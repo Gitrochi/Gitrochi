@@ -26,7 +26,7 @@ struct GitchBar: View {
                     ForEach(store.gitchAccounts) { a in
                         Button { switching = a } label: {
                             if a.id == s.lockedAccount {
-                                Label { Text(verbatim: "\(a.id) · \(a.email)") } icon: { Image(systemName: "checkmark") }
+                                Label { Text(verbatim: "\(a.id) · \(a.email)") } icon: { DesignIconImage(icon: .check) }
                             } else {
                                 Text(verbatim: "\(a.id) · \(a.email)")
                             }

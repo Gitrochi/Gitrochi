@@ -1,4 +1,5 @@
-import { Circle, CircleAlert, CircleCheck, CircleDot, Square, SquareCheck, TriangleAlert } from "lucide-react";
+import { Circle, CircleCheck, CircleDot, Square, SquareCheck, TriangleAlert } from "lucide-react";
+import { CircleAlert } from "@/shared/icons";
 import {
   scheduleStage,
   type HubProjectField,

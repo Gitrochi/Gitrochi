@@ -96,7 +96,7 @@ struct IssueDetailView: View {
             Menu {
                 Button("Refresh conversation") { Task { await store.openInboxItem(item) } }
                 Button("Copy link") { store.copy(item.url) }
-            } label: { Image(systemName: "ellipsis").font(.system(size: 12)) }
+            } label: { DesignIconImage(icon: .more, size: 12) }
                 .menuStyle(.borderlessButton).menuIndicator(.hidden)
                 .frame(width: 28, height: 28)
                 .background(RoundedRectangle(cornerRadius: 6).fill(StudioStyle.surface))

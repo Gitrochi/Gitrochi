@@ -54,13 +54,6 @@ final class ChangeQuestionSession {
     }
 }
 
-/// A change the Code page shows, which is not the repository screen's open diff. (Windows: ChangeQuestionCode)
-struct ChangeQuestionCode {
-    let scope: String
-    let path: String
-    let document: DiffDocument
-}
-
 extension RepoStore {
     private var changeQuestionOrigin: String {
         String(describing: diffSource) + "|" + String(describing: selection) + "|" + (headHash ?? "")

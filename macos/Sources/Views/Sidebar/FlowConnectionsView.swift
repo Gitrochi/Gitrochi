@@ -144,7 +144,7 @@ private struct FlowConnectionsSheet: View {
             }
             ForEach(result.jobs) { item in
                 Button { loadBuilds(item.path) } label: {
-                    HStack { Image(systemName: item.folder ? "folder" : "shippingbox"); Text(item.name); Spacer(); Image(systemName: "chevron.right") }
+                    HStack { Image(systemName: item.folder ? "folder" : "shippingbox"); Text(item.name); Spacer(); DesignIconImage(icon: .chevronRight) }
                         .padding(8).contentShape(Rectangle())
                 }.buttonStyle(.plain)
             }

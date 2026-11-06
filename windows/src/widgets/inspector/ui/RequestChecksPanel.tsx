@@ -1,4 +1,5 @@
-import { ChevronDown, ChevronRight, CircleCheck, Ellipsis, ExternalLink, RefreshCw, RotateCw } from "lucide-react";
+import { CircleCheck } from "lucide-react";
+import { ChevronDown, ChevronRight, Ellipsis, ExternalLink, RefreshCw, RotateCw } from "@/shared/icons";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CIAPI, CIStatusIcon, isActiveCI, statusInfo, type CIJob, type CIPipeline, type CIRequestCheck } from "@/entities/ci";
 import { accounts, hubError, workspaceJobLog } from "@/entities/hosting";

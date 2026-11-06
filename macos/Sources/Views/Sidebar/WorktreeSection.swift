@@ -36,7 +36,7 @@ struct WorktreeSection: View {
                     Button("Clean up") { Task { await store.pruneWorktrees() } }
                         .buttonStyle(.borderless).font(.caption)
                 }
-                Button { store.sheet = .addWorktree(branch: nil, start: nil) } label: { Image(systemName: "plus") }
+                Button { store.sheet = .addWorktree(branch: nil, start: nil) } label: { DesignIconImage(icon: .plus) }
                     .buttonStyle(.borderless)
                     .help("New worktree")
             }
@@ -79,7 +79,7 @@ private struct WorktreeRow: View {
                 Image(systemName: "exclamationmark.triangle").foregroundStyle(.orange)
                     .help("Worktree whose folder is gone — remove it with 'Clean up'")
             } else if worktree.locked {
-                Image(systemName: "lock").foregroundStyle(.secondary).help("Locked worktree")
+                DesignIconImage(icon: .lock).foregroundStyle(.secondary).help("Locked worktree")
             }
         }
     }

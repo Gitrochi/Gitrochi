@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ExternalLink, RefreshCw } from "lucide-react";
+import { ExternalLink, RefreshCw } from "@/shared/icons";
 import { externalEditors, describe, type ExternalEditor, type ExternalEditorID } from "@/shared/platform";
 import { t } from "@/shared/i18n";
 import { Button, Spinner } from "@/shared/ui";

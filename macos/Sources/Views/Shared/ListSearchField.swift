@@ -16,7 +16,7 @@ struct ListSearchRow<Value: Hashable>: View {
     var body: some View {
         HStack(spacing: 4) {
             HStack(spacing: 5) {
-                Image(systemName: "magnifyingglass").font(.system(size: 11)).foregroundStyle(.secondary)
+                DesignIconImage(icon: .search, size: 11).foregroundStyle(.secondary)
                 TextField(prompt, text: $text)
                     .textFieldStyle(.plain)
                     .font(.callout)

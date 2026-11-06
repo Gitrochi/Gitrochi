@@ -39,15 +39,15 @@ struct RepositoryCodeReader: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 7) {
-                Button { findFocused = true } label: { Image(systemName: "magnifyingglass") }
+                Button { findFocused = true } label: { DesignIconImage(icon: .search) }
                     .keyboardShortcut("f", modifiers: .command).help("Find in file").accessibilityLabel("Find in file")
                 TextField("Find in file", text: $findText).textFieldStyle(.plain).focused($findFocused)
                     .onSubmit { advance(1) }.accessibilityLabel("Find in file")
                 if !findText.isEmpty {
                     Text(counter).font(.caption.monospacedDigit()).foregroundStyle(.secondary).fixedSize()
-                    Button { advance(-1) } label: { Image(systemName: "chevron.up") }.disabled(matches.isEmpty).help("Previous match").accessibilityLabel("Previous match")
-                    Button { advance(1) } label: { Image(systemName: "chevron.down") }.disabled(matches.isEmpty).help("Next match").accessibilityLabel("Next match")
-                    Button { findText = "" } label: { Image(systemName: "xmark") }.help("Clear search").accessibilityLabel("Clear search")
+                    Button { advance(-1) } label: { DesignIconImage(icon: .chevronUp) }.disabled(matches.isEmpty).help("Previous match").accessibilityLabel("Previous match")
+                    Button { advance(1) } label: { DesignIconImage(icon: .chevronDown) }.disabled(matches.isEmpty).help("Next match").accessibilityLabel("Next match")
+                    Button { findText = "" } label: { DesignIconImage(icon: .close) }.help("Clear search").accessibilityLabel("Clear search")
                 }
                 if editableText != nil {
                     Button { replaceRequest = UUID() } label: { Image(systemName: "arrow.triangle.2.circlepath") }

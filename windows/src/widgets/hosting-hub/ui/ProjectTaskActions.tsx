@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
-import { Archive, ArchiveRestore, ArrowUpDown, Circle, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, Circle } from "lucide-react";
+import { ArrowUpDown, MoreHorizontal, Pencil, Trash2 } from "@/shared/icons";
 import { archiveHubProjectItem, deleteHubProjectItem, moveHubProjectItemPosition, convertHubProjectDraftToIssue, type HubDetail, type HubProjectRow } from "@/entities/hosting";
 import { t } from "@/shared/i18n";
 import { Button } from "@/shared/ui";

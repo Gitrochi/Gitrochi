@@ -1,4 +1,5 @@
-import { PanelLeftOpen, Plus, RefreshCw } from "lucide-react";
+import { PanelLeftOpen } from "lucide-react";
+import { Plus, RefreshCw } from "@/shared/icons";
 import { useEffect } from "react";
 import { DiffView } from "@/widgets/diff-viewer";
 import { PullRequestDetailView } from "@/widgets/inspector";

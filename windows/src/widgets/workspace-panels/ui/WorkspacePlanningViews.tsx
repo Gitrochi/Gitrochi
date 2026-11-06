@@ -1,11 +1,6 @@
 import { useEffect, useState } from "react";
-import {
-  ArrowUpRight,
-  CalendarDays,
-  CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import { ArrowUpRight, CalendarDays, CheckCircle2 } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "@/shared/icons";
 import {
   portfolioTasks,
   scheduleAddDays,

@@ -157,7 +157,7 @@ struct CIPanel: View {
         let open = !collapsedRefs.contains(g.ref)
         return Button { if open { collapsedRefs.insert(g.ref) } else { collapsedRefs.remove(g.ref) } } label: {
             HStack(spacing: 6) {
-                Image(systemName: "chevron.down")
+                DesignIconImage(icon: .chevronDown)
                     .font(.caption2.weight(.bold))
                     .foregroundStyle(HostedList.caption)
                     .rotationEffect(.degrees(open ? 0 : -90))

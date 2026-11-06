@@ -93,9 +93,9 @@ struct RepositoryCodePanel: View {
                 revisionButton
                 separator
                 HStack(spacing: 4) {
-                    Button { navigate(-1) } label: { Image(systemName: "chevron.left").font(.system(size: 12, weight: .medium)) }
+                    Button { navigate(-1) } label: { DesignIconImage(icon: .chevronLeft, size: 12) }
                         .disabled(!navigation.canGoBack).help("Navigate back").accessibilityLabel("Navigate back").accessibilityIdentifier("code-back")
-                    Button { navigate(1) } label: { Image(systemName: "chevron.right").font(.system(size: 12, weight: .medium)) }
+                    Button { navigate(1) } label: { DesignIconImage(icon: .chevronRight, size: 12) }
                         .disabled(!navigation.canGoForward).help("Navigate forward").accessibilityLabel("Navigate forward").accessibilityIdentifier("code-forward")
                 }
                 .buttonStyle(RepositoryCodeBarButton(square: true))
@@ -109,7 +109,7 @@ struct RepositoryCodePanel: View {
                 // the board has no place for these two; they stay at the end of the bar
                 RepositoryExternalEditorMenu(editors: editors, fileAvailable: selected?.isFile == true && treeURL == store.url,
                     open: openExternal, refresh: { editors = ExternalEditors.editors() }).disabled(store.url == nil)
-                Button { explorerVisible.toggle() } label: { Image(systemName: "sidebar.left").foregroundStyle(StudioStyle.Rail.icon).frame(width: 24, height: 24).contentShape(Rectangle()) }
+                Button { explorerVisible.toggle() } label: { DesignIconImage(icon: .panelLeft).foregroundStyle(StudioStyle.Rail.icon).frame(width: 24, height: 24).contentShape(Rectangle()) }
                     .buttonStyle(.plain)
                     .help(explorerVisible ? String(localized: "Hide file explorer") : String(localized: "Show file explorer"))
                     .accessibilityLabel(explorerVisible ? String(localized: "Hide file explorer") : String(localized: "Show file explorer"))
@@ -134,7 +134,7 @@ struct RepositoryCodePanel: View {
         let room: CGFloat = panelWidth >= 760 ? 200 : 130
         return Button { revisionSearch = ""; revisionPicker = true } label: {
             HStack(spacing: 6) {
-                Image(systemName: "circle.and.line.horizontal").font(.system(size: 12)).foregroundStyle(StudioStyle.Rail.icon)
+                DesignIconImage(icon: .commit, size: 12).foregroundStyle(StudioStyle.Rail.icon)
                 if loading {
                     ProgressView().controlSize(.small)
                 } else if let tree {
@@ -146,7 +146,7 @@ struct RepositoryCodePanel: View {
                 } else {
                     Text(revisionInput).lineLimit(1).truncationMode(.middle).frame(maxWidth: room).fixedSize()
                 }
-                Image(systemName: "chevron.down").font(.system(size: 9, weight: .semibold)).foregroundStyle(StudioStyle.Rail.icon)
+                DesignIconImage(icon: .chevronDown, size: 9).foregroundStyle(StudioStyle.Rail.icon)
             }
         }
         .buttonStyle(RepositoryCodeBarButton())
@@ -216,7 +216,7 @@ struct RepositoryCodePanel: View {
     private var quickOpenField: some View {
         Button { quickOpen = true } label: {
             HStack(spacing: 6) {
-                Image(systemName: "magnifyingglass").font(.system(size: 12))
+                DesignIconImage(icon: .search, size: 12)
                 Text("Quick open").lineLimit(1).frame(maxWidth: .infinity, alignment: .leading)
                 Text(verbatim: "⌘P").font(.system(size: 12))
             }
@@ -240,7 +240,7 @@ struct RepositoryCodePanel: View {
                     if !directory.isEmpty && languageFilter == nil {
                         RepositoryCodeRow(selected: false, action: { directory = parentDirectory }) {
                             HStack(spacing: 8) {
-                                Image(systemName: "arrow.turn.left.up").font(.system(size: 11)).foregroundStyle(StudioStyle.Rail.icon).frame(width: 14)
+                                DesignIconImage(icon: .upFolder, size: 11).foregroundStyle(StudioStyle.Rail.icon).frame(width: 14)
                                 Text(verbatim: "..").font(.system(size: 12, design: .monospaced)).foregroundStyle(StudioStyle.Tone.neutral.text)
                             }
                             .padding(.leading, 10).padding(.trailing, 6).frame(height: 28)
@@ -250,7 +250,7 @@ struct RepositoryCodePanel: View {
                     ForEach(folders, id: \.self) { folder in
                         RepositoryCodeRow(selected: false, action: { directory = folder }) {
                             HStack(spacing: 8) {
-                                Image(systemName: "folder").font(.system(size: 12)).foregroundStyle(StudioStyle.Rail.icon).frame(width: 14)
+                                DesignIconImage(icon: .repository, size: 12).foregroundStyle(StudioStyle.Rail.icon).frame(width: 14)
                                 Text(String(folder.dropFirst(prefix.count))).font(.system(size: 13)).lineLimit(1).truncationMode(.middle)
                             }
                             .padding(.leading, 10).padding(.trailing, 6).frame(height: 28)
@@ -329,7 +329,7 @@ struct RepositoryCodePanel: View {
                                     }
                                 }.frame(minWidth: 60, maxWidth: 180, alignment: .leading)
                             }.accessibilityIdentifier("code-tab-" + path)
-                            Button { closeTab(path) } label: { Image(systemName: "xmark").font(.system(size: 9, weight: .medium)).foregroundStyle(StudioStyle.Rail.icon).frame(width: 16, height: 16).contentShape(Rectangle()) }
+                            Button { closeTab(path) } label: { DesignIconImage(icon: .close, size: 9).foregroundStyle(StudioStyle.Rail.icon).frame(width: 16, height: 16).contentShape(Rectangle()) }
                                 .help("Close file").accessibilityLabel("Close file").accessibilityIdentifier("code-close-" + path)
                         }
                             .font(.system(size: 13, weight: .medium))

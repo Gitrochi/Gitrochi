@@ -43,7 +43,7 @@ struct HostingHubPanel: View {
                                 Text(verbatim: String(localized: "My projects: @{0}").replacingOccurrences(of: "{0}", with: account.username)).tag("personal")
                             }.frame(maxWidth: 310).disabled(locked)
                         }
-                        Button { editor = nil; Task { await store.loadHostingHub() } } label: { Image(systemName: "arrow.clockwise") }.help("Refresh").disabled(locked)
+                        Button { editor = nil; Task { await store.loadHostingHub() } } label: { DesignIconImage(icon: .refresh) }.help("Refresh").disabled(locked)
                         if section == .releases || section == .gists { Button { startEditor(edit: false) } label: { Label("New", systemImage: "plus") }.disabled(locked || store.hubAccount == nil) }
                     }
                 }.frame(maxWidth: .infinity, alignment: .leading).padding(20)
@@ -86,7 +86,7 @@ struct HostingHubPanel: View {
                     VStack(alignment: .leading, spacing: 10) {
                         if embedded {
                             HStack(spacing: 6) {
-                                Image(systemName: "magnifyingglass").font(.system(size: 12)).foregroundStyle(StudioStyle.Rail.icon)
+                                DesignIconImage(icon: .search, size: 12).foregroundStyle(StudioStyle.Rail.icon)
                                 TextField("Search loaded items", text: $store.hostingHub.query).textFieldStyle(.plain).font(.system(size: 13))
                             }
                             .padding(.horizontal, 10).frame(height: 28)
@@ -267,7 +267,7 @@ struct HostingHubPanel: View {
             HStack(alignment: .top, spacing: 7) {
                 Image(systemName: "circle").foregroundStyle(Color.accentColor).font(.caption).padding(.top, 3)
                 Text(row.title).font(.callout.weight(.semibold)).fixedSize(horizontal: false, vertical: true).frame(maxWidth: .infinity, alignment: .leading)
-                if safeURL(row.url) != nil { Button { open(row.url) } label: { Image(systemName: "arrow.up.right.square") }.buttonStyle(.borderless).help("Open in browser") }
+                if safeURL(row.url) != nil { Button { open(row.url) } label: { DesignIconImage(icon: .external) }.buttonStyle(.borderless).help("Open in browser") }
             }
             if !row.body.isEmpty { Text(String(row.body.prefix(1200))).font(.caption).foregroundStyle(.secondary).lineLimit(3).textSelection(.enabled) }
             ForEach(detail.fields) { field in projectField(field, row: row, detail: detail).font(.caption) }

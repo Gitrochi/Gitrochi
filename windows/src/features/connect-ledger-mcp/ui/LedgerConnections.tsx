@@ -1,4 +1,5 @@
-import { CircleCheck, CircleDashed, CircleX, Clock, Code, Globe, SquareTerminal, Wrench } from "lucide-react";
+import { CircleCheck, CircleDashed, CircleX, Code, Globe, Wrench } from "lucide-react";
+import { Clock, SquareTerminal } from "@/shared/icons";
 import { type ReactNode, useCallback, useEffect, useState } from "react";
 import type { LedgerBrowserStatus, LedgerIntegrationStatus, LedgerStableCommand, LedgerStore } from "@/entities/ledger";
 import { isWindows } from "@/shared/config";

@@ -1,4 +1,5 @@
-import { Code2, FileUp, RefreshCw, Workflow } from "lucide-react";
+import { Code2, FileUp, Workflow } from "lucide-react";
+import { RefreshCw } from "@/shared/icons";
 import { type DragEvent, useEffect, useRef, useState } from "react";
 import { type FlowAttachment, type FlowBlock, type FlowConnection, type FlowDesignDiagnostic, type FlowDesignInspection, type FlowDocument, type FlowImportSource, type FlowStore, addCodeModule, addParallelFlowExample, checkedDesignYaml, composeDesignProposal, designFlowNames, flowConfigFiles, flowEngine, importedFlowName, listFlowConnections, readFlowImport, readWebFlowImport, saveFlowConfig, scriptFlowExample } from "@/entities/flow";
 import { ipc } from "@/shared/api";

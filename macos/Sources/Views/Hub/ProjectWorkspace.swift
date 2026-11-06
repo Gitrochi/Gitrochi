@@ -267,7 +267,7 @@ struct ProjectWorkspace: View {
     }
     private var searchField: some View {
         HStack(spacing: 6) {
-            Image(systemName: "magnifyingglass").font(.system(size: 12)).foregroundStyle(StudioStyle.Rail.icon)
+            DesignIconImage(icon: .search, size: 12).foregroundStyle(StudioStyle.Rail.icon)
             TextField("Search tasks", text: $filter.query).font(.system(size: 13)).textFieldStyle(.plain)
             if !filter.query.isEmpty { Button { filter.query = "" } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary) }.buttonStyle(.plain).help("Clear search").accessibilityLabel("Clear search") }
         }

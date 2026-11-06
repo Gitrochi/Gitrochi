@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { RequestScope } from "@/entities/hosting";
-import { Plus, RefreshCw, SquareArrowOutUpRight } from "lucide-react";
+import { Plus, RefreshCw, SquareArrowOutUpRight } from "@/shared/icons";
 import { CIStatusIcon, statusInfo } from "@/entities/ci";
 import { accountHost, providerInfo, type RepoTarget } from "@/entities/git";
 import { accounts, workStateTitle } from "@/entities/hosting";

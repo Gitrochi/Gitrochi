@@ -155,7 +155,7 @@ struct GitchGuideSheet: View {
         HStack(alignment: .top, spacing: 12) {
             Text(verbatim: text).font(.caption.monospaced()).frame(width: 112, alignment: .leading).textSelection(.enabled)
             Text(purpose).font(.caption).foregroundStyle(.secondary).frame(maxWidth: .infinity, alignment: .leading)
-            Button { NSPasteboard.general.clearContents(); NSPasteboard.general.setString(text, forType: .string) } label: { Image(systemName: "doc.on.doc") }
+            Button { NSPasteboard.general.clearContents(); NSPasteboard.general.setString(text, forType: .string) } label: { DesignIconImage(icon: .copy) }
                 .buttonStyle(.borderless).help("Copy command").accessibilityLabel("Copy command")
         }
     }

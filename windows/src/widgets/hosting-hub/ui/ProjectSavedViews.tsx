@@ -1,4 +1,5 @@
-import { ExternalLink, Settings2 } from "lucide-react";
+import { Settings2 } from "lucide-react";
+import { ExternalLink } from "@/shared/icons";
 import type { HubProjectView } from "@/entities/hosting";
 import { t } from "@/shared/i18n";
 import { Button, Spinner } from "@/shared/ui";

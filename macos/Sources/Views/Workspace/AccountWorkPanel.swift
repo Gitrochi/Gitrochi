@@ -212,7 +212,7 @@ private struct AccountWorkPanel: View {
                         HStack(spacing: 6) {
                             Text(verbatim: Self.categories.first { $0.value == model.kind }?.title ?? "").font(.system(size: 13)).foregroundStyle(.primary).lineLimit(1)
                             Spacer(minLength: 4)
-                            Image(systemName: "chevron.down").font(.system(size: 9, weight: .semibold)).foregroundStyle(StudioStyle.Rail.icon)
+                            DesignIconImage(icon: .chevronDown, size: 9).foregroundStyle(StudioStyle.Rail.icon)
                         }
                         .padding(.horizontal, 10)
                     }
@@ -252,7 +252,7 @@ private struct AccountWorkPanel: View {
 
     private var searchField: some View {
         HStack(spacing: 6) {
-            Image(systemName: "magnifyingglass").font(.system(size: 12)).foregroundStyle(StudioStyle.Rail.icon)
+            DesignIconImage(icon: .search, size: 12).foregroundStyle(StudioStyle.Rail.icon)
             TextField(model.inbox ? String(localized: "Search notifications") : String(localized: "Search my work"), text: $search)
                 .textFieldStyle(.plain).font(.system(size: 13))
         }
@@ -266,7 +266,7 @@ private struct AccountWorkPanel: View {
             Button { oldestFirst = false } label: { if oldestFirst { Text("Newest first") } else { Label("Newest first", systemImage: "checkmark") } }
             Button { oldestFirst = true } label: { if oldestFirst { Label("Oldest first", systemImage: "checkmark") } else { Text("Oldest first") } }
         } label: {
-            Image(systemName: "arrow.up.arrow.down").font(.system(size: 12)).frame(width: 28)
+            DesignIconImage(icon: .sort, size: 12).frame(width: 28)
         }
         .help("Sort").accessibilityLabel("Sort")
     }

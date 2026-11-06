@@ -25,7 +25,7 @@ struct FileInspectView: View {
             WorkbenchFlow(spacing: 10) {
                 Button("Trace lines…") { store.openLineHistory(path: inspect.path, revision: inspect.rev, start: store.fileInspectLine ?? 1) }
                 if store.fileInspectLoading { ProgressView().controlSize(.small) }
-                Button { store.revealInFinder(path: inspect.path) } label: { Image(systemName: "folder") }
+                Button { store.revealInFinder(path: inspect.path) } label: { DesignIconImage(icon: .repository) }
                     .buttonStyle(.borderless)
                     .help("Show in Finder")
                     .accessibilityLabel("Show in Finder")

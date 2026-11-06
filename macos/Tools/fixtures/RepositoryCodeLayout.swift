@@ -113,6 +113,7 @@ struct FixtureRef: Identifiable {
     var id: String { name }
 }
 @MainActor @Observable final class RepoStore {
+    func openChangeQuestion(code: ChangeQuestionCode) async {}
     var url: URL? = URL(fileURLWithPath: "/fixture/repository")
     let localBranches = [FixtureRef(name: "main"), FixtureRef(name: "feature/code-reader")]
     let remoteBranches = [FixtureRef(name: "origin/main")]

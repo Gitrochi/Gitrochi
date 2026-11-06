@@ -23,7 +23,7 @@ struct ReviewDraftPanel: View {
                             Text("\(draft.anchor.path):\(draft.anchor.line)").font(.caption.monospaced()).lineLimit(2)
                             Text(draft.anchor.side == .left ? String(localized: "Old version") : String(localized: "New version")).font(.caption).foregroundStyle(.secondary)
                             Spacer()
-                            Button { store.removeReviewDraft(draft.id) } label: { Image(systemName: "trash") }
+                            Button { store.removeReviewDraft(draft.id) } label: { DesignIconImage(icon: .trash) }
                                 .buttonStyle(.borderless).help("Remove draft").disabled(store.reviewBusy)
                         }
                         if let review, draft.anchor.refs != review.refs {

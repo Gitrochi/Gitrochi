@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { ArrowLeftRight, CircleCheck, Cloud, GitBranch, Search, Tag as TagIcon } from "lucide-react";
+import { CircleCheck } from "lucide-react";
+import { ArrowLeftRight, Cloud, GitBranch, Search, Tag as TagIcon } from "@/shared/icons";
 import type { RepoStore } from "@/entities/repo";
 import { RevisionPicker } from "@/features/history-tools";
 import { t } from "@/shared/i18n";

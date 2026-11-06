@@ -69,7 +69,7 @@ struct ProjectDashboard: View {
         let count = overview.counts[group, default: 0], on = focus == group.rawValue, alert = group == .overdue && count > 0
         return Button { focus = on ? "" : group.rawValue } label: {
             HStack(spacing: 6) {
-                if alert { Image(systemName: "exclamationmark.circle").font(.system(size: 12)).foregroundStyle(StudioStyle.Tone.failed.text).accessibilityHidden(true) }
+                if alert { DesignIconImage(icon: .alert, size: 12).foregroundStyle(StudioStyle.Tone.failed.text).accessibilityHidden(true) }
                 Text(count.formatted()).font(.system(size: 15, weight: .semibold)).foregroundStyle(alert ? StudioStyle.Tone.failed.text : count == 0 ? caption : Color.primary)
                 Text(title).font(.system(size: 12)).foregroundStyle(alert ? StudioStyle.Tone.failed.text : caption)
             }

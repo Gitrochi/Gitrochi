@@ -1,4 +1,5 @@
-import { CircleCheck, CircleX, Clock, GitMerge, GitPullRequest, GitPullRequestClosed, GitPullRequestDraft, type LucideIcon } from "lucide-react";
+import { CircleCheck, CircleX, GitMerge, GitPullRequestClosed, GitPullRequestDraft, type LucideIcon } from "lucide-react";
+import { Clock, GitPullRequest } from "@/shared/icons";
 import { useEffect } from "react";
 import { workStateTitle } from "@/entities/hosting";
 import type { LedgerSession, LedgerStore } from "@/entities/ledger";

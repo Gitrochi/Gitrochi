@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { ExternalLink, MessageSquareText, RefreshCw } from "lucide-react";
+import { MessageSquareText } from "lucide-react";
+import { ExternalLink, RefreshCw } from "@/shared/icons";
 import { ensureHubCurrent, HostingError, HubUncertainWriteError, hubError, inboxDetail, postInboxComment, type HubAccess, type HubProjectRow, type InboxDetail } from "@/entities/hosting";
 import { language, t } from "@/shared/i18n";
 import { Button, Markdown, Spinner } from "@/shared/ui";

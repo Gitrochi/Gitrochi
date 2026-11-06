@@ -63,7 +63,7 @@ struct RunPipelineSheet: View {
             HStack {
                 Text("Variables").font(.subheadline.weight(.semibold))
                 Spacer()
-                Button { variables.append(Variable(key: "", value: "")) } label: { Image(systemName: "plus") }
+                Button { variables.append(Variable(key: "", value: "")) } label: { DesignIconImage(icon: .plus) }
                     .buttonStyle(.borderless)
                     .help("Add variable")
             }

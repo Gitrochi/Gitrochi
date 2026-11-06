@@ -11,7 +11,7 @@ struct CompareRevisionsSheet: View {
             VStack(spacing: 8) {
                 HStack {
                     RevisionPicker(title: String(localized: "From revision"), revision: $state.left, store: store)
-                    Button { let old = state.left; state.left = state.right; state.right = old } label: { Image(systemName: "arrow.left.arrow.right") }.help("Swap revisions")
+                    Button { let old = state.left; state.left = state.right; state.right = old } label: { DesignIconImage(icon: .compare) }.help("Swap revisions")
                 }
                 HStack {
                     RevisionPicker(title: String(localized: "To revision"), revision: $state.right, store: store)
@@ -112,8 +112,8 @@ struct BatchCommitsSheet: View {
                             Text(String(item.sha.prefix(8))).font(.caption.monospaced())
                             Text(item.subject).lineLimit(1).frame(maxWidth: .infinity, alignment: .leading).help(item.message)
                             Text(item.author).font(.caption).foregroundStyle(.secondary)
-                            Button { move(index, -1) } label: { Image(systemName: "arrow.up") }.disabled(index == 0 || state.batchLoading).help("Run earlier")
-                            Button { move(index, 1) } label: { Image(systemName: "arrow.down") }.disabled(index == state.batch.count - 1 || state.batchLoading).help("Run later")
+                            Button { move(index, -1) } label: { DesignIconImage(icon: .push) }.disabled(index == 0 || state.batchLoading).help("Run earlier")
+                            Button { move(index, 1) } label: { DesignIconImage(icon: .pull) }.disabled(index == state.batch.count - 1 || state.batchLoading).help("Run later")
                         }.padding(8).background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 5))
                     }
                 }

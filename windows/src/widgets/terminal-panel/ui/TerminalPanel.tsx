@@ -1,4 +1,5 @@
-import { ChevronDown, Columns2, ExternalLink, Plus, Rows2, SquareTerminal, X } from "lucide-react";
+import { Columns2, Rows2 } from "lucide-react";
+import { ChevronDown, ExternalLink, Plus, SquareTerminal, X } from "@/shared/icons";
 import { useEffect, useLayoutEffect, useRef } from "react";
 import type { RepoStore } from "@/entities/repo";
 import { cornerPane, panes, type TerminalSession, type TermNode, type TermPane, type TermSplit } from "@/entities/terminal";

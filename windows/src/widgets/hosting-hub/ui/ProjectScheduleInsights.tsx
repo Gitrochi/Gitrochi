@@ -1,4 +1,5 @@
-import { CircleAlert, Flag, UserRound } from "lucide-react";
+import { Flag } from "lucide-react";
+import { CircleAlert, UserRound } from "@/shared/icons";
 import {
   scheduleProgress,
   scheduleWorkload,

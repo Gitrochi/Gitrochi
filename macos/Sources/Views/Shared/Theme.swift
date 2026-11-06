@@ -137,7 +137,7 @@ struct RefBadge: View {
                 .truncationMode(.middle)
                 .layoutPriority(-1)
             if label.isCurrent && label.kind == .local {
-                Image(systemName: "checkmark").font(.system(size: 8, weight: .heavy))
+                DesignIconImage(icon: .check, size: 8)
             }
         }
         .padding(.horizontal, 6)

@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import { ArrowDownToLine, Book, Building2, Check, ChevronsUpDown, CircleX, Monitor, RefreshCw } from "lucide-react";
+import { ArrowDownToLine, Book, Building2, ChevronsUpDown, CircleX, Monitor } from "lucide-react";
+import { Check, RefreshCw } from "@/shared/icons";
 import { avatars } from "@/entities/avatar";
 import { accountHost, type HostAccount } from "@/entities/git";
 import { accounts, hubProjectOrganization, type HubProjectScope } from "@/entities/hosting";

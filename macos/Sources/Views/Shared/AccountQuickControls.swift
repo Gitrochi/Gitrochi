@@ -34,14 +34,14 @@ struct AccountQuickControls: View {
                     Text(verbatim: title)
                         .font(.system(size: 12, weight: .semibold)).lineLimit(1).truncationMode(.middle)
                     HStack(spacing: 3) {
-                        if store.gitchStatus?.lockedAccount != nil { Image(systemName: "lock.fill").font(.system(size: 8)) }
+                        if store.gitchStatus?.lockedAccount != nil { DesignIconImage(icon: .lock, size: 8) }
                         Group {
                             if store.url == nil { Text("Open repository…") }
                             else { Text("Git: \(gitAccount)") }
                         }.font(.system(size: 10)).lineLimit(1).truncationMode(.middle)
                     }.foregroundStyle(.secondary)
                 }
-                Image(systemName: "chevron.down").font(.system(size: 9, weight: .semibold)).foregroundStyle(.secondary)
+                DesignIconImage(icon: .chevronDown, size: 9).foregroundStyle(.secondary)
             }
             .frame(maxWidth: 190, alignment: .leading)
             .padding(.leading, 4).padding(.trailing, 8)
@@ -178,7 +178,7 @@ struct AccountQuickControls: View {
                         Text(verbatim: "@\(a.username) · \(a.host)").font(.caption).foregroundStyle(.secondary).lineLimit(1)
                     }
                     Spacer()
-                    if a.id == shown?.id { Image(systemName: "checkmark").foregroundStyle(.secondary) }
+                    if a.id == shown?.id { DesignIconImage(icon: .check).foregroundStyle(.secondary) }
                 }.contentShape(Rectangle()) }.buttonStyle(.plain)
                 if accounts.credentialState(for: a) != .ready { SavedAccountAccessNotice(account: a) }
             }

@@ -17,6 +17,41 @@ enum DesignIcon: String {
     case flows
     case ledger
     case settings
+    case chevronDown
+    case chevronUp
+    case chevronLeft
+    case chevronRight
+    case commit
+    case branch
+    case refresh
+    case plus
+    case terminal
+    case search
+    case copy
+    case close
+    case check
+    case panelLeft
+    case panelRight
+    case push
+    case pull
+    case external
+    case sort
+    case comment
+    case eye
+    case sparkles
+    case file
+    case lock
+    case pencil
+    case trash
+    case person
+    case clock
+    case alert
+    case inbox
+    case upFolder
+    case whitespace
+    case cloud
+    case minus
+    case more
 
     fileprivate var drawing: String {
         switch self {
@@ -33,6 +68,41 @@ enum DesignIcon: String {
         case .flows: return #"<rect x="2" y="2.5" width="4.5" height="3.5" rx="1"/><rect x="9.5" y="10" width="4.5" height="3.5" rx="1"/><path d="M4.2 6v4.2a1.5 1.5 0 0 0 1.5 1.5h3.8"/>"#
         case .ledger: return #"<path d="M2.5 4.4l1.3 1.3L6.2 3.2M2.5 10.4l1.3 1.3 2.4-2.5M8.5 4.6h5M8.5 10.6h5"/>"#
         case .settings: return #"<circle cx="8" cy="8" r="2.2"/><path d="M8 1.8v1.6M8 12.6v1.6M1.8 8h1.6M12.6 8h1.6M3.6 3.6l1.1 1.1M11.3 11.3l1.1 1.1M3.6 12.4l1.1-1.1M11.3 4.7l1.1-1.1"/>"#
+        case .chevronDown: return #"<path d="M4 6l4 4 4-4"/>"#
+        case .chevronUp: return #"<path d="M4 10l4-4 4 4"/>"#
+        case .chevronLeft: return #"<path d="M10 3.5 5.5 8l4.5 4.5"/>"#
+        case .chevronRight: return #"<path d="M6 3.5 10.5 8 6 12.5"/>"#
+        case .commit: return #"<circle cx="8" cy="8" r="2.5"/><path d="M1.5 8h4M10.5 8h4"/>"#
+        case .branch: return #"<circle cx="4.5" cy="3.5" r="1.5"/><circle cx="4.5" cy="12.5" r="1.5"/><circle cx="11.5" cy="5" r="1.5"/><path d="M4.5 5v6M11.5 6.5c0 3-7 2-7 4.5"/>"#
+        case .refresh: return #"<path d="M13 8a5 5 0 1 1-1.46-3.54"/><path d="M13 2.5V5.5H10"/>"#
+        case .plus: return #"<path d="M8 3v10M3 8h10"/>"#
+        case .terminal: return #"<rect x="1.5" y="2.5" width="13" height="11" rx="2"/><path d="M4.5 6l2 2-2 2M8.5 10.5h3"/>"#
+        case .search: return #"<circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/>"#
+        case .copy: return #"<rect x="5.5" y="5.5" width="8" height="8" rx="1.5"/><path d="M10.5 5.5v-2a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2"/>"#
+        case .close: return #"<path d="M4.5 4.5l7 7M11.5 4.5l-7 7"/>"#
+        case .check: return #"<path d="m3.5 8.5 3 3 6-7"/>"#
+        case .panelLeft: return #"<rect x="1.5" y="2.5" width="13" height="11" rx="2"/><path d="M6 2.5v11"/>"#
+        case .panelRight: return #"<rect x="1.5" y="2.5" width="13" height="11" rx="2"/><path d="M10 2.5v11"/>"#
+        case .push: return #"<path d="M8 13.5v-10M4 7.5l4-4 4 4"/>"#
+        case .pull: return #"<path d="M8 2.5v10M4 8.5l4 4 4-4"/>"#
+        case .external: return #"<path d="M9 3h4v4M13 3 7.5 8.5M11 9.5V13H3V5h3.5"/>"#
+        case .sort: return #"<path d="M5 3v10M2.5 5.5 5 3l2.5 2.5M11 13V3M8.5 10.5 11 13l2.5-2.5"/>"#
+        case .comment: return #"<path d="M2.5 3.5h11v7.5H7l-3 2.5V11H2.5z"/>"#
+        case .eye: return #"<path d="M1.5 8S4 3.5 8 3.5 14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8z"/><circle cx="8" cy="8" r="2"/>"#
+        case .sparkles: return #"<path d="M7 2l1.3 3.7L12 7l-3.7 1.3L7 12l-1.3-3.7L2 7l3.7-1.3z"/><path d="M12.5 10.5l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z"/>"#
+        case .file: return #"<path d="M4 1.8h5.2L12 4.6v9.6H4z"/><path d="M9 1.8v3h3"/>"#
+        case .lock: return #"<rect x="3.5" y="7" width="9" height="6.5" rx="1.3"/><path d="M5.5 7V5.2a2.5 2.5 0 0 1 5 0V7"/>"#
+        case .pencil: return #"<path d="M10.5 2.5l3 3L6 13H3v-3z"/>"#
+        case .trash: return #"<path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.6 8.5h5.8l.6-8.5"/>"#
+        case .person: return #"<circle cx="8" cy="5.5" r="2.6"/><path d="M3 14c.6-2.8 2.6-4.2 5-4.2s4.4 1.4 5 4.2"/>"#
+        case .clock: return #"<circle cx="8" cy="8" r="6.2"/><path d="M8 4.8V8l2.2 1.6"/>"#
+        case .alert: return #"<circle cx="8" cy="8" r="6.2"/><path d="M8 4.8v3.6M8 11.1v.1"/>"#
+        case .inbox: return #"<path d="M2 9.5 3.8 3.5h8.4L14 9.5v3a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z"/><path d="M2 9.5h3.2l.8 1.6h4l.8-1.6H14"/>"#
+        case .upFolder: return #"<path d="M13 13H8.5A3.5 3.5 0 0 1 5 9.5V3M2 6l3-3 3 3"/>"#
+        case .whitespace: return #"<path d="M7.5 13V3h5M10.5 3v10M7.5 3H6a2.5 2.5 0 0 0 0 5h1.5"/>"#
+        case .cloud: return #"<path d="M4.6 12.5h7a2.9 2.9 0 0 0 .4-5.8 4 4 0 0 0-7.7.9 2.5 2.5 0 0 0 .3 4.9z"/>"#
+        case .minus: return #"<path d="M3.5 8h9"/>"#
+        case .more: return #"<circle cx="3.5" cy="8" r="1.3" fill="black" stroke="none"/><circle cx="8" cy="8" r="1.3" fill="black" stroke="none"/><circle cx="12.5" cy="8" r="1.3" fill="black" stroke="none"/>"#
         }
     }
 
@@ -49,43 +119,11 @@ enum DesignIcon: String {
     }
 }
 
-extension WorkspaceDestination {
-    /// nil for a page the Shell board draws no icon for: it keeps `symbol`
-    var designIcon: DesignIcon? {
-        switch self {
-        case .account: return nil
-        case .home: return .home
-        case .repository: return .repository
-        case .compare: return .compare
-        case .rebase: return .rebase
-        case .code: return .code
-        case .pullRequests: return .pullRequests
-        case .issues: return .issues
-        case .actions: return .actions
-        case .releases: return .releases
-        case .projects: return .projects
-        case .flows: return .flows
-        case .ledger: return .ledger
-        }
-    }
-}
-
 struct DesignIconImage: View {
     let icon: DesignIcon
-    var size: CGFloat = 16
+    var size: CGFloat = 14
 
     var body: some View {
         Image(nsImage: icon.image).renderingMode(.template).resizable().frame(width: size, height: size).accessibilityHidden(true)
-    }
-}
-
-/// A page's icon in the rail and the sidebar
-struct NavigationPageIcon: View {
-    let page: WorkspaceDestination
-    var size: CGFloat = 16
-
-    var body: some View {
-        if let icon = page.designIcon { DesignIconImage(icon: icon, size: size) }
-        else { Image(systemName: page.symbol).font(.system(size: size)).frame(width: size, height: size) }
     }
 }

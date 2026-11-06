@@ -114,7 +114,7 @@ struct LedgerDocumentsSheet: View {
             LazyVStack(alignment: .leading, spacing: 0) {
                 if entries.isEmpty {
                     VStack(spacing: 8) {
-                        Image(systemName: "doc.text").font(.system(size: 24)).foregroundStyle(.secondary)
+                        DesignIconImage(icon: .file, size: 24).foregroundStyle(.secondary)
                         Text("No document evidence yet").font(.system(size: 15, weight: .semibold))
                         Text("Choose folders and scan them, or clear your search.")
                             .font(.system(size: 12)).foregroundStyle(.secondary)

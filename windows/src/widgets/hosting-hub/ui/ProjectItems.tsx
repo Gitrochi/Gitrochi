@@ -1,15 +1,6 @@
 import { useEffect, useState, type CSSProperties } from "react";
-import {
-  Archive,
-  CheckCircle2,
-  CheckSquare,
-  Square,
-  Circle,
-  FileText,
-  Filter,
-  GitPullRequest,
-  Plus,
-} from "lucide-react";
+import { Archive, CheckCircle2, CheckSquare, Square, Circle, Filter } from "lucide-react";
+import { FileText, GitPullRequest, Plus } from "@/shared/icons";
 import {
   hubProjectColumns,
   type HubDetail,

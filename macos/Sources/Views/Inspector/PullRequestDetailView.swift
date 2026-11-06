@@ -189,7 +189,7 @@ struct PullRequestDetailView: View {
                 }
             }
         } label: {
-            Image(systemName: "ellipsis").font(.system(size: 12, weight: .medium)).foregroundStyle(.secondary)
+            DesignIconImage(icon: .more, size: 12).foregroundStyle(.secondary)
                 .frame(width: 28, height: 28)
                 .background(RoundedRectangle(cornerRadius: 6).fill(StudioStyle.surface))
                 .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.primary.opacity(0.16)))

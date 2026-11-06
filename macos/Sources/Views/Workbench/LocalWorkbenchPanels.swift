@@ -13,7 +13,7 @@ struct RevisionComparisonPanel: View {
                 RevisionPicker(title: String(localized: "From revision"), revision: $state.left, store: store)
                 HStack {
                     Spacer()
-                    Button { let old = state.left; state.left = state.right; state.right = old } label: { Image(systemName: "arrow.up.arrow.down") }
+                    Button { let old = state.left; state.left = state.right; state.right = old } label: { DesignIconImage(icon: .sort) }
                         .buttonStyle(.borderless).help("Swap revisions")
                     Spacer()
                 }
@@ -151,7 +151,7 @@ struct LocalBranchesPanel: View {
                 if tab == "Tags", let sha = store.headHash { Button("New tag") { store.sheet = .tag(sha: sha) }.disabled(store.busy != nil) }
                 if tab == "Stashes" { Button("Stash changes…") { store.sheet = .stash }.disabled(store.busy != nil) }
                 Button("New branch") { store.requestNewBranch() }.disabled(store.busy != nil)
-                Button { Task { await store.reload() } } label: { Image(systemName: "arrow.clockwise") }.help("Refresh")
+                Button { Task { await store.reload() } } label: { DesignIconImage(icon: .refresh) }.help("Refresh")
             }
             VStack(alignment: .leading, spacing: 10) {
                 Picker("Reference type", selection: $tab) { ForEach(tabs, id: \.self) { Text(LocalizedStringKey($0)).tag($0) } }.pickerStyle(.segmented).frame(maxWidth: 430)
@@ -166,7 +166,7 @@ struct LocalBranchesPanel: View {
                     } else if tab == "Tags" {
                         ForEach(store.tags.filter { query.isEmpty || $0.name.localizedCaseInsensitiveContains(query) }) { tag in
                             WorkbenchFlow {
-                                Image(systemName: "tag"); Text(tag.name).fontWeight(.medium).lineLimit(1).truncationMode(.middle).help(tag.name); Text(String(tag.target.prefix(12))).font(.caption.monospaced()).foregroundStyle(.secondary)
+                                DesignIconImage(icon: .releases); Text(tag.name).fontWeight(.medium).lineLimit(1).truncationMode(.middle).help(tag.name); Text(String(tag.target.prefix(12))).font(.caption.monospaced()).foregroundStyle(.secondary)
                                 Button("Check out detached") { Task { await store.checkoutDetached(tag.target) } }
                                 Button("New branch") { store.requestNewBranch(from: tag.target, label: tag.name) }
                                 Button("Push…") { Task { await store.pushTag(tag) } }
@@ -202,7 +202,7 @@ struct LocalBranchesPanel: View {
         VStack(alignment: .leading, spacing: 10) {
             Button { selected = branch; rename = branch.name } label: {
                 HStack(spacing: 12) {
-                    Image(systemName: "arrow.triangle.branch").font(.title3).foregroundStyle(Color.accentColor)
+                    DesignIconImage(icon: .branch).font(.title3).foregroundStyle(Color.accentColor)
                     VStack(alignment: .leading, spacing: 4) {
                         WorkbenchFlow(spacing: 6) { Text(branch.name).fontWeight(.semibold).lineLimit(1).truncationMode(.middle).help(branch.name); if branch.isCurrent { Text("Current").font(.caption).foregroundStyle(Color.accentColor) }; if store.isPinned(branch) { Label("Pinned", systemImage: "pin.fill").font(.caption).foregroundStyle(.secondary) }; if store.isHidden(branch) { Image(systemName: "eye.slash").foregroundStyle(.secondary).help("Show in graph again") } }
                         Text(activity[branch.name] ?? String(branch.target.prefix(12))).font(.caption).foregroundStyle(.secondary).lineLimit(1)

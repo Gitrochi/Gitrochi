@@ -66,7 +66,7 @@ struct FlowVisualEditor: View {
                             Text(block?.title ?? design.blockID(design.selected)).font(.caption).foregroundStyle(.secondary)
                         }
                         Spacer()
-                        Button { removeModule = true } label: { Image(systemName: "trash") }
+                        Button { removeModule = true } label: { DesignIconImage(icon: .trash) }
                             .buttonStyle(.borderless).help("Remove module")
                     }
                     if let block { FlowModuleEffects(block: block) }

@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import { GitBranch, GitPullRequest } from "lucide-react";
+import { GitBranch, GitPullRequest } from "@/shared/icons";
 import { issueTaskReference, workStateTitle, type InboxItem, type IssueLinkedRequest } from "@/entities/hosting";
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";

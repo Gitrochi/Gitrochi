@@ -62,8 +62,8 @@ struct ProjectCalendar: View {
         VStack(alignment: .leading, spacing: 12) {
             WorkbenchFlow(spacing: 12) {
                 HStack(spacing: 4) {
-                    Button { navigate(-1) } label: { Image(systemName: "chevron.left").frame(width: 20, height: 20) }.help("Previous calendar period")
-                    Button { navigate(1) } label: { Image(systemName: "chevron.right").frame(width: 20, height: 20) }.help("Next calendar period")
+                    Button { navigate(-1) } label: { DesignIconImage(icon: .chevronLeft).frame(width: 20, height: 20) }.help("Previous calendar period")
+                    Button { navigate(1) } label: { DesignIconImage(icon: .chevronRight).frame(width: 20, height: 20) }.help("Next calendar period")
                 }
                 Text(periodTitle).font(.system(size: 19, weight: .semibold)).frame(minWidth: 170, alignment: .leading)
                 Button("Today") { anchor = today }
@@ -71,7 +71,7 @@ struct ProjectCalendar: View {
                 Menu {
                     Toggle("Show completed tasks", isOn: $includeCompleted)
                     Toggle("Show unscheduled tasks", isOn: $showingUndated)
-                } label: { Image(systemName: "eye") }.help("Calendar visibility")
+                } label: { DesignIconImage(icon: .eye) }.help("Calendar visibility")
                 ProjectScheduleConfiguration(fields: fields, settings: $settings, manageFields: manageFields)
             }
             HStack(spacing: 7) {
@@ -143,7 +143,7 @@ struct ProjectCalendar: View {
                     Text(entry.row.title).font(.system(size: 10, weight: .medium)).lineLimit(mode == "month" ? 2 : 3).multilineTextAlignment(.leading).foregroundStyle(.primary)
                     if mode == "week", let person = entry.row.assignees.first { Text("@" + person).font(.system(size: 9)).foregroundStyle(.secondary).lineLimit(1) }
                 }.frame(maxWidth: .infinity, alignment: .leading)
-                if entry.completed { Image(systemName: "checkmark").font(.system(size: 8, weight: .bold)).foregroundStyle(.green) }
+                if entry.completed { DesignIconImage(icon: .check, size: 8).foregroundStyle(.green) }
                 else if let day, day == entry.due { Image(systemName: "flag.fill").font(.system(size: 8)).foregroundStyle(color).accessibilityLabel("Due date") }
             }.padding(.vertical, 6).padding(.horizontal, 5).fixedSize(horizontal: false, vertical: true)
                 .background(color.opacity(0.08), in: RoundedRectangle(cornerRadius: 5))

@@ -1,4 +1,5 @@
-import { ArrowUpDown, CircleUserRound, CircleX, Search, X } from "lucide-react";
+import { CircleUserRound, CircleX } from "lucide-react";
+import { ArrowUpDown, Search, X } from "@/shared/icons";
 import type { ButtonHTMLAttributes, HTMLAttributes, MouseEvent, ReactNode } from "react";
 import { t } from "@/shared/i18n";
 import { listWhen } from "@/shared/lib";

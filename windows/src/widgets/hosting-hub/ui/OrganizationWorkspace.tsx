@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { ExternalLink, MailPlus, ShieldCheck } from "lucide-react";
+import { MailPlus, ShieldCheck } from "lucide-react";
+import { ExternalLink } from "@/shared/icons";
 import { hubOrganizationInviteError, hubOrganizationLinks, inviteHubOrganizationMember, cancelHubOrganizationInvitation, hubSafeURL, type HostingHubStore, type HubAccess, type HubDetail, type HubMember, type HubOrganizationInviteInput, type HubOrganizationTab, type HubOrganizationInvitation, type HubOrganizationTeam } from "@/entities/hosting";
 import { accountHost } from "@/entities/git";
 import { Avatar, Button } from "@/shared/ui";

@@ -132,7 +132,7 @@ struct DiffView: View {
             } else {
                 store.revealInFinder(c)
             }
-        } label: { Image(systemName: "folder") }
+        } label: { DesignIconImage(icon: .repository) }
             .buttonStyle(.borderless)
             .help("Show in Finder")
             .accessibilityLabel("Show in Finder")

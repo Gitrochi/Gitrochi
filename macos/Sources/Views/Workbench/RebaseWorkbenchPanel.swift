@@ -90,7 +90,7 @@ struct RebaseWorkbenchPanel: View {
                 stepTitle(1, "Choose the new base")
                 caption("Replays this branch's commits on top of a new base, as if the branch had started there.")
                 HStack(spacing: 6) {
-                    Image(systemName: "magnifyingglass").font(.system(size: 12)).foregroundStyle(StudioStyle.Rail.icon)
+                    DesignIconImage(icon: .search, size: 12).foregroundStyle(StudioStyle.Rail.icon)
                     TextField("Search branches and tags", text: $search).textFieldStyle(.plain).font(.system(size: 13))
                 }
                 .padding(.horizontal, 10).frame(height: 28)

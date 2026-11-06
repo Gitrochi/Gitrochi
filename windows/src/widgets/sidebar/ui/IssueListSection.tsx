@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Plus, SquareArrowOutUpRight } from "lucide-react";
+import { Plus, SquareArrowOutUpRight } from "@/shared/icons";
 import { accounts, type IssueScope, workStateTitle } from "@/entities/hosting";
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";

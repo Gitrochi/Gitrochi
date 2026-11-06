@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
-import { CornerDownLeft, Equal, FileArchive, MoreHorizontal, Pilcrow, TriangleAlert } from "lucide-react";
+import { CornerDownLeft, Equal, FileArchive, TriangleAlert } from "lucide-react";
+import { MoreHorizontal, Pilcrow } from "@/shared/icons";
 import { diffSides, parseDiffAsync, splitRows, StatusBadge, type ChangeKind, type DiffDocument, type DiffLine } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";

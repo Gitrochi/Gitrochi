@@ -1,5 +1,5 @@
 import type { KeyboardEvent } from "react";
-import { Clock } from "lucide-react";
+import { Clock } from "@/shared/icons";
 import { avatars } from "@/entities/avatar";
 import { short, type FileHistoryEntry } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";

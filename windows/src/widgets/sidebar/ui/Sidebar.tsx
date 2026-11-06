@@ -1,4 +1,5 @@
-import { Archive, ChevronDown, CircleCheck, Cloud, CloudAlert, Eye, EyeOff, Folder, FolderOpen, GitBranch, PanelLeftClose, Pin, ShieldCheck, SquareArrowOutUpRight, Tag as TagIcon } from "lucide-react";
+import { Archive, CircleCheck, CloudAlert, EyeOff, FolderOpen, PanelLeftClose, Pin, ShieldCheck } from "lucide-react";
+import { ChevronDown, Cloud, Eye, Folder, GitBranch, SquareArrowOutUpRight, Tag as TagIcon } from "@/shared/icons";
 import { type ReactNode, useState } from "react";
 import { localBranchMenu, remoteBranchMenu } from "@/features/git-menus";
 import { agents, isActiveStatus } from "@/entities/agent";

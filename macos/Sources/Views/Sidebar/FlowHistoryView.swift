@@ -54,7 +54,7 @@ struct FlowHistoryView: View {
             }
             HStack(spacing: 10) {
                 HStack(spacing: 7) {
-                    Image(systemName: "magnifyingglass").font(.system(size: 11)).foregroundStyle(.secondary)
+                    DesignIconImage(icon: .search, size: 11).foregroundStyle(.secondary)
                     TextField("Search runs", text: $search).textFieldStyle(.plain).font(.system(size: 11))
                     if !search.isEmpty {
                         Button { search = "" } label: { Image(systemName: "xmark.circle.fill").font(.system(size: 11)).foregroundStyle(.secondary) }
@@ -102,7 +102,7 @@ struct FlowHistoryView: View {
                     }
                     if let duration = run.durationMs { Text(FlowFormat.duration(duration)).font(.system(size: 10, design: .monospaced)).foregroundStyle(.secondary) }
                 }.frame(maxWidth: 145, alignment: .trailing)
-                Image(systemName: "chevron.right").font(.system(size: 9, weight: .semibold)).foregroundStyle(.tertiary)
+                DesignIconImage(icon: .chevronRight, size: 9).foregroundStyle(.tertiary)
             }
             .padding(14).background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 11))
             .overlay(RoundedRectangle(cornerRadius: 11).stroke(Color.primary.opacity(0.08)))

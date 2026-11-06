@@ -61,10 +61,10 @@ struct IssueListSection: View {
                 Text(list.page > 0 ? "Issues \(list.items.count)" : "Issues")
                 Spacer()
                 if list.busy, !list.items.isEmpty { ProgressView().controlSize(.mini) }
-                Button { store.navigate(.issues) } label: { Image(systemName: "arrow.up.forward.square") }
+                Button { store.navigate(.issues) } label: { DesignIconImage(icon: .external) }
                     .buttonStyle(.borderless)
                     .help("Open in Issues")
-                Button { store.sheet = .issueEditor(number: nil, title: "", body: "") } label: { Image(systemName: "plus") }
+                Button { store.sheet = .issueEditor(number: nil, title: "", body: "") } label: { DesignIconImage(icon: .plus) }
                     .buttonStyle(.borderless)
                     .disabled(store.collaborationAccess == nil)
                     .help("New issue")

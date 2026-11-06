@@ -78,7 +78,7 @@ struct LedgerInspector: View {
                 if LedgerWake.waits(s, now: LedgerStore.localNow() + ledger.clockSkew) { LedgerWakePill() }
                 LedgerVerdictBadge(verdict: s.verdict)
                 if let close {
-                    Button(action: close) { Image(systemName: "xmark") }
+                    Button(action: close) { DesignIconImage(icon: .close) }
                         .buttonStyle(.borderless).keyboardShortcut(.cancelAction)
                         .help("Close").accessibilityLabel("Close")
                 }
@@ -104,7 +104,7 @@ struct LedgerInspector: View {
                 let current = s.baseCurrent ?? base
                 let behind = LedgerProjects.behind(s, baselines: ledger.state?.baselines ?? [])
                 HStack(spacing: 4) {
-                    Image(systemName: "tag").font(.system(size: 11)).foregroundStyle(.secondary).accessibilityHidden(true)
+                    DesignIconImage(icon: .releases, size: 11).foregroundStyle(.secondary).accessibilityHidden(true)
                     Text(current == base ? base : base + " → " + current).font(.system(size: 11))
                     if behind > 0 {
                         Text("\(behind) behind").font(.system(size: 11, weight: .semibold)).foregroundStyle(StudioStyle.Tone.waiting.text)
@@ -366,7 +366,7 @@ struct LedgerInspector: View {
                 LedgerSectionHeader(title: String(localized: "Touches"), count: s.touches.count)
                 ForEach(s.touches, id: \.self) { path in
                     HStack(spacing: 6) {
-                        Image(systemName: "doc").font(.system(size: 11)).foregroundStyle(.secondary).accessibilityHidden(true)
+                        DesignIconImage(icon: .file, size: 11).foregroundStyle(.secondary).accessibilityHidden(true)
                         // the file name whole, then its folder shortened from the start (docs/design.md, Text)
                         Text((path as NSString).lastPathComponent).font(.system(size: 12)).lineLimit(1).fixedSize()
                             .textSelection(.enabled)

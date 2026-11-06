@@ -1,4 +1,5 @@
-import { CircleAlert, CircleCheck, CircleDot, File } from "lucide-react";
+import { CircleCheck, CircleDot } from "lucide-react";
+import { CircleAlert, File } from "@/shared/icons";
 import type { ReactNode } from "react";
 import { fileName } from "@/entities/git";
 import type { PullRequestReview, ReviewComment } from "@/entities/hosting";

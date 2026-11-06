@@ -86,10 +86,10 @@ struct InteractiveRebaseSheet: View {
                     .help(item.wrappedValue.message)
                 Spacer(minLength: 4)
                 Text(item.wrappedValue.author).font(.caption).foregroundStyle(.secondary).lineLimit(1)
-                Button { move(i, -1) } label: { Image(systemName: "arrow.up") }
+                Button { move(i, -1) } label: { DesignIconImage(icon: .push) }
                     .buttonStyle(.borderless).disabled(i == 0).help("Up (later)")
                     .accessibilityLabel("Up")
-                Button { move(i, 1) } label: { Image(systemName: "arrow.down") }
+                Button { move(i, 1) } label: { DesignIconImage(icon: .pull) }
                     .buttonStyle(.borderless).disabled(i == count - 1).help("Down (earlier)")
                     .accessibilityLabel("Down")
             }

@@ -1,4 +1,5 @@
-import { ArrowDownToLine, Ellipsis, ExternalLink, GitGraph, GitMerge, GitPullRequest, GitPullRequestClosed, GitPullRequestDraft, MessageSquareText } from "lucide-react";
+import { ArrowDownToLine, GitGraph, GitMerge, GitPullRequestClosed, GitPullRequestDraft, MessageSquareText } from "lucide-react";
+import { Ellipsis, ExternalLink, GitPullRequest } from "@/shared/icons";
 import { type ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { markdownLinks, providerInfo } from "@/entities/git";

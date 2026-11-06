@@ -1,4 +1,5 @@
-import { Clock3, Hand, Maximize, Minus, Plus, RotateCcw, Workflow } from "lucide-react";
+import { Clock3, Hand, Maximize, RotateCcw, Workflow } from "lucide-react";
+import { Minus, Plus } from "@/shared/icons";
 import { type PointerEvent, useEffect, useId, useMemo, useRef, useState } from "react";
 import { fitFlowGraph, flowZoomAnchor, formatDuration, layoutFlowGraph } from "@/entities/flow";
 import { t } from "@/shared/i18n";

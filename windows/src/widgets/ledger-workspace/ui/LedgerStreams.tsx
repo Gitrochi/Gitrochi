@@ -1,4 +1,5 @@
-import { ArrowRight, ChevronDown, ChevronRight, CircleCheck, CircleDot, SkipForward, Waves } from "lucide-react";
+import { ArrowRight, CircleCheck, CircleDot, SkipForward, Waves } from "lucide-react";
+import { ChevronDown, ChevronRight } from "@/shared/icons";
 import { useEffect, useState } from "react";
 import { compareVersions, type LedgerSession, type LedgerSessionDetail, type LedgerStore, type LedgerStreamCycle } from "@/entities/ledger";
 import { t } from "@/shared/i18n";

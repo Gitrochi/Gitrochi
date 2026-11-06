@@ -1,4 +1,5 @@
-import { ArrowUpDown, Eye, GitPullRequestDraft, MessageSquare, PanelLeftClose, Search, X } from "lucide-react";
+import { GitPullRequestDraft, PanelLeftClose } from "lucide-react";
+import { ArrowUpDown, Eye, MessageSquare, Search, X } from "@/shared/icons";
 import { useEffect, useState } from "react";
 import { commentCount, isThisBranch, requestDate, type RequestSort, reviewRequestedCount, sorted } from "@/widgets/inspector";
 import { CIStatusIcon, statusInfo } from "@/entities/ci";

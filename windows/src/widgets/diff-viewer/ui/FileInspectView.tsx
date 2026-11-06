@@ -1,4 +1,5 @@
-import { ChevronLeft, Clock, FileArchive, FolderOpen, History, ScanText, TriangleAlert } from "lucide-react";
+import { FileArchive, FolderOpen, History, ScanText, TriangleAlert } from "lucide-react";
+import { ChevronLeft, Clock } from "@/shared/icons";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { avatars } from "@/entities/avatar";
 import { type BlameLine, isUncommittedLine, short } from "@/entities/git";

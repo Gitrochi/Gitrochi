@@ -1,4 +1,5 @@
-import { ChevronDown, Ellipsis, Plus, RefreshCw, SquareCheck } from "lucide-react";
+import { SquareCheck } from "lucide-react";
+import { ChevronDown, Ellipsis, Plus, RefreshCw } from "@/shared/icons";
 import type { HostAccount } from "@/entities/git";
 import { accounts, type HostingHubStore, type HubItem } from "@/entities/hosting";
 import { ProjectScopeFailureStrip, ProjectScopeMenu, type ProjectScopeCatalogs } from "@/features/select-project-scope";

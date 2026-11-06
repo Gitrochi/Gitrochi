@@ -87,13 +87,13 @@ struct AccountWorkspacePanel: View {
                     HostingAvatar(name: account.name ?? account.username, username: account.username,
                                   avatarURL: account.avatarURL.flatMap(URL.init(string:)), size: 20)
                     Text(verbatim: Self.title(account)).font(.system(size: 13)).foregroundStyle(Color.primary).lineLimit(1)
-                    Image(systemName: "chevron.down").font(.system(size: 9, weight: .semibold)).foregroundStyle(StudioStyle.Rail.icon)
+                    DesignIconImage(icon: .chevronDown, size: 9).foregroundStyle(StudioStyle.Rail.icon)
                 }
                 .padding(.leading, 4).padding(.trailing, 12)
             }
             .accessibilityLabel("Account and server")
             .disabled(current == "organizations" && hubLocked)
-            Button { refresh(account) } label: { Image(systemName: "arrow.clockwise") }
+            Button { refresh(account) } label: { DesignIconImage(icon: .refresh) }
                 .buttonStyle(AccountIconButtonStyle())
                 .help("Refresh").accessibilityLabel("Refresh")
                 .disabled(busy)

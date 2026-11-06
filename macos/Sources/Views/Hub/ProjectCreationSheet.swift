@@ -38,7 +38,7 @@ struct ProjectCreationSheet: View {
                         .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer(minLength: 0)
-                Button { dismiss() } label: { Image(systemName: "xmark") }.buttonStyle(.borderless).disabled(saving).help("Close")
+                Button { dismiss() } label: { DesignIconImage(icon: .close) }.buttonStyle(.borderless).disabled(saving).help("Close")
             }.padding(24)
             Divider()
             ScrollView {

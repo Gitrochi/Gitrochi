@@ -170,7 +170,7 @@ private struct FlowObjectFields: View {
                 Button {
                     let newValue: FlowJSON = kind == "object" ? .object([:]) : kind == "array" ? .array([]) : kind == "boolean" ? .bool(false) : kind == "number" ? .number(0) : .string("")
                     value = value.setting([key], to: newValue); key = ""; onError(nil)
-                } label: { Image(systemName: "plus") }
+                } label: { DesignIconImage(icon: .plus) }
                 .disabled(key.isEmpty || value.object[key] != nil).help("Add field")
             }
         }.padding(10).background(Color.secondary.opacity(0.035), in: RoundedRectangle(cornerRadius: 8))

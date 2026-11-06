@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
-import { ArrowRight, ShieldCheck, Trash2, X } from "lucide-react";
+import { ArrowRight, ShieldCheck } from "lucide-react";
+import { Trash2, X } from "@/shared/icons";
 import { t } from "@/shared/i18n";
 import { Button, Spinner } from "@/shared/ui";
 /** A contextual review is reserved for destructive, batch and explicit scheduling operations. */

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { ArrowDownToLine, Folder, GitBranch, Plus, Search, TriangleAlert } from "lucide-react";
+import { ArrowDownToLine, TriangleAlert } from "lucide-react";
+import { Folder, GitBranch, Plus, Search } from "@/shared/icons";
 import { parseStatus, type WorkingStatus } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
 import { ipc } from "@/shared/api";

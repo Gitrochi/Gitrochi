@@ -110,7 +110,7 @@ private struct FlowPanelBody: View {
                 .buttonStyle(.borderless)
                 .help(affectedOnly ? "Running only tests affected by your changes" : "Run only tests affected by your changes")
                 .accessibilityLabel("Run only affected tests")
-            Button { Task { await flows.refresh() } } label: { Image(systemName: "arrow.clockwise") }
+            Button { Task { await flows.refresh() } } label: { DesignIconImage(icon: .refresh) }
                 .buttonStyle(.borderless)
                 .help("Refresh")
             Button { sheet = .edit } label: { Image(systemName: "square.and.pencil") }

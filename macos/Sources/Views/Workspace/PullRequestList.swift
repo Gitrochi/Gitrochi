@@ -26,7 +26,7 @@ struct PullRequestList: View {
             HStack(spacing: 8) {
                 searchField
                 sortMenu
-                Button(action: hide) { Image(systemName: "sidebar.left") }
+                Button(action: hide) { DesignIconImage(icon: .panelLeft) }
                     .buttonStyle(PullRequestButtonStyle(iconOnly: true))
                     .help("Hide list")
                     .accessibilityLabel(gitlab ? "Hide merge request list" : "Hide pull request list")
@@ -62,7 +62,7 @@ struct PullRequestList: View {
 
     private var searchField: some View {
         HStack(spacing: 6) {
-            Image(systemName: "magnifyingglass").font(.system(size: 12)).foregroundStyle(StudioStyle.Rail.icon)
+            DesignIconImage(icon: .search, size: 12).foregroundStyle(StudioStyle.Rail.icon)
             TextField(gitlab ? String(localized: "Search merge requests") : String(localized: "Search pull requests"), text: $search)
                 .textFieldStyle(.plain).font(.system(size: 13))
                 .focused($searchFocused)
@@ -99,7 +99,7 @@ struct PullRequestList: View {
                 }
             }
         } label: {
-            Image(systemName: "arrow.up.arrow.down").font(.system(size: 12)).foregroundStyle(.secondary)
+            DesignIconImage(icon: .sort, size: 12).foregroundStyle(.secondary)
                 .frame(width: 28, height: 28)
                 .background(RoundedRectangle(cornerRadius: 6).fill(StudioStyle.surface))
                 .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.primary.opacity(0.16)))
@@ -191,7 +191,7 @@ struct PullRequestList: View {
                     Spacer(minLength: 0)
                     if let comments, comments > 0 {
                         HStack(spacing: 4) {
-                            Image(systemName: "bubble.left").font(.system(size: 10))
+                            DesignIconImage(icon: .comment, size: 10)
                             Text(verbatim: String(comments)).font(.system(size: 11))
                         }
                         .foregroundStyle(secondary).fixedSize()

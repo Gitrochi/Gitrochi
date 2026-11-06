@@ -14,7 +14,7 @@ struct SettingsView: View {
             ToolsSettings()
                 .tabItem { Label("Tool locations", systemImage: "wrench.and.screwdriver") }
             CLISettings()
-                .tabItem { Label { Text(verbatim: "CLI") } icon: { Image(systemName: "terminal") } }
+                .tabItem { Label { Text(verbatim: "CLI") } icon: { DesignIconImage(icon: .terminal) } }
             AppearanceSettings()
                 .tabItem { Label("Appearance", systemImage: "paintpalette") }
             UpdateSettings()

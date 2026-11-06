@@ -99,7 +99,7 @@ struct LedgerToastView: View {
                     .keyboardShortcut("z", modifiers: .command)
                     .help("Undo (⌘Z)")
             }
-            Button(action: close) { Image(systemName: "xmark") }
+            Button(action: close) { DesignIconImage(icon: .close) }
                 .buttonStyle(.borderless).foregroundStyle(.secondary)
                 .help("Close").accessibilityLabel("Close")
         }

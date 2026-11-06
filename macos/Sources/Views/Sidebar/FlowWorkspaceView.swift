@@ -106,7 +106,7 @@ struct FlowWorkspaceView: View {
                 Text("\(list.flows.count)").font(.caption.monospacedDigit()).foregroundStyle(.secondary)
             }.padding(.horizontal, 4)
             HStack(spacing: 7) {
-                Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
+                DesignIconImage(icon: .search).foregroundStyle(.secondary)
                 TextField("Find flows", text: $search).textFieldStyle(.plain)
                     .accessibilityLabel("Find flows")
                 if !search.isEmpty {
@@ -122,7 +122,7 @@ struct FlowWorkspaceView: View {
                     ForEach(matchingFlows) { item in flowChoice(item) }
                     if matchingFlows.isEmpty, !search.isEmpty {
                         VStack(spacing: 10) {
-                            Image(systemName: "magnifyingglass").font(.title3).foregroundStyle(.tertiary)
+                            DesignIconImage(icon: .search).font(.title3).foregroundStyle(.tertiary)
                             Text("No matching flows").font(.caption).foregroundStyle(.secondary)
                             Button("Clear search") { search = "" }.buttonStyle(.borderless).font(.caption)
                         }.frame(maxWidth: .infinity).padding(.vertical, 28)
@@ -150,12 +150,12 @@ struct FlowWorkspaceView: View {
         return Button { chooseFlow(item.name) } label: {
             VStack(alignment: .leading, spacing: 8) {
                 HStack(spacing: 8) {
-                    Image(systemName: "arrow.triangle.branch")
+                    DesignIconImage(icon: .branch)
                         .font(.system(size: 12, weight: .medium)).foregroundStyle(.secondary)
                         .frame(width: 25, height: 25).background(Color.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 7))
                     Text(item.name).font(.callout.weight(.semibold)).lineLimit(1)
                     Spacer(minLength: 0)
-                    Image(systemName: "chevron.right").font(.system(size: 9, weight: .semibold)).foregroundStyle(.tertiary)
+                    DesignIconImage(icon: .chevronRight, size: 9).foregroundStyle(.tertiary)
                 }
                 if let description = item.description, !description.isEmpty {
                     Text(description).font(.caption).foregroundStyle(.secondary).lineLimit(2)
@@ -177,7 +177,7 @@ struct FlowWorkspaceView: View {
 
     private var compactSelector: some View {
         HStack(spacing: 10) {
-            Image(systemName: "arrow.triangle.branch").foregroundStyle(.secondary)
+            DesignIconImage(icon: .branch).foregroundStyle(.secondary)
             Picker("Flow", selection: Binding(get: { flow?.name ?? "" }, set: { name in
                 chooseFlow(name)
             })) {
@@ -204,7 +204,7 @@ struct FlowWorkspaceView: View {
             Image(systemName: "checkmark.circle.fill").foregroundStyle(.green).accessibilityHidden(true)
             Text("Flow created. Review its commands, then run it.").font(.caption)
             Spacer(minLength: 0)
-            Button { createdFlowNotice = nil } label: { Image(systemName: "xmark") }
+            Button { createdFlowNotice = nil } label: { DesignIconImage(icon: .close) }
                 .buttonStyle(.borderless).help("Close").accessibilityLabel("Close")
         }
         .padding(12).background(Color(nsColor: .controlBackgroundColor))
@@ -306,7 +306,7 @@ struct FlowWorkspaceView: View {
                     Button { onOpenRun(latest.runId) } label: {
                         HStack(spacing: 5) {
                             FlowStatusBadge(state: FlowRunHistory.presentationState(latest), compact: true)
-                            Image(systemName: "chevron.right").font(.system(size: 9, weight: .semibold)).foregroundStyle(.secondary)
+                            DesignIconImage(icon: .chevronRight, size: 9).foregroundStyle(.secondary)
                         }
                     }.buttonStyle(.plain).help("Show last run").accessibilityLabel("Show last run")
                         .accessibilityValue(FlowFormat.stateTitle(FlowRunHistory.presentationState(latest)))

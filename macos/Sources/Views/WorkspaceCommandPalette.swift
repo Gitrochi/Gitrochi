@@ -26,7 +26,7 @@ struct WorkspaceCommandPalette: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
-                Image(systemName: "magnifyingglass").foregroundStyle(StudioStyle.accent)
+                DesignIconImage(icon: .search).foregroundStyle(StudioStyle.accent)
                 TextField("Search views, branches and actions…", text: $query)
                     .textFieldStyle(.plain).font(.system(size: 14))
                     .focused($searchFocused)

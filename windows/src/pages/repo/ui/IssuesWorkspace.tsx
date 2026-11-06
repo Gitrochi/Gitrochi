@@ -1,5 +1,6 @@
 import { useEffect } from "react";
-import { ChevronLeft, CircleDot, CircleX, GitBranch, GitPullRequest, Globe, MessageSquare, PanelRight, Plus, RefreshCw, Search } from "lucide-react";
+import { CircleDot, CircleX, Globe } from "lucide-react";
+import { ChevronLeft, GitBranch, GitPullRequest, MessageSquare, PanelRight, Plus, RefreshCw, Search } from "@/shared/icons";
 import { IssueDetail } from "@/widgets/inspector";
 import type { RepoStore } from "@/entities/repo";
 import {

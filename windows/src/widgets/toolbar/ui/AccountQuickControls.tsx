@@ -1,4 +1,5 @@
-import { ChevronDown, LockKeyhole, UserRound, X } from "lucide-react";
+import { LockKeyhole } from "lucide-react";
+import { ChevronDown, UserRound, X } from "@/shared/icons";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AccountConnections, GitchBrowserLogin } from "@/features/account-connection";

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check } from "lucide-react";
+import { Check } from "@/shared/icons";
 import { parseScheduleDay, type HubProjectField, type HubProjectRow } from "@/entities/hosting";
 import { t } from "@/shared/i18n";
 import { Button } from "@/shared/ui";

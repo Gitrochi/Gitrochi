@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { UserRound } from "lucide-react";
+import { UserRound } from "@/shared/icons";
 import { destinationEnabled, destinationShortcut, repositoryDestinations, type WorkspaceDestination } from "@/entities/git";
 import { openedLedgerStore } from "@/entities/ledger";
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
 import { Observable, useObserve } from "@/shared/lib";
-import { designIcon, tip } from "@/shared/ui";
+import { tip } from "@/shared/ui";
+import { designIcon } from "@/shared/icons";
 import "./navigation-sidebar.css";
 
 const titles: Record<WorkspaceDestination, string> = { home: "Home", repository: "Repository", compare: "Compare", rebase: "Rebase", code: "Code", pullRequests: "Pull requests", issues: "Issues", actions: "Actions", releases: "Releases", projects: "Projects", account: "Account", flows: "Flows", ledger: "Ledger" };

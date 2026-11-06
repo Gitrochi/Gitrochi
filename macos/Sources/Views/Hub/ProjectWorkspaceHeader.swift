@@ -30,7 +30,7 @@ struct ProjectWorkspaceHeader: View {
                 Picker("Project source", selection: Binding(get: { hub.projectSource }, set: { source in Task { await store.selectHubProjectSource(source) } })) {
                     Text("Local").tag("local"); Text(verbatim: remote == .gitlab ? "GitLab" : "GitHub").tag("remote")
                 }.labelsHidden().pickerStyle(.segmented).fixedSize().disabled(locked)
-                Button(action: refresh) { Image(systemName: "arrow.clockwise") }.controlSize(.large).help("Refresh").accessibilityLabel("Refresh").disabled(locked)
+                Button(action: refresh) { DesignIconImage(icon: .refresh) }.controlSize(.large).help("Refresh").accessibilityLabel("Refresh").disabled(locked)
                 Spacer(minLength: 0)
             }.padding(EdgeInsets(top: 12, leading: 20, bottom: 0, trailing: 20))
             if !local, catalogs.failed(store.hubAccount), let account = store.hubAccount {
@@ -76,7 +76,7 @@ struct ProjectWorkspaceHeader: View {
                         if store.hubProvider == .github, !local { Button("Add existing issue or pull request…", action: importItem) }
                         if !local { Button("Open in GitHub", action: openBrowser) }
                         if local { Divider(); Button("Delete project…", role: .destructive, action: deleteProject) }
-                    } label: { Image(systemName: "ellipsis") }.menuStyle(.button).menuIndicator(.hidden).fixedSize().help("More project actions").accessibilityLabel("More project actions").disabled(hub.uncertainWrite)
+                    } label: { DesignIconImage(icon: .more) }.menuStyle(.button).menuIndicator(.hidden).fixedSize().help("More project actions").accessibilityLabel("More project actions").disabled(hub.uncertainWrite)
                     Button(action: store.hubProvider == .github ? addTask : importItem) { Label("New task…", systemImage: "plus") }.buttonStyle(.borderedProminent).disabled(hub.uncertainWrite)
                 }.controlSize(.large).disabled(locked)
             }

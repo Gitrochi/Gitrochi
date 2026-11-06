@@ -147,7 +147,7 @@ struct HostedListSearch<Items: View>: View {
     var body: some View {
         HStack(spacing: 8) {
             HStack(spacing: 6) {
-                Image(systemName: "magnifyingglass").font(.system(size: 12)).foregroundStyle(HostedList.caption)
+                DesignIconImage(icon: .search, size: 12).foregroundStyle(HostedList.caption)
                 TextField(prompt, text: $text)
                     .textFieldStyle(.plain).font(.system(size: 13))
                     .focused($focused)
@@ -166,7 +166,7 @@ struct HostedListSearch<Items: View>: View {
             .padding(.horizontal, 10).frame(height: 28)
             .background(RoundedRectangle(cornerRadius: 6).fill(StudioStyle.surface))
             .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(focused ? Color.accentColor.opacity(0.7) : HostedList.edge))
-            Menu { menu } label: { Image(systemName: "arrow.up.arrow.down").font(.system(size: 12)) }
+            Menu { menu } label: { DesignIconImage(icon: .sort, size: 12) }
                 .menuStyle(.borderlessButton).menuIndicator(.hidden)
                 .frame(width: 28, height: 28)
                 .background(RoundedRectangle(cornerRadius: 6).fill(StudioStyle.surface))

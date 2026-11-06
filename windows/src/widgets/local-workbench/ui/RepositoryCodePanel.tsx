@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowDown, ArrowUp, CaseSensitive, Check, ChevronDown, ChevronLeft, ChevronRight, Cloud, Copy, CornerLeftUp, File, Folder, GitBranch, GitCommitHorizontal, PanelLeftClose, PanelLeftOpen, Search, Tag, WrapText, X } from "lucide-react";
+import { CaseSensitive, PanelLeftClose, PanelLeftOpen, WrapText } from "lucide-react";
+import { ArrowDown, ArrowUp, Check, ChevronDown, ChevronLeft, ChevronRight, Cloud, Copy, CornerLeftUp, File, Folder, GitBranch, GitCommitHorizontal, Search, Tag, X } from "@/shared/icons";
 import { fileHistoryFormat, initialRepositoryFile, loadRepositoryBlob, loadRepositoryTree, parseBlameAsync, parseFileHistoryAsync, StatusBadge, validRevisionInput, type BlameLine, type ChangeKind, type FileHistoryEntry, type RepositoryBlob, type RepositoryTree, type RepositoryTreeEntry } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
 import { keyLabel } from "@/shared/config";

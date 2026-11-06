@@ -47,7 +47,7 @@ struct PullRequestsWorkspace: View {
             Text(verbatim: "\(target.host) / \(target.path)").font(.system(size: 13)).foregroundStyle(StudioStyle.Rail.icon).lineLimit(1).truncationMode(.middle)
             Spacer(minLength: 10)
             if store.prState == .loading { ProgressView().controlSize(.small) }
-            Button { Task { await store.loadPullRequests() } } label: { Image(systemName: "arrow.clockwise") }
+            Button { Task { await store.loadPullRequests() } } label: { DesignIconImage(icon: .refresh) }
                 .buttonStyle(PullRequestButtonStyle(iconOnly: true))
                 .help("Refresh list").accessibilityLabel("Refresh list")
             Button { store.sheet = .createPullRequest } label: {
@@ -62,7 +62,7 @@ struct PullRequestsWorkspace: View {
 
     /// The hidden list: a strip that holds only Show list
     private func strip(_ target: RepoTarget, stacked: Bool) -> some View {
-        Button { listHidden = false } label: { Image(systemName: "sidebar.left") }
+        Button { listHidden = false } label: { DesignIconImage(icon: .panelLeft) }
             .buttonStyle(PullRequestButtonStyle(iconOnly: true))
             .help("Show list")
             .accessibilityLabel(target.provider == .gitlab ? "Show merge request list" : "Show pull request list")
@@ -77,7 +77,7 @@ struct PullRequestsWorkspace: View {
             PullRequestDetailView(number: number, listShown: !listHidden, onPage: true)
         } else {
             VStack(spacing: 8) {
-                Image(systemName: "arrow.triangle.pull").font(.system(size: 24)).foregroundStyle(StudioStyle.Rail.icon).accessibilityHidden(true)
+                DesignIconImage(icon: .pullRequests, size: 24).foregroundStyle(StudioStyle.Rail.icon).accessibilityHidden(true)
                 Text("Select a pull request").font(.system(size: 15, weight: .semibold))
                 Text("Search the list, then review the conversation, files and merge checks here.")
                     .font(.system(size: 12)).foregroundStyle(StudioStyle.Rail.icon).multilineTextAlignment(.center).frame(maxWidth: 380)

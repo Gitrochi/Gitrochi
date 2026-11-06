@@ -22,7 +22,7 @@ struct RepositoryQuickOpen: View {
                     .onKeyPress(.downArrow) { move(1); return .handled }
                     .onKeyPress(.upArrow) { move(-1); return .handled }
                     .accessibilityLabel("Search files by name or path").accessibilityIdentifier("code-quick-open-search")
-                Button(action: close) { Image(systemName: "xmark") }.buttonStyle(.borderless)
+                Button(action: close) { DesignIconImage(icon: .close) }.buttonStyle(.borderless)
                     .help("Close quick open").accessibilityLabel("Close quick open").keyboardShortcut(.cancelAction)
             }.padding(17)
             Divider()
@@ -36,7 +36,7 @@ struct RepositoryQuickOpen: View {
                             ForEach(results, id: \.self) { path in
                                 Button { open(path) } label: {
                                     HStack(spacing: 10) {
-                                        Image(systemName: "doc.text").foregroundStyle(.secondary)
+                                        DesignIconImage(icon: .file).foregroundStyle(.secondary)
                                         VStack(alignment: .leading, spacing: 4) {
                                             Text((path as NSString).lastPathComponent).font(.callout.weight(.medium)).lineLimit(1).truncationMode(.middle)
                                             Text(path).font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)

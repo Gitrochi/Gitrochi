@@ -1,4 +1,5 @@
-import { Folder, FolderOpen, Lock, Plus, TriangleAlert } from "lucide-react";
+import { FolderOpen, TriangleAlert } from "lucide-react";
+import { Folder, Lock, Plus } from "@/shared/icons";
 import { short } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
 import { ipc } from "@/shared/api";

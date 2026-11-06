@@ -90,7 +90,7 @@ struct OrganizationWorkspace: View {
             Text("Open administration tools on the connected server. Availability depends on your role, account permissions, and plan.").font(.caption).foregroundStyle(.secondary)
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 170), alignment: .leading)], alignment: .leading, spacing: 10) {
                 ForEach(links) { link in
-                    Button { open(link.url) } label: { HStack { Text(link.title); Spacer(); Image(systemName: "arrow.up.right") }.frame(maxWidth: .infinity) }.buttonStyle(.bordered)
+                    Button { open(link.url) } label: { HStack { Text(link.title); Spacer(); DesignIconImage(icon: .external) }.frame(maxWidth: .infinity) }.buttonStyle(.bordered)
                 }
             }
             }
@@ -122,7 +122,7 @@ struct OrganizationWorkspace: View {
                     Button(onClone == nil ? String(localized: "Copy clone URL") : String(localized: "Clone")) {
                         if let onClone { onClone(repository.cloneURL) } else { NSPasteboard.general.clearContents(); NSPasteboard.general.setString(repository.cloneURL, forType: .string) }
                     }.disabled(locked || safeURL(repository.cloneURL) == nil)
-                    if safeURL(repository.url) != nil { Button { open(repository.url) } label: { Image(systemName: "arrow.up.right.square") }.help("Open in browser") }
+                    if safeURL(repository.url) != nil { Button { open(repository.url) } label: { DesignIconImage(icon: .external) }.help("Open in browser") }
                 }.padding(14).background(Color.secondary.opacity(0.04), in: RoundedRectangle(cornerRadius: 10))
             }
             if detail.repositories.isEmpty && detail.organizationSections["repositories"]?.error == nil { Text("No repositories visible to this account.").foregroundStyle(.secondary) }
@@ -144,7 +144,7 @@ struct OrganizationWorkspace: View {
             }
             Spacer(minLength: 0)
             if canInvite { Button { accessRequest = OrganizationAccessRequest(member: member, team: team) } label: { Image(systemName: "key").font(.caption2) }.buttonStyle(.borderless).help("Manage access").accessibilityLabel("Manage access").disabled(managementLocked) }
-            if let url = member.profileURL { Link(destination: url) { Image(systemName: "arrow.up.right").font(.caption2) }.help("Open profile").accessibilityLabel("Open profile") }
+            if let url = member.profileURL { Link(destination: url) { DesignIconImage(icon: .external).font(.caption2) }.help("Open profile").accessibilityLabel("Open profile") }
         }.frame(maxWidth: .infinity, alignment: .leading).padding(7).background(Color.secondary.opacity(0.04), in: RoundedRectangle(cornerRadius: 8))
     }
     private var teams: some View {
@@ -155,7 +155,7 @@ struct OrganizationWorkspace: View {
                         VStack(alignment: .leading, spacing: 4) { Text(team.name).font(.callout.weight(.semibold)); if !team.description.isEmpty { Text(team.description).font(.caption).foregroundStyle(.secondary).lineLimit(2) } }
                         Spacer(minLength: 0)
                         if canInvite { Button("Add member") { accessRequest = OrganizationAccessRequest(team: team, assigning: true) }.controlSize(.small).disabled(managementLocked) }
-                        if safeURL(team.url) != nil { Button { open(team.url) } label: { Image(systemName: "arrow.up.right.square") }.help("Open in browser") }
+                        if safeURL(team.url) != nil { Button { open(team.url) } label: { DesignIconImage(icon: .external) }.help("Open in browser") }
                     }
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 180), alignment: .leading)], alignment: .leading, spacing: 8) {
                         ForEach(team.members.filter { matches(team.name) || matches($0.name + " " + $0.username) }) { member in memberCard(member, team: team) }

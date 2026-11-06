@@ -1,4 +1,5 @@
-import { ChevronLeft, Globe, PanelRight, Play, RefreshCw } from "lucide-react";
+import { Globe, Play } from "lucide-react";
+import { ChevronLeft, PanelRight, RefreshCw } from "@/shared/icons";
 import { runHistory } from "@/entities/ci";
 import type { RepoStore } from "@/entities/repo";
 import { CIPanel, CIRunDetail, RunSummary, useRuns } from "@/features/ci-panel";

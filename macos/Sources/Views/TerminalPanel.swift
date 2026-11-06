@@ -280,7 +280,7 @@ private struct TerminalPaneView: View {
                 }
             }
         } label: {
-            Image(systemName: "ellipsis")
+            DesignIconImage(icon: .more)
                 .font(.system(size: 12, weight: .semibold))
                 .frame(width: 26, height: 26)
         }

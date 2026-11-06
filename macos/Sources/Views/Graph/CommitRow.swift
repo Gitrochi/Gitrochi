@@ -243,15 +243,15 @@ private struct RefPill: View {
         let solid = group.isCurrent
         let color = group.isTag ? Color(nsColor: .systemGray) : (group.isHead ? Color(nsColor: .labelColor) : tint)
         HStack(spacing: 3) {
-            if solid { Image(systemName: "checkmark").font(.system(size: 8, weight: .heavy)) }
-            if group.isTag { Image(systemName: "tag").font(.system(size: 9, weight: .semibold)) }
+            if solid { DesignIconImage(icon: .check, size: 8) }
+            if group.isTag { DesignIconImage(icon: .releases, size: 9) }
             if group.isHead { Image(systemName: "scope").font(.system(size: 9, weight: .semibold)) }
             Text(group.name)
                 .font(.system(size: 11, weight: solid ? .bold : .medium))
                 .lineLimit(1)
                 .truncationMode(.middle)
             if group.local != nil { Image(systemName: "laptopcomputer").font(.system(size: 9)) }
-            if !group.remotes.isEmpty { Image(systemName: "cloud").font(.system(size: 9)) }
+            if !group.remotes.isEmpty { DesignIconImage(icon: .cloud, size: 9) }
         }
         .padding(.horizontal, 6)
         .padding(.vertical, 2)

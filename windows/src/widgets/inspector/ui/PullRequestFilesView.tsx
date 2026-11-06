@@ -1,4 +1,5 @@
-import { Check, ChevronDown, ChevronRight, ChevronUp, Ellipsis, Folder, MessageSquare, Space } from "lucide-react";
+import { Space } from "lucide-react";
+import { Check, ChevronDown, ChevronRight, ChevronUp, Ellipsis, Folder, MessageSquare } from "@/shared/icons";
 import { type CSSProperties, type ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { fileDir, fileName, StatusBadge } from "@/entities/git";
 import { type PullRequestReview, type ReviewFile, reviewFileChange } from "@/entities/hosting";

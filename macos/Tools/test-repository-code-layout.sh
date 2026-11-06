@@ -35,7 +35,7 @@ for TASK_SOURCE in \
     "$ROOT/Sources/Views/Workbench/RepositoryLanguageSummary.swift" \
     "$ROOT/Sources/Views/Workbench/RepositoryExternalEditorMenu.swift" \
     "$ROOT/Sources/Views/Workbench/RepositoryHTMLPreview.swift" \
-    "$ROOT/Sources/Views/Workbench/RepositoryCodeChangesView.swift" \
+    "$ROOT/Sources/Views/Shared/DesignIcon.swift" "$ROOT/Sources/Views/Shared/PageControls.swift" "$ROOT/Sources/Core/ChangeQuestion.swift" "$ROOT/Sources/Core/ListDate.swift" "$ROOT/Sources/Views/Workbench/RepositoryCodeChangesView.swift" \
     "$ROOT/Sources/Views/Workbench/RepositoryCodeHistoryView.swift" \
     "$ROOT/Sources/Views/Workbench/RepositoryCodeBlameView.swift" \
     "$ROOT/Sources/Views/Workbench/RepositoryCodePanel.swift" \

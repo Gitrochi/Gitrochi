@@ -1,4 +1,5 @@
-import { ArrowLeft, CircleCheck, CircleDot, CircleMinus, CirclePlus, Clock, GitBranch, GitMerge, Hash, Layers, Sparkles, TriangleAlert, Waypoints } from "lucide-react";
+import { ArrowLeft, CircleCheck, CircleDot, CircleMinus, CirclePlus, GitMerge, Hash, Layers, TriangleAlert, Waypoints } from "lucide-react";
+import { Clock, GitBranch, Sparkles } from "@/shared/icons";
 import { type ReactNode, useMemo, useState } from "react";
 import { ai } from "@/entities/ai";
 import { avatars } from "@/entities/avatar";

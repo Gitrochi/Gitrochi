@@ -68,7 +68,7 @@ struct ReleaseWorkspace: View {
                 }.fixedSize().disabled(locked)
             }
             Spacer(minLength: 0)
-            Button { detailOpen = false; Task { await store.loadHostingHub() } } label: { Image(systemName: "arrow.clockwise") }.help("Refresh").accessibilityLabel("Refresh").disabled(locked || editor != nil)
+            Button { detailOpen = false; Task { await store.loadHostingHub() } } label: { DesignIconImage(icon: .refresh) }.help("Refresh").accessibilityLabel("Refresh").disabled(locked || editor != nil)
             Button { startEditor(false) } label: { Label("New release", systemImage: "plus") }.buttonStyle(.borderedProminent).disabled(locked || store.hubAccount == nil)
         }.padding(.horizontal, 20).padding(.top, 14).padding(.bottom, 12)
     }
@@ -154,7 +154,7 @@ struct ReleaseWorkspace: View {
                 TextField("Search loaded items", text: $store.hostingHub.query).textFieldStyle(.roundedBorder)
                 Menu {
                     Picker("Sort releases", selection: $sort) { Text("Newest first").tag("date"); Text("Version number").tag("version") }.pickerStyle(.inline)
-                } label: { Image(systemName: "arrow.up.arrow.down") }
+                } label: { DesignIconImage(icon: .sort) }
                     .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize().help("Sort releases").accessibilityLabel("Sort releases")
             }
             if mixed {
@@ -235,7 +235,7 @@ struct ReleaseWorkspace: View {
                             try await HostingHubAPI.delete(c, section: .releases, item: d.item); detailOpen = false
                         }
                     }
-                } label: { Image(systemName: "ellipsis") }.menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize().help("Release actions").accessibilityLabel("Release actions").disabled(locked)
+                } label: { DesignIconImage(icon: .more) }.menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize().help("Release actions").accessibilityLabel("Release actions").disabled(locked)
             }.fixedSize()
         }
         WorkbenchFlow(spacing: 10) {
@@ -299,7 +299,7 @@ struct ReleaseWorkspace: View {
                     Picker("Compare from", selection: Binding(get: { from }, set: { base = $0 })) { ForEach(comparable) { Text(ReleaseCatalog.tag($0)).tag(ReleaseCatalog.tag($0)) } }.labelsHidden()
                     Image(systemName: "arrow.right").foregroundStyle(.secondary)
                     Text(tag).font(.caption.monospaced().weight(.semibold)).lineLimit(1).truncationMode(.middle).padding(.horizontal, 8).padding(.vertical, 4).background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 6)).help(tag)
-                    Button { if let url { open(url.absoluteString) } } label: { Image(systemName: "arrow.up.right.square") }.buttonStyle(.borderless).help("Compare in browser").accessibilityLabel("Compare in browser").disabled(url == nil)
+                    Button { if let url { open(url.absoluteString) } } label: { DesignIconImage(icon: .external) }.buttonStyle(.borderless).help("Compare in browser").accessibilityLabel("Compare in browser").disabled(url == nil)
                 }
                 Button { store.showRevisionComparison(left: from, right: tag) } label: { Label("Compare in app", systemImage: "arrow.left.arrow.right").frame(maxWidth: .infinity) }.disabled(from.isEmpty)
             }.padding(12).frame(maxWidth: .infinity, alignment: .leading).overlay(RoundedRectangle(cornerRadius: 10).stroke(Color(nsColor: .separatorColor).opacity(0.6)))

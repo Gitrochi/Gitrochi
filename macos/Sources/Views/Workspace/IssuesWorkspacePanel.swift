@@ -373,7 +373,7 @@ private struct IssueListColumn: View {
                 Spacer(minLength: 6)
                 if let comments = item.comments, comments > 0 {
                     HStack(spacing: 4) {
-                        Image(systemName: "bubble.left").font(.system(size: 10))
+                        DesignIconImage(icon: .comment, size: 10)
                         Text(verbatim: String(comments)).font(.system(size: 11))
                     }
                     .foregroundStyle(secondary)

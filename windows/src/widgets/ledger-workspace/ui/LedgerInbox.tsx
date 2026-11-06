@@ -1,4 +1,5 @@
-import { Archive, CircleCheck, Clock, GitMerge, MessageSquareReply, Sparkles, X } from "lucide-react";
+import { Archive, CircleCheck, GitMerge, MessageSquareReply } from "lucide-react";
+import { Clock, Sparkles, X } from "@/shared/icons";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { agentWaits, describeAnswer, filterSessions, type InboxItem, inboxGroups, inboxItems, inboxKeyAction, type LedgerPendingPrompt, type LedgerSession, type LedgerStore, matchesText, promptSummary, serverNow, STALE_HOURS, stepIndex, streamCount } from "@/entities/ledger";
 import { LedgerAnswerField } from "@/features/answer-ledger-question";

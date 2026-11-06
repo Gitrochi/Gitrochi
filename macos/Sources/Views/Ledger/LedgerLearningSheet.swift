@@ -29,7 +29,7 @@ import SwiftUI
                 if learning.progress.completed {
                     Label("Completed", systemImage: "checkmark.circle").font(.system(size: 11)).foregroundStyle(.secondary)
                 }
-                Button { dismiss() } label: { Image(systemName: "xmark").frame(width: 24, height: 24) }
+                Button { dismiss() } label: { DesignIconImage(icon: .close).frame(width: 24, height: 24) }
                     .buttonStyle(.borderless).help("Close").accessibilityLabel("Close")
                     .keyboardShortcut(.cancelAction)
             }
@@ -93,7 +93,7 @@ import SwiftUI
                     Label("Baseline", systemImage: "tag").font(.system(size: 12, weight: .medium))
                     Text("v1.0.0").font(.system(size: 13))
                 }
-                Image(systemName: "arrow.triangle.branch").foregroundStyle(.secondary).accessibilityHidden(true)
+                DesignIconImage(icon: .branch).foregroundStyle(.secondary).accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 6) {
                     Label("Session", systemImage: "bubble.left.and.bubble.right").font(.system(size: 12, weight: .medium))
                     Text("S1").font(.system(size: 13))

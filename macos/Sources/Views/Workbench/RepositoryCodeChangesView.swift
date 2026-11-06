@@ -69,7 +69,7 @@ struct RepositoryCodeChangesView: View {
                 .init(value: true, title: String(localized: "Split")),
             ], selection: store.diffSplit) { store.diffSplit = $0 }
             let hidden = store.diffIgnoreWhitespace
-            Button { store.diffIgnoreWhitespace.toggle() } label: { Image(systemName: "paragraphsign") }
+            Button { store.diffIgnoreWhitespace.toggle() } label: { DesignIconImage(icon: .whitespace) }
                 .buttonStyle(PullRequestIconButtonStyle(on: hidden))
                 .help("Hide whitespace").accessibilityLabel("Hide whitespace")
                 .accessibilityValue(hidden ? String(localized: "On") : String(localized: "Off"))
@@ -86,7 +86,7 @@ struct RepositoryCodeChangesView: View {
                 if let commit { Button("Show commit") { store.reveal(commit) } }
                 Button("Copy path") { store.copy(path) }
             } label: {
-                Image(systemName: "ellipsis").font(.system(size: 12, weight: .medium)).foregroundStyle(StudioStyle.Tone.neutral.text)
+                DesignIconImage(icon: .more, size: 12).foregroundStyle(StudioStyle.Tone.neutral.text)
                     .frame(width: 24, height: 24).contentShape(Rectangle())
             }
             .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize()

@@ -115,7 +115,7 @@ struct WorkspacePlanningDashboard: View {
                 }.frame(maxWidth: .infinity, alignment: .leading)
                 if data.loading { ProgressView().controlSize(.small) }
                 Button("New project") { store.hostingHub.selectedAccountID = account?.id; store.hostingHub.projectScope = effectiveScope; creatingProject = true }.buttonStyle(.borderedProminent).controlSize(.small)
-                Button { Task { await refresh() } } label: { Image(systemName: "arrow.clockwise") }.help("Refresh planning dashboard").disabled(data.loading || (!isLocal && account == nil))
+                Button { Task { await refresh() } } label: { DesignIconImage(icon: .refresh) }.help("Refresh planning dashboard").disabled(data.loading || (!isLocal && account == nil))
             }
             if fixture == nil && portfolioContext != context {
                 ProgressView("Loading project schedules…").font(.callout)
@@ -189,7 +189,7 @@ struct WorkspacePlanningDashboard: View {
                     if let due = task.entry.due, due < today {
                         // overdue is said by the icon and the word, not by the red alone
                         HStack(spacing: 4) {
-                            Image(systemName: "exclamationmark.circle").accessibilityHidden(true)
+                            DesignIconImage(icon: .alert).accessibilityHidden(true)
                             Text("Overdue · \(ProjectSchedulePresentation.date(due))")
                         }
                         .fontWeight(.semibold).foregroundStyle(StudioStyle.Tone.failed.text)
@@ -277,7 +277,7 @@ struct WorkspacePlanningDashboard: View {
                 if task.entry.invalidDate || task.entry.invalidRange { Text("Check task dates").font(.caption).foregroundStyle(.orange) }
                 else if let day = task.entry.date { Text(ProjectSchedulePresentation.date(day)).font(.caption.weight(.medium)).foregroundStyle(task.entry.due.map { $0 < today } == true && !task.entry.completed ? .red : Color.secondary) }
                 else { Text("No date").font(.caption).foregroundStyle(.tertiary) }
-                Image(systemName: "arrow.up.right").font(.caption).foregroundStyle(.tertiary)
+                DesignIconImage(icon: .external).font(.caption).foregroundStyle(.tertiary)
             }.padding(12).background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 10)).contentShape(Rectangle())
         }.buttonStyle(.plain).disabled(opening)
     }
@@ -285,7 +285,7 @@ struct WorkspacePlanningDashboard: View {
         let entries = tasks
         let columnWidth = max(170, (width - 108) / 7)
         return VStack(alignment: .leading, spacing: 12) {
-            HStack { Text("This week, in focus").font(.headline); Spacer(); Button { anchor = ProjectSchedule.addDays(anchor, -7) ?? anchor } label: { Image(systemName: "chevron.left") }.help("Previous week"); Button("Today") { anchor = today }; Button { anchor = ProjectSchedule.addDays(anchor, 7) ?? anchor } label: { Image(systemName: "chevron.right") }.help("Next week") }
+            HStack { Text("This week, in focus").font(.headline); Spacer(); Button { anchor = ProjectSchedule.addDays(anchor, -7) ?? anchor } label: { DesignIconImage(icon: .chevronLeft) }.help("Previous week"); Button("Today") { anchor = today }; Button { anchor = ProjectSchedule.addDays(anchor, 7) ?? anchor } label: { DesignIconImage(icon: .chevronRight) }.help("Next week") }
             ScrollView(.horizontal) {
                 HStack(alignment: .top, spacing: 10) {
                     ForEach(ProjectSchedule.weekDays(anchor), id: \.self) { day in

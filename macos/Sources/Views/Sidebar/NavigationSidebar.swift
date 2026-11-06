@@ -28,7 +28,7 @@ struct NavigationSidebar: View {
                 Divider()
                 SettingsLink {
                     HStack(spacing: 8) {
-                        Label { Text("Settings") } icon: { DesignIconImage(icon: .settings).foregroundStyle(.secondary) }
+                        Label { Text("Settings") } icon: { DesignIconImage(icon: .settings, size: 16).foregroundStyle(.secondary) }
                         Spacer(minLength: 8)
                         if commandHeld || hovered == nil && settingsHovered { Text(verbatim: "⌘,").foregroundStyle(.primary.opacity(0.6)) }
                     }
@@ -97,5 +97,37 @@ struct NavigationSidebar: View {
         .accessibilityLabel(title)
         .accessibilityValue(active ? String(localized: "Current page") : "")
         .accessibilityAddTraits(active ? .isSelected : [])
+    }
+}
+
+extension WorkspaceDestination {
+    /// nil for a page the Shell board draws no icon for: it keeps `symbol`
+    var designIcon: DesignIcon? {
+        switch self {
+        case .account: return nil
+        case .home: return .home
+        case .repository: return .repository
+        case .compare: return .compare
+        case .rebase: return .rebase
+        case .code: return .code
+        case .pullRequests: return .pullRequests
+        case .issues: return .issues
+        case .actions: return .actions
+        case .releases: return .releases
+        case .projects: return .projects
+        case .flows: return .flows
+        case .ledger: return .ledger
+        }
+    }
+}
+
+/// A page's icon in the rail and the sidebar
+struct NavigationPageIcon: View {
+    let page: WorkspaceDestination
+    var size: CGFloat = 16
+
+    var body: some View {
+        if let icon = page.designIcon { DesignIconImage(icon: icon, size: size) }
+        else { Image(systemName: page.symbol).font(.system(size: size)).frame(width: size, height: size) }
     }
 }

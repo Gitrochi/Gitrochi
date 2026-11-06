@@ -1,13 +1,6 @@
 import { useState } from "react";
-import {
-  AlertCircle,
-  CalendarDays,
-  CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
-  GripVertical,
-  Inbox,
-} from "lucide-react";
+import { AlertCircle, CalendarDays, CheckCircle2, GripVertical } from "lucide-react";
+import { ChevronLeft, ChevronRight, Inbox } from "@/shared/icons";
 import {
   parseScheduleDay,
   scheduleAddDays,

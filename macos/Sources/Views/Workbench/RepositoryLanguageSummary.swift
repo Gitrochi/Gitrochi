@@ -13,7 +13,7 @@ struct RepositoryLanguageControl: View {
                     HStack(spacing: 5) {
                         Text("Languages").font(.caption.weight(.medium))
                         if let selected { Text(LocalizedStringKey(selected)).font(.caption).foregroundStyle(Color.accentColor).lineLimit(1) }
-                        Image(systemName: "chevron.down").font(.system(size: 8))
+                        DesignIconImage(icon: .chevronDown, size: 8)
                     }
                 }.buttonStyle(.plain).help("Language composition").accessibilityIdentifier("code-language-composition")
                     .popover(isPresented: $showing) { RepositoryLanguageSummary(segments: segments, truncated: truncated, selected: $selected).frame(width: 280) }

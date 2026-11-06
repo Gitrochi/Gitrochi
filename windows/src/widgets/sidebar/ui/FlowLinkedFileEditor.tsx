@@ -1,4 +1,5 @@
-import { FilePlus2, FolderOpen, RefreshCw } from "lucide-react";
+import { FilePlus2, FolderOpen } from "lucide-react";
+import { RefreshCw } from "@/shared/icons";
 import { useEffect, useRef, useState } from "react";
 import { type FlowSourceFile, checkedFlowSource, flowEngine, portableSourcePath } from "@/entities/flow";
 import { t } from "@/shared/i18n";

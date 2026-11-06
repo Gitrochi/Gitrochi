@@ -17,7 +17,7 @@ struct AgentsPanel: View {
                         Button("Clear ended sessions") { agents.clearEnded() }
                             .buttonStyle(.borderless).font(.caption)
                     }
-                    Button { store.sheet = .addWorktree(branch: nil, start: nil) } label: { Image(systemName: "plus") }
+                    Button { store.sheet = .addWorktree(branch: nil, start: nil) } label: { DesignIconImage(icon: .plus) }
                         .buttonStyle(.borderless)
                         .help("New worktree")
                 }
@@ -106,7 +106,7 @@ private struct ExternalAgentRow: View {
                 Text(place).font(.caption2).foregroundStyle(.tertiary).lineLimit(1).truncationMode(.head)
             }
             Spacer(minLength: 0)
-            Image(systemName: "arrow.up.forward.app").foregroundStyle(.secondary).font(.caption)
+            DesignIconImage(icon: .external).foregroundStyle(.secondary).font(.caption)
         }
         .font(.callout)
         .contentShape(Rectangle())
@@ -122,7 +122,7 @@ private struct ExternalAgentRow: View {
         if let pid = agent.hostPID, let icon = NSRunningApplication(processIdentifier: pid)?.icon {
             Image(nsImage: icon).resizable().scaledToFit()
         } else {
-            Image(systemName: "terminal").foregroundStyle(.secondary)
+            DesignIconImage(icon: .terminal).foregroundStyle(.secondary)
         }
     }
 
@@ -200,7 +200,7 @@ private struct WorktreeCard: View {
                     .help(worktree.path)
                 Spacer(minLength: 4)
                 if hover {
-                    Button { store.sheet = .startAgent(path: worktree.path) } label: { Image(systemName: "sparkles") }
+                    Button { store.sheet = .startAgent(path: worktree.path) } label: { DesignIconImage(icon: .sparkles) }
                         .buttonStyle(.borderless)
                         .help("Start an agent session in this worktree")
                 }

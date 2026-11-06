@@ -1,4 +1,5 @@
-import { Plus, ShieldCheck, Trash2, TriangleAlert } from "lucide-react";
+import { ShieldCheck, TriangleAlert } from "lucide-react";
+import { Plus, Trash2 } from "@/shared/icons";
 import { useState } from "react";
 import { type FlowBlock, type FlowConnection, type FlowDocument, type FlowInputSchema, type FlowModule, canDesignDependOn, designModules, flowObject, updateDesignInput, updateDesignModule } from "@/entities/flow";
 import { t } from "@/shared/i18n";

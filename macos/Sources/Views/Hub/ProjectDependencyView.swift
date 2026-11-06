@@ -43,9 +43,9 @@ struct ProjectDependencyView: View {
                     } else {
                         VStack(alignment: .leading, spacing: 12) {
                             column("Predecessors", nodes: predecessors)
-                            Image(systemName: "arrow.down").foregroundStyle(.secondary).accessibilityLabel("Precedes")
+                            DesignIconImage(icon: .pull).foregroundStyle(.secondary).accessibilityLabel("Precedes")
                             column("Selected task", nodes: [focus])
-                            Image(systemName: "arrow.down").foregroundStyle(.secondary).accessibilityLabel("Precedes")
+                            DesignIconImage(icon: .pull).foregroundStyle(.secondary).accessibilityLabel("Precedes")
                             column("Successors", nodes: successors)
                         }
                     }

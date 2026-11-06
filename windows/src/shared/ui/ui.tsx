@@ -1,4 +1,4 @@
-import { Check, ChevronRight } from "lucide-react";
+import { Check, ChevronRight } from "@/shared/icons";
 import { type ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { keyLabel } from "@/shared/config";
 import { laneColor, Observable, stableHash, useObserve } from "@/shared/lib";

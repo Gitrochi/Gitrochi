@@ -136,7 +136,7 @@ struct CIRunDetailView: View {
                 Button("View commit") { store.reveal(p.sha) }
                 Button("Copy link") { store.copy(p.url) }
                 Button("Refresh") { Task { await store.loadJobs(p) } }
-            } label: { Image(systemName: "ellipsis").font(.system(size: 12)) }
+            } label: { DesignIconImage(icon: .more, size: 12) }
                 .menuStyle(.borderlessButton).menuIndicator(.hidden)
                 .frame(width: 28, height: 28)
                 .background(RoundedRectangle(cornerRadius: 6).fill(StudioStyle.surface))
@@ -306,7 +306,7 @@ private struct CIJobLogView: View {
                 Button("Reload log") { Task { await load() } }.disabled(busy)
                 Divider()
                 Button("Close log", action: close)
-            } label: { Image(systemName: "ellipsis").font(.system(size: 12)) }
+            } label: { DesignIconImage(icon: .more, size: 12) }
                 .menuStyle(.borderlessButton).menuIndicator(.hidden)
                 .frame(width: 28, height: 28)
                 .background(RoundedRectangle(cornerRadius: 6).fill(StudioStyle.surface))

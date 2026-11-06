@@ -1,4 +1,5 @@
-import { CirclePlay, CircleStop, Ellipsis, ExternalLink, Hand, RotateCw, TriangleAlert } from "lucide-react";
+import { CirclePlay, CircleStop, Hand, TriangleAlert } from "lucide-react";
+import { Ellipsis, ExternalLink, RotateCw } from "@/shared/icons";
 import { type MouseEvent, type ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   canPlay,

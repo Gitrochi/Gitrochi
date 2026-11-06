@@ -82,7 +82,7 @@ struct FlowCodeAuthoringView: View {
 
     private var sourceHeader: some View {
         HStack(spacing: 9) {
-            Image(systemName: "doc.text").foregroundStyle(.secondary)
+            DesignIconImage(icon: .file).foregroundStyle(.secondary)
             Text(currentPath).font(.system(size: 11, design: .monospaced)).lineLimit(1).truncationMode(.middle)
             Spacer()
             if related.active {

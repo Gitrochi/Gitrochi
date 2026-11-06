@@ -82,7 +82,7 @@ struct RequestChecksPanel: View {
                 Text(String(headSHA.prefix(7))).font(.system(size: 11, design: .monospaced)).foregroundStyle(StudioStyle.Rail.icon).textSelection(.enabled)
                 Spacer(minLength: 8)
                 if loading { ProgressView().controlSize(.small) }
-                Button { refreshID = UUID() } label: { Image(systemName: "arrow.clockwise") }
+                Button { refreshID = UUID() } label: { DesignIconImage(icon: .refresh) }
                     .buttonStyle(PullRequestIconButtonStyle()).help("Refresh checks").accessibilityLabel("Refresh checks").disabled(loading)
             }
             if draft { PullRequestCaption(String(localized: "Draft requests cannot be merged.")) }
@@ -185,7 +185,7 @@ struct RequestChecksPanel: View {
                 Button("Load log") { Task { await loadLog(check) } }.buttonStyle(PullRequestTextButtonStyle()).disabled(loadingLogs.contains(check.id))
             }
             if let url = safeURL(check.url) {
-                Button { NSWorkspace.shared.open(url) } label: { Image(systemName: "arrow.up.right.square") }
+                Button { NSWorkspace.shared.open(url) } label: { DesignIconImage(icon: .external) }
                     .buttonStyle(PullRequestButtonStyle(iconOnly: true))
                     .help("Open check result").accessibilityLabel("Open check result")
             }
@@ -195,7 +195,7 @@ struct RequestChecksPanel: View {
                     Button(log == nil ? String(localized: "Load log") : String(localized: "Refresh log")) { Task { await loadLog(check) } }
                         .disabled(loadingLogs.contains(check.id))
                 } label: {
-                    Image(systemName: "ellipsis").font(.system(size: 12, weight: .medium)).foregroundStyle(.secondary)
+                    DesignIconImage(icon: .more, size: 12).foregroundStyle(.secondary)
                         .frame(width: 28, height: 28)
                         .background(RoundedRectangle(cornerRadius: 6).fill(StudioStyle.surface))
                         .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.primary.opacity(0.16)))

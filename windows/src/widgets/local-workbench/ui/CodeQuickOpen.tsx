@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { File, Search, X } from "lucide-react";
+import { File, Search, X } from "@/shared/icons";
 import type { RepositoryTreeEntry } from "@/entities/git";
 import { t } from "@/shared/i18n";
 import { rankCodeFiles } from "../lib/code-navigation";

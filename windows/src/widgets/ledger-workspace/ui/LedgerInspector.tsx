@@ -1,4 +1,5 @@
-import { Bot, ChevronDown, Copy, FolderTree, GitBranch, GitMerge, MessageSquare, Monitor, X } from "lucide-react";
+import { Bot, FolderTree, GitMerge, Monitor } from "lucide-react";
+import { ChevronDown, Copy, GitBranch, MessageSquare, X } from "@/shared/icons";
 import { useEffect, useState } from "react";
 import { agents, agentStatusTitle } from "@/entities/agent";
 import { agentWaits, compareVersions, DEFAULT_WAIT_SEC, type LedgerAutoContinue, type LedgerHubSharing, ledgerHubSharing, type LedgerQuestion, type LedgerSession, type LedgerStore, serverNow } from "@/entities/ledger";

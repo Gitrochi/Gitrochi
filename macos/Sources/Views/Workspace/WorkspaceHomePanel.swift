@@ -81,7 +81,7 @@ struct WorkspaceHomePanel: View {
 
     private var filterField: some View {
         HStack(spacing: 6) {
-            Image(systemName: "magnifyingglass").font(.system(size: 12)).foregroundStyle(StudioStyle.Rail.icon)
+            DesignIconImage(icon: .search, size: 12).foregroundStyle(StudioStyle.Rail.icon)
             TextField("Filter repositories", text: $filter).textFieldStyle(.plain).font(.system(size: 13))
         }
         .padding(.horizontal, 10)
@@ -95,7 +95,7 @@ struct WorkspaceHomePanel: View {
         let state = states[url.path]
         return HStack(alignment: .center, spacing: 24) {
             HStack(alignment: .top, spacing: 12) {
-                Image(systemName: "folder").font(.system(size: 22)).foregroundStyle(StudioStyle.Rail.icon).frame(width: 28, height: 28)
+                DesignIconImage(icon: .repository, size: 22).foregroundStyle(StudioStyle.Rail.icon).frame(width: 28, height: 28)
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Last opened").font(.system(size: 12)).foregroundStyle(StudioStyle.Rail.icon)
                     Text(url.lastPathComponent).font(.system(size: 22, weight: .semibold)).lineLimit(1)
@@ -127,7 +127,7 @@ struct WorkspaceHomePanel: View {
         let state = states[url.path]
         return Button { open(url) } label: {
             HStack(alignment: .top, spacing: 12) {
-                Image(systemName: "folder").font(.system(size: 14)).foregroundStyle(StudioStyle.Rail.icon).frame(width: 16, height: 16)
+                DesignIconImage(icon: .repository, size: 14).foregroundStyle(StudioStyle.Rail.icon).frame(width: 16, height: 16)
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(alignment: .top, spacing: 8) {
                         Text(url.lastPathComponent).font(.system(size: 13, weight: .medium)).lineLimit(1)

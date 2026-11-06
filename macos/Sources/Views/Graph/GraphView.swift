@@ -306,7 +306,7 @@ private struct SearchBar: View {
         @Bindable var store = store
         HStack(spacing: 8) {
             HStack(spacing: 6) {
-                Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
+                DesignIconImage(icon: .search).foregroundStyle(.secondary)
                 TextField(store.searchScope.prompt, text: $store.searchText)
                     .textFieldStyle(.plain)
                     .focused($focused)
@@ -343,9 +343,9 @@ private struct SearchBar: View {
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
                 ControlGroup {
-                    Button { store.previousMatch() } label: { Image(systemName: "chevron.up") }
+                    Button { store.previousMatch() } label: { DesignIconImage(icon: .chevronUp) }
                         .help("Previous result (⇧⌘G)")
-                    Button { store.nextMatch() } label: { Image(systemName: "chevron.down") }
+                    Button { store.nextMatch() } label: { DesignIconImage(icon: .chevronDown) }
                         .help("Next result (⌘G · Enter)")
                 }
                 .fixedSize()
@@ -355,7 +355,7 @@ private struct SearchBar: View {
                         .controlSize(.small)
                 }
             }
-            Button { store.closeSearchBar() } label: { Image(systemName: "xmark") }
+            Button { store.closeSearchBar() } label: { DesignIconImage(icon: .close) }
                 .buttonStyle(.borderless).foregroundStyle(.secondary)
                 .help("Close search (Esc)").accessibilityLabel("Close search")
         }

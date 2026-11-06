@@ -177,7 +177,7 @@ struct ProjectScopeMenu: View {
             Task { await store.selectHubProjectScope(candidate, account: value.id) }
         } label: {
             HStack(spacing: 8) {
-                Image(systemName: "checkmark").font(.system(size: 11, weight: .semibold)).opacity(on ? 1 : 0).frame(width: 13).accessibilityHidden(true)
+                DesignIconImage(icon: .check, size: 11).opacity(on ? 1 : 0).frame(width: 13).accessibilityHidden(true)
                 icon().frame(width: 20, height: 20)
                 Text(title).font(.system(size: 13)).lineLimit(1).truncationMode(.tail).frame(maxWidth: .infinity, alignment: .leading)
             }

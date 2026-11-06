@@ -1,4 +1,5 @@
-import { CircleAlert, CircleCheck, CircleDot, CircleX, Clock } from "lucide-react";
+import { CircleCheck, CircleDot, CircleX } from "lucide-react";
+import { CircleAlert, Clock } from "@/shared/icons";
 import { useEffect, useState } from "react";
 import { CIStatusIcon } from "@/entities/ci";
 import type { PullRequest } from "@/entities/git";

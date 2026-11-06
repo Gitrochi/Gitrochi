@@ -136,7 +136,7 @@ private struct CLIWorkflowGuide: View {
                         Button {
                             NSPasteboard.general.clearContents()
                             NSPasteboard.general.setString(command, forType: .string)
-                        } label: { Image(systemName: "doc.on.doc") }
+                        } label: { DesignIconImage(icon: .copy) }
                             .buttonStyle(.borderless)
                             .help("Copy command")
                             .accessibilityLabel("Copy command")

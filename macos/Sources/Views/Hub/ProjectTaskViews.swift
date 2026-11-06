@@ -236,7 +236,7 @@ struct ProjectTaskInspector: View {
                 }
                 Spacer()
                 taskMenu
-                Button(action: close) { Image(systemName: "xmark") }.buttonStyle(.borderless).help("Close details")
+                Button(action: close) { DesignIconImage(icon: .close) }.buttonStyle(.borderless).help("Close details")
             }.padding(18)
             Divider()
             ScrollView {
@@ -345,7 +345,7 @@ struct ProjectTaskInspector: View {
                 Button(row.archived ? String(localized: "Restore archived item") : String(localized: "Archive item"), action: archive)
                 Button("Remove from project…", role: .destructive, action: remove)
             }
-        } label: { Image(systemName: "ellipsis").frame(width: 24, height: 24) }.menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize().help("More").accessibilityLabel("More").disabled(locked || updatingField || postingComment)
+        } label: { DesignIconImage(icon: .more).frame(width: 24, height: 24) }.menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize().help("More").accessibilityLabel("More").disabled(locked || updatingField || postingComment)
     }
     private var conversionForm: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -363,7 +363,7 @@ struct ProjectTaskInspector: View {
                 if !conversationComments.isEmpty { Text(conversationComments.count.formatted()).font(.caption).foregroundStyle(.secondary) }
                 Spacer()
                 if reading { ProgressView().controlSize(.small) }
-                Button { Task { await readConversation() } } label: { Image(systemName: "arrow.clockwise") }.buttonStyle(.borderless).help("Refresh").disabled(reading)
+                Button { Task { await readConversation() } } label: { DesignIconImage(icon: .refresh) }.buttonStyle(.borderless).help("Refresh").disabled(reading)
             }
             if conversation != nil, conversationComments.isEmpty, !reading { Text("No comments yet.").font(.callout).foregroundStyle(.secondary) }
             ForEach(conversationComments) { comment in

@@ -1,4 +1,5 @@
-import { FileText, FolderPlus, RefreshCw, Search } from "lucide-react";
+import { FolderPlus } from "lucide-react";
+import { FileText, RefreshCw, Search } from "@/shared/icons";
 import { useEffect, useRef, useState } from "react";
 import { ai } from "@/entities/ai";
 import type { LedgerStore } from "@/entities/ledger";

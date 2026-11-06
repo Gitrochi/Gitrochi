@@ -1,4 +1,4 @@
-import { MessageSquare, Trash2 } from "lucide-react";
+import { MessageSquare, Trash2 } from "@/shared/icons";
 import { useEffect, useRef, useState } from "react";
 import type { ReviewComment } from "@/entities/hosting";
 import type { RepoStore } from "@/entities/repo";

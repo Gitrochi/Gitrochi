@@ -248,7 +248,7 @@ struct FlowGraphView: View {
                         .font(.system(size: 9)).foregroundStyle(.secondary).lineLimit(1)
                     Spacer(minLength: 0)
                     if !node.needs.isEmpty {
-                        Image(systemName: "arrow.triangle.branch").font(.system(size: 8))
+                        DesignIconImage(icon: .branch, size: 8)
                         Text("\(node.needs.count)").font(.system(size: 9, design: .monospaced))
                     }
                 }.foregroundStyle(.tertiary)

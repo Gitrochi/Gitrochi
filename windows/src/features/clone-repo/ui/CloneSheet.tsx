@@ -1,4 +1,5 @@
-import { Globe, Lock } from "lucide-react";
+import { Globe } from "lucide-react";
+import { Lock } from "@/shared/icons";
 import { useEffect, useMemo, useState } from "react";
 import { accountApiBase, accountHost, type RemoteRepo } from "@/entities/git";
 import * as Hosting from "@/entities/hosting";

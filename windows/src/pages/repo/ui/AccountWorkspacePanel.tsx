@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, RefreshCw, UserRound } from "lucide-react";
+import { ChevronDown, RefreshCw, UserRound } from "@/shared/icons";
 import { HostingHubPanel } from "@/widgets/hosting-hub";
 import { MyWorkPanel, WorkInboxPanel } from "@/widgets/workspace-panels";
 import { AccountState, AccountWorkModel, SignInExpired } from "@/features/account-work";

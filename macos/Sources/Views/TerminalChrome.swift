@@ -86,7 +86,7 @@ struct TerminalSessionTab: View {
             .accessibilityValue(accessibleStatus)
             .accessibilityAddTraits(selected ? [.isSelected] : [])
             Button(action: close) {
-                Image(systemName: "xmark")
+                DesignIconImage(icon: .close)
                     .font(.system(size: 8, weight: .semibold))
                     .frame(width: 20, height: 24).contentShape(Rectangle())
             }
@@ -241,7 +241,7 @@ struct TerminalStatusBar: View {
             .frame(minWidth: 48, maxWidth: .infinity, alignment: .leading)
             if showBranch, let branch, !branch.isEmpty {
                 Label { Text(verbatim: branch).lineLimit(1).truncationMode(.middle) } icon: {
-                    Image(systemName: "arrow.triangle.branch")
+                    DesignIconImage(icon: .branch)
                 }
                 .frame(maxWidth: 140).help(branch)
                 .accessibilityLabel("Repository branch")
@@ -274,7 +274,7 @@ struct TerminalStatusBar: View {
 
     private var folder: some View {
         HStack(spacing: 5) {
-            Image(systemName: "folder").accessibilityHidden(true)
+            DesignIconImage(icon: .repository).accessibilityHidden(true)
             Text(verbatim: abbreviatedDirectory).lineLimit(1).truncationMode(.head)
             if copyDirectory != nil {
                 Image(systemName: copyFeedbackToken != nil ? "checkmark" : "doc.on.doc")

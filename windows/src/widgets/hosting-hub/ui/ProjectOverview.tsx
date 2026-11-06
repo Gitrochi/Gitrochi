@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { CalendarPlus, CircleAlert, TriangleAlert } from "lucide-react";
+import { CalendarPlus, TriangleAlert } from "lucide-react";
+import { CircleAlert } from "@/shared/icons";
 import {
   scheduleGroup,
   scheduleOverview,

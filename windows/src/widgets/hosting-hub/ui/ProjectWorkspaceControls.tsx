@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import { CheckSquare, ListFilter, Search, Settings2 } from "lucide-react";
+import { CheckSquare, ListFilter, Settings2 } from "lucide-react";
+import { Search } from "@/shared/icons";
 import type { HubProjectField } from "@/entities/hosting";
 import { t } from "@/shared/i18n";
 import { Button, type MenuItem, showMenuBelow, StatusPill } from "@/shared/ui";

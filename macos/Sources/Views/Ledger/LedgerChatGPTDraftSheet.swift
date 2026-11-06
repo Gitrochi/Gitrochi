@@ -87,7 +87,7 @@ struct LedgerChatGPTDraftSheet: View {
     @ViewBuilder private var answerTarget: some View {
         if questions.isEmpty {
             VStack(spacing: 6) {
-                Image(systemName: "bubble.left").font(.system(size: 24)).foregroundStyle(.secondary).accessibilityHidden(true)
+                DesignIconImage(icon: .comment, size: 24).foregroundStyle(.secondary).accessibilityHidden(true)
                 Text("No open questions").font(.callout.weight(.semibold))
                 Text("Add a question from the pasted text, or choose another project in the Ledger.")
                     .font(.system(size: 11)).foregroundStyle(.secondary).multilineTextAlignment(.center)

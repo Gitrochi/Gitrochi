@@ -134,7 +134,7 @@ struct PullRequestFilesView: View {
         return Button { if open { collapsed.insert(path) } else { collapsed.remove(path) } } label: {
             HStack(spacing: 6) {
                 Image(systemName: open ? "chevron.down" : "chevron.right").font(.system(size: 9, weight: .semibold)).foregroundStyle(StudioStyle.Rail.icon).frame(width: 12)
-                Image(systemName: "folder").font(.system(size: 11)).foregroundStyle(StudioStyle.Rail.icon)
+                DesignIconImage(icon: .repository, size: 11).foregroundStyle(StudioStyle.Rail.icon)
                 Text(verbatim: name).fontWeight(.medium).lineLimit(1).truncationMode(.head)
                 // a folder holding a single file needs no count
                 if count > 1 { StatusPill(title: String(count), symbol: nil, tone: .neutral) }
@@ -176,7 +176,7 @@ struct PullRequestFilesView: View {
             .accessibilityAddTraits(selected ? .isSelected : [])
             if threads > 0 {
                 HStack(spacing: 4) {
-                    Image(systemName: "bubble.left").font(.system(size: 10))
+                    DesignIconImage(icon: .comment, size: 10)
                     Text(verbatim: String(threads)).font(.system(size: 11))
                 }
                 .foregroundStyle(secondary).fixedSize()
@@ -235,10 +235,10 @@ struct PullRequestFilesView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             HStack(spacing: 4) {
                 Text(verbatim: "\(index + 1) / \(count)").font(.system(size: 11, design: .monospaced)).foregroundStyle(StudioStyle.Rail.icon).padding(.trailing, 4).fixedSize()
-                Button { step(-1) } label: { Image(systemName: "chevron.up") }
+                Button { step(-1) } label: { DesignIconImage(icon: .chevronUp) }
                     .buttonStyle(PullRequestIconButtonStyle()).disabled(index == 0)
                     .help("Previous file (K)").accessibilityLabel("Previous file (K)")
-                Button { step(1) } label: { Image(systemName: "chevron.down") }
+                Button { step(1) } label: { DesignIconImage(icon: .chevronDown) }
                     .buttonStyle(PullRequestIconButtonStyle()).disabled(index + 1 >= count)
                     .help("Next file (J)").accessibilityLabel("Next file (J)")
             }
@@ -260,7 +260,7 @@ struct PullRequestFilesView: View {
                 Button("Show in Finder") { store.revealInFinder(file.change) }
                 Button("Copy path") { store.copy(file.path) }
             } label: {
-                Image(systemName: "ellipsis").font(.system(size: 12, weight: .medium)).foregroundStyle(StudioStyle.Tone.neutral.text)
+                DesignIconImage(icon: .more, size: 12).foregroundStyle(StudioStyle.Tone.neutral.text)
                     .frame(width: 24, height: 24).contentShape(Rectangle())
             }
             .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize()

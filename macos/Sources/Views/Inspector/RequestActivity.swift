@@ -110,7 +110,7 @@ struct RequestActivity: View {
         let first = comments[0], path = first.path ?? ""
         return VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 8) {
-                Image(systemName: "doc").font(.system(size: 12)).foregroundStyle(StudioStyle.Rail.icon)
+                DesignIconImage(icon: .file, size: 12).foregroundStyle(StudioStyle.Rail.icon)
                 Button { openFile(path) } label: {
                     Text(verbatim: (path as NSString).lastPathComponent).fontWeight(.medium).foregroundStyle(StudioStyle.link).lineLimit(1)
                 }

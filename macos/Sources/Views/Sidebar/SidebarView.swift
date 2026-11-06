@@ -116,7 +116,7 @@ struct SidebarView: View {
                         }
                     } label: {
                         HStack(spacing: 6) {
-                            Image(systemName: "cloud").frame(width: 16)
+                            DesignIconImage(icon: .cloud).frame(width: 16)
                                 .foregroundStyle(.secondary)
                             Text(remote).lineLimit(1).truncationMode(.middle)
                             Spacer(minLength: 4)
@@ -160,7 +160,7 @@ struct SidebarView: View {
                     Text("Tags \(store.tags.count)")
                     Spacer()
                     if store.target != nil {
-                        Button { store.navigate(.releases) } label: { Image(systemName: "arrow.up.forward.square") }
+                        Button { store.navigate(.releases) } label: { DesignIconImage(icon: .external) }
                             .buttonStyle(.borderless)
                             .help("Open in Releases")
                     }
@@ -382,7 +382,7 @@ private struct BranchRow: View {
                 .help(hidden ? String(localized: "Show in graph again") : String(localized: "Hide from graph"))
             }
             if let worktreePath {
-                Image(systemName: "folder").foregroundStyle(.secondary)
+                DesignIconImage(icon: .repository).foregroundStyle(.secondary)
                     .help("In use by a worktree: \(worktreePath)")
             }
             if branch.upstreamGone {
@@ -425,7 +425,7 @@ struct SidebarSection<Header: View, Content: View>: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 6) {
                 if !flyout {
-                    Image(systemName: "chevron.down")
+                    DesignIconImage(icon: .chevronDown)
                         .font(.caption2.weight(.bold))
                         .rotationEffect(.degrees(open.wrappedValue ? 0 : -90))
                         .frame(width: 10)
