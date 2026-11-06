@@ -1,6 +1,7 @@
 import type { LoadState } from "@/entities/git";
 import * as Hosting from "@/entities/hosting";
-import { accounts, type InboxItem, type IssueScope } from "@/entities/hosting";
+import type { PullRequest } from "@/entities/git";
+import { accounts, type AssignedIssue, type InboxItem, type IssueScope, type IssueSort } from "@/entities/hosting";
 import { t } from "@/shared/i18n";
 import { describe } from "@/shared/platform";
 import { RepoHosting } from "./hosting";
@@ -13,6 +14,15 @@ import { RepoHosting } from "./hosting";
 export abstract class RepoIssues extends RepoHosting {
   issues: InboxItem[] = [];
   issueScope: IssueScope = "open";
+  issueSort: IssueSort = "updated";
+  /** The open issues assigned to this account, for the Issues page's summary and its segment count; null until read */
+  issueAssigned: InboxItem[] | null = null;
+  issueAssignedMore = false;
+  /** The assigned issues could not be read and none are shown from before */
+  issueAssignedFailed = false;
+  /** When the list last arrived, in seconds, for "Showing data from 12m ago" after a refresh fails */
+  issueLoadedAt: number | null = null;
+  private issueAssignedContext = "";
   /** The text in the search field; a search runs on Enter */
   issueSearch = "";
   /** The search the list was loaded with (the sidebar's filter caption shows it, not unsent typing) */
@@ -57,10 +67,10 @@ export abstract class RepoIssues extends RepoHosting {
         : { kind: "needsAccount" };
       this.emit(); return;
     }
-      const result = await Hosting.issuePage(c, this.issueScope, this.issueSearch, page);
+      const result = await Hosting.issuePage(c, this.issueScope, this.issueSearch, page, this.issueSort);
       if (!current()) return;
       this.issues = append ? [...this.issues, ...result.items.filter((i) => !this.issues.some((old) => old.id === i.id))] : result.items;
-      this.issuePage = page; this.issuesMore = result.more; this.issueState = { kind: "loaded" };
+      this.issuePage = page; this.issuesMore = result.more; this.issueState = { kind: "loaded" }; this.issueLoadedAt = Date.now() / 1000;
     } catch (e) { if (current()) this.issueState = { kind: "failed", message: describe(e) }; }
     if (current()) this.emit();
   }
@@ -69,6 +79,65 @@ export abstract class RepoIssues extends RepoHosting {
   async filterIssues(scope: IssueScope, search = this.issueSearch) {
     this.issueScope = scope; this.issueSearch = search;
     await this.loadIssues();
+  }
+
+  /** updated, created or oldest; the list starts over in the new order */
+  async sortIssues(sort: IssueSort) {
+    this.issueSort = sort;
+    await this.loadIssues();
+  }
+
+  /** What is assigned to this account, for the Issues page's summary and the count on its segment; a failure leaves it as it was */
+  async loadAssignedIssues() {
+    const key = this.issueContextKey;
+    if (key !== this.issueAssignedContext) { this.issueAssigned = null; this.issueAssignedMore = false; this.issueAssignedFailed = false; this.issueAssignedContext = key; this.emit(); }
+    if (!this.target) return;
+    try {
+      const c = await this.workspaceAccess();
+      if (!c || key !== this.issueContextKey) return;
+      const result = await Hosting.issuePage(c, "assigned", "", 1, "oldest");
+      if (key !== this.issueContextKey) return;
+      this.issueAssigned = result.items; this.issueAssignedMore = result.more; this.issueAssignedFailed = false;
+    } catch {
+      // the summary keeps what it showed; with nothing to show it says the server was out of reach
+      if (key !== this.issueContextKey) return;
+      this.issueAssignedFailed = this.issueAssigned === null;
+    }
+    this.emit();
+  }
+
+  /** The local branches this repository linked to the issue */
+  issueBranches(item: InboxItem): string[] {
+    const task = Hosting.issueTaskReference(this.target, item);
+    return task && this.path ? Hosting.projectIssueBranches(this.path, task).filter((name) => this.localBranches.some((branch) => branch.name === name)) : [];
+  }
+
+  /** The branches of the loaded requests, when the request list shows open ones (a closed request is no review) */
+  private get openRequestBranches(): Set<string> {
+    return new Set(["open", "mine", "reviewRequested"].includes(this.requestQuery.scope) ? this.pullRequests.map((request) => request.source) : []);
+  }
+
+  /** How far the issue's work is, as this repository knows it: its linked branches and their loaded requests */
+  issueProgress(item: InboxItem): AssignedIssue {
+    const branches = this.issueBranches(item);
+    return { number: item.number, progress: Hosting.issueProgress(branches, this.openRequestBranches), branch: branches.find((name) => name === this.headBranch) ?? branches[0] };
+  }
+
+  /** The loaded request each issue's branch opened, by issue number */
+  issueRequests(items: InboxItem[]): Map<number, PullRequest> {
+    const out = new Map<number, PullRequest>();
+    if (!this.openRequestBranches.size) return out;
+    for (const item of items) {
+      const branches = this.issueBranches(item), request = this.pullRequests.find((value) => branches.includes(value.source));
+      if (request) out.set(item.number, request);
+    }
+    return out;
+  }
+
+  /** Shows a request one of the issue's branches opened on the Pull requests page */
+  openIssueRequest(request: PullRequest) {
+    this.navigate("pullRequests");
+    this.select({ kind: "pullRequest", number: request.number });
   }
 
   /** Shows the issue on the Issues page */
@@ -142,12 +211,13 @@ export abstract class RepoIssues extends RepoHosting {
 
   private clearIssueList() {
     this.issueListToken++;
-    this.issues = []; this.issuePage = 0; this.issuesMore = false; this.issueState = { kind: "idle" };
+    this.issues = []; this.issuePage = 0; this.issuesMore = false; this.issueState = { kind: "idle" }; this.issueLoadedAt = null;
   }
 
   protected override resetState() {
     this.clearIssueList();
-    this.issueContext = ""; this.issueScope = "open"; this.issueSearch = ""; this.issueLoadedSearch = "";
+    this.issueContext = ""; this.issueScope = "open"; this.issueSort = "updated"; this.issueSearch = ""; this.issueLoadedSearch = "";
+    this.issueAssigned = null; this.issueAssignedMore = false; this.issueAssignedFailed = false; this.issueAssignedContext = "";
     super.resetState();
   }
 }

@@ -144,12 +144,36 @@ struct FixtureFailure: LocalizedError {
             do { _ = try await cancelled!.value; fatalError("A cancelled task returned checks") }
             catch is CancellationError {} catch { fatalError("Task cancellation was replaced: \(error)") }
         }
-        print("Request checks: GitHub check/status pagination and latest deduplication, partial failures/redaction, GitLab merged-result pipeline/job routing, stale context and cancellation passed")
+        // the Actions page reads the same run and job models
+        func run(_ id: Int, _ status: CIStatus, ref: String = "topic", name: String = "CI", title: String = "Run") -> CIPipeline {
+            CIPipeline(id: id, number: id, name: name, title: title, ref: ref, sha: "s\(id)", status: status, url: "", created: Date(timeIntervalSince1970: Double(id)), event: "push", actor: nil)
+        }
+        let runs = [run(9, .running, ref: "other"), run(8, .waiting, ref: "main", name: "Deploy"), run(7, .success, ref: "main"), run(6, .success), run(5, .failed, ref: "fix", title: "Rework focus"), run(4, .success), run(3, .success), run(2, .canceled, ref: "x")]
+        precondition(ActionsPage.Segment.allCases.map { ActionsPage.count(runs, $0) } == [8, 1, 1, 1], "Failed, Running and Waiting count their runs; a cancelled or passed run is only under All")
+        precondition(ActionsPage.visible(runs, segment: .failed, search: "", oldestFirst: false) { $0.title }.map(\.id) == [5] && ActionsPage.visible(runs, segment: .all, search: " MAIN ", oldestFirst: true) { $0.title }.map(\.id) == [7, 8], "A segment filters, the search matches the branch and the order can be reversed")
+        precondition(ActionsPage.visible(runs, segment: .all, search: "focus", oldestFirst: false) { $0.title }.map(\.id) == [5] && ActionsPage.visible(runs, segment: .all, search: "#4", oldestFirst: false) { $0.title }.map(\.id) == [4] && ActionsPage.visible(runs, segment: .all, search: "deploy", oldestFirst: false) { $0.title }.map(\.id) == [8], "The search matches the title, the number and the workflow")
+        precondition(ActionsPage.commonWorkflow(runs) == "CI" && ActionsPage.commonWorkflow([]) == nil, "The workflow most runs belong to goes without saying")
+        precondition(ActionsPage.history(runs, ref: "topic").map(\.id) == [3, 4, 6] && ActionsPage.history(runs, ref: "topic", limit: 2).map(\.id) == [4, 6] && ActionsPage.history(runs, ref: nil).isEmpty, "This branch's latest runs, oldest first")
+        precondition(ActionsPage.streak(ActionsPage.history(runs, ref: "topic")) == .passing(3) && ActionsPage.streak([run(1, .failed), run(2, .success)]) == .passing(1), "A streak counts the runs that passed in a row, newest back")
+        precondition(ActionsPage.streak([run(1, .success), run(2, .failed)]) == .failed(run(2, .failed)) && ActionsPage.streak([run(1, .success), run(2, .pending)]) == .running(run(2, .pending)) && ActionsPage.streak([run(2, .manual)]) == .waiting(run(2, .manual)) && ActionsPage.streak([run(2, .canceled)]) == .none && ActionsPage.streak([]) == .none, "The newest run decides what the summary says")
+        var timed = run(1, .success), going = run(2, .running)
+        timed.started = Date(timeIntervalSince1970: 100); timed.updated = Date(timeIntervalSince1970: 448)
+        going.started = Date(timeIntervalSince1970: 100); going.updated = Date(timeIntervalSince1970: 448)
+        precondition(ActionsPage.took(timed) == 348 && ActionsPage.took(going) == nil && ActionsPage.took(run(3, .success)) == nil, "Only a finished run with both times says how long it took")
+        precondition(ActionsPage.baseRef(["topic", "master", "main"]) == "main" && ActionsPage.baseRef(["topic", "master"]) == "master" && ActionsPage.baseRef(["topic"]) == nil, "Runs are compared with main, or master where there is no main")
+        func job(_ id: Int, _ status: CIStatus) -> CIJob { CIJob(id: id, name: "job\(id)", stage: "", status: status, url: "", allowFailure: false, duration: nil) }
+        let groups = ActionsPage.groups([job(1, .success), job(2, .failed), job(3, .skipped), job(4, .manual), job(5, .running), job(6, .success)])
+        precondition(groups.map(\.group) == [.failed, .running, .waiting, .passed, .other] && groups.map { $0.jobs.map(\.id) } == [[2], [5], [4], [1, 6], [3]], "Jobs are grouped by result, what failed first")
+        precondition(ActionsPage.isError("TerminalFocusTests.swift:58: error: XCTAssertTrue failed") && ActionsPage.isError("Error: Process completed with exit code 1.") && ActionsPage.isError("FAIL: Update the dependency lockfile") && ActionsPage.isError("##[error]boom") && ActionsPage.isError("fatal: not a git repository"), "A line that names an error is marked")
+        precondition(!ActionsPage.isError("Test Suite 'TerminalFocusTests' started.") && !ActionsPage.isError("Checked 12 terrors, errorless") && !ActionsPage.isError("Executed 231 tests, with 1 failure"), "Words that only contain one are not")
+        precondition(ActionsPage.firstShown((1...46).map { $0 == 41 ? "x.swift:58: error: failed" : "line \($0)" }) == 37 && ActionsPage.firstShown((1...500).map { "line \($0)" }) == 300 && ActionsPage.firstShown(["one"]) == 0, "A log opens a few lines before its first error, or on its last two hundred lines")
+        print("Request checks: GitHub check/status pagination and latest deduplication, partial failures/redaction, GitLab merged-result pipeline/job routing, stale context and cancellation, and the Actions page's segments, search, branch history, job groups and log errors passed")
     }
 }
 SWIFT
 swiftc -parse-as-library -swift-version 5 \
     "$ROOT/Sources/Services/CIModels.swift" \
+    "$ROOT/Sources/Core/ActionsPage.swift" \
     "$ROOT/Sources/Services/Collaboration.swift" \
     "$ROOT/Sources/Services/WorkspaceCILog.swift" \
     "$ROOT/Sources/Services/RequestChecks.swift" \

@@ -1,52 +1,41 @@
 import { useEffect } from "react";
-import { Plus, RefreshCw, SquareArrowOutUpRight } from "lucide-react";
+import { Plus, SquareArrowOutUpRight } from "lucide-react";
 import { accounts, type IssueScope, workStateTitle } from "@/entities/hosting";
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { IconButton, showContextMenu, Spinner } from "@/shared/ui";
-import { ListFilterCaption, ListSearchRow } from "./ListSearchRow";
+import { ListFilterCaption } from "./ListSearchRow";
 import { Section } from "./Section";
 
 /**
- * The repository's issues: in the repository sidebar (a row opens the Issues page), and as the list of the
- * Issues page (onPage). The list itself lives in the store, so both show the same items. (macOS: IssueListSection.swift)
+ * The repository's issues in the repository sidebar: a row opens the Issues page, which has the search, the filters and
+ * its own rows (IssuesWorkspace). The list itself lives in the store, so both show the same items.
+ * (macOS: IssueListSection.swift)
  */
-export function IssueListSection({ store, openSettings, onPage = false }: { store: RepoStore; openSettings: () => void; onPage?: boolean }) {
+export function IssueListSection({ store, openSettings }: { store: RepoStore; openSettings: () => void }) {
   useObserve(store);
   useObserve(accounts);
   const key = store.issueContextKey;
   useEffect(() => { void store.prepareIssues(); }, [store, key]);
   const st = store.issueState;
-  const filters: { value: IssueScope; title: string }[] = [{ value: "open", title: workStateTitle("open") }, { value: "closed", title: workStateTitle("closed") }, { value: "all", title: t("All") }];
+  const filters: { value: IssueScope; title: string }[] = [{ value: "open", title: workStateTitle("open") }, { value: "closed", title: workStateTitle("closed") }, { value: "all", title: t("All") }, { value: "assigned", title: t("Assigned to you") }];
   const openPage = t("Open in Issues");
-  const selected = store.inboxDetail?.item.kind === "issue" ? store.inboxDetail.item.id : null;
   return (
     <Section
       id="issues"
       title={t("Issues")}
       count={st.kind === "loaded" ? store.issues.length : undefined}
-      collapsible={!onPage}
       actions={
         <>
           {st.kind === "loading" && store.issues.length > 0 && <Spinner size={11} />}
           {/* the sidebar keeps two icons; refreshing and searching belong to the page */}
-          {onPage ? <IconButton small icon={<RefreshCw size={12} />} tip={t("Refresh list")} aria-label={t("Refresh list")} onClick={() => void store.loadIssues()} />
-            : <IconButton small icon={<SquareArrowOutUpRight size={12} />} tip={openPage} aria-label={openPage} onClick={() => store.navigate("issues")} />}
+          <IconButton small icon={<SquareArrowOutUpRight size={12} />} tip={openPage} aria-label={openPage} onClick={() => store.navigate("issues")} />
           <IconButton small icon={<Plus size={13} />} tip={t("New issue")} aria-label={t("New issue")} disabled={!store.hostingAccount} onClick={() => store.openSheet({ kind: "issueEditor", title: "", body: "" })} />
         </>
       }
     >
-      {onPage ? <ListSearchRow
-        prompt={t("Search issues")}
-        text={store.issueSearch}
-        onText={(text) => { store.issueSearch = text; store.changed(); }}
-        filters={filters}
-        selection={store.issueScope}
-        defaultFilter="open"
-        onSearch={(text) => void store.filterIssues(store.issueScope, text)}
-        onFilter={(value) => void store.filterIssues(value)}
-      /> : (store.issueScope !== "open" || store.issueLoadedSearch.trim()) && <ListFilterCaption
+      {(store.issueScope !== "open" || store.issueLoadedSearch.trim()) && <ListFilterCaption
         state={filters.find((f) => f.value === store.issueScope)?.title ?? store.issueScope}
         search={store.issueLoadedSearch.trim()}
         onClear={() => void store.filterIssues("open", "")}
@@ -63,8 +52,8 @@ export function IssueListSection({ store, openSettings, onPage = false }: { stor
           key={issue.id}
           className="side-row"
           data-issue={issue.number}
-          style={{ alignItems: "flex-start", background: onPage && selected === issue.id ? "var(--select)" : undefined }}
-          onClick={() => (onPage ? void store.openInboxItem(issue) : store.openIssue(issue))}
+          style={{ alignItems: "flex-start" }}
+          onClick={() => store.openIssue(issue)}
           onContextMenu={(e) =>
             showContextMenu(e, [
               { label: t("Open in browser"), onClick: () => store.openUrl(issue.url) },

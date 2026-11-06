@@ -68,6 +68,27 @@ describe("shared issue list", () => {
     await store.filterIssues("open", "");
     expect(new URL(urls.at(-1)!).searchParams.get("state")).toBe("open"); expect(store.inboxDetail?.item.number).toBe(1);
   });
+  it("reads what is assigned to you apart from the list, oldest first, and reorders the list on request", async () => {
+    const store = fixture(); await store.prepareIssues();
+    list = () => [{ ...issue(4), comments: 3, created_at: "2026-10-23T09:00:00Z", assignees: [{ login: "me" }], labels: [{ name: "search", color: "1f5a9e" }, "plain"] }];
+    await store.loadAssignedIssues();
+    const assigned = new URL(urls.at(-1)!).searchParams;
+    expect(assigned.get("state")).toBe("open"); expect(assigned.get("assignee")).toBe("me"); expect(assigned.get("sort")).toBe("created"); expect(assigned.get("direction")).toBe("asc");
+    // the comment count, assignees, labels and the opened date come with the list
+    expect(store.issueAssigned).toMatchObject([{ number: 4, comments: 3, assignees: ["me"], labels: [{ name: "search", color: "1f5a9e" }, { name: "plain" }], created: Date.parse("2026-10-23T09:00:00Z") / 1000 }]);
+    expect(store.issues.map((i) => i.number)).toEqual([1, 2]);
+    // nothing links issue 4 to a branch here, so its work has not started
+    expect(store.issueProgress(store.issueAssigned![0])).toEqual({ number: 4, progress: "notStarted", branch: undefined });
+    await store.filterIssues("assigned");
+    expect(new URL(urls.at(-1)!).searchParams.get("assignee")).toBe("me"); expect(store.issues.map((i) => i.number)).toEqual([4]);
+    await store.sortIssues("created");
+    const sorted = new URL(urls.at(-1)!).searchParams;
+    expect(sorted.get("sort")).toBe("created"); expect(sorted.get("direction")).toBe("desc"); expect(store.issueSort).toBe("created");
+    await store.filterIssues("assigned", "crash");
+    expect(new URL(urls.at(-1)!).searchParams.get("q")).toContain('is:issue is:open assignee:me "crash"');
+    internal(store).resetState();
+    expect(store.issueAssigned).toBeNull(); expect(store.issueSort).toBe("updated");
+  });
   it("appends further pages without duplicates and reports more while a page is full", async () => {
     const store = fixture();
     list = (url) => new URL(url).searchParams.get("page") === "1" ? Array.from({ length: 30 }, (_, i) => issue(i + 1)) : [issue(30), issue(31)];

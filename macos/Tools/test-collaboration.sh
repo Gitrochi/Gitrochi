@@ -97,9 +97,27 @@ enum Hosting {
         }
         let linked = try await CollaborationAPI.issueLinkedRequests(gh, item: issue, page: 1)
         precondition(linked.0.count == 1 && linked.0[0].number == 9 && !linked.1)
-        print("Collaboration: REST list paging and page filters, merge SHA and context guards, request mention replies, state reset passed")
+        precondition(IssuePage.progress(branches: [], requestBranches: ["a"]) == .notStarted && IssuePage.progress(branches: ["b"], requestBranches: ["a"]) == .inProgress && IssuePage.progress(branches: ["b", "a"], requestBranches: ["a"]) == .inReview, "An issue is in review once a linked branch has a request, in progress once it has a branch")
+        let assigned = [IssuePage.Assigned(number: 42, progress: .inReview, branch: "feature/search"), IssuePage.Assigned(number: 41, progress: .notStarted), IssuePage.Assigned(number: 37, progress: .notStarted)]
+        let summary = IssuePage.summary(assigned)
+        precondition(summary.lines == ["#42 in review", "#41 and #37 not started"] && summary.counts == "1 in review, 2 not started" && summary.total == 3, "The summary names the groups that have issues, the furthest along first")
+        precondition(IssuePage.numbers([7]) == "#7" && IssuePage.numbers([1, 2, 3]) == "3 issues" && IssuePage.summary([]).lines.isEmpty, "Three numbers in a row become a count")
+        precondition(IssuePage.next(assigned, currentBranch: "feature/search") == .createBranch(41), "The next step is a branch for the first issue nobody started")
+        precondition(IssuePage.next([IssuePage.Assigned(number: 62, progress: .inProgress, branch: "feature/export"), IssuePage.Assigned(number: 63, progress: .notStarted)], currentBranch: "feature/export") == .createRequest(62, branch: "feature/export"), "The issue this branch works on asks for its request first")
+        precondition(IssuePage.next([IssuePage.Assigned(number: 61, progress: .inReview)], currentBranch: nil) == nil, "Nothing is next when everything is in review")
+        precondition(IssuePage.count(0, more: false) == nil && IssuePage.count(3, more: false) == "3" && IssuePage.count(30, more: true) == "30+", "The segment counts what is assigned, and nothing when nothing is")
+        var listCalendar = Calendar(identifier: .gregorian)
+        listCalendar.timeZone = TimeZone(secondsFromGMT: 0)!
+        let listNow = listCalendar.date(from: DateComponents(year: 2026, month: 11, day: 5, hour: 9))!
+        func when(_ year: Int, _ month: Int, _ day: Int, _ hour: Int = 0, _ minute: Int = 0, _ second: Int = 0) -> String {
+            ListDate.when(listCalendar.date(from: DateComponents(year: year, month: month, day: day, hour: hour, minute: minute, second: second))!, now: listNow, calendar: listCalendar, locale: Locale(identifier: "en_US"))
+        }
+        precondition(when(2026, 11, 5, 8, 59, 30) == "Just now" && when(2026, 11, 5, 8, 48) == "12m ago" && when(2026, 11, 5, 7) == "2h ago" && when(2026, 11, 4, 10) == "23h ago", "Within 24 hours a row says how long ago")
+        precondition(when(2026, 11, 4, 8) == "Yesterday" && when(2026, 11, 3, 20) == "Nov 3" && when(2025, 12, 30) == "Dec 30, 2025", "Then yesterday, then the day, with the year only for another year")
+        precondition(ListDate.parse("2026-10-30T09:00:00Z") == listCalendar.date(from: DateComponents(year: 2026, month: 10, day: 30, hour: 9)) && ListDate.parse("2026-10-30T09:00:00.250Z") != nil && ListDate.parse("") == nil && ListDate.parse(nil) == nil, "The servers' dates are read with or without fractions")
+        print("Collaboration: REST list paging and page filters, merge SHA and context guards, request mention replies, state reset, the Issues page's assigned summary and list dates passed")
     }
 }
 SWIFT
-swiftc -swift-version 5 -parse-as-library "$ROOT/Sources/Services/Collaboration.swift" "$ROOT/Sources/Services/IssueCollaboration.swift" "$TASK_TMP/main.swift" -o "$TASK_TMP/test"
+swiftc -swift-version 5 -parse-as-library "$ROOT/Sources/Services/Collaboration.swift" "$ROOT/Sources/Services/IssueCollaboration.swift" "$ROOT/Sources/Core/IssuePage.swift" "$ROOT/Sources/Core/ListDate.swift" "$TASK_TMP/main.swift" -o "$TASK_TMP/test"
 "$TASK_TMP/test"

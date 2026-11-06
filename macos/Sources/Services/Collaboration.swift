@@ -17,9 +17,13 @@ struct RequestLifecycle {
 struct RequestState {
     var number: Int; var state: String; var draft: Bool; var headSHA: String
 }
+/// A label on an issue; GitLab's list names labels without their colour
+struct IssueLabel: Hashable { var name: String; var color: String? = nil }
 struct CollaborationInboxItem: Identifiable {
     var id: String; var kind: String; var number: Int; var title: String; var url: String; var body: String
     var state: String; var author: String; var unread = false; var readID: String?; var isRequest = false; var createdAt: String? = nil; var updatedAt: String? = nil
+    /// What an issue's own list or detail response says about it; nil or empty when the server did not say
+    var comments: Int? = nil; var assignees: [String] = []; var labels: [IssueLabel] = []
 }
 struct CollaborationInboxComment: Identifiable {
     var id: String; var author: String; var body: String; var createdAt: String? = nil; var editable = false
@@ -205,7 +209,23 @@ struct CollaborationInboxDetail {
     }
     static func issue(_ p: Object) -> CollaborationInboxItem {
         let n = (p["number"] as? Int) ?? number(p, "iid")
-        return CollaborationInboxItem(id: "issue-\(n)", kind: "issue", number: n, title: text(p, "title"), url: (p["html_url"] as? String) ?? text(p, "web_url"), body: (p["body"] as? String) ?? text(p, "description"), state: text(p, "state"), author: (obj(p, "user")["login"] as? String) ?? text(obj(p, "author"), "username"))
+        var item = CollaborationInboxItem(id: "issue-\(n)", kind: "issue", number: n, title: text(p, "title"), url: (p["html_url"] as? String) ?? text(p, "web_url"), body: (p["body"] as? String) ?? text(p, "description"), state: text(p, "state"), author: (obj(p, "user")["login"] as? String) ?? text(obj(p, "author"), "username"))
+        issueFacts(p, into: &item)
+        return item
+    }
+    /// Dates, comment count, assignees and labels, read from the issue's own response (GitHub and GitLab name them differently)
+    static func issueFacts(_ p: Object, into item: inout CollaborationInboxItem) {
+        if let created = p["created_at"] as? String { item.createdAt = created }
+        if let updated = p["updated_at"] as? String { item.updatedAt = updated }
+        if let count = (p["comments"] as? Int) ?? (p["user_notes_count"] as? Int) { item.comments = count }
+        if let people = p["assignees"] as? [Object] { item.assignees = people.compactMap { ($0["login"] as? String) ?? ($0["username"] as? String) } }
+        if let labels = p["labels"] as? [Any] {
+            item.labels = labels.compactMap { value in
+                if let name = value as? String { return IssueLabel(name: name) }
+                guard let label = value as? Object, let name = label["name"] as? String else { return nil }
+                return IssueLabel(name: name, color: label["color"] as? String)
+            }
+        }
     }
     static func inbox(_ c: ReviewAccess, kind: String, page: Int) async throws -> ([CollaborationInboxItem], Bool) {
         if kind == "review" {
@@ -239,6 +259,7 @@ struct CollaborationInboxDetail {
         let detail = try await object(c, item.isRequest && c.target.provider == .github ? requestURL(c, item.number) : base)
         let values = try await list(c, base + "/\(c.target.provider == .github ? "comments" : "notes")?per_page=30&page=\(page)")
         var item = item; item.title = text(detail, "title"); item.body = (detail["body"] as? String) ?? text(detail, "description"); item.state = text(detail, "state"); item.createdAt = detail["created_at"] as? String; item.updatedAt = detail["updated_at"] as? String
+        if !item.isRequest { issueFacts(detail, into: &item) }
         let comments = values.map { CollaborationInboxComment(id: String(number($0, "id")), author: c.target.provider == .github ? text(obj($0, "user"), "login") : text(obj($0, "author"), "username"), body: text($0, "body"), createdAt: $0["created_at"] as? String, editable: $0["system"] as? Bool != true && (c.target.provider == .github ? text(obj($0, "user"), "login") : text(obj($0, "author"), "username")).caseInsensitiveCompare(c.me) == .orderedSame) }
         return CollaborationInboxDetail(item: item, comments: comments, page: page, more: values.count == 30)
     }

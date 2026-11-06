@@ -3,23 +3,26 @@ import Observation
 
 /// Workspace APIs share the repository/account guard used by reviews.
 @MainActor enum WorkspaceOperations {
-    static func issues(_ c: ReviewAccess, scope: String, search: String, page: Int) async throws
+    /// `scope` is open, closed, all or assigned (open and assigned to this account); `sort` is updated, created or oldest
+    static func issues(_ c: ReviewAccess, scope: String, search: String, page: Int, sort: String = "updated") async throws
         -> (
             [CollaborationInboxItem], Bool
         )
     {
         let n = max(1, page)
+        let assigned = scope == "assigned", state = assigned ? "open" : scope
+        let field = sort == "updated" ? "updated" : "created", direction = sort == "oldest" ? "asc" : "desc"
         if c.target.provider == .github, !search.trimmed.isEmpty {
             let text = search.trimmed.replacingOccurrences(of: "\"", with: " ")
                 .replacingOccurrences(
                     of: "\\", with: " ")
             let q =
-                "repo:\(c.target.path) is:issue \(scope == "all" ? "" : "is:" + scope) \"\(text)\""
+                "repo:\(c.target.path) is:issue \(state == "all" ? "" : "is:" + state)\(assigned ? " assignee:" + c.me : "") \"\(text)\""
             let r = try await CollaborationAPI.object(
                 c,
                 c.apiBase + "/search/issues?"
                     + CollaborationAPI.query([
-                        "q": q, "sort": "updated", "order": "desc", "per_page": "30",
+                        "q": q, "sort": field, "order": direction, "per_page": "30",
                         "page": String(n),
                     ]))
             return (
@@ -29,14 +32,16 @@ import Observation
         }
         // newest activity first; GitHub sorts with sort/direction, GitLab with order_by/sort (sort only takes asc or desc)
         var query = [
-            "state": c.target.provider == .gitlab && scope == "open" ? "opened" : scope,
+            "state": c.target.provider == .gitlab && state == "open" ? "opened" : state,
             "per_page": "30",
             "page": String(n),
         ]
         if c.target.provider == .gitlab {
-            query["order_by"] = "updated_at"; query["sort"] = "desc"
+            query["order_by"] = field + "_at"; query["sort"] = direction
+            if assigned { query["assignee_username"] = c.me }
         } else {
-            query["sort"] = "updated"; query["direction"] = "desc"
+            query["sort"] = field; query["direction"] = direction
+            if assigned { query["assignee"] = c.me }
         }
         if !search.trimmed.isEmpty { query["search"] = search.trimmed }
         let items = try await CollaborationAPI.list(
@@ -47,7 +52,7 @@ import Observation
         let n =
             CollaborationAPI.number(i, "number") == 0
             ? CollaborationAPI.number(i, "iid") : CollaborationAPI.number(i, "number")
-        return CollaborationInboxItem(
+        var item = CollaborationInboxItem(
             id: "issue-\(n)", kind: "issue", number: n, title: CollaborationAPI.text(i, "title"),
             url: CollaborationAPI.text(i, "html_url").isEmpty
                 ? CollaborationAPI.text(i, "web_url") : CollaborationAPI.text(i, "html_url"),
@@ -57,6 +62,8 @@ import Observation
             author: CollaborationAPI.text(CollaborationAPI.obj(i, "user"), "login").isEmpty
                 ? CollaborationAPI.text(CollaborationAPI.obj(i, "author"), "username")
                 : CollaborationAPI.text(CollaborationAPI.obj(i, "user"), "login"))
+        CollaborationAPI.issueFacts(i, into: &item)
+        return item
     }
     static func saveIssue(_ c: ReviewAccess, title: String, body: String, number: Int? = nil)
         async throws -> CollaborationInboxItem
@@ -130,8 +137,19 @@ import Observation
 
 @MainActor @Observable final class WorkspaceIssueModel {
     var items: [CollaborationInboxItem] = []
-    /// open, closed or all
+    /// open, closed, all or assigned (open and assigned to this account)
     var scope = "open"
+    /// updated (newest activity first), created (newest first) or oldest
+    var sort = "updated"
+    /// The open issues assigned to this account, for the Issues page's summary and its segment count; nil until read
+    var assigned: [CollaborationInboxItem]?
+    var assignedMore = false
+    /// The assigned issues could not be read and none are shown from before
+    var assignedFailed = false
+    /// Repository and account the assigned issues were read for
+    var assignedKey = ""
+    /// When the list last arrived, for "Showing data from 12m ago" after a refresh fails
+    var loadedAt: Date?
     var search = ""
     /// The search the list was loaded with (the page's field may hold text not searched yet)
     var loadedSearch = ""
@@ -150,6 +168,7 @@ import Observation
         more = false
         busy = false
         error = nil
+        loadedAt = nil
     }
     func load(_ c: ReviewAccess, scope: String, search: String, append: Bool = false) async {
         let id = UUID()
@@ -159,12 +178,22 @@ import Observation
         defer { if generation == id { busy = false } }
         do {
             let (next, hasMore) = try await WorkspaceOperations.issues(
-                c, scope: scope, search: search, page: append ? page + 1 : 1)
+                c, scope: scope, search: search, page: append ? page + 1 : 1, sort: sort)
             guard generation == id, c.isCurrent?() != false else { return }
             items =
                 append ? items + next.filter { item in !items.contains { $0.id == item.id } } : next
             page = append ? page + 1 : 1
             more = hasMore
+            loadedAt = Date()
         } catch { if generation == id { self.error = error.localizedDescription } }
+    }
+    /// The first page of what is assigned to this account; a failure leaves the summary as it was
+    func loadAssigned(_ c: ReviewAccess) async {
+        let result = try? await WorkspaceOperations.issues(c, scope: "assigned", search: "", page: 1, sort: "oldest")
+        guard c.isCurrent?() != false else { return }
+        assignedFailed = result == nil && assigned == nil
+        guard let (next, hasMore) = result else { return }
+        assigned = next
+        assignedMore = hasMore
     }
 }

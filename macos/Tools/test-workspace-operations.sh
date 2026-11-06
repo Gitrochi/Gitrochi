@@ -34,6 +34,18 @@ struct RemoteRepo { let fullName:String;let cloneURL:String;let isPrivate:Bool;l
         Hosting.handler={r in calls.append(r);return try json([["iid":8,"title":"Task","description":"Body","state":"opened","author":["username":"me"]]])}
         let result=try await WorkspaceOperations.issues(gl,scope:"open",search:"nested",page:1)
         precondition(result.0[0].body=="Body"&&calls.last!.url!.absoluteString.contains("team%2Frepo/issues"))
+        func query(_ name:String)->String?{URLComponents(url:calls.last!.url!,resolvingAgainstBaseURL:false)!.queryItems!.first{$0.name==name}?.value}
+        Hosting.handler={r in calls.append(r);return try json([["number":9,"title":"Mine","state":"open","user":["login":"other"],"comments":3,"updated_at":"2026-10-30T09:00:00Z","created_at":"2026-10-23T09:00:00Z","assignees":[["login":"me"]],"labels":[["name":"search","color":"1f5a9e"]]]])}
+        let assigned=try await WorkspaceOperations.issues(gh,scope:"assigned",search:"",page:1,sort:"oldest")
+        precondition(query("state")=="open"&&query("assignee")=="me"&&query("sort")=="created"&&query("direction")=="asc","Assigned issues are the open ones assigned to this account, here oldest first")
+        precondition(assigned.0[0].comments==3&&assigned.0[0].assignees==["me"]&&assigned.0[0].labels==[IssueLabel(name:"search",color:"1f5a9e")]&&assigned.0[0].createdAt=="2026-10-23T09:00:00Z"&&assigned.0[0].updatedAt=="2026-10-30T09:00:00Z","An issue's comment count, assignees, labels and dates come with the list")
+        Hosting.handler={r in calls.append(r);return try json([["iid":8,"title":"Task","state":"opened","author":["username":"me"],"user_notes_count":2,"labels":["bug"],"assignees":[["username":"me"]]]])}
+        let glAssigned=try await WorkspaceOperations.issues(gl,scope:"assigned",search:"",page:1,sort:"created")
+        precondition(query("state")=="opened"&&query("assignee_username")=="me"&&query("order_by")=="created_at"&&query("sort")=="desc","GitLab names the same filter and order differently")
+        precondition(glAssigned.0[0].comments==2&&glAssigned.0[0].labels==[IssueLabel(name:"bug")]&&glAssigned.0[0].assignees==["me"],"GitLab counts notes and names labels without a colour")
+        Hosting.handler={r in calls.append(r);return try json(["items":[],"total_count":0])}
+        _=try await WorkspaceOperations.issues(gh,scope:"assigned",search:"fix",page:1)
+        precondition(query("q")!.contains("is:issue is:open assignee:me \"fix\"")&&query("sort")=="updated"&&query("order")=="desc","A search within the assigned issues keeps the assignee and the default order")
         Hosting.handler={r in calls.append(r);return try json(["iid":8,"title":"Saved","state":"opened"])}
         _=try await WorkspaceOperations.saveIssue(gl,title:" Title ",body:"Description")
         precondition(calls.last!.httpMethod=="POST")
