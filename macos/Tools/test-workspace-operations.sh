@@ -109,8 +109,8 @@ struct RemoteRepo { let fullName:String;let cloneURL:String;let isPrivate:Bool;l
         Hosting.handler={r in calls.append(r);return try json(["items":[["id":1,"number":7,"title":"Draft work","body":"What it changes","draft":true,"pull_request":[String:Any](),"user":["login":"sam"],"updated_at":"2026-11-01T00:00:00Z","html_url":"https://github.com/org/other/pull/7","repository_url":"https://api.github.com/repos/org/other","state":"open"]],"total_count":1])}
         let draft=try await AccountWorkAPI.page(gh,kind:"review",page:1).0[0]
         precondition(draft.kind == .request&&draft.reason.isEmpty&&draft.status=="draft"&&draft.body=="What it changes"&&draft.author=="sam", "My work keeps a draft's state, text and author")
-        let assigned=try await AccountWorkAPI.page(gh,kind:"issues",page:1).0[0]
-        precondition(assigned.kind == .issue)
+        let assignedWork=try await AccountWorkAPI.page(gh,kind:"issues",page:1).0[0]
+        precondition(assignedWork.kind == .issue)
         Hosting.handler={r in calls.append(r);return try json([["id":21,"action_name":"mentioned","created_at":"2026-11-03T12:00:00.000Z","author":["username":"sam","name":"Sam"],"target_type":"MergeRequest","target_url":"https://gitlab.example/group/other/-/merge_requests/4","target":["iid":4,"title":"Review","state":"merged","description":"Notes","source_branch":"feature/a","target_branch":"main"],"project":["path_with_namespace":"group/other"]]])}
         let todo=try await AccountWorkAPI.page(gl,kind:"inbox",page:1).0[0]
         precondition(todo.kind == .request&&todo.reason=="mentioned"&&todo.actor=="Sam"&&todo.status=="merged"&&todo.body=="Notes"&&todo.source=="feature/a"&&todo.target=="main"&&todo.updated != nil, "A GitLab to-do describes its request in target")
