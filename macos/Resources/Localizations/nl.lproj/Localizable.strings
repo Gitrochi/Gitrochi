@@ -4,6 +4,7 @@
 "%@ requested changes" = "%@ heeft wijzigingen gevraagd";
 "%lld changed files" = "%1$lld gewijzigde bestanden";
 "%lld comments" = "%lld reacties";
+"%lld commits in %@" = "%1$lld commits in %2$@";
 "%lld commits replay on top of %@, newest first." = "%1$lld commits worden opnieuw afgespeeld op %2$@, nieuwste eerst.";
 "%lld failed" = "%lld mislukt";
 "%lld new commits" = "%1$lld nieuwe commits";
@@ -23,6 +24,7 @@
 "Approvals" = "Goedkeuringen";
 "Approved" = "Goedgekeurd";
 "Ask questions about the selected changes" = "Vragen stellen over de geselecteerde wijzigingen";
+"Based on %@" = "Gebaseerd op %@";
 "Changes requested" = "Wijzigingen gevraagd";
 "Choose a base to see the commits that replay." = "Kies een basis om de commits te zien die opnieuw worden afgespeeld.";
 "Choose the new base" = "Kies de nieuwe basis";
@@ -34,6 +36,8 @@
 "Conflicts pause the rebase until you continue or abort, and a finished rebase can be undone." = "Bij conflicten pauzeert de rebase tot je doorgaat of afbreekt; een voltooide rebase kan ongedaan worden gemaakt.";
 "Copy log" = "Log kopiëren";
 "Create a merge commit" = "Merge-commit maken";
+"Create merge request…" = "Merge request maken…";
+"Create pull request…" = "Pull request maken…";
 "Diff layout" = "Diff-indeling";
 "Fast-forward only" = "Alleen fast-forward";
 "Filter repositories" = "Repository's filteren";
@@ -49,6 +53,8 @@
 "Linked issue" = "Gekoppeld issue";
 "Load log" = "Log laden";
 "Merge" = "Merge";
+"Merge request open" = "Merge request open";
+"Merges %@ into this branch" = "Voegt %@ samen in deze branch";
 "More file actions" = "Meer bestandsacties";
 "More job actions" = "Meer jobacties";
 "More merge request actions" = "Meer acties voor merge request";
@@ -62,7 +68,9 @@
 "Newest" = "Nieuwste";
 "Next file (J)" = "Volgend bestand (J)";
 "No comments yet." = "Nog geen reacties.";
+"Not pushed" = "Niet gepusht";
 "Nothing is due today." = "Vandaag staat er niets gepland.";
+"Nothing to push" = "Niets te pushen";
 "Open Projects" = "Projecten openen";
 "Open a repository to use these" = "Open een repository om deze te gebruiken";
 "Open changes" = "Wijzigingen openen";
@@ -76,6 +84,9 @@
 "Next match" = "Volgende overeenkomst";
 "Pull as configured in git" = "Pull volgens git-configuratie";
 "Pull options" = "Pull-opties";
+"Pull request open" = "Pull request open";
+"Push %lld commits" = "%lld commits pushen";
+"Push 1 commit" = "1 commit pushen";
 "Re-run job" = "Job opnieuw uitvoeren";
 "Rebase and merge" = "Rebasen en mergen";
 "Rebase mode" = "Rebase-modus";
@@ -104,12 +115,19 @@
 "Switch branch or repository, open or clone one, or close the tab" = "Van branch of repository wisselen, er een openen of klonen, of het tabblad sluiten";
 "Tasks for today" = "Taken voor vandaag";
 "This branch" = "Deze branch";
+"This branch compared with the server" = "Deze branch vergeleken met de server";
 "Unified" = "Gecombineerd";
 "Up to date" = "Bijgewerkt";
+"Update branch" = "Branch bijwerken";
+"Updates merge request #%@" = "Werkt merge request #%@ bij";
+"Updates pull request #%@" = "Werkt pull request #%@ bij";
 "Viewed %@" = "%@ bekeken";
 "Yesterday" = "Gisteren";
+"base" = "basis";
 "choose a new base" = "kies een nieuwe basis";
 "line %lld" = "regel %lld";
+"on GitHub" = "op GitHub";
+"on GitLab" = "op GitLab";
 "{0} of {1}" = "{0} van {1}";
 "No matches" = "Geen overeenkomsten";
 "Wrap lines" = "Regels afbreken";

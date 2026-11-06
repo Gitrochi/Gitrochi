@@ -39,7 +39,6 @@ struct PullRequest { var number: Int; var source = "feature"; var target = "main
         precondition(!PullRequestPage.splitAllowed(diffWidth: 999) && PullRequestPage.splitAllowed(diffWidth: 1000))
         precondition(PullRequestPage.headerInOneRow(onPage: true, tab: "files", width: 720) && !PullRequestPage.headerInOneRow(onPage: true, tab: "files", width: 719)
             && !PullRequestPage.headerInOneRow(onPage: false, tab: "files", width: 1200) && !PullRequestPage.headerInOneRow(onPage: true, tab: "checks", width: 1200))
-        precondition(PullRequestPage.dateStyle(age: 86_399) == .relative && PullRequestPage.dateStyle(age: 86_400) == .yesterday && PullRequestPage.dateStyle(age: 2 * 86_400) == .day)
         let requests = [PullRequest(number: 3, comments: 1), PullRequest(number: 9, reviewRequested: true), PullRequest(number: 5, comments: 4), PullRequest(number: 7, comments: 1)]
         precondition(PullRequestPage.sorted(requests, by: .updated).map(\.number) == [3, 9, 5, 7])
         precondition(PullRequestPage.sorted(requests, by: .newest).map(\.number) == [9, 7, 5, 3])
@@ -60,6 +59,7 @@ struct PullRequest { var number: Int; var source = "feature"; var target = "main
         let groups = PullRequestPage.checkGroups(checks)
         precondition(groups.failed.map(\.id) == ["2"] && groups.running.map(\.id) == ["3"] && groups.passed.map(\.id) == ["1", "4"])
         precondition(PullRequestPage.checksBadge(checks) == .failed(1) && PullRequestPage.checksBadge([checks[0], checks[2]]) == .running(1) && PullRequestPage.checksBadge([checks[0], checks[3]]) == nil)
+        precondition(PullRequestPage.branchSummary(hasRequest: false, ahead: 3, incoming: 2, commits: 3) == .noRequest(commits: 3) && PullRequestPage.branchSummary(hasRequest: true, ahead: 2, incoming: 5, commits: 6) == .notPushed(onServer: 4, local: 2) && PullRequestPage.branchSummary(hasRequest: true, ahead: 0, incoming: 5, commits: 3) == .moved(incoming: 5, commits: 3) && PullRequestPage.branchSummary(hasRequest: true, ahead: 0, incoming: 0, commits: 3) == .upToDate(commits: 3))
         let lines = PullRequestPage.logLines("Test started\nfile.swift:58: error: XCTAssertTrue failed\r\nNo errors in terror tests\nProcess completed with exit code 1.\n")
         precondition(lines.count == 4 && lines.map(\.isError) == [false, true, false, true] && lines[1].text.hasSuffix("failed") && PullRequestPage.firstError(lines)?.number == 2)
         precondition(PullRequestPage.linkedIssues("Closes #42, fixes #7 and resolved: #42. See #9") == [42, 7])
@@ -190,5 +190,5 @@ struct PullRequest { var number: Int; var source = "feature"; var target = "main
     }
 }
 SWIFT
-swiftc -parse-as-library -swift-version 5 "$ROOT/Sources/Services/ReviewAPI.swift" "$ROOT/Sources/Core/PullRequestPage.swift" "$TASK_TMP/main.swift" -o "$TASK_TMP/test-review"
+swiftc -parse-as-library -swift-version 5 "$ROOT/Sources/Services/ReviewAPI.swift" "$ROOT/Sources/Core/PullRequestPage.swift" "$ROOT/Sources/Core/JobLog.swift" "$TASK_TMP/main.swift" -o "$TASK_TMP/test-review"
 "$TASK_TMP/test-review"

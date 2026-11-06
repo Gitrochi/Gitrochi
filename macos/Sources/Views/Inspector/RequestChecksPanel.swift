@@ -19,6 +19,7 @@ struct RequestChecksPanel: View {
     @ViewState private var loadingLogs = Set<String>()
     @ViewState private var failedOpen = true
     @ViewState private var passedOpen = false
+    @ViewState private var runningOpen = true
     @ViewState private var rerunning = Set<String>()
     /// Counts "Jump to first error" presses per check, so its log scrolls each time
     @ViewState private var jumps: [String: Int] = [:]
@@ -44,8 +45,8 @@ struct RequestChecksPanel: View {
                 }
                 if !groups.running.isEmpty {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("Running").font(.system(size: 12, weight: .semibold)).foregroundStyle(StudioStyle.Rail.icon).frame(minHeight: 24)
-                        rows(groups.running)
+                        groupButton(String(localized: "Running"), open: $runningOpen)
+                        if runningOpen { rows(groups.running) }
                     }
                 }
                 if !groups.passed.isEmpty {

@@ -23,7 +23,6 @@ export function ReviewDraftPanel({ store, number }: { store: RepoStore; number: 
   }, [draftIDs]);
   return <div className="col" style={{ gap: 8 }}>
     {review?.warnings.map((warning) => <span key={warning} className="hint" role="status">{warning}</span>)}
-    <span className="hint">{t("Use the comment button beside a diff line to add it to your review. Drafts stay on this device until submitted.")}</span>
     {drafts.length > 0 && <>
       <strong>{t("Pending line comments ({0})", drafts.length)}</strong>
       {store.target?.provider === "gitlab" && <span className="hint">{t("GitLab publishes threads one at a time; approval is a separate action.")}</span>}

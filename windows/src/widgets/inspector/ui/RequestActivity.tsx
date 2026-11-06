@@ -5,9 +5,8 @@ import { fileName } from "@/entities/git";
 import type { PullRequestReview, ReviewComment } from "@/entities/hosting";
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
-import { longDate } from "@/shared/lib";
+import { listWhen, longDate } from "@/shared/lib";
 import { Avatar, Markdown, StatusPill } from "@/shared/ui";
-import { requestDate } from "../lib/request-date";
 import { ReviewThreadActions } from "./ReviewPanels";
 
 type MarkdownLinks = Omit<Parameters<typeof Markdown>[0], "text">;
@@ -30,7 +29,7 @@ function activityItems(comments: ReviewComment[]): ReviewComment[][] {
  * comments on a file as a thread card. macOS: RequestActivity.swift.
  */
 export function RequestActivity({ store, review, author, onOpenFile, ...markdown }: { store: RepoStore; review: PullRequestReview; /** the request's author, who gets the Author pill */ author: string; onOpenFile: (path: string) => void } & MarkdownLinks) {
-  const when = (comment: ReviewComment) => comment.date != null && <time className="pr-cap" dateTime={new Date(comment.date * 1000).toISOString()} title={longDate(comment.date)}>{requestDate(comment.date)}</time>;
+  const when = (comment: ReviewComment) => comment.date != null && <time className="pr-cap" dateTime={new Date(comment.date * 1000).toISOString()} title={longDate(comment.date)}>{listWhen(comment.date)}</time>;
   const article = (comment: ReviewComment) => <article className="pr-comment" key={comment.id}>
     <span aria-hidden="true"><Avatar name={comment.author} email={comment.author} size={24}/></span>
     <div className="pr-comment-body">

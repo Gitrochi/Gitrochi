@@ -1,14 +1,14 @@
 import { GitPullRequestDraft, PanelLeftClose } from "lucide-react";
 import { ArrowUpDown, Eye, MessageSquare, Search, X } from "@/shared/icons";
 import { useEffect, useState } from "react";
-import { commentCount, isThisBranch, requestDate, type RequestSort, reviewRequestedCount, sorted } from "@/widgets/inspector";
+import { commentCount, isThisBranch, type RequestSort, reviewRequestedCount, sorted } from "@/widgets/inspector";
 import { CIStatusIcon, statusInfo } from "@/entities/ci";
 import { accountHost, type PullRequest, type RepoTarget } from "@/entities/git";
 import { accounts, type RequestScope, workStateTitle } from "@/entities/hosting";
 import type { RepoStore } from "@/entities/repo";
 import { settings } from "@/shared/config";
 import { t } from "@/shared/i18n";
-import { longDate, useObserve } from "@/shared/lib";
+import { listWhen, longDate, useObserve } from "@/shared/lib";
 import { Avatar, Button, Segmented, showContextMenu, showMenuBelow, Spinner, StatusPill } from "@/shared/ui";
 
 const sortSetting = "pullRequestSort";
@@ -40,6 +40,8 @@ export function PullRequestList({ store, target, openSettings, onHide }: { store
   // Closed and Merged have no segment, so they live here; choosing the checked one goes back to open requests
   const showItem = (value: RequestScope) => ({ label: workStateTitle(value), checked: scope === value, onClick: () => filter(scope === value ? "open" : value) });
   const hideLabel = t(gitlab ? "Hide merge request list" : "Hide pull request list");
+  // the signed-in account's own requests carry its photo
+  const own = (author: string) => (store.hostingAccount?.username.toLowerCase() === author.toLowerCase() ? store.hostingAccount?.avatarURL ?? undefined : undefined);
   const row = (pr: PullRequest) => {
     const selected = store.selection?.kind === "pullRequest" && store.selection.number === pr.number;
     const run = pr.headSHA ? store.ci.bySha.get(pr.headSHA) : undefined;
@@ -53,7 +55,7 @@ export function PullRequestList({ store, target, openSettings, onHide }: { store
       ])}>
       <span className="pr-row-top">
         <span className="pr-row-title">{pr.title}</span>
-        {pr.updated != null && <span className="pr-row-when" title={longDate(pr.updated)}>{requestDate(pr.updated)}</span>}
+        {pr.updated != null && <span className="pr-row-when" title={longDate(pr.updated)}>{listWhen(pr.updated)}</span>}
       </span>
       <span className="pr-row-meta">
         <span className="pr-row-number mono">#{pr.number}</span>
@@ -64,7 +66,7 @@ export function PullRequestList({ store, target, openSettings, onHide }: { store
         {pr.reviewRequested && scope !== "reviewRequested" && <StatusPill tone="info" icon={<Eye />} className="pr-row-shrink"><span className="ellipsis">{t("Review requested")}</span></StatusPill>}
         <span className="spacer" />
         {!!comments && <span className="pr-row-comments" role="img" aria-label={comments === 1 ? t("1 comment") : t("{0} comments", comments)}><MessageSquare size={11} />{comments}</span>}
-        <span role="img" aria-label={`@${pr.author}`} title={`@${pr.author}`}><Avatar name={pr.author} email={pr.author} size={16} /></span>
+        <span role="img" aria-label={`@${pr.author}`} title={`@${pr.author}`}><Avatar name={pr.author} email={pr.author} size={16} url={own(pr.author)} /></span>
       </span>
     </button>;
   };

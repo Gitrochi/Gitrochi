@@ -80,7 +80,7 @@ struct RequestActivity: View {
                     }
                 }
                 .foregroundStyle(StudioStyle.Tone.neutral.text)
-                if let date = comment.date { Text(PullRequestDate.short(date)).font(.system(size: 12)).foregroundStyle(StudioStyle.Rail.icon).help(Fmt.long(date)) }
+                if let date = comment.date { Text(verbatim: ListDate.when(date)).font(.system(size: 12)).foregroundStyle(StudioStyle.Rail.icon).help(Fmt.long(date)) }
             }
             // a verdict can carry a comment of its own
             if comment.kind != .system, !comment.body.isEmpty {
@@ -96,7 +96,7 @@ struct RequestActivity: View {
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 8) {
                     Text(verbatim: "@\(comment.author)").fontWeight(.semibold)
-                    if let date = comment.date { Text(PullRequestDate.short(date)).font(.system(size: 12)).foregroundStyle(StudioStyle.Rail.icon).help(Fmt.long(date)) }
+                    if let date = comment.date { Text(verbatim: ListDate.when(date)).font(.system(size: 12)).foregroundStyle(StudioStyle.Rail.icon).help(Fmt.long(date)) }
                     if comment.author == author { StatusPill(title: String(localized: "Author"), symbol: nil, tone: .neutral) }
                 }
                 if !comment.body.isEmpty { MarkdownView(comment.body, target: store.target, revision: revision, baseURL: baseURL) }

@@ -29,7 +29,7 @@ export function RequestChecksPanel({ store, number, sha, url, draft = false, act
   const [checks, setChecks] = useState<CIRequestCheck[]>([]), [runs, setRuns] = useState<CIPipeline[]>([]), [truncated, setTruncated] = useState(false);
   const [jobs, setJobs] = useState(new Map<number, CIJob[]>()), [jobLoading, setJobLoading] = useState<number | null>(null);
   const [logs, setLogs] = useState(new Map<number, Log>()), [logLoading, setLogLoading] = useState<number | null>(null);
-  const [passedOpen, setPassedOpen] = useState(false), [failedOpen, setFailedOpen] = useState(true);
+  const [runningOpen, setRunningOpen] = useState(true), [passedOpen, setPassedOpen] = useState(false), [failedOpen, setFailedOpen] = useState(true);
   const generation = useRef(0), autoLoaded = useRef<number | null>(null);
   const target = store.target, account = store.hostingAccount;
   const key = `${store.path}:${target?.provider}:${target?.host}:${target?.path}:${account?.id}:${accounts.revision}:${number}:${sha}`;
@@ -155,8 +155,8 @@ export function RequestChecksPanel({ store, number, sha, url, draft = false, act
       })}
     </section>}
     {groups.running.length > 0 && <section className="pr-check-group" aria-label={t("Running")}>
-      <span className="pr-group">{t("Running")}</span>
-      <div className="pr-check-list">{groups.running.map(checkRow)}</div>
+      <button type="button" className="pr-group" aria-expanded={runningOpen} onClick={() => setRunningOpen(!runningOpen)}>{runningOpen ? <ChevronDown size={12}/> : <ChevronRight size={12}/>}<span>{t("Running")}</span></button>
+      {runningOpen && <div className="pr-check-list">{groups.running.map(checkRow)}</div>}
     </section>}
     {groups.passed.length > 0 && <section className="pr-check-group" aria-label={t("Passed")}>
       <button type="button" className="pr-group" aria-expanded={passedOpen} onClick={() => setPassedOpen(!passedOpen)}>

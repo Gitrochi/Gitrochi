@@ -24,11 +24,6 @@ enum PullRequestPage {
     /// Changed files trades the tall header for one 44pt row, on the page (not in the repository's inspector) and when it fits
     static func headerInOneRow(onPage: Bool, tab: String, width: CGFloat) -> Bool { onPage && tab == "files" && width >= oneRowMinimumWidth }
 
-    enum DateStyle { case relative, yesterday, day }
-
-    /// docs/design.md › Text: "2h ago" within 24 hours, then "Yesterday", then "Oct 28"
-    static func dateStyle(age seconds: TimeInterval) -> DateStyle { seconds < 86_400 ? .relative : seconds < 2 * 86_400 ? .yesterday : .day }
-
     /// Two columns of code need room; below this Split is disabled and says why
     static func splitAllowed(diffWidth: CGFloat) -> Bool { diffWidth >= splitMinimumWidth }
 
@@ -112,19 +107,34 @@ enum PullRequestPage {
         var id: Int { number }
     }
 
-    private static let errorPattern = try? NSRegularExpression(pattern: #"\b(error|failed)\b|failure|fatal|exit code [1-9]"#, options: [.caseInsensitive])
+    private static let exitCode = try? NSRegularExpression(pattern: #"exit code [1-9]"#)
 
     static func logLines(_ body: String) -> [LogLine] {
-        var lines = body.components(separatedBy: "\n")
+        // the same reading as the Actions page, so a log says the same thing on both
+        var lines = JobLog.lines(body)
         if lines.last?.isEmpty == true { lines.removeLast() }
-        return lines.enumerated().map { index, raw in
-            let text = raw.hasSuffix("\r") ? String(raw.dropLast()) : raw
-            let range = NSRange(text.startIndex..., in: text)
-            return LogLine(number: index + 1, text: text, isError: errorPattern?.firstMatch(in: text, range: range) != nil)
+        return lines.enumerated().map { index, text in
+            let failed = exitCode?.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)) != nil
+            return LogLine(number: index + 1, text: text, isError: JobLog.isError(text) || failed)
         }
     }
 
     static func firstError(_ lines: [LogLine]) -> LogLine? { lines.first(where: \.isError) }
+
+    /// What the summary card says about the current branch
+    enum BranchSummary: Equatable {
+        case noRequest(commits: Int)
+        case moved(incoming: Int, commits: Int)
+        case upToDate(commits: Int)
+        case notPushed(onServer: Int, local: Int)
+    }
+
+    /// `commits` are the branch's own over its base, `incoming` the base's new ones, `ahead` those not pushed yet
+    static func branchSummary(hasRequest: Bool, ahead: Int, incoming: Int, commits: Int) -> BranchSummary {
+        guard hasRequest else { return .noRequest(commits: commits) }
+        if ahead > 0 { return .notPushed(onServer: max(0, commits - ahead), local: ahead) }
+        return incoming > 0 ? .moved(incoming: incoming, commits: commits) : .upToDate(commits: commits)
+    }
 
     private static let closingPattern = try? NSRegularExpression(pattern: #"\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s*:?\s+#(\d+)"#, options: [.caseInsensitive])
 

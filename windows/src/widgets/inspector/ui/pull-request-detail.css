@@ -83,7 +83,7 @@
 
 /* Side cards */
 .pr-side { flex: 0 0 280px; width: 280px; max-width: 100%; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
-@container pr-detail (max-width: 780px) { .pr-side { flex: 1 1 100%; width: auto; } .pr-conversation-scroll { padding: 16px 14px; } }
+@container pr-detail (max-width: 716px) { .pr-side { flex: 1 1 100%; width: auto; } .pr-conversation-scroll { padding: 16px 14px; } }
 .pr-card { border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .pr-card-title { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--text-2); }
 .pr-card-row { display: flex; align-items: center; gap: 8px; min-width: 0; overflow-wrap: anywhere; }

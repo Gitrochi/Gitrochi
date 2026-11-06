@@ -9,7 +9,7 @@ import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { showMenuBelow, Spinner, StatusPill } from "@/shared/ui";
 import { folderLabel, splitAllowed, threadCount, treeWidth, viewedKey, withViewed } from "../lib/pull-request-page";
-import { FileViewToggle, treeRows, useFileViewMode } from "./FileList";
+import { FileViewToggle, requestFileView, treeRows, useFileViewMode } from "./FileList";
 import { ReviewDraftPanel } from "./ReviewPanels";
 
 const viewedSetting = "pullRequestViewed";
@@ -29,7 +29,7 @@ export function PullRequestFilesView({ store, number, review, compact, active, d
   diff?: (split: boolean) => ReactNode;
 }) {
   useObserve(settings);
-  const mode = useFileViewMode();
+  const mode = useFileViewMode(...requestFileView);
   const [collapsed, setCollapsed] = useState(new Set<string>());
   const [diffWidth, setDiffWidth] = useState(0);
   const pane = useRef<HTMLElement>(null);
@@ -90,7 +90,7 @@ export function PullRequestFilesView({ store, number, review, compact, active, d
     </div>;
   };
   const tree = <section className="pr-tree" style={diff ? { "--pr-tree-width": `${treeWidth(compact)}px` } as CSSProperties : undefined} aria-label={t("Changed files")}>
-    <div className="pr-tree-head"><span className="pr-cap grow">{t("{0} viewed", files.filter((file) => viewed.has(file.path)).length)}</span><FileViewToggle/></div>
+    <div className="pr-tree-head"><span className="pr-cap grow">{t("{0} viewed", files.filter((file) => viewed.has(file.path)).length)}</span><FileViewToggle view={requestFileView}/></div>
     {!review ? store.reviewLoading && <Spinner size={14}/> : !files.length && <p className="pr-cap">{t("No changed files")}</p>}
     <div className="pr-tree-rows" role="group">
       {mode === "tree" ? rows.map((row) => row.kind === "folder"

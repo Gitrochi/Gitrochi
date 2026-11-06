@@ -4,6 +4,7 @@
 "%@ requested changes" = "%@ módosításokat kért";
 "%lld changed files" = "%1$lld módosított fájl";
 "%lld comments" = "%lld megjegyzés";
+"%lld commits in %@" = "%1$lld commit itt: %2$@";
 "%lld commits replay on top of %@, newest first." = "%1$lld commit kerül újrajátszásra a(z) %2$@ tetején, a legújabbal kezdve.";
 "%lld failed" = "%lld sikertelen";
 "%lld new commits" = "%1$lld új commit";
@@ -23,6 +24,7 @@
 "Approvals" = "Jóváhagyások";
 "Approved" = "Jóváhagyva";
 "Ask questions about the selected changes" = "Kérdések feltevése a kijelölt módosításokról";
+"Based on %@" = "Alap: %@";
 "Changes requested" = "Módosítások kérve";
 "Choose a base to see the commits that replay." = "Válasszon alapot az újrajátszandó commitok megtekintéséhez.";
 "Choose the new base" = "Válassza ki az új alapot";
@@ -34,6 +36,8 @@
 "Conflicts pause the rebase until you continue or abort, and a finished rebase can be undone." = "Ütközés esetén a rebase szünetel, amíg nem folytatja vagy meg nem szakítja; a befejezett rebase visszavonható.";
 "Copy log" = "Napló másolása";
 "Create a merge commit" = "Egyesítő commit létrehozása";
+"Create merge request…" = "Merge request létrehozása…";
+"Create pull request…" = "Pull request létrehozása…";
 "Diff layout" = "Diff elrendezése";
 "Fast-forward only" = "Csak fast-forward";
 "Filter repositories" = "Tárolók szűrése";
@@ -49,6 +53,8 @@
 "Linked issue" = "Kapcsolódó issue";
 "Load log" = "Napló betöltése";
 "Merge" = "Egyesítés";
+"Merge request open" = "Merge request nyitva";
+"Merges %@ into this branch" = "%@ egyesítése ebbe az ágba";
 "More file actions" = "További fájlműveletek";
 "More job actions" = "További jobműveletek";
 "More merge request actions" = "További merge request-műveletek";
@@ -62,7 +68,9 @@
 "Newest" = "Legújabb";
 "Next file (J)" = "Következő fájl (J)";
 "No comments yet." = "Még nincsenek megjegyzések.";
+"Not pushed" = "Nincs feltöltve";
 "Nothing is due today." = "Mára nincs esedékes feladat.";
+"Nothing to push" = "Nincs mit feltölteni";
 "Open Projects" = "Projektek megnyitása";
 "Open a repository to use these" = "Ezek használatához nyisson meg egy tárolót";
 "Open changes" = "Módosítások megnyitása";
@@ -76,6 +84,9 @@
 "Next match" = "Következő találat";
 "Pull as configured in git" = "Pull a git beállításai szerint";
 "Pull options" = "Pull beállításai";
+"Pull request open" = "Pull request nyitva";
+"Push %lld commits" = "%lld commit feltöltése";
+"Push 1 commit" = "1 commit feltöltése";
 "Re-run job" = "Job újrafuttatása";
 "Rebase and merge" = "Rebase és egyesítés";
 "Rebase mode" = "Rebase módja";
@@ -104,12 +115,19 @@
 "Switch branch or repository, open or clone one, or close the tab" = "Ág vagy tároló váltása, egy tároló megnyitása vagy klónozása, vagy a lap bezárása";
 "Tasks for today" = "Mai feladatok";
 "This branch" = "Ez az ág";
+"This branch compared with the server" = "Ez az ág a szerverhez képest";
 "Unified" = "Egyesített";
 "Up to date" = "Naprakész";
+"Update branch" = "Ág frissítése";
+"Updates merge request #%@" = "Frissíti a(z) #%@ merge requestet";
+"Updates pull request #%@" = "Frissíti a(z) #%@ pull requestet";
 "Viewed %@" = "%@ megtekintve";
 "Yesterday" = "Tegnap";
+"base" = "alap";
 "choose a new base" = "válasszon új alapot";
 "line %lld" = "%lld. sor";
+"on GitHub" = "a GitHubon";
+"on GitLab" = "a GitLabon";
 "{0} of {1}" = "{0} / {1}";
 "No matches" = "Nincs találat";
 "Wrap lines" = "Sortördelés";

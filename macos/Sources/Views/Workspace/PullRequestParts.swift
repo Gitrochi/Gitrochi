@@ -94,24 +94,6 @@ struct PullRequestCard<Content: View>: View {
     }
 }
 
-/// Dates as docs/design.md writes them: relative within a day, then "Yesterday", then "Oct 28"
-enum PullRequestDate {
-    private static let relative: RelativeDateTimeFormatter = {
-        let formatter = RelativeDateTimeFormatter()
-        formatter.locale = AppLanguage.locale
-        formatter.unitsStyle = .short
-        return formatter
-    }()
-
-    static func short(_ date: Date, now: Date = Date()) -> String {
-        switch PullRequestPage.dateStyle(age: now.timeIntervalSince(date)) {
-        case .relative: return relative.localizedString(for: date, relativeTo: now)
-        case .yesterday: return String(localized: "Yesterday")
-        case .day: return date.formatted(.dateTime.month(.abbreviated).day().locale(AppLanguage.locale))
-        }
-    }
-}
-
 /// A file's folder beside its name: shortened from the start by whole segments, hidden when not even the last one fits
 struct PullRequestFolderLabel: View {
     let path: String

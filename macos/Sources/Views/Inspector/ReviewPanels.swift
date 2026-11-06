@@ -9,8 +9,6 @@ struct ReviewDraftPanel: View {
         let review = store.review?.number == number ? store.review : nil
         VStack(alignment: .leading, spacing: 8) {
             ForEach(review?.warnings ?? [], id: \.self) { warning in Text(warning).font(.caption).foregroundStyle(.orange) }
-            Text("Use the comment button beside a diff line to add it to your review. Drafts stay on this device until submitted.")
-                .font(.caption).foregroundStyle(.secondary)
             if !drafts.isEmpty {
                 Text("Pending line comments (\(drafts.count))").font(.subheadline.weight(.semibold))
                 if store.target?.provider == .gitlab {

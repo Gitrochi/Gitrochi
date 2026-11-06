@@ -4,6 +4,7 @@
 "%@ requested changes" = "%@ 要求了變更";
 "%lld changed files" = "%1$lld 個已變更檔案";
 "%lld comments" = "%lld 則留言";
+"%lld commits in %@" = "%2$@ 中的 %1$lld 個提交";
 "%lld commits replay on top of %@, newest first." = "%1$lld 個提交將重新套用到 %2$@ 之上，最新的在前。";
 "%lld failed" = "%lld 個失敗";
 "%lld new commits" = "%1$lld 個新提交";
@@ -23,6 +24,7 @@
 "Approvals" = "核准";
 "Approved" = "已核准";
 "Ask questions about the selected changes" = "詢問所選變更";
+"Based on %@" = "基於 %@";
 "Changes requested" = "已要求變更";
 "Choose a base to see the commits that replay." = "選擇基底後會顯示要重新套用的提交。";
 "Choose the new base" = "選擇新的基底";
@@ -34,6 +36,8 @@
 "Conflicts pause the rebase until you continue or abort, and a finished rebase can be undone." = "發生衝突時重訂基底會暫停，直到你繼續或中止；完成的重訂基底可以還原。";
 "Copy log" = "複製記錄";
 "Create a merge commit" = "建立合併提交";
+"Create merge request…" = "建立合併請求…";
+"Create pull request…" = "建立拉取請求…";
 "Diff layout" = "差異版面";
 "Fast-forward only" = "僅快轉";
 "Filter repositories" = "篩選存放庫";
@@ -49,6 +53,8 @@
 "Linked issue" = "已連結的議題";
 "Load log" = "載入記錄";
 "Merge" = "合併";
+"Merge request open" = "合併請求已開啟";
+"Merges %@ into this branch" = "將 %@ 合併到此分支";
 "More file actions" = "更多檔案操作";
 "More job actions" = "更多作業操作";
 "More merge request actions" = "更多合併請求操作";
@@ -62,7 +68,9 @@
 "Newest" = "最新";
 "Next file (J)" = "下一個檔案 (J)";
 "No comments yet." = "尚無留言。";
+"Not pushed" = "未推送";
 "Nothing is due today." = "今天沒有到期的工作。";
+"Nothing to push" = "沒有可推送的內容";
 "Open Projects" = "開啟專案";
 "Open a repository to use these" = "開啟存放庫後才能使用這些";
 "Open changes" = "開啟變更";
@@ -76,6 +84,9 @@
 "Next match" = "下一個符合項目";
 "Pull as configured in git" = "依 git 設定提取";
 "Pull options" = "提取選項";
+"Pull request open" = "拉取請求已開啟";
+"Push %lld commits" = "推送 %lld 個提交";
+"Push 1 commit" = "推送 1 個提交";
 "Re-run job" = "重新執行作業";
 "Rebase and merge" = "重訂基底並合併";
 "Rebase mode" = "重訂基底方式";
@@ -104,12 +115,19 @@
 "Switch branch or repository, open or clone one, or close the tab" = "切換分支或存放庫、開啟或複製存放庫，或關閉分頁";
 "Tasks for today" = "今日工作";
 "This branch" = "此分支";
+"This branch compared with the server" = "此分支與伺服器的比較";
 "Unified" = "單欄";
 "Up to date" = "已是最新";
+"Update branch" = "更新分支";
+"Updates merge request #%@" = "更新合併請求 #%@";
+"Updates pull request #%@" = "更新拉取請求 #%@";
 "Viewed %@" = "已檢視 %@";
 "Yesterday" = "昨天";
+"base" = "基礎";
 "choose a new base" = "選擇新的基底";
 "line %lld" = "第 %lld 行";
+"on GitHub" = "在 GitHub 上";
+"on GitLab" = "在 GitLab 上";
 "{0} of {1}" = "第 {0} 項，共 {1} 項";
 "No matches" = "沒有符合項目";
 "Wrap lines" = "自動換行";

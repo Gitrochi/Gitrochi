@@ -30,7 +30,7 @@ struct PullRequestDetailView: View {
                     if PullRequestPage.headerInOneRow(onPage: onPage, tab: tab, width: width) { filesHeader(pr, t, compact: compact) } else { header(pr, t, wide: width >= 640) }
                     // every tab stays mounted: drafts, metadata edits and loaded checks survive a tab switch
                     ZStack(alignment: .topLeading) {
-                        panel("conversation") { conversation(pr, t, wide: width >= 776) }
+                        panel("conversation") { conversation(pr, t, wide: width >= 716) }
                         panel("files") { PullRequestFilesView(number: number, compact: compact, active: tab == "files", treeOnly: !onPage) }
                         panel("checks") { checks(pr) }
                     }

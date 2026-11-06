@@ -365,6 +365,7 @@ private struct ReviewCommentable: ViewModifier {
     let line: DiffLine
     let side: ReviewLineSide?
     let enabled: Bool
+    @ViewState private var hovered = false
 
     @ViewBuilder func body(content: Content) -> some View {
         let actualSide = side ?? (line.newNo != nil ? .right : .left)
@@ -383,8 +384,10 @@ private struct ReviewCommentable: ViewModifier {
                 .help("Add review comment")
                 .accessibilityLabel(Text("Add review comment on line \(number)"))
                 .disabled(store.reviewBusy || store.reviewLoading)
+                .opacity(hovered ? 1 : 0)
                 content
             }
+            .onHover { hovered = $0 }
         } else { content }
     }
 }

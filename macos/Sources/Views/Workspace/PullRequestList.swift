@@ -165,6 +165,15 @@ struct PullRequestList: View {
 
     // MARK: Rows
 
+    /// The signed-in account's own requests carry its photo
+    @ViewBuilder private func authorAvatar(_ author: String) -> some View {
+        if let account = store.hostingAccount, account.username.caseInsensitiveCompare(author) == .orderedSame {
+            HostingAvatar(name: account.name ?? author, username: author, avatarURL: account.avatarURL.flatMap(URL.init(string:)), size: 16)
+        } else {
+            Avatar(name: author, email: author, size: 16)
+        }
+    }
+
     private func row(_ pr: PullRequest) -> some View {
         let selected = store.selection == .pullRequest(pr.number)
         let secondary = selected ? Color.primary.opacity(0.72) : StudioStyle.Rail.icon
@@ -175,7 +184,7 @@ struct PullRequestList: View {
                     Text(pr.title).font(.system(size: 13, weight: selected ? .semibold : .medium)).lineLimit(2)
                         .multilineTextAlignment(.leading).frame(maxWidth: .infinity, alignment: .leading)
                     // the list row owns the updated date; it never truncates
-                    if let date = pr.updated { Text(PullRequestDate.short(date)).font(.system(size: 12)).foregroundStyle(secondary).fixedSize().help(Fmt.long(date)) }
+                    if let date = pr.updated { Text(verbatim: ListDate.when(date)).font(.system(size: 12)).foregroundStyle(secondary).fixedSize().help(Fmt.long(date)) }
                 }
                 HStack(spacing: 6) {
                     Text(verbatim: "#\(pr.number)").font(.system(size: 11, design: .monospaced)).foregroundStyle(secondary).fixedSize()
@@ -198,7 +207,7 @@ struct PullRequestList: View {
                         .accessibilityElement(children: .ignore)
                         .accessibilityLabel(comments == 1 ? String(localized: "1 comment") : String(localized: "\(comments) comments"))
                     }
-                    Avatar(name: pr.author, email: pr.author, size: 16).help(Text(verbatim: "@\(pr.author)")).accessibilityLabel(Text(verbatim: "@\(pr.author)"))
+                    authorAvatar(pr.author).help(Text(verbatim: "@\(pr.author)")).accessibilityLabel(Text(verbatim: "@\(pr.author)"))
                 }
             }
             .padding(.horizontal, 10).padding(.vertical, 8)

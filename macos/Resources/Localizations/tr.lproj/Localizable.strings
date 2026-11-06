@@ -4,6 +4,7 @@
 "%@ requested changes" = "%@ değişiklik istedi";
 "%lld changed files" = "%1$lld değişen dosya";
 "%lld comments" = "%lld yorum";
+"%lld commits in %@" = "%2$@ içinde %1$lld commit";
 "%lld commits replay on top of %@, newest first." = "%1$lld commit, en yenisi önce olacak şekilde %2$@ üzerine yeniden uygulanır.";
 "%lld failed" = "%lld başarısız";
 "%lld new commits" = "%1$lld yeni commit";
@@ -23,6 +24,7 @@
 "Approvals" = "Onaylar";
 "Approved" = "Onaylandı";
 "Ask questions about the selected changes" = "Seçili değişiklikler hakkında soru sor";
+"Based on %@" = "%@ tabanlı";
 "Changes requested" = "Değişiklik istendi";
 "Choose a base to see the commits that replay." = "Yeniden uygulanacak commit'leri görmek için bir taban seçin.";
 "Choose the new base" = "Yeni tabanı seçin";
@@ -34,6 +36,8 @@
 "Conflicts pause the rebase until you continue or abort, and a finished rebase can be undone." = "Çakışmalar, siz devam edene veya iptal edene kadar rebase'i duraklatır; tamamlanan rebase geri alınabilir.";
 "Copy log" = "Günlüğü kopyala";
 "Create a merge commit" = "Birleştirme commit'i oluştur";
+"Create merge request…" = "Merge request oluştur…";
+"Create pull request…" = "Pull request oluştur…";
 "Diff layout" = "Diff düzeni";
 "Fast-forward only" = "Yalnızca ileri sar";
 "Filter repositories" = "Depoları filtrele";
@@ -49,6 +53,8 @@
 "Linked issue" = "Bağlı issue";
 "Load log" = "Günlüğü yükle";
 "Merge" = "Birleştir";
+"Merge request open" = "Merge request açık";
+"Merges %@ into this branch" = "%@ bu dala birleştirilir";
 "More file actions" = "Diğer dosya eylemleri";
 "More job actions" = "Diğer iş eylemleri";
 "More merge request actions" = "Diğer merge request eylemleri";
@@ -62,7 +68,9 @@
 "Newest" = "En yeni";
 "Next file (J)" = "Sonraki dosya (J)";
 "No comments yet." = "Henüz yorum yok.";
+"Not pushed" = "Gönderilmedi";
 "Nothing is due today." = "Bugün teslim edilecek bir şey yok.";
+"Nothing to push" = "Gönderilecek bir şey yok";
 "Open Projects" = "Projeleri aç";
 "Open a repository to use these" = "Bunları kullanmak için bir depo açın";
 "Open changes" = "Değişiklikleri aç";
@@ -76,6 +84,9 @@
 "Next match" = "Sonraki eşleşme";
 "Pull as configured in git" = "git ayarlarına göre çek";
 "Pull options" = "Çekme seçenekleri";
+"Pull request open" = "Pull request açık";
+"Push %lld commits" = "%lld commit gönder";
+"Push 1 commit" = "1 commit gönder";
 "Re-run job" = "İşi yeniden çalıştır";
 "Rebase and merge" = "Rebase ve birleştir";
 "Rebase mode" = "Rebase modu";
@@ -104,12 +115,19 @@
 "Switch branch or repository, open or clone one, or close the tab" = "Dalı veya depoyu değiştir, bir depo aç ya da klonla veya sekmeyi kapat";
 "Tasks for today" = "Bugünün görevleri";
 "This branch" = "Bu dal";
+"This branch compared with the server" = "Bu dal ve sunucu karşılaştırması";
 "Unified" = "Birleşik";
 "Up to date" = "Güncel";
+"Update branch" = "Dalı güncelle";
+"Updates merge request #%@" = "#%@ merge request'ini günceller";
+"Updates pull request #%@" = "#%@ pull request'ini günceller";
 "Viewed %@" = "%@ görüntülendi";
 "Yesterday" = "Dün";
+"base" = "taban";
 "choose a new base" = "yeni bir taban seçin";
 "line %lld" = "satır %lld";
+"on GitHub" = "GitHub'da";
+"on GitLab" = "GitLab'da";
 "{0} of {1}" = "{0} / {1}";
 "No matches" = "Eşleşme yok";
 "Wrap lines" = "Satırları kaydır";

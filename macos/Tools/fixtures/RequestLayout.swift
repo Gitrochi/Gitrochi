@@ -119,6 +119,8 @@ struct RequestFixtureAvatarImage<Content: View>: View {
                         ], state: ReviewState(approvedBy: ["maintainer"]))
                     }
                     if scenario == "files" {
+                        // the list keeps the fixture's file order, so the first file is the one with the patch
+                        requestFixtureDefaults.set("list", forKey: requestFileViewModeKey)
                         // Changed files: the list shown in the wide window (compact header, 280pt tree) and hidden in the narrow one
                         requestFixtureDefaults.set(width < 1200, forKey: "pullRequestListHidden")
                         let patch = "@@ -1,4 +1,5 @@\n import SwiftUI\n \n-struct MemberCard: View {\n+/// One member of an organization\n+struct MemberProfileCard: View {\n     let name: String\n"

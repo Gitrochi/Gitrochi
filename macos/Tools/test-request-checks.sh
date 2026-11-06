@@ -165,10 +165,10 @@ struct FixtureFailure: LocalizedError {
         func job(_ id: Int, _ status: CIStatus) -> CIJob { CIJob(id: id, name: "job\(id)", stage: "", status: status, url: "", allowFailure: false, duration: nil) }
         let groups = ActionsPage.groups([job(1, .success), job(2, .failed), job(3, .skipped), job(4, .manual), job(5, .running), job(6, .success)])
         precondition(groups.map(\.group) == [.failed, .running, .waiting, .passed, .other] && groups.map { $0.jobs.map(\.id) } == [[2], [5], [4], [1, 6], [3]], "Jobs are grouped by result, what failed first")
-        precondition(ActionsPage.isError("TerminalFocusTests.swift:58: error: XCTAssertTrue failed") && ActionsPage.isError("Error: Process completed with exit code 1.") && ActionsPage.isError("FAIL: Update the dependency lockfile") && ActionsPage.isError("##[error]boom") && ActionsPage.isError("fatal: not a git repository"), "A line that names an error is marked")
-        precondition(!ActionsPage.isError("Test Suite 'TerminalFocusTests' started.") && !ActionsPage.isError("Checked 12 terrors, errorless") && !ActionsPage.isError("Executed 231 tests, with 1 failure"), "Words that only contain one are not")
-        precondition(!ActionsPage.isError("curl --retry 10 --show-error --fail https://example.test") && !ActionsPage.isError("CACHE_ON_FAILURE: false"))
-        precondition(ActionsPage.lines("2026-11-06T00:45:22.6820373Z ##[group]Run tests\r\n2026-11-06T00:45:22.68Z \u{1B}[36;1mmake\u{1B}[0m\n##[endgroup]\n##[error]Process completed\n##[start-action id=1]") == ["Run tests", "make", "Error: Process completed"])
+        precondition(JobLog.isError("TerminalFocusTests.swift:58: error: XCTAssertTrue failed") && JobLog.isError("Error: Process completed with exit code 1.") && JobLog.isError("FAIL: Update the dependency lockfile") && JobLog.isError("##[error]boom") && JobLog.isError("fatal: not a git repository"), "A line that names an error is marked")
+        precondition(!JobLog.isError("Test Suite 'TerminalFocusTests' started.") && !JobLog.isError("Checked 12 terrors, errorless") && !JobLog.isError("Executed 231 tests, with 1 failure"), "Words that only contain one are not")
+        precondition(!JobLog.isError("curl --retry 10 --show-error --fail https://example.test") && !JobLog.isError("CACHE_ON_FAILURE: false"))
+        precondition(JobLog.lines("2026-11-06T00:45:22.6820373Z ##[group]Run tests\r\n2026-11-06T00:45:22.68Z \u{1B}[36;1mmake\u{1B}[0m\n##[endgroup]\n##[error]Process completed\n##[start-action id=1]") == ["Run tests", "make", "Error: Process completed"])
         precondition(ActionsPage.firstShown((1...46).map { $0 == 41 ? "x.swift:58: error: failed" : "line \($0)" }) == 37 && ActionsPage.firstShown((1...500).map { "line \($0)" }) == 300 && ActionsPage.firstShown(["one"]) == 0, "A log opens a few lines before its first error, or on its last two hundred lines")
         print("Request checks: GitHub check/status pagination and latest deduplication, partial failures/redaction, GitLab merged-result pipeline/job routing, stale context and cancellation, and the Actions page's segments, search, branch history, job groups and log errors passed")
     }
@@ -176,7 +176,7 @@ struct FixtureFailure: LocalizedError {
 SWIFT
 swiftc -parse-as-library -swift-version 5 \
     "$ROOT/Sources/Services/CIModels.swift" \
-    "$ROOT/Sources/Core/ActionsPage.swift" \
+    "$ROOT/Sources/Core/ActionsPage.swift" "$ROOT/Sources/Core/JobLog.swift" \
     "$ROOT/Sources/Services/Collaboration.swift" \
     "$ROOT/Sources/Services/WorkspaceCILog.swift" \
     "$ROOT/Sources/Services/RequestChecks.swift" \

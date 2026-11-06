@@ -3,6 +3,7 @@
 "%@ requested changes" = "%@ が変更を要求しました";
 "%lld changed files" = "変更ファイル %1$lld 件";
 "%lld comments" = "コメント %lld 件";
+"%lld commits in %@" = "%2$@ の %1$lld 件のコミット";
 "%lld commits replay on top of %@, newest first." = "%1$lld 件のコミットを %2$@ の上に適用し直します（新しい順）。";
 "%lld failed" = "%lld 件失敗";
 "%lld new commits" = "新しいコミット %1$lld 件";
@@ -22,6 +23,7 @@
 "Approvals" = "承認";
 "Approved" = "承認済み";
 "Ask questions about the selected changes" = "選択した変更について質問する";
+"Based on %@" = "%@ がベース";
 "Changes requested" = "変更要求";
 "Choose a base to see the commits that replay." = "ベースを選ぶと、適用し直すコミットが表示されます。";
 "Choose the new base" = "新しいベースを選ぶ";
@@ -33,6 +35,8 @@
 "Conflicts pause the rebase until you continue or abort, and a finished rebase can be undone." = "コンフリクトが起きると、続行または中止するまでリベースは止まります。完了したリベースは元に戻せます。";
 "Copy log" = "ログをコピー";
 "Create a merge commit" = "マージコミットを作成";
+"Create merge request…" = "マージリクエストを作成…";
+"Create pull request…" = "プルリクエストを作成…";
 "Development" = "開発";
 "Diff layout" = "差分のレイアウト";
 "Fast-forward only" = "早送りのみ";
@@ -48,6 +52,8 @@
 "Linked issue" = "リンクされた Issue";
 "Load log" = "ログを読み込む";
 "Merge" = "マージ";
+"Merge request open" = "マージリクエスト オープン";
+"Merges %@ into this branch" = "%@ をこのブランチにマージします";
 "More file actions" = "ファイルのその他の操作";
 "More job actions" = "ジョブのその他の操作";
 "More merge request actions" = "マージリクエストのその他の操作";
@@ -62,7 +68,9 @@
 "Newest first" = "新しい順";
 "Next file (J)" = "次のファイル (J)";
 "No comments yet." = "コメントはまだありません。";
+"Not pushed" = "未プッシュ";
 "Nothing is due today." = "今日が期限のタスクはありません。";
+"Nothing to push" = "プッシュするものはありません";
 "Open Projects" = "プロジェクトを開く";
 "Open a repository to use these" = "これらを使うにはリポジトリを開いてください";
 "Open changes" = "変更を開く";
@@ -74,6 +82,9 @@
 "Previous file (K)" = "前のファイル (K)";
 "Pull as configured in git" = "git の設定どおりにプル";
 "Pull options" = "プルのオプション";
+"Pull request open" = "プルリクエスト オープン";
+"Push %lld commits" = "%lld 件のコミットをプッシュ";
+"Push 1 commit" = "1 件のコミットをプッシュ";
 "Re-run job" = "ジョブを再実行";
 "Rebase and merge" = "リベースしてマージ";
 "Rebase mode" = "リベースの方法";
@@ -101,8 +112,12 @@
 "Switch branch or repository, open or clone one, or close the tab" = "ブランチやリポジトリを切り替える、リポジトリを開く・クローンする、またはタブを閉じる";
 "Tasks for today" = "今日のタスク";
 "This branch" = "このブランチ";
+"This branch compared with the server" = "サーバーと比較したこのブランチ";
 "Unified" = "統合";
 "Up to date" = "最新";
+"Update branch" = "ブランチを更新";
+"Updates merge request #%@" = "マージリクエスト #%@ を更新します";
+"Updates pull request #%@" = "プルリクエスト #%@ を更新します";
 "Version number" = "バージョン順";
 "Create branch" = "ブランチを作成";
 "Create pull request" = "プルリクエストを作成";
@@ -119,8 +134,11 @@
 "Next match" = "次の検索結果";
 "Viewed %@" = "%@ を閲覧済み";
 "Yesterday" = "昨日";
+"base" = "ベース";
 "choose a new base" = "新しいベースを選択";
 "line %lld" = "%lld 行目";
+"on GitHub" = "GitHub 上";
+"on GitLab" = "GitLab 上";
 "{0} of {1}" = "{1}件中{0}件";
 "No matches" = "一致なし";
 "Wrap lines" = "行を折り返す";

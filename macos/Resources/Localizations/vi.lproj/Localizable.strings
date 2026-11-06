@@ -4,6 +4,7 @@
 "%@ requested changes" = "%@ đã yêu cầu thay đổi";
 "%lld changed files" = "%1$lld tệp đã thay đổi";
 "%lld comments" = "%lld bình luận";
+"%lld commits in %@" = "%1$lld commit trong %2$@";
 "%lld commits replay on top of %@, newest first." = "%1$lld commit sẽ được áp dụng lại lên %2$@, mới nhất trước.";
 "%lld failed" = "%lld thất bại";
 "%lld new commits" = "%1$lld commit mới";
@@ -23,6 +24,7 @@
 "Approvals" = "Lượt phê duyệt";
 "Approved" = "Đã phê duyệt";
 "Ask questions about the selected changes" = "Đặt câu hỏi về các thay đổi đã chọn";
+"Based on %@" = "Dựa trên %@";
 "Changes requested" = "Đã yêu cầu thay đổi";
 "Choose a base to see the commits that replay." = "Chọn một gốc để xem các commit sẽ áp dụng lại.";
 "Choose the new base" = "Chọn gốc mới";
@@ -34,6 +36,8 @@
 "Conflicts pause the rebase until you continue or abort, and a finished rebase can be undone." = "Xung đột sẽ tạm dừng rebase cho đến khi bạn tiếp tục hoặc hủy, và rebase đã xong có thể hoàn tác.";
 "Copy log" = "Sao chép log";
 "Create a merge commit" = "Tạo commit merge";
+"Create merge request…" = "Tạo merge request…";
+"Create pull request…" = "Tạo pull request…";
 "Diff layout" = "Bố cục diff";
 "Fast-forward only" = "Chỉ fast-forward";
 "Filter repositories" = "Lọc kho lưu trữ";
@@ -49,6 +53,8 @@
 "Linked issue" = "Issue liên kết";
 "Load log" = "Tải log";
 "Merge" = "Merge";
+"Merge request open" = "Merge request đang mở";
+"Merges %@ into this branch" = "Hợp nhất %@ vào nhánh này";
 "More file actions" = "Thêm thao tác với tệp";
 "More job actions" = "Thêm thao tác với job";
 "More merge request actions" = "Thêm thao tác với merge request";
@@ -62,7 +68,9 @@
 "Newest" = "Mới nhất";
 "Next file (J)" = "Tệp tiếp theo (J)";
 "No comments yet." = "Chưa có bình luận nào.";
+"Not pushed" = "Chưa đẩy";
 "Nothing is due today." = "Hôm nay không có việc nào đến hạn.";
+"Nothing to push" = "Không có gì để đẩy";
 "Open Projects" = "Mở Dự án";
 "Open a repository to use these" = "Mở một kho lưu trữ để dùng các mục này";
 "Open changes" = "Mở thay đổi";
@@ -76,6 +84,9 @@
 "Next match" = "Kết quả tiếp theo";
 "Pull as configured in git" = "Pull theo cấu hình git";
 "Pull options" = "Tùy chọn pull";
+"Pull request open" = "Pull request đang mở";
+"Push %lld commits" = "Đẩy %lld commit";
+"Push 1 commit" = "Đẩy 1 commit";
 "Re-run job" = "Chạy lại job";
 "Rebase and merge" = "Rebase và merge";
 "Rebase mode" = "Chế độ rebase";
@@ -104,12 +115,19 @@
 "Switch branch or repository, open or clone one, or close the tab" = "Chuyển nhánh hoặc kho lưu trữ, mở hoặc clone một kho, hoặc đóng tab";
 "Tasks for today" = "Việc hôm nay";
 "This branch" = "Nhánh này";
+"This branch compared with the server" = "Nhánh này so với máy chủ";
 "Unified" = "Hợp nhất";
 "Up to date" = "Đã cập nhật";
+"Update branch" = "Cập nhật nhánh";
+"Updates merge request #%@" = "Cập nhật merge request #%@";
+"Updates pull request #%@" = "Cập nhật pull request #%@";
 "Viewed %@" = "Đã xem %@";
 "Yesterday" = "Hôm qua";
+"base" = "gốc";
 "choose a new base" = "chọn gốc mới";
 "line %lld" = "dòng %lld";
+"on GitHub" = "trên GitHub";
+"on GitLab" = "trên GitLab";
 "{0} of {1}" = "{0} trên {1}";
 "No matches" = "Không có kết quả";
 "Wrap lines" = "Ngắt dòng";

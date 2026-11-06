@@ -13,7 +13,7 @@ struct PullRequestFilesView: View {
     let active: Bool
     /// The repository's inspector has no room for a diff: the tree alone, and a file opens on the Pull requests page
     var treeOnly = false
-    @AppStorage(fileViewModeKey) private var mode = "list"
+    @AppStorage(requestFileViewModeKey) private var mode = "tree"
     @ViewState private var collapsed = Set<String>()
     @ViewState private var viewed = Set<String>()
     @ViewState private var hovered: String?
@@ -102,7 +102,7 @@ struct PullRequestFilesView: View {
             HStack(spacing: 8) {
                 PullRequestCaption(String(localized: "\(viewed.intersection(review.files.map(\.path)).count) viewed"))
                 Spacer(minLength: 8)
-                FileViewToggle()
+                FileViewToggle(key: requestFileViewModeKey, fallback: "tree")
             }
             .padding(.leading, 6)
             .frame(height: 44)
@@ -119,7 +119,7 @@ struct PullRequestFilesView: View {
                     } else {
                         ForEach(review.files) { fileRow($0, review, indent: 6, folder: true) }
                     }
-                    // how to comment on a line, and the line comments waiting to be sent, stay with the files
+                    // the line comments waiting to be sent stay with the files
                     ReviewDraftPanel(number: number).padding(.top, 12).padding(.horizontal, 6)
                 }
             }

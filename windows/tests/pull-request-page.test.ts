@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { PullRequest } from "@/entities/git";
 import type { PullRequestReview, ReviewComment } from "@/entities/hosting";
 import {
-  branchLabel, checkGroups, checkJob, checksBadge, commentCount, dateStyle, firstError, folderLabel, headerInOneRow, isCompact, isThisBranch, linkedIssues, logLines, logTail, logWindow,
+  branchLabel, checkGroups, checkJob, checksBadge, commentCount, branchSummary, firstError, folderLabel, headerInOneRow, isCompact, isThisBranch, linkedIssues, logLines, logTail, logWindow,
   reviewRequestedCount, sorted, splitAllowed, threadCount, treeWidth, viewedKey, withViewed,
 } from "@/widgets/inspector/lib/pull-request-page";
 
@@ -24,7 +24,10 @@ describe("Pull requests page", () => {
     expect(headerInOneRow(true, "files", 719)).toBe(false);
     expect(headerInOneRow(true, "conversation", 1200)).toBe(false);
     expect(headerInOneRow(false, "files", 1200)).toBe(false);
-    expect([dateStyle(86_399), dateStyle(86_400), dateStyle(2 * 86_400)]).toEqual(["relative", "yesterday", "day"]);
+    expect(branchSummary(false, 3, 2, 3)).toEqual({ kind: "noRequest", commits: 3 });
+    expect(branchSummary(true, 2, 5, 6)).toEqual({ kind: "notPushed", onServer: 4, local: 2 });
+    expect(branchSummary(true, 0, 5, 3)).toEqual({ kind: "moved", incoming: 5, commits: 3 });
+    expect(branchSummary(true, 0, 0, 3)).toEqual({ kind: "upToDate", commits: 3 });
   });
 
   it("allows Split only from a 1000 px diff", () => {

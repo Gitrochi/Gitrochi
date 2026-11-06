@@ -4,6 +4,7 @@
 "%@ requested changes" = "Пользователь %@ запросил изменения";
 "%lld changed files" = "Изменённых файлов: %1$lld";
 "%lld comments" = "Комментариев: %lld";
+"%lld commits in %@" = "Коммитов в %2$@: %1$lld";
 "%lld commits replay on top of %@, newest first." = "Коммитов: %1$lld — будут применены поверх %2$@, сначала новые.";
 "%lld failed" = "Со сбоем: %lld";
 "%lld new commits" = "Новых коммитов: %1$lld";
@@ -23,6 +24,7 @@
 "Approvals" = "Одобрения";
 "Approved" = "Одобрено";
 "Ask questions about the selected changes" = "Задать вопросы о выбранных изменениях";
+"Based on %@" = "На основе %@";
 "Changes requested" = "Запрошены изменения";
 "Choose a base to see the commits that replay." = "Выберите базу, чтобы увидеть коммиты, которые будут применены повторно.";
 "Choose the new base" = "Выберите новую базу";
@@ -34,6 +36,8 @@
 "Conflicts pause the rebase until you continue or abort, and a finished rebase can be undone." = "При конфликтах перебазирование приостанавливается, пока вы не продолжите или не отмените его; завершённое перебазирование можно отменить.";
 "Copy log" = "Копировать журнал";
 "Create a merge commit" = "Создать коммит слияния";
+"Create merge request…" = "Создать merge request…";
+"Create pull request…" = "Создать pull request…";
 "Diff layout" = "Макет diff";
 "Fast-forward only" = "Только перемотка вперёд";
 "Filter repositories" = "Фильтр репозиториев";
@@ -49,6 +53,8 @@
 "Linked issue" = "Связанная задача";
 "Load log" = "Загрузить журнал";
 "Merge" = "Слияние";
+"Merge request open" = "Merge request открыт";
+"Merges %@ into this branch" = "Сольёт %@ в эту ветку";
 "More file actions" = "Другие действия с файлом";
 "More job actions" = "Другие действия с заданием";
 "More merge request actions" = "Другие действия с merge request";
@@ -62,7 +68,9 @@
 "Newest" = "Сначала новые";
 "Next file (J)" = "Следующий файл (J)";
 "No comments yet." = "Комментариев пока нет.";
+"Not pushed" = "Не отправлено";
 "Nothing is due today." = "На сегодня ничего нет.";
+"Nothing to push" = "Нечего отправлять";
 "Open Projects" = "Открыть проекты";
 "Open a repository to use these" = "Откройте репозиторий, чтобы ими пользоваться";
 "Open changes" = "Открыть изменения";
@@ -76,6 +84,9 @@
 "Next match" = "Следующее совпадение";
 "Pull as configured in git" = "Извлечь по настройкам git";
 "Pull options" = "Параметры извлечения";
+"Pull request open" = "Pull request открыт";
+"Push %lld commits" = "Отправить коммиты: %lld";
+"Push 1 commit" = "Отправить 1 коммит";
 "Re-run job" = "Перезапустить задание";
 "Rebase and merge" = "Перебазирование и слияние";
 "Rebase mode" = "Режим перебазирования";
@@ -104,12 +115,19 @@
 "Switch branch or repository, open or clone one, or close the tab" = "Переключить ветку или репозиторий, открыть или клонировать репозиторий либо закрыть вкладку";
 "Tasks for today" = "Задачи на сегодня";
 "This branch" = "Эта ветка";
+"This branch compared with the server" = "Эта ветка в сравнении с сервером";
 "Unified" = "Единый";
 "Up to date" = "Актуально";
+"Update branch" = "Обновить ветку";
+"Updates merge request #%@" = "Обновит merge request #%@";
+"Updates pull request #%@" = "Обновит pull request #%@";
 "Viewed %@" = "Просмотрено: %@";
 "Yesterday" = "Вчера";
+"base" = "база";
 "choose a new base" = "выберите новую базу";
 "line %lld" = "строка %lld";
+"on GitHub" = "на GitHub";
+"on GitLab" = "на GitLab";
 "{0} of {1}" = "{0} из {1}";
 "No matches" = "Нет совпадений";
 "Wrap lines" = "Перенос строк";

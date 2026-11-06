@@ -2,9 +2,13 @@ import SwiftUI
 
 /// 변경 파일 보기 방식(목록/트리) — 작업 영역과 커밋 상세가 함께 쓴다
 let fileViewModeKey = "fileViewMode"
+/// Requests open as a tree (the Changed files board); the choice is apart from the repository's changes
+let requestFileViewModeKey = "requestFileViewMode"
 
 struct FileViewToggle: View {
-    @AppStorage(fileViewModeKey) private var mode = "list"
+    @AppStorage private var mode: String
+
+    init(key: String = fileViewModeKey, fallback: String = "list") { _mode = AppStorage(wrappedValue: fallback, key) }
 
     var body: some View {
         Picker("File display", selection: $mode) {

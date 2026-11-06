@@ -1,6 +1,6 @@
 /* The Pull requests page (the redesign's pull request boards): a caption row, then a 312px list column, or the 40px
    strip that brings it back, beside the selected request. macOS: PullRequestsWorkspace.swift, PullRequestList.swift. */
-.pr-page { display: flex; flex-direction: column; flex: 1; height: 100%; min-height: 0; min-width: 0; background: var(--surface); color: var(--text); font-size: 13px; container: pr-page / inline-size; }
+.pr-page { display: flex; flex-direction: column; flex: 1; height: 100%; min-height: 0; min-width: 0; background: var(--surface); color: var(--text); font-size: 13px; container: pr-page hosted / inline-size; }
 .pr-page-top { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 20px; min-width: 0; }
 .pr-page-where { font-size: 13px; color: var(--text-2); min-width: 0; overflow-wrap: anywhere; }
 .pr-page .btn.pr-page-icon { width: 28px; padding: 0; flex: none; }
@@ -54,3 +54,18 @@
   .pr-list-strip { flex: 0 0 auto; width: auto; flex-direction: row; padding: 6px 12px; border-right: 0; border-bottom: 1px solid var(--border); }
   .pr-page-detail { flex: 1 1 auto; }
 }
+
+/* the summary's line from the base to HEAD */
+.pr-summary-branch { direction: rtl; text-align: left; }
+.pr-track { flex: 1 1 auto; min-width: 0; display: flex; align-items: flex-start; padding: 20px 8px 0; }
+.pr-track-node { flex: 0 0 96px; position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 11px; text-align: center; color: var(--text-2); white-space: nowrap; }
+.pr-track-node strong { font-weight: 600; color: var(--text); }
+.pr-track-node .status-tone { color: var(--status-text); }
+.pr-track-dot { width: 10px; height: 10px; margin: 3px 0; border-radius: 50%; background: var(--text-3); }
+.pr-track-node.strong .pr-track-dot { width: 12px; height: 12px; margin: 2px 0; background: var(--text); }
+.pr-track-node.current .pr-track-dot { width: 12px; height: 12px; margin: 2px 0; background: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
+.pr-track-line { flex: 1 1 0; min-width: 40px; margin: 0 -48px; position: relative; height: 16px; }
+.pr-track-line::before { content: ""; position: absolute; left: 0; right: 0; top: 7px; border-top: 2px solid var(--border-strong); }
+.pr-track-line.dashed::before { border-top: 2px dashed var(--text); }
+.pr-track-line > span { position: absolute; left: 0; right: 0; bottom: 18px; text-align: center; font-size: 11px; color: var(--text-2); white-space: nowrap; }
+.pr-track-line.dashed > span { font-weight: 600; color: var(--text); }

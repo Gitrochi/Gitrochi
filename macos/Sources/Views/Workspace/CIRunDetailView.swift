@@ -213,8 +213,8 @@ private struct CIJobLogView: View {
     }
 
     var body: some View {
-        let lines = ActionsPage.lines(text)
-        let hasError = lines.contains(where: ActionsPage.isError)
+        let lines = JobLog.lines(text)
+        let hasError = lines.contains(where: JobLog.isError)
         let first = showAll ? 0 : ActionsPage.firstShown(lines)
         VStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 4) {
@@ -428,7 +428,7 @@ private struct LogTextView: NSViewRepresentable {
         var error: NSRange?
         for (index, line) in lines.enumerated() {
             let label = String(first + index + 1)
-            let isError = ActionsPage.isError(line)
+            let isError = JobLog.isError(line)
             let start = out.length
             out.append(NSAttributedString(string: String(repeating: " ", count: max(0, digits - label.count)) + label + "  ", attributes: isError ? marked.merging([.foregroundColor: NSColor.secondaryLabelColor]) { $1 } : number))
             out.append(NSAttributedString(string: line + (index == lines.count - 1 ? "" : "\n"), attributes: isError ? marked : plain))

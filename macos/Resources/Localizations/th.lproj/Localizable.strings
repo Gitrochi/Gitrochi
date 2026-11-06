@@ -4,6 +4,7 @@
 "%@ requested changes" = "%@ ขอให้แก้ไข";
 "%lld changed files" = "ไฟล์ที่เปลี่ยน %1$lld ไฟล์";
 "%lld comments" = "%lld ความคิดเห็น";
+"%lld commits in %@" = "%1$lld คอมมิตใน %2$@";
 "%lld commits replay on top of %@, newest first." = "commit %1$lld รายการจะถูกวางซ้ำบน %2$@ เรียงจากใหม่สุด";
 "%lld failed" = "ล้มเหลว %lld รายการ";
 "%lld new commits" = "commit ใหม่ %1$lld รายการ";
@@ -23,6 +24,7 @@
 "Approvals" = "การอนุมัติ";
 "Approved" = "อนุมัติแล้ว";
 "Ask questions about the selected changes" = "ถามเกี่ยวกับการเปลี่ยนแปลงที่เลือก";
+"Based on %@" = "อิงจาก %@";
 "Changes requested" = "ขอให้แก้ไขแล้ว";
 "Choose a base to see the commits that replay." = "เลือกฐานเพื่อดู commit ที่จะวางซ้ำ";
 "Choose the new base" = "เลือกฐานใหม่";
@@ -34,6 +36,8 @@
 "Conflicts pause the rebase until you continue or abort, and a finished rebase can be undone." = "หากเกิดข้อขัดแย้ง rebase จะหยุดจนกว่าคุณจะดำเนินการต่อหรือยกเลิก และ rebase ที่เสร็จแล้วสามารถเลิกทำได้";
 "Copy log" = "คัดลอกล็อก";
 "Create a merge commit" = "สร้างคอมมิตเมิร์จ";
+"Create merge request…" = "สร้าง merge request…";
+"Create pull request…" = "สร้าง pull request…";
 "Diff layout" = "เลย์เอาต์ diff";
 "Fast-forward only" = "fast-forward เท่านั้น";
 "Filter repositories" = "กรองรีโพสิทอรี";
@@ -49,6 +53,8 @@
 "Linked issue" = "อิชชูที่เชื่อมโยง";
 "Load log" = "โหลดล็อก";
 "Merge" = "เมิร์จ";
+"Merge request open" = "Merge request เปิดอยู่";
+"Merges %@ into this branch" = "รวม %@ เข้าสาขานี้";
 "More file actions" = "การทำงานอื่นของไฟล์";
 "More job actions" = "การทำงานอื่นของจ็อบ";
 "More merge request actions" = "การทำงานอื่นของเมิร์จรีเควสต์";
@@ -62,7 +68,9 @@
 "Newest" = "ใหม่สุด";
 "Next file (J)" = "ไฟล์ถัดไป (J)";
 "No comments yet." = "ยังไม่มีความคิดเห็น";
+"Not pushed" = "ยังไม่ได้ push";
 "Nothing is due today." = "วันนี้ไม่มีงานที่ถึงกำหนด";
+"Nothing to push" = "ไม่มีอะไรให้ push";
 "Open Projects" = "เปิดโปรเจกต์";
 "Open a repository to use these" = "เปิดรีโพสิทอรีเพื่อใช้รายการเหล่านี้";
 "Open changes" = "เปิดการเปลี่ยนแปลง";
@@ -76,6 +84,9 @@
 "Next match" = "รายการที่ตรงกันถัดไป";
 "Pull as configured in git" = "พูลตามที่ตั้งค่าไว้ใน git";
 "Pull options" = "ตัวเลือกพูล";
+"Pull request open" = "Pull request เปิดอยู่";
+"Push %lld commits" = "Push %lld คอมมิต";
+"Push 1 commit" = "Push 1 คอมมิต";
 "Re-run job" = "รันจ็อบใหม่";
 "Rebase and merge" = "รีเบสแล้วเมิร์จ";
 "Rebase mode" = "โหมด rebase";
@@ -104,12 +115,19 @@
 "Switch branch or repository, open or clone one, or close the tab" = "สลับแบรนช์หรือรีโพสิทอรี เปิดหรือโคลนรีโพสิทอรี หรือปิดแท็บ";
 "Tasks for today" = "งานสำหรับวันนี้";
 "This branch" = "แบรนช์นี้";
+"This branch compared with the server" = "สาขานี้เทียบกับเซิร์ฟเวอร์";
 "Unified" = "แบบรวม";
 "Up to date" = "เป็นปัจจุบัน";
+"Update branch" = "อัปเดตสาขา";
+"Updates merge request #%@" = "อัปเดต merge request #%@";
+"Updates pull request #%@" = "อัปเดต pull request #%@";
 "Viewed %@" = "ดู %@ แล้ว";
 "Yesterday" = "เมื่อวาน";
+"base" = "ฐาน";
 "choose a new base" = "เลือกฐานใหม่";
 "line %lld" = "บรรทัด %lld";
+"on GitHub" = "บน GitHub";
+"on GitLab" = "บน GitLab";
 "{0} of {1}" = "{0} จาก {1}";
 "No matches" = "ไม่พบรายการที่ตรงกัน";
 "Wrap lines" = "ตัดบรรทัด";

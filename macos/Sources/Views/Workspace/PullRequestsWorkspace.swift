@@ -11,7 +11,24 @@ struct PullRequestsWorkspace: View {
         if let target = store.target {
             VStack(spacing: 0) {
                 top(target)
-                Divider()
+                GeometryReader { geometry in
+                    VStack(spacing: 0) {
+                        PullRequestSummary(target: target, compact: geometry.size.width < 680)
+                        Divider()
+                        columns(target)
+                    }
+                }
+            }
+            .task { await store.loadPullRequests() }
+        } else {
+            VStack(spacing: 14) {
+                ContentUnavailableView("No hosting remote", symbol: "arrow.triangle.pull", description: Text("Open a repository with a GitHub or GitLab remote to use this workspace."))
+                Button("Open repository…") { store.presentOpenPanel() }
+            }.frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+    }
+
+    private func columns(_ target: RepoTarget) -> some View {
                 GeometryReader { geometry in
                     // a narrow window stacks the list above the request; children keep their identity so a draft survives
                     let stacked = geometry.size.width < 680
@@ -31,14 +48,6 @@ struct PullRequestsWorkspace: View {
                         detail.frame(minWidth: 0, maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                     }
                 }
-            }
-            .task { await store.loadPullRequests() }
-        } else {
-            VStack(spacing: 14) {
-                ContentUnavailableView("No hosting remote", symbol: "arrow.triangle.pull", description: Text("Open a repository with a GitHub or GitLab remote to use this workspace."))
-                Button("Open repository…") { store.presentOpenPanel() }
-            }.frame(maxWidth: .infinity, maxHeight: .infinity)
-        }
     }
 
     /// Where the list comes from, and the two things done to the list as a whole

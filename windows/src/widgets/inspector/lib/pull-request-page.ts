@@ -1,3 +1,4 @@
+import { isLogError, logLines as readableLog } from "@/shared/lib";
 import type { CIStatus } from "@/entities/ci";
 import type { PullRequest } from "@/entities/git";
 import type { PullRequestReview, ReviewComment } from "@/entities/hosting";
@@ -22,9 +23,6 @@ export const treeWidth = (compact: boolean) => (compact ? 280 : 340);
 export const splitAllowed = (diffWidth: number) => diffWidth >= splitMinimumWidth;
 /** Changed files on the Pull requests page folds its header into one 44px row, when there is room for it */
 export const headerInOneRow = (onPage: boolean, tab: string, width: number) => onPage && tab === "files" && width >= oneRowMinimumWidth;
-
-/** docs/design.md › Text: "2h ago" within 24 hours, then "Yesterday", then "Oct 28" */
-export const dateStyle = (ageSeconds: number): "relative" | "yesterday" | "day" => (ageSeconds < 86_400 ? "relative" : ageSeconds < 2 * 86_400 ? "yesterday" : "day");
 
 export type RequestSort = "updated" | "newest" | "comments";
 
@@ -83,16 +81,31 @@ export function checksBadge(checks: Check[]): { kind: "failed" | "running"; coun
 
 export interface LogLine { n: number; text: string; isError: boolean }
 
-const errorLine = /\berror\b|\bfailed\b|failure|fatal|exit code [1-9]/i;
+const exitCode = /exit code [1-9]/;
 
 /** A job log as numbered lines; the ones that report a failure are marked */
 export function logLines(body: string): LogLine[] {
-  const lines = body.replace(/\r\n?/g, "\n").split("\n");
-  if (lines.length > 1 && lines[lines.length - 1] === "") lines.pop();
-  return lines.map((text, index) => ({ n: index + 1, text, isError: errorLine.test(text) }));
+  // the same reading as the Actions page, so a log says the same thing on both
+  const lines = readableLog(body);
+  if (lines.length > 1 && !lines[lines.length - 1]) lines.pop();
+  return lines.map((text, index) => ({ n: index + 1, text, isError: isLogError(text) || exitCode.test(text) }));
 }
 
 /** The number of the first line that reports a failure */
+/** What the summary card says about the current branch (macOS: PullRequestPage.BranchSummary) */
+export type BranchSummary =
+  | { kind: "noRequest"; commits: number }
+  | { kind: "moved"; incoming: number; commits: number }
+  | { kind: "upToDate"; commits: number }
+  | { kind: "notPushed"; onServer: number; local: number };
+
+/** `commits` are the branch's own over its base, `incoming` the base's new ones, `ahead` those not pushed yet */
+export function branchSummary(hasRequest: boolean, ahead: number, incoming: number, commits: number): BranchSummary {
+  if (!hasRequest) return { kind: "noRequest", commits };
+  if (ahead > 0) return { kind: "notPushed", onServer: Math.max(0, commits - ahead), local: ahead };
+  return incoming > 0 ? { kind: "moved", incoming, commits } : { kind: "upToDate", commits };
+}
+
 export const firstError = (lines: LogLine[]): number | null => lines.find((line) => line.isError)?.n ?? null;
 
 /** The lines a log shows: the last `logTail` until the reader asks for all of them */

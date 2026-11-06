@@ -9,6 +9,7 @@ import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { Button, Empty, Spinner } from "@/shared/ui";
 import { PullRequestList } from "./PullRequestList";
+import { PullRequestSummary } from "./PullRequestSummary";
 import "./pull-requests.css";
 
 /** One choice for all three tabs, kept across restarts; nothing else hides the list. macOS: @AppStorage("pullRequestListHidden"). */
@@ -37,6 +38,7 @@ export function PullRequestsWorkspace({ store, openSettings }: { store: RepoStor
       <Button className="pr-page-icon" aria-label={t("Refresh list")} tip={t("Refresh list")} onClick={() => void store.loadPullRequests()}><RefreshCw size={14} /></Button>
       <Button disabled={!store.headBranch} tip={t("New {0} from the current branch", gitlab ? "MR" : "PR")} onClick={() => store.openSheet({ kind: "createPullRequest" })}><Plus size={13} />{t(gitlab ? "New merge request…" : "New pull request…")}</Button>
     </div>
+    <PullRequestSummary store={store} />
     <div className="pr-page-split">
       {hidden
         ? <aside className="pr-list-strip" aria-label={t(gitlab ? "Merge requests" : "Pull requests")}><Button className="pr-page-icon" aria-label={showLabel} aria-expanded={false} tip={t("Show list")} onClick={() => settings.set(listHiddenSetting, false)}><PanelLeftOpen size={14} /></Button></aside>

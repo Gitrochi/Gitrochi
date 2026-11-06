@@ -3,6 +3,7 @@
 "%@ requested changes" = "%@ hat Änderungen angefordert";
 "%lld changed files" = "%1$lld geänderte Dateien";
 "%lld comments" = "%lld Kommentare";
+"%lld commits in %@" = "%1$lld Commits in %2$@";
 "%lld commits replay on top of %@, newest first." = "%1$lld Commits werden auf %2$@ erneut abgespielt, neueste zuerst.";
 "%lld failed" = "%lld fehlgeschlagen";
 "%lld new commits" = "%1$lld neue Commits";
@@ -22,6 +23,7 @@
 "Approvals" = "Genehmigungen";
 "Approved" = "Genehmigt";
 "Ask questions about the selected changes" = "Fragen zu den ausgewählten Änderungen stellen";
+"Based on %@" = "Basiert auf %@";
 "Changes requested" = "Änderungen angefordert";
 "Choose a base to see the commits that replay." = "Wählen Sie eine Basis, um die Commits zu sehen, die erneut abgespielt werden.";
 "Choose the new base" = "Neue Basis wählen";
@@ -33,6 +35,8 @@
 "Conflicts pause the rebase until you continue or abort, and a finished rebase can be undone." = "Bei Konflikten pausiert der Rebase, bis Sie fortfahren oder abbrechen; ein abgeschlossener Rebase lässt sich rückgängig machen.";
 "Copy log" = "Log kopieren";
 "Create a merge commit" = "Merge-Commit erstellen";
+"Create merge request…" = "Merge Request erstellen…";
+"Create pull request…" = "Pull Request erstellen…";
 "Development" = "Entwicklung";
 "Diff layout" = "Diff-Layout";
 "Fast-forward only" = "Nur Fast-Forward";
@@ -48,6 +52,8 @@
 "Linked issue" = "Verknüpftes Issue";
 "Load log" = "Log laden";
 "Merge" = "Merge";
+"Merge request open" = "Merge Request offen";
+"Merges %@ into this branch" = "Führt %@ in diesen Branch zusammen";
 "More file actions" = "Weitere Dateiaktionen";
 "More job actions" = "Weitere Job-Aktionen";
 "More merge request actions" = "Weitere Merge-Request-Aktionen";
@@ -62,7 +68,9 @@
 "Newest first" = "Neueste zuerst";
 "Next file (J)" = "Nächste Datei (J)";
 "No comments yet." = "Noch keine Kommentare.";
+"Not pushed" = "Nicht gepusht";
 "Nothing is due today." = "Heute ist nichts fällig.";
+"Nothing to push" = "Nichts zu pushen";
 "Open Projects" = "Projekte öffnen";
 "Open a repository to use these" = "Öffnen Sie ein Repository, um diese zu verwenden";
 "Open changes" = "Änderungen öffnen";
@@ -74,6 +82,9 @@
 "Previous file (K)" = "Vorherige Datei (K)";
 "Pull as configured in git" = "Pull gemäß git-Konfiguration";
 "Pull options" = "Pull-Optionen";
+"Pull request open" = "Pull Request offen";
+"Push %lld commits" = "%lld Commits pushen";
+"Push 1 commit" = "1 Commit pushen";
 "Re-run job" = "Job erneut ausführen";
 "Rebase and merge" = "Rebasen und mergen";
 "Rebase mode" = "Rebase-Art";
@@ -102,8 +113,12 @@
 "Switch branch or repository, open or clone one, or close the tab" = "Branch oder Repository wechseln, ein Repository öffnen oder klonen oder den Tab schließen";
 "Tasks for today" = "Aufgaben für heute";
 "This branch" = "Dieser Branch";
+"This branch compared with the server" = "Dieser Branch im Vergleich zum Server";
 "Unified" = "Einheitlich";
 "Up to date" = "Aktuell";
+"Update branch" = "Branch aktualisieren";
+"Updates merge request #%@" = "Aktualisiert Merge Request #%@";
+"Updates pull request #%@" = "Aktualisiert Pull Request #%@";
 "Version number" = "Versionsnummer";
 "Create branch" = "Branch erstellen";
 "Create pull request" = "Pull Request erstellen";
@@ -120,8 +135,11 @@
 "Next match" = "Nächster Treffer";
 "Viewed %@" = "%@ angesehen";
 "Yesterday" = "Gestern";
+"base" = "Basis";
 "choose a new base" = "neue Basis wählen";
 "line %lld" = "Zeile %lld";
+"on GitHub" = "auf GitHub";
+"on GitLab" = "auf GitLab";
 "{0} of {1}" = "{0} von {1}";
 "No matches" = "Keine Treffer";
 "Wrap lines" = "Zeilen umbrechen";
