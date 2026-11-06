@@ -104,19 +104,26 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
     // Account: Inbox, My work and Organizations on one page; Releases and Projects have pages of their own
     settings.set("accountPageSection", "inbox");
     await mount(<AccountWorkspacePanel store={store} openSettings={() => {}} />);
-    check(host.querySelectorAll(".account-page-sections .segmented button").length === 3, "Account page must offer its three sections");
-    check([...host.querySelectorAll(".account-page-sections button")].every((b) => b.textContent?.trim() !== t("Projects") && b.textContent?.trim() !== t("Releases")), "Releases and Projects must not be account sections");
+    const sectionTabs = [...host.querySelectorAll<HTMLButtonElement>('.account-tabs [role="tab"]')];
+    check(sectionTabs.length === 3, "Account page must offer its three sections");
+    check(sectionTabs.every((b) => b.textContent?.trim() !== t("Projects") && b.textContent?.trim() !== t("Releases")), "Releases and Projects must not be account sections");
+    check(sectionTabs.every((b) => !/\d/.test(b.textContent ?? "")), "The section tabs carry no count; the filter owns the unread count");
     check(!host.querySelector("h1"), "Account sections must not show a large page title");
-    check(mentions > 0 && host.textContent?.includes("Fixture mention"), "Inbox did not query mentions");
+    check(host.querySelector(".account-picker")?.textContent?.includes("github.com · @fixture"), "The page must name the account it reads");
+    check(await until(() => mentions > 0 && !!host.querySelector(".account-row")), "Inbox did not load the account's notifications");
+    const inboxRow = host.querySelector<HTMLButtonElement>(".account-row")!;
+    check(inboxRow.textContent?.includes("Fixture mention") && inboxRow.textContent.includes("#7") && inboxRow.textContent.includes(t("Mentioned")), "An inbox row must show its title, number and reason");
+    check(inboxRow.classList.contains("unread") && inboxRow.getAttribute("aria-current") === "true", "The first notification must be unread and selected");
+    check(host.querySelector(".account-list .segmented")?.textContent === t("Unread {0}", 1) + t("All {0}", 1), "The filter must count the unread and all notifications");
     check(!host.querySelector('[role="dialog"]'), "Inbox is still a modal");
-    host.querySelector<HTMLButtonElement>(".inbox-item")!.click();
-    await pause();
-    check(host.textContent?.includes("Fixture comment"), "Inbox conversation missing");
+    // the open repository's own issue is handed to the Issues page; marking it read is one request
+    check([...host.querySelectorAll(".account-detail-actions button")].some((b) => b.textContent?.trim() === t("Open in Issues")), "A notification of the open repository must open on its page");
     await click("Mark as read");
-    check(await until(() => writes === 1 && !store.inboxBusy && store.inboxDetail?.item.unread === false), `Mark-read mutation did not finish: ${writeDetails()}`);
+    check(await until(() => writes === 1 && !host.querySelector(".account-row.unread")), `Mark-read mutation did not finish: ${writeDetails()}`);
+    check(requests.some((request) => request.method === "PATCH" && request.path === "/notifications/threads/44"), "Mark as read reached the wrong thread");
+    check(host.querySelector<HTMLButtonElement>(".account-text-button")?.disabled === true, "Mark all as read must be disabled when nothing is unread");
     await click("My work");
-    await pause();
-    check(await until(() => host.textContent?.includes("Fixture pull request") === true && host.textContent?.includes("Fixture issue") === true), `My work summaries missing: ${writeDetails()}`);
+    check(await until(() => host.querySelector(".account-row")?.textContent?.includes("Fixture global work") === true), `My work did not list the account's open work: ${writeDetails()}`);
     check(settings.get<string>("accountPageSection", "") === "myWork", "The account section was not remembered");
     check([...host.querySelectorAll("button")].every((b) => b.textContent?.trim() !== t("Gists")), "Gists must be gone");
     reset();
@@ -128,11 +135,13 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
     store.target = null;
     settings.set("accountPageSection", "myWork");
     await mount(<AccountWorkspacePanel store={store} openSettings={() => {}} />);
-    check(host.textContent?.includes(t("Select an account to load work across its repositories.")), "Global work did not require an explicit account");
-    await change(host.querySelector('select[aria-label="' + t("Account and server") + '"]')!, profile.id);
-    check(host.textContent?.includes("Fixture global work") && host.textContent?.includes("github.com/fixture/other"), "No-repository account work missing");
-    await click("Assigned requests");
-    check(host.textContent?.includes("Fixture global work"), "Global assigned requests missing");
+    // without a repository the page reads the account its picker shows
+    check(await until(() => host.querySelector(".account-row")?.textContent?.includes("Fixture global work") === true), "No-repository account work missing");
+    check(host.querySelector(".account-detail-meta")?.textContent?.includes("github.com/fixture/other"), "The detail must say where the item lives");
+    check([...host.querySelectorAll(".account-detail-actions button")].every((b) => b.textContent?.trim() !== t("Open in Pull requests")), "Another repository's request must open in the browser only");
+    const searches = () => requests.filter((request) => request.path === "/search/issues").length, searched = searches();
+    await change(host.querySelector<HTMLSelectElement>(`select[aria-label="${t("Work category")}"]`)!, "assignedRequests");
+    check(await until(() => searches() > searched && host.querySelector(".account-row")?.textContent?.includes("Fixture global work") === true), "Global assigned requests missing");
     reset();
     store.target = repositoryTarget;
     store.path = "C:/fixture/repo";
@@ -201,7 +210,7 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
     check(copies.includes("[redacted]") && !copies.includes("private-secret") && !copies.includes("fixture-token"), "Copied log did not redact credentials");
     store.ciSelected = null;
     check(writes === 4, `Unexpected mutation total: ${writeDetails()}`);
-    return [true, `Home project catalog query=${projectReads} with zero mutations; exact read/comment/create/edit mutations=${writes}; Home welcome actions and remote clone, Account page with inbox mentions/read, my-work summaries, a Releases page and no gists, account-only work, sidebar issue opening the Issues page, issue detail with Markdown, composer, close confirmation and the create/edit dialog, and CI bounded redacted log passed`];
+    return [true, `Home project catalog query=${projectReads} with zero mutations; exact read/comment/create/edit mutations=${writes}; Home welcome actions and remote clone, Account page with its three tabs, the account's inbox and mark-read, my work across repositories, a Releases page and no gists, account-only work, sidebar issue opening the Issues page, issue detail with Markdown, composer, close confirmation and the create/edit dialog, and CI bounded redacted log passed`];
   } catch (error) {
     return [false, error instanceof Error ? error.message : String(error)];
   } finally {
