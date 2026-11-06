@@ -91,8 +91,6 @@ export async function localWorkbenchSelfTest(): Promise<[boolean, string]> {
     const control = async (label: string) => { const button = host.querySelector<HTMLButtonElement>(`button[aria-label="${t(label)}"]`); check(button && !button.disabled, `Missing reader control: ${label}`); button!.click(); await pause(); };
     await control("Wrap lines"); check(host.querySelector("pre")?.classList.contains("wrap"), "Wrap control did not update the source");
     await control("Increase font size"); check(host.querySelector("pre")?.style.fontSize === "14px", "Reader font size did not change");
-    await control("Hide file explorer"); check(!host.querySelector(".code-explorer"), "Focus control did not hide the explorer");
-    await control("Show file explorer"); check(host.querySelector(".code-explorer"), "Focus control did not restore the explorer");
     check(status().includes(t("{0} lines", "6")) && status().includes(t("As of commit {0}", b.slice(0, 7))), "Reader line count or revision missing");
     reset();
     const codeFiles: Record<string, string> = {

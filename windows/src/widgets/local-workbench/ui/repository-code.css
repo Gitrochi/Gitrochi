@@ -38,7 +38,6 @@
 
 /* The folder's files */
 .code-reader-layout { display: grid; grid-template-columns: 240px minmax(0, 1fr); flex: 1; min-height: 0; min-width: 0; }
-.code-reader-layout.focused { grid-template-columns: minmax(0, 1fr); }
 .code-explorer { display: flex; flex-direction: column; min-width: 0; min-height: 0; background: var(--sidebar); border-right: 1px solid var(--border); }
 .code-file-list { flex: 1; min-height: 0; overflow: auto; box-sizing: border-box; padding: 10px 8px; display: flex; flex-direction: column; gap: 4px; }
 .code-file-list p { margin: 0; padding: 6px; line-height: 1.5; }
@@ -278,7 +277,6 @@
   .code-bar { padding: 8px 10px; }
   .code-reader-layout { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(130px, 28%) minmax(0, 1fr); overflow: auto; }
   .code-reader-layout:has(.code-language-legend) { grid-template-rows: minmax(280px, 42%) minmax(220px, 1fr); }
-  .code-reader-layout.focused { grid-template-rows: minmax(0, 1fr); }
   .code-explorer { border-right: 0; border-bottom: 1px solid var(--border); }
   .code-languages { padding: 8px 12px; }
   .code-languages-heading { margin-bottom: 5px; }

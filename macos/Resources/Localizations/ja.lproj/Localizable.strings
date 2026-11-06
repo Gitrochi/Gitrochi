@@ -126,8 +126,6 @@
 "Decrease font size" = "文字を小さく";
 "Increase font size" = "文字を大きく";
 "Copy source" = "ソースをコピー";
-"Hide file explorer" = "ファイル一覧を隠す";
-"Show file explorer" = "ファイル一覧を表示";
 "Files" = "ファイル";
 "{0} lines" = "{0}行";
 "Plain text" = "プレーンテキスト";

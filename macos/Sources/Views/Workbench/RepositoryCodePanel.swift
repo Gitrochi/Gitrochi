@@ -20,7 +20,6 @@ struct RepositoryCodePanel: View {
     @ViewState private var error: String?
     @ViewState private var treeRequest = UUID()
     @ViewState private var fileRequest = UUID()
-    @ViewState private var explorerVisible = true
     @ViewState private var fontSize: CGFloat = 13
     @ViewState private var wraps = false
     @ViewState private var findText = ""
@@ -61,12 +60,8 @@ struct RepositoryCodePanel: View {
                     .textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 16).padding(.vertical, 8)
                 Divider()
             }
-            Group {
-                if explorerVisible {
-                    AdaptiveWorkbenchSplit(listWidth: 240) { files } detail: { document }
-                } else { document }
-            }
-            .background(StudioStyle.surface)
+            AdaptiveWorkbenchSplit(listWidth: 240) { files } detail: { document }
+                .background(StudioStyle.surface)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(StudioStyle.surface)
@@ -106,13 +101,9 @@ struct RepositoryCodePanel: View {
                 } else {
                     Spacer(minLength: 0)
                 }
-                // the board has no place for these two; they stay at the end of the bar
+                // the board has no place for this; it stays at the end of the bar
                 RepositoryExternalEditorMenu(editors: editors, fileAvailable: selected?.isFile == true && treeURL == store.url,
                     open: openExternal, refresh: { editors = ExternalEditors.editors() }).disabled(store.url == nil)
-                Button { explorerVisible.toggle() } label: { DesignIconImage(icon: .panelLeft).foregroundStyle(StudioStyle.Rail.icon).frame(width: 24, height: 24).contentShape(Rectangle()) }
-                    .buttonStyle(.plain)
-                    .help(explorerVisible ? String(localized: "Hide file explorer") : String(localized: "Show file explorer"))
-                    .accessibilityLabel(explorerVisible ? String(localized: "Hide file explorer") : String(localized: "Show file explorer"))
             }
             if !wide {
                 HStack(spacing: 10) {

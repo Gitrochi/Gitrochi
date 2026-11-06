@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CaseSensitive, PanelLeftClose, PanelLeftOpen, WrapText } from "lucide-react";
+import { CaseSensitive, WrapText } from "lucide-react";
 import { ArrowDown, ArrowUp, Check, ChevronDown, ChevronLeft, ChevronRight, Cloud, Copy, CornerLeftUp, File, Folder, GitBranch, GitCommitHorizontal, Search, Tag, X } from "@/shared/icons";
 import { fileHistoryFormat, initialRepositoryFile, loadRepositoryBlob, loadRepositoryTree, parseBlameAsync, parseFileHistoryAsync, StatusBadge, validRevisionInput, type BlameLine, type ChangeKind, type FileHistoryEntry, type RepositoryBlob, type RepositoryTree, type RepositoryTreeEntry } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
@@ -37,7 +37,7 @@ export function RepositoryCodePanel({ store, source = defaultCodeSource, editorS
   const [directory, setDirectory] = useState(""), [input, setInput] = useState("HEAD"), [revisionPicker, setRevisionPicker] = useState(false), [revisionSearch, setRevisionSearch] = useState("");
   const [tree, setTree] = useState<RepositoryTree | null>(null), [selected, setSelected] = useState<RepositoryTreeEntry | null>(null), [blob, setBlob] = useState<RepositoryBlob | null>(null);
   const [mode, setMode] = useState<CodeViewMode>("Source"), [loading, setLoading] = useState(false), [fileLoading, setFileLoading] = useState(false), [error, setError] = useState<string | null>(null);
-  const [find, setFind] = useState(""), [activeMatch, setActiveMatch] = useState(0), [wrap, setWrap] = useState(false), [fontSize, setFontSize] = useState(13), [explorer, setExplorer] = useState(true), [copied, setCopied] = useState(false);
+  const [find, setFind] = useState(""), [activeMatch, setActiveMatch] = useState(0), [wrap, setWrap] = useState(false), [fontSize, setFontSize] = useState(13), [copied, setCopied] = useState(false);
   const [navigation, setNavigation] = useState(emptyCodeNavigation), [quickOpen, setQuickOpen] = useState(false), [lineFocus, setLineFocus] = useState(0), [lineJump, setLineJump] = useState<{ line: number; id: number } | null>(null);
   const [languageFilter, setLanguageFilter] = useState<string | null>(null);
   // the commits that changed the open file, read once per file for the History tab and its count; null while reading
@@ -223,21 +223,20 @@ export function RepositoryCodePanel({ store, source = defaultCodeSource, editorS
       </nav>
       {/* opens the quick-open palette; drawn as the field it leads to */}
       <button type="button" className="code-quick-field" aria-label={t("Quick open")} aria-keyshortcuts="Control+P" disabled={!tree} onClick={() => setQuickOpen(true)}><Search size={13}/><span>{t("Quick open")}</span><kbd>{keyLabel("Ctrl+P")}</kbd></button>
-      {/* the board has no place for these two; they stay at the end of the bar */}
+      {/* the board has no place for this; it stays at the end of the bar */}
       {repo && <CodeExternalEditors repo={repo} file={selected?.kind === "file" ? selected.path : null} source={editorSource}/>}
-      <IconButton tip={t(explorer ? "Hide file explorer" : "Show file explorer")} aria-label={t(explorer ? "Hide file explorer" : "Show file explorer")} aria-pressed={explorer} onClick={() => setExplorer((value) => !value)} icon={explorer ? <PanelLeftClose size={16}/> : <PanelLeftOpen size={16}/>} />
     </header>
     {error && <div role="alert" className="code-notice error-text">{error}</div>}
     {tree?.truncated && <div className="code-notice hint">{t("File list truncated. Narrow the repository or use another tool for the remaining files.")}</div>}
-    <div className={`code-reader-layout ${explorer ? "" : "focused"}`}>
-      {explorer && <nav className="code-explorer" aria-label={t("Repository files")}>
+    <div className="code-reader-layout">
+      <nav className="code-explorer" aria-label={t("Repository files")}>
         <div className="code-file-list">{directory && <button type="button" className="code-file-row folder parent" aria-label={t("Parent folder")} title={t("Parent folder")} onClick={() => setDirectory(directory.split("/").slice(0, -1).join("/"))}><CornerLeftUp size={13}/><code>..</code></button>}
           {folders.map((folder) => <button type="button" className="code-file-row folder" key={folder} onClick={() => setDirectory(folder)}><Folder size={13}/><span>{folder.slice(prefix.length)}</span></button>)}
           {entries.slice(0, 2000).map((entry) => <button type="button" key={entry.path} className={`code-file-row ${selected?.path === entry.path ? "on" : ""}`} aria-current={selected?.path === entry.path ? "true" : undefined} onClick={() => { if (tree) void readFile(entry, tree); }} title={entry.path}><File size={13}/><span>{entry.path.slice(prefix.length)}</span>{entry.kind !== "file" && <span className="code-entry-kind">{entry.kind === "symlink" ? "↪" : "⊞"}</span>}{changed.has(entry.path) && <StatusBadge kind={changed.get(entry.path)!}/>}</button>)}
           {entries.length > 2000 && <p className="hint">{t("Showing the first 2,000 matches. Search to narrow the file list.")}</p>}{tree && !entries.length && !folders.length && <Empty title={t("No matching files")}/>}
         </div>
         {tree && <RepositoryLanguages summary={languageSummary} selected={languageFilter} select={(value) => { setLanguageFilter(value); setDirectory(""); }}/>}
-      </nav>}
+      </nav>
       <main className="code-document">
         {/* one open file needs no tab of its own */}
         {navigation.tabs.length > 1 && <div className="code-open-files" aria-label={t("Open files")}><div className="code-file-tabs">{navigation.tabs.map((tab) => <div className={`code-file-tab ${selected?.path === tab.path ? "on" : ""}`} key={tab.path}><button type="button" title={tab.path} aria-current={selected?.path === tab.path ? "page" : undefined} onClick={() => { const entry = allEntries.find((item) => item.path === tab.path); if (entry && tree) void readFile(entry, tree, tab.mode); }}><span>{tab.path.split("/").at(-1)}</span></button><button type="button" className="code-close-file" aria-label={t("Close file")} data-tip={t("Close file")} onClick={() => closeFile(tab.path)}><X size={12}/></button></div>)}</div><IconButton small icon={<X size={13}/>} aria-label={t("Close all files")} tip={t("Close all files")} onClick={() => { updateNavigation({ ...navigationState.current, tabs: [] }); clearSelection(); }}/></div>}
