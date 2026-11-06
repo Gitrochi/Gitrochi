@@ -1,5 +1,5 @@
 import {describe,it,expect,vi} from "vitest";
-import {initialRepositoryFile,repositoryFolderCount,defaultRebaseBase,loadRebasePreview,type RepositoryTreeEntry} from "@/entities/git";
+import {initialRepositoryFile,repositoryFolderCount,defaultRebaseBase,loadRebasePreview,parseRebaseBases,rebaseBaseMatches,type RepositoryTreeEntry} from "@/entities/git";
 const a="a".repeat(40),b="b".repeat(40);
 const entry=(path:string,kind:RepositoryTreeEntry["kind"]="file",size=40):RepositoryTreeEntry=>({path,kind,size,oid:a,mode:kind==="file"?"100644":kind==="symlink"?"120000":"160000"});
 describe("workbench first screen",()=>{
@@ -7,5 +7,15 @@ describe("workbench first screen",()=>{
  it("summarizes unique folder paths without counting files or repeating ancestors",()=>{expect(repositoryFolderCount([entry("README.md"),entry("src/ui/A.tsx"),entry("src/ui/B.tsx"),entry("test/a.ts")])).toBe(3);});
  it("chooses the base from existing refs before using a feature branch upstream",()=>{expect(defaultRebaseBase(["topic","main","origin/main","origin/topic"],"topic","origin/topic")).toBe("origin/main");expect(defaultRebaseBase(["topic","release"],"topic",null)).toBe("release");});
  it("reads replay counts and candidates from fixed object IDs without changing Git state",async()=>{const read=vi.fn(async(args:string[])=>args[0]==="rev-parse"?(args[2].startsWith("main")?b:a):args[0]==="rev-list"?"3\t2\n":`${a}\tCurrent commit\n${b}\tOlder commit\n`);const result=await loadRebasePreview("fixture","main","HEAD",read);expect(result).toMatchObject({base:b,head:a,incoming:3,replay:2});expect(result.commits.map(commit=>commit.subject)).toEqual(["Current commit","Older commit"]);expect(read.mock.calls.every(([args])=>["rev-parse","rev-list","log"].includes(args[0]))).toBe(true);expect(read.mock.calls.find(([args])=>args[0]==="log")![0]).toContain(`${b}..${a}`);});
+ it("lists the bases with their new commits, the usual ones first, without the current branch or remote HEADs",()=>{
+  const bases=parseRebaseBases(["refs/heads/topic\t0 0","refs/heads/feature/a\t3 1","refs/heads/main\t0 4","refs/remotes/origin/HEAD\t5 0","refs/remotes/origin/main\t5 0","refs/tags/v1.0\t0 9","refs/heads/odd"].join("\n"),"topic");
+  expect(bases.map(base=>[base.name,base.kind,base.incoming])).toEqual([["origin/main","remote",5],["main","branch",0],["feature/a","branch",3],["odd","branch",null],["v1.0","tag",0]]);
+  expect(bases.filter(base=>rebaseBaseMatches(base," MAIN ")).map(base=>base.name)).toEqual(["origin/main","main"]);
+ });
+ it("reads a commit's time after its subject and keeps tabs inside the subject",async()=>{
+  const read=async(args:string[])=>args[0]==="rev-parse"?(args[2].startsWith("main")?b:a):args[0]==="rev-list"?"0\t2\n":`${a}\tTabbed\tsubject\t1762300800\n${b}\tNo time\n`;
+  const result=await loadRebasePreview("fixture","main","HEAD",read);
+  expect(result.commits).toEqual([{id:a,subject:"Tabbed\tsubject",date:1762300800},{id:b,subject:"No time"}]);
+ });
  it("rejects option-like revisions before making any read",async()=>{const read=vi.fn();await expect(loadRebasePreview("fixture","--all","HEAD",read)).rejects.toThrow("valid base");expect(read).not.toHaveBeenCalled();});
 });

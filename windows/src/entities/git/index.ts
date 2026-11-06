@@ -13,6 +13,6 @@ export { type PushReviewPlan, type PushConfig, parsePushConfig, displayPushURL, 
 export { type BatchCommitAction, type BatchCommitItem, type LineHistoryEntry, batchArguments, fullObjectID, lineHistoryRange, parseLineHistory, toggleGraphSelection, validRevisionInput, historyOperationInProgress } from "./lib/history-tools";
 export { initialRepositoryFile, repositoryFolderCount, loadRepositoryTree, loadRepositoryBlob, safeRepositoryPath, parseRepositoryTree, repositoryImageMime, type RepositoryTreeEntry, type RepositoryTree, type RepositoryBlob } from "./lib/repository-browser";
 
-export { defaultRebaseBase, loadRebasePreview, type RebasePreview } from "./lib/rebase-preview";
+export { defaultRebaseBase, loadRebaseBases, loadRebasePreview, parseRebaseBases, rebaseBaseMatches, type RebaseBase, type RebasePreview } from "./lib/rebase-preview";
 
 export type { ProjectTaskReference } from "./model/types";

@@ -1,10 +1,19 @@
 /* Gitrochi — zh-Hant. 소스의 영어 글자가 키. 새 글자를 넣으면 같은 PR 에서 번역도 채운다(CONTRIBUTING 「화면과 글」). */
 
 "%lld changed files" = "%1$lld 個已變更檔案";
+"%lld commits replay on top of %@, newest first." = "%1$lld 個提交將重新套用到 %2$@ 之上，最新的在前。";
+"%lld new commits" = "%1$lld 個新提交";
 "%lld not pushed" = "%1$lld 個未推送";
 "%lld to pull" = "%1$lld 個待提取";
+"%lld uncommitted files. Stash them above or commit first." = "有 %1$lld 個未提交的檔案。請在上方選擇擱置，或先提交。";
 "All branches…" = "所有分支…";
+"Already in this branch" = "已包含在此分支中";
+"Choose a base to see the commits that replay." = "選擇基底後會顯示要重新套用的提交。";
+"Choose the new base" = "選擇新的基底";
+"Clean up history" = "整理歷史";
+"Commits to replay" = "要重新套用的提交";
 "Compare with %@" = "與 %1$@ 比較";
+"Conflicts pause the rebase until you continue or abort, and a finished rebase can be undone." = "發生衝突時重訂基底會暫停，直到你繼續或中止；完成的重訂基底可以還原。";
 "Fast-forward only" = "僅快轉";
 "Filter repositories" = "篩選存放庫";
 "Find in file" = "在檔案中尋找";
@@ -12,10 +21,13 @@
 "Last opened" = "上次開啟";
 "Last opened repository" = "上次開啟的存放庫";
 "Merge" = "合併";
+"Move onto another branch" = "移到另一個分支之上";
+"New base" = "新的基底";
 "New repository…" = "新增存放庫…";
 "Nothing is due today." = "今天沒有到期的工作。";
 "Open Projects" = "開啟專案";
 "Open a repository to use these" = "開啟存放庫後才能使用這些";
+"Open changes" = "開啟變更";
 "Open…" = "開啟…";
 "Overdue · %@" = "已逾期 · %1$@";
 "Pop latest stash" = "套用最近的擱置";
@@ -24,12 +36,18 @@
 "Next match" = "下一個符合項目";
 "Pull as configured in git" = "依 git 設定提取";
 "Pull options" = "提取選項";
+"Rebase mode" = "重訂基底方式";
 "Recent" = "最近";
+"Replays this branch's commits on top of a new base, as if the branch had started there." = "將此分支的提交重新套用到新的基底之上，就像分支是從那裡開始的一樣。";
+"Review the commits" = "檢查提交";
+"Search branches and tags" = "搜尋分支和標籤";
 "Start %@ here" = "在此啟動 %1$@";
+"Stash uncommitted changes and restore them after" = "擱置未提交的變更，完成後還原";
 "Switch branch or repository, open or clone one, or close the tab" = "切換分支或存放庫、開啟或複製存放庫，或關閉分頁";
 "Tasks for today" = "今日工作";
 "Up to date" = "已是最新";
 "Yesterday" = "昨天";
+"choose a new base" = "選擇新的基底";
 "{0} of {1}" = "第 {0} 項，共 {1} 項";
 "No matches" = "沒有符合項目";
 "Wrap lines" = "自動換行";

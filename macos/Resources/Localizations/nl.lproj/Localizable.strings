@@ -1,10 +1,19 @@
 /* Gitrochi — nl. 소스의 영어 글자가 키. 새 글자를 넣으면 같은 PR 에서 번역도 채운다(CONTRIBUTING 「화면과 글」). */
 
 "%lld changed files" = "%1$lld gewijzigde bestanden";
+"%lld commits replay on top of %@, newest first." = "%1$lld commits worden opnieuw afgespeeld op %2$@, nieuwste eerst.";
+"%lld new commits" = "%1$lld nieuwe commits";
 "%lld not pushed" = "%1$lld niet gepusht";
 "%lld to pull" = "%1$lld te pullen";
+"%lld uncommitted files. Stash them above or commit first." = "%1$lld niet-gecommitte bestanden. Stash ze hierboven of commit eerst.";
 "All branches…" = "Alle branches…";
+"Already in this branch" = "Zit al in deze branch";
+"Choose a base to see the commits that replay." = "Kies een basis om de commits te zien die opnieuw worden afgespeeld.";
+"Choose the new base" = "Kies de nieuwe basis";
+"Clean up history" = "Geschiedenis opschonen";
+"Commits to replay" = "Opnieuw af te spelen commits";
 "Compare with %@" = "Vergelijken met %1$@";
+"Conflicts pause the rebase until you continue or abort, and a finished rebase can be undone." = "Bij conflicten pauzeert de rebase tot je doorgaat of afbreekt; een voltooide rebase kan ongedaan worden gemaakt.";
 "Fast-forward only" = "Alleen fast-forward";
 "Filter repositories" = "Repository's filteren";
 "Find in file" = "Zoeken in bestand";
@@ -12,10 +21,13 @@
 "Last opened" = "Laatst geopend";
 "Last opened repository" = "Laatst geopende repository";
 "Merge" = "Merge";
+"Move onto another branch" = "Naar een andere branch verplaatsen";
+"New base" = "Nieuwe basis";
 "New repository…" = "Nieuwe repository…";
 "Nothing is due today." = "Vandaag staat er niets gepland.";
 "Open Projects" = "Projecten openen";
 "Open a repository to use these" = "Open een repository om deze te gebruiken";
+"Open changes" = "Wijzigingen openen";
 "Open…" = "Openen…";
 "Overdue · %@" = "Te laat · %1$@";
 "Pop latest stash" = "Laatste stash toepassen";
@@ -24,12 +36,18 @@
 "Next match" = "Volgende overeenkomst";
 "Pull as configured in git" = "Pull volgens git-configuratie";
 "Pull options" = "Pull-opties";
+"Rebase mode" = "Rebase-modus";
 "Recent" = "Recent";
+"Replays this branch's commits on top of a new base, as if the branch had started there." = "Speelt de commits van deze branch opnieuw af op een nieuwe basis, alsof de branch daar was begonnen.";
+"Review the commits" = "Controleer de commits";
+"Search branches and tags" = "Branches en tags zoeken";
 "Start %@ here" = "%1$@ hier starten";
+"Stash uncommitted changes and restore them after" = "Niet-gecommitte wijzigingen stashen en daarna herstellen";
 "Switch branch or repository, open or clone one, or close the tab" = "Van branch of repository wisselen, er een openen of klonen, of het tabblad sluiten";
 "Tasks for today" = "Taken voor vandaag";
 "Up to date" = "Bijgewerkt";
 "Yesterday" = "Gisteren";
+"choose a new base" = "kies een nieuwe basis";
 "{0} of {1}" = "{0} van {1}";
 "No matches" = "Geen overeenkomsten";
 "Wrap lines" = "Regels afbreken";

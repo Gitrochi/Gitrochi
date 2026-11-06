@@ -1,10 +1,19 @@
 /* Gitrochi — th. 소스의 영어 글자가 키. 새 글자를 넣으면 같은 PR 에서 번역도 채운다(CONTRIBUTING 「화면과 글」). */
 
 "%lld changed files" = "ไฟล์ที่เปลี่ยน %1$lld ไฟล์";
+"%lld commits replay on top of %@, newest first." = "commit %1$lld รายการจะถูกวางซ้ำบน %2$@ เรียงจากใหม่สุด";
+"%lld new commits" = "commit ใหม่ %1$lld รายการ";
 "%lld not pushed" = "ยังไม่ได้พุช %1$lld รายการ";
 "%lld to pull" = "รอพูล %1$lld รายการ";
+"%lld uncommitted files. Stash them above or commit first." = "มีไฟล์ที่ยังไม่ commit %1$lld ไฟล์ เลือก stash ด้านบนหรือ commit ก่อน";
 "All branches…" = "แบรนช์ทั้งหมด…";
+"Already in this branch" = "อยู่ใน branch นี้แล้ว";
+"Choose a base to see the commits that replay." = "เลือกฐานเพื่อดู commit ที่จะวางซ้ำ";
+"Choose the new base" = "เลือกฐานใหม่";
+"Clean up history" = "จัดระเบียบประวัติ";
+"Commits to replay" = "commit ที่จะวางซ้ำ";
 "Compare with %@" = "เปรียบเทียบกับ %1$@";
+"Conflicts pause the rebase until you continue or abort, and a finished rebase can be undone." = "หากเกิดข้อขัดแย้ง rebase จะหยุดจนกว่าคุณจะดำเนินการต่อหรือยกเลิก และ rebase ที่เสร็จแล้วสามารถเลิกทำได้";
 "Fast-forward only" = "fast-forward เท่านั้น";
 "Filter repositories" = "กรองรีโพสิทอรี";
 "Find in file" = "ค้นหาในไฟล์";
@@ -12,10 +21,13 @@
 "Last opened" = "เปิดล่าสุด";
 "Last opened repository" = "รีโพสิทอรีที่เปิดล่าสุด";
 "Merge" = "เมิร์จ";
+"Move onto another branch" = "ย้ายไปไว้บน branch อื่น";
+"New base" = "ฐานใหม่";
 "New repository…" = "รีโพสิทอรีใหม่…";
 "Nothing is due today." = "วันนี้ไม่มีงานที่ถึงกำหนด";
 "Open Projects" = "เปิดโปรเจกต์";
 "Open a repository to use these" = "เปิดรีโพสิทอรีเพื่อใช้รายการเหล่านี้";
+"Open changes" = "เปิดการเปลี่ยนแปลง";
 "Open…" = "เปิด…";
 "Overdue · %@" = "เลยกำหนด · %1$@";
 "Pop latest stash" = "นำสแตชล่าสุดกลับมาใช้";
@@ -24,12 +36,18 @@
 "Next match" = "รายการที่ตรงกันถัดไป";
 "Pull as configured in git" = "พูลตามที่ตั้งค่าไว้ใน git";
 "Pull options" = "ตัวเลือกพูล";
+"Rebase mode" = "โหมด rebase";
 "Recent" = "ล่าสุด";
+"Replays this branch's commits on top of a new base, as if the branch had started there." = "นำ commit ของ branch นี้ไปวางซ้ำบนฐานใหม่ เหมือนกับว่า branch เริ่มจากตรงนั้น";
+"Review the commits" = "ตรวจสอบ commit";
+"Search branches and tags" = "ค้นหา branch และแท็ก";
 "Start %@ here" = "เริ่ม %1$@ ที่นี่";
+"Stash uncommitted changes and restore them after" = "stash การเปลี่ยนแปลงที่ยังไม่ commit แล้วคืนค่าหลังเสร็จ";
 "Switch branch or repository, open or clone one, or close the tab" = "สลับแบรนช์หรือรีโพสิทอรี เปิดหรือโคลนรีโพสิทอรี หรือปิดแท็บ";
 "Tasks for today" = "งานสำหรับวันนี้";
 "Up to date" = "เป็นปัจจุบัน";
 "Yesterday" = "เมื่อวาน";
+"choose a new base" = "เลือกฐานใหม่";
 "{0} of {1}" = "{0} จาก {1}";
 "No matches" = "ไม่พบรายการที่ตรงกัน";
 "Wrap lines" = "ตัดบรรทัด";

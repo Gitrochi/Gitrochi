@@ -1,15 +1,26 @@
 /* Release and issue workspace. */
 "%lld changed files" = "변경된 파일 %1$lld개";
+"%lld commits replay on top of %@, newest first." = "커밋 %1$lld개를 %2$@ 위에 다시 쌓습니다. 최신순입니다.";
+"%lld new commits" = "새 커밋 %1$lld개";
 "%lld not pushed" = "푸시 안 한 커밋 %1$lld개";
 "%lld to pull" = "받을 커밋 %1$lld개";
+"%lld uncommitted files. Stash them above or commit first." = "커밋하지 않은 파일 %1$lld개. 위에서 스태시를 켜거나 먼저 커밋하세요.";
 "All branches…" = "모든 브랜치…";
+"Already in this branch" = "이미 이 브랜치에 있음";
+"Choose a base to see the commits that replay." = "기준을 고르면 다시 쌓을 커밋이 보입니다.";
+"Choose the new base" = "새 기준 고르기";
+"Clean up history" = "히스토리 정리";
+"Commits to replay" = "다시 쌓을 커밋";
 "Compare with %@" = "%1$@ 기준으로 비교";
+"Conflicts pause the rebase until you continue or abort, and a finished rebase can be undone." = "충돌이 나면 계속하거나 중단할 때까지 리베이스가 멈추고, 끝난 리베이스는 되돌릴 수 있습니다.";
 "Fast-forward only" = "fast-forward만";
 "Filter repositories" = "저장소 필터";
 "Go" = "이동";
 "Last opened" = "마지막으로 연 저장소";
 "Last opened repository" = "마지막으로 연 저장소";
 "Merge" = "병합";
+"Move onto another branch" = "다른 브랜치 위로 옮기기";
+"New base" = "새 기준";
 "New repository…" = "새 저장소…";
 "Nothing is due today." = "오늘 마감인 일이 없습니다.";
 "Open Projects" = "프로젝트 열기";
@@ -20,8 +31,13 @@
 "Pop latest stash (none saved)" = "가장 최근 stash 꺼내기 (보관된 것 없음)";
 "Pull as configured in git" = "git 설정대로 Pull";
 "Pull options" = "Pull 옵션";
+"Rebase mode" = "리베이스 방식";
 "Recent" = "최근";
+"Replays this branch's commits on top of a new base, as if the branch had started there." = "이 브랜치의 커밋을 새 기준 위에 다시 쌓습니다. 브랜치가 거기서 시작한 것처럼 됩니다.";
+"Review the commits" = "커밋 확인";
+"Search branches and tags" = "브랜치와 태그 검색";
 "Start %@ here" = "여기서 %1$@ 시작";
+"Stash uncommitted changes and restore them after" = "커밋하지 않은 변경을 스태시했다가 끝나면 되돌리기";
 "Switch branch or repository, open or clone one, or close the tab" = "브랜치나 저장소 전환, 저장소 열기·복제, 탭 닫기";
 "Tasks for today" = "오늘 할 일";
 "Up to date" = "최신 상태";
@@ -91,6 +107,7 @@
 "Previous match" = "이전 검색 결과";
 "Next match" = "다음 검색 결과";
 "Yesterday" = "어제";
+"choose a new base" = "새 기준을 고르세요";
 "{0} of {1}" = "{1}개 중 {0}";
 "No matches" = "검색 결과 없음";
 "Wrap lines" = "자동 줄바꿈";
@@ -1702,7 +1719,6 @@
 "Add file" = "파일 추가";
 "Add issue" = "이슈 추가";
 "Add issue to project?" = "프로젝트에 이슈를 추가할까요?";
-"After rebase, compare the branch with its base and check the rewritten commits before pushing. Push review checks the destination and any force push." = "리베이스 후 기준 브랜치와 비교하고, 바뀐 커밋을 확인한 뒤 Push하세요. Push 검토에서 전송 대상과 강제 전송 여부를 확인합니다.";
 "All" = "전체";
 "Assigned requests" = "담당 요청";
 "Authored issues" = "내가 작성한 이슈";
@@ -1711,7 +1727,6 @@
 "Binary file. Text preview is unavailable." = "바이너리 파일은 텍스트로 미리 볼 수 없습니다.";
 "Board column" = "보드 열";
 "Build cleanup plan" = "커밋 정리 계획 만들기";
-"Change branch base" = "브랜치 기준 변경";
 "Change project status?" = "프로젝트 상태를 변경할까요?";
 "Check out detached" = "분리된 HEAD로 체크아웃";
 "Choose a commit" = "커밋 선택";
@@ -1723,7 +1738,6 @@
 "Closed" = "닫힘";
 "Code" = "코드";
 "Commits from the current branch will be replayed onto '{0}'. Commit or stash your changes first. Review the result before pushing." = "현재 브랜치의 커밋을 '{0}' 위에 다시 적용합니다. 변경 내용을 먼저 커밋하거나 스태시에 보관하세요. Push 전 결과를 검토하세요.";
-"Compare branch with base" = "기준과 현재 브랜치 비교";
 "Confirm" = "확인";
 "Connect a GitHub or GitLab account to use this workspace." = "이 작업 공간을 사용하려면 GitHub 또는 GitLab 계정을 연결하세요.";
 "Connect an account to load this workspace." = "이 작업 화면을 보려면 계정을 연결하세요.";
@@ -1785,7 +1799,6 @@
 "My pull requests" = "내 풀 리퀘스트";
 "My work" = "내 작업";
 "New" = "새로 만들기";
-"New base revision" = "새 기준 리비전";
 "New issue" = "새 이슈";
 "New tag" = "새 태그";
 "No connected account" = "연결된 계정 없음";
@@ -1985,17 +1998,9 @@
 "{0} files · {1} folders" = "파일 {0}개 · 폴더 {1}개";
 "Choose a valid base branch to preview its commits." = "올바른 대상 브랜치를 선택하면 커밋을 미리 볼 수 있습니다.";
 "The branch summary could not be read. Refresh and try again." = "브랜치 요약을 읽지 못했습니다. 대상을 확인하고 다시 시도하세요.";
-"Rebase preview" = "리베이스 미리보기";
 "Reading branch summary…" = "브랜치 요약을 읽는 중…";
-"{0} commits to replay" = "다시 적용할 커밋 {0}개";
-"{0} commits on the base only" = "대상 브랜치에만 있는 커밋 {0}개";
 "No commits need to be replayed onto this base." = "이 대상을 기준으로 다시 적용할 커밋이 없습니다.";
-"Select the oldest commit to include in a cleanup plan." = "정리 계획에 포함할 가장 오래된 커밋을 선택하세요.";
-"Showing the latest 6 candidate commits." = "최근 후보 커밋 6개를 표시합니다.";
-"This preview only reads history. Starting rebase still requires confirmation." = "미리보기는 기록만 조회합니다. 리베이스는 확인 후 시작합니다.";
 "Commit at least once to preview rebase." = "첫 커밋을 만들면 리베이스를 미리 볼 수 있습니다.";
-"Commit or stash working changes before starting rebase." = "리베이스를 시작하려면 작업 중인 변경 사항을 커밋하거나 스태시하세요.";
-"Open Changes" = "변경 내용 열기";
 
 "Couldn't access the saved account. Allow the macOS Keychain request, then try again." = "저장된 계정에 접근하지 못했습니다. macOS 키체인 요청을 허용한 뒤 다시 시도하세요.";
 "Checking saved account access…" = "저장된 계정 접근 확인 중…";

@@ -1,10 +1,19 @@
 /* Gitrochi — ru. 소스의 영어 글자가 키. 새 글자를 넣으면 같은 PR 에서 번역도 채운다(CONTRIBUTING 「화면과 글」). */
 
 "%lld changed files" = "Изменённых файлов: %1$lld";
+"%lld commits replay on top of %@, newest first." = "Коммитов: %1$lld — будут применены поверх %2$@, сначала новые.";
+"%lld new commits" = "Новых коммитов: %1$lld";
 "%lld not pushed" = "Не отправлено: %1$lld";
 "%lld to pull" = "К получению: %1$lld";
+"%lld uncommitted files. Stash them above or commit first." = "Незакоммиченных файлов: %1$lld. Спрячьте их выше или сначала закоммитьте.";
 "All branches…" = "Все ветки…";
+"Already in this branch" = "Уже в этой ветке";
+"Choose a base to see the commits that replay." = "Выберите базу, чтобы увидеть коммиты, которые будут применены повторно.";
+"Choose the new base" = "Выберите новую базу";
+"Clean up history" = "Привести историю в порядок";
+"Commits to replay" = "Коммиты для повторного применения";
 "Compare with %@" = "Сравнить с %1$@";
+"Conflicts pause the rebase until you continue or abort, and a finished rebase can be undone." = "При конфликтах перебазирование приостанавливается, пока вы не продолжите или не отмените его; завершённое перебазирование можно отменить.";
 "Fast-forward only" = "Только перемотка вперёд";
 "Filter repositories" = "Фильтр репозиториев";
 "Find in file" = "Найти в файле";
@@ -12,10 +21,13 @@
 "Last opened" = "Последний открытый";
 "Last opened repository" = "Последний открытый репозиторий";
 "Merge" = "Слияние";
+"Move onto another branch" = "Перенести на другую ветку";
+"New base" = "Новая база";
 "New repository…" = "Новый репозиторий…";
 "Nothing is due today." = "На сегодня ничего нет.";
 "Open Projects" = "Открыть проекты";
 "Open a repository to use these" = "Откройте репозиторий, чтобы ими пользоваться";
+"Open changes" = "Открыть изменения";
 "Open…" = "Открыть…";
 "Overdue · %@" = "Просрочено · %1$@";
 "Pop latest stash" = "Применить последние спрятанные изменения";
@@ -24,12 +36,18 @@
 "Next match" = "Следующее совпадение";
 "Pull as configured in git" = "Извлечь по настройкам git";
 "Pull options" = "Параметры извлечения";
+"Rebase mode" = "Режим перебазирования";
 "Recent" = "Недавние";
+"Replays this branch's commits on top of a new base, as if the branch had started there." = "Повторно применяет коммиты этой ветки поверх новой базы, как если бы ветка начиналась оттуда.";
+"Review the commits" = "Проверьте коммиты";
+"Search branches and tags" = "Поиск веток и тегов";
 "Start %@ here" = "Запустить %1$@ здесь";
+"Stash uncommitted changes and restore them after" = "Спрятать незакоммиченные изменения и вернуть их после";
 "Switch branch or repository, open or clone one, or close the tab" = "Переключить ветку или репозиторий, открыть или клонировать репозиторий либо закрыть вкладку";
 "Tasks for today" = "Задачи на сегодня";
 "Up to date" = "Актуально";
 "Yesterday" = "Вчера";
+"choose a new base" = "выберите новую базу";
 "{0} of {1}" = "{0} из {1}";
 "No matches" = "Нет совпадений";
 "Wrap lines" = "Перенос строк";
