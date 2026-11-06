@@ -22,6 +22,7 @@
 "Already in this branch" = "已包含在此分支中";
 "Approvals" = "批准";
 "Approved" = "已批准";
+"Ask questions about the selected changes" = "询问所选更改";
 "Changes requested" = "已请求更改";
 "Choose a base to see the commits that replay." = "选择基底后会显示要重新应用的提交。";
 "Choose the new base" = "选择新的基底";

@@ -21,6 +21,7 @@
 "Already in this branch" = "すでにこのブランチに含まれています";
 "Approvals" = "承認";
 "Approved" = "承認済み";
+"Ask questions about the selected changes" = "選択した変更について質問する";
 "Changes requested" = "変更要求";
 "Choose a base to see the commits that replay." = "ベースを選ぶと、適用し直すコミットが表示されます。";
 "Choose the new base" = "新しいベースを選ぶ";

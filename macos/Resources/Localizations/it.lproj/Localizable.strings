@@ -22,6 +22,7 @@
 "Already in this branch" = "Già in questo branch";
 "Approvals" = "Approvazioni";
 "Approved" = "Approvato";
+"Ask questions about the selected changes" = "Fai domande sulle modifiche selezionate";
 "Changes requested" = "Modifiche richieste";
 "Choose a base to see the commits that replay." = "Scegli una base per vedere i commit da riapplicare.";
 "Choose the new base" = "Scegli la nuova base";

@@ -111,8 +111,11 @@
 .code-changes-head { flex: none; height: 44px; box-sizing: border-box; display: flex; align-items: center; gap: 8px; min-width: 0; padding: 0 16px; border-bottom: 1px solid var(--border); }
 .code-changes-head > strong { flex: none; font-weight: 600; white-space: nowrap; }
 .code-changes-folder { flex: 0 1 auto; min-width: 0; font-size: 11px; color: var(--text-2); white-space: nowrap; overflow: hidden; }
-.code-changes-head .segmented { flex: none; }
-.code-changes-head .segmented button { font-size: 12px; font-weight: 500; }
+.code-changes-head .segmented { flex: none; border-radius: 6px; }
+.code-changes-head .segmented button { height: 24px; padding: 0 8px; border-radius: 4px; font-size: 12px; font-weight: 500; white-space: nowrap; }
+.code-text-button { flex: none; min-height: 24px; padding: 2px 0; border: 0; background: transparent; font: inherit; font-size: 12px; font-weight: 500; color: var(--text-2); cursor: pointer; }
+.code-text-button:hover:not(:disabled) { color: var(--text); }
+.code-text-button:disabled { color: var(--text-3); cursor: default; }
 .code-changes-head .icon-btn.on { color: var(--text); background: var(--hover); }
 .code-diff { flex: 1 1 auto; min-height: 0; overflow: auto; padding-bottom: 16px; }
 .code-diff-sheet { display: flex; flex-direction: column; width: max-content; min-width: 100%; }

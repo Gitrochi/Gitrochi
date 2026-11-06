@@ -21,6 +21,7 @@
 "Already in this branch" = "Bereits in diesem Branch";
 "Approvals" = "Genehmigungen";
 "Approved" = "Genehmigt";
+"Ask questions about the selected changes" = "Fragen zu den ausgewählten Änderungen stellen";
 "Changes requested" = "Änderungen angefordert";
 "Choose a base to see the commits that replay." = "Wählen Sie eine Basis, um die Commits zu sehen, die erneut abgespielt werden.";
 "Choose the new base" = "Neue Basis wählen";

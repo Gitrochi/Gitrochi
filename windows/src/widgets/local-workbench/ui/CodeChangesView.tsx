@@ -111,8 +111,9 @@ export function CodeChangesView({ store, repo, path, commit, read, wrap, setWrap
       {shortFolder(folder) && <span className="code-changes-folder" title={folder}>{shortFolder(folder)}</span>}
       <span className="spacer"/>
       <Segmented value={split ? "split" : "unified"} options={[{ value: "unified", label: t("Unified") }, { value: "split", label: t("Split") }]} onChange={(value) => store.setDiffSplit(value === "split")}/>
-      <IconButton className={ignoreWhitespace ? "on" : ""} icon={<Pilcrow size={14}/>} aria-label={t("Ignore whitespace")} aria-pressed={ignoreWhitespace} tip={t("Ignore whitespace")} onClick={() => { store.setDiffIgnoreWhitespace(!ignoreWhitespace); store.changed(); }}/>
-      <IconButton icon={<MoreHorizontal size={14}/>} aria-label={t("More")} aria-haspopup="menu" tip={t("More")} onClick={(event) => showMenuBelow(event.currentTarget, [
+      <IconButton className={ignoreWhitespace ? "on" : ""} icon={<Pilcrow size={14}/>} aria-label={t("Hide whitespace")} aria-pressed={ignoreWhitespace} tip={t("Hide whitespace")} onClick={() => { store.setDiffIgnoreWhitespace(!ignoreWhitespace); store.changed(); }}/>
+      <button type="button" className="code-text-button" disabled={!doc || doc.isBinary} data-tip={t("Ask questions about the selected changes")} onClick={() => { if (doc) void store.openChangeQuestion(false, { scope: commit ? `${t("Commit")} ${commit}` : t("Uncommitted changes against HEAD"), path, doc }); }}>{t("Ask AI…")}</button>
+      <IconButton icon={<MoreHorizontal size={14}/>} aria-label={t("More file actions")} aria-haspopup="menu" tip={t("More file actions")} onClick={(event) => showMenuBelow(event.currentTarget, [
         { label: t("Wrap lines"), checked: wrap, onClick: () => setWrap(!wrap) },
         ...(commit ? [{ label: t("Show commit"), onClick: () => store.reveal(commit) }] : []),
         { label: t("Copy path"), onClick: () => store.copy(path) },

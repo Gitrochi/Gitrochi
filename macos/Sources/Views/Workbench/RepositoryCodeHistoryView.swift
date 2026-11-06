@@ -12,6 +12,7 @@ struct RepositoryCodeHistoryView: View {
     @Binding var wraps: Bool
     @Binding var lineCount: Int?
     @FocusState private var focused: Bool
+    @Environment(\.locale) private var locale
 
     var body: some View {
         if let entries {
@@ -58,7 +59,7 @@ struct RepositoryCodeHistoryView: View {
                 HStack(alignment: .top, spacing: 8) {
                     Text(entry.commit.subject).font(.system(size: 13, weight: isSelected ? .semibold : .medium)).lineLimit(2)
                         .multilineTextAlignment(.leading).frame(maxWidth: .infinity, alignment: .leading)
-                    Text(Fmt.short(entry.commit.date)).font(.system(size: 12)).foregroundStyle(StudioStyle.Rail.icon).fixedSize()
+                    Text(verbatim: ListDate.when(entry.commit.date, locale: locale)).font(.system(size: 12)).foregroundStyle(StudioStyle.Rail.icon).fixedSize()
                 }
                 HStack(spacing: 6) {
                     AuthorAvatar(name: entry.commit.author, email: entry.commit.email, size: 16)

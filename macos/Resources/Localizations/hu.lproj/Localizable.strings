@@ -22,6 +22,7 @@
 "Already in this branch" = "Már benne van ebben az ágban";
 "Approvals" = "Jóváhagyások";
 "Approved" = "Jóváhagyva";
+"Ask questions about the selected changes" = "Kérdések feltevése a kijelölt módosításokról";
 "Changes requested" = "Módosítások kérve";
 "Choose a base to see the commits that replay." = "Válasszon alapot az újrajátszandó commitok megtekintéséhez.";
 "Choose the new base" = "Válassza ki az új alapot";

@@ -64,29 +64,33 @@ struct RepositoryCodeChangesView: View {
                     .help((path as NSString).deletingLastPathComponent)
             }
             Spacer(minLength: 8)
-            Picker("", selection: Binding(get: { store.diffSplit }, set: { store.diffSplit = $0 })) {
-                Text("Unified").tag(false)
-                Text("Split").tag(true)
-            }
-            .pickerStyle(.segmented).labelsHidden().fixedSize()
+            PullRequestSegmented(label: "Diff layout", items: [
+                .init(value: false, title: String(localized: "Unified")),
+                .init(value: true, title: String(localized: "Split")),
+            ], selection: store.diffSplit) { store.diffSplit = $0 }
             let hidden = store.diffIgnoreWhitespace
-            Button { store.diffIgnoreWhitespace.toggle() } label: {
-                Image(systemName: "paragraphsign").font(.system(size: 13))
-                    .foregroundStyle(hidden ? AnyShapeStyle(.primary) : AnyShapeStyle(StudioStyle.Rail.icon))
-                    .frame(width: 24, height: 24)
-                    .background(RoundedRectangle(cornerRadius: 6).fill(hidden ? StudioStyle.Tone.neutral.fill : Color.clear))
-                    .contentShape(Rectangle())
+            Button { store.diffIgnoreWhitespace.toggle() } label: { Image(systemName: "paragraphsign") }
+                .buttonStyle(PullRequestIconButtonStyle(on: hidden))
+                .help("Hide whitespace").accessibilityLabel("Hide whitespace")
+                .accessibilityValue(hidden ? String(localized: "On") : String(localized: "Off"))
+            Button("Ask AI…") {
+                guard let document else { return }
+                let scope = commit.map { String(localized: "Commit") + " " + $0 } ?? String(localized: "Uncommitted changes against HEAD")
+                Task { await store.openChangeQuestion(code: ChangeQuestionCode(scope: scope, path: path, document: document)) }
             }
-            .buttonStyle(.plain).help("Ignore whitespace").accessibilityLabel("Ignore whitespace")
-            .accessibilityValue(hidden ? String(localized: "On") : String(localized: "Off"))
+            .buttonStyle(PullRequestTextButtonStyle())
+            .disabled(document == nil || document?.isBinary == true)
+            .help("Ask questions about the selected changes")
             Menu {
                 Toggle("Wrap lines", isOn: $wraps)
                 if let commit { Button("Show commit") { store.reveal(commit) } }
                 Button("Copy path") { store.copy(path) }
             } label: {
-                Image(systemName: "ellipsis").font(.system(size: 13)).foregroundStyle(StudioStyle.Rail.icon).frame(width: 24, height: 24)
+                Image(systemName: "ellipsis").font(.system(size: 12, weight: .medium)).foregroundStyle(StudioStyle.Tone.neutral.text)
+                    .frame(width: 24, height: 24).contentShape(Rectangle())
             }
-            .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize().help("More").accessibilityLabel("More")
+            .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize()
+            .help("More file actions").accessibilityLabel("More file actions")
         }
         .padding(.horizontal, 16)
         .frame(height: 44)

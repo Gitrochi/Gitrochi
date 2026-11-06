@@ -22,6 +22,7 @@
 "Already in this branch" = "อยู่ใน branch นี้แล้ว";
 "Approvals" = "การอนุมัติ";
 "Approved" = "อนุมัติแล้ว";
+"Ask questions about the selected changes" = "ถามเกี่ยวกับการเปลี่ยนแปลงที่เลือก";
 "Changes requested" = "ขอให้แก้ไขแล้ว";
 "Choose a base to see the commits that replay." = "เลือกฐานเพื่อดู commit ที่จะวางซ้ำ";
 "Choose the new base" = "เลือกฐานใหม่";

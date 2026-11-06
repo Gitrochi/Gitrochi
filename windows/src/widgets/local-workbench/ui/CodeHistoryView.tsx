@@ -4,7 +4,7 @@ import { avatars } from "@/entities/avatar";
 import { short, type FileHistoryEntry } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
-import { shortDate, useObserve } from "@/shared/lib";
+import { listWhen, useObserve } from "@/shared/lib";
 import { Avatar, Empty, Spinner, StatusPill } from "@/shared/ui";
 import { fileHistoryLimit } from "../lib/code-history";
 import { CodeChangesView } from "./CodeChangesView";
@@ -44,7 +44,7 @@ export function CodeHistoryView({ store, repo, entries, local, selected, select,
   return <div className="code-history">
     <section className="code-history-list" aria-label={t("Commits that changed this file")} onKeyDown={move}>
       {shown.map(({ commit }) => <button type="button" key={commit.id} data-commit={commit.id} className={`code-history-row ${commit.id === current.commit.id ? "on" : ""}`} aria-current={commit.id === current.commit.id ? "true" : undefined} onClick={() => select(commit.id)}>
-        <span className="code-history-top"><span className="code-history-subject">{commit.subject}</span><span className="code-history-when">{shortDate(commit.date)}</span></span>
+        <span className="code-history-top"><span className="code-history-subject">{commit.subject}</span><span className="code-history-when">{listWhen(commit.date)}</span></span>
         <span className="code-history-meta">
           <Avatar name={commit.author} email={commit.email} size={16} url={avatars.url(commit.email, commit.author)}/>
           <span className="ellipsis">{commit.author}</span>

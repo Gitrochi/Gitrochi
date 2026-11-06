@@ -18,10 +18,13 @@ final class ChangeQuestionSession {
     var active = true
     var generation = 0
     var task: Task<Void, Never>?
+    /// The Code page's change, for New snapshot to read again
+    let code: ChangeQuestionCode?
 
-    init(repository: URL, origin: String) {
+    init(repository: URL, origin: String, code: ChangeQuestionCode? = nil) {
         self.repository = repository
         self.origin = origin
+        self.code = code
         let ai = AIStore.shared
         provider = ai.provider(for: .explain)
         let model = ai.model(provider)
@@ -51,29 +54,37 @@ final class ChangeQuestionSession {
     }
 }
 
+/// A change the Code page shows, which is not the repository screen's open diff. (Windows: ChangeQuestionCode)
+struct ChangeQuestionCode {
+    let scope: String
+    let path: String
+    let document: DiffDocument
+}
+
 extension RepoStore {
     private var changeQuestionOrigin: String {
         String(describing: diffSource) + "|" + String(describing: selection) + "|" + (headHash ?? "")
     }
 
     /// 보내기 전에는 AI를 호출하지 않고, 사용자가 확인할 로컬 미리보기만 준비한다.
-    func openChangeQuestion(refresh: Bool = false, present: Bool = true) async {
+    func openChangeQuestion(refresh: Bool = false, present: Bool = true, code requested: ChangeQuestionCode? = nil) async {
         guard let url else { return }
-        let origin = changeQuestionOrigin
+        let code = requested ?? (refresh ? changeQuestionSession?.code : nil)
+        let origin = code.map { "code|\($0.scope)|\($0.path)|" + (headHash ?? "") } ?? changeQuestionOrigin
         if !refresh, let existing = changeQuestionSession, existing.repository == url, existing.origin == origin, existing.snapshot != nil {
             existing.active = true
             if present { sheet = .changeQuestion }
             return
         }
         cancelChangeQuestion()
-        let session = ChangeQuestionSession(repository: url, origin: origin)
+        let session = ChangeQuestionSession(repository: url, origin: origin, code: code)
         changeQuestionSession = session
         if present { sheet = .changeQuestion }
-        let source = diffSource
+        let source = code == nil ? diffSource : nil
         let selection = selection
-        let document = diff
-        let selectedLines = diffSelection
-        let wasLoading = diffLoading
+        let document = code?.document ?? diff
+        let selectedLines = code == nil ? diffSelection : []
+        let wasLoading = code == nil && diffLoading
         let ignoreWhitespace = diffIgnoreWhitespace
         do {
             var scope: String
@@ -85,14 +96,15 @@ extension RepoStore {
             if case .worktree(let path, _)? = source { sourceURL = URL(fileURLWithPath: path, isDirectory: true) }
             else { sourceURL = url }
             let capturedHead = (try? await Git.run(["rev-parse", "--verify", "HEAD"], in: sourceURL).output.trimmed) ?? "(unborn HEAD)"
-            if let source {
-                path = source.change.path
+            if code != nil || source != nil {
+                path = code?.path ?? source?.change.path
                 switch source {
-                case .working(let change):
+                case nil: scope = code?.scope ?? ""
+                case .working(let change)?:
                     scope = change.kind == .untracked ? String(localized: "Untracked file") : (change.staged ? String(localized: "Staged file") : String(localized: "Unstaged file"))
-                case .commit(let sha, _, _): scope = String(localized: "Commit") + " " + sha
-                case .review(let number, _, _): scope = "PR/MR #\(number)"
-                case .worktree(let path, _): scope = String(localized: "Worktree") + " " + (path as NSString).lastPathComponent
+                case .commit(let sha, _, _)?: scope = String(localized: "Commit") + " " + sha
+                case .review(let number, _, _)?: scope = "PR/MR #\(number)"
+                case .worktree(let path, _)?: scope = String(localized: "Worktree") + " " + (path as NSString).lastPathComponent
                 }
                 // 표시 필터와 선택한 줄을 포함해 사용자가 보던 내용만 고정한다.
                 // 새 파일도 기존 diff를 재사용해 파일을 다시 읽거나 심볼릭 링크를 따라가지 않는다.
