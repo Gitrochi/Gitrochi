@@ -195,6 +195,8 @@ export async function localWorkbenchSelfTest(): Promise<[boolean, string]> {
     const options=[...host.querySelectorAll<HTMLButtonElement>(".rebase-option")];
     check(options.length===2&&options[0].getAttribute("aria-selected")==="true"&&options[0].textContent?.includes(t("{0} new commits",3))&&options[1].disabled&&options[1].textContent?.includes(t("Already in this branch")),"Rebase must list the bases with their new commits and disable what is already in the branch");
     check(host.querySelectorAll(".rebase-commits li").length===2&&!store.confirm,"Opening rebase must only preview commits");
+    // the commit clean-up sheet caps its own list; the page's column must not share that rule
+    check(getComputedStyle(host.querySelector(".rebase-column")!).maxHeight==="none","The Rebase list column must fill the page height");
     reset(); store.repoState = "rebasing"; store.continueOperation = async () => { rebases++; }; await mount(<RebaseWorkbenchPanel store={store}/>); await click("Continue"); check(rebases === 1 && host.textContent?.includes(t("Abort…")), "In-progress rebase controls missing");
     return [true, "Compare, source reading/navigation, immutable language composition/filtering, injected working-copy editors, isolated HTML/CSS/raster and Markdown previews, DOM security/resource budgets, stale requests, revision resets and rebase controls rendered"];
   } catch (error) { return [false, error instanceof Error ? error.message : String(error)]; }

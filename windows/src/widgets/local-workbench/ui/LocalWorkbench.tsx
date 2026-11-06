@@ -120,7 +120,7 @@ export function RebaseWorkbenchPanel({ store, previewSource = loadRebasePreview,
         </div>
       ) : (
         <div className="rebase-body">
-          <section className="rebase-list">
+          <section className="rebase-column">
             {mode === "move" ? <>
               <div className="rebase-step-title"><span className="rebase-num" aria-hidden>1</span><h3>{t("Choose the new base")}</h3></div>
               <span className="rebase-cap">{t("Replays this branch's commits on top of a new base, as if the branch had started there.")}</span>

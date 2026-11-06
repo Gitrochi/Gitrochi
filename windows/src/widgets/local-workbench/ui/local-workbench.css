@@ -44,7 +44,7 @@
 .rebase-route > span { color: var(--text-2); }
 .rebase-route > [aria-hidden] { flex: none; }
 .rebase-body { flex: 1 1 auto; min-height: 0; display: flex; align-items: stretch; }
-.rebase-list { flex: 0 0 312px; min-width: 0; min-height: 0; box-sizing: border-box; background: var(--sidebar); border-right: 1px solid var(--border); padding: 16px 12px 20px; display: flex; flex-direction: column; gap: 10px; }
+.rebase-column { flex: 0 0 312px; min-width: 0; min-height: 0; box-sizing: border-box; background: var(--sidebar); border-right: 1px solid var(--border); padding: 16px 12px 20px; display: flex; flex-direction: column; gap: 10px; }
 .rebase-step-title { display: flex; align-items: center; gap: 10px; }
 .rebase-page h3 { margin: 0; font-size: 15px; font-weight: 600; line-height: 22px; }
 .rebase-num { flex: none; width: 22px; height: 22px; border-radius: 50%; background: var(--bar); color: var(--text); font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
@@ -81,4 +81,4 @@
 .rebase-reason { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--status-text); }
 .rebase-plan { align-self: stretch; min-width: 0; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
 .rebase-operation { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 16px 24px 32px; }
-@container rebase (max-width: 760px) { .rebase-body { flex-direction: column; overflow: auto; } .rebase-list { flex: none; border-right: 0; border-bottom: 1px solid var(--border); } .rebase-options { overflow: visible; } .rebase-detail { overflow: visible; } }
+@container rebase (max-width: 760px) { .rebase-body { flex-direction: column; overflow: auto; } .rebase-column { flex: none; border-right: 0; border-bottom: 1px solid var(--border); } .rebase-options { overflow: visible; } .rebase-detail { overflow: visible; } }
