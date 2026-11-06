@@ -8,7 +8,8 @@ import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { Avatar, Button, Spinner } from "@/shared/ui";
-import { linkedIssues } from "../lib/pull-request-page";
+import { ownAvatarURL } from "../lib/own-avatar";
+import { type checksBadge, linkedIssues, mergeReason } from "../lib/pull-request-page";
 
 const methodTitle = (method: MergeMethod) => t(method === "merge" ? "Create a merge commit" : method === "squash" ? "Squash and merge" : "Rebase and merge");
 
@@ -16,7 +17,7 @@ const methodTitle = (method: MergeMethod) => t(method === "merge" ? "Create a me
  * The side cards of a request's conversation: Merge, Reviewers, Linked issue, and the request's own fields while they
  * are edited. The server's policy decides what Merge may do. macOS: RequestLifecyclePanel.swift.
  */
-export function RequestLifecyclePanel({ store, number, pr, review, editing, onEditing }: { store: RepoStore; number: number; pr: PullRequest; review: PullRequestReview | null; editing: boolean; onEditing: (value: boolean) => void }) {
+export function RequestLifecyclePanel({ store, number, pr, review, badge, editing, onEditing }: { store: RepoStore; number: number; pr: PullRequest; review: PullRequestReview | null; badge: ReturnType<typeof checksBadge>; editing: boolean; onEditing: (value: boolean) => void }) {
   useObserve(store);
   useObserve(store.ci);
   const [title, setTitle] = useState(""), [body, setBody] = useState(""), [base, setBase] = useState(""), [reviewers, setReviewers] = useState("");
@@ -32,6 +33,10 @@ export function RequestLifecyclePanel({ store, number, pr, review, editing, onEd
   const approved = !!state && state.approvedBy.length > 0 && !state.changesRequestedBy.length && !(state.approvalsLeft && state.approvalsLeft > 0);
   const names = [...new Set([...(r?.reviewers ?? []), ...(state?.approvedBy ?? []), ...(state?.changesRequestedBy ?? [])])];
   const issues = linkedIssues(pr.body);
+  const checksText = badge?.kind === "failed" ? (badge.count === 1 ? t("1 check failed") : t("{0} checks failed", badge.count))
+    : badge?.kind === "running" ? (badge.count === 1 ? t("1 check running") : t("{0} checks running", badge.count))
+    : t(run?.status === "success" ? "All checks passed" : "Checks pending");
+  const reason = r && mergeReason(r.conflicts, r.base, badge, state?.approvalsLeft, r.blockers);
   const issueURL = (issue: number) => store.target ? `https://${store.target.host}/${store.target.path}/${store.target.provider === "gitlab" ? "-/issues" : "issues"}/${issue}` : "";
   return <>
     {store.lifecycleError && <p className="error-text selectable" role="alert" style={{ whiteSpace: "pre-wrap", margin: 0 }}>{store.lifecycleError}</p>}
@@ -44,14 +49,15 @@ export function RequestLifecyclePanel({ store, number, pr, review, editing, onEd
     <section className="pr-card" aria-label={t("Merge")}>
       <span className="pr-card-title">{t("Merge")}{disabled && <Spinner size={11} />}</span>
       {r ? <>
-        <span className="pr-card-row">{run ? <CIStatusIcon status={run.status} size={14} /> : <CircleDot size={14} className="pr-neutral-icon" aria-hidden="true" />}<span>{r.checks}</span></span>
+        <span className="pr-card-row">{badge?.kind === "failed" ? <CircleX size={14} className="status-tone" data-tone="failed" aria-hidden="true" /> : badge?.kind === "running" ? <Clock size={14} className="status-tone" data-tone="waiting" aria-hidden="true" /> : run ? <CIStatusIcon status={run.status} size={14} /> : <CircleDot size={14} className="pr-neutral-icon" aria-hidden="true" />}<span>{checksText}</span></span>
+        <span className="pr-card-row">{r.conflicts ? <CircleX size={14} className="status-tone" data-tone="failed" aria-hidden="true" /> : <CircleCheck size={14} className="status-tone" data-tone="passed" aria-hidden="true" />}<span>{t(r.conflicts ? "Conflicts with {0}" : "No conflicts with {0}", r.base)}</span></span>
         {state && <span className="pr-card-row status-tone" data-tone={approved ? "passed" : "waiting"}>{approved ? <CircleCheck size={14} aria-hidden="true" /> : <CircleAlert size={14} aria-hidden="true" />}<span>{state.approvalsLeft && state.approvalsLeft > 0 ? t("{0} more approvals needed.", state.approvalsLeft) : t("Approvals")}</span></span>}
         {r.state === "open" ? <>
           <div className="pr-merge-row">
             <select className="select" aria-label={t("Merge method")} value={method} disabled={disabled || !r.methods.length} onChange={(e) => setMethod(e.target.value as MergeMethod)}>{r.methods.map((m) => <option value={m} key={m}>{methodTitle(m)}</option>)}</select>
-            <Button kind={r.blockers.length ? "default" : "primary"} tip={r.policy} disabled={disabled || !!r.blockers.length} aria-describedby={r.blockers.length ? "request-merge-reason" : undefined} onClick={() => store.confirmMergeRequest(method)}>{t("Merge…")}</Button>
+            <Button kind={r.blockers.length ? "default" : "primary"} tip={[r.policy, ...r.blockers].join("\n")} disabled={disabled || !!r.blockers.length} aria-describedby={r.blockers.length ? "request-merge-reason" : undefined} onClick={() => store.confirmMergeRequest(method)}>{t("Merge…")}</Button>
           </div>
-          {r.blockers.length > 0 && <span id="request-merge-reason" className="pr-cap pr-merge-reason">{r.blockers.join("\n")}</span>}
+          {reason && <span id="request-merge-reason" className="pr-cap pr-merge-reason">{reason}</span>}
         </> : <span className="pr-cap">{workStateTitle(r.state)}</span>}
       </> : !disabled && <span className="pr-cap">{t("No checks reported")}</span>}
     </section>
@@ -60,7 +66,7 @@ export function RequestLifecyclePanel({ store, number, pr, review, editing, onEd
       {names.map((name) => {
         const status = state?.changesRequestedBy.includes(name) ? "changes" : state?.approvedBy.includes(name) ? "approved" : "waiting";
         return <span className="pr-card-row" key={name}>
-          <span aria-hidden="true"><Avatar name={name} email={name} size={20} /></span><span className="ellipsis grow">@{name}</span>
+          <span aria-hidden="true"><Avatar name={name} email={name} size={20} url={ownAvatarURL(store, name)} /></span><span className="ellipsis grow">@{name}</span>
           <span className="pr-reviewer-status status-tone" data-tone={status === "approved" ? "passed" : status === "changes" ? "failed" : "waiting"}>
             {status === "approved" ? <CircleCheck size={12} aria-hidden="true" /> : status === "changes" ? <CircleX size={12} aria-hidden="true" /> : <Clock size={12} aria-hidden="true" />}
             {t(status === "approved" ? "Approved" : status === "changes" ? "Changes requested" : "Waiting")}

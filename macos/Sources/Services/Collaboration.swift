@@ -9,6 +9,8 @@ struct RequestQuery {
     var page = 1
 }
 struct RequestLifecycle {
+    /// The server says the request conflicts with its base
+    var conflicts = false
     var number: Int; var headSHA: String; var state: String; var title: String; var body: String; var base: String
     var reviewers: [String]; var methods: [String]; var blockers: [String]; var checks: String; var policy: String
     var canEdit: Bool; var canRebase: Bool
@@ -162,7 +164,7 @@ struct CollaborationInboxDetail {
             var methods: [String] = []
             if bool(r, "allow_merge_commit") { methods.append("merge") }; if bool(r, "allow_squash_merge") { methods.append("squash") }; if bool(r, "allow_rebase_merge") { methods.append("rebase") }
             if methods.isEmpty { blockers.append(String(localized: "The server did not allow a merge method.")) }
-            return RequestLifecycle(number: n, headSHA: text(obj(p, "head"), "sha"), state: state, title: text(p, "title"), body: text(p, "body"), base: text(obj(p, "base"), "ref"), reviewers: array(p, "requested_reviewers").map { text($0, "login") }, methods: methods, blockers: blockers, checks: readiness + " · " + ci, policy: String(localized: "GitHub branch rules, required checks and approvals are enforced again by the server."), canEdit: text(obj(p, "user"), "login") == c.me || write, canRebase: false)
+            return RequestLifecycle(conflicts: text(p, "mergeable_state") == "dirty", number: n, headSHA: text(obj(p, "head"), "sha"), state: state, title: text(p, "title"), body: text(p, "body"), base: text(obj(p, "base"), "ref"), reviewers: array(p, "requested_reviewers").map { text($0, "login") }, methods: methods, blockers: blockers, checks: readiness + " · " + ci, policy: String(localized: "GitHub branch rules, required checks and approvals are enforced again by the server."), canEdit: text(obj(p, "user"), "login") == c.me || write, canRebase: false)
         }
         let approvals = try? await object(c, requestURL(c, n) + "/approvals")
         let state = text(p, "state"), readiness = (p["detailed_merge_status"] as? String) ?? (p["merge_status"] as? String) ?? "unknown"
@@ -175,7 +177,7 @@ struct CollaborationInboxDetail {
         else if (approvals?["approvals_left"] as? Int ?? 0) > 0 { blockers.append(String(localized: "More approvals are required.")) }
         if bool(r, "only_allow_merge_if_pipeline_succeeds") && pipeline != "success" { blockers.append(String(localized: "The required pipeline has not succeeded.")) }
         let squash = text(r, "squash_option"), methods = squash == "always" ? ["squash"] : squash == "never" ? ["merge"] : ["merge", "squash"]
-        return RequestLifecycle(number: n, headSHA: text(p, "sha"), state: state == "opened" ? "open" : state, title: text(p, "title"), body: text(p, "description"), base: text(p, "target_branch"), reviewers: array(p, "reviewers").map { text($0, "username") }, methods: methods, blockers: blockers, checks: "\(readiness) · pipeline: \(pipeline.isEmpty ? "none" : pipeline)", policy: String(localized: "GitLab project merge method: \(text(r, "merge_method")). The server enforces approval, discussion and pipeline rules."), canEdit: text(obj(p, "author"), "username") == c.me || canMerge, canRebase: state == "opened" && canMerge)
+        return RequestLifecycle(conflicts: bool(p, "has_conflicts"), number: n, headSHA: text(p, "sha"), state: state == "opened" ? "open" : state, title: text(p, "title"), body: text(p, "description"), base: text(p, "target_branch"), reviewers: array(p, "reviewers").map { text($0, "username") }, methods: methods, blockers: blockers, checks: "\(readiness) · pipeline: \(pipeline.isEmpty ? "none" : pipeline)", policy: String(localized: "GitLab project merge method: \(text(r, "merge_method")). The server enforces approval, discussion and pipeline rules."), canEdit: text(obj(p, "author"), "username") == c.me || canMerge, canRebase: state == "opened" && canMerge)
     }
     static func merge(_ c: ReviewAccess, expected: RequestLifecycle, method: String) async throws {
         let fresh = try await lifecycle(c, expected.number)

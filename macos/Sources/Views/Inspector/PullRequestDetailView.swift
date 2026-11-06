@@ -202,7 +202,7 @@ struct PullRequestDetailView: View {
 
     @ViewBuilder private func meta(_ pr: PullRequest) -> some View {
         HStack(spacing: 6) {
-            Avatar(name: pr.author, email: pr.author, size: 20)
+            RequestAuthorAvatar(author: pr.author, size: 20)
             Text(verbatim: "@\(pr.author)").font(.system(size: 13, weight: .semibold))
         }
         HStack(spacing: 5) {
@@ -290,7 +290,7 @@ struct PullRequestDetailView: View {
 
     private func side(_ pr: PullRequest, _ t: RepoTarget) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            RequestLifecyclePanel(number: number, review: review?.state, headSHA: pr.headSHA, editing: $editing)
+            RequestLifecyclePanel(number: number, review: review?.state, headSHA: pr.headSHA, badge: checksBadge, editing: $editing)
             let issues = PullRequestPage.linkedIssues(pr.body)
             if !issues.isEmpty {
                 PullRequestCard(title: "Linked issue") {

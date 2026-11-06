@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { PullRequest } from "@/entities/git";
 import type { PullRequestReview, ReviewComment } from "@/entities/hosting";
 import {
-  branchLabel, checkGroups, checkJob, checksBadge, commentCount, branchSummary, firstError, folderLabel, headerInOneRow, isCompact, isThisBranch, linkedIssues, logLines, logTail, logWindow,
+  branchLabel, checkGroups, checkJob, checksBadge, commentCount, branchSummary, mergeReason, firstError, folderLabel, headerInOneRow, isCompact, isThisBranch, linkedIssues, logLines, logTail, logWindow,
   reviewRequestedCount, sorted, splitAllowed, threadCount, treeWidth, viewedKey, withViewed,
 } from "@/widgets/inspector/lib/pull-request-page";
 
@@ -24,6 +24,9 @@ describe("Pull requests page", () => {
     expect(headerInOneRow(true, "files", 719)).toBe(false);
     expect(headerInOneRow(true, "conversation", 1200)).toBe(false);
     expect(headerInOneRow(false, "files", 1200)).toBe(false);
+    expect(mergeReason(false, "main", null, 1, [])).toBeNull();
+    expect(mergeReason(true, "main", { kind: "failed", count: 1 }, 1, ["raw"])).toContain("main");
+    expect(mergeReason(false, "main", null, null, ["raw"])).toBe("raw");
     expect(branchSummary(false, 3, 2, 3)).toEqual({ kind: "noRequest", commits: 3 });
     expect(branchSummary(true, 2, 5, 6)).toEqual({ kind: "notPushed", onServer: 4, local: 2 });
     expect(branchSummary(true, 0, 5, 3)).toEqual({ kind: "moved", incoming: 5, commits: 3 });

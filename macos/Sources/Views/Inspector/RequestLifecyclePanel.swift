@@ -8,6 +8,8 @@ struct RequestLifecyclePanel: View {
     /// Who approved or asked for changes, once the review is loaded
     var review: ReviewState?
     var headSHA: String?
+    /// What the Checks tab counted; nil when nothing needs attention or it has not read them yet
+    var badge: PullRequestPage.ChecksBadge?
     /// "Edit request…" in the More menu opens the fields here
     @Binding var editing: Bool
     @ViewState private var title = ""
@@ -38,7 +40,10 @@ struct RequestLifecyclePanel: View {
     private func merge(_ request: RequestLifecycle?) -> some View {
         PullRequestCard(title: "Merge") {
             if let request {
-                row(checksSymbol, checksTone) { Text(verbatim: request.checks) }
+                row(checksSymbol, checksTone) { Text(verbatim: checksText) }
+                row(request.conflicts ? "xmark.circle.fill" : "checkmark.circle.fill", request.conflicts ? .failed : .passed) {
+                    Text(verbatim: request.conflicts ? String(localized: "Conflicts with \(request.base)") : String(localized: "No conflicts with \(request.base)"))
+                }
                 if let review {
                     let met = !review.approvedBy.isEmpty && review.changesRequestedBy.isEmpty && (review.approvalsLeft ?? 0) == 0
                     row(met ? "checkmark.circle.fill" : "exclamationmark.circle.fill", met ? .passed : .waiting) {
@@ -47,20 +52,29 @@ struct RequestLifecyclePanel: View {
                 }
                 if request.state == "open" {
                     HStack(spacing: 6) {
-                        Picker("Merge method", selection: $method) {
-                            ForEach(request.methods, id: \.self) { value in
-                                Text(value == "merge" ? String(localized: "Create a merge commit") : value == "squash" ? String(localized: "Squash and merge") : String(localized: "Rebase and merge")).tag(value)
+                        Menu {
+                            ForEach(request.methods, id: \.self) { value in Button(Self.methodTitle(value)) { method = value } }
+                        } label: {
+                            HStack(spacing: 6) {
+                                Text(verbatim: Self.methodTitle(method)).lineLimit(1).frame(maxWidth: .infinity, alignment: .leading)
+                                SymbolIcon("chevron.up.chevron.down").font(.system(size: 10)).foregroundStyle(StudioStyle.Rail.icon)
                             }
+                            .font(.system(size: 13)).padding(.horizontal, 8).frame(height: 28)
+                            .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(HostedList.edge))
+                            .contentShape(Rectangle())
                         }
-                        .labelsHidden().frame(maxWidth: .infinity, alignment: .leading)
+                        .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden)
+                        .accessibilityLabel("Merge method")
                         // the card's one filled button; neutral when blocked, with the reason directly below
                         Button("Merge…") { store.confirmMergeRequest(method: method) }
                             .buttonStyle(PullRequestButtonStyle(filled: true))
                             .disabled(disabled || !request.blockers.isEmpty)
-                            .help(request.policy)
+                            .help(([request.policy] + request.blockers).joined(separator: "\n"))
                     }
                     .padding(.top, 4)
-                    ForEach(request.blockers, id: \.self) { PullRequestCaption($0) }
+                    if let reason = PullRequestPage.mergeReason(conflicts: request.conflicts, base: request.base, badge: badge, approvalsLeft: review?.approvalsLeft, blockers: request.blockers) {
+                        PullRequestCaption(reason)
+                    }
                 } else {
                     PullRequestCaption(WorkState.title(request.state))
                 }
@@ -73,7 +87,25 @@ struct RequestLifecyclePanel: View {
         }
     }
 
+    private static func methodTitle(_ value: String) -> String {
+        value == "merge" ? String(localized: "Create a merge commit") : value == "squash" ? String(localized: "Squash and merge") : String(localized: "Rebase and merge")
+    }
+
+    private var checksText: String {
+        switch badge {
+        case .failed(let count)?: return count == 1 ? String(localized: "1 check failed") : String(localized: "\(count) checks failed")
+        case .running(let count)?: return count == 1 ? String(localized: "1 check running") : String(localized: "\(count) checks running")
+        case nil: return headSHA.flatMap({ store.ciBySha[$0]?.status }) == .success ? String(localized: "All checks passed") : String(localized: "Checks pending")
+        }
+    }
+
     private var checksSymbol: String {
+        if case .failed? = badge { return "xmark.circle.fill" }
+        if case .running? = badge { return "clock.fill" }
+        return storedChecksSymbol
+    }
+
+    private var storedChecksSymbol: String {
         switch headSHA.flatMap({ store.ciBySha[$0]?.status }) {
         case .success?: return "checkmark.circle.fill"
         case .failed?: return "xmark.circle.fill"
@@ -83,6 +115,8 @@ struct RequestLifecyclePanel: View {
     }
 
     private var checksTone: StudioStyle.Tone {
+        if case .failed? = badge { return .failed }
+        if case .running? = badge { return .waiting }
         switch headSHA.flatMap({ store.ciBySha[$0]?.status }) {
         case .success?: return .passed
         case .failed?: return .failed
@@ -109,7 +143,7 @@ struct RequestLifecyclePanel: View {
             if names.isEmpty { PullRequestCaption(String(localized: "No one has approved yet.")) }
             ForEach(names, id: \.self) { name in
                 HStack(spacing: 8) {
-                    Avatar(name: name, email: name, size: 20)
+                    RequestAuthorAvatar(author: name, size: 20)
                     Text(verbatim: "@\(name)").lineLimit(1).truncationMode(.tail).frame(maxWidth: .infinity, alignment: .leading)
                     if changes.contains(name) { status("Changes requested", "exclamationmark.bubble.fill", .waiting) }
                     else if approved.contains(name) { status("Approved", "checkmark.circle.fill", .passed) }

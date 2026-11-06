@@ -2,4 +2,5 @@
 export { Inspector } from "./ui/Inspector";
 export { IssueDetail } from "./ui/IssueDetail";
 export { PullRequestDetailView, type PullRequestPageContext } from "./ui/PullRequestDetailView";
+export { ownAvatarURL } from "./lib/own-avatar";
 export { branchSummary, type BranchSummary, commentCount, isThisBranch, type RequestSort, reviewRequestedCount, sorted } from "./lib/pull-request-page";

@@ -3,6 +3,8 @@
 "%@ approved these changes" = "Uživatel %@ schválil tyto změny";
 "%@ requested changes" = "Uživatel %@ požádal o změny";
 "%lld changed files" = "Změněné soubory: %1$lld";
+"%lld checks failed" = "Neúspěšné kontroly: %lld";
+"%lld checks running" = "Běžící kontroly: %lld";
 "%lld comments" = "Komentáře: %lld";
 "%lld commits in %@" = "%1$lld commitů v %2$@";
 "%lld commits replay on top of %@, newest first." = "Commity (%1$lld) se znovu přehrají na %2$@, nejnovější první.";
@@ -14,11 +16,15 @@
 "%lld to pull" = "%1$lld ke stažení";
 "%lld uncommitted files. Stash them above or commit first." = "Necommitnuté soubory: %1$lld. Odložte je výše, nebo je nejdřív commitněte.";
 "%lld viewed" = "Prohlédnuto: %lld";
+"1 check failed" = "1 kontrola selhala";
+"1 check running" = "1 kontrola běží";
 "1 comment" = "1 komentář";
 "1 thread" = "1 vlákno";
+"A check still needs attention" = "Kontrola stále vyžaduje pozornost";
 "A comment needs text" = "Komentář musí obsahovat text";
 "Activity" = "Aktivita";
 "All branches…" = "Všechny větve…";
+"All checks passed" = "Všechny kontroly prošly";
 "Already checked out" = "Už jste na této větvi";
 "Already in this branch" = "Už je v této větvi";
 "Approvals" = "Schválení";
@@ -26,6 +32,7 @@
 "Ask questions about the selected changes" = "Položit otázky k vybraným změnám";
 "Based on %@" = "Vychází z %@";
 "Changes requested" = "Požadovány změny";
+"Checks pending" = "Kontroly čekají";
 "Choose a base to see the commits that replay." = "Vyberte základ, abyste viděli commity, které se přehrají.";
 "Choose the new base" = "Vyberte nový základ";
 "Clean up history" = "Uklidit historii";
@@ -34,6 +41,7 @@
 "Commits to replay" = "Commity k přehrání";
 "Compare with %@" = "Porovnat s %1$@";
 "Conflicts pause the rebase until you continue or abort, and a finished rebase can be undone." = "Konflikty rebase pozastaví, dokud nebudete pokračovat nebo ho nepřerušíte; dokončený rebase lze vrátit zpět.";
+"Conflicts with %@" = "Konflikty s %@";
 "Copy log" = "Kopírovat log";
 "Create a merge commit" = "Vytvořit slučovací commit";
 "Create merge request…" = "Vytvořit merge request…";
@@ -53,6 +61,8 @@
 "Linked issue" = "Propojené issue";
 "Load log" = "Načíst log";
 "Merge" = "Sloučení";
+"Merge needs %lld more approvals" = "Sloučení potřebuje další schválení: %lld";
+"Merge needs 1 more approval" = "Sloučení potřebuje ještě 1 schválení";
 "Merge request open" = "Merge request otevřen";
 "Merges %@ into this branch" = "Sloučí %@ do této větve";
 "More file actions" = "Další akce souboru";
@@ -68,6 +78,7 @@
 "Newest" = "Nejnovější";
 "Next file (J)" = "Další soubor (J)";
 "No comments yet." = "Zatím žádné komentáře.";
+"No conflicts with %@" = "Žádné konflikty s %@";
 "Not pushed" = "Neodesláno";
 "Nothing is due today." = "Na dnešek není nic naplánováno.";
 "Nothing to push" = "Není co odeslat";
@@ -95,6 +106,7 @@
 "Replays this branch's commits on top of a new base, as if the branch had started there." = "Znovu přehraje commity této větve na novém základu, jako by větev začínala tam.";
 "Request review…" = "Požádat o revizi…";
 "Resolve" = "Vyřešit";
+"Resolve the conflicts with %@ first" = "Nejprve vyřešte konflikty s %@";
 "Review the commits" = "Zkontrolujte commity";
 "Review type" = "Typ revize";
 "Reviewers" = "Recenzenti";
@@ -122,6 +134,7 @@
 "Updates merge request #%@" = "Aktualizuje merge request #%@";
 "Updates pull request #%@" = "Aktualizuje pull request #%@";
 "Viewed %@" = "Prohlédnuto: %@";
+"Waiting for the checks to finish" = "Čeká se na dokončení kontrol";
 "Yesterday" = "Včera";
 "base" = "základ";
 "choose a new base" = "vyberte nový základ";

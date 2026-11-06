@@ -20,7 +20,9 @@ struct PullRequestSummary: View {
     private var requestShort: String { request.map { "#\($0.number)" } ?? "" }
 
     var body: some View {
-        Group {
+        // not a Group: with no card yet it would be no view at all, and its task would never read the counts
+        VStack(spacing: 0) {
+            Color.clear.frame(height: 0)
             if let head, let base, head != base, let counts {
                 let state = PullRequestPage.branchSummary(hasRequest: request != nil, ahead: store.status.ahead, incoming: counts.incoming, commits: counts.commits)
                 HostedListSummary(compact: compact) {

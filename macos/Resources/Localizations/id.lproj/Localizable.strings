@@ -3,6 +3,8 @@
 "%@ approved these changes" = "%@ menyetujui perubahan ini";
 "%@ requested changes" = "%@ meminta perubahan";
 "%lld changed files" = "%1$lld file berubah";
+"%lld checks failed" = "%lld pemeriksaan gagal";
+"%lld checks running" = "%lld pemeriksaan berjalan";
 "%lld comments" = "%lld komentar";
 "%lld commits in %@" = "%1$lld commit di %2$@";
 "%lld commits replay on top of %@, newest first." = "%1$lld commit diterapkan ulang di atas %2$@, terbaru lebih dulu.";
@@ -14,11 +16,15 @@
 "%lld to pull" = "%1$lld perlu di-pull";
 "%lld uncommitted files. Stash them above or commit first." = "%1$lld file belum di-commit. Stash di atas atau commit dulu.";
 "%lld viewed" = "%lld dilihat";
+"1 check failed" = "1 pemeriksaan gagal";
+"1 check running" = "1 pemeriksaan berjalan";
 "1 comment" = "1 komentar";
 "1 thread" = "1 utas";
+"A check still needs attention" = "Satu pemeriksaan masih perlu perhatian";
 "A comment needs text" = "Komentar perlu teks";
 "Activity" = "Aktivitas";
 "All branches…" = "Semua branch…";
+"All checks passed" = "Semua pemeriksaan lulus";
 "Already checked out" = "Sudah di-checkout";
 "Already in this branch" = "Sudah ada di branch ini";
 "Approvals" = "Persetujuan";
@@ -26,6 +32,7 @@
 "Ask questions about the selected changes" = "Ajukan pertanyaan tentang perubahan yang dipilih";
 "Based on %@" = "Berdasarkan %@";
 "Changes requested" = "Perubahan diminta";
+"Checks pending" = "Pemeriksaan tertunda";
 "Choose a base to see the commits that replay." = "Pilih basis untuk melihat commit yang diterapkan ulang.";
 "Choose the new base" = "Pilih basis baru";
 "Clean up history" = "Rapikan riwayat";
@@ -34,6 +41,7 @@
 "Commits to replay" = "Commit yang diterapkan ulang";
 "Compare with %@" = "Bandingkan dengan %1$@";
 "Conflicts pause the rebase until you continue or abort, and a finished rebase can be undone." = "Konflik menjeda rebase sampai Anda melanjutkan atau membatalkannya, dan rebase yang selesai dapat diurungkan.";
+"Conflicts with %@" = "Konflik dengan %@";
 "Copy log" = "Salin log";
 "Create a merge commit" = "Buat commit merge";
 "Create merge request…" = "Buat merge request…";
@@ -53,6 +61,8 @@
 "Linked issue" = "Issue tertaut";
 "Load log" = "Muat log";
 "Merge" = "Merge";
+"Merge needs %lld more approvals" = "Penggabungan perlu %lld persetujuan lagi";
+"Merge needs 1 more approval" = "Penggabungan perlu 1 persetujuan lagi";
 "Merge request open" = "Merge request terbuka";
 "Merges %@ into this branch" = "Menggabungkan %@ ke cabang ini";
 "More file actions" = "Tindakan file lainnya";
@@ -68,6 +78,7 @@
 "Newest" = "Terbaru";
 "Next file (J)" = "File berikutnya (J)";
 "No comments yet." = "Belum ada komentar.";
+"No conflicts with %@" = "Tidak ada konflik dengan %@";
 "Not pushed" = "Belum di-push";
 "Nothing is due today." = "Tidak ada yang jatuh tempo hari ini.";
 "Nothing to push" = "Tidak ada yang perlu di-push";
@@ -95,6 +106,7 @@
 "Replays this branch's commits on top of a new base, as if the branch had started there." = "Menerapkan ulang commit branch ini di atas basis baru, seolah-olah branch dimulai dari sana.";
 "Request review…" = "Minta tinjauan…";
 "Resolve" = "Selesaikan";
+"Resolve the conflicts with %@ first" = "Selesaikan dulu konflik dengan %@";
 "Review the commits" = "Tinjau commit";
 "Review type" = "Jenis tinjauan";
 "Reviewers" = "Peninjau";
@@ -122,6 +134,7 @@
 "Updates merge request #%@" = "Memperbarui merge request #%@";
 "Updates pull request #%@" = "Memperbarui pull request #%@";
 "Viewed %@" = "%@ dilihat";
+"Waiting for the checks to finish" = "Menunggu pemeriksaan selesai";
 "Yesterday" = "Kemarin";
 "base" = "dasar";
 "choose a new base" = "pilih basis baru";

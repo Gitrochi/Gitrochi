@@ -3,6 +3,8 @@
 "%@ approved these changes" = "%@ อนุมัติการเปลี่ยนแปลงนี้";
 "%@ requested changes" = "%@ ขอให้แก้ไข";
 "%lld changed files" = "ไฟล์ที่เปลี่ยน %1$lld ไฟล์";
+"%lld checks failed" = "การตรวจสอบล้มเหลว %lld รายการ";
+"%lld checks running" = "กำลังตรวจสอบ %lld รายการ";
 "%lld comments" = "%lld ความคิดเห็น";
 "%lld commits in %@" = "%1$lld คอมมิตใน %2$@";
 "%lld commits replay on top of %@, newest first." = "commit %1$lld รายการจะถูกวางซ้ำบน %2$@ เรียงจากใหม่สุด";
@@ -14,11 +16,15 @@
 "%lld to pull" = "รอพูล %1$lld รายการ";
 "%lld uncommitted files. Stash them above or commit first." = "มีไฟล์ที่ยังไม่ commit %1$lld ไฟล์ เลือก stash ด้านบนหรือ commit ก่อน";
 "%lld viewed" = "ดูแล้ว %lld ไฟล์";
+"1 check failed" = "การตรวจสอบล้มเหลว 1 รายการ";
+"1 check running" = "กำลังตรวจสอบ 1 รายการ";
 "1 comment" = "1 ความคิดเห็น";
 "1 thread" = "1 เธรด";
+"A check still needs attention" = "ยังมีการตรวจสอบที่ต้องดู";
 "A comment needs text" = "ความคิดเห็นต้องมีข้อความ";
 "Activity" = "กิจกรรม";
 "All branches…" = "แบรนช์ทั้งหมด…";
+"All checks passed" = "ผ่านการตรวจสอบทั้งหมด";
 "Already checked out" = "เช็กเอาต์อยู่แล้ว";
 "Already in this branch" = "อยู่ใน branch นี้แล้ว";
 "Approvals" = "การอนุมัติ";
@@ -26,6 +32,7 @@
 "Ask questions about the selected changes" = "ถามเกี่ยวกับการเปลี่ยนแปลงที่เลือก";
 "Based on %@" = "อิงจาก %@";
 "Changes requested" = "ขอให้แก้ไขแล้ว";
+"Checks pending" = "รอการตรวจสอบ";
 "Choose a base to see the commits that replay." = "เลือกฐานเพื่อดู commit ที่จะวางซ้ำ";
 "Choose the new base" = "เลือกฐานใหม่";
 "Clean up history" = "จัดระเบียบประวัติ";
@@ -34,6 +41,7 @@
 "Commits to replay" = "commit ที่จะวางซ้ำ";
 "Compare with %@" = "เปรียบเทียบกับ %1$@";
 "Conflicts pause the rebase until you continue or abort, and a finished rebase can be undone." = "หากเกิดข้อขัดแย้ง rebase จะหยุดจนกว่าคุณจะดำเนินการต่อหรือยกเลิก และ rebase ที่เสร็จแล้วสามารถเลิกทำได้";
+"Conflicts with %@" = "มีข้อขัดแย้งกับ %@";
 "Copy log" = "คัดลอกล็อก";
 "Create a merge commit" = "สร้างคอมมิตเมิร์จ";
 "Create merge request…" = "สร้าง merge request…";
@@ -53,6 +61,8 @@
 "Linked issue" = "อิชชูที่เชื่อมโยง";
 "Load log" = "โหลดล็อก";
 "Merge" = "เมิร์จ";
+"Merge needs %lld more approvals" = "ต้องได้รับการอนุมัติอีก %lld รายการจึงจะผสานได้";
+"Merge needs 1 more approval" = "ต้องได้รับการอนุมัติอีก 1 รายการจึงจะผสานได้";
 "Merge request open" = "Merge request เปิดอยู่";
 "Merges %@ into this branch" = "รวม %@ เข้าสาขานี้";
 "More file actions" = "การทำงานอื่นของไฟล์";
@@ -68,6 +78,7 @@
 "Newest" = "ใหม่สุด";
 "Next file (J)" = "ไฟล์ถัดไป (J)";
 "No comments yet." = "ยังไม่มีความคิดเห็น";
+"No conflicts with %@" = "ไม่มีข้อขัดแย้งกับ %@";
 "Not pushed" = "ยังไม่ได้ push";
 "Nothing is due today." = "วันนี้ไม่มีงานที่ถึงกำหนด";
 "Nothing to push" = "ไม่มีอะไรให้ push";
@@ -95,6 +106,7 @@
 "Replays this branch's commits on top of a new base, as if the branch had started there." = "นำ commit ของ branch นี้ไปวางซ้ำบนฐานใหม่ เหมือนกับว่า branch เริ่มจากตรงนั้น";
 "Request review…" = "ขอให้รีวิว…";
 "Resolve" = "ทำเครื่องหมายว่าแก้แล้ว";
+"Resolve the conflicts with %@ first" = "แก้ข้อขัดแย้งกับ %@ ก่อน";
 "Review the commits" = "ตรวจสอบ commit";
 "Review type" = "ประเภทการรีวิว";
 "Reviewers" = "ผู้รีวิว";
@@ -122,6 +134,7 @@
 "Updates merge request #%@" = "อัปเดต merge request #%@";
 "Updates pull request #%@" = "อัปเดต pull request #%@";
 "Viewed %@" = "ดู %@ แล้ว";
+"Waiting for the checks to finish" = "กำลังรอการตรวจสอบให้เสร็จ";
 "Yesterday" = "เมื่อวาน";
 "base" = "ฐาน";
 "choose a new base" = "เลือกฐานใหม่";

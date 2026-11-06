@@ -2,6 +2,8 @@
 "%@ approved these changes" = "%@ hat diese Änderungen genehmigt";
 "%@ requested changes" = "%@ hat Änderungen angefordert";
 "%lld changed files" = "%1$lld geänderte Dateien";
+"%lld checks failed" = "%lld Prüfungen fehlgeschlagen";
+"%lld checks running" = "%lld Prüfungen laufen";
 "%lld comments" = "%lld Kommentare";
 "%lld commits in %@" = "%1$lld Commits in %2$@";
 "%lld commits replay on top of %@, newest first." = "%1$lld Commits werden auf %2$@ erneut abgespielt, neueste zuerst.";
@@ -13,11 +15,15 @@
 "%lld to pull" = "%1$lld zu pullen";
 "%lld uncommitted files. Stash them above or commit first." = "%1$lld nicht committete Dateien. Oben stashen oder zuerst committen.";
 "%lld viewed" = "%lld angesehen";
+"1 check failed" = "1 Prüfung fehlgeschlagen";
+"1 check running" = "1 Prüfung läuft";
 "1 comment" = "1 Kommentar";
 "1 thread" = "1 Thread";
+"A check still needs attention" = "Eine Prüfung braucht noch Aufmerksamkeit";
 "A comment needs text" = "Ein Kommentar braucht Text";
 "Activity" = "Aktivität";
 "All branches…" = "Alle Branches…";
+"All checks passed" = "Alle Prüfungen bestanden";
 "Already checked out" = "Bereits ausgecheckt";
 "Already in this branch" = "Bereits in diesem Branch";
 "Approvals" = "Genehmigungen";
@@ -25,6 +31,7 @@
 "Ask questions about the selected changes" = "Fragen zu den ausgewählten Änderungen stellen";
 "Based on %@" = "Basiert auf %@";
 "Changes requested" = "Änderungen angefordert";
+"Checks pending" = "Prüfungen ausstehend";
 "Choose a base to see the commits that replay." = "Wählen Sie eine Basis, um die Commits zu sehen, die erneut abgespielt werden.";
 "Choose the new base" = "Neue Basis wählen";
 "Clean up history" = "Verlauf aufräumen";
@@ -33,6 +40,7 @@
 "Commits to replay" = "Erneut abzuspielende Commits";
 "Compare with %@" = "Mit %1$@ vergleichen";
 "Conflicts pause the rebase until you continue or abort, and a finished rebase can be undone." = "Bei Konflikten pausiert der Rebase, bis Sie fortfahren oder abbrechen; ein abgeschlossener Rebase lässt sich rückgängig machen.";
+"Conflicts with %@" = "Konflikte mit %@";
 "Copy log" = "Log kopieren";
 "Create a merge commit" = "Merge-Commit erstellen";
 "Create merge request…" = "Merge Request erstellen…";
@@ -52,6 +60,8 @@
 "Linked issue" = "Verknüpftes Issue";
 "Load log" = "Log laden";
 "Merge" = "Merge";
+"Merge needs %lld more approvals" = "Zusammenführen braucht noch %lld Freigaben";
+"Merge needs 1 more approval" = "Zusammenführen braucht noch 1 Freigabe";
 "Merge request open" = "Merge Request offen";
 "Merges %@ into this branch" = "Führt %@ in diesen Branch zusammen";
 "More file actions" = "Weitere Dateiaktionen";
@@ -68,6 +78,7 @@
 "Newest first" = "Neueste zuerst";
 "Next file (J)" = "Nächste Datei (J)";
 "No comments yet." = "Noch keine Kommentare.";
+"No conflicts with %@" = "Keine Konflikte mit %@";
 "Not pushed" = "Nicht gepusht";
 "Nothing is due today." = "Heute ist nichts fällig.";
 "Nothing to push" = "Nichts zu pushen";
@@ -93,6 +104,7 @@
 "Replays this branch's commits on top of a new base, as if the branch had started there." = "Spielt die Commits dieses Branches auf einer neuen Basis erneut ab, als hätte der Branch dort begonnen.";
 "Request review…" = "Review anfordern…";
 "Resolve" = "Auflösen";
+"Resolve the conflicts with %@ first" = "Löse zuerst die Konflikte mit %@";
 "Review the commits" = "Commits prüfen";
 "Review type" = "Review-Art";
 "Reviewers" = "Reviewer";
@@ -134,6 +146,7 @@
 "Previous match" = "Vorheriger Treffer";
 "Next match" = "Nächster Treffer";
 "Viewed %@" = "%@ angesehen";
+"Waiting for the checks to finish" = "Warten auf das Ende der Prüfungen";
 "Yesterday" = "Gestern";
 "base" = "Basis";
 "choose a new base" = "neue Basis wählen";

@@ -3,6 +3,8 @@
 "%@ approved these changes" = "%@ jóváhagyta ezeket a módosításokat";
 "%@ requested changes" = "%@ módosításokat kért";
 "%lld changed files" = "%1$lld módosított fájl";
+"%lld checks failed" = "%lld ellenőrzés sikertelen";
+"%lld checks running" = "%lld ellenőrzés fut";
 "%lld comments" = "%lld megjegyzés";
 "%lld commits in %@" = "%1$lld commit itt: %2$@";
 "%lld commits replay on top of %@, newest first." = "%1$lld commit kerül újrajátszásra a(z) %2$@ tetején, a legújabbal kezdve.";
@@ -14,11 +16,15 @@
 "%lld to pull" = "%1$lld letöltendő";
 "%lld uncommitted files. Stash them above or commit first." = "%1$lld nem commitolt fájl. Tegye félre őket fent, vagy előbb commitoljon.";
 "%lld viewed" = "%lld megtekintve";
+"1 check failed" = "1 ellenőrzés sikertelen";
+"1 check running" = "1 ellenőrzés fut";
 "1 comment" = "1 megjegyzés";
 "1 thread" = "1 szál";
+"A check still needs attention" = "Egy ellenőrzés még figyelmet igényel";
 "A comment needs text" = "A megjegyzéshez szöveg szükséges";
 "Activity" = "Tevékenység";
 "All branches…" = "Összes ág…";
+"All checks passed" = "Minden ellenőrzés sikeres";
 "Already checked out" = "Már ezen az ágon van";
 "Already in this branch" = "Már benne van ebben az ágban";
 "Approvals" = "Jóváhagyások";
@@ -26,6 +32,7 @@
 "Ask questions about the selected changes" = "Kérdések feltevése a kijelölt módosításokról";
 "Based on %@" = "Alap: %@";
 "Changes requested" = "Módosítások kérve";
+"Checks pending" = "Ellenőrzések függőben";
 "Choose a base to see the commits that replay." = "Válasszon alapot az újrajátszandó commitok megtekintéséhez.";
 "Choose the new base" = "Válassza ki az új alapot";
 "Clean up history" = "Előzmények rendezése";
@@ -34,6 +41,7 @@
 "Commits to replay" = "Újrajátszandó commitok";
 "Compare with %@" = "Összehasonlítás ezzel: %1$@";
 "Conflicts pause the rebase until you continue or abort, and a finished rebase can be undone." = "Ütközés esetén a rebase szünetel, amíg nem folytatja vagy meg nem szakítja; a befejezett rebase visszavonható.";
+"Conflicts with %@" = "Ütközés ezzel: %@";
 "Copy log" = "Napló másolása";
 "Create a merge commit" = "Egyesítő commit létrehozása";
 "Create merge request…" = "Merge request létrehozása…";
@@ -53,6 +61,8 @@
 "Linked issue" = "Kapcsolódó issue";
 "Load log" = "Napló betöltése";
 "Merge" = "Egyesítés";
+"Merge needs %lld more approvals" = "Az egyesítéshez még %lld jóváhagyás kell";
+"Merge needs 1 more approval" = "Az egyesítéshez még 1 jóváhagyás kell";
 "Merge request open" = "Merge request nyitva";
 "Merges %@ into this branch" = "%@ egyesítése ebbe az ágba";
 "More file actions" = "További fájlműveletek";
@@ -68,6 +78,7 @@
 "Newest" = "Legújabb";
 "Next file (J)" = "Következő fájl (J)";
 "No comments yet." = "Még nincsenek megjegyzések.";
+"No conflicts with %@" = "Nincs ütközés ezzel: %@";
 "Not pushed" = "Nincs feltöltve";
 "Nothing is due today." = "Mára nincs esedékes feladat.";
 "Nothing to push" = "Nincs mit feltölteni";
@@ -95,6 +106,7 @@
 "Replays this branch's commits on top of a new base, as if the branch had started there." = "Újrajátssza az ág commitjait egy új alapon, mintha az ág onnan indult volna.";
 "Request review…" = "Felülvizsgálat kérése…";
 "Resolve" = "Megoldottnak jelölés";
+"Resolve the conflicts with %@ first" = "Először oldja fel az ütközéseket ezzel: %@";
 "Review the commits" = "Commitok áttekintése";
 "Review type" = "Felülvizsgálat típusa";
 "Reviewers" = "Felülvizsgálók";
@@ -122,6 +134,7 @@
 "Updates merge request #%@" = "Frissíti a(z) #%@ merge requestet";
 "Updates pull request #%@" = "Frissíti a(z) #%@ pull requestet";
 "Viewed %@" = "%@ megtekintve";
+"Waiting for the checks to finish" = "Várakozás az ellenőrzések befejezésére";
 "Yesterday" = "Tegnap";
 "base" = "alap";
 "choose a new base" = "válasszon új alapot";

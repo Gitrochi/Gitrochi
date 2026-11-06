@@ -55,7 +55,7 @@ export async function prConversationSelfTest(): Promise<[boolean, string]> {
     store.filterPullRequests = async (scope, search) => { searches.push(`${scope}:${search}`); store.requestQuery = { scope, search, page: 1 }; store.changed(); };
     store.loadReview = async (number) => { store.review = { ...review, number }; store.changed(); };
     store.loadRequestLifecycle = async () => {};
-    store.requestLifecycle = { number: 7, headSHA: head, state: "open", title: pr.title, body: pr.body, base: "main", reviewers: [], methods: ["merge"], blockers: [], checks: "Fixture only", policy: "Fixture only", canEdit: true, canRebase: false, squashRequired: false };
+    store.requestLifecycle = { conflicts: false, number: 7, headSHA: head, state: "open", title: pr.title, body: pr.body, base: "main", reviewers: [], methods: ["merge"], blockers: [], checks: "Fixture only", policy: "Fixture only", canEdit: true, canRebase: false, squashRequired: false };
     store.selection = { kind: "pullRequest", number: 7 }; store.navigate("pullRequests", false);
     root.render(<RepoPage store={store} openSettings={() => { unexpected.push("settings"); }} />);
     if (!await until(() => !!composer() && !!labelled("More pull request actions"))) return [false, "PR conversation did not mount"];

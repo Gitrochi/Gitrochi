@@ -92,6 +92,16 @@ export function logLines(body: string): LogLine[] {
 }
 
 /** The number of the first line that reports a failure */
+/** The one reason beside a disabled Merge…: what to do first. `blockers` are the server's own words, for what the page cannot say better. (macOS: PullRequestPage.mergeReason) */
+export function mergeReason(conflicts: boolean, base: string, badge: ReturnType<typeof checksBadge>, approvalsLeft: number | null | undefined, blockers: string[]): string | null {
+  if (!blockers.length) return null;
+  if (conflicts) return t("Resolve the conflicts with {0} first", base);
+  if (badge?.kind === "failed") return t("A check still needs attention");
+  if (badge?.kind === "running") return t("Waiting for the checks to finish");
+  if (approvalsLeft && approvalsLeft > 0) return approvalsLeft === 1 ? t("Merge needs 1 more approval") : t("Merge needs {0} more approvals", approvalsLeft);
+  return blockers[0];
+}
+
 /** What the summary card says about the current branch (macOS: PullRequestPage.BranchSummary) */
 export type BranchSummary =
   | { kind: "noRequest"; commits: number }

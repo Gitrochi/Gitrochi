@@ -15,6 +15,7 @@ import { PullRequestFilesView } from "./PullRequestFilesView";
 import { PullRequestReviewDialog } from "./PullRequestReviewDialog";
 import { RequestActivity } from "./RequestActivity";
 import { RequestChecksPanel } from "./RequestChecksPanel";
+import { ownAvatarURL } from "../lib/own-avatar";
 import { RequestLifecyclePanel } from "./RequestLifecyclePanel";
 import { ReviewDraftPanel } from "./ReviewPanels";
 import "./pull-request-detail.css";
@@ -107,7 +108,7 @@ export function PullRequestDetailView({ store, number, page }: { store: RepoStor
         <Button className="pr-button-icon" aria-label={moreLabel} aria-haspopup="menu" tip={moreLabel} onClick={(event) => showMenuBelow(event.currentTarget, more)}><Ellipsis size={14} /></Button>
       </div>
       <div className="pr-head-meta">
-        <span className="pr-author"><span aria-hidden="true"><Avatar name={pr.author} email={pr.author} size={20} /></span><strong>@{pr.author}</strong></span>
+        <span className="pr-author"><span aria-hidden="true"><Avatar name={pr.author} email={pr.author} size={20} url={ownAvatarURL(store, pr.author)} /></span><strong>@{pr.author}</strong></span>
         <span className="pr-chip selectable">{thisBranch && <span className="pr-dot" aria-hidden="true" />}{branchLabel(pr, store.headBranch)}</span>
         {added + deleted > 0 && <span className="pr-stat mono"><span className="a">+{added}</span> <span className="d">−{deleted}</span></span>}
       </div>
@@ -128,7 +129,7 @@ export function PullRequestDetailView({ store, number, page }: { store: RepoStor
           {r && pending > 0 && <ReviewDraftPanel store={store} number={number} />}
           {r ? <RequestActivity store={store} review={r} author={pr.author} onOpenFile={openFile} {...md} /> : store.reviewLoading && <Spinner size={14} />}
         </div>
-        <aside className="pr-side"><RequestLifecyclePanel store={store} number={number} pr={pr} review={r} editing={editing} onEditing={setEditing} /></aside>
+        <aside className="pr-side"><RequestLifecyclePanel badge={badge} store={store} number={number} pr={pr} review={r} editing={editing} onEditing={setEditing} /></aside>
       </div>
       <div className={`pr-composer ${focused || draft ? "expanded" : ""}`}>
         <textarea className="pr-composer-field" rows={1} aria-label={t("Comment")} placeholder={t("Write a comment…")} value={draft} disabled={store.reviewBusy || store.reviewLoading}

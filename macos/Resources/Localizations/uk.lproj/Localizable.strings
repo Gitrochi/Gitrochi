@@ -3,6 +3,8 @@
 "%@ approved these changes" = "Користувач %@ схвалив ці зміни";
 "%@ requested changes" = "Користувач %@ запросив зміни";
 "%lld changed files" = "Змінених файлів: %1$lld";
+"%lld checks failed" = "Не пройдено перевірок: %lld";
+"%lld checks running" = "Виконується перевірок: %lld";
 "%lld comments" = "Коментарів: %lld";
 "%lld commits in %@" = "Комітів у %2$@: %1$lld";
 "%lld commits replay on top of %@, newest first." = "Комітів: %1$lld — буде застосовано поверх %2$@, спочатку нові.";
@@ -14,11 +16,15 @@
 "%lld to pull" = "До отримання: %1$lld";
 "%lld uncommitted files. Stash them above or commit first." = "Незакомічених файлів: %1$lld. Сховайте їх вище або спершу закомітьте.";
 "%lld viewed" = "Переглянуто: %lld";
+"1 check failed" = "1 перевірку не пройдено";
+"1 check running" = "Виконується 1 перевірка";
 "1 comment" = "1 коментар";
 "1 thread" = "1 тред";
+"A check still needs attention" = "Перевірка все ще потребує уваги";
 "A comment needs text" = "Коментар має містити текст";
 "Activity" = "Активність";
 "All branches…" = "Усі гілки…";
+"All checks passed" = "Усі перевірки пройдено";
 "Already checked out" = "Уже на цій гілці";
 "Already in this branch" = "Уже в цій гілці";
 "Approvals" = "Схвалення";
@@ -26,6 +32,7 @@
 "Ask questions about the selected changes" = "Поставити запитання про вибрані зміни";
 "Based on %@" = "На основі %@";
 "Changes requested" = "Запитано зміни";
+"Checks pending" = "Перевірки очікують";
 "Choose a base to see the commits that replay." = "Виберіть базу, щоб побачити коміти, які буде застосовано повторно.";
 "Choose the new base" = "Виберіть нову базу";
 "Clean up history" = "Упорядкувати історію";
@@ -34,6 +41,7 @@
 "Commits to replay" = "Коміти для повторного застосування";
 "Compare with %@" = "Порівняти з %1$@";
 "Conflicts pause the rebase until you continue or abort, and a finished rebase can be undone." = "У разі конфліктів перебазування призупиняється, доки ви не продовжите або не скасуєте його; завершене перебазування можна скасувати.";
+"Conflicts with %@" = "Конфлікти з %@";
 "Copy log" = "Копіювати журнал";
 "Create a merge commit" = "Створити коміт злиття";
 "Create merge request…" = "Створити merge request…";
@@ -53,6 +61,8 @@
 "Linked issue" = "Пов’язана задача";
 "Load log" = "Завантажити журнал";
 "Merge" = "Злиттям";
+"Merge needs %lld more approvals" = "Для злиття потрібно ще схвалень: %lld";
+"Merge needs 1 more approval" = "Для злиття потрібне ще 1 схвалення";
 "Merge request open" = "Merge request відкрито";
 "Merges %@ into this branch" = "Об'єднає %@ у цю гілку";
 "More file actions" = "Інші дії з файлом";
@@ -68,6 +78,7 @@
 "Newest" = "Спочатку нові";
 "Next file (J)" = "Наступний файл (J)";
 "No comments yet." = "Коментарів поки немає.";
+"No conflicts with %@" = "Немає конфліктів з %@";
 "Not pushed" = "Не надіслано";
 "Nothing is due today." = "На сьогодні нічого немає.";
 "Nothing to push" = "Нічого надсилати";
@@ -95,6 +106,7 @@
 "Replays this branch's commits on top of a new base, as if the branch had started there." = "Повторно застосовує коміти цієї гілки поверх нової бази, ніби гілка починалася звідти.";
 "Request review…" = "Запросити рев’ю…";
 "Resolve" = "Позначити розв’язаним";
+"Resolve the conflicts with %@ first" = "Спочатку розв'яжіть конфлікти з %@";
 "Review the commits" = "Перевірте коміти";
 "Review type" = "Тип рев’ю";
 "Reviewers" = "Рецензенти";
@@ -122,6 +134,7 @@
 "Updates merge request #%@" = "Оновить merge request #%@";
 "Updates pull request #%@" = "Оновить pull request #%@";
 "Viewed %@" = "Переглянуто: %@";
+"Waiting for the checks to finish" = "Очікування завершення перевірок";
 "Yesterday" = "Учора";
 "base" = "база";
 "choose a new base" = "виберіть нову базу";

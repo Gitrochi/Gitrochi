@@ -165,15 +165,6 @@ struct PullRequestList: View {
 
     // MARK: Rows
 
-    /// The signed-in account's own requests carry its photo
-    @ViewBuilder private func authorAvatar(_ author: String) -> some View {
-        if let account = store.hostingAccount, account.username.caseInsensitiveCompare(author) == .orderedSame {
-            HostingAvatar(name: account.name ?? author, username: author, avatarURL: account.avatarURL.flatMap(URL.init(string:)), size: 16)
-        } else {
-            Avatar(name: author, email: author, size: 16)
-        }
-    }
-
     private func row(_ pr: PullRequest) -> some View {
         let selected = store.selection == .pullRequest(pr.number)
         let secondary = selected ? Color.primary.opacity(0.72) : StudioStyle.Rail.icon
@@ -207,7 +198,7 @@ struct PullRequestList: View {
                         .accessibilityElement(children: .ignore)
                         .accessibilityLabel(comments == 1 ? String(localized: "1 comment") : String(localized: "\(comments) comments"))
                     }
-                    authorAvatar(pr.author).help(Text(verbatim: "@\(pr.author)")).accessibilityLabel(Text(verbatim: "@\(pr.author)"))
+                    RequestAuthorAvatar(author: pr.author, size: 16).help(Text(verbatim: "@\(pr.author)")).accessibilityLabel(Text(verbatim: "@\(pr.author)"))
                 }
             }
             .padding(.horizontal, 10).padding(.vertical, 8)

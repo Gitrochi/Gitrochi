@@ -3,6 +3,8 @@
 "%@ approved these changes" = "%@ heeft deze wijzigingen goedgekeurd";
 "%@ requested changes" = "%@ heeft wijzigingen gevraagd";
 "%lld changed files" = "%1$lld gewijzigde bestanden";
+"%lld checks failed" = "%lld controles mislukt";
+"%lld checks running" = "%lld controles bezig";
 "%lld comments" = "%lld reacties";
 "%lld commits in %@" = "%1$lld commits in %2$@";
 "%lld commits replay on top of %@, newest first." = "%1$lld commits worden opnieuw afgespeeld op %2$@, nieuwste eerst.";
@@ -14,11 +16,15 @@
 "%lld to pull" = "%1$lld te pullen";
 "%lld uncommitted files. Stash them above or commit first." = "%1$lld niet-gecommitte bestanden. Stash ze hierboven of commit eerst.";
 "%lld viewed" = "%lld bekeken";
+"1 check failed" = "1 controle mislukt";
+"1 check running" = "1 controle bezig";
 "1 comment" = "1 reactie";
 "1 thread" = "1 thread";
+"A check still needs attention" = "Een controle vraagt nog aandacht";
 "A comment needs text" = "Een reactie heeft tekst nodig";
 "Activity" = "Activiteit";
 "All branches…" = "Alle branches…";
+"All checks passed" = "Alle controles geslaagd";
 "Already checked out" = "Al uitgecheckt";
 "Already in this branch" = "Zit al in deze branch";
 "Approvals" = "Goedkeuringen";
@@ -26,6 +32,7 @@
 "Ask questions about the selected changes" = "Vragen stellen over de geselecteerde wijzigingen";
 "Based on %@" = "Gebaseerd op %@";
 "Changes requested" = "Wijzigingen gevraagd";
+"Checks pending" = "Controles in afwachting";
 "Choose a base to see the commits that replay." = "Kies een basis om de commits te zien die opnieuw worden afgespeeld.";
 "Choose the new base" = "Kies de nieuwe basis";
 "Clean up history" = "Geschiedenis opschonen";
@@ -34,6 +41,7 @@
 "Commits to replay" = "Opnieuw af te spelen commits";
 "Compare with %@" = "Vergelijken met %1$@";
 "Conflicts pause the rebase until you continue or abort, and a finished rebase can be undone." = "Bij conflicten pauzeert de rebase tot je doorgaat of afbreekt; een voltooide rebase kan ongedaan worden gemaakt.";
+"Conflicts with %@" = "Conflicten met %@";
 "Copy log" = "Log kopiëren";
 "Create a merge commit" = "Merge-commit maken";
 "Create merge request…" = "Merge request maken…";
@@ -53,6 +61,8 @@
 "Linked issue" = "Gekoppeld issue";
 "Load log" = "Log laden";
 "Merge" = "Merge";
+"Merge needs %lld more approvals" = "Samenvoegen vereist nog %lld goedkeuringen";
+"Merge needs 1 more approval" = "Samenvoegen vereist nog 1 goedkeuring";
 "Merge request open" = "Merge request open";
 "Merges %@ into this branch" = "Voegt %@ samen in deze branch";
 "More file actions" = "Meer bestandsacties";
@@ -68,6 +78,7 @@
 "Newest" = "Nieuwste";
 "Next file (J)" = "Volgend bestand (J)";
 "No comments yet." = "Nog geen reacties.";
+"No conflicts with %@" = "Geen conflicten met %@";
 "Not pushed" = "Niet gepusht";
 "Nothing is due today." = "Vandaag staat er niets gepland.";
 "Nothing to push" = "Niets te pushen";
@@ -95,6 +106,7 @@
 "Replays this branch's commits on top of a new base, as if the branch had started there." = "Speelt de commits van deze branch opnieuw af op een nieuwe basis, alsof de branch daar was begonnen.";
 "Request review…" = "Review vragen…";
 "Resolve" = "Oplossen";
+"Resolve the conflicts with %@ first" = "Los eerst de conflicten met %@ op";
 "Review the commits" = "Controleer de commits";
 "Review type" = "Reviewtype";
 "Reviewers" = "Reviewers";
@@ -122,6 +134,7 @@
 "Updates merge request #%@" = "Werkt merge request #%@ bij";
 "Updates pull request #%@" = "Werkt pull request #%@ bij";
 "Viewed %@" = "%@ bekeken";
+"Waiting for the checks to finish" = "Wachten tot de controles klaar zijn";
 "Yesterday" = "Gisteren";
 "base" = "basis";
 "choose a new base" = "kies een nieuwe basis";

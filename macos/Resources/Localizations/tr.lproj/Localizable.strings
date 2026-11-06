@@ -3,6 +3,8 @@
 "%@ approved these changes" = "%@ bu değişiklikleri onayladı";
 "%@ requested changes" = "%@ değişiklik istedi";
 "%lld changed files" = "%1$lld değişen dosya";
+"%lld checks failed" = "%lld denetim başarısız";
+"%lld checks running" = "%lld denetim çalışıyor";
 "%lld comments" = "%lld yorum";
 "%lld commits in %@" = "%2$@ içinde %1$lld commit";
 "%lld commits replay on top of %@, newest first." = "%1$lld commit, en yenisi önce olacak şekilde %2$@ üzerine yeniden uygulanır.";
@@ -14,11 +16,15 @@
 "%lld to pull" = "%1$lld çekilecek";
 "%lld uncommitted files. Stash them above or commit first." = "%1$lld commit edilmemiş dosya. Yukarıdan stash'leyin veya önce commit edin.";
 "%lld viewed" = "%lld görüntülendi";
+"1 check failed" = "1 denetim başarısız";
+"1 check running" = "1 denetim çalışıyor";
 "1 comment" = "1 yorum";
 "1 thread" = "1 tartışma";
+"A check still needs attention" = "Bir denetim hâlâ ilgi bekliyor";
 "A comment needs text" = "Yorum için metin gerekli";
 "Activity" = "Etkinlik";
 "All branches…" = "Tüm dallar…";
+"All checks passed" = "Tüm denetimler başarılı";
 "Already checked out" = "Zaten bu dala geçildi";
 "Already in this branch" = "Zaten bu dalda";
 "Approvals" = "Onaylar";
@@ -26,6 +32,7 @@
 "Ask questions about the selected changes" = "Seçili değişiklikler hakkında soru sor";
 "Based on %@" = "%@ tabanlı";
 "Changes requested" = "Değişiklik istendi";
+"Checks pending" = "Denetimler bekliyor";
 "Choose a base to see the commits that replay." = "Yeniden uygulanacak commit'leri görmek için bir taban seçin.";
 "Choose the new base" = "Yeni tabanı seçin";
 "Clean up history" = "Geçmişi düzenle";
@@ -34,6 +41,7 @@
 "Commits to replay" = "Yeniden uygulanacak commit'ler";
 "Compare with %@" = "%1$@ ile karşılaştır";
 "Conflicts pause the rebase until you continue or abort, and a finished rebase can be undone." = "Çakışmalar, siz devam edene veya iptal edene kadar rebase'i duraklatır; tamamlanan rebase geri alınabilir.";
+"Conflicts with %@" = "%@ ile çakışmalar var";
 "Copy log" = "Günlüğü kopyala";
 "Create a merge commit" = "Birleştirme commit'i oluştur";
 "Create merge request…" = "Merge request oluştur…";
@@ -53,6 +61,8 @@
 "Linked issue" = "Bağlı issue";
 "Load log" = "Günlüğü yükle";
 "Merge" = "Birleştir";
+"Merge needs %lld more approvals" = "Birleştirme için %lld onay daha gerekli";
+"Merge needs 1 more approval" = "Birleştirme için 1 onay daha gerekli";
 "Merge request open" = "Merge request açık";
 "Merges %@ into this branch" = "%@ bu dala birleştirilir";
 "More file actions" = "Diğer dosya eylemleri";
@@ -68,6 +78,7 @@
 "Newest" = "En yeni";
 "Next file (J)" = "Sonraki dosya (J)";
 "No comments yet." = "Henüz yorum yok.";
+"No conflicts with %@" = "%@ ile çakışma yok";
 "Not pushed" = "Gönderilmedi";
 "Nothing is due today." = "Bugün teslim edilecek bir şey yok.";
 "Nothing to push" = "Gönderilecek bir şey yok";
@@ -95,6 +106,7 @@
 "Replays this branch's commits on top of a new base, as if the branch had started there." = "Bu dalın commit'lerini, dal oradan başlamış gibi yeni bir tabanın üzerine yeniden uygular.";
 "Request review…" = "İnceleme iste…";
 "Resolve" = "Çöz";
+"Resolve the conflicts with %@ first" = "Önce %@ ile çakışmaları çözün";
 "Review the commits" = "Commit'leri gözden geçirin";
 "Review type" = "İnceleme türü";
 "Reviewers" = "İnceleyenler";
@@ -122,6 +134,7 @@
 "Updates merge request #%@" = "#%@ merge request'ini günceller";
 "Updates pull request #%@" = "#%@ pull request'ini günceller";
 "Viewed %@" = "%@ görüntülendi";
+"Waiting for the checks to finish" = "Denetimlerin bitmesi bekleniyor";
 "Yesterday" = "Dün";
 "base" = "taban";
 "choose a new base" = "yeni bir taban seçin";

@@ -3,6 +3,8 @@
 "%@ approved these changes" = "Пользователь %@ одобрил эти изменения";
 "%@ requested changes" = "Пользователь %@ запросил изменения";
 "%lld changed files" = "Изменённых файлов: %1$lld";
+"%lld checks failed" = "Не пройдено проверок: %lld";
+"%lld checks running" = "Выполняется проверок: %lld";
 "%lld comments" = "Комментариев: %lld";
 "%lld commits in %@" = "Коммитов в %2$@: %1$lld";
 "%lld commits replay on top of %@, newest first." = "Коммитов: %1$lld — будут применены поверх %2$@, сначала новые.";
@@ -14,11 +16,15 @@
 "%lld to pull" = "К получению: %1$lld";
 "%lld uncommitted files. Stash them above or commit first." = "Незакоммиченных файлов: %1$lld. Спрячьте их выше или сначала закоммитьте.";
 "%lld viewed" = "Просмотрено: %lld";
+"1 check failed" = "1 проверка не пройдена";
+"1 check running" = "Выполняется 1 проверка";
 "1 comment" = "1 комментарий";
 "1 thread" = "1 тред";
+"A check still needs attention" = "Проверка всё ещё требует внимания";
 "A comment needs text" = "Комментарий должен содержать текст";
 "Activity" = "Активность";
 "All branches…" = "Все ветки…";
+"All checks passed" = "Все проверки пройдены";
 "Already checked out" = "Уже на этой ветке";
 "Already in this branch" = "Уже в этой ветке";
 "Approvals" = "Одобрения";
@@ -26,6 +32,7 @@
 "Ask questions about the selected changes" = "Задать вопросы о выбранных изменениях";
 "Based on %@" = "На основе %@";
 "Changes requested" = "Запрошены изменения";
+"Checks pending" = "Проверки ожидают";
 "Choose a base to see the commits that replay." = "Выберите базу, чтобы увидеть коммиты, которые будут применены повторно.";
 "Choose the new base" = "Выберите новую базу";
 "Clean up history" = "Привести историю в порядок";
@@ -34,6 +41,7 @@
 "Commits to replay" = "Коммиты для повторного применения";
 "Compare with %@" = "Сравнить с %1$@";
 "Conflicts pause the rebase until you continue or abort, and a finished rebase can be undone." = "При конфликтах перебазирование приостанавливается, пока вы не продолжите или не отмените его; завершённое перебазирование можно отменить.";
+"Conflicts with %@" = "Конфликты с %@";
 "Copy log" = "Копировать журнал";
 "Create a merge commit" = "Создать коммит слияния";
 "Create merge request…" = "Создать merge request…";
@@ -53,6 +61,8 @@
 "Linked issue" = "Связанная задача";
 "Load log" = "Загрузить журнал";
 "Merge" = "Слияние";
+"Merge needs %lld more approvals" = "Для слияния нужно ещё одобрений: %lld";
+"Merge needs 1 more approval" = "Для слияния нужно ещё 1 одобрение";
 "Merge request open" = "Merge request открыт";
 "Merges %@ into this branch" = "Сольёт %@ в эту ветку";
 "More file actions" = "Другие действия с файлом";
@@ -68,6 +78,7 @@
 "Newest" = "Сначала новые";
 "Next file (J)" = "Следующий файл (J)";
 "No comments yet." = "Комментариев пока нет.";
+"No conflicts with %@" = "Нет конфликтов с %@";
 "Not pushed" = "Не отправлено";
 "Nothing is due today." = "На сегодня ничего нет.";
 "Nothing to push" = "Нечего отправлять";
@@ -95,6 +106,7 @@
 "Replays this branch's commits on top of a new base, as if the branch had started there." = "Повторно применяет коммиты этой ветки поверх новой базы, как если бы ветка начиналась оттуда.";
 "Request review…" = "Запросить ревью…";
 "Resolve" = "Отметить решённым";
+"Resolve the conflicts with %@ first" = "Сначала разрешите конфликты с %@";
 "Review the commits" = "Проверьте коммиты";
 "Review type" = "Тип ревью";
 "Reviewers" = "Ревьюеры";
@@ -122,6 +134,7 @@
 "Updates merge request #%@" = "Обновит merge request #%@";
 "Updates pull request #%@" = "Обновит pull request #%@";
 "Viewed %@" = "Просмотрено: %@";
+"Waiting for the checks to finish" = "Ожидание завершения проверок";
 "Yesterday" = "Вчера";
 "base" = "база";
 "choose a new base" = "выберите новую базу";

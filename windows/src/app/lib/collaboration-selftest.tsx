@@ -17,7 +17,7 @@ export async function collaborationSelfTest(): Promise<[boolean, string]> {
     store.pullRequests = [{ number: 1, title: "Fixture request", body: "Body", author: "fixture", source: "work", target: "main", headSHA: "a".repeat(40), isDraft: false, updated: null, url: "https://github.example.invalid/fixture/repo/pull/1", fromFork: false }];
     store.loadReview = async () => {};
     store.loadRequestLifecycle = async () => {
-      store.requestLifecycle = { number: 1, title: "Fixture request", body: "Body", base: "main", headSHA: "a".repeat(40), state: "open", reviewers: [], methods: ["merge", "squash"], blockers: [], checks: "clean", policy: "Fixture policy", canEdit: true, canRebase: false, squashRequired: false }; store.changed();
+      store.requestLifecycle = { conflicts: false, number: 1, title: "Fixture request", body: "Body", base: "main", headSHA: "a".repeat(40), state: "open", reviewers: [], methods: ["merge", "squash"], blockers: [], checks: "clean", policy: "Fixture policy", canEdit: true, canRebase: false, squashRequired: false }; store.changed();
     };
     store.saveRequestMetadata = async () => { saves++; return true; };
     root.render(<Inspector store={store} />); await pause();

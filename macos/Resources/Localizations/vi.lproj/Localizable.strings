@@ -3,6 +3,8 @@
 "%@ approved these changes" = "%@ đã phê duyệt các thay đổi này";
 "%@ requested changes" = "%@ đã yêu cầu thay đổi";
 "%lld changed files" = "%1$lld tệp đã thay đổi";
+"%lld checks failed" = "%lld kiểm tra thất bại";
+"%lld checks running" = "%lld kiểm tra đang chạy";
 "%lld comments" = "%lld bình luận";
 "%lld commits in %@" = "%1$lld commit trong %2$@";
 "%lld commits replay on top of %@, newest first." = "%1$lld commit sẽ được áp dụng lại lên %2$@, mới nhất trước.";
@@ -14,11 +16,15 @@
 "%lld to pull" = "%1$lld cần kéo";
 "%lld uncommitted files. Stash them above or commit first." = "%1$lld tệp chưa commit. Hãy stash ở trên hoặc commit trước.";
 "%lld viewed" = "Đã xem %lld";
+"1 check failed" = "1 kiểm tra thất bại";
+"1 check running" = "1 kiểm tra đang chạy";
 "1 comment" = "1 bình luận";
 "1 thread" = "1 luồng";
+"A check still needs attention" = "Một kiểm tra vẫn cần chú ý";
 "A comment needs text" = "Bình luận cần có nội dung";
 "Activity" = "Hoạt động";
 "All branches…" = "Tất cả nhánh…";
+"All checks passed" = "Tất cả kiểm tra đã đạt";
 "Already checked out" = "Đã checkout";
 "Already in this branch" = "Đã có trong nhánh này";
 "Approvals" = "Lượt phê duyệt";
@@ -26,6 +32,7 @@
 "Ask questions about the selected changes" = "Đặt câu hỏi về các thay đổi đã chọn";
 "Based on %@" = "Dựa trên %@";
 "Changes requested" = "Đã yêu cầu thay đổi";
+"Checks pending" = "Kiểm tra đang chờ";
 "Choose a base to see the commits that replay." = "Chọn một gốc để xem các commit sẽ áp dụng lại.";
 "Choose the new base" = "Chọn gốc mới";
 "Clean up history" = "Dọn dẹp lịch sử";
@@ -34,6 +41,7 @@
 "Commits to replay" = "Các commit sẽ áp dụng lại";
 "Compare with %@" = "So sánh với %1$@";
 "Conflicts pause the rebase until you continue or abort, and a finished rebase can be undone." = "Xung đột sẽ tạm dừng rebase cho đến khi bạn tiếp tục hoặc hủy, và rebase đã xong có thể hoàn tác.";
+"Conflicts with %@" = "Xung đột với %@";
 "Copy log" = "Sao chép log";
 "Create a merge commit" = "Tạo commit merge";
 "Create merge request…" = "Tạo merge request…";
@@ -53,6 +61,8 @@
 "Linked issue" = "Issue liên kết";
 "Load log" = "Tải log";
 "Merge" = "Merge";
+"Merge needs %lld more approvals" = "Cần thêm %lld phê duyệt để hợp nhất";
+"Merge needs 1 more approval" = "Cần thêm 1 phê duyệt để hợp nhất";
 "Merge request open" = "Merge request đang mở";
 "Merges %@ into this branch" = "Hợp nhất %@ vào nhánh này";
 "More file actions" = "Thêm thao tác với tệp";
@@ -68,6 +78,7 @@
 "Newest" = "Mới nhất";
 "Next file (J)" = "Tệp tiếp theo (J)";
 "No comments yet." = "Chưa có bình luận nào.";
+"No conflicts with %@" = "Không xung đột với %@";
 "Not pushed" = "Chưa đẩy";
 "Nothing is due today." = "Hôm nay không có việc nào đến hạn.";
 "Nothing to push" = "Không có gì để đẩy";
@@ -95,6 +106,7 @@
 "Replays this branch's commits on top of a new base, as if the branch had started there." = "Áp dụng lại các commit của nhánh này lên một gốc mới, như thể nhánh bắt đầu từ đó.";
 "Request review…" = "Yêu cầu review…";
 "Resolve" = "Giải quyết";
+"Resolve the conflicts with %@ first" = "Hãy giải quyết xung đột với %@ trước";
 "Review the commits" = "Xem lại các commit";
 "Review type" = "Loại review";
 "Reviewers" = "Người review";
@@ -122,6 +134,7 @@
 "Updates merge request #%@" = "Cập nhật merge request #%@";
 "Updates pull request #%@" = "Cập nhật pull request #%@";
 "Viewed %@" = "Đã xem %@";
+"Waiting for the checks to finish" = "Đang chờ các kiểm tra hoàn tất";
 "Yesterday" = "Hôm qua";
 "base" = "gốc";
 "choose a new base" = "chọn gốc mới";

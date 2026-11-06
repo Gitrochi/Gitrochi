@@ -2,6 +2,8 @@
 "%@ approved these changes" = "%@ がこの変更を承認しました";
 "%@ requested changes" = "%@ が変更を要求しました";
 "%lld changed files" = "変更ファイル %1$lld 件";
+"%lld checks failed" = "%lld 件のチェックが失敗";
+"%lld checks running" = "%lld 件のチェックを実行中";
 "%lld comments" = "コメント %lld 件";
 "%lld commits in %@" = "%2$@ の %1$lld 件のコミット";
 "%lld commits replay on top of %@, newest first." = "%1$lld 件のコミットを %2$@ の上に適用し直します（新しい順）。";
@@ -13,11 +15,15 @@
 "%lld to pull" = "未プル %1$lld 件";
 "%lld uncommitted files. Stash them above or commit first." = "未コミットのファイルが %1$lld 件あります。上でスタッシュを選ぶか、先にコミットしてください。";
 "%lld viewed" = "%lld 件閲覧済み";
+"1 check failed" = "1 件のチェックが失敗";
+"1 check running" = "1 件のチェックを実行中";
 "1 comment" = "コメント 1 件";
 "1 thread" = "スレッド 1 件";
+"A check still needs attention" = "対応が必要なチェックがあります";
 "A comment needs text" = "コメントには本文が必要です";
 "Activity" = "アクティビティ";
 "All branches…" = "すべてのブランチ…";
+"All checks passed" = "すべてのチェックに合格";
 "Already checked out" = "チェックアウト済み";
 "Already in this branch" = "すでにこのブランチに含まれています";
 "Approvals" = "承認";
@@ -25,6 +31,7 @@
 "Ask questions about the selected changes" = "選択した変更について質問する";
 "Based on %@" = "%@ がベース";
 "Changes requested" = "変更要求";
+"Checks pending" = "チェック待ち";
 "Choose a base to see the commits that replay." = "ベースを選ぶと、適用し直すコミットが表示されます。";
 "Choose the new base" = "新しいベースを選ぶ";
 "Clean up history" = "履歴を整理";
@@ -33,6 +40,7 @@
 "Commits to replay" = "適用し直すコミット";
 "Compare with %@" = "%1$@ と比較";
 "Conflicts pause the rebase until you continue or abort, and a finished rebase can be undone." = "コンフリクトが起きると、続行または中止するまでリベースは止まります。完了したリベースは元に戻せます。";
+"Conflicts with %@" = "%@ と競合しています";
 "Copy log" = "ログをコピー";
 "Create a merge commit" = "マージコミットを作成";
 "Create merge request…" = "マージリクエストを作成…";
@@ -52,6 +60,8 @@
 "Linked issue" = "リンクされた Issue";
 "Load log" = "ログを読み込む";
 "Merge" = "マージ";
+"Merge needs %lld more approvals" = "マージにはあと %lld 件の承認が必要です";
+"Merge needs 1 more approval" = "マージにはあと 1 件の承認が必要です";
 "Merge request open" = "マージリクエスト オープン";
 "Merges %@ into this branch" = "%@ をこのブランチにマージします";
 "More file actions" = "ファイルのその他の操作";
@@ -68,6 +78,7 @@
 "Newest first" = "新しい順";
 "Next file (J)" = "次のファイル (J)";
 "No comments yet." = "コメントはまだありません。";
+"No conflicts with %@" = "%@ との競合なし";
 "Not pushed" = "未プッシュ";
 "Nothing is due today." = "今日が期限のタスクはありません。";
 "Nothing to push" = "プッシュするものはありません";
@@ -93,6 +104,7 @@
 "Replays this branch's commits on top of a new base, as if the branch had started there." = "このブランチのコミットを新しいベースの上に適用し直します。ブランチがそこから始まったかのようになります。";
 "Request review…" = "レビューを依頼…";
 "Resolve" = "解決済みにする";
+"Resolve the conflicts with %@ first" = "先に %@ との競合を解決してください";
 "Review the commits" = "コミットを確認";
 "Review type" = "レビューの種類";
 "Reviewers" = "レビュアー";
@@ -133,6 +145,7 @@
 "Previous match" = "前の検索結果";
 "Next match" = "次の検索結果";
 "Viewed %@" = "%@ を閲覧済み";
+"Waiting for the checks to finish" = "チェックの完了を待っています";
 "Yesterday" = "昨日";
 "base" = "ベース";
 "choose a new base" = "新しいベースを選択";

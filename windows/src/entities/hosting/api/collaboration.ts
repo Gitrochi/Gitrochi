@@ -8,6 +8,8 @@ export interface RequestQuery { scope: RequestScope; search: string; page: numbe
 export interface RequestPage { items: PullRequest[]; more: boolean; warning?: string }
 export type MergeMethod = "merge" | "squash" | "rebase";
 export interface RequestLifecycle {
+  /** The server says the request conflicts with its base */
+  conflicts: boolean;
   number: number; headSHA: string; state: "open" | "closed" | "merged"; title: string; body: string; base: string;
   reviewers: string[]; methods: MergeMethod[]; blockers: string[]; checks: string; policy: string;
   canEdit: boolean; canRebase: boolean; squashRequired: boolean;
@@ -25,7 +27,7 @@ export const collaborationRepoURL = (c: ReviewAccess) => c.target.provider === "
 const reqURL = (c: ReviewAccess, n: number) => `${collaborationRepoURL(c)}/${c.target.provider === "github" ? "pulls" : "merge_requests"}/${n}`;
 interface User { login?: string; username?: string; id?: number }
 interface GHPull { number: number; title: string; body?: string; user: User; head: { ref: string; sha: string; repo?: { full_name: string } }; base: { ref: string }; html_url: string; draft?: boolean; updated_at?: string; merged?: boolean; merged_at?: string | null; state: string; requested_reviewers?: User[]; mergeable?: boolean | null; mergeable_state?: string; maintainer_can_modify?: boolean }
-interface GLMerge { iid: number; title: string; description?: string; author: User; source_branch: string; target_branch: string; web_url: string; sha: string; draft?: boolean; updated_at?: string; state: string; reviewers?: User[]; detailed_merge_status?: string; merge_status?: string; head_pipeline?: { status: string }; user?: { can_merge?: boolean }; source_project_id?: number; target_project_id?: number; user_notes_count?: number }
+interface GLMerge { iid: number; title: string; description?: string; author: User; source_branch: string; target_branch: string; web_url: string; sha: string; draft?: boolean; updated_at?: string; state: string; reviewers?: User[]; has_conflicts?: boolean; detailed_merge_status?: string; merge_status?: string; head_pipeline?: { status: string }; user?: { can_merge?: boolean }; source_project_id?: number; target_project_id?: number; user_notes_count?: number }
 // The comment count and the review request come with the list response the page already loads. macOS: CollaborationAPI.pull.
 const isMe = (c: ReviewAccess, name?: string) => !!name && name.toLowerCase() === c.me.toLowerCase();
 const ghPull = (c: ReviewAccess, p: GHPull): PullRequest => ({ number: p.number, title: p.title, body: p.body ?? "", author: p.user.login ?? "", source: p.head.ref, target: p.base.ref, headSHA: p.head.sha, isDraft: !!p.draft, updated: H.date(p.updated_at), url: p.html_url, fromFork: p.head.repo?.full_name.toLowerCase() !== c.target.path.toLowerCase(), reviewRequested: (p.requested_reviewers ?? []).some((u) => isMe(c, u.login)) });
@@ -105,7 +107,7 @@ export async function requestLifecycle(c: ReviewAccess, n: number): Promise<Requ
     const methods: MergeMethod[] = [];
     if (r.allow_merge_commit) methods.push("merge"); if (r.allow_squash_merge) methods.push("squash"); if (r.allow_rebase_merge) methods.push("rebase");
     if (!methods.length) blockers.push(t("The server did not allow a merge method."));
-    return { number: n, headSHA: p.head.sha, state: p.merged ? "merged" : p.state === "open" ? "open" : "closed", title: p.title, body: p.body ?? "", base: p.base.ref, reviewers: (p.requested_reviewers ?? []).map((u) => u.login ?? ""), methods, blockers, checks: `${p.mergeable_state ?? "unknown"} · ${ci}`, policy: t("GitHub branch rules, required checks and approvals are enforced again by the server."), canEdit: p.user.login === c.me || !!r.permissions?.push, canRebase: false, squashRequired: false };
+    return { conflicts: p.mergeable_state === "dirty", number: n, headSHA: p.head.sha, state: p.merged ? "merged" : p.state === "open" ? "open" : "closed", title: p.title, body: p.body ?? "", base: p.base.ref, reviewers: (p.requested_reviewers ?? []).map((u) => u.login ?? ""), methods, blockers, checks: `${p.mergeable_state ?? "unknown"} · ${ci}`, policy: t("GitHub branch rules, required checks and approvals are enforced again by the server."), canEdit: p.user.login === c.me || !!r.permissions?.push, canRebase: false, squashRequired: false };
   }
   const [p, r, approvals] = await Promise.all([send<GLMerge>(c, reqURL(c, n) + "?with_merge_status_recheck=true"), send<{ merge_method?: string; squash_option?: string; only_allow_merge_if_pipeline_succeeds?: boolean; only_allow_merge_if_all_discussions_are_resolved?: boolean }>(c, collaborationRepoURL(c)), send<{ approvals_left?: number; approved?: boolean }>(c, reqURL(c, n) + "/approvals").catch(() => null)]);
   const status = p.detailed_merge_status ?? p.merge_status ?? "unknown", blockers: string[] = [];
@@ -118,7 +120,7 @@ export async function requestLifecycle(c: ReviewAccess, n: number): Promise<Requ
   const pipeline = p.head_pipeline?.status ?? "none";
   if (r.only_allow_merge_if_pipeline_succeeds && pipeline !== "success") blockers.push(t("The required pipeline has not succeeded."));
   const methods: MergeMethod[] = r.squash_option === "always" ? ["squash"] : r.squash_option === "never" ? ["merge"] : ["merge", "squash"];
-  return { number: n, headSHA: p.sha, state: p.state === "merged" ? "merged" : p.state === "opened" ? "open" : "closed", title: p.title, body: p.description ?? "", base: p.target_branch, reviewers: (p.reviewers ?? []).map((u) => u.username ?? ""), methods, blockers, checks: `${status} · pipeline: ${pipeline}`, policy: t("GitLab project merge method: {0}. The server enforces approval, discussion and pipeline rules.", r.merge_method ?? "unknown"), canEdit: p.author.username === c.me || p.user?.can_merge === true, canRebase: p.state === "opened" && p.user?.can_merge === true, squashRequired: r.squash_option === "always" };
+  return { conflicts: p.has_conflicts === true, number: n, headSHA: p.sha, state: p.state === "merged" ? "merged" : p.state === "opened" ? "open" : "closed", title: p.title, body: p.description ?? "", base: p.target_branch, reviewers: (p.reviewers ?? []).map((u) => u.username ?? ""), methods, blockers, checks: `${status} · pipeline: ${pipeline}`, policy: t("GitLab project merge method: {0}. The server enforces approval, discussion and pipeline rules.", r.merge_method ?? "unknown"), canEdit: p.author.username === c.me || p.user?.can_merge === true, canRebase: p.state === "opened" && p.user?.can_merge === true, squashRequired: r.squash_option === "always" };
 }
 export async function mergeRequest(c: ReviewAccess, expected: RequestLifecycle, method: MergeMethod) {
   const fresh = await requestLifecycle(c, expected.number);

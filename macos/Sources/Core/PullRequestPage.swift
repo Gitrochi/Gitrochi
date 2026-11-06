@@ -121,6 +121,22 @@ enum PullRequestPage {
 
     static func firstError(_ lines: [LogLine]) -> LogLine? { lines.first(where: \.isError) }
 
+    /// The one reason beside a disabled Merge…: what to do first, in the order someone would do it. `blockers` are the
+    /// server's own words, for what the page cannot say better.
+    static func mergeReason(conflicts: Bool, base: String, badge: ChecksBadge?, approvalsLeft: Int?, blockers: [String]) -> String? {
+        guard let first = blockers.first else { return nil }
+        if conflicts { return String(localized: "Resolve the conflicts with \(base) first") }
+        switch badge {
+        case .failed?: return String(localized: "A check still needs attention")
+        case .running?: return String(localized: "Waiting for the checks to finish")
+        case nil: break
+        }
+        if let left = approvalsLeft, left > 0 {
+            return left == 1 ? String(localized: "Merge needs 1 more approval") : String(localized: "Merge needs \(left) more approvals")
+        }
+        return first
+    }
+
     /// What the summary card says about the current branch
     enum BranchSummary: Equatable {
         case noRequest(commits: Int)

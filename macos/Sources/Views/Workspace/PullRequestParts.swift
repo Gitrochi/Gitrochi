@@ -118,3 +118,18 @@ struct PullRequestCaption: View {
         Text(verbatim: text).font(.system(size: 12)).foregroundStyle(StudioStyle.Rail.icon).fixedSize(horizontal: false, vertical: true)
     }
 }
+
+/// A person on a request; the signed-in account carries its photo
+struct RequestAuthorAvatar: View {
+    @Environment(RepoStore.self) private var store
+    let author: String
+    let size: CGFloat
+
+    var body: some View {
+        if let account = store.hostingAccount, account.username.caseInsensitiveCompare(author) == .orderedSame {
+            HostingAvatar(name: account.name ?? author, username: author, avatarURL: account.avatarURL.flatMap(URL.init(string:)), size: size)
+        } else {
+            Avatar(name: author, email: author, size: size)
+        }
+    }
+}

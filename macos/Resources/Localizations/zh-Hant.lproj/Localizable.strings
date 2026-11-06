@@ -3,6 +3,8 @@
 "%@ approved these changes" = "%@ 核准了這些變更";
 "%@ requested changes" = "%@ 要求了變更";
 "%lld changed files" = "%1$lld 個已變更檔案";
+"%lld checks failed" = "%lld 項檢查失敗";
+"%lld checks running" = "%lld 項檢查執行中";
 "%lld comments" = "%lld 則留言";
 "%lld commits in %@" = "%2$@ 中的 %1$lld 個提交";
 "%lld commits replay on top of %@, newest first." = "%1$lld 個提交將重新套用到 %2$@ 之上，最新的在前。";
@@ -14,11 +16,15 @@
 "%lld to pull" = "%1$lld 個待提取";
 "%lld uncommitted files. Stash them above or commit first." = "有 %1$lld 個未提交的檔案。請在上方選擇擱置，或先提交。";
 "%lld viewed" = "已檢視 %lld 個";
+"1 check failed" = "1 項檢查失敗";
+"1 check running" = "1 項檢查執行中";
 "1 comment" = "1 則留言";
 "1 thread" = "1 個討論串";
+"A check still needs attention" = "有一項檢查仍需處理";
 "A comment needs text" = "留言必須填寫內容";
 "Activity" = "活動";
 "All branches…" = "所有分支…";
+"All checks passed" = "所有檢查皆已通過";
 "Already checked out" = "已簽出";
 "Already in this branch" = "已包含在此分支中";
 "Approvals" = "核准";
@@ -26,6 +32,7 @@
 "Ask questions about the selected changes" = "詢問所選變更";
 "Based on %@" = "基於 %@";
 "Changes requested" = "已要求變更";
+"Checks pending" = "檢查等待中";
 "Choose a base to see the commits that replay." = "選擇基底後會顯示要重新套用的提交。";
 "Choose the new base" = "選擇新的基底";
 "Clean up history" = "整理歷史";
@@ -34,6 +41,7 @@
 "Commits to replay" = "要重新套用的提交";
 "Compare with %@" = "與 %1$@ 比較";
 "Conflicts pause the rebase until you continue or abort, and a finished rebase can be undone." = "發生衝突時重訂基底會暫停，直到你繼續或中止；完成的重訂基底可以還原。";
+"Conflicts with %@" = "與 %@ 有衝突";
 "Copy log" = "複製記錄";
 "Create a merge commit" = "建立合併提交";
 "Create merge request…" = "建立合併請求…";
@@ -53,6 +61,8 @@
 "Linked issue" = "已連結的議題";
 "Load log" = "載入記錄";
 "Merge" = "合併";
+"Merge needs %lld more approvals" = "合併還需要 %lld 個核准";
+"Merge needs 1 more approval" = "合併還需要 1 個核准";
 "Merge request open" = "合併請求已開啟";
 "Merges %@ into this branch" = "將 %@ 合併到此分支";
 "More file actions" = "更多檔案操作";
@@ -68,6 +78,7 @@
 "Newest" = "最新";
 "Next file (J)" = "下一個檔案 (J)";
 "No comments yet." = "尚無留言。";
+"No conflicts with %@" = "與 %@ 無衝突";
 "Not pushed" = "未推送";
 "Nothing is due today." = "今天沒有到期的工作。";
 "Nothing to push" = "沒有可推送的內容";
@@ -95,6 +106,7 @@
 "Replays this branch's commits on top of a new base, as if the branch had started there." = "將此分支的提交重新套用到新的基底之上，就像分支是從那裡開始的一樣。";
 "Request review…" = "請求審查…";
 "Resolve" = "解決";
+"Resolve the conflicts with %@ first" = "請先解決與 %@ 的衝突";
 "Review the commits" = "檢查提交";
 "Review type" = "審查類型";
 "Reviewers" = "審查者";
@@ -122,6 +134,7 @@
 "Updates merge request #%@" = "更新合併請求 #%@";
 "Updates pull request #%@" = "更新拉取請求 #%@";
 "Viewed %@" = "已檢視 %@";
+"Waiting for the checks to finish" = "正在等待檢查完成";
 "Yesterday" = "昨天";
 "base" = "基礎";
 "choose a new base" = "選擇新的基底";
