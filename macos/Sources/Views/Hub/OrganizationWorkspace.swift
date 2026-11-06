@@ -21,13 +21,19 @@ struct OrganizationWorkspace: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             header
-            WorkbenchFlow(spacing: 6) {
-                tab(String(localized: "Overview"), "overview", "square.grid.2x2")
-                tab(String(localized: "Repositories"), "repositories", "folder")
-                tab(String(localized: "Members"), "members", "person.2")
-                tab(github ? String(localized: "Teams") : String(localized: "Subgroups"), "teams", "person.3")
-                tab(String(localized: "Invitations"), "invitations", "envelope")
-            }.disabled(locked)
+            // switching content uses underline tabs, like the page's sections (docs/design.md, Controls)
+            VStack(alignment: .leading, spacing: 0) {
+                WorkbenchFlow(spacing: 4) {
+                    tab(String(localized: "Overview"), "overview")
+                    tab(String(localized: "Repositories"), "repositories")
+                    tab(String(localized: "Members"), "members")
+                    tab(github ? String(localized: "Teams") : String(localized: "Subgroups"), "teams")
+                    tab(String(localized: "Invitations"), "invitations")
+                    // beside the tabs, as on Windows; in a narrow window it wraps under them
+                    TextField("Search loaded people and teams", text: $query).textFieldStyle(.roundedBorder).frame(width: 240).padding(.leading, 12).padding(.vertical, 6)
+                }
+                AccountStyle.rule
+            }
             switch store.hostingHub.tab {
             case "overview": overview
             case "members": members; sectionStatus("members")
@@ -68,12 +74,10 @@ struct OrganizationWorkspace: View {
                     HStack { Label("Pending invitations", systemImage: "envelope"); if detail.organizationSections["invitations"]?.error != nil { Text("Unavailable").font(.caption).foregroundStyle(.secondary) } else if detail.organizationSections["invitations"]?.loading == true { ProgressView().controlSize(.small) } else if detail.organizationSections["invitations"]?.loaded != true { Text("Not loaded").font(.caption).foregroundStyle(.secondary) } else { Text(verbatim: String(localized: "{0} loaded").replacingOccurrences(of: "{0}", with: detail.invitations.count.formatted())).font(.caption).foregroundStyle(.secondary) } }
                 }
             }
-            TextField("Search loaded people and teams", text: $query).textFieldStyle(.roundedBorder).frame(maxWidth: 390)
         }
     }
-    private func tab(_ title: String, _ value: String, _ icon: String) -> some View {
-        Button { inviting = false; Task { await store.selectHostingHubItem(detail.item, tab: value) } } label: { Label(title, systemImage: icon) }
-            .buttonStyle(.bordered).tint(store.hostingHub.tab == value ? .accentColor : .secondary)
+    private func tab(_ title: String, _ value: String) -> some View {
+        AccountTab(title: title, on: store.hostingHub.tab == value, disabled: locked) { inviting = false; Task { await store.selectHostingHubItem(detail.item, tab: value) } }
     }
     private var overview: some View {
         VStack(alignment: .leading, spacing: 18) {
@@ -125,7 +129,7 @@ struct OrganizationWorkspace: View {
         }
     }
     private var members: some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), alignment: .leading)], alignment: .leading, spacing: 12) {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 180), alignment: .leading)], alignment: .leading, spacing: 12) {
             ForEach(filteredMembers) { member in memberCard(member) }
             if detail.members.isEmpty && detail.organizationSections["members"]?.error == nil { Text("No members visible to this account.").font(.caption).foregroundStyle(.secondary) }
         }
@@ -153,7 +157,7 @@ struct OrganizationWorkspace: View {
                         if canInvite { Button("Add member") { accessRequest = OrganizationAccessRequest(team: team, assigning: true) }.controlSize(.small).disabled(managementLocked) }
                         if safeURL(team.url) != nil { Button { open(team.url) } label: { Image(systemName: "arrow.up.right.square") }.help("Open in browser") }
                     }
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 130), alignment: .leading)], alignment: .leading, spacing: 8) {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 180), alignment: .leading)], alignment: .leading, spacing: 8) {
                         ForEach(team.members.filter { matches(team.name) || matches($0.name + " " + $0.username) }) { member in memberCard(member, team: team) }
                     }
                     HStack {

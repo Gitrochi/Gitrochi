@@ -1,0 +1,73 @@
+/* The Inbox and My work sections of the Account page (the redesign's Account board): a 312px list column and the
+   selected row beside it. macOS: AccountWorkPanel. */
+.account-work { flex: 1 1 auto; min-height: 0; min-width: 0; display: flex; background: var(--surface); color: var(--text); font-size: 13px; container: account-work / inline-size; }
+.account-split { flex: 1 1 auto; min-height: 0; min-width: 0; display: flex; align-items: stretch; }
+.account-list { flex: 0 0 312px; min-width: 0; min-height: 0; box-sizing: border-box; background: var(--sidebar); border-right: 1px solid var(--border); padding: 12px; display: flex; flex-direction: column; gap: 4px; }
+.account-list-controls { flex: none; display: flex; flex-direction: column; gap: 10px; padding-bottom: 4px; }
+.account-list-search { display: flex; align-items: center; gap: 8px; }
+.account-search { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border: 1px solid var(--border-strong); border-radius: 6px; background: var(--input); color: var(--text-2); box-sizing: border-box; }
+.account-search input { border: 0; outline: 0; font: inherit; flex: 1; min-width: 0; background: transparent; color: var(--text); }
+.account-search:focus-within { border-color: var(--accent); }
+.btn.account-icon-button { flex: none; width: 28px; padding: 0; }
+/* the filter's labels as the board sets them: 12px medium in 24px segments */
+.account-list .segmented button { height: 24px; font-size: 12px; font-weight: 500; white-space: nowrap; }
+.account-list-controls > .select { width: 100%; }
+.account-rows { flex: 1 1 auto; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 4px; }
+.account-group { flex: none; font-size: 12px; font-weight: 600; color: var(--text-2); padding: 10px 8px 4px; }
+.account-row { flex: none; display: flex; align-items: flex-start; gap: 8px; width: 100%; box-sizing: border-box; padding: 8px 10px; border: 0; border-radius: 6px; background: transparent; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.account-row.with-dot { padding-left: 8px; }
+.account-row:hover { background: var(--hover); }
+/* selection is the tint alone: no bar, border or ring, and keyboard focus moves it */
+.account-row.selected { background: var(--select); }
+.account-row:focus-visible { outline: 0; }
+.account-dot { flex: 0 0 8px; height: 8px; margin-top: 6px; border-radius: 50%; background: transparent; }
+.account-row.unread .account-dot { background: var(--accent); }
+.account-row-text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.account-row-top { display: flex; align-items: flex-start; gap: 8px; }
+.account-row-title { flex: 1 1 auto; min-width: 0; font-size: 13px; font-weight: 500; color: var(--text); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.account-row.unread .account-row-title, .account-row.selected .account-row-title { font-weight: 600; }
+.account-row-when { flex: none; font-size: 12px; color: var(--text-2); white-space: nowrap; }
+.account-row-meta { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 11px; color: var(--text-2); }
+.account-row-ref { flex: none; font-family: var(--mono); }
+.account-row-repo { flex: 0 1 auto; min-width: 0; }
+.account-row-author { flex: none; white-space: nowrap; }
+/* on the tint the secondary text is a step darker and the pill turns white */
+.account-row.selected .account-row-when, .account-row.selected .account-row-meta { color: color-mix(in srgb, var(--text) 70%, transparent); }
+.account-row.selected .status-pill { --status-fill: var(--surface); }
+.account-more { flex: none; height: 32px; width: 100%; border: 0; border-radius: 6px; background: transparent; font: inherit; font-size: 12px; font-weight: 500; color: var(--text-2); cursor: pointer; }
+.account-more:hover:not(:disabled) { background: var(--hover); }
+.account-more:focus-visible { outline: 2px solid color-mix(in srgb, var(--accent) 40%, transparent); outline-offset: -2px; }
+.account-loading { display: flex; align-items: center; gap: 6px; padding: 6px 8px; font-size: 12px; color: var(--text-2); }
+.account-caption { font-size: 12px; color: var(--text-2); }
+
+/* a notice is white with a hairline, never tinted, so a tint keeps meaning selection */
+.account-notice { flex: none; display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; margin-bottom: 6px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); }
+.account-notice-icon { flex: none; display: inline-flex; margin-top: 2px; color: var(--status-text); }
+.account-notice-text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.account-notice-lead { font-weight: 600; color: var(--status-text); overflow-wrap: anywhere; }
+.account-notice > .btn { flex: none; }
+
+.account-detail { flex: 999 1 520px; min-width: 0; min-height: 0; overflow: auto; box-sizing: border-box; padding: 20px 24px; display: flex; flex-direction: column; gap: 8px; }
+.account-detail-head { display: flex; align-items: center; gap: 8px; min-height: 18px; }
+.account-detail-ref { font-family: var(--mono); font-size: 13px; color: var(--text-2); }
+.account-detail h2 { margin: 0; font-size: 22px; line-height: 1.25; font-weight: 600; overflow-wrap: anywhere; }
+.account-detail-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; font-size: 12px; color: var(--text-2); }
+.account-detail-who { display: flex; align-items: center; gap: 6px; }
+.account-detail-who strong { font-weight: 600; color: var(--text); }
+.account-detail-body { margin: 8px 0 0; line-height: 1.55; white-space: pre-line; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.account-detail-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+
+/* empty and blocked states: a 24px icon, one 15px semibold line, one 12px caption, one action */
+.account-state { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 24px; text-align: center; }
+.account-state-icon { display: inline-flex; color: var(--text-2); }
+.account-state-tone { display: inline-flex; color: var(--status-text); }
+.account-state-title { font-size: 15px; font-weight: 600; overflow-wrap: anywhere; }
+.account-state-caption { font-size: 12px; color: var(--text-2); max-width: 380px; }
+.account-state > .btn { margin-top: 4px; }
+
+/* under 680px the list sits above the detail, as the board folds it */
+@container account-work (max-width: 680px) {
+  .account-split { flex-direction: column; }
+  .account-list { flex: 0 1 auto; max-height: 50%; border-right: 0; border-bottom: 1px solid var(--border); }
+  .account-detail { flex: 1 1 auto; }
+}
