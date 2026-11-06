@@ -21,9 +21,11 @@ export const collaborationRepoURL = (c: ReviewAccess) => c.target.provider === "
 const reqURL = (c: ReviewAccess, n: number) => `${collaborationRepoURL(c)}/${c.target.provider === "github" ? "pulls" : "merge_requests"}/${n}`;
 interface User { login?: string; username?: string; id?: number }
 interface GHPull { number: number; title: string; body?: string; user: User; head: { ref: string; sha: string; repo?: { full_name: string } }; base: { ref: string }; html_url: string; draft?: boolean; updated_at?: string; merged?: boolean; merged_at?: string | null; state: string; requested_reviewers?: User[]; mergeable?: boolean | null; mergeable_state?: string; maintainer_can_modify?: boolean }
-interface GLMerge { iid: number; title: string; description?: string; author: User; source_branch: string; target_branch: string; web_url: string; sha: string; draft?: boolean; updated_at?: string; state: string; reviewers?: User[]; detailed_merge_status?: string; merge_status?: string; head_pipeline?: { status: string }; user?: { can_merge?: boolean }; source_project_id?: number; target_project_id?: number }
-const ghPull = (c: ReviewAccess, p: GHPull): PullRequest => ({ number: p.number, title: p.title, body: p.body ?? "", author: p.user.login ?? "", source: p.head.ref, target: p.base.ref, headSHA: p.head.sha, isDraft: !!p.draft, updated: H.date(p.updated_at), url: p.html_url, fromFork: p.head.repo?.full_name.toLowerCase() !== c.target.path.toLowerCase() });
-const glPull = (p: GLMerge): PullRequest => ({ number: p.iid, title: p.title, body: p.description ?? "", author: p.author.username ?? "", source: p.source_branch, target: p.target_branch, headSHA: p.sha, isDraft: !!p.draft, updated: H.date(p.updated_at), url: p.web_url, fromFork: p.source_project_id !== p.target_project_id });
+interface GLMerge { iid: number; title: string; description?: string; author: User; source_branch: string; target_branch: string; web_url: string; sha: string; draft?: boolean; updated_at?: string; state: string; reviewers?: User[]; detailed_merge_status?: string; merge_status?: string; head_pipeline?: { status: string }; user?: { can_merge?: boolean }; source_project_id?: number; target_project_id?: number; user_notes_count?: number }
+// The comment count and the review request come with the list response the page already loads. macOS: CollaborationAPI.pull.
+const isMe = (c: ReviewAccess, name?: string) => !!name && name.toLowerCase() === c.me.toLowerCase();
+const ghPull = (c: ReviewAccess, p: GHPull): PullRequest => ({ number: p.number, title: p.title, body: p.body ?? "", author: p.user.login ?? "", source: p.head.ref, target: p.base.ref, headSHA: p.head.sha, isDraft: !!p.draft, updated: H.date(p.updated_at), url: p.html_url, fromFork: p.head.repo?.full_name.toLowerCase() !== c.target.path.toLowerCase(), reviewRequested: (p.requested_reviewers ?? []).some((u) => isMe(c, u.login)) });
+const glPull = (c: ReviewAccess, p: GLMerge): PullRequest => ({ number: p.iid, title: p.title, body: p.description ?? "", author: p.author.username ?? "", source: p.source_branch, target: p.target_branch, headSHA: p.sha, isDraft: !!p.draft, updated: H.date(p.updated_at), url: p.web_url, fromFork: p.source_project_id !== p.target_project_id, comments: p.user_notes_count, reviewRequested: (p.reviewers ?? []).some((u) => isMe(c, u.username)) });
 const ensureCurrent = (c: ReviewAccess) => { if (c.stillCurrent?.() === false) throw new Error(t("The repository or account changed. Reopen this action.")); };
 const send = <T>(c: ReviewAccess, url: string, method = "GET", body?: unknown) => { ensureCurrent(c); return H.send<T>(c.target.provider, url, c.token, method, body); };
 const raw = (c: ReviewAccess, url: string, method: string, body?: unknown) => { ensureCurrent(c); return H.sendRaw(c.target.provider, url, c.token, method, body); };
@@ -47,7 +49,7 @@ export async function requestPage(c: ReviewAccess, query: RequestQuery): Promise
   if (query.scope === "mine") p.set("author_username", c.me);
   if (query.scope === "reviewRequested") p.set("reviewer_username", c.me);
   const items = await send<GLMerge[]>(c, `${collaborationRepoURL(c)}/merge_requests?${p}`);
-  return { items: items.map(glPull), more: items.length === 30 };
+  return { items: items.map((item) => glPull(c, item)), more: items.length === 30 };
 }
 function matchesQuery(c: ReviewAccess, p: GHPull, scope: RequestScope, search: string) {
   const me = (name?: string) => (name ?? "").toLowerCase() === c.me.toLowerCase();

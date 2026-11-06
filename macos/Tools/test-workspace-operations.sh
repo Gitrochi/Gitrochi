@@ -8,7 +8,7 @@ import Foundation
 extension String { var trimmed: String { trimmingCharacters(in: .whitespacesAndNewlines) } }
 enum Provider { case github, gitlab }
 struct RepoTarget { let provider: Provider; let host: String; let path: String }
-struct PullRequest { let number: Int; let title: String; let author: String; let source: String; let target: String; let url: String; let isDraft: Bool; let updated: Date?; let body: String; let headSHA: String?; let fromFork: Bool }
+struct PullRequest { let number: Int; let title: String; let author: String; let source: String; let target: String; let url: String; let isDraft: Bool; let updated: Date?; let body: String; let headSHA: String?; let fromFork: Bool; var comments: Int? = nil; var reviewRequested = false }
 enum Hosting {
     static var handler: (URLRequest) throws -> Data = { _ in fatalError("Unexpected request") }
     static func request(_ p: Provider, _ url: String, token: String, method: String = "GET", body: [String: Any]? = nil) throws -> URLRequest {

@@ -27,9 +27,47 @@ enum Hosting {
     static func date(_ string: String?) -> Date? { string.flatMap { ISO8601DateFormatter().date(from: $0) } }
 }
 struct FixtureError: LocalizedError { var errorDescription: String? { "Lost response" } }
+enum CIStatus { case pending, running, success, failed, skipped, neutral }
+struct RequestCheck { var id: String; var name: String; var status: CIStatus }
+struct PullRequest { var number: Int; var source = "feature"; var target = "main"; var fromFork = false; var comments: Int? = nil; var reviewRequested = false }
 
 @main struct PullRequestReviewTests {
+    /// The Pull requests page's rules that need no view. Windows: tests/pull-request-page.test.ts.
+    static func pageRules() {
+        precondition(PullRequestPage.isCompact(listShown: true, width: 1400) && PullRequestPage.isCompact(listShown: false, width: 916) && !PullRequestPage.isCompact(listShown: false, width: 917))
+        precondition(PullRequestPage.treeWidth(compact: true) == 280 && PullRequestPage.treeWidth(compact: false) == 340)
+        precondition(!PullRequestPage.splitAllowed(diffWidth: 999) && PullRequestPage.splitAllowed(diffWidth: 1000))
+        precondition(PullRequestPage.headerInOneRow(onPage: true, tab: "files", width: 720) && !PullRequestPage.headerInOneRow(onPage: true, tab: "files", width: 719)
+            && !PullRequestPage.headerInOneRow(onPage: false, tab: "files", width: 1200) && !PullRequestPage.headerInOneRow(onPage: true, tab: "checks", width: 1200))
+        precondition(PullRequestPage.dateStyle(age: 86_399) == .relative && PullRequestPage.dateStyle(age: 86_400) == .yesterday && PullRequestPage.dateStyle(age: 2 * 86_400) == .day)
+        let requests = [PullRequest(number: 3, comments: 1), PullRequest(number: 9, reviewRequested: true), PullRequest(number: 5, comments: 4), PullRequest(number: 7, comments: 1)]
+        precondition(PullRequestPage.sorted(requests, by: .updated).map(\.number) == [3, 9, 5, 7])
+        precondition(PullRequestPage.sorted(requests, by: .newest).map(\.number) == [9, 7, 5, 3])
+        precondition(PullRequestPage.sorted(requests, by: .comments).map(\.number) == [5, 3, 7, 9], "Unknown counts go last and ties keep the loaded order")
+        precondition(PullRequestPage.reviewRequestedCount(requests) == 1)
+        let review = PullRequestReview(number: 9, repositoryKey: "k", refs: ReviewRefs(headSHA: "h", baseSHA: "b", startSHA: "b"), comments: [
+            ReviewComment(id: "a", author: "x", body: "", date: nil, path: "a.swift", threadID: "t1"),
+            ReviewComment(id: "b", author: "y", body: "", date: nil, path: "a.swift", threadID: "t1"),
+            ReviewComment(id: "c", author: "y", body: "", date: nil, path: "a.swift", threadID: "t2"),
+            ReviewComment(id: "d", author: "y", body: "", date: nil, kind: .system)])
+        precondition(PullRequestPage.commentCount(requests[0], review: review) == 1 && PullRequestPage.commentCount(requests[1], review: review) == 3 && PullRequestPage.commentCount(requests[1], review: nil) == nil)
+        precondition(PullRequestPage.threadCount(review.comments, path: "a.swift") == 2 && PullRequestPage.threadCount(review.comments, path: "b.swift") == 0)
+        precondition(PullRequestPage.branchLabel(requests[0], currentBranch: "feature", thisBranch: "This branch") == "This branch → main")
+        precondition(PullRequestPage.branchLabel(PullRequest(number: 1, fromFork: true), currentBranch: "feature", thisBranch: "This branch") == "feature → main")
+        precondition(PullRequestPage.folderLabel("macos/Sources/Views/Search/SearchPanel.swift") == "…/Views/Search" && PullRequestPage.folderLabel("docs/search.md") == "docs" && PullRequestPage.folderLabel("README.md") == "")
+        precondition(PullRequestPage.folderLabels("macos/Sources/Views/Search/SearchPanel.swift") == ["…/Views/Search", "…/Search"] && PullRequestPage.folderLabels("docs/search.md") == ["docs"] && PullRequestPage.folderLabels("README.md").isEmpty)
+        let checks = [RequestCheck(id: "1", name: "build", status: .success), RequestCheck(id: "2", name: "test", status: .failed), RequestCheck(id: "3", name: "lint", status: .running), RequestCheck(id: "4", name: "docs", status: .skipped)]
+        let groups = PullRequestPage.checkGroups(checks)
+        precondition(groups.failed.map(\.id) == ["2"] && groups.running.map(\.id) == ["3"] && groups.passed.map(\.id) == ["1", "4"])
+        precondition(PullRequestPage.checksBadge(checks) == .failed(1) && PullRequestPage.checksBadge([checks[0], checks[2]]) == .running(1) && PullRequestPage.checksBadge([checks[0], checks[3]]) == nil)
+        let lines = PullRequestPage.logLines("Test started\nfile.swift:58: error: XCTAssertTrue failed\r\nNo errors in terror tests\nProcess completed with exit code 1.\n")
+        precondition(lines.count == 4 && lines.map(\.isError) == [false, true, false, true] && lines[1].text.hasSuffix("failed") && PullRequestPage.firstError(lines)?.number == 2)
+        precondition(PullRequestPage.linkedIssues("Closes #42, fixes #7 and resolved: #42. See #9") == [42, 7])
+        precondition(PullRequestPage.viewedKey(repositoryKey: "github.com/team/repo", number: 5, headSHA: "abc") == "github.com/team/repo#5@abc")
+    }
+
     @MainActor static func main() async throws {
+        pageRules()
         let gh = RepoTarget(provider: .github, host: "github.test", path: "team/repo")
         let gl = RepoTarget(provider: .gitlab, host: "gitlab.test", path: "team/repo")
         let ghRefs = ReviewRefs(headSHA: "head-a", baseSHA: "base-a", startSHA: "base-a")
@@ -152,5 +190,5 @@ struct FixtureError: LocalizedError { var errorDescription: String? { "Lost resp
     }
 }
 SWIFT
-swiftc -parse-as-library -swift-version 5 "$ROOT/Sources/Services/ReviewAPI.swift" "$TASK_TMP/main.swift" -o "$TASK_TMP/test-review"
+swiftc -parse-as-library -swift-version 5 "$ROOT/Sources/Services/ReviewAPI.swift" "$ROOT/Sources/Core/PullRequestPage.swift" "$TASK_TMP/main.swift" -o "$TASK_TMP/test-review"
 "$TASK_TMP/test-review"

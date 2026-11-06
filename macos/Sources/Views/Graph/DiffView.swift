@@ -6,10 +6,18 @@ import AppKit
 struct DiffView: View {
     @Environment(RepoStore.self) private var store
     let source: DiffSource
+    /// false where the page draws the header itself (a request's Changed files)
+    var chrome = true
+    /// false where the diff is too narrow for two columns: it renders unified and the stored preference stays
+    var splitAllowed = true
 
     var body: some View {
         let change = source.change
         let _ = store.diffSettingsVersion
+        if chrome { framed(change) } else { content.frame(maxWidth: .infinity, maxHeight: .infinity) }
+    }
+
+    private func framed(_ change: FileChange) -> some View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
                 Button { store.closeDiff() } label: {
@@ -69,7 +77,7 @@ struct DiffView: View {
             } else if doc.lines.isEmpty {
                 DiffEmptyState(doc: doc, ignoreWhitespace: store.diffIgnoreWhitespace)
             } else {
-                DiffLinesView(doc: doc, split: store.diffSplit, editable: store.canEditDiffLines,
+                DiffLinesView(doc: doc, split: store.diffSplit && splitAllowed, editable: store.canEditDiffLines,
                               staged: { if case .working(let c) = source { return c.staged } else { return false } }())
             }
         } else {

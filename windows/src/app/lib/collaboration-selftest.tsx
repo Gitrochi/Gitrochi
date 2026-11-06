@@ -22,7 +22,10 @@ export async function collaborationSelfTest(): Promise<[boolean, string]> {
     store.saveRequestMetadata = async () => { saves++; return true; };
     root.render(<Inspector store={store} />); await pause();
     button("Merge…")?.click(); await pause(); ensure(store.confirm?.title.includes("1"), "Merge did not ask to confirm the reviewed request");
-    store.confirm = null; button("Edit request…")?.click(); await pause(); ensure(host.querySelector("input")?.value === "Fixture request", "Request metadata did not populate");
+    // Edit request… lives in the request's More menu, which opens in the app's menu host outside this root
+    store.confirm = null; host.querySelector<HTMLButtonElement>(`button[aria-label="${t("More pull request actions")}"]`)?.click(); await pause();
+    [...document.querySelectorAll<HTMLElement>(".menu .menu-item")].find((item) => item.querySelector(".label")?.textContent === t("Edit request…"))?.click(); await pause();
+    ensure(host.querySelector("input")?.value === "Fixture request", "Request metadata did not populate");
     button("Save request")?.click(); await pause(); ensure(saves === 1, "Request metadata save did not execute");
     root.unmount(); host.replaceChildren(); root = createRoot(host);
     const item = { id: "mention-9", kind: "mention" as const, number: 1, title: "Fixture mention", body: "Mention body", url: "https://github.example.invalid/fixture/repo/pull/1", author: "fixture", state: "PullRequest", updated: null, unread: true, readID: "9", isRequest: true };

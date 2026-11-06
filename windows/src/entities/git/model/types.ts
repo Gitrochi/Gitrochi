@@ -444,6 +444,10 @@ export interface PullRequest {
   body: string;
   headSHA: string | null;
   fromFork: boolean;
+  /** Comments on the request, when the list response carries the count (GitLab's does; GitHub's list has none) */
+  comments?: number;
+  /** The signed-in user is asked for a review */
+  reviewRequested?: boolean;
 }
 
 export interface RemoteRepo {
