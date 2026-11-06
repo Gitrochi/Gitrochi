@@ -55,15 +55,17 @@ const trimPath = (p: string) => p.replace(/\\/g, "/").replace(/\/+$/, "").toLowe
 
 /**
  * The project of the open repository: the one most of whose sessions are linked to it, else the one named like its
- * folder. The contract's projects carry no repository yet, so this is inferred. (macOS: LedgerStore.project(for:))
+ * folder. The contract's projects carry no repository yet, so this is inferred. A window can have a linked worktree
+ * open, and a session in one names the main checkout as its repository, so the session's own folders count too.
+ * (macOS: LedgerProjects.key)
  */
 export function projectForRepository(state: Pick<LedgerState, "projects" | "sessions">, repoPath: string | null): string | null {
   if (!repoPath) return null;
   const key = trimPath(repoPath);
   const votes = new Map<string, number>();
   for (const s of state.sessions) {
-    const linked = s.links.repoPath ?? s.links.worktree ?? s.links.cwd;
-    if (linked && trimPath(linked) === key) votes.set(s.project, (votes.get(s.project) ?? 0) + 1);
+    const linked = [s.links.repoPath, s.links.worktree, s.links.cwd].some((path) => path && trimPath(path) === key);
+    if (linked) votes.set(s.project, (votes.get(s.project) ?? 0) + 1);
   }
   const best = [...votes].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0];
   if (best) return best[0];

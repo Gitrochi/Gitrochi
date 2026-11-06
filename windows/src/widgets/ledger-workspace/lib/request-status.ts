@@ -24,14 +24,15 @@ const folder = (p: string) => p.replace(/\\/g, "/").replace(/\/+$/, "").toLowerC
 
 /**
  * The request the session links to, only when the session belongs to the open repository and the request lives in
- * that repository's hosting project: the session's linked folder is the repository (or, with no folder, its project is
- * the repository's), and the request's address is under the hosting project's path.
+ * that repository's hosting project: one of the session's linked folders is the repository (or, with no folder, its
+ * project is the repository's), and the request's address is under the hosting project's path.
  */
 export function ledgerRequestLink(s: LedgerSession, repo: LedgerRequestRepository): LedgerRequestLink | null {
   const pr = s.links.pr, target = repo.target;
   if (!pr || !(pr.number > 0) || !repo.path || !target?.host || !target.path) return null;
-  const linked = s.links.repoPath ?? s.links.worktree ?? s.links.cwd;
-  if (linked ? folder(linked) !== folder(repo.path) : !repo.project || s.project !== repo.project) return null;
+  const linked = [s.links.repoPath, s.links.worktree, s.links.cwd].filter((path): path is string => !!path);
+  const open = folder(repo.path);
+  if (linked.length ? !linked.some((path) => folder(path) === open) : !repo.project || s.project !== repo.project) return null;
   let url: URL;
   try { url = new URL(pr.url); } catch { return null; }
   const host = target.host.toLowerCase();

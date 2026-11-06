@@ -397,6 +397,9 @@ let start: LedgerMs = 1_793_400_000_000
         check(link(session(links: .init(pr: pr))) != nil && link(session(project: "harbor", links: .init(pr: pr))) == nil,
               "without a folder, the session's project must be the repository's")
         check(link(session(links: .init(repoPath: "/Users/me/work/harbor", pr: pr))) == nil, "another repository")
+        let worktree = "/Users/me/work/atlas/.claude/worktrees/nimble-otter"
+        let inWorktree = session(links: .init(repoPath: "/Users/me/work/atlas", worktree: worktree, pr: pr))
+        check(link(inWorktree) != nil && link(inWorktree, path: worktree) != nil, "a session in a worktree: in the repository's window and in the worktree's")
         check(link(session(links: .init(repoPath: "/Users/me/work/atlas", pr: PR(host: "other.example.com", number: 142, url: "https://other.example.com/team/atlas/pull/142")))) == nil,
               "another host")
         check(link(session(links: .init(repoPath: "/Users/me/work/atlas", pr: PR(host: "example.com", number: 142, url: "https://example.com/team/atlas-fork/pull/142")))) == nil,
@@ -592,6 +595,16 @@ let start: LedgerMs = 1_793_400_000_000
         let projects = [LedgerProject(key: "harbor", name: "Harbor", open: 1), LedgerProject(key: "meadow", name: "Meadow", open: 0)]
         check(LedgerProjects.key(forRepository: NSHomeDirectory() + "/Projects/harbor/", sessions: [linked], projects: projects) == "harbor", "linked repository, ~ expanded")
         check(LedgerProjects.key(forRepository: "/tmp/elsewhere/Meadow", sessions: [linked], projects: projects) == "meadow", "a project named like the folder")
+        // A session in a linked worktree names the main checkout as its repository and the worktree as its own folder.
+        var inWorktree = session("S8", "x", verdict: .active, last: 0)
+        inWorktree.project = "harbor"
+        inWorktree.links.repoPath = "/tmp/elsewhere/harbor-main"
+        inWorktree.links.worktree = "/tmp/elsewhere/.claude/worktrees/nimble-otter/"
+        check(LedgerProjects.key(forRepository: "/tmp/elsewhere/harbor-main", sessions: [inWorktree], projects: projects) == "harbor", "the main checkout follows sessions in its worktrees")
+        check(LedgerProjects.key(forRepository: "/tmp/elsewhere/.claude/worktrees/nimble-otter", sessions: [inWorktree], projects: projects) == "harbor", "a window on the worktree follows them too")
+        var movedOn = inWorktree
+        movedOn.links.cwd = "/tmp/elsewhere/harbor-main/sub"
+        check(LedgerProjects.key(forRepository: "/tmp/elsewhere/harbor-main/sub", sessions: [movedOn], projects: projects) == "harbor", "a session's working folder counts when nothing else names it")
         check(LedgerProjects.key(forRepository: "/tmp/elsewhere/unknown", sessions: [linked], projects: projects) == nil && LedgerProjects.key(forRepository: nil, sessions: [], projects: projects) == nil, "no project")
         let baselines = ["v1.9.2", "v1.10.0", "v1.2.0"].map { LedgerBaseline(project: "harbor", version: $0, ts: 0, source: .tag, note: nil, bySession: nil) }
         check(LedgerProjects.head("harbor", baselines: baselines) == "v1.10.0", "numeric version order")
