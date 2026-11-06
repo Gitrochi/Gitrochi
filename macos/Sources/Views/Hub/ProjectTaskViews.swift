@@ -41,11 +41,11 @@ struct ProjectTaskCard: View {
 
     var body: some View {
         Button(action: select) {
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 6) {
                 HStack(alignment: .top, spacing: 8) {
                     Image(systemName: selectingItems ? selected ? "checkmark.square.fill" : "square" : entry?.completed == true ? "checkmark.circle.fill" : ProjectTaskStyle.symbol(row))
                         .font(.system(size: 13)).foregroundStyle(entry?.completed == true ? .green : ProjectTaskStyle.color(row)).padding(.top, 2)
-                    Text(row.title).font(.system(size: 13, weight: .semibold)).lineLimit(3).multilineTextAlignment(.leading)
+                    Text(row.title).font(.system(size: 13, weight: selected ? .semibold : .regular)).lineLimit(3).multilineTextAlignment(.leading)
                         .frame(maxWidth: .infinity, alignment: .leading).foregroundStyle(.primary)
                     if let number = row.number { Text("#\(number)").font(.system(size: 10)).monospacedDigit().foregroundStyle(.secondary) }
                 }
@@ -76,10 +76,11 @@ struct ProjectTaskCard: View {
                         }
                     }.font(.system(size: 10)).foregroundStyle(.secondary)
                 }
-            }.padding(13).background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 10))
-                .background(selected ? Color.accentColor.opacity(0.04) : Color.clear, in: RoundedRectangle(cornerRadius: 10))
-                .overlay(RoundedRectangle(cornerRadius: 10).stroke(selected ? Color.accentColor : Color.secondary.opacity(hovering ? 0.25 : 0.13), lineWidth: selected ? 1.5 : 1))
-                .shadow(color: .black.opacity(hovering ? 0.055 : 0.025), radius: hovering ? 5 : 3, y: 2).contentShape(RoundedRectangle(cornerRadius: 10))
+            }.padding(.horizontal, 10).padding(.vertical, 8)
+                // Selection is the tint alone (docs/design.md): no accent border or ring around the card.
+                .background(selected ? Color.accentColor.opacity(0.16) : hovering ? StudioStyle.hover : Color.clear, in: RoundedRectangle(cornerRadius: 10))
+                .background(StudioStyle.surface, in: RoundedRectangle(cornerRadius: 10))
+                .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(StudioStyle.border)).contentShape(RoundedRectangle(cornerRadius: 10))
         }.buttonStyle(.plain).accessibilityLabel(row.title).accessibilityAddTraits(selected ? .isSelected : [])
             .onHover { hovering = $0 }
     }
@@ -112,15 +113,21 @@ struct ProjectBoardColumn: View {
     @ViewState private var creating = false
     @ViewState private var createError: String?
     @FocusState private var titleFocused: Bool
+    /// A status column takes the colour of its stage (to do, in progress, done); any other grouping keeps the palette.
+    private var swatch: Color {
+        guard let status = ProjectSchedule.fields(fields, settings: settings).status, status.options.contains(where: { $0.id == column.id }) else { return ProjectTaskStyle.color(index) }
+        if settings.completedOptionIDs.contains(column.id) { return StudioStyle.Tone.passed.text }
+        return status.options.first { !settings.completedOptionIDs.contains($0.id) }?.id == column.id ? StudioStyle.Tone.neutral.fill : StudioStyle.Tone.info.text
+    }
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 8) {
-                Circle().fill(ProjectTaskStyle.color(index)).frame(width: 7, height: 7)
-                Text(column.title).font(.system(size: 12, weight: .semibold)).lineLimit(1)
-                Text(column.rows.count.formatted()).font(.system(size: 10, weight: .medium)).monospacedDigit()
-                    .foregroundStyle(.secondary).padding(.horizontal, 6).padding(.vertical, 3).background(Color.secondary.opacity(0.075), in: Capsule())
+                RoundedRectangle(cornerRadius: 2).fill(swatch).frame(width: 8, height: 8)
+                    .overlay(RoundedRectangle(cornerRadius: 2).strokeBorder(Color.primary.opacity(0.16))).accessibilityHidden(true)
+                Text(column.title).font(.system(size: 13, weight: .semibold)).lineLimit(1)
+                StatusPill(title: column.rows.count.formatted(), tone: .neutral)
                 Spacer(minLength: 0)
-            }.padding(.horizontal, 3).padding(.vertical, 5)
+            }.padding(4)
             ForEach(column.rows) { row in
                 ProjectTaskCard(row: row, selected: selectingItems ? selectedItems.contains(row.id) : selectedID == row.id,
                     local: !row.repository.isEmpty && row.repository.caseInsensitiveCompare(localRepository) == .orderedSame,
@@ -139,14 +146,13 @@ struct ProjectBoardColumn: View {
                     if quickAdd != nil { adding = true; createError = nil; titleFocused = true }
                     else { add() }
                 } label: {
-                    Label("Add item", systemImage: "plus").font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(.secondary).frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 6).padding(.vertical, 8).contentShape(Rectangle())
+                    Label("Add item", systemImage: "plus").font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(StudioStyle.Rail.icon).frame(maxWidth: .infinity, minHeight: 24, alignment: .leading).padding(.horizontal, 4).contentShape(Rectangle())
                 }.buttonStyle(.plain).disabled(!canEdit)
             }
         }
-        .padding(12).frame(width: width).frame(minHeight: min(210, max(180, height)), alignment: .topLeading)
-        .background(Color.secondary.opacity(0.025), in: RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.secondary.opacity(0.1)))
+        .padding(10).frame(width: width).frame(minHeight: min(210, max(180, height)), alignment: .topLeading)
+        .background(StudioStyle.sidebar, in: RoundedRectangle(cornerRadius: 10))
         .dropDestination(for: String.self) { identifiers, _ in move(identifiers) }
     }
 
@@ -502,15 +508,17 @@ struct ProjectTaskTable: View {
                         else { Text(option.name) }
                     }
                 }
-            } label: { cellValue(value, color: ProjectTaskStyle.fieldColor(row, field: field), menu: true) }
-                .menuStyle(.borderlessButton).menuIndicator(.hidden).disabled(!canEdit || updatingField || row.archived || row.kind == .redacted).accessibilityLabel(label)
+            } label: { Text(value.isEmpty ? "—" : value).font(.system(size: 11)).foregroundStyle(ProjectTaskStyle.fieldColor(row, field: field)).lineLimit(1) }
+                // A menu draws its label at its natural width, so the column's width is set on the menu and the chevron is its own.
+                .menuStyle(.borderlessButton).menuIndicator(.visible).fixedSize().disabled(!canEdit || updatingField || row.archived || row.kind == .redacted).accessibilityLabel(label)
+                .padding(.horizontal, 12).frame(width: 150, height: 46, alignment: .leading)
         } else {
-            Button { edit(row, field) } label: { cellValue(value, color: .primary, menu: false) }
+            Button { edit(row, field) } label: { cellValue(value, color: .primary) }
                 .buttonStyle(.plain).disabled(!canEdit || updatingField || row.archived || row.kind == .redacted).accessibilityLabel(label)
         }
     }
-    private func cellValue(_ value: String, color: Color, menu: Bool) -> some View {
-        HStack(spacing: 6) { Text(value.isEmpty ? "—" : value).font(.system(size: 11)).lineLimit(1); Spacer(minLength: 0); if menu { Image(systemName: "chevron.down").font(.system(size: 8)).foregroundStyle(.tertiary) } }
+    private func cellValue(_ value: String, color: Color) -> some View {
+        HStack(spacing: 6) { Text(value.isEmpty ? "—" : value).font(.system(size: 11)).lineLimit(1); Spacer(minLength: 0) }
             .foregroundStyle(color).padding(.horizontal, 12).frame(width: 150, height: 46, alignment: .leading).contentShape(Rectangle())
     }
     private func updateField(_ row: HubProjectRow, field: HubProjectField, value: String?, using action: (HubProjectRow, HubProjectField, String?) async -> String?) async {

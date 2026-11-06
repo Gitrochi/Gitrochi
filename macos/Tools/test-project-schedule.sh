@@ -83,6 +83,23 @@ enum Hosting {
         precondition(workload.first { $0.assignee == "sam" }!.summary.overdue == 1)
         precondition(workload.last!.assignee.isEmpty && workload.reduce(0) { $0 + $1.summary.active } == 9, "Shared tasks count once per person while empty assignees remain explicit")
 
+        let overview = ProjectSchedule.overview(entries + ProjectSchedule.entries([row("ahead", ["due": "2026-10-29"], statuses: ["status": "done"])], fields: fields, settings: settings), today: "2026-10-27")
+        precondition(overview.rows.map(\.id) == ["late", "today", "ahead", "week", "unscheduled", "bad"], "The Schedule list is the open tasks the chips count, by date, with a task done ahead of its day between them")
+        let counted = ProjectSchedule.summary(entries, today: "2026-10-27")
+        precondition(overview.counts == [.overdue: counted.overdue, .today: counted.today, .upcoming: counted.upcoming, .unscheduled: counted.unscheduled], "The chips count open tasks only, with the summary's rules")
+        precondition(overview.counts.values.reduce(0, +) == overview.rows.filter { !$0.completed }.count, "The chips add up to the open rows")
+        precondition(overview.done.map(\.id) == ["configured", "closed", "merged"] && overview.later.map(\.id) == ["later"], "Other done tasks wait behind the list and later due dates go to the deadlines card")
+        precondition(ProjectSchedule.overview(entries, today: "invalid").rows.map(\.id) == ["unscheduled", "bad"], "Without a valid day only undated tasks can be listed")
+        let stages = HubProjectField(id: "stage", name: "Status", options: [HubProjectOption(id: "shipped", name: "Shipped"), HubProjectOption(id: "todo", name: "Todo"), HubProjectOption(id: "doing", name: "Doing"), HubProjectOption(id: "review", name: "Review")])
+        let staged = ProjectSchedule.entries([
+            row("a", statuses: ["stage": "todo"]), row("b", statuses: ["stage": "doing"]), row("c", ["stage": "review"]), row("d", statuses: ["stage": "shipped"]),
+            row("e"), row("f", statuses: ["stage": "removed"]), row("g", state: "CLOSED", statuses: ["stage": "doing"])
+        ], fields: [stages], settings: ProjectScheduleSettings(completedOptionIDs: ["shipped"]))
+        precondition(staged.map { ProjectSchedule.stage($0, status: stages, settings: ProjectScheduleSettings(completedOptionIDs: ["shipped"])) } == [.todo, .inProgress, .inProgress, .done, .todo, .todo, .done], "The first open status is to do, the others are in progress, and unknown or missing statuses stay to do")
+        let progress = ProjectSchedule.progress(staged, status: stages, settings: ProjectScheduleSettings(completedOptionIDs: ["shipped"]))
+        precondition(progress == ProjectScheduleProgress(done: 2, inProgress: 2, todo: 3) && progress.percent == 29 && ProjectScheduleProgress(done: 12, inProgress: 2, todo: 4).percent == 67 && ProjectScheduleProgress().percent == 0)
+        precondition(ProjectSchedule.progress(staged, status: nil) == ProjectScheduleProgress(done: 2, inProgress: 0, todo: 5), "Without a status field nothing is in progress")
+
         let shiftedRange = try ProjectSchedule.reschedule(row("range", ["start": "2026-03-07", "due": "2026-03-09"]), fields: fields, settings: settings, targetDay: "2026-11-02")
         precondition(shiftedRange == [ProjectScheduleChange(fieldID: "start", value: "2026-10-31"), ProjectScheduleChange(fieldID: "due", value: "2026-11-02")])
         let shiftedSingle = try ProjectSchedule.reschedule(row("single", ["due": "2026-10-27"]), fields: fields, targetDay: "2026-10-30")

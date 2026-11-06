@@ -10,10 +10,14 @@ private struct ProjectWorkspaceReview: Identifiable {
     let actionTitle: String
     let destructive: Bool
     let expected: String
+    /// Deleting the project leaves nothing to reread, so the list is read instead
+    var refreshList = false
     let action: (HubAccess) async throws -> Void
 }
 
-/// Projects keeps planning, task details and local Git actions in one workspace.
+/// The Projects page, as the redesign's Projects board draws it: the header with whose projects are shown, underline
+/// tabs for the layouts, one search and filter row, then the layout. Planning, task details and local Git actions stay
+/// in this one workspace. (Windows: widgets/hosting-hub/ui/ProjectWorkspace.tsx)
 struct ProjectWorkspace: View {
     @Bindable var store: RepoStore
     @ViewState private var filter = ProjectWorkbenchFilter()
@@ -39,6 +43,8 @@ struct ProjectWorkspace: View {
     @ViewState private var sharedViewID: String?
     @ViewState private var viewsRead = UUID()
     @ViewState private var viewsError: String?
+    /// When the project on screen was last read, for the footer
+    @ViewState private var syncedAt = Date()
     private var isLocal: Bool { store.hubIsLocalProject }
     private var scheduleAccount: String { isLocal ? "local" : store.hubAccount?.id ?? "" }
     private var hub: HostingHubState { store.hostingHub }
@@ -62,22 +68,12 @@ struct ProjectWorkspace: View {
             if let detail {
                 controls(detail)
                 if selectingItems { bulkToolbar(detail) }
-                Divider()
                 workspace(detail)
                 footer(detail)
             } else if hub.loading || hub.detailLoading || store.hubCredentialState == .loading {
                 loadingState
             } else if hub.error == nil {
-                ContentUnavailableView {
-                    Label("Your next project starts here", systemImage: "rectangle.3.group")
-                } description: {
-                    if isLocal { Text("Create a local project and start organizing tasks, dates, and priorities without an account.") }
-                    else { Text("Choose a project above, or change the account and project scope.") }
-                } actions: {
-                    if store.hubProvider == .github { Button("New project") { manage(.newProject) } }
-                    // GitLab has no personal boards; its scope menu offers groups instead.
-                    if !isLocal, store.hubProvider == .github { Button("Show my projects") { Task { await store.selectHubProjectScope("personal"); await selectInitialProject() } } }
-                }.frame(maxWidth: .infinity, maxHeight: .infinity)
+                emptyState
             } else { Spacer(minLength: 20) }
         }
         .background(Color(nsColor: .windowBackgroundColor))
@@ -119,6 +115,7 @@ struct ProjectWorkspace: View {
             if !["board", "table"].contains(value) { selectingItems = false; selectedItems = [] }
         }
         .onChange(of: groupID) { _, value in UserDefaults.standard.set(value, forKey: settingsKey + ".group") }
+        .onChange(of: hub.detailLoading) { _, loading in if !loading { syncedAt = Date() } }
         .sheet(item: $permissionAccount) { account in
             GitHubBrowserLoginSheet(expectedLogin: account.username, capability: .projects) { _, _ in
                 permissionAccount = nil
@@ -147,7 +144,7 @@ struct ProjectWorkspace: View {
         .sheet(item: $review) { request in
             ProjectActionReviewSheet(title: request.title, project: request.project, summary: request.summary, items: request.items,
                                      actionTitle: request.actionTitle, destructive: request.destructive) {
-                await save(expected: request.expected, action: request.action)
+                await save(expected: request.expected, refreshList: request.refreshList, action: request.action)
             }
         }
         .sheet(isPresented: $compactInspector, onDismiss: {
@@ -178,76 +175,105 @@ struct ProjectWorkspace: View {
             chooseProject: { item in Task { await store.selectHostingHubItem(item) } },
             refresh: { Task { if let detail { await store.selectHostingHubItem(detail.item); await loadSharedViews() } else { await store.loadHostingHub(); await selectInitialProject() } } },
             addTask: { compose(.draft) }, importItem: { compose(.link) }, overview: { showingReadme = true }, manage: manage,
-            openBrowser: { if let url = detail?.item.url { open(url) } })
+            openBrowser: { if let url = detail?.item.url { open(url) } }, deleteProject: deleteLocalProject)
+    }
+
+    /// Nothing to show yet: one line, one caption and the one action that gets the user going (docs/design.md, Controls).
+    private var emptyState: some View {
+        VStack(spacing: 8) {
+            Image(systemName: "checkmark.square").font(.system(size: 24)).foregroundStyle(StudioStyle.Rail.icon).accessibilityHidden(true)
+            Text("No projects yet").font(.system(size: 15, weight: .semibold))
+            Text(isLocal ? String(localized: "Create a local project and start organizing tasks, dates, and priorities without an account.")
+                 : String(localized: "No projects found for {0}.").replacingOccurrences(of: "{0}", with: store.hubProjectOwner))
+                .font(.system(size: 12)).foregroundStyle(StudioStyle.Rail.icon).multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
+            Button("New project…") { manage(.newProject) }.buttonStyle(.borderedProminent).controlSize(.large).padding(.top, 4).disabled(locked)
+        }.padding(24).frame(maxWidth: 420).frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private func deleteLocalProject() {
+        guard isLocal, let detail else { return }
+        write("Delete local project?", message: detail.item.title, actionTitle: "Delete local project", destructive: true, refreshList: true) { _ in
+            try await LocalProjectStore.shared.deleteProject(detail: detail)
+        }
+    }
+
+    /// A notice as docs/design.md draws one: a white strip with a hairline, a 14 pt icon, dark text and plain actions
+    private func strip<Content: View>(symbol: String, color: Color, @ViewBuilder content: () -> Content) -> some View {
+        HStack(alignment: .center, spacing: 10) {
+            Image(systemName: symbol).font(.system(size: 14)).foregroundStyle(color).accessibilityHidden(true)
+            content()
+        }
+        .padding(EdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 8)).frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: 8).fill(StudioStyle.surface))
+        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(StudioStyle.border))
+        .padding(.horizontal, 20).padding(.bottom, 8)
     }
 
     @ViewBuilder private var accessNotice: some View {
         if let error = hub.error {
-            HStack(alignment: .top, spacing: 12) {
-                Image(systemName: "lock.shield").foregroundStyle(Color.accentColor)
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(error).font(.callout).textSelection(.enabled)
-                    if store.hubCredentialState == .authorizationRequired {
-                        Button("Allow saved account access") { Task { await store.allowHubStoredAccess(); await selectInitialProject() } }.disabled(locked)
-                    } else if hub.projectPermissionRequired, let account = store.hubAccount {
-                        Button("Connect project access") { permissionAccount = account }.disabled(locked)
-                    } else { Button("Retry") { Task { if let detail { await store.selectHostingHubItem(detail.item) } else { await store.loadHostingHub(); await selectInitialProject() } } }.disabled(locked) }
-                }
-                Spacer()
-            }.padding(16).frame(maxWidth: .infinity, alignment: .leading).background(Color.accentColor.opacity(0.06))
+            // Missing access blocks the page, so its action is the filled one; anything else is a plain retry.
+            let access = store.hubCredentialState == .authorizationRequired || hub.projectPermissionRequired
+            strip(symbol: access ? "lock.shield" : "xmark.circle.fill", color: access ? StudioStyle.Rail.icon : StudioStyle.Tone.failed.text) {
+                Text(error).font(.system(size: 13)).textSelection(.enabled).fixedSize(horizontal: false, vertical: true).frame(maxWidth: .infinity, alignment: .leading)
+                if store.hubCredentialState == .authorizationRequired {
+                    Button("Allow saved account access") { Task { await store.allowHubStoredAccess(); await selectInitialProject() } }.buttonStyle(.borderedProminent).disabled(locked)
+                } else if hub.projectPermissionRequired, let account = store.hubAccount {
+                    Button("Connect project access") { permissionAccount = account }.buttonStyle(.borderedProminent).disabled(locked)
+                } else { Button("Retry") { Task { if let detail { await store.selectHostingHubItem(detail.item) } else { await store.loadHostingHub(); await selectInitialProject() } } }.disabled(locked) }
+            }
         }
-        if hub.allowingCredentialAccess { Label("Waiting for your macOS approval. You can continue using local Git tools.", systemImage: "key").font(.caption).padding(12) }
-        if let notice = detail?.notice { Text(notice).font(.caption).foregroundStyle(.secondary).padding(.horizontal, 24).padding(.bottom, 8) }
+        if hub.allowingCredentialAccess {
+            strip(symbol: "key", color: StudioStyle.Rail.icon) { Text("Waiting for your macOS approval. You can continue using local Git tools.").font(.system(size: 13)).frame(maxWidth: .infinity, alignment: .leading) }
+        }
+        if let notice = detail?.notice { Text(notice).font(.system(size: 12)).foregroundStyle(StudioStyle.Rail.icon).padding(.horizontal, 20).padding(.bottom, 8).frame(maxWidth: .infinity, alignment: .leading) }
         if let sharedView, !sharedView.filter.isEmpty {
-            HStack(spacing: 10) {
-                Image(systemName: "line.3.horizontal.decrease.circle")
-                VStack(alignment: .leading, spacing: 3) { Text(sharedView.filter).font(.caption.monospaced()); Text("This shared view has a GitHub filter. Native results use your loaded-item filters below.").font(.caption).foregroundStyle(.secondary) }
-                Spacer(minLength: 0)
+            strip(symbol: "line.3.horizontal.decrease.circle", color: StudioStyle.Rail.icon) {
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(sharedView.filter).font(.system(size: 13, design: .monospaced))
+                    Text("This shared view has a GitHub filter. Native results use your loaded-item filters below.").font(.system(size: 12)).foregroundStyle(StudioStyle.Rail.icon)
+                }.frame(maxWidth: .infinity, alignment: .leading)
                 Button("Open full GitHub view") { if let url = detail?.item.url { open(url + (sharedView.number.map { "/views/\($0)" } ?? "")) } }
-            }.padding(.horizontal, 24).padding(.vertical, 10).background(Color.accentColor.opacity(0.04))
+            }
         }
     }
 
     private func controls(_ detail: HubDetail) -> some View {
         VStack(spacing: 0) {
-            HStack(spacing: 22) {
+            HStack(spacing: 4) {
                 if store.hubProvider == .github {
-                    navigationTab("overview", "Overview", symbol: "square.grid.2x2")
-                    navigationTab("calendar", "Calendar", symbol: "calendar")
+                    navigationTab("overview", "Overview")
+                    navigationTab("calendar", "Calendar")
                 }
-                navigationTab("board", "Board", symbol: "rectangle.split.3x1")
-                navigationTab("table", "Table", symbol: "tablecells")
-                navigationTab("roadmap", "Roadmap", symbol: "chart.bar.xaxis")
-                Spacer(minLength: 8)
-                if !isLocal, store.hubProvider == .github {
-                    Menu {
-                        Button("Local view") { sharedViewID = nil }
-                        ForEach(sharedViews) { view in Button(view.name) { apply(view) } }
-                        Divider(); Button("Manage shared views…") { manage(.views) }
-                        if viewsError != nil { Button("Retry loading views") { Task { await loadSharedViews() } } }
-                    } label: { Text(sharedView?.name ?? String(localized: "Shared views")) }.menuStyle(.borderlessButton).fixedSize()
-                }
-                Text(verbatim: String(localized: "{0} tasks").replacingOccurrences(of: "{0}", with: rows.count.formatted())).font(.caption).foregroundStyle(.secondary)
-            }.padding(.horizontal, 22).frame(height: 43)
+                navigationTab("board", "Board")
+                navigationTab("table", "Table")
+                navigationTab("roadmap", "Roadmap")
+                Spacer(minLength: 0)
+            }.padding(EdgeInsets(top: 0, leading: 8, bottom: 0, trailing: 20))
+                .accessibilityElement(children: .contain).accessibilityLabel("Project views")
             Divider()
-            if width >= 760 {
-                HStack(spacing: 12) { searchField.frame(maxWidth: 380); Spacer(minLength: 0); filterControls(detail) }.padding(.horizontal, 22).padding(.vertical, 10)
-            } else {
-                VStack(alignment: .leading, spacing: 10) { searchField; HStack(spacing: 12) { filterControls(detail); Spacer(minLength: 0) } }.padding(.horizontal, 22).padding(.vertical, 10)
-            }
+            WorkbenchFlow(spacing: 8) { searchField; filterControls(detail) }
+                .padding(.horizontal, 20).padding(.vertical, 12).frame(maxWidth: .infinity, alignment: .leading)
         }.frame(maxWidth: .infinity, alignment: .leading).disabled(locked)
     }
-    private func navigationTab(_ value: String, _ title: LocalizedStringKey, symbol: String) -> some View {
+    /// Layouts switch content, so they are underline tabs: the label keeps its weight and the 2 pt accent line moves.
+    private func navigationTab(_ value: String, _ title: LocalizedStringKey) -> some View {
         Button { layout = value; sharedViewID = nil } label: {
-            Label(title, systemImage: symbol).font(.system(size: 12, weight: layout == value ? .semibold : .medium))
-                .foregroundStyle(layout == value ? Color.accentColor : Color.secondary).frame(height: 43)
-                .overlay(alignment: .bottom) { if layout == value { Capsule().fill(Color.accentColor).frame(height: 2) } }
+            Text(title).font(.system(size: 13, weight: .medium))
+                .foregroundStyle(layout == value ? Color.primary : StudioStyle.Tone.neutral.text)
+                .padding(.horizontal, 12).frame(height: 36)
+                .overlay(alignment: .bottom) { if layout == value { Rectangle().fill(Color.accentColor).frame(height: 2) } }
                 .contentShape(Rectangle())
         }.buttonStyle(.plain).accessibilityAddTraits(layout == value ? .isSelected : [])
     }
     private var searchField: some View {
-        HStack(spacing: 8) { Image(systemName: "magnifyingglass").font(.system(size: 12)).foregroundStyle(.secondary); TextField("Search tasks", text: $filter.query).font(.callout).textFieldStyle(.plain); if !filter.query.isEmpty { Button { filter.query = "" } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary) }.buttonStyle(.plain).help("Clear search") } }
-            .padding(.horizontal, 10).frame(minWidth: 180).frame(height: 32).background(Color.secondary.opacity(0.045), in: RoundedRectangle(cornerRadius: 7))
+        HStack(spacing: 6) {
+            Image(systemName: "magnifyingglass").font(.system(size: 12)).foregroundStyle(StudioStyle.Rail.icon)
+            TextField("Search tasks", text: $filter.query).font(.system(size: 13)).textFieldStyle(.plain)
+            if !filter.query.isEmpty { Button { filter.query = "" } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary) }.buttonStyle(.plain).help("Clear search").accessibilityLabel("Clear search") }
+        }
+        .padding(.horizontal, 10).frame(width: 280, height: 28)
+        .background(RoundedRectangle(cornerRadius: 6).fill(StudioStyle.surface))
+        .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.primary.opacity(0.16)))
     }
     @ViewBuilder private func filterControls(_ detail: HubDetail) -> some View {
         Menu {
@@ -255,19 +281,31 @@ struct ProjectWorkspace: View {
             Toggle("Include archived", isOn: $filter.includeArchived)
             Divider()
             Picker("Sort by", selection: $filter.sort) { Text("Project order").tag("manual"); Text("Recently updated").tag("updated"); Text("Title").tag("title"); if !isLocal { Text("Number").tag("number") } }
-        } label: { Label("Filters", systemImage: "line.3.horizontal.decrease") }.menuStyle(.borderlessButton).fixedSize()
+        } label: { Label("Filter", systemImage: "line.3.horizontal.decrease") }.menuStyle(.button).menuIndicator(.hidden).controlSize(.large).fixedSize()
+        // The board draws search and Filter; what the page already offered follows them on the same row.
+        if layout == "overview" {
+            ProjectScheduleConfiguration(fields: detail.fields, settings: $scheduleSettings, manageFields: { manage(isLocal ? .overview : .fields) }).menuStyle(.button).menuIndicator(.hidden).controlSize(.large).fixedSize()
+        }
+        if !isLocal, store.hubProvider == .github {
+            Menu {
+                Button("Local view") { sharedViewID = nil }
+                ForEach(sharedViews) { view in Button(view.name) { apply(view) } }
+                Divider(); Button("Manage shared views…") { manage(.views) }
+                if viewsError != nil { Button("Retry loading views") { Task { await loadSharedViews() } } }
+            } label: { Text(sharedView?.name ?? String(localized: "Shared views")) }.menuStyle(.button).menuIndicator(.hidden).controlSize(.large).fixedSize()
+        }
         if ["board", "table"].contains(layout) {
             if let grouping {
                 Menu { Picker("Group by", selection: Binding(get: { grouping.id }, set: { groupID = $0 })) { ForEach(detail.fields.filter { !$0.options.isEmpty }) { field in Text(field.name).tag(field.id) } } }
-                    label: { Label(grouping.name, systemImage: "rectangle.3.group") }.menuStyle(.borderlessButton).fixedSize()
+                    label: { Label(grouping.name, systemImage: "rectangle.3.group") }.menuStyle(.button).menuIndicator(.hidden).controlSize(.large).fixedSize()
             }
-            Toggle(isOn: $selectingItems) { Label("Select", systemImage: "checkmark.square") }.toggleStyle(.button).controlSize(.small)
+            Toggle(isOn: $selectingItems) { Label("Select", systemImage: "checkmark.square") }.toggleStyle(.button).controlSize(.large)
         }
     }
     private func workspace(_ detail: HubDetail) -> some View {
         HStack(spacing: 0) {
             Group {
-                if layout == "overview" { ProjectDashboard(rows: rows, fields: detail.fields, settings: $scheduleSettings, locked: locked || hub.uncertainWrite, select: select, editDate: editField, complete: complete, manageFields: { manage(isLocal ? .overview : .fields) }, addTask: { compose(.draft) }, openCalendar: { layout = "calendar" }, viewAllTasks: { layout = "table"; sharedViewID = nil; filter = ProjectWorkbenchFilter(); filter.includeArchived = true }) }
+                if layout == "overview" { ProjectDashboard(rows: rows, fields: detail.fields, settings: $scheduleSettings, locked: locked || hub.uncertainWrite, select: select, editDate: editField, complete: complete, manageFields: { manage(isLocal ? .overview : .fields) }, selectedID: selectedID) }
                 else if layout == "calendar" { ProjectCalendar(rows: rows, fields: detail.fields, settings: $scheduleSettings, locked: locked || hub.uncertainWrite, select: select, editDate: editField, complete: complete, reschedule: reschedule, manageFields: { manage(isLocal ? .overview : .fields) }) }
                 else if layout == "table" { ProjectTaskTable(rows: rows, fields: tableFields, selectedID: selectedID, selectedItems: selectedItems, select: select, edit: editField,
                     setField: { row, field, value in await saveField(row, field: field, detail: detail, value: value) }, canEdit: !locked && !hub.uncertainWrite).id(detail.item.id) }
@@ -283,10 +321,11 @@ struct ProjectWorkspace: View {
         let columns = HostingHubAPI.projectColumns(filtered, fieldID: field?.id)
         return GeometryReader { geometry in
             ScrollView([.horizontal, .vertical]) {
-                HStack(alignment: .top, spacing: 14) {
+                HStack(alignment: .top, spacing: 12) {
                     ForEach(Array(columns.enumerated()), id: \.element.id) { index, column in
+                        // The columns share the whole width; below 260 each they keep that and the board scrolls.
                         ProjectBoardColumn(column: column, index: index,
-                            width: max(260, min(420, (geometry.size.width - 44 - CGFloat(max(0, min(columns.count, 3) - 1)) * 14) / CGFloat(max(1, min(columns.count, 3))))),
+                            width: max(260, (geometry.size.width - 40 - CGFloat(max(0, columns.count - 1)) * 12) / CGFloat(max(1, columns.count))),
                             height: 210, localRepository: localRepository,
                             selectedID: selectedID, selectedItems: selectedItems, selectingItems: selectingItems, fields: detail.fields, settings: scheduleSettings, select: select,
                             add: { compose(store.hubProvider == .github ? .draft : .link) },
@@ -301,7 +340,7 @@ struct ProjectWorkspace: View {
                                 }
                             } : nil, canEdit: !locked && !hub.uncertainWrite)
                     }
-                }.padding(22).frame(minWidth: geometry.size.width, minHeight: geometry.size.height, alignment: .topLeading)
+                }.padding(EdgeInsets(top: 4, leading: 20, bottom: 20, trailing: 20)).frame(minWidth: geometry.size.width, minHeight: geometry.size.height, alignment: .topLeading)
             }.accessibilityLabel("Project board")
         }
     }
@@ -355,12 +394,19 @@ struct ProjectWorkspace: View {
         }
     }
     private func footer(_ detail: HubDetail) -> some View {
-        HStack {
-            Text(verbatim: String(localized: "{0} of {1} loaded items").replacingOccurrences(of: "{0}", with: rows.count.formatted()).replacingOccurrences(of: "{1}", with: detail.rows.count.formatted())).font(.caption).foregroundStyle(.secondary)
-            Spacer()
+        HStack(spacing: 12) {
+            Text(verbatim: String(localized: "{0} of {1} loaded items").replacingOccurrences(of: "{0}", with: rows.count.formatted()).replacingOccurrences(of: "{1}", with: detail.rows.count.formatted())).lineLimit(1)
             if detail.more { Button("Load more items") { Task { await store.selectHostingHubItem(detail.item, append: true) } }.controlSize(.small).disabled(locked) }
-            Label(isLocal ? String(localized: "Saved on this device") : String(localized: "Synced with GitHub"), systemImage: isLocal ? "internaldrive" : "checkmark.icloud").font(.caption).foregroundStyle(.secondary).opacity(store.hubProvider == .github ? 1 : 0)
-        }.padding(.horizontal, 24).padding(.vertical, 10).background(Color.secondary.opacity(0.025))
+            Spacer(minLength: 0)
+            if isLocal { Text("Saved on this device").lineLimit(1) }
+            else if let host = store.hubAccount?.host { TimelineView(.periodic(from: .now, by: 30)) { context in Text(verbatim: synced(host, now: context.date)).lineLimit(1) } }
+        }.font(.system(size: 12)).foregroundStyle(StudioStyle.Rail.icon).padding(.horizontal, 20).frame(height: 28).background(StudioStyle.canvas).overlay(alignment: .top) { Divider() }
+    }
+    /// "Synced with github.com 2m ago": the server by name, and how old the page is once that is a minute or more
+    private func synced(_ host: String, now: Date) -> String {
+        guard now.timeIntervalSince(syncedAt) >= 60 else { return String(localized: "Synced with \(host)") }
+        let formatter = RelativeDateTimeFormatter(); formatter.locale = AppLanguage.locale; formatter.unitsStyle = .abbreviated
+        return String(localized: "Synced with \(host) \(formatter.localizedString(for: syncedAt, relativeTo: now))")
     }
     private var loadingState: some View {
         VStack(spacing: 16) { ProgressView(); Text("Loading your project workspace…").font(.callout).foregroundStyle(.secondary) }.frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -497,12 +543,12 @@ struct ProjectWorkspace: View {
             }
         }
     }
-    private func save(expected: String, action: (HubAccess) async throws -> Void) async -> String? {
+    private func save(expected: String, refreshList: Bool = false, action: (HubAccess) async throws -> Void) async -> String? {
         guard expected == store.hubActionStamp, !locked, !hub.uncertainWrite else { return String(localized: "The repository or account changed. Reopen this action.") }
-        let saved = await store.hostingHubAction(expected: expected, action: action)
+        let saved = await store.hostingHubAction(expected: expected, refreshList: refreshList, action: action)
         return saved ? nil : store.hostingHub.error ?? String(localized: "The change could not be saved. Refresh and try again.")
     }
-    private func write(_ title: String.LocalizationValue, message: String, actionTitle: String.LocalizationValue? = nil, destructive: Bool = false, action: @escaping (HubAccess) async throws -> Void) {
+    private func write(_ title: String.LocalizationValue, message: String, actionTitle: String.LocalizationValue? = nil, destructive: Bool = false, refreshList: Bool = false, action: @escaping (HubAccess) async throws -> Void) {
         guard !locked, !hub.uncertainWrite else { return }
         let translated = String(localized: title)
         let label = actionTitle.map { String(localized: $0) } ?? (destructive ? String(localized: "Remove") : String(localized: "Apply changes"))
@@ -511,7 +557,7 @@ struct ProjectWorkspace: View {
             : String(localized: "Review the project and affected items before applying this change.")
         let request = ProjectWorkspaceReview(title: translated, project: detail?.item.title ?? "", summary: summary,
             items: message.components(separatedBy: .newlines).filter { !$0.isEmpty }, actionTitle: label,
-            destructive: destructive, expected: store.hubActionStamp, action: action)
+            destructive: destructive, expected: store.hubActionStamp, refreshList: refreshList, action: action)
         presentAfterInspector {
             guard request.expected == store.hubActionStamp else { return }
             review = request

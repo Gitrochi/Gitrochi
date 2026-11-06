@@ -41,7 +41,7 @@ struct ProjectRoadmap: View {
                     }
                     if dateFields.isEmpty {
                         Label("Add a date field to this project to see real task dates on the roadmap.", systemImage: "calendar.badge.plus")
-                            .font(.callout).foregroundStyle(.secondary).padding(16).frame(maxWidth: 760, alignment: .leading)
+                            .font(.callout).foregroundStyle(.secondary).padding(16).frame(maxWidth: .infinity, alignment: .leading)
                             .background(Color.secondary.opacity(0.035), in: RoundedRectangle(cornerRadius: 12))
                     }
                     if !scheduled.isEmpty {
@@ -52,15 +52,15 @@ struct ProjectRoadmap: View {
                             }
                         } else {
                             timeline(width: max(600, geometry.size.width - 40))
-                            if !undated.isEmpty { undatedList.frame(maxWidth: 760, alignment: .leading) }
+                            if !undated.isEmpty { undatedList.frame(maxWidth: .infinity, alignment: .leading) }
                         }
                     } else {
                         VStack(alignment: .leading, spacing: 7) {
                             Label("Give your work a timeline", systemImage: "calendar").font(.system(size: 14, weight: .semibold))
                             Text("No loaded tasks have dates yet. Select a task to set its date fields.").font(.system(size: 12)).foregroundStyle(.secondary)
-                        }.padding(16).frame(maxWidth: 760, alignment: .leading)
+                        }.padding(16).frame(maxWidth: .infinity, alignment: .leading)
                             .background(Color.accentColor.opacity(0.035), in: RoundedRectangle(cornerRadius: 12))
-                        if !undated.isEmpty { undatedList.frame(maxWidth: 760, alignment: .leading) }
+                        if !undated.isEmpty { undatedList.frame(maxWidth: .infinity, alignment: .leading) }
                     }
                 }.padding(20).frame(maxWidth: .infinity, minHeight: geometry.size.height, alignment: .topLeading)
             }.defaultScrollAnchor(.top)
@@ -105,7 +105,7 @@ struct ProjectRoadmap: View {
                     Button {
                         if let field = resolved.due ?? resolved.start, let editDate { editDate(entry.row, field) }
                         else { select(entry.row) }
-                    } label: { Label("Schedule", systemImage: "calendar.badge.plus").font(.system(size: 11, weight: .medium)) }
+                    } label: { Label("Schedule…", systemImage: "calendar.badge.plus").font(.system(size: 11, weight: .medium)) }
                         .buttonStyle(.borderless).fixedSize().disabled(dateFields.isEmpty).help("Edit task date")
                     Spacer(minLength: 0)
                 }.padding(13).frame(minHeight: 54, alignment: .leading)

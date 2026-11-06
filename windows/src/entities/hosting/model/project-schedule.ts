@@ -34,6 +34,21 @@ export interface ProjectScheduleWorkload extends ProjectScheduleSummary {
   assignee: string;
 }
 export interface ProjectScheduleChange { fieldID: string; value: string }
+/** One chip of the overview. A chip counts open tasks only, and its count is the rows the Schedule list shows for it. */
+export type ProjectScheduleGroup = "overdue" | "today" | "upcoming" | "unscheduled";
+/** Where a task stands, for its status pill and the progress bar. */
+export type ProjectScheduleStage = "todo" | "inProgress" | "done";
+/** The overview's Schedule list and what it leaves to the cards beside it. */
+export interface ProjectScheduleOverview {
+  /** Open tasks a chip counts, by date, with the done tasks of the same days between them */
+  rows: ProjectScheduleEntry[];
+  /** Done tasks the list leaves out until they are asked for */
+  done: ProjectScheduleEntry[];
+  /** Open tasks due after the week the list covers, soonest first */
+  later: ProjectScheduleEntry[];
+  counts: Record<ProjectScheduleGroup, number>;
+}
+export interface ProjectScheduleProgress { done: number; inProgress: number; todo: number; percent: number }
 
 const dayMilliseconds = 86_400_000;
 const defaults: ProjectScheduleSettings = { completedOptionIDs: [] };
@@ -108,6 +123,45 @@ export function scheduleSummary(entries: ProjectScheduleEntry[], today: string):
     if (entry.date === today) result.today++;
     if (entry.date && horizon && entry.date > today && entry.date <= horizon) result.upcoming++;
   }
+  return result;
+}
+/** The chip that counts a task, with the rules of `scheduleSummary`; undefined for a done task and for one no chip counts (due after the week, started without a due date, or with its dates reversed). */
+export function scheduleGroup(entry: ProjectScheduleEntry, today: string): ProjectScheduleGroup | undefined {
+  if (entry.completed) return undefined;
+  if (!entry.date) return "unscheduled";
+  if (!parseScheduleDay(today) || entry.invalidRange) return undefined;
+  if (entry.due && entry.due < today) return "overdue";
+  if (entry.date === today) return "today";
+  const horizon = scheduleAddDays(today, 7);
+  return horizon && entry.date > today && entry.date <= horizon ? "upcoming" : undefined;
+}
+/** The Schedule list keeps the project's order within a day, so the chips always add up to its open rows. */
+export function scheduleOverview(entries: ProjectScheduleEntry[], today: string): ProjectScheduleOverview {
+  const horizon = scheduleAddDays(today, 7);
+  const counts: Record<ProjectScheduleGroup, number> = { overdue: 0, today: 0, upcoming: 0, unscheduled: 0 };
+  const rows: [number, ProjectScheduleEntry][] = [], done: [number, ProjectScheduleEntry][] = [], later: [number, ProjectScheduleEntry][] = [];
+  entries.forEach((entry, index) => {
+    const group = scheduleGroup(entry, today);
+    if (group) { counts[group]++; rows.push([index, entry]); }
+    else if (entry.completed) (entry.date && horizon && entry.date >= today && entry.date <= horizon ? rows : done).push([index, entry]);
+    else if (entry.due && horizon && entry.due > horizon && !entry.invalidRange) later.push([index, entry]);
+  });
+  const ordered = (values: [number, ProjectScheduleEntry][], day: (entry: ProjectScheduleEntry) => string | undefined) =>
+    values.sort(([a, left], [b, right]) => { const x = day(left) ?? "9999-99-99", y = day(right) ?? "9999-99-99"; return x === y ? a - b : x < y ? -1 : 1; }).map(([, entry]) => entry);
+  return { rows: ordered(rows, (entry) => entry.date), done: ordered(done, (entry) => entry.date), later: ordered(later, (entry) => entry.due), counts };
+}
+/** A task that left the first open status is in progress; one without a status field is still to do. */
+export function scheduleStage(entry: ProjectScheduleEntry, status: HubProjectField | undefined, settings: ProjectScheduleSettings = defaults): ProjectScheduleStage {
+  if (entry.completed) return "done";
+  if (!status) return "todo";
+  const current = fieldValue(entry.row, status), first = status.options.find((option) => !settings.completedOptionIDs.includes(option.id));
+  return current === first?.id || !status.options.some((option) => option.id === current) ? "todo" : "inProgress";
+}
+export function scheduleProgress(entries: ProjectScheduleEntry[], status: HubProjectField | undefined, settings: ProjectScheduleSettings = defaults): ProjectScheduleProgress {
+  const result = { done: 0, inProgress: 0, todo: 0, percent: 0 };
+  for (const entry of entries) result[scheduleStage(entry, status, settings)]++;
+  const total = result.done + result.inProgress + result.todo;
+  result.percent = total ? Math.round((result.done / total) * 100) : 0;
   return result;
 }
 /** Shared tasks count once per assignee, so workload totals may exceed the project total. */

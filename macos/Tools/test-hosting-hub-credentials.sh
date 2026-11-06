@@ -147,6 +147,17 @@ actor LocalHubMemory: LocalProjectPersistence {
         await loading.activateHostingHub(.projects)
         precondition(Hosting.requests.count == 1 && loading.hostingHub.items.first?.id == first.username, "Settled credentials did not load the selected account's projects")
 
+        // The Projects scope menu lists every account, so one choice may change the account and the owner together.
+        let scoped = fixture()
+        accounts.set(.ready, for: first); accounts.set(.ready, for: second)
+        await scoped.activateHostingHub(.projects)
+        let scopedReads = Hosting.requests.count
+        await scoped.selectHubProjectScope("organization:fixture-team", account: second.id)
+        precondition(scoped.hubAccount?.id == second.id && scoped.hostingHub.projectScope == "organization:fixture-team" && scoped.hubProjectOwner == "fixture-team", "The scope menu did not change the account and the owner in one step")
+        precondition(Hosting.requests.count == scopedReads + 1 && Hosting.requests.last?.value(forHTTPHeaderField: "X-Fixture-Account") == "fixture-" + second.id, "Another account's projects were not read once with that account's credential")
+        await scoped.selectHubProjectScope("personal", account: "missing")
+        precondition(scoped.hubAccount?.id == second.id && scoped.hostingHub.projectScope == "organization:fixture-team" && Hosting.requests.count == scopedReads + 1, "An account that is not connected changed the scope")
+
         let denied = fixture()
         accounts.set(.authorizationRequired, for: first)
         await denied.activateHostingHub(.projects)
