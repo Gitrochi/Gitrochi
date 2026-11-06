@@ -1029,9 +1029,9 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
     ensure(await until(() => !!button("More release actions") && !button("More release actions")!.disabled), "Release actions missing");
     button("More release actions")!.click();
     // a menu's items are not buttons
-    const menuItem = () => [...host.querySelectorAll<HTMLElement>(".menu-item")].find((item) => item.textContent?.includes(t("Delete…")));
-    ensure(await until(() => !!menuItem()), "Release delete control missing");
-    menuItem()!.click();
+    const deleteItem = () => [...host.querySelectorAll<HTMLElement>(".menu-item")].find((item) => item.textContent?.includes(t("Delete…")));
+    ensure(await until(() => !!deleteItem()), "Release delete control missing");
+    deleteItem()!.click();
     await pause(25);
     const before = writes.length;
     button("Cancel")!.click();
