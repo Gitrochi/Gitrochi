@@ -91,8 +91,30 @@ Each of these has one form. Build it once per platform and reuse it; don't draw 
 
 ![Repository: a selected commit in the graph and its inspector](design/repository-commit.png)
 
+## App shell
+
+On macOS the window, toolbar and sidebar are native: `NavigationSplitView`, a unified toolbar (`.windowToolbarStyle(.unified)`) and a `.listStyle(.sidebar)` source list. The OS owns their height, the capsules it groups toolbar items into, the sidebar selection highlight, `.badge` counts, menus and the overflow (») menu for items that do not fit. Don't redraw those; decide only what goes in them.
+
+- **Repository and branch** are the window title: `navigationTitle` (repository) and `navigationSubtitle` (branch, with `↑2 ↓5`) with `.toolbarTitleMenu`. Ahead/behind counts are against the branch's upstream and live only there.
+- **No page title band.** The selected sidebar item names the page; the toolbar is the only title. The page name still reaches VoiceOver as the content's accessibility label.
+- **Toolbar by page**:
+  - Repository pages (graph, Changes, Agents, and any window with the terminal open): title · Changes N · Fetch, Pull, Push · Branch ▾ · ⋯ · terminal · right panel · account.
+  - Every other page (pull requests, issues, Actions, releases, Flows, Compare, Code, Rebase, Account): title · ⋯ · terminal · account, plus the right-panel toggle only where the page has a right panel (Flows).
+  - No repository open (Home, Projects): title ("Choose a repository") · account. ⋯ and the terminal act on a repository, so they are left out rather than disabled.
+- **Always titled**: Changes N, Fetch, Pull, Push (`.labelStyle(.titleAndIcon)`). Everything else is icon-only and follows the user's toolbar setting, with branch, worktree and stash actions under Branch ▾ and the rest under ⋯.
+- **⋯ is the same menu on every page**: it starts with Fetch ⇧⌘F, Pull ⇧⌘L and Push ⇧⌘P, then `Undo "<last operation>"` ⌥⌘Z, then the rest. Undo has no toolbar button.
+- **One prominent item** (`.borderedProminent`) only for the recommended action: Push when there are only commits to push, Pull when a fast-forward is possible, none when the branch has diverged.
+- **Toggles** (Changes, terminal, right panel) are `Toggle`s so the OS draws their on state; Windows draws it as a neutral `#f0f0f0` fill inside the capsule. A toggle is on only while the thing it shows is visible; the label flips to "Hide …".
+- **Account** is the last item: the 24px profile photo (initials only for an account without one). A small warning badge appears only when the current repository's own account needs attention. It opens one popover: this repository's account with the reason it was chosen and "Change…", the other accounts, Inbox (the Account page), "Add account…" (the same sheet as Settings) and "Manage accounts…" (Settings › Accounts, the only place accounts are removed).
+- **Keep visible in a narrow window**: the title, the titled actions and the account, through `NSToolbarItem.visibilityPriority` (SwiftUI has no API for it). Branch names shorten from the start by whole segments (`…/workspace-search`).
+- **Sheets** are `.sheet`: attached under the toolbar, horizontally centred, without dimming the window. Header: 15px semibold title, one 12px context line, 20 padding, a 1px line below. Footer: secondary actions on the left; on the right Cancel, a reason line when the primary is disabled, then the one filled primary.
+- **Terminal panel** docks under the centre column only; the sidebar and the right panel keep the full window height. The tab bar has no logo. Tab status is a shape in a reserved 12px slot: a ring while a command runs, an accent dot for unseen output or a session waiting for the user, a hollow circle when exited, nothing when idle. When the panel narrows, the commands fold into "Commands ▾", extra tabs move into », and the status line drops the branch, then the shell.
+- **Sidebar**: sections Repository · GitHub · Tools · Settings, icons in `.foregroundStyle(.secondary)` so the accent stays on the selection. The OS selection highlight is the one exception to "selection is a tint"; lists inside pages keep the tint.
+- **Blocked pages** say why in one line under their section; macOS shows no `.help()` on disabled rows. The collapsed icon rail is custom: its blocked icons are drawn dimmed but stay enabled, so their `.help()` reason still shows.
+- **Windows** has no native shell, so it draws the same structure with the frame values below.
+
 ## Frames and spacing
 
-- Repository screens: a 44px toolbar, a 240px sidebar, a 340px inspector (header 44px). List/detail pages: a 312px list column. Blame: a 280px gutter with a 56px age column.
+- Repository screens: no page toolbar under the window toolbar (see App shell), a 240px sidebar, a 340px inspector (header 44px). List/detail pages: a 312px list column. Blame: a 280px gutter with a 56px age column.
 - Spacing steps: 4, 6, 8, 10, 12, 16, 20, 24, 28, 32. Card padding 12 16.
 - Avatars: 24 in conversations, 20 in meta and side cards, 22 as graph nodes, 16 in dense rows.
