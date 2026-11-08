@@ -1,340 +1,160 @@
 import { useState } from "react";
+import { CalendarPlus, TriangleAlert } from "lucide-react";
+import { CircleAlert } from "@/shared/icons";
 import {
-  AlertCircle,
-  ArrowRight,
-  CalendarCheck2,
-  CheckCircle2,
-  Clock3,
-  CalendarDays,
-  Inbox,
-  Plus,
-} from "lucide-react";
-import {
-  scheduleAddDays,
-  scheduleSummary,
+  scheduleGroup,
+  scheduleOverview,
   type HubProjectField,
   type HubProjectRow,
   type ProjectScheduleEntry,
+  type ProjectScheduleGroup,
+  type ProjectScheduleSettings,
 } from "@/entities/hosting";
 import { t } from "@/shared/i18n";
 import { Button } from "@/shared/ui";
-import { ProjectAgendaTask, scheduleDateLabel } from "./ProjectAgendaTask";
+import { ProjectAgendaTask } from "./ProjectAgendaTask";
 import { ProjectScheduleInsights } from "./ProjectScheduleInsights";
 
-type Focus =
-  | "active"
-  | "overdue"
-  | "today"
-  | "upcoming"
-  | "unscheduled"
-  | "completed";
+/** Rows drawn before "Show N more": a project may hold hundreds of undated tasks */
+const pageSize = 50;
+const chips: { id: ProjectScheduleGroup; label: string }[] = [
+  { id: "overdue", label: "Overdue" },
+  { id: "today", label: "Today" },
+  { id: "upcoming", label: "Next 7 days" },
+  { id: "unscheduled", label: "Unscheduled" },
+];
+/**
+ * The project overview, as the redesign's Projects board draws it: chips that count the open tasks, the Schedule list
+ * they add up to, and progress and later deadlines beside it. Everything is derived from the loaded tasks, the
+ * project's own fields and real dates. macOS: ProjectDashboard.
+ */
 export function ProjectOverview({
   entries,
   today,
   selectedID,
   select,
   status,
+  settings,
   complete,
   completionEnabled,
-  localRepository,
-  calendar,
-  viewAll,
-  add,
   manageFields,
-  hasDueField,
-  more,
-  localProject = false,
-  locked = false,
+  hasDateField,
+  person,
+  setPerson,
 }: {
   entries: ProjectScheduleEntry[];
   today: string;
   selectedID: string | null;
   select: (row: HubProjectRow) => void;
   status?: HubProjectField;
+  settings: ProjectScheduleSettings;
   complete: (row: HubProjectRow) => void;
   completionEnabled: boolean;
-  localRepository?: string;
-  calendar: () => void;
-  viewAll: () => void;
-  add: () => void;
   manageFields: () => void;
-  hasDueField: boolean;
-  more: boolean;
-  localProject?: boolean;
-  locked?: boolean;
+  hasDateField: boolean;
+  person?: string;
+  setPerson?: (value: string) => void;
 }) {
-  const [focus, setFocus] = useState<Focus>("active"),
-    [person, setPerson] = useState<string | null>(null),
-    [dayFocus, setDayFocus] = useState<string | null>(null),
-    summary = scheduleSummary(entries, today),
-    nextWeek = scheduleAddDays(today, 7) ?? today;
-  const metrics = [
-    {
-      id: "overdue" as const,
-      label: t("Overdue"),
-      value: summary.overdue,
-      icon: AlertCircle,
-    },
-    {
-      id: "today" as const,
-      label: t("Today"),
-      value: summary.today,
-      icon: CalendarCheck2,
-    },
-    {
-      id: "upcoming" as const,
-      label: t("Next 7 days"),
-      value: summary.upcoming,
-      icon: Clock3,
-    },
-    {
-      id: "unscheduled" as const,
-      label: t("Unscheduled"),
-      value: summary.unscheduled,
-      icon: Inbox,
-    },
-    {
-      id: "completed" as const,
-      label: t("Completed"),
-      value: summary.completed,
-      icon: CheckCircle2,
-    },
-  ];
-  const agenda = entries
-    .filter((entry) => {
-      if (
-        dayFocus &&
-        (entry.completed || entry.invalidRange || entry.due !== dayFocus)
-      )
-        return false;
-      if (
-        person !== null &&
-        (person
-          ? !entry.row.assignees?.some(
-              (name) => name.toLocaleLowerCase() === person.toLocaleLowerCase(),
-            )
-          : entry.row.assignees?.length)
-      )
-        return false;
-      if (focus === "completed") return entry.completed;
-      if (entry.completed) return false;
-      if (focus === "overdue")
-        return !entry.invalidRange && !!entry.due && entry.due < today;
-      if (focus === "today") return !entry.invalidRange && entry.date === today;
-      if (focus === "upcoming")
-        return (
-          !entry.invalidRange &&
-          !!entry.date &&
-          entry.date > today &&
-          entry.date <= nextWeek
-        );
-      if (focus === "unscheduled") return !entry.date;
-      return true;
-    })
-    .sort(
-      (a, b) =>
-        (a.due ?? "9999").localeCompare(b.due ?? "9999") ||
-        a.row.title.localeCompare(b.row.title),
-    );
-  const completedPercent =
-    summary.active + summary.completed
-      ? Math.round(
-          (summary.completed / (summary.active + summary.completed)) * 100,
-        )
-      : 0;
+  // A pressed chip's group, "invalid" for the tasks whose dates need fixing, or null for the whole list.
+  const [focus, setFocus] = useState<ProjectScheduleGroup | "invalid" | null>(null),
+    [showingDone, setShowingDone] = useState(false),
+    [limit, setLimit] = useState(pageSize);
+  const overview = scheduleOverview(entries, today),
+    invalid = entries.filter((entry) => entry.invalidDate || entry.invalidRange);
+  const listed =
+    focus === "invalid"
+      ? invalid
+      : focus
+        ? overview.rows.filter((entry) => scheduleGroup(entry, today) === focus)
+        : [...overview.rows, ...(showingDone ? overview.done : [])];
+  const choose = (value: typeof focus) => {
+    setFocus(focus === value ? null : value);
+    setLimit(pageSize);
+  };
   return (
     <section className="project-overview" aria-label={t("Schedule overview")}>
-      <div className="project-overview-heading">
-        <div>
-          <span className="project-eyebrow">{t("Plan with clarity")}</span>
-          <h2>{t("Make the next move count")}</h2>
-          <p>
-            {t(
-              "See what needs attention, balance the upcoming work, and move straight into code.",
-            )}
-          </p>
-        </div>
-        <div className="project-overview-actions">
-        <Button size="small" onClick={viewAll}>{t("View all tasks")}<ArrowRight size={13} /></Button>
-        <Button size="small" kind="primary" disabled={locked} onClick={add}><Plus size={14} />{t("New task")}</Button>
-        <Button size="small" onClick={calendar}>
-          <CalendarDays size={14} />
-          {t("Open calendar")}
-          <ArrowRight size={13} />
-        </Button>
-        </div>
-      </div>
-      <div className="project-schedule-metrics">
-        {metrics.map((metric) => (
-          <button
-            key={metric.id}
-            className={`${focus === metric.id ? "active" : ""} ${metric.id}`}
-            onClick={() => {
-              setFocus(focus === metric.id ? "active" : metric.id);
-              setPerson(null);
-              setDayFocus(null);
-            }}
-            aria-pressed={focus === metric.id}
-          >
-            <span>
-              <metric.icon size={15} />
-              {metric.label}
-            </span>
-            <strong>{metric.value}</strong>
-            <small>
-              {metric.id === "upcoming"
-                ? t("After today")
-                : metric.id === "completed"
-                  ? t("{0}% of loaded work", completedPercent)
-                  : t("Loaded items")}
-            </small>
-          </button>
-        ))}
-      </div>
-      {summary.invalid > 0 && (
-        <div className="project-schedule-warning" role="status">
-          <AlertCircle size={15} />
-          {t(
-            "{0} tasks have invalid dates or reversed ranges. Review their date fields before rescheduling.",
-            summary.invalid,
-          )}
-        </div>
-      )}
-      {!hasDueField && (
-        <div className="project-schedule-empty-field">
-          <CalendarDays size={24} />
-          <div>
-            <strong>{t("Give every task a clear deadline")}</strong>
-            <p>
-              {t(
-                "Choose a due date field in Schedule setup, or add a date field to this project.",
-              )}
-            </p>
-          </div>
-          <Button size="small" onClick={manageFields}>
-            {t("Manage date fields")}
-            <ArrowRight size={13} />
-          </Button>
-        </div>
-      )}
-      <div className="project-overview-grid">
-        <div className="project-agenda project-schedule-panel">
-          <header>
-            <div>
-              <h3>{t("Your agenda")}</h3>
-              <p>
-                {dayFocus
-                  ? t("Due on {0}", scheduleDateLabel(dayFocus))
-                  : person === null
-                    ? t("Tasks ordered by due date")
-                    : person
-                      ? t("Assigned to @{0}", person)
-                      : t("Unassigned work")}
-              </p>
-            </div>
-            <span className="project-count">{agenda.length}</span>
-          </header>
-          <div
-            className="project-agenda-tabs"
-            role="group"
-            aria-label={t("Agenda focus")}
-          >
+      <div className="project-stats" role="group" aria-label={t("Task counts")}>
+        {/* An empty Unscheduled chip would only be noise. */}
+        {chips.filter((chip) => chip.id !== "unscheduled" || overview.counts.unscheduled > 0 || focus === "unscheduled").map((chip) => {
+          const count = overview.counts[chip.id], alert = chip.id === "overdue" && count > 0;
+          return (
             <button
-              className={focus === "active" ? "active" : ""}
-              onClick={() => {
-                setFocus("active");
-                setDayFocus(null);
-              }}
+              type="button"
+              key={chip.id}
+              className={`project-stat ${focus === chip.id ? "on" : ""} ${alert ? "alert status-tone" : ""} ${count ? "" : "zero"}`}
+              data-tone={alert ? "failed" : undefined}
+              aria-pressed={focus === chip.id}
+              onClick={() => choose(chip.id)}
             >
-              {t("All active")}
+              {alert && <CircleAlert size={12} />}
+              <span className="project-stat-n">{count}</span>
+              <span className="project-stat-l">{t(chip.label)}</span>
             </button>
-            {metrics.map((metric) => (
-              <button
-                key={metric.id}
-                className={focus === metric.id ? "active" : ""}
-                onClick={() => {
-                  setFocus(metric.id);
-                  setDayFocus(null);
-                }}
-              >
-                {metric.label}
-              </button>
-            ))}
-            {(person !== null || dayFocus) && (
-              <button
-                onClick={() => {
-                  setPerson(null);
-                  setDayFocus(null);
-                }}
-              >
-                {t("Clear focus filter")}
-              </button>
-            )}
-          </div>
-          <div className="project-agenda-list">
-            {agenda.slice(0, 30).map((entry) => (
+          );
+        })}
+      </div>
+      {!hasDateField && (
+        <div className="project-strip" role="status">
+          <CalendarPlus size={14} />
+          <span>
+            <strong>{t("Give every task a clear deadline")}</strong>
+            <small>{t("Choose a due date field in Schedule setup, or add a date field to this project.")}</small>
+          </span>
+          <Button onClick={manageFields}>{t("Manage date fields")}</Button>
+        </div>
+      )}
+      {invalid.length > 0 && (
+        <div className="project-strip warning status-tone" data-tone="waiting" role="status">
+          <TriangleAlert size={14} />
+          <span>
+            <strong>{t("{0} tasks have invalid dates or reversed ranges. Review their date fields before rescheduling.", invalid.length)}</strong>
+          </span>
+          <Button onClick={() => choose("invalid")}>{t(focus === "invalid" ? "View all tasks" : "Date issues")}</Button>
+        </div>
+      )}
+      <div className="project-overview-columns">
+        <section className="project-schedule-list" aria-label={t("Schedule")}>
+          <div className="project-schedule-head"><span className="project-panel-title">{t("Schedule")}</span></div>
+          <div role="list" aria-label={t("Schedule")}>
+            {listed.slice(0, limit).map((entry) => (
               <ProjectAgendaTask
                 key={entry.row.id}
                 entry={entry}
                 today={today}
                 status={status}
+                settings={settings}
                 selected={entry.row.id === selectedID}
                 select={() => select(entry.row)}
                 complete={() => complete(entry.row)}
                 completionEnabled={completionEnabled}
-                localRepository={localRepository}
               />
             ))}
-            {!agenda.length && (
-              <div className="project-canvas-empty">
-                <CheckCircle2 size={28} />
-                <strong>
-                  {focus === "overdue"
-                    ? t("Nothing overdue")
-                    : t("No tasks in this focus")}
-                </strong>
-                <span>{t("Choose another focus or add your next task.")}</span>
-                <Button size="small" kind="primary" disabled={locked} onClick={add}>
-                  <Plus size={13} />{t("New task")}
-                </Button>
-              </div>
-            )}
-            {agenda.length > 30 && (
-              <p className="project-schedule-footnote">
-                {t(
-                  "Showing the first {0} tasks. Use filters to narrow the agenda.",
-                  30,
-                )}
-              </p>
-            )}
           </div>
-        </div>
+          {!listed.length && <div className="project-schedule-foot project-schedule-empty">{t(entries.length ? "No open tasks in this view" : "No tasks yet")}</div>}
+          {listed.length > limit && (
+            <div className="project-schedule-foot">
+              <button type="button" className="project-text-button" onClick={() => setLimit(listed.length)}>{t("Show {0} more", listed.length - limit)}</button>
+            </div>
+          )}
+          {!focus && overview.done.length > 0 && (
+            <div className="project-schedule-foot">
+              <button type="button" className="project-text-button" aria-expanded={showingDone} onClick={() => setShowingDone(!showingDone)}>
+                {showingDone ? t("Hide done tasks") : t("Show {0} more done tasks", overview.done.length)}
+              </button>
+            </div>
+          )}
+        </section>
         <ProjectScheduleInsights
           entries={entries}
+          later={overview.later}
           today={today}
+          status={status}
+          settings={settings}
           person={person}
-          setPerson={(value) => {
-            setPerson(value);
-            setDayFocus(null);
-            setFocus("active");
-          }}
-          selectDay={(value) => {
-            setDayFocus(value);
-            setFocus("active");
-            setPerson(null);
-          }}
-          calendar={calendar}
+          setPerson={setPerson}
+          select={select}
         />
       </div>
-      <p className="project-schedule-footnote">
-        {more
-          ? t("More items are available. Metrics cover loaded pages.")
-          : t(
-              localProject
-                ? "Local tasks are saved on this device. Add dates and priorities to turn ideas into a plan."
-                : "Schedule metrics use active, loaded project items and the selected date fields.",
-            )}
-      </p>
     </section>
   );
 }

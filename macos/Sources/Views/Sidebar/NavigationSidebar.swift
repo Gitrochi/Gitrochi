@@ -28,7 +28,7 @@ struct NavigationSidebar: View {
                 Divider()
                 SettingsLink {
                     HStack(spacing: 8) {
-                        Label { Text("Settings") } icon: { Image(systemName: "gearshape").foregroundStyle(.secondary) }
+                        Label { Text("Settings") } icon: { DesignIconImage(icon: .settings, size: 16).foregroundStyle(.secondary) }
                         Spacer(minLength: 8)
                         if commandHeld || hovered == nil && settingsHovered { Text(verbatim: "⌘,").foregroundStyle(.primary.opacity(0.6)) }
                     }
@@ -75,7 +75,7 @@ struct NavigationSidebar: View {
                 Label {
                     Text(title).foregroundStyle(blocked ? .tertiary : .primary)
                 } icon: {
-                    Image(systemName: page.symbol).foregroundStyle(blocked ? .quaternary : .secondary)
+                    NavigationPageIcon(page: page, size: 16).foregroundStyle(blocked ? .quaternary : .secondary)
                 }
                 Spacer(minLength: 8)
                 if let shortcut = page.shortcutLabel, commandHeld || hovered == page {
@@ -97,5 +97,35 @@ struct NavigationSidebar: View {
         .accessibilityLabel(title)
         .accessibilityValue(active ? String(localized: "Current page") : "")
         .accessibilityAddTraits(active ? .isSelected : [])
+    }
+}
+
+extension WorkspaceDestination {
+    var designIcon: DesignIcon {
+        switch self {
+        case .account: return .account
+        case .home: return .home
+        case .repository: return .repository
+        case .compare: return .compare
+        case .rebase: return .rebase
+        case .code: return .code
+        case .pullRequests: return .pullRequests
+        case .issues: return .issues
+        case .actions: return .actions
+        case .releases: return .releases
+        case .projects: return .projects
+        case .flows: return .flows
+        case .ledger: return .ledger
+        }
+    }
+}
+
+/// A page's icon in the rail and the sidebar
+struct NavigationPageIcon: View {
+    let page: WorkspaceDestination
+    var size: CGFloat = 16
+
+    var body: some View {
+        DesignIconImage(icon: page.designIcon, size: size)
     }
 }

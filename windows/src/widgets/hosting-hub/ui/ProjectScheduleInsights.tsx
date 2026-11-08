@@ -1,155 +1,103 @@
-import { ArrowRight, CalendarDays, Users } from "lucide-react";
+import { Flag } from "lucide-react";
+import { CircleAlert, UserRound } from "@/shared/icons";
 import {
-  scheduleWeekDays,
+  scheduleProgress,
   scheduleWorkload,
+  type HubProjectField,
+  type HubProjectRow,
   type ProjectScheduleEntry,
+  type ProjectScheduleSettings,
 } from "@/entities/hosting";
 import { t } from "@/shared/i18n";
+import { Avatar, StatusPill } from "@/shared/ui";
 import { scheduleDateLabel } from "./ProjectAgendaTask";
+/**
+ * The cards beside the Schedule list, as the redesign's Projects board draws them: progress and the deadlines after
+ * the week the list covers. The board draws no workload; it stays as a third card because nothing there replaces it.
+ * macOS: ProjectDashboard's side cards.
+ */
 export function ProjectScheduleInsights({
   entries,
+  later,
   today,
+  status,
+  settings,
   person,
   setPerson,
-  selectDay,
-  calendar,
+  select,
 }: {
   entries: ProjectScheduleEntry[];
+  /** Open tasks due after the week the list covers, soonest first */
+  later: ProjectScheduleEntry[];
   today: string;
-  person: string | null;
-  setPerson: (value: string | null) => void;
-  selectDay: (day: string) => void;
-  calendar: () => void;
+  status?: HubProjectField;
+  settings: ProjectScheduleSettings;
+  /** The assignee the workspace is filtered to, if any */
+  person?: string;
+  setPerson?: (value: string) => void;
+  select: (row: HubProjectRow) => void;
 }) {
-  const week = scheduleWeekDays(today),
-    workload = scheduleWorkload(entries, today),
-    summaryActive = entries.filter((entry) => !entry.completed).length;
-  const deadlineCounts = week.map(
-      (day) =>
-        entries.filter(
-          (entry) =>
-            !entry.completed && !entry.invalidRange && entry.due === day,
-        ).length,
-    ),
-    maxDeadlines = Math.max(1, ...deadlineCounts),
-    maxLoad = Math.max(1, ...workload.map((value) => value.active));
+  const progress = scheduleProgress(entries, status, settings),
+    parts = [
+      { id: "done", tone: "passed", label: t("Done"), count: progress.done },
+      { id: "progress", tone: "info", label: t("In progress"), count: progress.inProgress },
+      { id: "todo", tone: "neutral", label: t("To do"), count: progress.todo },
+    ],
+    workload = scheduleWorkload(entries, today)
+      .filter((value) => value.active > 0)
+      .sort((a, b) => b.active - a.active || a.assignee.localeCompare(b.assignee));
   return (
-    <aside className="project-planning-sidebar">
-      <div className="project-schedule-panel project-deadlines">
-        <header>
-          <div>
-            <h3>{t("Deadlines this week")}</h3>
-            <p>{t("Active tasks by due date")}</p>
-          </div>
-          <CalendarDays size={16} />
-        </header>
-        <div className="project-deadline-bars">
-          {week.map((day, index) => (
-            <button
-              key={day}
-              className={day === today ? "today" : ""}
-              onClick={() => {
-                selectDay(day);
-              }}
-              title={`${scheduleDateLabel(day)}: ${deadlineCounts[index]}`}
-            >
-              <b>{deadlineCounts[index]}</b>
-              <span className="project-deadline-track">
-                <i
-                  style={{
-                    height: `${deadlineCounts[index] ? Math.max(8, (deadlineCounts[index] / maxDeadlines) * 100) : 0}%`,
-                  }}
-                />
-              </span>
-              <time dateTime={day}>
-                {scheduleDateLabel(day, {
-                  weekday: "short",
-                  month: undefined,
-                  day: undefined,
-                })}
-              </time>
-            </button>
+    <aside className="project-overview-side">
+      <section className="project-side-card" aria-label={t("Progress")}>
+        <span className="project-panel-title">{t("Progress")}</span>
+        <strong className="project-progress-value">{t("{0}% done", progress.percent)}</strong>
+        <div className="project-progress-bar" role="img" aria-label={parts.map((part) => `${part.label} ${part.count}`).join(", ")}>
+          {parts.filter((part) => part.count > 0).map((part) => (
+            <span key={part.id} className={`status-tone ${part.id}`} data-tone={part.tone} style={{ flex: `${part.count} 1 0` }} />
           ))}
         </div>
-        <button className="project-schedule-text-link" onClick={calendar}>
-          {t("Plan on the calendar")}
-          <ArrowRight size={12} />
-        </button>
-      </div>
-      <div className="project-schedule-panel project-workload">
-        <header>
-          <div>
-            <h3>{t("Team workload")}</h3>
-            <p>{t("Active task counts by assignee")}</p>
-          </div>
-          <Users size={16} />
-        </header>
-        {workload
-          .filter((value) => value.active > 0)
-          .map((value) => (
-            <button
-              className={`project-workload-person ${person === value.assignee ? "selected" : ""}`}
-              key={value.assignee || "__unassigned"}
-              onClick={() => {
-                setPerson(person === value.assignee ? null : value.assignee);
-              }}
-            >
-              <span className="project-workload-name">
-                <span className="project-avatar">
-                  {value.assignee
-                    ? value.assignee.slice(0, 1).toUpperCase()
-                    : "?"}
-                </span>
-                <strong>
-                  {value.assignee ? `@${value.assignee}` : t("Unassigned")}
-                </strong>
-                <b>{value.active}</b>
-              </span>
-              <span className="project-workload-track">
-                <i
-                  className="overdue"
-                  style={{ width: `${(value.overdue / maxLoad) * 100}%` }}
-                />
-                <i
-                  className="due"
-                  style={{
-                    width: `${((value.today + value.upcoming) / maxLoad) * 100}%`,
-                  }}
-                />
-                <i
-                  className="other"
-                  style={{
-                    width: `${(Math.max(0, value.active - value.overdue - value.today - value.upcoming) / maxLoad) * 100}%`,
-                  }}
-                />
-              </span>
-            </button>
+        <div className="project-progress-legend" aria-hidden>
+          {parts.map((part) => (
+            <span key={part.id}><i className={`status-tone ${part.id}`} data-tone={part.tone} />{part.label} {part.count}</span>
           ))}
-        {!summaryActive && (
-          <p className="project-schedule-footnote">
-            {t("No active work in loaded items.")}
-          </p>
+        </div>
+        {status && !settings.completedOptionIDs.length && (
+          <span className="project-side-note">{t("Choose a completion status in Schedule setup.")}</span>
         )}
-        <div className="project-workload-legend">
-          <span>
-            <i className="overdue" />
-            {t("Overdue")}
-          </span>
-          <span>
-            <i className="due" />
-            {t("Due within 7 days")}
-          </span>
-          <span>
-            <i className="other" />
-            {t("Other active")}
-          </span>
-        </div>
-        <p className="project-schedule-footnote">
-          {t(
-            "Shared tasks count once for each assignee. Counts do not estimate effort or capacity.",
-          )}
-        </p>
-      </div>
+      </section>
+      <section className="project-side-card" aria-label={t("Upcoming deadlines")}>
+        <span className="project-panel-title">{t("Upcoming deadlines")}</span>
+        {later.slice(0, 5).map((entry) => (
+          <button type="button" className="project-deadline" key={entry.row.id} onClick={() => select(entry.row)}>
+            <Flag size={13} />
+            <span>{entry.row.title}</span>
+            {entry.due && <time dateTime={entry.due}>{scheduleDateLabel(entry.due)}</time>}
+          </button>
+        ))}
+        {!later.length && <span className="project-side-note">{t("Nothing is due after the next 7 days.")}</span>}
+      </section>
+      {workload.length > 0 && (
+        <section className="project-side-card" aria-label={t("Team workload")}>
+          <span className="project-panel-title">{t("Team workload")}</span>
+          {workload.slice(0, 6).map((value) => {
+            const content = <>
+              {value.assignee ? <Avatar name={value.assignee} email={value.assignee} size={20} /> : <UserRound size={16} />}
+              <span>{value.assignee ? `@${value.assignee}` : t("Unassigned")}</span>
+              {value.overdue > 0 && <StatusPill tone="failed" icon={<CircleAlert />}>{t("Overdue")} {value.overdue}</StatusPill>}
+              <b>{value.active}</b>
+            </>;
+            // A person narrows the whole workspace through its assignee filter; "nobody" is not a filter it has.
+            return value.assignee && setPerson ? (
+              <button type="button" className={`project-workload-row ${person?.toLowerCase() === value.assignee.toLowerCase() ? "on" : ""}`} key={value.assignee}
+                aria-pressed={person?.toLowerCase() === value.assignee.toLowerCase()} onClick={() => setPerson(person?.toLowerCase() === value.assignee.toLowerCase() ? "" : value.assignee)}>
+                {content}
+              </button>
+            ) : (
+              <div className="project-workload-row" key={value.assignee || "__unassigned"}>{content}</div>
+            );
+          })}
+        </section>
+      )}
     </aside>
   );
 }

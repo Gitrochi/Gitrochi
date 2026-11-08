@@ -1,11 +1,6 @@
 import { useEffect, useState } from "react";
-import {
-  CircleAlert,
-  RefreshCw,
-  Search,
-  Sun,
-  Users,
-} from "lucide-react";
+import { Sun, Users } from "lucide-react";
+import { CircleAlert, RefreshCw, Search } from "@/shared/icons";
 import { accountApiBase, accountHost } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
 import {

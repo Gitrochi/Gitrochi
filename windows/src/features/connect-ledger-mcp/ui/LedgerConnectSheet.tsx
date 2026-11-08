@@ -1,4 +1,4 @@
-import { Copy } from "lucide-react";
+import { Copy } from "@/shared/icons";
 import { useState } from "react";
 import type { LedgerInfo, LedgerStore } from "@/entities/ledger";
 import { env, isWindows, joinPath } from "@/shared/config";

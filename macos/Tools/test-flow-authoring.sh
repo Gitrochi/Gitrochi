@@ -270,7 +270,7 @@ swiftc -parse-as-library -swift-version 5 -module-cache-path "$FIXTURE/modules" 
     "$REPO_ROOT/macos/Sources/Core/RepositoryCodeReading.swift" \
     "$REPO_ROOT/macos/Sources/Core/RepositoryCodeNavigation.swift" \
     "$REPO_ROOT/macos/Sources/Core/RepositoryCodeEditing.swift" \
-    "$REPO_ROOT/macos/Sources/Views/Workbench/RepositorySourceView.swift" \
+    "$REPO_ROOT/macos/Sources/Views/Shared/DesignIcon.swift" "$REPO_ROOT/macos/Sources/Views/Shared/DesignSymbols.swift" "$REPO_ROOT/macos/Sources/Views/Workbench/RepositorySourceView.swift" \
     "$REPO_ROOT/macos/Sources/Views/Workbench/RepositoryCodeReader.swift" \
     "$REPO_ROOT/macos/Sources/Views/Workbench/AdaptiveWorkbenchLayout.swift" \
     "$FIXTURE/EditorUndo.swift" -o "$FIXTURE/test-editor-undo"

@@ -64,12 +64,12 @@ struct FlowCodeAuthoringView: View {
 
     private var fileControls: some View {
         HStack(spacing: 9) {
-            Button { request(FileTarget(path: nil)) } label: { Label("Flow definition", systemImage: "point.3.connected.trianglepath.dotted") }
+            Button { request(FileTarget(path: nil)) } label: { Label("Flow definition", symbol: "point.3.connected.trianglepath.dotted") }
                 .disabled(!related.active)
             Menu {
                 if references.isEmpty { Text("No literal file references found") }
                 ForEach(references, id: \.self) { path in Button(path) { request(FileTarget(path: path)) } }
-            } label: { Label("Related files", systemImage: "doc.on.doc") }
+            } label: { Label("Related files", symbol: "doc.on.doc") }
             .menuStyle(.borderlessButton).fixedSize()
             Divider().frame(height: 18)
             TextField("Repository-relative path", text: $pathInput).textFieldStyle(.roundedBorder).frame(minWidth: 150, maxWidth: .infinity)
@@ -82,7 +82,7 @@ struct FlowCodeAuthoringView: View {
 
     private var sourceHeader: some View {
         HStack(spacing: 9) {
-            Image(systemName: "doc.text").foregroundStyle(.secondary)
+            DesignIconImage(icon: .file).foregroundStyle(.secondary)
             Text(currentPath).font(.system(size: 11, design: .monospaced)).lineLimit(1).truncationMode(.middle)
             Spacer()
             if related.active {
@@ -96,7 +96,7 @@ struct FlowCodeAuthoringView: View {
                 Menu {
                     Button("Module from catalogue…") { templates = true }
                     Button("Fork and join example") { design.addForkJoin(); applyTemplate() }
-                } label: { Label("Insert template", systemImage: "plus.square") }
+                } label: { Label("Insert template", symbol: "plus.square") }
                 .menuStyle(.borderlessButton).fixedSize().disabled(!design.sourcePreviewCurrent || busy || design.selectedFlow.isEmpty)
             }
         }.controlSize(.small).padding(.horizontal, 12).frame(height: 42)
@@ -106,7 +106,7 @@ struct FlowCodeAuthoringView: View {
     private var preview: some View {
         VStack(spacing: 0) {
             HStack(spacing: 8) {
-                Label("Source preview", systemImage: "point.3.connected.trianglepath.dotted").font(.caption.weight(.medium))
+                Label("Source preview", symbol: "point.3.connected.trianglepath.dotted").font(.caption.weight(.medium))
                 Spacer()
                 Picker("Flow", selection: $design.selectedFlow) {
                     ForEach(design.flowNames, id: \.self) { Text($0).tag($0) }
@@ -119,7 +119,7 @@ struct FlowCodeAuthoringView: View {
             } else {
                 VStack(spacing: 10) {
                     if design.previewing { ProgressView().controlSize(.small); Text("Updating source preview…") }
-                    else { Image(systemName: "exclamationmark.triangle").font(.title2); Text("Preview is out of date").font(.headline); Text("Fix the source errors to update the diagram.") }
+                    else { SymbolIcon("exclamationmark.triangle").font(.title2); Text("Preview is out of date").font(.headline); Text("Fix the source errors to update the diagram.") }
                 }.font(.callout).foregroundStyle(.secondary).padding(20).frame(maxWidth: .infinity, maxHeight: .infinity)
                     .accessibilityIdentifier("flow-preview-stale")
             }

@@ -60,14 +60,14 @@ struct LedgerGraphView: View {
             }
             if content > visible {
                 HStack(spacing: 4) {
-                    Image(systemName: "arrow.left.and.right").foregroundStyle(.secondary).accessibilityHidden(true)
+                    SymbolIcon("arrow.left.and.right").foregroundStyle(.secondary).accessibilityHidden(true)
                     Slider(value: Binding(get: { Double(offset) }, set: { laneOffset = CGFloat($0) }), in: 0...Double(content - visible))
                         .controlSize(.mini).frame(width: 110)
                         .accessibilityLabel("Scroll the lanes")
                 }
                 .help("More lanes than fit: scroll them sideways")
             }
-            Button { showLegend.toggle() } label: { Image(systemName: "info.circle") }
+            Button { showLegend.toggle() } label: { SymbolIcon("info.circle") }
                 .buttonStyle(.borderless)
                 .help("What the shapes mean")
                 .accessibilityLabel("Legend")
@@ -234,7 +234,7 @@ private struct LedgerGraphLabel: View {
     var body: some View {
         HStack(spacing: 8) {
             if node.lane == 0 {
-                Label(node.version ?? node.label ?? "", systemImage: "tag")
+                Label(node.version ?? node.label ?? "", symbol: "tag")
                     .font(.system(size: 12, weight: .semibold)).lineLimit(1)
                 if node.kind == .release, let by = node.sessionId {
                     Text("released by \(by)").font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
@@ -264,7 +264,7 @@ private struct LedgerGraphCard: View {
         VStack(alignment: .leading, spacing: 6) {
             if node.lane == 0 {
                 let baseline = baselines.first { $0.version == node.version }
-                Label(node.version ?? "", systemImage: "tag").font(.callout.weight(.semibold))
+                Label(node.version ?? "", symbol: "tag").font(.callout.weight(.semibold))
                 if let baseline { Text(baseline.source.title + (baseline.note.map { " · " + $0 } ?? "")).font(.system(size: 11)).foregroundStyle(.secondary) }
             } else if let session {
                 HStack(spacing: 6) {

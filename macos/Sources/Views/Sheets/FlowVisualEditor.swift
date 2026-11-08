@@ -18,14 +18,14 @@ struct FlowVisualEditor: View {
                 Picker("Flow", selection: $design.selectedFlow) {
                     ForEach(design.flowNames, id: \.self) { Text($0).tag($0) }
                 }.labelsHidden().frame(maxWidth: 220)
-                Button { addFlow = true } label: { Label("Add flow", systemImage: "plus") }
+                Button { addFlow = true } label: { Label("Add flow", symbol: "plus") }
                 Spacer()
-                Button { addModule = true } label: { Label("Add module", systemImage: "square.stack.3d.up.badge.plus") }
+                Button { addModule = true } label: { Label("Add module", symbol: "square.stack.3d.up.badge.plus") }
                     .disabled(design.selectedFlow.isEmpty)
             }.controlSize(.small).padding(12)
             Divider()
             if design.flowNames.isEmpty {
-                ContentUnavailableView("Add a flow", systemImage: "point.3.connected.trianglepath.dotted", description: Text("Create a flow, then add modules and connect their dependencies."))
+                ContentUnavailableView("Add a flow", symbol: "point.3.connected.trianglepath.dotted", description: Text("Create a flow, then add modules and connect their dependencies."))
             } else {
                 FlowSplitView(initialFraction: 0.6, minimumLeading: 380, minimumTrailing: 300) {
                     FlowGraphView(nodes: design.graphNodes, selected: $design.selectedNode, initialFit: true).id(design.selectedFlow)
@@ -59,14 +59,14 @@ struct FlowVisualEditor: View {
                     let block = design.selectedBlock
                     HStack(spacing: 10) {
                         let style = FlowBlockStyle.look(block?.id ?? design.blockID(design.selected))
-                        Image(systemName: style.icon).foregroundStyle(style.color).frame(width: 34, height: 34)
+                        SymbolIcon(style.icon).foregroundStyle(style.color).frame(width: 34, height: 34)
                             .background(style.color.opacity(0.1), in: RoundedRectangle(cornerRadius: 9))
                         VStack(alignment: .leading, spacing: 3) {
                             Text(id).font(.headline).textSelection(.enabled)
                             Text(block?.title ?? design.blockID(design.selected)).font(.caption).foregroundStyle(.secondary)
                         }
                         Spacer()
-                        Button { removeModule = true } label: { Image(systemName: "trash") }
+                        Button { removeModule = true } label: { DesignIconImage(icon: .trash) }
                             .buttonStyle(.borderless).help("Remove module")
                     }
                     if let block { FlowModuleEffects(block: block) }
@@ -124,7 +124,7 @@ struct FlowVisualEditor: View {
 
     private var dependencies: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Label("Dependencies", systemImage: "arrow.triangle.branch").font(.subheadline.weight(.semibold))
+            Label("Dependencies", symbol: "arrow.triangle.branch").font(.subheadline.weight(.semibold))
             ForEach(design.nodeIDs.filter { $0 != design.selectedNode }, id: \.self) { id in
                 let enabled = design.canonical(design.selected)["needs"].dependencyIDs.contains(id)
                 Toggle(id, isOn: Binding(get: { enabled }, set: { design.toggleDependency(id, enabled: $0) }))
@@ -157,9 +157,9 @@ struct FlowModuleEffects: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 7) {
             Text("Effects").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
-            if block.outward { Label("Acts outside this computer", systemImage: "arrow.up.forward.app").foregroundStyle(.orange) }
-            if block.destructive { Label("Review before running; changes may be hard to undo.", systemImage: "exclamationmark.triangle").foregroundStyle(.orange) }
-            ForEach(block.capabilities, id: \.self) { capability in Label(capabilityTitle(capability), systemImage: "circle.dotted").foregroundStyle(.secondary) }
+            if block.outward { Label("Acts outside this computer", symbol: "arrow.up.forward.app").foregroundStyle(.orange) }
+            if block.destructive { Label("Review before running; changes may be hard to undo.", symbol: "exclamationmark.triangle").foregroundStyle(.orange) }
+            ForEach(block.capabilities, id: \.self) { capability in Label(capabilityTitle(capability), symbol: "circle.dotted").foregroundStyle(.secondary) }
             if let outputs = block.outputs, outputs != .null { Text(outputs.jsonText).font(.system(size: 10, design: .monospaced)).textSelection(.enabled) }
             Text("Results, outputs and errors appear in the run details.").foregroundStyle(.secondary)
         }

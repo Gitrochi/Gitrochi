@@ -23,7 +23,7 @@ struct NavigationSidebarRail: View {
                 .padding(.vertical, 8)
             }
             SettingsLink {
-                Image(systemName: "gearshape").font(.system(size: 17))
+                DesignIconImage(icon: .settings, size: 18)
                     .frame(width: 36, height: 32)
                     .foregroundStyle(StudioStyle.Rail.settings)
                     .contentShape(RoundedRectangle(cornerRadius: 8))
@@ -52,7 +52,7 @@ struct NavigationSidebarRail: View {
             let blocked = store.url == nil && page.needsRepository
             let title = page.title(gitlab: store.target?.provider == .gitlab)
             Button { store.navigate(page) } label: {
-                Image(systemName: page.symbol).font(.system(size: 17))
+                NavigationPageIcon(page: page, size: 18)
                     .frame(width: 36, height: 32)
                     .foregroundStyle(blocked ? StudioStyle.Rail.blocked : StudioStyle.Rail.icon)
                     .background(active ? StudioStyle.Rail.selected : hovered == page ? StudioStyle.Rail.hover : Color.clear,

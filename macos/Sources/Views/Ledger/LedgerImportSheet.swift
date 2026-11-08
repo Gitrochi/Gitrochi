@@ -67,7 +67,7 @@ struct LedgerImportSheet: View {
                 VStack(alignment: .leading, spacing: 4) {
                     ForEach(results) { block in
                         HStack(alignment: .firstTextBaseline, spacing: 8) {
-                            Image(systemName: block.duplicate ? "equal.circle" : block.ok ? "checkmark.circle.fill" : "xmark.octagon.fill")
+                            SymbolIcon(block.duplicate ? "equal.circle" : block.ok ? "checkmark.circle.fill" : "xmark.octagon.fill")
                                 .foregroundStyle(block.duplicate ? .secondary : block.ok ? StudioStyle.Tone.passed.text : StudioStyle.Tone.failed.text)
                                 .accessibilityHidden(true)
                             Text("Block \(block.index + 1)").font(.system(size: 11, weight: .semibold)).monospacedDigit()

@@ -4,12 +4,14 @@ import Observation
 import Vision
 
 typealias ViewState<Value> = SwiftUI.State<Value>
-enum FixtureCredentialState { case ready, loading }
-struct CredentialAccessNotice: View { let account: HostAccount; var body: some View { EmptyView() } }
+enum FixtureCredentialState { case ready, loading, authorizationRequired }
+struct HostedAccountNeeded: View { let target: RepoTarget; let restored: () -> Void; var body: some View { Text(verbatim: "Connect an account") } }
 struct GitResult { let status: Int32; let output: String }
 enum Git {
     static func run(_ args: [String], in directory: URL, ok: Set<Int32>) async throws -> GitResult {
         precondition(args.first == "rev-list")
+        // the prerelease is off this branch, so the timeline draws it on a fork of its own
+        if args.contains(where: { $0.contains("beta") }) { return GitResult(status: 0, output: "3\t42") }
         return GitResult(status: 0, output: args.contains("--left-right") ? "0\t42" : "12")
     }
 }
@@ -24,11 +26,11 @@ enum Git {
 @MainActor @Observable final class RepoStore {
     var hostingHub = HostingHubState()
     var target: RepoTarget? = RepoTarget(provider: .github, remote: "origin", host: "github.com", path: "sample-studio/desktop")
-    var tags = [Tag(name: "v1.9.0", target: "fixture-head")]
+    var tags = [Tag(name: "v1.9.0", target: "fixture-head"), Tag(name: "v1.10.0", target: "3a281709c4e2")]
     var headHash: String? = "fixture-head"
     var headBranch: String? = "feature/workspace-search-results"
     var url: URL? = URL(fileURLWithPath: "/fixture/desktop")
-    var hubAccount: HostAccount? = nil
+    var hubAccount: HostAccount? = HostAccount(id: "fixture", provider: .github, server: "https://github.com", username: "reader", name: nil, avatarURL: nil)
     var hubCredentialState: FixtureCredentialState? = .ready
     var pendingHubCredentialAccount: HostAccount? = nil
     var hubProvider: Provider = .github
@@ -38,6 +40,7 @@ enum Git {
     func activateHostingHub(_ section: HostingHubSection) async { hostingHub.section = section }
     func loadHostingHub(append: Bool = false) async {}
     func selectHostingHubItem(_ item: HubItem) async { hostingHub.detail = HubDetail(item: item) }
+    func copy(_ text: String) { fatalError("Fixture copied a link") }
     func showRevisionComparison(left: String, right: String) { fatalError("Fixture opened the Compare page") }
     func hostingHubAction(expected: String, refreshList: Bool, action: @escaping (HubAccess) async throws -> Void) async { fatalError("Fixture attempted a write") }
 }
@@ -70,7 +73,7 @@ enum Git {
             for dark in [false, true] {
                 let store = RepoStore()
                 let item = HubItem(id: "1", title: "A clearer release workspace", subtitle: "v1.10.0", body: notes, url: "https://github.com/sample-studio/desktop/releases/tag/v1.10.0", data: ["tag_name": "v1.10.0", "published_at": "2026-10-28T09:00:00Z"])
-                store.hostingHub.items = [item, HubItem(id: "2", title: "Faster navigation", subtitle: "v1.9.0", data: ["tag_name": "v1.9.0", "published_at": "2026-10-20T09:00:00Z"])]
+                store.hostingHub.items = [HubItem(id: "3", title: "Search state preview", subtitle: "v1.11.0-beta.1", data: ["tag_name": "v1.11.0-beta.1", "published_at": "2026-10-30T09:00:00Z", "prerelease": true, "target_commitish": "main"]), item, HubItem(id: "2", title: "Faster navigation", subtitle: "v1.9.0", data: ["tag_name": "v1.9.0", "published_at": "2026-10-20T09:00:00Z"])]
                 store.hostingHub.page = 1
                 store.hostingHub.detail = HubDetail(item: item, assets: [HubAsset(id: "asset", name: "Example-desktop-1.10.0-macOS-universal.zip", size: 12_582_912, downloads: 142, url: "https://github.com/sample-studio/desktop/releases/download/v1.10.0/example.zip")])
                 let bounds = NSRect(x: 0, y: 0, width: width, height: 900)
@@ -89,7 +92,7 @@ enum Git {
                 precondition(text.contains("v1.10.0") && text.contains("A clearer release workspace"), "Release identity missing: \(name)")
                 if width > 680 {
                     precondition(text.contains("Release highlights") && text.contains("Platform"), "Markdown missing: \(name)")
-                    precondition(text.contains("Latest release") && text.contains("42 unreleased commits") && text.contains("v1.9.0"), "Release timeline missing: \(name)")
+                    precondition(text.contains("Unreleased") && text.contains("42 commits on this branch") && text.contains("v1.9.0") && text.contains("Prerelease") && text.contains("3a28170"), "Release timeline missing: \(name)")
                 }
                 window.orderOut(nil)
             }

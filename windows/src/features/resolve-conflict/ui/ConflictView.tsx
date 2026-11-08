@@ -1,4 +1,5 @@
-import { Check, ChevronDown, TriangleAlert } from "lucide-react";
+import { TriangleAlert } from "lucide-react";
+import { Check, ChevronDown } from "@/shared/icons";
 import { useEffect, useRef, useState } from "react";
 import { choiceLines, choiceTitle, conflictProjection, parseConflict, type ConflictBlock, type ConflictDocument, type FileChange } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";

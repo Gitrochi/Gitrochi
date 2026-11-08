@@ -52,6 +52,18 @@ describe("organization project discovery", () => {
     expect(catalog.items.map(item => item.id)).toEqual(["new-team"]); expect(catalog.error).toBeNull(); expect(catalog.loading).toBe(false);
   });
 
+  it("changes the account and the owner in one step, as the Projects scope menu chooses them", async () => {
+    // macOS: the same case in macos/Tools/test-hosting-hub-credentials.sh
+    const first = account(), second = account("second"); accounts.accounts = [first, second]; vi.spyOn(accounts, "token").mockResolvedValue("fixture-token");
+    const http = vi.spyOn(ipc, "http").mockResolvedValue(response({ data: { organization: { projectsV2: { nodes: [{ id: "theirs", title: "Delivery", number: 1 }], pageInfo: {} } } } }));
+    const hub = new HostingHubStore({ path: null, target: null, hostingAccount: first }); hub.section = "projects"; hub.projectScope = "personal";
+    await hub.selectProjectScope("organization:second-team", second.id);
+    expect(hub.account?.id).toBe("second"); expect(hub.projectOwner).toBe("second-team"); expect(hub.items.map(item => item.id)).toEqual(["theirs"]);
+    expect(http).toHaveBeenCalledTimes(1); expect(JSON.parse(http.mock.calls[0][3]!).variables.owner).toBe("second-team");
+    await hub.selectProjectScope("organization:second-team", "missing");
+    expect(hub.account?.id).toBe("second"); expect(http).toHaveBeenCalledTimes(1);
+  });
+
   it("preserves organization scope without a repository and rejects old project reads after switching accounts", async () => {
     const old = account(), next = account("second"); accounts.accounts = [old, next]; vi.spyOn(accounts, "token").mockResolvedValue("fixture-token");
     let finish!: (value: ReturnType<typeof response>) => void;

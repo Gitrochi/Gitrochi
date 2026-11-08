@@ -1,0 +1,33 @@
+/* The Account page (the redesign's Account board): underline tabs, one row for the account and Refresh, then the
+   section. macOS: AccountWorkspacePanel. */
+.account-page { background: var(--surface); color: var(--text); font-size: 13px; }
+.account-tabs { flex: none; display: flex; flex-wrap: wrap; align-items: stretch; gap: 4px; padding: 0 20px 0 8px; border-bottom: 1px solid var(--border); }
+/* switching content uses underline tabs: medium text, never in the accent, so labels do not shift */
+.account-tab { font: inherit; font-weight: 500; color: color-mix(in srgb, var(--text) 87%, var(--surface)); background: transparent; border: 0; border-bottom: 2px solid transparent; padding: 8px 12px; cursor: pointer; }
+.account-tab.on { color: var(--text); border-bottom-color: var(--accent); }
+.account-tab:focus-visible, .account-text-button:focus-visible { outline: 2px solid color-mix(in srgb, var(--accent) 40%, transparent); outline-offset: -2px; }
+.account-text-button { align-self: center; font: inherit; font-size: 12px; font-weight: 500; min-height: 24px; padding: 2px 0; border: 0; background: transparent; color: var(--text-2); cursor: pointer; }
+.account-text-button:hover:not(:disabled) { color: var(--text); }
+.account-text-button:disabled { color: var(--text-3); cursor: default; }
+.account-toolbar { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 20px; border-bottom: 1px solid var(--border); }
+.btn.account-picker { min-width: 0; max-width: 100%; padding-left: 4px; }
+.account-toolbar .btn.account-icon-button { flex: none; width: 28px; padding: 0; }
+.account-page-hub { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.account-page-hub[hidden] { display: none; }
+
+/* Organizations: the row above chooses the account and refreshes, so the hub's own header would repeat them; its
+   list becomes the page's 312px list column */
+.account-page .hosting-hub-organizations > header { display: none; }
+.account-page .hosting-hub-organizations .hub-split { grid-template-columns: 312px minmax(0, 1fr); }
+.account-page .hosting-hub-organizations .hub-list { background: var(--sidebar); padding: 12px; display: flex; flex-direction: column; gap: 4px; }
+.account-page .hosting-hub-organizations .hub-list > * { flex: none; }
+.account-page .hosting-hub-organizations .hub-list > .input { height: 28px; margin-bottom: 6px; }
+.account-page .hosting-hub-organizations .hub-list > .hint { margin: 0 0 6px; }
+.account-page .hosting-hub-organizations .hub-list button.hub-item { padding: 8px 10px; border-radius: 6px; }
+.account-page .hosting-hub-organizations .hub-list button.hub-item.active strong { font-weight: 600; }
+.account-page .hosting-hub-organizations .hub-content { padding: 20px 24px; }
+/* a notice is white with a hairline, never tinted */
+.account-page .hosting-hub-organizations > .hub-notice { margin: 12px 20px 0; background: var(--surface); border-radius: 6px; }
+@container hosting-hub (max-width: 680px) {
+  .account-page .hosting-hub-organizations .hub-split { grid-template-columns: minmax(0, 1fr); }
+}

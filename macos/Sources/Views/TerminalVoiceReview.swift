@@ -74,7 +74,7 @@ struct TerminalVoiceConfirmation: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Label("Ready to send", systemImage: draft.destination.symbol).font(.callout.weight(.semibold))
+            Label("Ready to send", symbol: draft.destination.symbol).font(.callout.weight(.semibold))
             HStack {
                 Text(verbatim: draft.destination.title)
                 Spacer()

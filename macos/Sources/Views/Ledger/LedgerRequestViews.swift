@@ -51,7 +51,7 @@ struct LedgerRequestMergedSuggestion<Picker: View>: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            Image(systemName: "arrow.triangle.merge").font(.system(size: 14)).foregroundStyle(.secondary).accessibilityHidden(true)
+            SymbolIcon("arrow.triangle.merge").font(.system(size: 14)).foregroundStyle(.secondary).accessibilityHidden(true)
             picker()
             Spacer(minLength: 0)
         }

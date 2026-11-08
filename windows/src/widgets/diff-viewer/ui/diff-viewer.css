@@ -258,5 +258,8 @@
   cursor: pointer;
   font-weight: 700;
 }
-.review-line-add:disabled { opacity: 0.4; cursor: default; }
+/* the button shows on the line under the pointer, and when the keys reach it */
+.review-line-add:not(:focus-visible) { opacity: 0; }
+.diff-line:hover .review-line-add:not(:disabled) { opacity: 1; }
+.diff-line:hover .review-line-add:disabled { opacity: 0.4; cursor: default; }
 .review-line-add:focus-visible { outline: 2px solid var(--text); outline-offset: 1px; }

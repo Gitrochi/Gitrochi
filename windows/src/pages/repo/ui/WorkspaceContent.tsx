@@ -1,16 +1,15 @@
-import { lazy, Suspense, useEffect } from "react";
-import { DiffView } from "@/widgets/diff-viewer";
-import { Inspector, IssueDetail } from "@/widgets/inspector";
-import { destinationTitle, FlowPanel, IssueListSection, PullRequestSection } from "@/widgets/sidebar";
+import { lazy, Suspense } from "react";
+import { destinationTitle, FlowPanel } from "@/widgets/sidebar";
 import { RepositoryCodePanel, RevisionComparisonPanel, RebaseWorkbenchPanel } from "@/widgets/local-workbench";
 import { HostingHubPanel, projectBranchName } from "@/widgets/hosting-hub";
 import { WorkspaceHomePanel, ActionsWorkspacePanel } from "@/widgets/workspace-panels";
 import type { RepoStore } from "@/entities/repo";
 import { repositoryDestinations } from "@/entities/git";
-import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
-import { Button, Empty, Spinner } from "@/shared/ui";
+import { Spinner } from "@/shared/ui";
 import { AccountWorkspacePanel } from "./AccountWorkspacePanel";
+import { PullRequestsWorkspace } from "./PullRequestsWorkspace";
+import { IssuesWorkspace } from "./IssuesWorkspace";
 
 // The Ledger is a preview page: its code loads the first time it opens
 const LedgerWorkspace = lazy(() => import("@/widgets/ledger-workspace").then((module) => ({ default: module.LedgerWorkspace })));
@@ -41,43 +40,10 @@ function WorkspacePage({ store, openSettings }: { store: RepoStore; openSettings
     case "issues": return <IssuesWorkspace {...props} />;
     case "actions": return <ActionsWorkspacePanel {...props} />;
     // Releases and Projects keep pages of their own, apart from the account's lists
-    case "releases": case "projects": return <HostingHubPanel store={store} section={store.destination} onClone={(url) => store.openSheet({ kind: "clone", url })} projectActions={{path:store.path,branches:store.localBranches.map(branch=>branch.name),onStartTask: row => {if(store.target)store.requestNewBranch(undefined, undefined, projectBranchName(row), {id:row.id,title:row.title,url:row.url,number:row.number,repository:store.target.path,host:store.target.host});}, onOpenRequest: row => {if (row.number) {store.navigate("pullRequests");store.select({kind:"pullRequest",number:row.number});}}}} />;
+    case "releases": case "projects": return <HostingHubPanel store={store} section={store.destination} openSettings={openSettings} onClone={(url) => store.openSheet({ kind: "clone", url })} projectActions={{path:store.path,branches:store.localBranches.map(branch=>branch.name),onStartTask: row => {if(store.target)store.requestNewBranch(undefined, undefined, projectBranchName(row), {id:row.id,title:row.title,url:row.url,number:row.number,repository:store.target.path,host:store.target.host});}, onOpenRequest: row => {if (row.number) {store.navigate("pullRequests");store.select({kind:"pullRequest",number:row.number});}}}} />;
     case "account": return <AccountWorkspacePanel {...props} />;
     case "flows": return <FlowPanel store={store} />;
     case "ledger": return <Suspense fallback={<div className="col grow" style={{ alignItems: "center", justifyContent: "center" }}><Spinner /></div>}><LedgerWorkspace repoPath={store.path} launcher={store} requests={store} flows={store} /></Suspense>;
     default: return null;
   }
-}
-
-/** Issues: the shared issue list on the left, the open issue on the right, like the Pull requests page (macOS: IssuesWorkspacePanel) */
-export function IssuesWorkspace({ store, openSettings }: { store: RepoStore; openSettings: () => void }) {
-  useObserve(store);
-  if (!store.target) return <div className="col grow" style={{ alignItems: "center", justifyContent: "center", gap: 12 }}><Empty title={t("No hosting remote")} detail={t("Open a repository with a GitHub or GitLab remote to use this workspace.")} /><Button onClick={() => void store.pickAndOpen()}>{t("Open repository…")}</Button></div>;
-  const detail = store.inboxDetail?.item.kind === "issue" ? store.inboxDetail : null;
-  return <div className="workspace-pr-page">
-    <div className="workspace-pr-list"><IssueListSection store={store} openSettings={openSettings} onPage /></div>
-    <div className="workspace-pr-detail col">
-      {detail ? <IssueDetail store={store} detail={detail} /> : <Empty title={t("Select an issue")} detail={t("Search the list, then read the conversation and reply here.")} />}
-    </div>
-  </div>;
-}
-
-function PullRequestsWorkspace({ store, openSettings }: { store: RepoStore; openSettings: () => void }) {
-  useObserve(store);
-  const target = store.target;
-  const targetKey = target ? `${target.provider}:${target.host}/${target.path}` : "";
-  useEffect(() => { if (store.target) void store.loadPullRequests(); }, [store, targetKey]);
-  if (!target) return <div className="col grow" style={{ alignItems: "center", justifyContent: "center", gap: 12 }}><Empty title={t("No hosting remote")} detail={t("Open a repository with a GitHub or GitLab remote to use this workspace.")} /><Button onClick={() => void store.pickAndOpen()}>{t("Open repository…")}</Button></div>;
-  const selected = store.selection?.kind === "pullRequest";
-  const diff = selected && store.diffSource?.kind === "review";
-  return <div className="workspace-pr-page">
-    <div className="workspace-pr-list"><PullRequestSection store={store} target={target} openSettings={openSettings} onPage /></div>
-    <div className="workspace-pr-detail col">
-      {!selected ? <Empty title={t("Select a pull request")} detail={t("Search the list, then review the conversation, files and merge checks here.")} /> : <>
-        {/* 파일을 확인하는 동안에도 대화를 유지해 작성 중인 댓글을 보존한다. */}
-        <div className="workspace-pr-conversation col grow" style={{ display: diff ? "none" : "flex" }}><Inspector store={store} /></div>
-        {diff && <><header className="row" style={{ padding: 10, borderBottom: "1px solid var(--border)" }}><Button onClick={() => store.closeDiff()}>{t("Back to conversation")}</Button></header><DiffView store={store} /></>}
-      </>}
-    </div>
-  </div>;
 }

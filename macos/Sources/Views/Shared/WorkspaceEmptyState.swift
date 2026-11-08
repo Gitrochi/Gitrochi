@@ -10,7 +10,7 @@ struct WorkspaceEmptyState: View {
 
     var body: some View {
         VStack(spacing: 12) {
-            Image(systemName: systemImage)
+            SymbolIcon(systemImage)
                 .font(.system(size: 23, weight: .regular))
                 .foregroundStyle(StudioStyle.accent)
                 .frame(width: 52, height: 52)

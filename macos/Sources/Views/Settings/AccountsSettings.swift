@@ -140,7 +140,7 @@ private struct ConnectedRow: View {
                 Text("@\(account.username)" + (showServer ? " · \(account.host)" : "")).font(.caption).foregroundStyle(.secondary)
             }
             Spacer()
-            Label("Connected", systemImage: "checkmark.circle.fill")
+            Label("Connected", symbol: "checkmark.circle.fill")
                 .foregroundStyle(.green)
                 .font(.caption)
             Button("Disconnect", action: disconnect)

@@ -1,5 +1,7 @@
 import { FILE_ROW_HEIGHT, visibleFileRange } from "../lib/visible-file-range";
-import { ChevronDown, ChevronRight, Folder, FolderOpen, List, ListTree } from "lucide-react";
+import { List, ListTree } from "lucide-react";
+import { FolderOpen } from "@/shared/icons";
+import { ChevronDown, ChevronRight, Folder } from "@/shared/icons";
 import { type ReactNode, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { changeId, type FileChange, fileDir, fileName, type LineStat, StatusBadge } from "@/entities/git";
 import { settings } from "@/shared/config";
@@ -8,17 +10,20 @@ import { useObserve } from "@/shared/lib";
 import { IconButton, LineStatText, type MenuItem, Segmented, showContextMenu } from "@/shared/ui";
 
 /** 변경 파일 보기 방식(목록/트리) — 작업 영역과 커밋 상세가 함께 쓴다 */
-export function useFileViewMode(): "list" | "tree" {
+export function useFileViewMode(key = "fileViewMode", fallback: "list" | "tree" = "list"): "list" | "tree" {
   useObserve(settings);
-  return settings.get<"list" | "tree">("fileViewMode", "list");
+  return settings.get<"list" | "tree">(key, fallback);
 }
 
-export function FileViewToggle() {
-  const mode = useFileViewMode();
+/** Requests open as a tree (the Changed files board); the choice is apart from the repository's changes */
+export const requestFileView = ["requestFileViewMode", "tree"] as const;
+
+export function FileViewToggle({ view = ["fileViewMode", "list"] }: { view?: readonly [string, "list" | "tree"] }) {
+  const mode = useFileViewMode(...view);
   return (
     <Segmented
       value={mode}
-      onChange={(v) => settings.set("fileViewMode", v)}
+      onChange={(v) => settings.set(view[0], v)}
       options={[
         { value: "list", label: <List size={14} />, tip: t("Show as list") },
         { value: "tree", label: <ListTree size={14} />, tip: t("Show as folder tree") },

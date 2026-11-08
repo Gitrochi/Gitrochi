@@ -10,7 +10,7 @@ struct StatusPill: View {
 
     var body: some View {
         HStack(spacing: 4) {
-            if let symbol { Image(systemName: symbol).font(.system(size: 11, weight: .semibold)).accessibilityHidden(true) }
+            if let symbol { SymbolIcon(symbol).font(.system(size: 11, weight: .semibold)).accessibilityHidden(true) }
             Text(title).lineLimit(1)
         }
         .font(.system(size: 11, weight: .semibold))

@@ -59,7 +59,7 @@ struct GraphCheckSheet: View {
             .frame(maxWidth: .infinity, minHeight: 120)
         case .failed(let message)?:
             Card(spacing: 6) {
-                Label("Couldn't check the rules", systemImage: "xmark.octagon.fill")
+                Label("Couldn't check the rules", symbol: "xmark.octagon.fill")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.red)
                 Text(message)
@@ -70,11 +70,11 @@ struct GraphCheckSheet: View {
             if rules == 0 {
                 // --init 이 만든 예시는 모두 주석 — 위반 없음이 아니라 아직 검사할 규칙이 없다
                 Card {
-                    Label("No rules yet. Remove the # in front of the examples and adjust them to this repository, then check again.", systemImage: "info.circle")
+                    Label("No rules yet. Remove the # in front of the examples and adjust them to this repository, then check again.", symbol: "info.circle")
                 }
             } else if result.violations.isEmpty {
                 Card {
-                    Label("No violations", systemImage: "checkmark.circle.fill")
+                    Label("No violations", symbol: "checkmark.circle.fill")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.green)
                 }
@@ -92,12 +92,12 @@ struct GraphCheckSheet: View {
         return VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 14) {
                 if errors > 0 {
-                    Label("Violations \(errors)", systemImage: "xmark.octagon.fill").foregroundStyle(.red)
+                    Label("Violations \(errors)", symbol: "xmark.octagon.fill").foregroundStyle(.red)
                 } else {
-                    Label("No violations", systemImage: "checkmark.circle.fill").foregroundStyle(.green)
+                    Label("No violations", symbol: "checkmark.circle.fill").foregroundStyle(.green)
                 }
                 if warnings > 0 {
-                    Label("Warnings \(warnings)", systemImage: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                    Label("Warnings \(warnings)", symbol: "exclamationmark.triangle.fill").foregroundStyle(.orange)
                 }
             }
             .font(.subheadline.weight(.semibold))
@@ -117,7 +117,7 @@ struct GraphCheckSheet: View {
 
     private func row(_ v: Gitch.GraphCheck.Violation) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Image(systemName: v.isError ? "xmark.octagon.fill" : "exclamationmark.triangle.fill")
+            SymbolIcon(v.isError ? "xmark.octagon.fill" : "exclamationmark.triangle.fill")
                 .foregroundStyle(v.isError ? Color.red : Color.orange)
             VStack(alignment: .leading, spacing: 3) {
                 HStack(alignment: .firstTextBaseline, spacing: 8) {

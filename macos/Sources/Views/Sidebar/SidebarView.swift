@@ -116,7 +116,7 @@ struct SidebarView: View {
                         }
                     } label: {
                         HStack(spacing: 6) {
-                            Image(systemName: "cloud").frame(width: 16)
+                            DesignIconImage(icon: .cloud).frame(width: 16)
                                 .foregroundStyle(.secondary)
                             Text(remote).lineLimit(1).truncationMode(.middle)
                             Spacer(minLength: 4)
@@ -142,7 +142,7 @@ struct SidebarView: View {
         if show("tags"), !store.tags.isEmpty || store.target != nil {
             SidebarSection("tags") {
                 ForEach(store.tags) { t in
-                    Label(t.name, systemImage: "tag")
+                    Label(t.name, symbol: "tag")
                         .lineLimit(1)
                         .sidebarRow()
                         .contentShape(Rectangle())
@@ -160,7 +160,7 @@ struct SidebarView: View {
                     Text("Tags \(store.tags.count)")
                     Spacer()
                     if store.target != nil {
-                        Button { store.navigate(.releases) } label: { Image(systemName: "arrow.up.forward.square") }
+                        Button { store.navigate(.releases) } label: { DesignIconImage(icon: .external) }
                             .buttonStyle(.borderless)
                             .help("Open in Releases")
                     }
@@ -206,7 +206,7 @@ struct SidebarView: View {
     private func folderLabel(_ f: BranchFolder) -> some View {
         let current = f.branches.contains(where: \.isCurrent)
         return HStack(spacing: 6) {
-            Image(systemName: current ? "folder.fill" : "folder")
+            SymbolIcon(current ? "folder.fill" : "folder")
                 .foregroundStyle(current ? Color.accentColor : .secondary)
                 .frame(width: 16)
             Text(f.name).lineLimit(1).truncationMode(.middle)
@@ -223,7 +223,7 @@ struct SidebarView: View {
                          toggleHidden: canHide ? { Task { await store.setHidden(b, !store.isHidden(b)) } } : nil)
             .sidebarTreeRow()
             .contentShape(Rectangle())
-            .draggable(RepoStore.branchPayload + b.name) { Label(b.name, systemImage: "arrow.triangle.branch").padding(6) }
+            .draggable(RepoStore.branchPayload + b.name) { Label(b.name, symbol: "arrow.triangle.branch").padding(6) }
             .onTapGesture(count: 2) { Task { await store.checkout(b) } }
             .onTapGesture { store.reveal(b.target) }
             .contextMenu { localMenu(b) }
@@ -234,7 +234,7 @@ struct SidebarView: View {
                   toggleHidden: { Task { await store.setHidden(b, !store.isHidden(b)) } })
             .sidebarTreeRow()
             .contentShape(Rectangle())
-            .draggable(RepoStore.branchPayload + b.name) { Label(b.name, systemImage: "cloud").padding(6) }
+            .draggable(RepoStore.branchPayload + b.name) { Label(b.name, symbol: "cloud").padding(6) }
             .onTapGesture(count: 2) { Task { await store.checkout(b) } }
             .onTapGesture { store.reveal(b.target) }
             .contextMenu { remoteMenu(b) }
@@ -352,7 +352,7 @@ private struct BranchRow: View {
         HStack(spacing: 6) {
             Color.clear.frame(width: 12, height: 16)
                 .accessibilityHidden(true)
-            Image(systemName: branch.isCurrent ? "checkmark.circle.fill" : "arrow.triangle.branch")
+            SymbolIcon(branch.isCurrent ? "checkmark.circle.fill" : "arrow.triangle.branch")
                 .foregroundStyle(branch.isCurrent ? Color.accentColor : .secondary)
                 .frame(width: 16)
             Text(label ?? (branch.isRemote ? branch.shortName : branch.name))
@@ -363,16 +363,16 @@ private struct BranchRow: View {
                 .help(branch.name)
             Spacer(minLength: 4)
             if pinned {
-                Image(systemName: "pin.fill").font(.caption2).foregroundStyle(.secondary).help("Branches pinned to the top")
+                SymbolIcon("pin.fill").font(.caption2).foregroundStyle(.secondary).help("Branches pinned to the top")
             }
             if protected {
-                Image(systemName: "lock.shield").font(.caption2).foregroundStyle(.secondary)
+                SymbolIcon("lock.shield").font(.caption2).foregroundStyle(.secondary)
                     .help("Protected by gitch: no direct pushes, merge through a pull request")
             }
             if let toggleHidden {
                 // the eye shows on hover; a hidden branch keeps it so the state stays visible
                 Button(action: toggleHidden) {
-                    Image(systemName: hidden ? "eye.slash" : "eye")
+                    SymbolIcon(hidden ? "eye.slash" : "eye")
                         .foregroundStyle(.secondary)
                         .frame(width: 16, height: 16)
                         .contentShape(Rectangle())
@@ -382,11 +382,11 @@ private struct BranchRow: View {
                 .help(hidden ? String(localized: "Show in graph again") : String(localized: "Hide from graph"))
             }
             if let worktreePath {
-                Image(systemName: "folder").foregroundStyle(.secondary)
+                DesignIconImage(icon: .repository).foregroundStyle(.secondary)
                     .help("In use by a worktree: \(worktreePath)")
             }
             if branch.upstreamGone {
-                Image(systemName: "exclamationmark.icloud").foregroundStyle(.orange)
+                SymbolIcon("exclamationmark.icloud").foregroundStyle(.orange)
                     .help("The tracked remote branch was deleted")
             }
             if branch.ahead > 0 { counter("↑\(branch.ahead)") }
@@ -425,7 +425,7 @@ struct SidebarSection<Header: View, Content: View>: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 6) {
                 if !flyout {
-                    Image(systemName: "chevron.down")
+                    DesignIconImage(icon: .chevronDown)
                         .font(.caption2.weight(.bold))
                         .rotationEffect(.degrees(open.wrappedValue ? 0 : -90))
                         .frame(width: 10)

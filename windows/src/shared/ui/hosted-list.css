@@ -1,0 +1,87 @@
+/* The parts the Issues and Actions pages share, as their boards draw them. macOS: Views/Shared/HostedList.swift. */
+.hosted-page { flex: 1 1 auto; min-width: 0; min-height: 0; height: 100%; display: flex; flex-direction: column; background: var(--surface); color: var(--text); font-size: 13px; container: hosted / inline-size; }
+.hosted-caption { font-size: 12px; color: var(--text-2); }
+/* a disabled button is neutral, never faded (docs/design.md, Controls) */
+.hosted-page .btn:disabled { opacity: 1; background: var(--bar); border-color: var(--border); color: var(--text-3); }
+.hosted-page .btn > svg { flex: none; }
+.hosted-icon-button { width: 28px; padding: 0; flex: none; }
+.hosted-text-button { font: inherit; font-size: 12px; font-weight: 500; border: 0; background: transparent; color: var(--text-2); min-height: 24px; padding: 0 2px; display: inline-flex; align-items: center; cursor: pointer; }
+.hosted-text-button:hover:not(:disabled) { color: var(--text); }
+.hosted-text-button:disabled { color: var(--text-3); cursor: default; }
+.hosted-text-button.destructive { color: #b42a24; }
+:root[data-theme="dark"] .hosted-text-button.destructive { color: var(--danger); }
+.hosted-text-button:focus-visible, .hosted-row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+.hosted-head { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 20px; }
+.hosted-head-where { font-size: 13px; color: var(--text-2); }
+
+/* one form on every hosted page: 112 px tall, what it is about, its picture, the next step */
+.hosted-summary { flex: none; height: 112px; box-sizing: border-box; margin: 0 20px 16px; border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; display: flex; align-items: center; gap: 32px; overflow: hidden; }
+.hosted-summary-lead { flex: 0 0 220px; width: 220px; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.hosted-summary-middle { flex: 1 1 auto; min-width: 0; display: flex; }
+.hosted-summary-trail { flex: 0 0 200px; width: 200px; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; text-align: right; }
+.hosted-summary-key { font-size: 12px; line-height: 16px; color: var(--text-2); }
+.hosted-summary-value { display: block; font-size: 15px; line-height: 20px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hosted-strip { display: none; flex: none; margin: 0 12px 10px; border: 1px solid var(--border); border-radius: 10px; height: 44px; box-sizing: border-box; padding: 0 10px 0 16px; align-items: center; gap: 10px; min-width: 0; }
+.hosted-strip > svg { flex: none; color: var(--text-2); }
+.hosted-strip-text { flex: 0 1 auto; min-width: 0; font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.hosted-columns { flex: 1 1 auto; min-height: 0; display: flex; border-top: 1px solid var(--border); }
+.hosted-list { flex: 0 0 312px; min-width: 0; min-height: 0; box-sizing: border-box; background: var(--sidebar); border-right: 1px solid var(--border); padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.hosted-detail { flex: 1 1 0; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.hosted-back { display: none; flex: none; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+
+.hosted-search { flex: none; display: flex; gap: 8px; align-items: center; }
+.hosted-search-field { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border: 1px solid var(--border-strong); border-radius: 6px; background: var(--input); color: var(--text-2); box-sizing: border-box; }
+.hosted-search-field input { border: 0; outline: 0; font: inherit; flex: 1; min-width: 0; background: transparent; color: var(--text); user-select: text; }
+.hosted-search-field:focus-within { border-color: var(--accent); }
+.hosted-search-clear { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; margin-right: -6px; border: 0; background: transparent; color: var(--text-2); cursor: pointer; }
+.hosted-segments { flex: none; }
+.hosted-segments .segmented { display: flex; border-radius: 6px; }
+.hosted-segments .segmented button { flex: 1 1 auto; justify-content: center; height: 24px; padding: 0 6px; border-radius: 4px; font-size: 12px; font-weight: 500; white-space: nowrap; }
+.hosted-segments .segmented button.on { font-weight: 600; }
+
+.hosted-rows { flex: 1 1 auto; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 4px; }
+.hosted-row { flex: none; display: flex; flex-direction: column; gap: 4px; width: 100%; text-align: left; border: 0; border-radius: 6px; padding: 8px 10px; font: inherit; color: inherit; background: transparent; cursor: pointer; box-sizing: border-box; }
+.hosted-row:hover { background: var(--hover); }
+/* selection is the tint only */
+.hosted-row.selected { background: var(--select); }
+.hosted-row-top { display: flex; align-items: flex-start; gap: 8px; }
+.hosted-row-title { flex: 1 1 auto; min-width: 0; font-size: 13px; font-weight: 500; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.hosted-row.selected .hosted-row-title { font-weight: 600; }
+.hosted-row-when { flex: none; font-size: 12px; color: var(--text-2); }
+.hosted-row-meta { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 11px; color: var(--text-2); }
+.hosted-row-meta > * { flex: none; }
+.hosted-row-meta > .spacer { flex: 1 1 auto; }
+/* secondary text on the tint needs the darker tone */
+.hosted-row.selected .hosted-row-when, .hosted-row.selected .hosted-row-meta { color: color-mix(in srgb, var(--text) 55%, var(--text-2)); }
+.hosted-more { flex: none; height: 32px; width: 100%; justify-content: center; }
+.hosted-chip { display: inline-flex; align-items: center; gap: 4px; height: 18px; padding: 0 8px; border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap; min-width: 0; color: var(--status-text); background: var(--status-fill); }
+.hosted-chip.square { border-radius: 6px; }
+.hosted-chip > svg { flex: none; }
+.hosted-row.selected .hosted-chip { background: var(--surface); }
+
+.hosted-empty { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center; padding: 24px; }
+.hosted-empty-icon { display: inline-flex; color: var(--text-2); }
+.hosted-empty.status-tone .hosted-empty-icon { color: var(--status-text); }
+.hosted-empty-title { font-size: 15px; font-weight: 600; overflow-wrap: anywhere; }
+.hosted-empty-caption { font-size: 12px; color: var(--text-2); max-width: 380px; overflow-wrap: anywhere; }
+.hosted-empty > .btn { margin-top: 4px; }
+.hosted-notice { flex: none; display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); }
+.hosted-notice > svg { flex: none; margin-top: 2px; color: var(--status-text); }
+.hosted-notice-text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.hosted-notice-title { font-weight: 600; color: var(--status-text); overflow-wrap: anywhere; }
+.hosted-loading { display: flex; flex-direction: column; gap: 10px; }
+.hosted-loading-caption { display: flex; align-items: center; gap: 6px; }
+.hosted-skeleton { display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; }
+.hosted-skeleton > span { display: block; border-radius: 4px; background: var(--bar); }
+
+@container hosted (max-width: 680px) {
+  .hosted-summary { display: none; }
+  .hosted-strip { display: flex; }
+  .hosted-list { flex: 1 1 auto; border-right: 0; }
+  /* choosing a row replaces the list with the detail, which offers the way back */
+  .hosted-columns.has-detail > .hosted-list { display: none; }
+  .hosted-columns:not(.has-detail) > .hosted-detail { display: none; }
+  .hosted-back { display: flex; }
+}

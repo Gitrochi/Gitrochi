@@ -1,4 +1,5 @@
-import { ArrowDown, ArrowUp, Plus, Trash2, Workflow } from "lucide-react";
+import { Workflow } from "lucide-react";
+import { ArrowDown, ArrowUp, Plus, Trash2 } from "@/shared/icons";
 import { useRef, useState } from "react";
 import { checkedDesignYaml, flowCreationDocument, flowCreationFile, flowCreationProblem, flowEngine, saveFlowConfig, type FlowCreationDraft, type FlowCreationProblem, type FlowStore } from "@/entities/flow";
 import { ipc } from "@/shared/api";

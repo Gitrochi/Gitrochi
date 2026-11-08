@@ -48,7 +48,7 @@ struct ProjectDependenciesEditor: View {
                     Button("Save task dependencies") { Task { await submit() } }.buttonStyle(.borderedProminent).disabled(!dirty || !validDuration || selected.count > 100)
                 }
             }.disabled(locked || busy || row.archived)
-            if let error { Label(error, systemImage: "exclamationmark.circle").font(.caption).foregroundStyle(.red).fixedSize(horizontal: false, vertical: true) }
+            if let error { Label(error, symbol: "exclamationmark.circle").font(.caption).foregroundStyle(.red).fixedSize(horizontal: false, vertical: true) }
             Text("Clear predecessor links from dependent tasks before deleting their predecessor.").font(.caption).foregroundStyle(.secondary)
         }.accessibilityElement(children: .contain).accessibilityLabel("Task predecessors")
             .onAppear { if !initialized { reset(); initialized = true } }

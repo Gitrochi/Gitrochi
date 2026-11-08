@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { AlertCircle, CalendarDays, Circle, ExternalLink } from "lucide-react";
+import { AlertCircle, CalendarDays } from "lucide-react";
+import { Circle } from "@/shared/icons";
+import { ExternalLink } from "@/shared/icons";
 import { localScheduleToday, parseScheduleDay } from "@/entities/hosting";
 import type {
   HubDetail,
@@ -263,7 +265,7 @@ export function ProjectRoadmap({
                       <Button size="small" disabled={locked || !assignDate || (!startField && !endField)} onClick={() => {
                         setSchedulingID(row.id);
                         setDates((current) => ({ ...current, [row.id]: current[row.id] ?? localScheduleToday() }));
-                      }}><CalendarDays size={13} />{t("Schedule")}</Button>
+                      }}><CalendarDays size={13} />{t("Schedule…")}</Button>
                     )}
                   </div>
                 </div>

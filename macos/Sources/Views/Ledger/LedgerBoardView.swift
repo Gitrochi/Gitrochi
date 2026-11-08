@@ -40,7 +40,7 @@ struct LedgerBoardView: View {
                     } label: {
                         // a filter, not a status: the verdict's icon carries its tone, and a chip that is on is tinted
                         HStack(spacing: 4) {
-                            Image(systemName: verdict.symbol).foregroundStyle(verdict.tone.text).accessibilityHidden(true)
+                            SymbolIcon(verdict.symbol).foregroundStyle(verdict.tone.text).accessibilityHidden(true)
                             Text(verdict.title).fontWeight(on ? .semibold : .regular).lineLimit(1)
                         }
                         .font(.system(size: 12))
@@ -196,7 +196,7 @@ private struct LedgerBoardRow: View {
     private func row(wide: Bool) -> some View {
         HStack(spacing: 10) {
             Button(action: togglePick) {
-                Image(systemName: picked ? "checkmark.square.fill" : "square").foregroundStyle(picked ? Color.accentColor : .secondary)
+                SymbolIcon(picked ? "checkmark.square.fill" : "square").foregroundStyle(picked ? Color.accentColor : .secondary)
             }
             .buttonStyle(.plain)
             .help(picked ? String(localized: "Remove from the selection") : String(localized: "Add to the selection (Space)"))
@@ -211,7 +211,7 @@ private struct LedgerBoardRow: View {
             if busy { ProgressView().controlSize(.small) }
             if wide {
                 if let branch = session.links.branch {
-                    Label(branch, systemImage: "arrow.triangle.branch").font(.system(size: 11)).foregroundStyle(.secondary)
+                    Label(branch, symbol: "arrow.triangle.branch").font(.system(size: 11)).foregroundStyle(.secondary)
                         .lineLimit(1).truncationMode(.middle).frame(maxWidth: 170, alignment: .leading)
                 }
                 if let pr = session.links.pr {

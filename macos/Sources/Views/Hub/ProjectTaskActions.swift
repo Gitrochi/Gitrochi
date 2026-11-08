@@ -28,7 +28,7 @@ struct ProjectTaskActions: View {
         .sheet(isPresented: $converting) {
             VStack(alignment: .leading, spacing: 0) {
                 HStack(alignment: .top, spacing: 14) {
-                    Image(systemName: "arrow.triangle.branch").font(.system(size: 20, weight: .medium)).foregroundStyle(Color.accentColor)
+                    DesignIconImage(icon: .branch, size: 20).foregroundStyle(Color.accentColor)
                         .frame(width: 44, height: 44).background(Color.accentColor.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Convert draft to issue").font(.system(size: 19, weight: .semibold))

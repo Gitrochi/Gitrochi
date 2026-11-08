@@ -46,7 +46,7 @@ struct LedgerBrowserSheet: View {
                     Divider()
                     if let status {
                         Label(status.installed ? String(localized: "Browser host installed") : String(localized: "Browser host not installed"),
-                              systemImage: status.installed ? "checkmark.circle" : "circle")
+                              symbol: status.installed ? "checkmark.circle" : "circle")
                             .font(.callout.weight(.medium))
                         DisclosureGroup("Connection details") {
                             VStack(alignment: .leading, spacing: 4) {

@@ -1,11 +1,14 @@
 import SwiftUI
 
 /// Organization discovery has its own lifetime so a failed page never hides personal projects.
-@MainActor @Observable private final class ProjectOrganizationCatalog {
+/// (Windows: entities/hosting/model/project-organizations.ts)
+@MainActor @Observable final class ProjectOrganizationCatalog {
     var items: [HubItem] = []
     var loading = false
     var more = false
     var error: String?
+    /// False until a page arrived, so "none found" is not said before anything was asked
+    var loaded = false
     private var page = 0
     private var cursor: String?
     private var generation = UUID()
@@ -13,7 +16,7 @@ import SwiftUI
 
     func reset(account: HostAccount?) {
         generation = UUID(); accountID = account?.id ?? ""
-        items = []; loading = false; more = false; error = nil; page = 0; cursor = nil
+        items = []; loading = false; more = false; error = nil; loaded = false; page = 0; cursor = nil
     }
 
     func load(_ account: HostAccount, append: Bool = false) async {
@@ -32,7 +35,7 @@ import SwiftUI
             // A GitLab group is chosen by its full path, which also tells subgroups with the same name apart.
             let found = account.provider == .gitlab ? result.items.filter { !$0.subtitle.isEmpty }.map { item in var group = item; group.id = item.subtitle; group.title = item.subtitle; return group } : result.items
             items = append ? items + found.filter { item in !items.contains { $0.id == item.id } } : found
-            page = nextPage; cursor = result.cursor; more = result.more
+            page = nextPage; cursor = result.cursor; more = result.more; loaded = true
         } catch {
             guard !Task.isCancelled, generation == request else { return }
             self.error = HostingHubAPI.error(error, token: credential)

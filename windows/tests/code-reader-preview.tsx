@@ -27,7 +27,9 @@ if (params.get("mode") === "selftest") {
   store.path = "/fixture/desktop";
   store.headBranch = "main";
   store.localBranches = [{ name: "main", target: oid, upstream: "origin/main", ahead: 0, behind: 0, upstreamGone: false, isCurrent: true, isRemote: false }];
+  store.remoteBranches = [{ ...store.localBranches[0], name: "origin/main", isCurrent: false, isRemote: true }];
   store.tags = [{ name: "v1.0.0", target: oid }];
+  store.status = { ...store.status, unstaged: [{ path: "src/components/Sidebar.tsx", oldPath: null, kind: "modified", staged: false }] };
   const files: Record<string, string> = {
     "package.json": '{\n  "name": "desktop-workspace",\n  "version": "1.0.0",\n  "private": true\n}\n',
     "src/components/RepositoryCard.tsx": `import { useState } from "react";
@@ -93,13 +95,41 @@ export function formatChangeCount(count: number): string {
   if (params.get("large") === "1") {
     files["src/large.ts"] = "line\n".repeat(6000) + "export function tail() {}\n";
   }
+  // Three commits per file, newest first, in the formats the app asks Git for
+  const now = Math.floor(Date.now() / 1000);
+  const commits = [
+    { id: "c".repeat(40), author: "Alex Kim", email: "alex.kim@example.com", time: now - 2 * 3600, subject: "Keep the next step close to the work" },
+    { id: "b".repeat(40), author: "Alex Kim", email: "alex.kim@example.com", time: now - 30 * 3600, subject: "Show the branch beside the name" },
+    { id: "9".repeat(40), author: "Morgan Park", email: "morgan.park@example.com", time: now - 40 * 86400, subject: "Add the repository workspace" },
+  ];
+  const history = (path: string) => commits.map((commit, index) => `\x1e${[commit.id, commits[index + 1]?.id ?? "", commit.author, commit.email, commit.time, commit.subject].join("\x1f")}\0\n${path}\0`).join("");
+  const fileLines = (text: string) => text.replace(/\n$/, "").split("\n");
+  const blame = (text: string) => {
+    const seen = new Set<string>(), lines = fileLines(text);
+    return lines.map((line, index) => {
+      const commit = commits[lines.length > 12 && index >= lines.length - 9 && index < lines.length - 6 ? 0 : index % 9 < 2 && index > 4 ? 1 : 2], first = !seen.has(commit.id);
+      seen.add(commit.id);
+      return `${commit.id} ${index + 1} ${index + 1}\n${first ? `author ${commit.author}\nauthor-mail <${commit.email}>\nauthor-time ${commit.time}\nsummary ${commit.subject}\nfilename file\n` : ""}\t${line}\n`;
+    }).join("");
+  };
+  // the newest commit reworded line 6 and added three lines near the end; a short file is new in it
+  const change = (text: string, path: string) => {
+    const lines = fileLines(text), n = lines.length, head = `diff --git a/${path} b/${path}\n`, a = n - 6;
+    if (n < 16) return `${head}new file mode 100644\n--- /dev/null\n+++ b/${path}\n@@ -0,0 +1,${n} @@\n${lines.map((line) => "+" + line).join("\n")}\n`;
+    const context = (from: number, to: number) => lines.slice(from - 1, to).map((line) => " " + line);
+    return [`${head}--- a/${path}\n+++ b/${path}`, "@@ -4,5 +4,5 @@", ...context(4, 5), "-" + lines[5].replace(/\w+(?=\W*$)/, "before"), "+" + lines[5], ...context(7, 8),
+      `@@ -${a - 3},6 +${a - 3},9 @@`, ...context(a - 3, a - 1), ...lines.slice(a - 1, a + 2).map((line) => "+" + line), ...context(a + 3, a + 5)].join("\n") + "\n";
+  };
   const pixel = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
   const entries = Object.entries(files).map(([path, text], index) => ({ path, mode: "100644", oid: (index + 1).toString(16).padStart(40, "0"), size: new TextEncoder().encode(text).length, kind: "file" as const }));
   entries.push({ path: "web/mark.png", mode: "100644", oid: "b".repeat(40), size: atob(pixel).length, kind: "file" });
   const source: RepositoryCodeSource = {
     tree: async () => ({ revision: oid, entries, truncated: false }),
     blob: async (_repo, entry) => entry.path === "web/mark.png" ? { image: `data:image/png;base64,${pixel}` } : { text: files[entry.path] },
-    read: async (args) => args[0] === "log" ? "8b4c21f 2026-10-28 Demo contributor\nImprove repository navigation\n" : args[0] === "blame" ? "8b4c21f (Demo contributor 2026-10-28 1) export function RepositoryCard() {" : "",
+    read: async (args) => {
+      const path = args.at(-1)!, text = files[path.includes(":") ? path.slice(path.indexOf(":") + 1) : path] ?? "";
+      return args[0] === "log" ? history(path) : args[0] === "blame" ? blame(text) : args[0] === "show" ? change(text, path) : args[0] === "rev-list" ? commits[0].id + "\n" : args[0] === "cat-file" ? text : "";
+    },
   };
   const editorSource: RepositoryEditorSource = {
     list: async () => [
@@ -112,4 +142,17 @@ export function formatChangeCount(count: number): string {
     open: async (repo, editorID, file) => { host.dataset.editor = editorID; host.dataset.editorRepo = repo; host.dataset.editorFile = file ?? ""; },
   };
   createRoot(host).render(<RepositoryCodePanel store={store} source={source} editorSource={editorSource}/>);
+  // ?file=src/components/RepositoryCard.tsx&view=History opens that file and view the way clicks would
+  const file = params.get("file"), view = params.get("view");
+  const wait = async (find: () => HTMLElement | null | undefined) => { for (let i = 0; i < 100; i++) { const element = find(); if (element) return element; await new Promise((resolve) => setTimeout(resolve, 30)); } throw new Error("The preview did not show the requested view"); };
+  const row = (name: string) => [...host.querySelectorAll<HTMLElement>(".code-file-list .code-file-row:not(.parent)")].find((item) => item.querySelector("span")?.textContent === name);
+  await wait(() => host.querySelector<HTMLElement>(".code-view-tabs"));
+  if (file) {
+    while (host.querySelector(".code-file-row.parent")) host.querySelector<HTMLElement>(".code-file-row.parent")!.click();
+    for (const part of file.split("/")) { (await wait(() => row(part))).click(); await new Promise((resolve) => setTimeout(resolve, 30)); }
+  }
+  if (view) (await wait(() => host.querySelector<HTMLElement>(`.code-view-tabs [data-view="${view}"]`))).click();
+  if (params.get("open") === "blame") (await wait(() => host.querySelectorAll<HTMLElement>(".code-blame-commit")[1])).click();
+  if (params.get("open") === "revision") host.querySelector<HTMLElement>(".code-revision > button")!.click();
+  host.dataset.ready = "true";
 }

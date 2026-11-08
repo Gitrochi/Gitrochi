@@ -1,6 +1,8 @@
 import SwiftUI
 
-/// A planning overview based only on loaded tasks, explicit project fields and real dates.
+/// The project overview, as the redesign's Projects board draws it: chips that count the open tasks, the Schedule list
+/// they add up to, and progress and later deadlines beside it. Everything is derived from the loaded tasks, the
+/// project's own fields and real dates. (Windows: widgets/hosting-hub/ui/ProjectOverview.tsx)
 struct ProjectDashboard: View {
     let rows: [HubProjectRow]
     let fields: [HubProjectField]
@@ -10,210 +12,213 @@ struct ProjectDashboard: View {
     let editDate: (HubProjectRow, HubProjectField) -> Void
     let complete: (HubProjectRow) -> Void
     let manageFields: () -> Void
-    var addTask: (() -> Void)? = nil
-    var openCalendar: (() -> Void)? = nil
-    var viewAllTasks: (() -> Void)? = nil
-    @ViewState private var focus = "focus"
+    var selectedID: String? = nil
+    /// A pressed chip's group, "invalid" for the tasks whose dates need fixing, or empty for the whole list
+    @ViewState private var focus = ""
+    @ViewState private var showingDone = false
     @ViewState private var width: CGFloat = 1000
     @ViewState private var today = ProjectSchedule.today()
     private var scheduleFields: ProjectScheduleFields { ProjectSchedule.fields(fields, settings: settings) }
     private var entries: [ProjectScheduleEntry] { ProjectSchedule.entries(rows, fields: fields, settings: settings) }
-    private var summary: ProjectScheduleSummary { ProjectSchedule.summary(entries, today: today) }
     private var canComplete: Bool { scheduleFields.status?.options.contains { settings.completedOptionIDs.contains($0.id) } == true }
-    private var endOfWeek: String { ProjectSchedule.addDays(today, 7) ?? today }
-    private var agenda: [ProjectScheduleEntry] {
-        entries.filter { entry in
-            if focus == "invalid" { return entry.invalidDate || entry.invalidRange }
-            if focus == "completed" { return entry.completed }
-            guard !entry.completed else { return false }
-            if focus == "unscheduled" { return entry.date == nil }
-            guard !entry.invalidRange else { return false }
-            guard let date = entry.date else { return false }
-            if focus == "overdue" { return entry.due.map { $0 < today } ?? false }
-            if focus == "today" { return date == today }
-            if focus == "upcoming" { return date > today && date <= endOfWeek }
-            return date <= endOfWeek
-        }.sorted { lhs, rhs in
-            if lhs.date != rhs.date { return (lhs.date ?? "9999") < (rhs.date ?? "9999") }
-            return lhs.row.title.localizedStandardCompare(rhs.row.title) == .orderedAscending
-        }
-    }
+    private var caption: Color { StudioStyle.Rail.icon }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 22) {
-                hero
-                metricCards
-                if summary.invalid > 0 {
-                    Button { focus = "invalid" } label: { Label("Some loaded tasks have invalid dates or a due date before their start. Open a task to correct its dates.", systemImage: "exclamationmark.triangle") }
-                        .buttonStyle(.plain)
-                        .font(.caption).foregroundStyle(.orange).padding(12).frame(maxWidth: .infinity, alignment: .leading).background(Color.orange.opacity(0.06), in: RoundedRectangle(cornerRadius: 10))
+        let entries = self.entries, overview = ProjectSchedule.overview(entries, today: today)
+        return ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                chips(overview)
+                if scheduleFields.due == nil && scheduleFields.start == nil {
+                    strip(symbol: "calendar.badge.plus", color: caption, lead: "Turn tasks into a plan",
+                          caption: "Add a date field, then choose it in Schedule settings. Every task can have a real place on your calendar.") {
+                        Button("Set up schedule fields…", action: manageFields)
+                    }
                 }
-                if width >= 900 {
-                    HStack(alignment: .top, spacing: 20) { agendaPanel.frame(maxWidth: .infinity); sidePanels.frame(width: 310) }
-                } else { agendaPanel; sidePanels }
-                Text("Based on loaded project items. Archived and private items are excluded.").font(.caption2).foregroundStyle(.secondary)
-            }.padding(24).frame(maxWidth: .infinity, alignment: .leading)
+                if entries.contains(where: { $0.invalidDate || $0.invalidRange }) {
+                    strip(symbol: "exclamationmark.triangle.fill", color: StudioStyle.Tone.waiting.text, lead: "Some loaded tasks have invalid dates or a due date before their start. Open a task to correct its dates.", caption: nil) {
+                        Button(focus == "invalid" ? LocalizedStringKey("View all tasks") : LocalizedStringKey("Date issues")) { focus = focus == "invalid" ? "" : "invalid" }
+                    }
+                }
+                if width >= 856 {
+                    HStack(alignment: .top, spacing: 16) { schedule(entries, overview).frame(maxWidth: .infinity); side(entries, overview).frame(width: 280) }
+                } else { schedule(entries, overview); side(entries, overview) }
+            }
+            .padding(EdgeInsets(top: 4, leading: 20, bottom: 20, trailing: 20))
+            // as wide as the window: the board's width is the size it was drawn at, not a limit
+            .frame(maxWidth: .infinity, alignment: .leading)
         }.background(Color(nsColor: .windowBackgroundColor))
             .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
             .accessibilityElement(children: .contain).accessibilityLabel("Project scheduling overview")
             .task { await refreshCalendarDay() }
     }
 
-    private var hero: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            HStack(alignment: .top, spacing: 16) {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(ProjectSchedulePresentation.date(today, template: "EEEE MMMM d")).font(.system(size: 11, weight: .semibold)).foregroundStyle(Color.accentColor)
-                    Text("Make room for your best work.").font(.system(size: 25, weight: .bold, design: .rounded)).tracking(-0.4)
-                    Text(heroMessage).font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-                }.frame(maxWidth: .infinity, alignment: .leading)
-                Image(systemName: "calendar.badge.clock").font(.system(size: 36, weight: .light)).foregroundStyle(Color.accentColor.opacity(0.8)).padding(18).background(Color.accentColor.opacity(0.07), in: RoundedRectangle(cornerRadius: 18))
-                    .accessibilityHidden(true)
-            }
-            WorkbenchFlow(spacing: 12) {
-                if let addTask { Button(action: addTask) { Label("New task", systemImage: "plus") }.buttonStyle(.borderedProminent).disabled(locked) }
-                if let openCalendar { Button(action: openCalendar) { Label("Open calendar", systemImage: "calendar") }.buttonStyle(.bordered) }
-                if let viewAllTasks { Button("View all tasks", action: viewAllTasks).buttonStyle(.borderless) }
-                Label("Planning overview", systemImage: "sparkle").font(.caption.weight(.semibold)).foregroundStyle(Color.accentColor)
-                if let due = scheduleFields.due { Label(due.name, systemImage: "calendar").font(.caption).foregroundStyle(.secondary) }
-                ProjectScheduleConfiguration(fields: fields, settings: $settings, manageFields: manageFields).controlSize(.small)
-            }
-            if scheduleFields.due == nil && scheduleFields.start == nil {
-                HStack(alignment: .top, spacing: 10) {
-                    Image(systemName: "calendar.badge.plus").foregroundStyle(Color.accentColor)
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Turn tasks into a plan").font(.callout.weight(.semibold))
-                        Text("Add a date field, then choose it in Schedule settings. Every task can have a real place on your calendar.").font(.caption).foregroundStyle(.secondary)
-                        Button("Set up schedule fields…", action: manageFields).buttonStyle(.borderless)
-                    }
-                }.padding(14).frame(maxWidth: .infinity, alignment: .leading).background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 11))
-            }
-        }.padding(22).background {
-            RoundedRectangle(cornerRadius: 18).fill(LinearGradient(colors: [Color.accentColor.opacity(0.075), Color.accentColor.opacity(0.015)], startPoint: .topLeading, endPoint: .bottomTrailing))
-        }.overlay(RoundedRectangle(cornerRadius: 18).stroke(Color.accentColor.opacity(0.1)))
-    }
+    // MARK: Chips
 
-    private var heroMessage: String {
-        if summary.overdue > 0 { return String(localized: "A few deadlines need attention. Clear the overdue work and protect what comes next.") }
-        if summary.today > 0 { return String(localized: "Your priorities are ready. Keep today's commitments in view while you build.") }
-        if summary.active > 0 { return String(localized: "See what is coming, give undated work a deadline, and move your project forward.") }
-        return String(localized: "A clear plan starts with a task. Add work to your project to build your schedule.")
-    }
-
-    private var metricCards: some View {
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible(minimum: 100), spacing: 11), count: width >= 900 ? 5 : width >= 640 ? 3 : 2), spacing: 11) {
-            metric("Overdue", count: summary.overdue, symbol: "exclamationmark.circle", color: .red, key: "overdue")
-            metric("Today", count: summary.today, symbol: "sun.max", color: .orange, key: "today")
-            metric("Next 7 days", count: summary.upcoming, symbol: "calendar", color: .accentColor, key: "upcoming")
-            metric("Unscheduled", count: summary.unscheduled, symbol: "tray", color: .secondary, key: "unscheduled")
-            metric("Completed", count: summary.completed, symbol: "checkmark.circle", color: .green, key: "completed")
+    private func chips(_ overview: ProjectScheduleOverview) -> some View {
+        WorkbenchFlow(spacing: 8) {
+            chip(.overdue, "Overdue", overview)
+            chip(.today, "Today", overview)
+            chip(.upcoming, "Next 7 days", overview)
+            // An empty Unscheduled chip would only be noise.
+            if overview.counts[.unscheduled, default: 0] > 0 || focus == ProjectScheduleGroup.unscheduled.rawValue { chip(.unscheduled, "Unscheduled", overview) }
         }
+        .accessibilityElement(children: .contain).accessibilityLabel("Task counts")
     }
 
-    private func metric(_ title: LocalizedStringKey, count: Int, symbol: String, color: Color, key: String) -> some View {
-        Button { focus = focus == key ? "focus" : key } label: {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack { Image(systemName: symbol).font(.system(size: 15)).foregroundStyle(color); Spacer(); if focus == key { Image(systemName: "checkmark").font(.caption2).foregroundStyle(color) } }
-                Text(count.formatted()).font(.system(size: 28, weight: .semibold, design: .rounded)).foregroundStyle(.primary)
-                Text(title).font(.caption).foregroundStyle(.secondary)
-            }.padding(15).frame(maxWidth: .infinity, alignment: .leading).background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 12))
-                .overlay(RoundedRectangle(cornerRadius: 12).stroke(focus == key ? color.opacity(0.5) : Color.secondary.opacity(0.1)))
-        }.buttonStyle(.plain).accessibilityAddTraits(focus == key ? .isSelected : [])
+    private func chip(_ group: ProjectScheduleGroup, _ title: LocalizedStringKey, _ overview: ProjectScheduleOverview) -> some View {
+        let count = overview.counts[group, default: 0], on = focus == group.rawValue, alert = group == .overdue && count > 0
+        return Button { focus = on ? "" : group.rawValue } label: {
+            HStack(spacing: 6) {
+                if alert { DesignIconImage(icon: .alert, size: 12).foregroundStyle(StudioStyle.Tone.failed.text).accessibilityHidden(true) }
+                Text(count.formatted()).font(.system(size: 15, weight: .semibold)).foregroundStyle(alert ? StudioStyle.Tone.failed.text : count == 0 ? caption : Color.primary)
+                Text(title).font(.system(size: 12)).foregroundStyle(alert ? StudioStyle.Tone.failed.text : caption)
+            }
+            .padding(.horizontal, 12).frame(height: 28)
+            .background(RoundedRectangle(cornerRadius: 6).fill(on ? Color.accentColor.opacity(0.16) : StudioStyle.surface))
+            .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(on ? Color.clear : StudioStyle.border))
+            .contentShape(RoundedRectangle(cornerRadius: 6))
+        }.buttonStyle(.plain).accessibilityAddTraits(on ? .isSelected : [])
     }
 
-    private var agendaPanel: some View {
-        let tasks = agenda
+    // MARK: Schedule
+
+    private func listed(_ entries: [ProjectScheduleEntry], _ overview: ProjectScheduleOverview) -> [ProjectScheduleEntry] {
+        if focus == "invalid" { return entries.filter { $0.invalidDate || $0.invalidRange } }
+        if let group = ProjectScheduleGroup(rawValue: focus) { return overview.rows.filter { ProjectSchedule.group($0, today: today) == group } }
+        return overview.rows + (showingDone ? overview.done : [])
+    }
+
+    private func schedule(_ entries: [ProjectScheduleEntry], _ overview: ProjectScheduleOverview) -> some View {
+        let tasks = listed(entries, overview)
         return VStack(alignment: .leading, spacing: 0) {
-            HStack {
-                VStack(alignment: .leading, spacing: 5) { Text("Your agenda").font(.system(size: 16, weight: .semibold)); Text("The work that deserves your attention.").font(.caption).foregroundStyle(.secondary) }
-                Spacer(minLength: 8)
-                Menu {
-                    Button("Focus: overdue and next 7 days") { focus = "focus" }
-                    Button("Overdue") { focus = "overdue" }; Button("Today") { focus = "today" }
-                    Button("Next 7 days") { focus = "upcoming" }; Button("Unscheduled") { focus = "unscheduled" }; Button("Completed") { focus = "completed" }
-                    if summary.invalid > 0 { Button("Date issues") { focus = "invalid" } }
-                } label: { Image(systemName: "line.3.horizontal.decrease") }.help("Choose agenda focus")
-            }.padding(.bottom, 18)
-            HStack(spacing: 6) { Circle().fill(focusColor).frame(width: 6, height: 6); Text(focusTitle).font(.caption.weight(.semibold)); Text(tasks.count.formatted()).font(.caption.monospacedDigit()).foregroundStyle(.secondary) }.padding(.bottom, 4)
+            cardTitle("Schedule").padding(EdgeInsets(top: 12, leading: 12, bottom: 8, trailing: 12))
+            LazyVStack(spacing: 0) {
+                ForEach(tasks) { entry in
+                    Divider()
+                    ProjectScheduleTaskRow(entry: entry, today: today, dateField: scheduleFields.due ?? scheduleFields.start, status: scheduleFields.status, settings: settings,
+                                           selected: entry.id == selectedID, canComplete: canComplete, locked: locked, select: select, editDate: editDate, complete: complete)
+                }
+            }
             if tasks.isEmpty {
-                VStack(spacing: 12) {
-                    Image(systemName: "checkmark.seal").font(.system(size: 30, weight: .light)).foregroundStyle(Color.accentColor)
-                    Text("A little breathing room").font(.callout.weight(.semibold))
-                    Text("No loaded tasks match this focus. Choose another focus or schedule your undated work.").font(.caption).foregroundStyle(.secondary).multilineTextAlignment(.center)
-                    Button("Show unscheduled tasks") { focus = "unscheduled" }.buttonStyle(.borderless)
-                }.frame(maxWidth: .infinity).padding(.vertical, 36).padding(.horizontal, 24)
-            } else {
-                LazyVStack(spacing: 0) {
-                    ForEach(tasks) { entry in
-                        ProjectScheduleTaskRow(entry: entry, today: today, dateField: scheduleFields.due ?? scheduleFields.start, canComplete: canComplete, locked: locked, select: select, editDate: editDate, complete: complete)
-                        if entry.row.id != tasks.last?.row.id { Divider().opacity(0.6) }
+                Divider()
+                Text(entries.isEmpty ? LocalizedStringKey("No tasks yet") : LocalizedStringKey("No open tasks in this view")).font(.system(size: 12)).foregroundStyle(caption)
+                    .padding(.horizontal, 12).frame(height: 36)
+            }
+            if focus.isEmpty, !overview.done.isEmpty {
+                Divider()
+                Button { showingDone.toggle() } label: {
+                    Text(showingDone ? LocalizedStringKey("Hide done tasks") : LocalizedStringKey("Show \(overview.done.count) more done tasks")).font(.system(size: 12, weight: .medium)).foregroundStyle(caption)
+                        .frame(minHeight: 24).contentShape(Rectangle())
+                }.buttonStyle(.plain).padding(.horizontal, 12).frame(height: 36)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(StudioStyle.border))
+    }
+
+    // MARK: Side cards
+
+    private func side(_ entries: [ProjectScheduleEntry], _ overview: ProjectScheduleOverview) -> some View {
+        VStack(spacing: 12) { progressCard(entries); deadlinesCard(overview); workloadCard(entries) }
+    }
+
+    private func progressCard(_ entries: [ProjectScheduleEntry]) -> some View {
+        let progress = ProjectSchedule.progress(entries, status: scheduleFields.status, settings: settings)
+        let parts: [(String, Int, Color)] = [
+            (String(localized: "Done"), progress.done, StudioStyle.Tone.passed.text),
+            (String(localized: "In progress"), progress.inProgress, StudioStyle.Tone.info.text),
+            (String(localized: "To do"), progress.todo, StudioStyle.Tone.neutral.fill)
+        ]
+        return card {
+            cardTitle("Progress")
+            Text("\(progress.percent)% done").font(.system(size: 15, weight: .semibold))
+            GeometryReader { geometry in
+                let shown = parts.filter { $0.1 > 0 }, room = max(0, geometry.size.width - CGFloat(max(0, shown.count - 1)) * 4)
+                HStack(spacing: 4) {
+                    ForEach(shown, id: \.0) { part in part.2.frame(width: room * CGFloat(part.1) / CGFloat(max(1, progress.total))) }
+                }
+            }
+            .frame(height: 8).background(StudioStyle.Tone.neutral.fill).clipShape(RoundedRectangle(cornerRadius: 4))
+            .accessibilityElement(children: .ignore).accessibilityLabel(parts.map { $0.0 + " " + $0.1.formatted() }.joined(separator: ", "))
+            WorkbenchFlow(spacing: 16) {
+                ForEach(parts, id: \.0) { part in
+                    HStack(spacing: 6) {
+                        RoundedRectangle(cornerRadius: 2).fill(part.2).frame(width: 8, height: 8)
+                            .overlay(RoundedRectangle(cornerRadius: 2).strokeBorder(Color.primary.opacity(0.16)))
+                        Text(verbatim: part.0 + " " + part.1.formatted()).font(.system(size: 12)).foregroundStyle(StudioStyle.Tone.neutral.text)
                     }
                 }
             }
-        }.padding(20).background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 15)).overlay(RoundedRectangle(cornerRadius: 15).stroke(Color.secondary.opacity(0.1)))
-    }
-
-    private var focusTitle: String {
-        switch focus { case "overdue": return String(localized: "Overdue"); case "today": return String(localized: "Today"); case "upcoming": return String(localized: "Next 7 days"); case "unscheduled": return String(localized: "Unscheduled"); case "completed": return String(localized: "Completed"); case "invalid": return String(localized: "Date issues"); default: return String(localized: "Focus: overdue and next 7 days") }
-    }
-    private var focusColor: Color { focus == "overdue" ? .red : focus == "today" ? .orange : focus == "completed" ? .green : .accentColor }
-
-    private var sidePanels: some View { VStack(spacing: 20) { progressPanel; deadlinePanel; workloadPanel } }
-
-    private var progressPanel: some View {
-        let total = summary.active + summary.completed
-        return panel("Project progress", symbol: "chart.pie") {
-            HStack(alignment: .firstTextBaseline, spacing: 4) {
-                Text(total == 0 ? "0%" : (Double(summary.completed) / Double(total)).formatted(.percent.precision(.fractionLength(0)))).font(.system(size: 30, weight: .semibold, design: .rounded))
-                Text("complete").font(.caption).foregroundStyle(.secondary)
-                Spacer()
-                Text("\(summary.completed)/\(total)").font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+            .accessibilityHidden(true)
+            if scheduleFields.status != nil, settings.completedOptionIDs.isEmpty {
+                Text("Choose completed statuses in Schedule settings to include finished drafts and tasks.").font(.system(size: 12)).foregroundStyle(caption).fixedSize(horizontal: false, vertical: true)
             }
-            ProgressView(value: Double(summary.completed), total: Double(max(1, total))).tint(.green)
-            if let status = scheduleFields.status {
-                ForEach(status.options.filter { option in entries.contains { ($0.row.values[status.id] ?? $0.row.statuses[status.id]) == option.id } }.prefix(5)) { option in
-                    HStack { Text(option.name).lineLimit(1); Spacer(); Text(entries.filter { ($0.row.values[status.id] ?? $0.row.statuses[status.id]) == option.id }.count.formatted()).monospacedDigit() }.font(.caption).foregroundStyle(.secondary)
+        }
+    }
+
+    private func deadlinesCard(_ overview: ProjectScheduleOverview) -> some View {
+        card {
+            cardTitle("Upcoming deadlines")
+            ForEach(overview.later.prefix(5)) { entry in
+                Button { select(entry.row) } label: {
+                    HStack(spacing: 8) {
+                        SymbolIcon("flag").font(.system(size: 12)).foregroundStyle(caption).accessibilityHidden(true)
+                        Text(entry.row.title).font(.system(size: 13)).lineLimit(1).truncationMode(.tail).frame(maxWidth: .infinity, alignment: .leading)
+                        Text(verbatim: entry.due.map { ProjectSchedulePresentation.date($0) } ?? "").font(.system(size: 12)).foregroundStyle(caption).fixedSize()
+                    }.contentShape(Rectangle())
+                }.buttonStyle(.plain)
+            }
+            if overview.later.isEmpty { Text("Nothing is due after the next 7 days.").font(.system(size: 12)).foregroundStyle(caption) }
+        }
+    }
+
+    /// The board draws no workload; it stays as a third card because nothing there replaces it.
+    @ViewBuilder private func workloadCard(_ entries: [ProjectScheduleEntry]) -> some View {
+        let workload = ProjectSchedule.workload(entries, today: today).filter { $0.summary.active > 0 }
+            .sorted { $0.summary.active == $1.summary.active ? $0.assignee < $1.assignee : $0.summary.active > $1.summary.active }
+        if !workload.isEmpty {
+            card {
+                cardTitle("Team workload")
+                ForEach(Array(workload.prefix(6)), id: \.assignee) { member in
+                    HStack(spacing: 8) {
+                        if member.assignee.isEmpty { SymbolIcon("person.crop.circle.dashed").font(.system(size: 16)).foregroundStyle(caption).frame(width: 20, height: 20).accessibilityHidden(true) }
+                        else { Avatar(name: member.assignee, email: member.assignee, size: 20).accessibilityHidden(true) }
+                        Text(member.assignee.isEmpty ? String(localized: "Unassigned") : "@" + member.assignee).font(.system(size: 13)).lineLimit(1).truncationMode(.tail).frame(maxWidth: .infinity, alignment: .leading)
+                        if member.summary.overdue > 0 { StatusPill(title: String(localized: "Overdue") + " " + member.summary.overdue.formatted(), symbol: "exclamationmark.circle", tone: .failed) }
+                        Text(member.summary.active.formatted()).font(.system(size: 12)).monospacedDigit().foregroundStyle(caption)
+                    }
                 }
             }
-            if settings.completedOptionIDs.isEmpty { Text("Choose completed statuses in Schedule settings to include finished drafts and tasks.").font(.caption2).foregroundStyle(.secondary) }
         }
     }
 
-    private var deadlinePanel: some View {
-        let dated = entries.filter { !$0.completed && $0.due != nil }
-        let days = Array(Set(dated.compactMap(\.due).filter { $0 >= today && $0 <= endOfWeek })).sorted()
-        return panel("Deadline pressure", symbol: "calendar.badge.exclamationmark") {
-            if summary.overdue > 0 {
-                HStack { Label("Overdue", systemImage: "exclamationmark.circle").foregroundStyle(.red); Spacer(); Text(summary.overdue.formatted()).fontWeight(.semibold).foregroundStyle(.red) }.font(.caption)
-            }
-            if days.isEmpty { Text("No upcoming due dates in the next 7 days.").font(.caption).foregroundStyle(.secondary) }
-            ForEach(days.prefix(5), id: \.self) { day in
-                let count = dated.filter { $0.due == day }.count
-                HStack { Text(day == today ? String(localized: "Today") : ProjectSchedulePresentation.date(day, template: "EEE MMMd")); Spacer(); Text(count.formatted()).monospacedDigit().padding(.horizontal, 7).padding(.vertical, 3).background(Color.accentColor.opacity(0.08), in: Capsule()) }.font(.caption)
-            }
-            Text("Task counts by due date, based on loaded items.").font(.caption2).foregroundStyle(.secondary)
-        }
+    // MARK: Parts
+
+    private func cardTitle(_ title: LocalizedStringKey) -> some View {
+        Text(title).font(.system(size: 12, weight: .semibold)).foregroundStyle(caption).accessibilityAddTraits(.isHeader)
     }
 
-    private var workloadPanel: some View {
-        let workload = ProjectSchedule.workload(entries, today: today).sorted { $0.summary.active == $1.summary.active ? $0.assignee < $1.assignee : $0.summary.active > $1.summary.active }
-        let maximum = max(1, workload.map { $0.summary.active }.max() ?? 1)
-        return panel("Team workload", symbol: "person.2") {
-            if workload.isEmpty { Text("No loaded tasks to assign yet.").font(.caption).foregroundStyle(.secondary) }
-            ForEach(Array(workload.prefix(6)), id: \.assignee) { member in
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack { Text(member.assignee.isEmpty ? String(localized: "Unassigned") : "@" + member.assignee).lineLimit(1); Spacer(); if member.summary.overdue > 0 { Label(member.summary.overdue.formatted(), systemImage: "exclamationmark.circle.fill").foregroundStyle(.red).labelStyle(.titleAndIcon) }; Text(member.summary.active.formatted()).monospacedDigit() }.font(.caption)
-                    GeometryReader { geometry in Capsule().fill(Color.accentColor.opacity(0.08)).overlay(alignment: .leading) { Capsule().fill(Color.accentColor.opacity(member.assignee.isEmpty ? 0.3 : 0.65)).frame(width: geometry.size.width * Double(member.summary.active) / Double(maximum)) } }.frame(height: 5)
-                }.padding(.vertical, 3)
-            }
-            Text("Active tasks per assignee. A task may have several assignees.").font(.caption2).foregroundStyle(.secondary)
-        }
+    private func card<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 8) { content() }
+            .padding(.horizontal, 14).padding(.vertical, 12).frame(maxWidth: .infinity, alignment: .leading)
+            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(StudioStyle.border))
     }
 
-    private func panel<Content: View>(_ title: LocalizedStringKey, symbol: String, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 13) { Label(title, systemImage: symbol).font(.callout.weight(.semibold)); content() }
-            .padding(18).frame(maxWidth: .infinity, alignment: .leading).background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 15)).overlay(RoundedRectangle(cornerRadius: 15).stroke(Color.secondary.opacity(0.1)))
+    /// A notice as docs/design.md draws one: a white strip with a hairline, a 14 pt icon, dark lead text and one plain action
+    private func strip<Action: View>(symbol: String, color: Color, lead: LocalizedStringKey, caption text: LocalizedStringKey?, @ViewBuilder action: () -> Action) -> some View {
+        HStack(spacing: 10) {
+            SymbolIcon(symbol).font(.system(size: 14)).foregroundStyle(color).accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 0) {
+                Text(lead).font(.system(size: 13, weight: .semibold)).fixedSize(horizontal: false, vertical: true)
+                if let text { Text(text).font(.system(size: 12)).foregroundStyle(caption).fixedSize(horizontal: false, vertical: true) }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            action()
+        }
+        .padding(EdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 8))
+        .background(RoundedRectangle(cornerRadius: 8).fill(StudioStyle.surface))
+        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(StudioStyle.border))
     }
 
     private func refreshCalendarDay() async {

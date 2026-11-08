@@ -18,7 +18,7 @@ struct PushReviewSheet: View {
                     }
                     if let error = store.pushReviewError { Text(error).foregroundStyle(.red).textSelection(.enabled) }
                     if force {
-                        Label("Force push can replace remote history. The reviewed remote revision is protected by an explicit lease.", systemImage: "exclamationmark.triangle")
+                        Label("Force push can replace remote history. The reviewed remote revision is protected by an explicit lease.", symbol: "exclamationmark.triangle")
                             .foregroundStyle(.orange).font(.callout)
                     }
                     if let plan = store.pushReview {

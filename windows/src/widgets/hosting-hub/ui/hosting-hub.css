@@ -27,11 +27,7 @@
 .hub-error .hub-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
 .hub-error .hub-actions > .hint { flex: 1 1 200px; }
 .hub-project-access { flex: 0 0 auto; max-height: 50%; overflow: auto; margin: 12px 22px; padding: 16px; border: 1px solid var(--border); border-radius: 10px; }
-
-.hub-item-summary { font-size: 12px; color: var(--text-2); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .project-workspace { min-width: 0; display: flex; flex-direction: column; gap: 16px; }
-.project-toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.project-view-switch { display: flex; gap: 4px; padding: 3px; border: 1px solid var(--border); border-radius: 9px; }
 .project-workspace .project-group { display: flex; flex-direction: row; align-items: center; gap: 8px; margin-left: auto; font-size: 12px; color: var(--text-2); }
 .project-group .select { width: auto; min-width: 100px; }
 .project-board { display: flex; gap: 12px; overflow-x: auto; padding: 2px 2px 12px; align-items: flex-start; }

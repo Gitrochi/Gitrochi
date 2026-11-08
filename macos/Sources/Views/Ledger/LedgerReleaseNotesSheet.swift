@@ -77,7 +77,7 @@ struct LedgerReleaseNotesSheet: View {
                 NSPasteboard.general.setString(markdown, forType: .string)
                 copied = true
             } label: {
-                Label(copied ? "Copied" : "Copy Markdown", systemImage: copied ? "checkmark" : "doc.on.doc")
+                Label(copied ? "Copied" : "Copy Markdown", symbol: copied ? "checkmark" : "doc.on.doc")
             }
             .buttonStyle(.borderedProminent)
             .disabled(notes == nil)

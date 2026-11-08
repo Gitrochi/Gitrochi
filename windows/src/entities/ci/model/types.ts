@@ -102,6 +102,11 @@ export interface CIPipeline {
   created: number | null;
   event: string;
   actor: string | null;
+  /** When this attempt started and when the run last changed; together they say how long a finished run took */
+  started?: number | null;
+  updated?: number | null;
+  /** GitHub: the pull request the run belongs to, when the run list names one */
+  request?: number | null;
 }
 
 export interface CIJob {

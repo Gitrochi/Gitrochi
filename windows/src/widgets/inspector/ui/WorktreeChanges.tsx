@@ -1,4 +1,4 @@
-import { GitBranch } from "lucide-react";
+import { GitBranch } from "@/shared/icons";
 import { type DiffSource, emptyStatus, sameDiffSource, StatusBadge, statusFiles } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
 import { displayPath, samePath } from "@/shared/config";

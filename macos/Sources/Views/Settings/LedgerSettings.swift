@@ -339,7 +339,7 @@ struct LedgerSettings: View {
             }
             .labelsHidden().fixedSize()
             .help(rule == nil ? Text("Sessions of this kind count as Other until it has a role") : Text("The role of sessions of this kind"))
-            Button { setKind(kind, nil) } label: { Image(systemName: "minus.circle") }
+            Button { setKind(kind, nil) } label: { SymbolIcon("minus.circle") }
                 .buttonStyle(.borderless)
                 .disabled(rule == nil)
                 .help("Remove this kind's rule")
@@ -519,7 +519,7 @@ struct LedgerSettings: View {
             }
             Button("Choose…") { if let folder = Self.chooseFolder(start: path) { set(folder) } }
             if path != nil {
-                Button { set(nil) } label: { Image(systemName: "xmark.circle.fill") }
+                Button { set(nil) } label: { SymbolIcon("xmark.circle.fill") }
                     .buttonStyle(.borderless)
                     .help("Clear")
                     .accessibilityLabel("Clear")

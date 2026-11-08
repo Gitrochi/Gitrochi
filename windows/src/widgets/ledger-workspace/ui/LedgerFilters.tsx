@@ -1,4 +1,5 @@
-import { ChevronDown, ListFilter } from "lucide-react";
+import { ListFilter } from "@/shared/icons";
+import { ChevronDown } from "@/shared/icons";
 import { type LedgerStore, verdictCounts, verdictLook } from "@/entities/ledger";
 import { basename } from "@/shared/config";
 import { t } from "@/shared/i18n";

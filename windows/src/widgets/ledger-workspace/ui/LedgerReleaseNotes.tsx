@@ -1,4 +1,4 @@
-import { Check, Copy, FileText } from "lucide-react";
+import { Check, Copy, FileText } from "@/shared/icons";
 import { useEffect, useState } from "react";
 import { type LedgerReleaseNotes as Notes, type LedgerStore, releaseNotesSummary } from "@/entities/ledger";
 import { t } from "@/shared/i18n";

@@ -1,18 +1,21 @@
 import { ipc } from "@/shared/api";
 import type { RemoteRepo } from "@/entities/git";
 import { t } from "@/shared/i18n";
-import { collaborationRepoURL, type InboxItem } from "./collaboration";
+import { collaborationRepoURL, issueFacts, type InboxItem, type IssueFactsRecord } from "./collaboration";
 import { send, sendRaw, date } from "./hosting";
 import type { ReviewAccess } from "./review";
 
-export type IssueScope = "open" | "closed" | "all";
+/** `assigned` is open and assigned to this account */
+export type IssueScope = "open" | "closed" | "all" | "assigned";
+/** Newest activity first, newest first or oldest first */
+export type IssueSort = "updated" | "created" | "oldest";
 const current = (c: ReviewAccess) => {
   if (c.stillCurrent?.() === false)
     throw new Error(
       t("The repository or account changed. Reopen this action."),
     );
 };
-interface IssueRecord {
+interface IssueRecord extends IssueFactsRecord {
   number?: number;
   iid?: number;
   title: string;
@@ -37,21 +40,25 @@ export const workspaceIssue = (i: IssueRecord): InboxItem => ({
   updated: date(i.updated_at),
   author: i.user?.login ?? i.author?.username ?? "",
   unread: false,
+  ...issueFacts(i),
 });
 export async function issuePage(
   c: ReviewAccess,
   scope: IssueScope,
   search = "",
   page = 1,
+  sort: IssueSort = "updated",
 ): Promise<{ items: InboxItem[]; more: boolean }> {
   current(c);
   const n = Math.max(1, Math.floor(page));
+  const assigned = scope === "assigned", state = assigned ? "open" : scope;
+  const field = sort === "updated" ? "updated" : "created", direction = sort === "oldest" ? "asc" : "desc";
   if (c.target.provider === "github" && search.trim()) {
     const text = search.trim().replace(/["\\]/g, " ");
-    const q = `repo:${c.target.path} is:issue ${scope === "all" ? "" : `is:${scope}`} "${text}"`;
+    const q = `repo:${c.target.path} is:issue ${state === "all" ? "" : `is:${state}`}${assigned ? ` assignee:${c.me}` : ""} "${text}"`;
     const result = await send<{ items: IssueRecord[]; total_count: number }>(
       c.target.provider,
-      `${c.apiBase}/search/issues?${new URLSearchParams({ q, sort: "updated", order: "desc", per_page: "30", page: String(n) })}`,
+      `${c.apiBase}/search/issues?${new URLSearchParams({ q, sort: field, order: direction, per_page: "30", page: String(n) })}`,
       c.token,
     );
     return {
@@ -62,12 +69,12 @@ export async function issuePage(
   // newest activity first; GitHub sorts with sort/direction, GitLab with order_by/sort (sort only takes asc or desc)
   const q = new URLSearchParams({
     state:
-      c.target.provider === "gitlab" && scope === "open" ? "opened" : scope,
+      c.target.provider === "gitlab" && state === "open" ? "opened" : state,
     per_page: "30",
     page: String(n),
     ...(c.target.provider === "gitlab"
-      ? { order_by: "updated_at", sort: "desc" }
-      : { sort: "updated", direction: "desc" }),
+      ? { order_by: `${field}_at`, sort: direction, ...(assigned ? { assignee_username: c.me } : {}) }
+      : { sort: field, direction, ...(assigned ? { assignee: c.me } : {}) }),
   });
   if (search.trim()) q.set("search", search.trim());
   const items = await send<IssueRecord[]>(

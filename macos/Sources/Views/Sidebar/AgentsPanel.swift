@@ -17,20 +17,20 @@ struct AgentsPanel: View {
                         Button("Clear ended sessions") { agents.clearEnded() }
                             .buttonStyle(.borderless).font(.caption)
                     }
-                    Button { store.sheet = .addWorktree(branch: nil, start: nil) } label: { Image(systemName: "plus") }
+                    Button { store.sheet = .addWorktree(branch: nil, start: nil) } label: { DesignIconImage(icon: .plus) }
                         .buttonStyle(.borderless)
                         .help("New worktree")
                 }
 
                 HStack(spacing: 6) {
                     Button { store.sheet = .startAgent(path: nil) } label: {
-                        Label("Start session", systemImage: "sparkles")
+                        Label("Start session", symbol: "sparkles")
                             .frame(maxWidth: .infinity)
                     }
                     .controlSize(.large)
                     .help("Start agent session — choose Claude Code, Codex or Gemini CLI, a worktree to work in, and a task")
                     Button { if let u = store.url { store.startAgent(in: u.path) } } label: {
-                        Image(systemName: "bolt.fill")
+                        SymbolIcon("bolt.fill")
                     }
                     .controlSize(.large)
                     .help("Start \(agents.defaultKind.title) in this worktree now")
@@ -106,7 +106,7 @@ private struct ExternalAgentRow: View {
                 Text(place).font(.caption2).foregroundStyle(.tertiary).lineLimit(1).truncationMode(.head)
             }
             Spacer(minLength: 0)
-            Image(systemName: "arrow.up.forward.app").foregroundStyle(.secondary).font(.caption)
+            DesignIconImage(icon: .external).foregroundStyle(.secondary).font(.caption)
         }
         .font(.callout)
         .contentShape(Rectangle())
@@ -122,7 +122,7 @@ private struct ExternalAgentRow: View {
         if let pid = agent.hostPID, let icon = NSRunningApplication(processIdentifier: pid)?.icon {
             Image(nsImage: icon).resizable().scaledToFit()
         } else {
-            Image(systemName: "terminal").foregroundStyle(.secondary)
+            DesignIconImage(icon: .terminal).foregroundStyle(.secondary)
         }
     }
 
@@ -191,7 +191,7 @@ private struct WorktreeCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 6) {
-                Image(systemName: worktree.isMain ? "house" : "arrow.triangle.branch")
+                SymbolIcon(worktree.isMain ? "house" : "arrow.triangle.branch")
                     .foregroundStyle(.secondary)
                 Text(worktree.branch ?? String(localized: "Detached HEAD"))
                     .font(.headline)
@@ -200,7 +200,7 @@ private struct WorktreeCard: View {
                     .help(worktree.path)
                 Spacer(minLength: 4)
                 if hover {
-                    Button { store.sheet = .startAgent(path: worktree.path) } label: { Image(systemName: "sparkles") }
+                    Button { store.sheet = .startAgent(path: worktree.path) } label: { DesignIconImage(icon: .sparkles) }
                         .buttonStyle(.borderless)
                         .help("Start an agent session in this worktree")
                 }
@@ -213,7 +213,7 @@ private struct WorktreeCard: View {
                     }
                     if stats.added > 0 { Text("+\(stats.added)").foregroundStyle(.green).help("New file") }
                     if stats.modified > 0 {
-                        Label("\(stats.modified)", systemImage: "pencil").labelStyle(.titleAndIcon)
+                        Label("\(stats.modified)", symbol: "pencil").labelStyle(.titleAndIcon)
                             .foregroundStyle(.orange).help("Modified files")
                     }
                     if stats.deleted > 0 { Text("−\(stats.deleted)").foregroundStyle(.red).help("Deleted file") }
@@ -275,7 +275,7 @@ private struct SessionRow: View {
                     Text(session.status.title).fontWeight(.medium)
                     Text(session.kind.title).font(.caption2).foregroundStyle(.tertiary)
                     if session.kind.skipsPermissions(session.mode) {
-                        Label("Skips permissions", systemImage: "exclamationmark.shield.fill")
+                        Label("Skips permissions", symbol: "exclamationmark.shield.fill")
                             .font(.caption2)
                             .foregroundStyle(.red)
                             .fixedSize()

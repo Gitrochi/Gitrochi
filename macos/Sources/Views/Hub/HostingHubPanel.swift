@@ -4,6 +4,9 @@ struct HostingHubPanel: View {
     @Bindable var store: RepoStore
     let section: HostingHubSection
     var onClone: ((String) -> Void)? = nil
+    /// On the Account page: the page's own row chooses the account and refreshes, so this panel draws no header
+    var embedded = false
+    @Environment(\.openSettings) private var openSettings
     @ViewState private var editor: String?
     @ViewState private var release = HubReleaseInput()
     @ViewState private var gist = HubGistInput()
@@ -13,6 +16,8 @@ struct HostingHubPanel: View {
     @ViewState private var projectFieldID = ""
     private var locked: Bool { store.hostingHub.loading || store.hostingHub.detailLoading || store.hostingHub.busy || store.hostingHub.allowingCredentialAccess || store.hubCredentialState == .loading }
     private var accessRequired: Bool { store.hostingHub.projectPermissionRequired || store.hubCredentialState == .authorizationRequired }
+    /// The server refused the saved sign-in; the hub keeps its errors as text, so this is the text a 401 becomes
+    private var expired: Bool { store.hostingHub.error == HostingError(status: 401, body: Data()).errorDescription }
     private var title: String { if store.hubProvider == .gitlab { switch section { case .gists: return String(localized: "Snippets"); case .organizations: return String(localized: "Groups"); case .projects: return String(localized: "Issue boards"); default: break } }; return section.title }
     @ViewBuilder var body: some View {
         if section == .releases { ReleaseWorkspace(store: store) }
@@ -21,27 +26,29 @@ struct HostingHubPanel: View {
     }
     private var standardBody: some View {
         VStack(spacing: 0) {
-            VStack(alignment: .leading, spacing: 12) {
-                Text(title).font(.title2.weight(.semibold))
-                WorkbenchFlow(spacing: 10) {
-                    // Releases use the repository's account, which the toolbar already chooses
-                    if section != .releases {
-                        Picker("Workspace account", selection: Binding(get: { store.hubAccount?.id ?? "" }, set: { id in editor = nil; Task { await store.selectHubAccount(id) } })) {
-                            if AccountStore.shared.accounts.isEmpty { Text("No connected account").tag("") }
-                            ForEach(AccountStore.shared.accounts) { a in Text("\(a.host) · @\(a.username)").tag(a.id) }
-                        }.labelsHidden().frame(width: 250).disabled(locked)
+            if !embedded {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text(title).font(.title2.weight(.semibold))
+                    WorkbenchFlow(spacing: 10) {
+                        // Releases use the repository's account, which the toolbar already chooses
+                        if section != .releases {
+                            Picker("Workspace account", selection: Binding(get: { store.hubAccount?.id ?? "" }, set: { id in editor = nil; Task { await store.selectHubAccount(id) } })) {
+                                if AccountStore.shared.accounts.isEmpty { Text("No connected account").tag("") }
+                                ForEach(AccountStore.shared.accounts) { a in Text("\(a.host) · @\(a.username)").tag(a.id) }
+                            }.labelsHidden().frame(width: 250).disabled(locked)
+                        }
+                        if section == .projects, store.hubProvider == .github, let account = store.hubAccount {
+                            Picker("Project scope", selection: Binding(get: { store.hubProjectEffectiveScope }, set: { scope in editor = nil; Task { await store.selectHubProjectScope(scope) } })) {
+                                if let owner = store.hubProjectRepositoryOwner { Text(verbatim: String(localized: "Repository owner: {0}").replacingOccurrences(of: "{0}", with: owner)).tag("repository") }
+                                Text(verbatim: String(localized: "My projects: @{0}").replacingOccurrences(of: "{0}", with: account.username)).tag("personal")
+                            }.frame(maxWidth: 310).disabled(locked)
+                        }
+                        Button { editor = nil; Task { await store.loadHostingHub() } } label: { DesignIconImage(icon: .refresh) }.help("Refresh").disabled(locked)
+                        if section == .releases || section == .gists { Button { startEditor(edit: false) } label: { Label("New", symbol: "plus") }.disabled(locked || store.hubAccount == nil) }
                     }
-                    if section == .projects, store.hubProvider == .github, let account = store.hubAccount {
-                        Picker("Project scope", selection: Binding(get: { store.hubProjectEffectiveScope }, set: { scope in editor = nil; Task { await store.selectHubProjectScope(scope) } })) {
-                            if let owner = store.hubProjectRepositoryOwner { Text(verbatim: String(localized: "Repository owner: {0}").replacingOccurrences(of: "{0}", with: owner)).tag("repository") }
-                            Text(verbatim: String(localized: "My projects: @{0}").replacingOccurrences(of: "{0}", with: account.username)).tag("personal")
-                        }.frame(maxWidth: 310).disabled(locked)
-                    }
-                    Button { editor = nil; Task { await store.loadHostingHub() } } label: { Image(systemName: "arrow.clockwise") }.help("Refresh").disabled(locked)
-                    if section == .releases || section == .gists { Button { startEditor(edit: false) } label: { Label("New", systemImage: "plus") }.disabled(locked || store.hubAccount == nil) }
-                }
-            }.frame(maxWidth: .infinity, alignment: .leading).padding(20)
-            Divider()
+                }.frame(maxWidth: .infinity, alignment: .leading).padding(20)
+                Divider()
+            }
             if store.hostingHub.allowingCredentialAccess {
                 HStack { ProgressView().controlSize(.small); Text("Waiting for your macOS approval. You can continue using local Git tools.").font(.caption).foregroundStyle(.secondary) }
                     .frame(maxWidth: .infinity, alignment: .leading).padding(14)
@@ -50,50 +57,70 @@ struct HostingHubPanel: View {
                     .frame(maxWidth: .infinity, alignment: .leading).padding(14)
             }
             if let notice = store.hostingHub.notice { noticeView(notice) }
-            if let error = store.hostingHub.error {
-                VStack(alignment: .leading, spacing: 10) {
-                    Label { Text(error).textSelection(.enabled).fixedSize(horizontal: false, vertical: true) } icon: { Image(systemName: accessRequired ? "lock.shield" : "exclamationmark.circle") }
-                        .font(.callout).foregroundStyle(accessRequired ? Color.secondary : Color.red)
-                    WorkbenchFlow(spacing: 8) {
-                        if let account = store.pendingHubCredentialAccount {
-                            CredentialAccessNotice(account: account)
-                        } else if store.hostingHub.projectPermissionRequired, let account = store.hubAccount {
-                            Button("Connect project access") { projectAccessAccount = account }.buttonStyle(.borderedProminent).disabled(locked)
-                            Text("Approve the additional permission in GitHub, then projects will reload automatically.").font(.caption).foregroundStyle(.secondary)
+            if embedded, expired, let account = store.hubAccount {
+                AccountState(symbol: "exclamationmark.triangle.fill", tint: StudioStyle.Tone.waiting.text, title: String(localized: "Sign-in expired"),
+                             caption: String(localized: "@\(account.username) on \(account.host). Local branches and commits still work."),
+                             action: String(localized: "Sign in again…"), filled: true) { openSettings() }
+            } else {
+                if let error = store.hostingHub.error {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Label { Text(error).textSelection(.enabled).fixedSize(horizontal: false, vertical: true) } icon: { SymbolIcon(accessRequired ? "lock.shield" : "exclamationmark.circle") }
+                            .font(.callout).foregroundStyle(accessRequired ? Color.secondary : Color.red)
+                        WorkbenchFlow(spacing: 8) {
+                            if let account = store.pendingHubCredentialAccount {
+                                CredentialAccessNotice(account: account)
+                            } else if store.hostingHub.projectPermissionRequired, let account = store.hubAccount {
+                                Button("Connect project access") { projectAccessAccount = account }.buttonStyle(.borderedProminent).disabled(locked)
+                                Text("Approve the additional permission in GitHub, then projects will reload automatically.").font(.caption).foregroundStyle(.secondary)
+                            } else {
+                                Button("Retry") { Task { if let d = store.hostingHub.detail { await store.selectHostingHubItem(d.item) } else { await store.loadHostingHub() } } }.disabled(locked)
+                            }
+                        }
+                    }.frame(maxWidth: .infinity, alignment: .leading).padding(14)
+                        // a notice is white with a hairline; a tint means selection (docs/design.md)
+                        .background(RoundedRectangle(cornerRadius: 6).fill(StudioStyle.surface))
+                        .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(StudioStyle.border))
+                        .padding(.horizontal, embedded ? 20 : 14).padding(.vertical, 10)
+                }
+                split {
+                    VStack(alignment: .leading, spacing: 10) {
+                        if embedded {
+                            HStack(spacing: 6) {
+                                DesignIconImage(icon: .search, size: 12).foregroundStyle(StudioStyle.Rail.icon)
+                                TextField("Search loaded items", text: $store.hostingHub.query).textFieldStyle(.plain).font(.system(size: 13))
+                            }
+                            .padding(.horizontal, 10).frame(height: 28)
+                            .background(RoundedRectangle(cornerRadius: 6).fill(StudioStyle.surface))
+                            .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(AccountStyle.edge))
                         } else {
-                            Button("Retry") { Task { if let d = store.hostingHub.detail { await store.selectHostingHubItem(d.item) } else { await store.loadHostingHub() } } }.disabled(locked)
+                            TextField("Search loaded items", text: $store.hostingHub.query).textFieldStyle(.roundedBorder)
                         }
+                        Text("Search filters loaded pages. Load more to search older items.").font(.caption).foregroundStyle(.secondary)
+                        ScrollView { LazyVStack(alignment: .leading, spacing: 5) {
+                            ForEach(store.hostingHub.filteredItems) { item in
+                                Button { editor = nil; Task { await store.selectHostingHubItem(item) } } label: {
+                                    itemRow(item)
+                                }.buttonStyle(.plain).background(RoundedRectangle(cornerRadius: 8).fill(store.hostingHub.detail?.item.id == item.id && editor == nil ? Color.accentColor.opacity(0.16) : .clear)).disabled(locked)
+                            }
+                            if store.hostingHub.loading { ProgressView().padding() }
+                            if !locked && store.hostingHub.items.isEmpty && store.hostingHub.error == nil {
+                                VStack(alignment: .leading, spacing: 10) {
+                                    Text(section == .projects && store.hubProvider == .github ? String(localized: "No projects found for {0}.").replacingOccurrences(of: "{0}", with: store.hubProjectOwner) : section == .projects ? String(localized: "No projects found for this owner.") : section == .releases ? String(localized: "No releases found for this repository.") : String(localized: "No items returned by this account.")).font(.caption).foregroundStyle(.secondary)
+                                    if section == .projects && store.hubProvider == .github && store.hubProjectEffectiveScope == "repository" { Button("Show my projects") { Task { await store.selectHubProjectScope("personal") } }.disabled(locked) }
+                                }.padding()
+                            }
+                            if store.hostingHub.more { Button("Load more") { Task { await store.loadHostingHub(append: true) } }.disabled(locked) }
+                        } }
+                    }.padding(12).background(embedded ? StudioStyle.canvas : Color.clear)
+                } detail: {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 14) {
+                            if editor != nil { editForm.disabled(locked) }
+                            else if store.hostingHub.detailLoading && store.hostingHub.detail == nil { ProgressView().padding(30) }
+                            else if let d = store.hostingHub.detail { detailView(d) }
+                            else { Text(section == .projects ? String(localized: "Select a project to view its board.") : String(localized: "Select an item to see details and available actions.")).foregroundStyle(.secondary).padding(30) }
+                        }.frame(maxWidth: .infinity, alignment: .leading).padding(22)
                     }
-                }.frame(maxWidth: .infinity, alignment: .leading).padding(14).background(Color.secondary.opacity(0.06))
-            }
-            AdaptiveWorkbenchSplit {
-                VStack(alignment: .leading, spacing: 10) {
-                    TextField("Search loaded items", text: $store.hostingHub.query).textFieldStyle(.roundedBorder)
-                    Text("Search filters loaded pages. Load more to search older items.").font(.caption).foregroundStyle(.secondary)
-                    ScrollView { LazyVStack(alignment: .leading, spacing: 5) {
-                        ForEach(store.hostingHub.filteredItems) { item in
-                            Button { editor = nil; Task { await store.selectHostingHubItem(item) } } label: {
-                                itemRow(item)
-                            }.buttonStyle(.plain).background(RoundedRectangle(cornerRadius: 8).fill(store.hostingHub.detail?.item.id == item.id && editor == nil ? Color.accentColor.opacity(0.16) : .clear)).disabled(locked)
-                        }
-                        if store.hostingHub.loading { ProgressView().padding() }
-                        if !locked && store.hostingHub.items.isEmpty && store.hostingHub.error == nil {
-                            VStack(alignment: .leading, spacing: 10) {
-                                Text(section == .projects && store.hubProvider == .github ? String(localized: "No projects found for {0}.").replacingOccurrences(of: "{0}", with: store.hubProjectOwner) : section == .projects ? String(localized: "No projects found for this owner.") : section == .releases ? String(localized: "No releases found for this repository.") : String(localized: "No items returned by this account.")).font(.caption).foregroundStyle(.secondary)
-                                if section == .projects && store.hubProvider == .github && store.hubProjectEffectiveScope == "repository" { Button("Show my projects") { Task { await store.selectHubProjectScope("personal") } }.disabled(locked) }
-                            }.padding()
-                        }
-                        if store.hostingHub.more { Button("Load more") { Task { await store.loadHostingHub(append: true) } }.disabled(locked) }
-                    } }
-                }.padding(12)
-            } detail: {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 14) {
-                        if editor != nil { editForm.disabled(locked) }
-                        else if store.hostingHub.detailLoading && store.hostingHub.detail == nil { ProgressView().padding(30) }
-                        else if let d = store.hostingHub.detail { detailView(d) }
-                        else { Text(section == .projects ? String(localized: "Select a project to view its board.") : String(localized: "Select an item to see details and available actions.")).foregroundStyle(.secondary).padding(30) }
-                    }.frame(maxWidth: .infinity, alignment: .leading).padding(22)
                 }
             }
         }
@@ -110,6 +137,10 @@ struct HostingHubPanel: View {
         }
         .onChange(of: store.hostingHub.uncertainWrite) { _, uncertain in if uncertain { editor = nil } }
         .task(id: section.rawValue + store.hubContextStamp(in: section)) { editor = nil; issueURL = ""; await store.activateHostingHub(section); if section == .organizations, store.hostingHub.detail == nil, store.hostingHub.error == nil, !store.hostingHub.detailLoading, let first = store.hostingHub.items.first { await store.selectHostingHubItem(first, tab: "overview") } }
+    }
+    /// On the Account page the list is the page's fixed 312 pt column
+    @ViewBuilder private func split<Leading: View, Detail: View>(@ViewBuilder leading: () -> Leading, @ViewBuilder detail: () -> Detail) -> some View {
+        if embedded { AccountSplit(leading: leading, detail: detail) } else { AdaptiveWorkbenchSplit(leading: leading, detail: detail) }
     }
     private func itemRow(_ item: HubItem) -> some View {
         HStack(spacing: 10) {
@@ -164,10 +195,10 @@ struct HostingHubPanel: View {
             Text(d.item.title).font(.title3.weight(.semibold)).textSelection(.enabled)
             Text(d.item.subtitle).font(.caption).foregroundStyle(.secondary)
         WorkbenchFlow {
-            if safeURL(d.item.url) != nil { Button { open(d.item.url) } label: { Label("Open in browser", systemImage: "arrow.up.right.square") } }
+            if safeURL(d.item.url) != nil { Button { open(d.item.url) } label: { Label("Open in browser", symbol: "arrow.up.right.square") } }
             if section == .releases || section == .gists && d.item.editable { Button("Edit") { startEditor(edit: true) }.disabled(section == .gists && (d.files.contains(where: \.truncated) || d.item.data["truncated"] as? Bool == true)) }
-            if section == .gists, let starred = d.starred { Button { let context = store.hubActionStamp; Task { await store.hostingHubAction(expected: context) { c in try await HostingHubAPI.star(c, item: d.item, starred: !starred) } } } label: { Label(starred ? String(localized: "Unstar") : String(localized: "Star"), systemImage: starred ? "star.fill" : "star") } }
-            if section == .releases || section == .gists && d.item.editable { Button(role: .destructive) { confirm(String(localized: "Delete this item?"), d.item.title + "\n" + String(localized: "This removes the remote item. Release tags and git history are kept."), refreshList: true, destructive: true) { c in try await HostingHubAPI.delete(c, section: section, item: d.item) } } label: { Label("Delete", systemImage: "trash") } }
+            if section == .gists, let starred = d.starred { Button { let context = store.hubActionStamp; Task { await store.hostingHubAction(expected: context) { c in try await HostingHubAPI.star(c, item: d.item, starred: !starred) } } } label: { Label(starred ? String(localized: "Unstar") : String(localized: "Star"), symbol: starred ? "star.fill" : "star") } }
+            if section == .releases || section == .gists && d.item.editable { Button(role: .destructive) { confirm(String(localized: "Delete this item?"), d.item.title + "\n" + String(localized: "This removes the remote item. Release tags and git history are kept."), refreshList: true, destructive: true) { c in try await HostingHubAPI.delete(c, section: section, item: d.item) } } label: { Label("Delete", symbol: "trash") } }
         }.controlSize(.small).disabled(locked)
         if let notice = d.notice { noticeView(notice) }
         if !d.item.body.isEmpty { Text(d.item.body).textSelection(.enabled).fixedSize(horizontal: false, vertical: true) }
@@ -194,7 +225,7 @@ struct HostingHubPanel: View {
     private func projectWorkspace(_ detail: HubDetail) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             WorkbenchFlow(spacing: 12) {
-                Picker("Project view", selection: $projectLayout) { Label("Board", systemImage: "rectangle.split.3x1").tag("board"); Label("List", systemImage: "list.bullet").tag("list") }.pickerStyle(.segmented).frame(width: 170)
+                Picker("Project view", selection: $projectLayout) { Label("Board", symbol: "rectangle.split.3x1").tag("board"); Label("List", symbol: "list.bullet").tag("list") }.pickerStyle(.segmented).frame(width: 170)
                 Text(verbatim: String(localized: "{0} loaded items").replacingOccurrences(of: "{0}", with: detail.rows.count.formatted())).font(.caption).foregroundStyle(.secondary)
                 if let field = groupingField(detail) {
                     Picker("Group by", selection: Binding(get: { field.id }, set: { projectFieldID = $0 })) { ForEach(detail.fields) { value in Text(value.name).tag(value.id) } }.frame(maxWidth: 230)
@@ -202,7 +233,7 @@ struct HostingHubPanel: View {
             }
             if detail.fields.isEmpty { Text("No editable single-select fields. Add a Status field in the project to move items here.").font(.caption).foregroundStyle(.secondary) }
             if detail.rows.isEmpty {
-                VStack(spacing: 10) { Image(systemName: "rectangle.split.3x1").font(.title); Text("This project has no loaded items.").font(.headline); Text("Add an existing issue below or manage the project in GitHub.").font(.caption) }
+                VStack(spacing: 10) { SymbolIcon("rectangle.split.3x1").font(.title); Text("This project has no loaded items.").font(.headline); Text("Add an existing issue below or manage the project in GitHub.").font(.caption) }
                     .foregroundStyle(.secondary).frame(maxWidth: .infinity).padding(28).background(RoundedRectangle(cornerRadius: 12).stroke(Color.secondary.opacity(0.2), style: StrokeStyle(lineWidth: 1, dash: [5])))
             } else if projectLayout == "board" {
                 ScrollView(.horizontal) {
@@ -219,7 +250,7 @@ struct HostingHubPanel: View {
             Divider()
             WorkbenchFlow(spacing: 8) {
                 TextField("Issue URL", text: $issueURL).textFieldStyle(.roundedBorder).frame(minWidth: 200, idealWidth: 330)
-                Button { let url = issueURL; confirm(store.hubProvider == .gitlab ? String(localized: "Move issue to the Open column?") : String(localized: "Add issue to project?"), store.hubProvider == .gitlab ? url + "\n" + String(localized: "This reopens the issue and removes its board column labels.") : url) { c in try await HostingHubAPI.addIssue(c, detail: detail, issueURL: url) } } label: { Label("Add issue", systemImage: "plus") }.disabled(issueURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                Button { let url = issueURL; confirm(store.hubProvider == .gitlab ? String(localized: "Move issue to the Open column?") : String(localized: "Add issue to project?"), store.hubProvider == .gitlab ? url + "\n" + String(localized: "This reopens the issue and removes its board column labels.") : url) { c in try await HostingHubAPI.addIssue(c, detail: detail, issueURL: url) } } label: { Label("Add issue", symbol: "plus") }.disabled(issueURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }.disabled(locked)
         }
     }
@@ -234,9 +265,9 @@ struct HostingHubPanel: View {
     private func projectCard(_ row: HubProjectRow, detail: HubDetail) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .top, spacing: 7) {
-                Image(systemName: "circle").foregroundStyle(Color.accentColor).font(.caption).padding(.top, 3)
+                SymbolIcon("circle").foregroundStyle(Color.accentColor).font(.caption).padding(.top, 3)
                 Text(row.title).font(.callout.weight(.semibold)).fixedSize(horizontal: false, vertical: true).frame(maxWidth: .infinity, alignment: .leading)
-                if safeURL(row.url) != nil { Button { open(row.url) } label: { Image(systemName: "arrow.up.right.square") }.buttonStyle(.borderless).help("Open in browser") }
+                if safeURL(row.url) != nil { Button { open(row.url) } label: { DesignIconImage(icon: .external) }.buttonStyle(.borderless).help("Open in browser") }
             }
             if !row.body.isEmpty { Text(String(row.body.prefix(1200))).font(.caption).foregroundStyle(.secondary).lineLimit(3).textSelection(.enabled) }
             ForEach(detail.fields) { field in projectField(field, row: row, detail: detail).font(.caption) }

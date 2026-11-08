@@ -74,12 +74,9 @@ extension ProjectWorkspace {
                             '}.frame(maxWidth: .infinity, alignment: .leading).disabled(locked)\n            .background(ProjectWorkspaceProbe(identifier: "project-controls"))',
                             'Project controls measurement attachment')
     elif relative == 'Views/Hub/ProjectWorkspaceHeader.swift':
-        text = replace_once(text, 'Button(action: addTask) { Label("New task", systemImage: "plus").fontWeight(.semibold) }.buttonStyle(.borderedProminent).controlSize(.large)',
-                            'Button(action: addTask) { Label("New task", systemImage: "plus").fontWeight(.semibold) }.buttonStyle(.borderedProminent).controlSize(.large).background(ProjectWorkspaceProbe(identifier: "project-add-item"))',
-                            'Local project add-task measurement attachment')
-        text = replace_once(text, '.background(Color.accentColor, in: RoundedRectangle(cornerRadius: 8))',
-                            '.background(Color.accentColor, in: RoundedRectangle(cornerRadius: 8)).background(ProjectWorkspaceProbe(identifier: "project-add-item"))',
-                            'Remote project add-item measurement attachment')
+        text = replace_once(text, '{ Label("New task…", systemImage: "plus") }.buttonStyle(.borderedProminent)',
+                            '{ Label("New task…", systemImage: "plus") }.buttonStyle(.borderedProminent).background(ProjectWorkspaceProbe(identifier: "project-add-item"))',
+                            'New task measurement attachment, the one filled action of local and remote projects')
     elif relative == 'Views/Hub/ProjectTaskViews.swift':
         text = replace_once(text, '.task(id: row.id + store.hubContextStamp) { await readConversation() }',
                             '.task(id: row.id + store.hubContextStamp) { await readConversation() }.background(ProjectWorkspaceProbe(identifier: "project-inspector:" + row.id)).background(ProjectWorkspaceProbe(identifier: "inspector-comments:" + conversationComments.count.formatted())).background(ProjectWorkspaceProbe(identifier: "inspector-comment-text:" + commentText)).background(ProjectWorkspaceProbe(identifier: "inspector-comment-error:" + (commentError ?? "none"))).background(ProjectWorkspaceProbe(identifier: "inspector-comment-posted:" + String(commentPosted)))',
@@ -99,8 +96,8 @@ extension ProjectWorkspace {
         text = replace_once(text, '}.buttonStyle(.plain).accessibilityLabel(row.title)',
                             '}.buttonStyle(.plain).background(ProjectWorkspaceProbe(identifier: "task:" + row.id)).accessibilityLabel(row.title)',
                             'Project card measurement attachment')
-        text = replace_once(text, '.overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.secondary.opacity(0.1)))',
-                            '.overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.secondary.opacity(0.1)))\n        .background(ProjectWorkspaceProbe(identifier: "column:" + column.id))',
+        text = replace_once(text, '.background(StudioStyle.sidebar, in: RoundedRectangle(cornerRadius: 10))',
+                            '.background(StudioStyle.sidebar, in: RoundedRectangle(cornerRadius: 10))\n        .background(ProjectWorkspaceProbe(identifier: "column:" + column.id))',
                             'Project column measurement attachment')
         text = replace_once(text, '.accessibilityLabel("Project table header")',
                             '.accessibilityLabel("Project table header").background(ProjectWorkspaceProbe(identifier: "project-table-header"))',

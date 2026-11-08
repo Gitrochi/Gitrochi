@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, ArrowLeftRight } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowLeftRight } from "@/shared/icons";
 import type { BatchCommitAction } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";

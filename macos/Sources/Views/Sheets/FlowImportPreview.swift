@@ -52,13 +52,13 @@ struct FlowImportPreview: View {
                 }.frame(maxHeight: 110)
             }
             if draft.inspection.proposal != nil {
-                Label("The proposal triggers the original CI remotely. Configure its saved connection and review it before running.", systemImage: "arrow.up.forward.app")
+                Label("The proposal triggers the original CI remotely. Configure its saved connection and review it before running.", symbol: "arrow.up.forward.app")
                     .font(.caption).foregroundStyle(.orange)
             }
             if draft.inspection.format == "compose" {
                 Text("Compose services remain in their original source. A deployment flow requires a project, service and image; its source is copied only when you save.")
                     .font(.caption).foregroundStyle(.secondary)
-                Label("Copying a Compose source changes its base directory. Review relative build, volume and environment-file paths before saving.", systemImage: "exclamationmark.triangle")
+                Label("Copying a Compose source changes its base directory. Review relative build, volume and environment-file paths before saving.", symbol: "exclamationmark.triangle")
                     .font(.caption).foregroundStyle(.orange)
             }
             HStack {
@@ -136,7 +136,7 @@ struct FlowImportPreview: View {
                         }.padding(10).background(Color.secondary.opacity(0.04), in: RoundedRectangle(cornerRadius: 8))
                     }
                 } else if draft.inspection.format == "jenkins" {
-                    Label("Jenkins runs remotely", systemImage: "server.rack").font(.headline)
+                    Label("Jenkins runs remotely", symbol: "server.rack").font(.headline)
                     Text("Jenkins Groovy is preserved as source. Configure the saved Jenkins connection and job in the proposed remote flow.")
                         .font(.callout).foregroundStyle(.secondary)
                 } else {

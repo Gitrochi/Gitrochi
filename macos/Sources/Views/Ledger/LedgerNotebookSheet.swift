@@ -90,7 +90,7 @@ struct LedgerNotebookSheet: View {
                         Button { request(.select(note)) } label: {
                             VStack(alignment: .leading, spacing: 6) {
                                 HStack(spacing: 4) {
-                                    if note.pinned { Image(systemName: "pin.fill").accessibilityLabel("Pinned") }
+                                    if note.pinned { SymbolIcon("pin.fill").accessibilityLabel("Pinned") }
                                     Text(note.title).fontWeight(selected?.id == note.id ? .semibold : .regular)
                                         .lineLimit(1)
                                     Spacer(minLength: 0)

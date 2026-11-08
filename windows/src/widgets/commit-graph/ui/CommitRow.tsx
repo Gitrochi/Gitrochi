@@ -1,4 +1,5 @@
-import { Check, Cloud, Crosshair, Laptop, Tag as TagIcon } from "lucide-react";
+import { Crosshair, Laptop } from "lucide-react";
+import { Check, Cloud, Tag as TagIcon } from "@/shared/icons";
 import { memo, useState } from "react";
 import { commitMenu, refMenu } from "@/features/git-menus";
 import { avatars } from "@/entities/avatar";

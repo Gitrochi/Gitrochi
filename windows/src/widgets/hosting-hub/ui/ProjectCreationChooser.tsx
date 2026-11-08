@@ -1,16 +1,7 @@
 import type { ReactNode } from "react";
-import {
-  Check,
-  CircleHelp,
-  Cloud,
-  Globe2,
-  HardDrive,
-  LockKeyhole,
-  RefreshCw,
-  ShieldCheck,
-  Sparkles,
-  X,
-} from "lucide-react";
+import { CircleHelp, Globe2, HardDrive, ShieldCheck } from "lucide-react";
+import { LockKeyhole } from "@/shared/icons";
+import { Check, Cloud, RefreshCw, Sparkles, X } from "@/shared/icons";
 import { t } from "@/shared/i18n";
 import { Button, Spinner } from "@/shared/ui";
 import "./project-creation.css";

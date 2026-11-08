@@ -109,13 +109,13 @@ struct WorkspacePlanningDashboard: View {
         VStack(alignment: .leading, spacing: 18) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 7) {
-                    Label("Your planning desk", systemImage: "sun.horizon").font(.caption.weight(.semibold)).foregroundStyle(Color.accentColor)
+                    Label("Your planning desk", symbol: "sun.horizon").font(.caption.weight(.semibold)).foregroundStyle(Color.accentColor)
                     Text("A clear day starts with a clear plan.").font(.system(size: 27, weight: .bold, design: .rounded))
                     Text("Bring project deadlines and your next actions into one place.").font(.callout).foregroundStyle(.secondary)
                 }.frame(maxWidth: .infinity, alignment: .leading)
                 if data.loading { ProgressView().controlSize(.small) }
                 Button("New project") { store.hostingHub.selectedAccountID = account?.id; store.hostingHub.projectScope = effectiveScope; creatingProject = true }.buttonStyle(.borderedProminent).controlSize(.small)
-                Button { Task { await refresh() } } label: { Image(systemName: "arrow.clockwise") }.help("Refresh planning dashboard").disabled(data.loading || (!isLocal && account == nil))
+                Button { Task { await refresh() } } label: { DesignIconImage(icon: .refresh) }.help("Refresh planning dashboard").disabled(data.loading || (!isLocal && account == nil))
             }
             if fixture == nil && portfolioContext != context {
                 ProgressView("Loading project schedules…").font(.callout)
@@ -189,7 +189,7 @@ struct WorkspacePlanningDashboard: View {
                     if let due = task.entry.due, due < today {
                         // overdue is said by the icon and the word, not by the red alone
                         HStack(spacing: 4) {
-                            Image(systemName: "exclamationmark.circle").accessibilityHidden(true)
+                            DesignIconImage(icon: .alert).accessibilityHidden(true)
                             Text("Overdue · \(ProjectSchedulePresentation.date(due))")
                         }
                         .fontWeight(.semibold).foregroundStyle(StudioStyle.Tone.failed.text)
@@ -241,7 +241,7 @@ struct WorkspacePlanningDashboard: View {
                     }
                 }
                 if data.more { Divider(); Button("Load more projects") { Task { await load(append: true) } } }
-            } label: { Label("Choose projects", systemImage: "rectangle.3.group") }.disabled(data.loading)
+            } label: { Label("Choose projects", symbol: "rectangle.3.group") }.disabled(data.loading)
             Text(verbatim: String(localized: "{0} projects selected").replacingOccurrences(of: "{0}", with: data.selectedIDs.count.formatted())).font(.caption).foregroundStyle(.secondary)
         }.frame(maxWidth: .infinity, alignment: .leading).controlSize(.small)
     }
@@ -271,13 +271,13 @@ struct WorkspacePlanningDashboard: View {
     private func taskRow(_ task: ProjectPortfolioTask) -> some View {
         Button { open(task.detail.item, rowID: task.entry.row.id) } label: {
             HStack(spacing: 12) {
-                Image(systemName: task.entry.completed ? "checkmark.circle.fill" : ProjectTaskStyle.symbol(task.entry.row)).foregroundStyle(task.entry.completed ? .green : Color.accentColor)
+                SymbolIcon(task.entry.completed ? "checkmark.circle.fill" : ProjectTaskStyle.symbol(task.entry.row)).foregroundStyle(task.entry.completed ? .green : Color.accentColor)
                 VStack(alignment: .leading, spacing: 5) { Text(task.entry.row.title).font(.callout.weight(.medium)).foregroundStyle(.primary).lineLimit(2); Text(task.projectNames.joined(separator: " · ")).font(.caption2).foregroundStyle(.secondary).lineLimit(1) }
                 Spacer(minLength: 6)
                 if task.entry.invalidDate || task.entry.invalidRange { Text("Check task dates").font(.caption).foregroundStyle(.orange) }
                 else if let day = task.entry.date { Text(ProjectSchedulePresentation.date(day)).font(.caption.weight(.medium)).foregroundStyle(task.entry.due.map { $0 < today } == true && !task.entry.completed ? .red : Color.secondary) }
                 else { Text("No date").font(.caption).foregroundStyle(.tertiary) }
-                Image(systemName: "arrow.up.right").font(.caption).foregroundStyle(.tertiary)
+                DesignIconImage(icon: .external).font(.caption).foregroundStyle(.tertiary)
             }.padding(12).background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 10)).contentShape(Rectangle())
         }.buttonStyle(.plain).disabled(opening)
     }
@@ -285,7 +285,7 @@ struct WorkspacePlanningDashboard: View {
         let entries = tasks
         let columnWidth = max(170, (width - 108) / 7)
         return VStack(alignment: .leading, spacing: 12) {
-            HStack { Text("This week, in focus").font(.headline); Spacer(); Button { anchor = ProjectSchedule.addDays(anchor, -7) ?? anchor } label: { Image(systemName: "chevron.left") }.help("Previous week"); Button("Today") { anchor = today }; Button { anchor = ProjectSchedule.addDays(anchor, 7) ?? anchor } label: { Image(systemName: "chevron.right") }.help("Next week") }
+            HStack { Text("This week, in focus").font(.headline); Spacer(); Button { anchor = ProjectSchedule.addDays(anchor, -7) ?? anchor } label: { DesignIconImage(icon: .chevronLeft) }.help("Previous week"); Button("Today") { anchor = today }; Button { anchor = ProjectSchedule.addDays(anchor, 7) ?? anchor } label: { DesignIconImage(icon: .chevronRight) }.help("Next week") }
             ScrollView(.horizontal) {
                 HStack(alignment: .top, spacing: 10) {
                     ForEach(ProjectSchedule.weekDays(anchor), id: \.self) { day in
@@ -303,7 +303,7 @@ struct WorkspacePlanningDashboard: View {
         Button { open(task.detail.item, rowID: task.entry.row.id) } label: {
             VStack(alignment: .leading, spacing: 8) {
                 HStack(spacing: 5) {
-                    Image(systemName: ProjectTaskStyle.symbol(task.entry.row)).foregroundStyle(Color.accentColor)
+                    SymbolIcon(ProjectTaskStyle.symbol(task.entry.row)).foregroundStyle(Color.accentColor)
                     if let number = task.entry.row.number { Text("#\(number)").monospacedDigit().foregroundStyle(.secondary) }
                     Spacer(minLength: 0)
                 }.font(.caption2)

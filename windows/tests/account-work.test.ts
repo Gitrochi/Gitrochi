@@ -3,6 +3,7 @@ import {
   accountWorkPage,
   accountWorkOrigin,
   markAccountWorkRead,
+  type AccountWorkItem,
   type ReviewAccess,
 } from "@/entities/hosting";
 import { ipc } from "@/shared/api";
@@ -155,7 +156,7 @@ describe("selected-account work without a local repository", () => {
     const http = vi
       .spyOn(ipc, "http")
       .mockResolvedValue({ status: 204, body: "" });
-    const item = {
+    const item: AccountWorkItem = {
       id: "inbox-14-org/repo",
       title: "Fixture",
       repository: "org/repo",
@@ -167,6 +168,14 @@ describe("selected-account work without a local repository", () => {
       unread: true,
       readID: "14",
       origin: accountWorkOrigin(access()),
+      kind: "issue",
+      reason: "mention",
+      actor: "",
+      updated: null,
+      status: "",
+      body: "",
+      source: "",
+      target: "",
     };
     await markAccountWorkRead(access(), item);
     expect(http.mock.calls[0][0]).toBe("PATCH");
@@ -222,5 +231,35 @@ describe("selected-account work without a local repository", () => {
       ),
     ).rejects.toThrow("Invalid notification");
     expect(http).not.toHaveBeenCalled();
+  });
+  it("keeps what the lists already say about a row: why, when, what kind and its state", async () => {
+    const http = vi.spyOn(ipc, "http").mockResolvedValue(
+      response([
+        { id: "14", unread: true, reason: "review_requested", updated_at: "2026-11-05T08:57:00Z", subject: { title: "Review", type: "PullRequest", url: "https://api.github.com/repos/team/other/pulls/9" }, repository: { full_name: "team/other" } },
+        { id: "15", unread: false, reason: "ci_activity", updated_at: "2026-11-04T10:00:00Z", subject: { title: "CI workflow run failed for main branch", type: "CheckSuite" }, repository: { full_name: "team/other" } },
+      ]),
+    );
+    const inbox = (await accountWorkPage(access(), "inbox")).items;
+    expect(inbox.map((item) => [item.kind, item.reason, item.updated, item.status])).toEqual([
+      ["request", "review_requested", Date.parse("2026-11-05T08:57:00Z") / 1000, ""],
+      ["other", "ci_activity", Date.parse("2026-11-04T10:00:00Z") / 1000, ""],
+    ]);
+    http.mockResolvedValue(
+      response({
+        items: [{ id: 1, number: 7, title: "Draft work", body: "What it changes", draft: true, pull_request: {}, user: { login: "sam" }, updated_at: "2026-11-01T00:00:00Z", html_url: "https://github.com/org/other/pull/7", repository_url: "https://api.github.com/repos/org/other", state: "open" }],
+        total_count: 1,
+      }),
+    );
+    const work = (await accountWorkPage(access(), "review")).items[0];
+    expect([work.kind, work.reason, work.status, work.body, work.author]).toEqual(["request", "", "draft", "What it changes", "sam"]);
+    expect((await accountWorkPage(access(), "issues")).items[0].kind).toBe("issue");
+    http.mockResolvedValue(
+      response([
+        { id: 21, action_name: "mentioned", created_at: "2026-11-03T12:00:00.000Z", author: { username: "sam", name: "Sam" }, target_type: "MergeRequest", target_url: "https://gitlab.example/group/other/-/merge_requests/4", target: { iid: 4, title: "Review", state: "merged", description: "Notes", source_branch: "feature/a", target_branch: "main" }, project: { path_with_namespace: "group/other" } },
+      ]),
+    );
+    const todo = (await accountWorkPage(access("gitlab"), "inbox")).items[0];
+    expect([todo.kind, todo.reason, todo.actor, todo.status, todo.body, todo.source, todo.target]).toEqual(["request", "mentioned", "Sam", "merged", "Notes", "feature/a", "main"]);
+    expect(todo.updated).toBe(Date.parse("2026-11-03T12:00:00.000Z") / 1000);
   });
 });

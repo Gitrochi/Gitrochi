@@ -1,4 +1,4 @@
-import { Image as ImageIcon } from "lucide-react";
+import { Image as ImageIcon } from "@/shared/icons";
 import { type CSSProperties, type ReactNode, useMemo, useState } from "react";
 import { ipc } from "@/shared/api";
 import { type MdBlock, type MdInline, type MdRefs, parseMarkdown } from "@/shared/lib";

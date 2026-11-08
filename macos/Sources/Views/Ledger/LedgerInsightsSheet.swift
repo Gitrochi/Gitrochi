@@ -247,7 +247,7 @@ private struct LedgerStatTile: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 5) {
-                Image(systemName: symbol).font(.system(size: 11, weight: .semibold))
+                SymbolIcon(symbol).font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(tone?.text ?? Color.secondary).accessibilityHidden(true)
                 Text(title).font(.system(size: 11, weight: .medium)).foregroundStyle(.secondary)
             }
@@ -273,7 +273,7 @@ private struct LedgerInsightBar: View {
     var body: some View {
         HStack(spacing: 8) {
             HStack(spacing: 4) {
-                if let symbol { Image(systemName: symbol).font(.system(size: 11)).foregroundStyle(tone.text).accessibilityHidden(true) }
+                if let symbol { SymbolIcon(symbol).font(.system(size: 11)).foregroundStyle(tone.text).accessibilityHidden(true) }
                 Text(verbatim: label).font(.system(size: 12)).lineLimit(1)
             }
             .frame(width: 130, alignment: .leading)

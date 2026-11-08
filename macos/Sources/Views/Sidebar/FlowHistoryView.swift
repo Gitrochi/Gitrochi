@@ -23,10 +23,10 @@ struct FlowHistoryView: View {
             Divider()
             if filtered.isEmpty {
                 if runs.isEmpty {
-                    ContentUnavailableView("No runs yet", systemImage: "clock.arrow.circlepath", description: Text("Run a flow to see its steps, output and results here."))
+                    ContentUnavailableView("No runs yet", symbol: "clock.arrow.circlepath", description: Text("Run a flow to see its steps, output and results here."))
                 } else {
                     VStack(spacing: 12) {
-                        ContentUnavailableView("No matching runs", systemImage: "magnifyingglass", description: Text("Try another search or filter."))
+                        ContentUnavailableView("No matching runs", symbol: "magnifyingglass", description: Text("Try another search or filter."))
                         Button("Clear filters") { search = ""; selectedFlow = ""; failuresOnly = false }
                             .buttonStyle(.bordered).padding(.bottom, 24)
                     }
@@ -45,7 +45,7 @@ struct FlowHistoryView: View {
     private var toolbar: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 10) {
-                Label("Recent runs", systemImage: "clock.arrow.circlepath").font(.callout.weight(.semibold))
+                Label("Recent runs", symbol: "clock.arrow.circlepath").font(.callout.weight(.semibold))
                 Text("\(filtered.count)").font(.system(size: 10, weight: .semibold, design: .monospaced)).foregroundStyle(.secondary)
                     .padding(.horizontal, 7).padding(.vertical, 3).background(Color.secondary.opacity(0.08), in: Capsule())
                 Spacer(minLength: 8)
@@ -54,10 +54,10 @@ struct FlowHistoryView: View {
             }
             HStack(spacing: 10) {
                 HStack(spacing: 7) {
-                    Image(systemName: "magnifyingglass").font(.system(size: 11)).foregroundStyle(.secondary)
+                    DesignIconImage(icon: .search, size: 11).foregroundStyle(.secondary)
                     TextField("Search runs", text: $search).textFieldStyle(.plain).font(.system(size: 11))
                     if !search.isEmpty {
-                        Button { search = "" } label: { Image(systemName: "xmark.circle.fill").font(.system(size: 11)).foregroundStyle(.secondary) }
+                        Button { search = "" } label: { SymbolIcon("xmark.circle.fill").font(.system(size: 11)).foregroundStyle(.secondary) }
                             .buttonStyle(.plain).help("Clear search").accessibilityLabel("Clear search")
                     }
                 }
@@ -77,7 +77,7 @@ struct FlowHistoryView: View {
 
     private func metric(_ title: LocalizedStringKey, count: Int, icon: String, color: Color) -> some View {
         HStack(spacing: 4) {
-            Image(systemName: icon).foregroundStyle(color)
+            SymbolIcon(icon).foregroundStyle(color)
             Text("\(count)").monospacedDigit()
             Text(title).foregroundStyle(.secondary)
         }
@@ -102,7 +102,7 @@ struct FlowHistoryView: View {
                     }
                     if let duration = run.durationMs { Text(FlowFormat.duration(duration)).font(.system(size: 10, design: .monospaced)).foregroundStyle(.secondary) }
                 }.frame(maxWidth: 145, alignment: .trailing)
-                Image(systemName: "chevron.right").font(.system(size: 9, weight: .semibold)).foregroundStyle(.tertiary)
+                DesignIconImage(icon: .chevronRight, size: 9).foregroundStyle(.tertiary)
             }
             .padding(14).background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 11))
             .overlay(RoundedRectangle(cornerRadius: 11).stroke(Color.primary.opacity(0.08)))

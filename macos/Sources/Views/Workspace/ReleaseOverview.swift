@@ -11,7 +11,7 @@ struct ReleaseOverview: View {
                 WorkbenchFlow(spacing: 12) {
                     VStack(alignment: .leading, spacing: 5) { Text("Repository releases").font(.headline); Text("Check versions across your open repositories.").font(.caption).foregroundStyle(.secondary) }
                     Button("Check releases") { Task { await portfolio.refresh(sources) } }.disabled(checking)
-                    Button { Task { await portfolio.refresh(sources, force: true) } } label: { Image(systemName: "arrow.clockwise") }.help("Refresh").accessibilityLabel("Refresh").disabled(checking)
+                    Button { Task { await portfolio.refresh(sources, force: true) } } label: { DesignIconImage(icon: .refresh) }.help("Refresh").accessibilityLabel("Refresh").disabled(checking)
                 }
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 240), alignment: .leading)], alignment: .leading, spacing: 12) {
                     ForEach(sources) { source in summaryCard(source) }

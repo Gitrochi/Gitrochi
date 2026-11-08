@@ -20,7 +20,7 @@ struct FlowCreateSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(spacing: 12) {
-                Image(systemName: "arrow.triangle.branch").font(.title2).foregroundStyle(.secondary)
+                DesignIconImage(icon: .branch).font(.title2).foregroundStyle(.secondary)
                     .frame(width: 42, height: 42).background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 12))
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 4) {
@@ -28,7 +28,7 @@ struct FlowCreateSheet: View {
                     Text("Build a flow from your commands.").font(.callout).foregroundStyle(.secondary)
                 }
                 Spacer()
-                Button(action: requestClose) { Image(systemName: "xmark") }
+                Button(action: requestClose) { DesignIconImage(icon: .close) }
                     .buttonStyle(.borderless).help("Close").accessibilityLabel("Close").disabled(saving)
             }
             ScrollView {
@@ -96,14 +96,14 @@ struct FlowCreateSheet: View {
             }
             Text(draft.execution == .inOrder ? String(localized: "Each step starts after the previous step succeeds.") : String(localized: "Steps run independently at the same time."))
                 .font(.caption).foregroundStyle(.secondary)
-            Label("Commands run from the repository folder.", systemImage: "folder").font(.caption).foregroundStyle(.secondary)
+            Label("Commands run from the repository folder.", symbol: "folder").font(.caption).foregroundStyle(.secondary)
         }
     }
 
     private var steps: some View {
         VStack(alignment: .leading, spacing: 12) {
             ForEach($draft.steps) { step in stepCard(step) }
-            Button { draft.steps.append(.init()) } label: { Label("Add step", systemImage: "plus") }
+            Button { draft.steps.append(.init()) } label: { Label("Add step", symbol: "plus") }
                 .buttonStyle(.bordered)
         }
     }
@@ -117,14 +117,14 @@ struct FlowCreateSheet: View {
                 TextField("Step title (optional)", text: step.title).textFieldStyle(.roundedBorder)
                     .accessibilityLabel("Step title (optional)")
                 HStack(spacing: 5) {
-                    Button { move(step.wrappedValue.id, by: -1) } label: { Image(systemName: "arrow.up") }
+                    Button { move(step.wrappedValue.id, by: -1) } label: { DesignIconImage(icon: .push) }
                         .disabled(index == 0).help("Move up").accessibilityLabel("Move up")
-                    Button { move(step.wrappedValue.id, by: 1) } label: { Image(systemName: "arrow.down") }
+                    Button { move(step.wrappedValue.id, by: 1) } label: { DesignIconImage(icon: .pull) }
                         .disabled(index == draft.steps.count - 1).help("Move down").accessibilityLabel("Move down")
                     Button {
                         let id = step.wrappedValue.id
                         draft.steps.removeAll { $0.id == id }
-                    } label: { Image(systemName: "trash") }
+                    } label: { DesignIconImage(icon: .trash) }
                         .disabled(draft.steps.count == 1).help("Remove step").accessibilityLabel("Remove step")
                 }.buttonStyle(.borderless)
             }

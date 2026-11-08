@@ -4,7 +4,7 @@ import Foundation
 enum CIAPI {
     private struct GLPipeline: Decodable {
         let id: Int; let iid: Int?; let sha: String; let ref: String; let status: String
-        let source: String?; let createdAt: String?; let webUrl: String; let name: String?
+        let source: String?; let createdAt: String?; let updatedAt: String?; let webUrl: String; let name: String?
         let user: GLUserRef?
     }
     private struct GLUserRef: Decodable { let username: String }
@@ -16,8 +16,10 @@ enum CIAPI {
     private struct GHRun: Decodable {
         let id: Int; let name: String?; let displayTitle: String?; let runNumber: Int; let headBranch: String?
         let headSha: String; let status: String?; let conclusion: String?; let htmlUrl: String
-        let createdAt: String?; let event: String; let actor: GHActor?
+        let createdAt: String?; let runStartedAt: String?; let updatedAt: String?; let event: String; let actor: GHActor?
+        let pullRequests: [GHRunRequest]?
     }
+    private struct GHRunRequest: Decodable { let number: Int }
     private struct GHActor: Decodable { let login: String }
     private struct GHJobs: Decodable { let jobs: [GHJob] }
     private struct GHJob: Decodable {
@@ -53,7 +55,8 @@ enum CIAPI {
             return try await Hosting.send([GLPipeline].self, req).map {
                 CIPipeline(id: $0.id, number: $0.iid ?? $0.id, name: $0.name ?? "", title: "", ref: $0.ref, sha: $0.sha,
                            status: CIStatus(gitlab: $0.status), url: $0.webUrl, created: Hosting.date($0.createdAt),
-                           event: $0.source ?? "", actor: $0.user?.username)
+                           event: $0.source ?? "", actor: $0.user?.username, started: Hosting.date($0.createdAt),
+                           updated: Hosting.date($0.updatedAt))
             }
         case .github:
             let filter = ref.map { "&branch=\(q($0))" } ?? ""
@@ -61,7 +64,9 @@ enum CIAPI {
             return try await Hosting.send(GHRuns.self, req).workflowRuns.map {
                 CIPipeline(id: $0.id, number: $0.runNumber, name: $0.name ?? "", title: $0.displayTitle ?? "",
                            ref: $0.headBranch ?? "", sha: $0.headSha, status: CIStatus(github: $0.status, conclusion: $0.conclusion),
-                           url: $0.htmlUrl, created: Hosting.date($0.createdAt), event: $0.event, actor: $0.actor?.login)
+                           url: $0.htmlUrl, created: Hosting.date($0.createdAt), event: $0.event, actor: $0.actor?.login,
+                           started: Hosting.date($0.runStartedAt ?? $0.createdAt), updated: Hosting.date($0.updatedAt),
+                           request: $0.pullRequests?.first?.number)
             }
         }
     }

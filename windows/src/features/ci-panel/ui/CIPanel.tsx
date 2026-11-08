@@ -1,59 +1,45 @@
-import {
-  ChevronRight,
-  CirclePlay,
-  GitBranch,
-  List,
-  ListFilter,
-  Play,
-  RefreshCw,
-  Zap,
-} from "lucide-react";
+import { Zap } from "lucide-react";
+import { CirclePlay, CircleX } from "@/shared/icons";
+import { ChevronRight, Clock, RefreshCw, Search } from "@/shared/icons";
 import { useEffect, useRef, useState } from "react";
 import {
   canPlay,
   type CIPipeline,
   CIStatusIcon,
-  eventTitle,
+  commonWorkflow,
   groupByBranch,
   isActiveCI,
+  runCount,
+  type RunSegment,
+  runSegment,
+  runSegments,
   statusInfo,
+  visibleRuns,
 } from "@/entities/ci";
 import type { Provider } from "@/entities/git";
 import { accounts } from "@/entities/hosting";
 import type { RepoStore } from "@/entities/repo";
 import { settings } from "@/shared/config";
 import { t } from "@/shared/i18n";
-import { shortDate, useObserve } from "@/shared/lib";
-import { IconButton, showMenuBelow, Spinner } from "@/shared/ui";
-import { runMenu, runTitle } from "./CIRunDetail";
+import { listWhen, useObserve } from "@/shared/lib";
+import {
+  hostedListAge, HostedAccountNeeded, HostedListChip, HostedListEmpty, HostedListLoading, HostedListNotice, HostedListRow, HostedListSearch, HostedListSegments,
+  IconButton, Spinner,
+} from "@/shared/ui";
+import { runMenu, runName, runTitle } from "./CIRunDetail";
 import "./ci-panel.css";
 
 /**
- * The Actions page's run list: GitLab pipelines or GitHub Actions runs, newest first or grouped by branch.
- * A row shows the run on the right (CIRunDetail). (macOS: CIPanel.swift)
+ * Reads the runs, then again every 8 seconds while one is active and every 45 otherwise (the selected run's jobs too),
+ * and selects the run a commit's CI badge asked for once the list has it. The Actions page calls it; so does the run
+ * list where it stands alone (Flows).
  */
-export function CIPanel({
-  store,
-  openSettings,
-}: {
-  store: RepoStore;
-  openSettings: () => void;
-}) {
-  useObserve(store);
-  const ci = useObserve(store.ci);
-  useObserve(accounts);
+export function useRuns(store: RepoStore, enabled = true) {
+  const ci = store.ci;
   const target = store.target;
-  useObserve(settings);
-  // 보기: 시간순 목록 / 브랜치별(접은 브랜치는 이 창에서만 기억)
-  const byBranch = settings.get<boolean>("ciGroupByBranch", false);
-  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const selectedRef = useRef(store.ciSelected);
   selectedRef.current = store.ciSelected;
-  const key = target
-    ? `${target.host}/${target.path}/${ci.currentBranchOnly}/${accounts.revision}`
-    : "";
-
-  // 처음 읽고, 실행 중인 게 있으면 8초·없으면 45초마다 새로 고친다(고른 실행의 작업도)
+  const key = enabled && target ? `${target.host}/${target.path}/${ci.currentBranchOnly}/${accounts.revision}` : "";
   useEffect(() => {
     if (!key) return;
     let stop = false;
@@ -78,21 +64,61 @@ export function CIPanel({
     };
   }, [key, ci]);
 
-  // a run opened from a graph badge: open its branch group, select the run, show it, then let go of the focus
-  const root = useRef<HTMLDivElement>(null);
   const focus = store.ciFocus;
   useEffect(() => {
-    if (focus === null) return;
+    if (!enabled || focus === null) return;
+    // a CI badge may ask for a run in a repository without a remote; nothing can show it, so let go
     if (target && (ci.state.kind === "idle" || ci.state.kind === "loading")) return; // the list is still on its way
     const p = ci.pipelines.find((x) => x.id === focus);
-    if (p) {
-      setCollapsed((prev) => { if (!prev.has(p.ref)) return prev; const next = new Set(prev); next.delete(p.ref); return next; });
-      store.selectRun(p);
-      requestAnimationFrame(() => root.current?.querySelector(`[data-pipeline="${p.id}"]`)?.scrollIntoView({ block: "center" }));
-    }
+    if (p) store.selectRun(p);
     store.ciFocus = null;
     store.changed();
-  }, [focus, target, ci, ci.state.kind, ci.pipelines, store]);
+  }, [enabled, focus, target, ci, ci.state.kind, ci.pipelines, store]);
+}
+
+/**
+ * The Actions page's list column, as the Actions board draws it: search with the sort and filter menu (order, all
+ * branches or this one, grouping), the segments that count what failed, runs or waits, and two-line rows.
+ * A row shows the run on the right (CIRunDetail). On the page (`page`) the page reads the runs and holds Refresh and
+ * Run; standing alone it does both itself. (macOS: CIPanel.swift)
+ */
+export function CIPanel({
+  store,
+  openSettings,
+  page = false,
+}: {
+  store: RepoStore;
+  openSettings: () => void;
+  page?: boolean;
+}) {
+  useObserve(store);
+  const ci = useObserve(store.ci);
+  useObserve(accounts);
+  const target = store.target;
+  useObserve(settings);
+  // rows in one list, or under their branches (the folded branches are remembered for this window only)
+  const byBranch = settings.get<boolean>("ciGroupByBranch", false);
+  const oldestFirst = settings.get<boolean>("ciOldestFirst", false);
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const [search, setSearch] = useState("");
+  const [segment, setSegment] = useState<RunSegment>("all");
+  useRuns(store, !page);
+  const title = (p: CIPipeline) => runTitle(store, p);
+  const runs = visibleRuns(ci.pipelines, segment, search, oldestFirst, title);
+
+  // the run the page selected (a row, or a commit's CI badge): open its branch group, drop a filter that hides it and
+  // bring it into view; a row already in view stays where it is
+  const root = useRef<HTMLElement>(null);
+  const selected = store.ciSelected;
+  useEffect(() => {
+    const p = selected === null ? undefined : ci.pipelines.find((x) => x.id === selected);
+    if (!p) return;
+    setCollapsed((prev) => { if (!prev.has(p.ref)) return prev; const next = new Set(prev); next.delete(p.ref); return next; });
+    if (!visibleRuns(ci.pipelines, segment, search, oldestFirst, title).some((x) => x.id === p.id)) { setSearch(""); setSegment("all"); }
+    requestAnimationFrame(() => root.current?.querySelector(`[data-pipeline="${p.id}"]`)?.scrollIntoView({ block: "nearest" }));
+    // only a new selection moves the list
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected]);
 
   if (!target) {
     return (
@@ -116,6 +142,8 @@ export function CIPanel({
     );
   }
 
+  const st = ci.state, host = target.host;
+  const common = commonWorkflow(ci.pipelines);
   const row = (p: CIPipeline, showRef: boolean) => (
     <PipelineRow
       key={p.id}
@@ -124,132 +152,75 @@ export function CIPanel({
       provider={target.provider}
       selected={store.ciSelected === p.id}
       showRef={showRef}
+      common={common}
     />
   );
-  const st = ci.state;
+  const order = oldestFirst ? t("Oldest first") : t("Newest first");
+  const branch = ci.currentBranchOnly ? ci.currentRef ?? t("Current branch") : t("All branches");
+  const segmentTitle = (value: RunSegment) => t(({ all: "All", failed: "Failed", running: "Running", waiting: "Waiting" } as const)[value]);
   return (
-    <div className="col ci-runs" style={{ flex: 1, minHeight: 0 }} ref={root}>
-      {/* styled like the Pull requests and Issues lists' section header */}
-      <div className="side-head">
-        <span className="row grow">
-          <span className="ellipsis">
-            {target.provider === "gitlab" ? t("Pipelines") : t("Runs")}
-          </span>
-          {ci.pipelines.length > 0 && (
-            <span style={{ fontWeight: 500 }}>{ci.pipelines.length}</span>
-          )}
+    <aside className="hosted-list ci-runs" aria-label={t("Run list")} ref={root}>
+      {!page && (
+        <div className="ci-list-actions">
           {st.kind === "loading" && <Spinner size={11} />}
-        </span>
-        <IconButton
-          small
-          icon={byBranch ? <GitBranch size={13} /> : <List size={13} />}
-          tip={t("Show runs as a list or grouped by branch")}
-          aria-label={t("Show runs as a list or grouped by branch")}
-          onClick={(e) =>
-            showMenuBelow(e.currentTarget, [
-              {
-                label: t("List"),
-                checked: !byBranch,
-                onClick: () => settings.set("ciGroupByBranch", false),
-              },
-              {
-                label: t("By branch"),
-                checked: byBranch,
-                onClick: () => settings.set("ciGroupByBranch", true),
-              },
-            ])
-          }
-        />
-        <IconButton
-          small
-          className={ci.currentBranchOnly ? "on" : ""}
-          icon={<ListFilter size={13} />}
-          tip={
-            ci.currentBranchOnly
-              ? t("Show all branches")
-              : t("Show only the current branch ({0})", ci.currentRef ?? "-")
-          }
-          onClick={() => ci.setCurrentBranchOnly(!ci.currentBranchOnly)}
-        />
-        <IconButton
-          small
-          icon={<RefreshCw size={12} />}
-          tip={t("Refresh")}
-          onClick={() => void ci.load()}
-        />
-        <IconButton
-          small
-          icon={<CirclePlay size={14} />}
-          tip={
-            target.provider === "gitlab"
-              ? t("Run new pipeline|Choose a branch and variables to run")
-              : t(
-                  "Run workflow|Runs a workflow_dispatch workflow with a branch and inputs",
-                )
-          }
-          disabled={!ci.hasAccess || ci.busy.has("run")}
-          onClick={() => {
-            store.sheet = { kind: "runPipeline" };
-            store.changed();
-          }}
-        />
-      </div>
-      <div className="side-scroll ci-run-list">
-        {st.kind === "needsAccount" && !store.hostingAccount && (
-          <div
-            className="col"
-            style={{ gap: 6, padding: 8, alignItems: "flex-start" }}
-          >
-            <span className="muted">
-              {t(
-                "Connect a {0} account to see pipelines.",
-                target.provider === "gitlab"
-                  ? t("Self-hosted GitLab ({0})", target.host)
-                  : "GitHub",
-              )}
-            </span>
-            <button className="link" onClick={openSettings}>
-              {t("Connect account…")}
-            </button>
-          </div>
-        )}
-        {st.kind === "needsAccount" && store.hostingAccount && <div className="col" style={{ padding: 8 }}><span className="hint">{t("Couldn't read the saved account credentials. Unlock your credentials, then retry.")}</span><button className="link" onClick={() => void ci.load()}>{t("Retry")}</button></div>}
-        {st.kind === "failed" && (
-          <div
-            className="col"
-            style={{ gap: 6, padding: 8, alignItems: "flex-start" }}
-          >
-            <span
-              className="error-text"
-              style={{
-                fontSize: 11.5,
-                whiteSpace: "pre-wrap",
-                userSelect: "text",
-              }}
-            >
-              {st.message}
-            </span>
-            <button className="link" onClick={() => void ci.load()}>
-              {t("Try again")}
-            </button>
-          </div>
-        )}
-        {st.kind === "loaded" && !ci.pipelines.length && (
-          <div className="muted" style={{ padding: 8 }}>
-            {ci.currentBranchOnly
-              ? t("No runs for this branch.")
-              : t("No runs yet.")}
-          </div>
-        )}
-        {st.kind !== "needsAccount" &&
-          st.kind !== "failed" &&
-          (byBranch
-            ? groupByBranch(ci.pipelines).map((g) => {
+          <span className="spacer" />
+          <IconButton small icon={<RefreshCw size={12} />} tip={t("Refresh")} aria-label={t("Refresh")} onClick={() => void ci.load()} />
+          <IconButton
+            small
+            icon={<CirclePlay size={14} />}
+            tip={target.provider === "gitlab" ? t("Run new pipeline|Choose a branch and variables to run") : t("Run workflow|Runs a workflow_dispatch workflow with a branch and inputs")}
+            disabled={!ci.hasAccess || ci.busy.has("run")}
+            onClick={() => { store.sheet = { kind: "runPipeline" }; store.changed(); }}
+          />
+        </div>
+      )}
+      {st.kind === "failed" && ci.pipelines.length > 0 && <HostedListNotice title={t("Couldn't reach {0}", host)} caption={hostedListAge(ci.loadedAt)} detail={st.message} retry={() => void ci.load()} />}
+      <HostedListSearch
+        prompt={t("Search runs")}
+        text={search}
+        onText={setSearch}
+        menuTitle={`${t("Sort and filter")}: ${order}, ${branch}`}
+        menu={() => [
+          { label: t("Newest first"), checked: !oldestFirst, onClick: () => settings.set("ciOldestFirst", false) },
+          { label: t("Oldest first"), checked: oldestFirst, onClick: () => settings.set("ciOldestFirst", true) },
+          "divider",
+          // the branch filter lives here, not in a control of its own
+          { label: t("All branches"), checked: !ci.currentBranchOnly, onClick: () => ci.setCurrentBranchOnly(false) },
+          { label: ci.currentRef ?? t("Current branch"), checked: ci.currentBranchOnly, onClick: () => ci.setCurrentBranchOnly(true) },
+          "divider",
+          { label: t("Group by branch"), checked: byBranch, onClick: () => settings.set("ciGroupByBranch", !byBranch) },
+        ]}
+      />
+      {/* Failed, Running and Waiting count what they hold; All never does, and nothing counts zero */}
+      <HostedListSegments<RunSegment>
+        options={runSegments.map((value) => ({ value, title: segmentTitle(value), count: value !== "all" && runCount(ci.pipelines, value) > 0 ? String(runCount(ci.pipelines, value)) : null }))}
+        selection={segment}
+        onSelect={setSegment}
+      />
+      {st.kind === "needsAccount" ? (
+        <HostedAccountNeeded gitlab={target.provider === "gitlab"} host={host} path={target.path} onConnect={openSettings} />
+      ) : !ci.pipelines.length ? (
+        st.kind === "failed" ? (
+          <HostedListEmpty failed icon={<CircleX size={24} />} title={t("Couldn't reach {0}", host)} caption={st.message} action={{ label: t("Retry"), onClick: () => void ci.load() }} />
+        ) : st.kind === "loaded" ? (
+          <HostedListEmpty icon={<CirclePlay size={24} />} title={ci.currentBranchOnly ? t("No runs for this branch.") : t("No runs yet.")}
+            action={ci.currentBranchOnly ? { label: t("Show all branches"), onClick: () => ci.setCurrentBranchOnly(false) } : undefined} />
+        ) : (
+          <HostedListLoading caption={t("Loading runs…")} />
+        )
+      ) : !runs.length ? (
+        <HostedListEmpty icon={<Search size={24} />} title={t("No runs match this filter.")}
+          action={{ label: search ? t("Clear search") : t("Show all runs"), onClick: () => { setSearch(""); setSegment("all"); } }} />
+      ) : (
+        <div className="hosted-rows ci-run-list">
+          {byBranch
+            ? groupByBranch(runs).map((g) => {
                 const closed = collapsed.has(g.ref);
                 return (
                   <div key={g.ref} className="ci-branch">
-                    <div
-                      className={`side-row ci-branch-head ${closed ? "collapsed" : ""}`}
+                    <button
+                      className={`ci-branch-head ${closed ? "collapsed" : ""}`}
+                      aria-expanded={!closed}
                       onClick={() => {
                         const next = new Set(collapsed);
                         if (closed) next.delete(g.ref);
@@ -260,86 +231,62 @@ export function CIPanel({
                     >
                       <ChevronRight size={12} className="chev" />
                       <CIStatusIcon status={g.pipelines[0].status} size={13} />
-                      <span className="mono ellipsis grow">{g.ref}</span>
-                      <span className="muted" style={{ fontSize: 11 }}>
-                        {g.pipelines.length}
-                      </span>
-                    </div>
-                    {!closed && (
-                      <div style={{ paddingLeft: 12 }}>
-                        {g.pipelines.map((p) => row(p, false))}
-                      </div>
-                    )}
+                      <span className="ellipsis grow">{g.ref}</span>
+                    </button>
+                    {!closed && <div className="ci-branch-runs">{g.pipelines.map((p) => row(p, false))}</div>}
                   </div>
                 );
               })
-            : ci.pipelines.map((p) => row(p, true)))}
-      </div>
-    </div>
+            : runs.map((p) => row(p, true))}
+        </div>
+      )}
+    </aside>
   );
 }
 
-/** 파이프라인 한 줄: 상태 · 제목 · 브랜치 · 시간. 버튼은 오른쪽 상세와 우클릭 메뉴에 있다. */
+/** One run: its title and when it started, then which run it is, its state and its branch. Its commands are in the detail and the context menu. */
 function PipelineRow({
   store,
   pipeline: p,
   provider,
   selected,
   showRef = true,
+  common,
 }: {
   store: RepoStore;
   pipeline: CIPipeline;
   provider: Provider;
   selected: boolean;
-  /** 브랜치별 보기에서는 묶음 머리에 브랜치가 있으니 줄마다 다시 적지 않는다 */
+  /** Under a branch heading the branch is not repeated on every row */
   showRef?: boolean;
+  /** The workflow most runs belong to: it goes without saying, any other one is named before the run */
+  common: string | null;
 }) {
   const ci = store.ci;
   const manual = (ci.jobs.get(p.id) ?? []).filter(canPlay).length;
+  // a waiting run says so in words, so it carries no separate status icon
+  const waiting = runSegment(p.status) === "waiting" || manual > 0;
   return (
-    <div
-      className={`side-row ci-run ${selected ? "selected" : ""}`}
+    <HostedListRow
+      className="ci-run"
+      selected={selected}
+      title={runTitle(store, p)}
+      when={p.created != null ? listWhen(p.created) : null}
       data-pipeline={p.id}
-      role="button"
-      tabIndex={0}
       aria-pressed={selected}
-      onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); store.selectRun(p); } }}
       onClick={() => store.selectRun(p)}
       onContextMenu={(e) => runMenu(e, store, p, provider)}
     >
-      <CIStatusIcon status={p.status} />
-      <div className="col grow" style={{ minWidth: 0, gap: 0 }}>
-        <span className="ci-run-title">{runTitle(store, p)}</span>
-        <span className="ci-run-status" style={{ color: statusInfo[p.status].color }}>{statusInfo[p.status].title}</span>
-        <span className="side-sub row" style={{ gap: 4, minWidth: 0 }}>
-          {provider === "github" && p.name && (
-            <span className="ellipsis" style={{ flex: "0 1 auto" }}>
-              {p.name}
-            </span>
-          )}
-          <span style={{ flex: "none" }}>#{p.number}</span>
-          {showRef && (
-            <span className="mono ellipsis" style={{ flex: "0 1 auto" }}>
-              {p.ref}
-            </span>
-          )}
-          {p.created != null && (
-            <span style={{ flex: "none" }}>{shortDate(p.created)}</span>
-          )}
-          {p.event && p.event !== "push" && (
-            <span style={{ flex: "none" }}>· {eventTitle(p.event)}</span>
-          )}
-        </span>
-      </div>
-      {manual > 0 && (
-        <span
-          className="row ci-manual"
-          data-tip={t("{0} jobs waiting to be run manually", manual)}
-        >
-          <Play size={10} fill="currentColor" /> {manual}
-        </span>
+      <span className="ci-run-which">{p.name && p.name !== common ? `${p.name} · ` : ""}<span className="mono">{runName(provider, p)}</span></span>
+      {waiting ? (
+        <HostedListChip tone="waiting" icon={<Clock size={11} />} data-tip={manual > 0 ? t("{0} jobs waiting to be run manually", manual) : statusInfo[p.status].title}>{t("Waiting")}</HostedListChip>
+      ) : (
+        <CIStatusIcon status={p.status} size={12} />
       )}
       {ci.busy.has(`pipeline:${p.id}`) && <Spinner size={11} />}
-    </div>
+      <span className="spacer" />
+      {/* the branch on the right is cut last, and from the front */}
+      {showRef && <span className="ci-run-ref">{p.ref}</span>}
+    </HostedListRow>
   );
 }
