@@ -7,7 +7,8 @@ import { Button, HostedListSummary } from "@/shared/ui";
 
 type Distances = { segments: (number | null)[]; ahead: number | null; behind: number | null; prereleaseInHead: boolean };
 // Square roots keep a 200-commit gap from flattening the 10-commit ones next to it.
-const grow = (commits: number | null | undefined) => commits == null ? 3 : Math.max(1, Math.sqrt(commits));
+// Equal steps between releases, as the board draws them; the unreleased stretch is a little longer, so its label fits.
+const step = 1, unreleased = 1.6;
 const nothing: Distances = { segments: [], ahead: null, behind: null, prereleaseInHead: false };
 
 /**
@@ -65,12 +66,12 @@ export function ReleaseSummary({ source, items, family }: { source: HubSource; i
       {line.map((item, index) => {
         const last = index === line.length - 1, back = line.length - 1 - index;
         return <Fragment key={item.id}>
-          {index > 0 && <span className="release-tseg" data-back={back + 1} style={{ flexGrow: grow(value?.segments[index - 1]) }}/>}
+          {index > 0 && <span className="release-tseg" data-back={back + 1} style={{ flexGrow: step }}/>}
           <span className="release-node" data-kind={!last ? "older" : atLast ? "head" : "latest"} data-back={back}><span className="release-node-dot"><i/></span><span className="release-node-label ellipsis" title={tags[index]}>{tags[index]}</span></span>
         </Fragment>;
       })}
       {hasHead && <>
-        <span className="release-tseg dashed" style={{ flexGrow: grow(value?.ahead) }}>
+        <span className="release-tseg dashed" style={{ flexGrow: unreleased }}>
           {fork && <>
             {!value?.prereleaseInHead && <span className="release-fork-curve"/>}
             <span className={`release-fork${value?.prereleaseInHead ? " on-line" : ""}`}><i/><span className="release-fork-text"><span>{forkTag}</span><span className="hosted-caption">{forkCaption}</span></span></span>

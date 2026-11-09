@@ -166,10 +166,10 @@ struct ReleaseWorkspace: View {
         return nodes
     }
     private func timelineSegments(value: Distances?, atLast: Bool) -> [ReleaseTimelineTrack.Segment] {
-        // Square roots keep a 200-commit gap from flattening the 10-commit ones next to it.
-        func weight(_ commits: Int?) -> Double { commits.map { max(1, Double($0).squareRoot()) } ?? 3 }
-        var segments = line.indices.dropFirst().map { index in ReleaseTimelineTrack.Segment(weight: weight(index - 1 < (value?.segments.count ?? 0) ? value?.segments[index - 1] : nil), dashed: false) }
-        if !atLast, store.headHash != nil { segments.append(.init(weight: weight(value?.ahead), dashed: true)) }
+        // Equal steps between releases, as the board draws them; the counts are in the words, not the lengths.
+        // The unreleased stretch is a little longer, so its label fits.
+        var segments = line.indices.dropFirst().map { _ in ReleaseTimelineTrack.Segment(weight: 1, dashed: false) }
+        if !atLast, store.headHash != nil { segments.append(.init(weight: 1.6, dashed: true)) }
         return segments
     }
     private func timelineFork(_ value: Distances?) -> ReleaseTimelineTrack.Fork? {
