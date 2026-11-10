@@ -116,6 +116,11 @@
 .code-text-button:hover:not(:disabled) { color: var(--text); }
 .code-text-button:disabled { color: var(--text-3); cursor: default; }
 .code-changes-head .icon-btn.on { color: var(--text); background: var(--hover); }
+/* the Compare page's "2 / 6" and the steps to the previous and next file */
+.code-changes-nav { flex: none; display: flex; align-items: center; gap: 4px; }
+.code-changes-count { font-size: 11px; color: var(--text-2); margin-right: 4px; white-space: nowrap; }
+.code-changes-nav .icon-btn { width: 24px; height: 24px; border-radius: 6px; }
+.code-changes-nav .icon-btn:disabled { opacity: 1; color: var(--border-strong); }
 .code-diff { flex: 1 1 auto; min-height: 0; overflow: auto; padding-bottom: 16px; }
 .code-diff-sheet { display: flex; flex-direction: column; width: max-content; min-width: 100%; }
 .code-diff.wrap .code-diff-sheet { width: 100%; }

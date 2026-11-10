@@ -2637,4 +2637,14 @@
 "on this branch" = "na této větvi";
 "pipeline #%@" = "pipeline #%@";
 "run #%@" = "běh #%@";
+"To" = "Do";
+"Swap From and To" = "Prohodit Od a Do";
+"From the common ancestor" = "Od společného předka";
+"Updates as soon as either side changes. Uncommitted changes are excluded." = "Aktualizuje se, jakmile se změní kterákoli strana. Nezapsané změny se nezahrnují.";
+"Compare %@ with the current branch" = "Porovnat %@ s aktuální větví";
+"%@, compared now" = "%@, právě porovnáváno";
+"No commits between these revisions." = "Mezi těmito revizemi nejsou žádné commity.";
+"Couldn't compare these revisions" = "Tyto revize nelze porovnat";
+"Changes from %@ to %@" = "Změny od %1$@ do %2$@";
+"Open in editor" = "Otevřít v editoru";
 "Checking push destination…" = "Kontroluje se cíl odeslání…";

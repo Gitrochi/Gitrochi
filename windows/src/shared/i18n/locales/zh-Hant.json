@@ -2709,5 +2709,17 @@
   "{0} not started": "{0} 尚未開始",
   "{0} of {1} jobs": "{0}/{1} 個作業",
   "{0} passes on {1}": "{0} 在{1}中通過",
+  "To": "終點",
+  "Swap From and To": "交換起點和終點",
+  "From the common ancestor": "從共同祖先開始",
+  "Updates as soon as either side changes. Uncommitted changes are excluded.": "任一側變更時立即更新。不包含未提交的變更。",
+  "Compare {0} with the current branch": "將 {0} 與目前分支比較",
+  "{0}, compared now": "{0}，目前比較中",
+  "No commits between these revisions.": "這兩個修訂之間沒有提交。",
+  "Couldn't compare these revisions": "無法比較這些修訂",
+  "Changes from {0} to {1}": "從 {0} 到 {1} 的變更",
+  "Compare with the current branch": "與目前分支比較",
+  "Comparing…": "正在比較…",
+  "Open in editor": "在編輯器中開啟",
   "Checking push destination…": "正在檢查推送目標…"
 }

@@ -271,8 +271,8 @@ struct PullRequestFilesView: View {
     }
 }
 
-/// J and K step through the files unless something is being typed
-@MainActor private final class FileKeys {
+/// J and K step through the files unless something is being typed (Pull requests' Changed files and Compare)
+@MainActor final class FileKeys {
     private var monitor: Any?
 
     func start(_ step: @escaping (Bool) -> Void) {

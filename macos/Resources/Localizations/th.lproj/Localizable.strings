@@ -2650,4 +2650,14 @@
 "on this branch" = "บนแบรนช์นี้";
 "pipeline #%@" = "ไปป์ไลน์ #%@";
 "run #%@" = "การรัน #%@";
+"To" = "ถึง";
+"Swap From and To" = "สลับจากและถึง";
+"From the common ancestor" = "จากบรรพบุรุษร่วม";
+"Updates as soon as either side changes. Uncommitted changes are excluded." = "อัปเดตทันทีที่ฝั่งใดฝั่งหนึ่งเปลี่ยน ไม่รวมการเปลี่ยนแปลงที่ยังไม่ได้คอมมิต";
+"Compare %@ with the current branch" = "เปรียบเทียบ %@ กับสาขาปัจจุบัน";
+"%@, compared now" = "%@ กำลังเปรียบเทียบอยู่";
+"No commits between these revisions." = "ไม่มีคอมมิตระหว่างรีวิชันเหล่านี้";
+"Couldn't compare these revisions" = "ไม่สามารถเปรียบเทียบรีวิชันเหล่านี้ได้";
+"Changes from %@ to %@" = "การเปลี่ยนแปลงจาก %1$@ ถึง %2$@";
+"Open in editor" = "เปิดในโปรแกรมแก้ไข";
 "Checking push destination…" = "กำลังตรวจปลายทาง push…";

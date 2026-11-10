@@ -31,7 +31,25 @@ import Foundation
         var plan = RebasePlan(base: nil, items: [item]); plan.items[0].action = .reword; plan.items[0].newMessage = "Edited"
         let todo = plan.todo { _ in "/fixture/msg" }
         precondition(todo.contains("--amend") && !todo.contains("--no-verify"))
-        print("History tools passed: safe revisions, SHA-256, line/function selectors, patch records, cancellation and hooks-preserving cleanup")
+        // the Compare page (Windows: tests/history-tools.test.ts)
+        let other = String(repeating: "b", count: 40)
+        precondition(HistoryTools.comparisonLogArgs(base: sha, right: other) == ["log", "-n", "201", "--format=%H%x1f%an%x1f%ct%x1f%s%x1e", sha + ".." + other, "--"])
+        let commits = HistoryTools.comparisonCommits("\(sha)\u{1f}Alex Kim\u{1f}1762300800\u{1f}Split\u{1f}subject\u{1e}\n\(other)\u{1f}Sam Lee\u{1f}\u{1f}No time\u{1e}\nnot a commit\u{1e}\n")
+        precondition(commits == [ComparisonCommit(id: sha, author: "Alex Kim", date: Date(timeIntervalSince1970: 1_762_300_800), subject: "Split\u{1f}subject"), ComparisonCommit(id: other, author: "Sam Lee", date: nil, subject: "No time")])
+        precondition(HistoryTools.comparisonCommits("").isEmpty)
+        precondition(HistoryTools.commitCountLabel(8) == "8" && HistoryTools.commitCountLabel(200) == "200" && HistoryTools.commitCountLabel(201) == "200+")
+        let references = HistoryTools.comparisonReferences(local: ["topic", "feature/a", "main"], remote: ["origin/HEAD", "origin/main", "origin/topic"], tags: ["v1.1", "v1.0"], current: "topic")
+        precondition(references.map(\.name) == ["origin/main", "main", "feature/a", "origin/topic", "v1.1", "v1.0"] && references.map(\.kind) == [.remote, .branch, .branch, .remote, .tag, .tag], "The usual bases come first, without the current branch or a remote's HEAD")
+        precondition(HistoryTools.comparisonReferences(local: ["main"], remote: [], tags: [], current: nil).map(\.name) == ["main"])
+        precondition(references.filter { HistoryTools.referenceMatches($0.name, filter: " MAIN ") }.map(\.name) == ["origin/main", "main"])
+        let targets = ["main": sha, "topic": other]
+        let key = HistoryTools.comparisonKey(repository: "/repo", left: "main", right: "topic", mergeBase: true, head: sha, targets: targets)
+        precondition(HistoryTools.comparisonKey(repository: "/repo", left: "main", right: "topic", mergeBase: true, head: sha, targets: targets) == key)
+        precondition(HistoryTools.comparisonKey(repository: "/repo", left: "main", right: "topic", mergeBase: true, head: sha, targets: ["main": sha, "topic": sha]) != key, "A moved branch compares again")
+        precondition(HistoryTools.comparisonKey(repository: "/repo", left: "main", right: "topic", mergeBase: false, head: sha, targets: targets) != key)
+        precondition(HistoryTools.comparisonKey(repository: "/repo", left: "topic", right: "main", mergeBase: true, head: sha, targets: targets) != key)
+        precondition(HistoryTools.comparisonKey(repository: "/repo", left: "main", right: "topic", mergeBase: true, head: other, targets: targets) != key)
+        print("History tools passed: safe revisions, SHA-256, line/function selectors, patch records, cancellation, hooks-preserving cleanup and the Compare page's commits, references and change key")
     }
 }
 SWIFT

@@ -23,6 +23,13 @@ enum RepositoryCodeHistory {
         ["show", "--format=", "--no-ext-diff", "--no-textconv", "-M", "-m", "--first-parent"] + (ignoreWhitespace ? ["-w"] : []) + [commit, "--", path]
     }
 
+    /// A file's change from one commit to another (the Compare page); a renamed file's old path goes along so the two
+    /// are paired. (Windows: comparisonChangeArgs)
+    static func comparisonArgs(base: String, commit: String, path: String, oldPath: String?, ignoreWhitespace: Bool) -> [String] {
+        ["diff", "--no-ext-diff", "--no-textconv", "-M"] + (ignoreWhitespace ? ["-w"] : []) + [base, commit, "--"]
+            + [oldPath].compactMap { $0 }.filter { $0 != path } + [path]
+    }
+
     /// The working tree's change to a file against HEAD
     static func workingArgs(path: String, ignoreWhitespace: Bool) -> [String] {
         ["diff", "--no-ext-diff", "--no-textconv"] + (ignoreWhitespace ? ["-w"] : []) + ["HEAD", "--", path]

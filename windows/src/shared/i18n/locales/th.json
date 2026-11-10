@@ -2699,5 +2699,17 @@
   "{0} not started": "{0} ยังไม่เริ่ม",
   "{0} of {1} jobs": "{0} จาก {1} จ็อบ",
   "{0} passes on {1}": "{0} ผ่านใน{1}",
+  "To": "ถึง",
+  "Swap From and To": "สลับจากและถึง",
+  "From the common ancestor": "จากบรรพบุรุษร่วม",
+  "Updates as soon as either side changes. Uncommitted changes are excluded.": "อัปเดตทันทีที่ฝั่งใดฝั่งหนึ่งเปลี่ยน ไม่รวมการเปลี่ยนแปลงที่ยังไม่ได้คอมมิต",
+  "Compare {0} with the current branch": "เปรียบเทียบ {0} กับสาขาปัจจุบัน",
+  "{0}, compared now": "{0} กำลังเปรียบเทียบอยู่",
+  "No commits between these revisions.": "ไม่มีคอมมิตระหว่างรีวิชันเหล่านี้",
+  "Couldn't compare these revisions": "ไม่สามารถเปรียบเทียบรีวิชันเหล่านี้ได้",
+  "Changes from {0} to {1}": "การเปลี่ยนแปลงจาก {0} ถึง {1}",
+  "Compare with the current branch": "เปรียบเทียบกับสาขาปัจจุบัน",
+  "Comparing…": "กำลังเปรียบเทียบ…",
+  "Open in editor": "เปิดในโปรแกรมแก้ไข",
   "Checking push destination…": "กำลังตรวจปลายทาง push…"
 }

@@ -2687,5 +2687,17 @@
   "{0} not started": "{0} nezahájeno",
   "{0} of {1} jobs": "Úlohy: {0} z {1}",
   "{0} passes on {1}": "{0} prochází v {1}",
+  "To": "Do",
+  "Swap From and To": "Prohodit Od a Do",
+  "From the common ancestor": "Od společného předka",
+  "Updates as soon as either side changes. Uncommitted changes are excluded.": "Aktualizuje se, jakmile se změní kterákoli strana. Nezapsané změny se nezahrnují.",
+  "Compare {0} with the current branch": "Porovnat {0} s aktuální větví",
+  "{0}, compared now": "{0}, právě porovnáváno",
+  "No commits between these revisions.": "Mezi těmito revizemi nejsou žádné commity.",
+  "Couldn't compare these revisions": "Tyto revize nelze porovnat",
+  "Changes from {0} to {1}": "Změny od {0} do {1}",
+  "Compare with the current branch": "Porovnat s aktuální větví",
+  "Comparing…": "Porovnávání…",
+  "Open in editor": "Otevřít v editoru",
   "Checking push destination…": "Kontroluje se cíl odeslání…"
 }

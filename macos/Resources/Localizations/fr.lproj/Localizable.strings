@@ -2691,4 +2691,14 @@
 "on this branch" = "sur cette branche";
 "pipeline #%@" = "pipeline #%@";
 "run #%@" = "exécution #%@";
+"To" = "À";
+"Swap From and To" = "Inverser De et À";
+"From the common ancestor" = "Depuis l'ancêtre commun";
+"Updates as soon as either side changes. Uncommitted changes are excluded." = "Se met à jour dès qu'un des deux côtés change. Les modifications non validées sont exclues.";
+"Compare %@ with the current branch" = "Comparer %@ avec la branche actuelle";
+"%@, compared now" = "%@, comparé actuellement";
+"No commits between these revisions." = "Aucun commit entre ces révisions.";
+"Couldn't compare these revisions" = "Impossible de comparer ces révisions";
+"Changes from %@ to %@" = "Modifications de %1$@ à %2$@";
+"Open in editor" = "Ouvrir dans l'éditeur";
 "Checking push destination…" = "Vérification de la destination du push…";

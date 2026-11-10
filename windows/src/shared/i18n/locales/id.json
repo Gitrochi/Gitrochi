@@ -2659,5 +2659,17 @@
   "{0} not started": "{0} belum dimulai",
   "{0} of {1} jobs": "{0} dari {1} job",
   "{0} passes on {1}": "{0} lolos di {1}",
+  "To": "Ke",
+  "Swap From and To": "Tukar Dari dan Ke",
+  "From the common ancestor": "Dari leluhur bersama",
+  "Updates as soon as either side changes. Uncommitted changes are excluded.": "Diperbarui begitu salah satu sisi berubah. Perubahan yang belum di-commit tidak disertakan.",
+  "Compare {0} with the current branch": "Bandingkan {0} dengan cabang saat ini",
+  "{0}, compared now": "{0}, sedang dibandingkan",
+  "No commits between these revisions.": "Tidak ada commit di antara revisi ini.",
+  "Couldn't compare these revisions": "Tidak dapat membandingkan revisi ini",
+  "Changes from {0} to {1}": "Perubahan dari {0} ke {1}",
+  "Compare with the current branch": "Bandingkan dengan cabang saat ini",
+  "Comparing…": "Membandingkan…",
+  "Open in editor": "Buka di editor",
   "Checking push destination…": "Memeriksa tujuan push…"
 }

@@ -2603,4 +2603,14 @@
 "on this branch" = "op deze branch";
 "pipeline #%@" = "pipeline #%@";
 "run #%@" = "run #%@";
+"To" = "Tot";
+"Swap From and To" = "Van en Tot omwisselen";
+"From the common ancestor" = "Vanaf de gemeenschappelijke voorouder";
+"Updates as soon as either side changes. Uncommitted changes are excluded." = "Wordt bijgewerkt zodra een van beide kanten verandert. Niet-gecommitte wijzigingen worden niet meegenomen.";
+"Compare %@ with the current branch" = "%@ vergelijken met de huidige branch";
+"%@, compared now" = "%@, nu vergeleken";
+"No commits between these revisions." = "Geen commits tussen deze revisies.";
+"Couldn't compare these revisions" = "Kan deze revisies niet vergelijken";
+"Changes from %@ to %@" = "Wijzigingen van %1$@ tot %2$@";
+"Open in editor" = "Openen in editor";
 "Checking push destination…" = "Pushbestemming controleren…";

@@ -19,6 +19,10 @@ export const localCommitArgs = (revision: string): string[] => ["rev-list", "-n"
 export const fileChangeArgs = (commit: string, path: string, ignoreWhitespace: boolean): string[] =>
   ["show", "--format=", "--no-ext-diff", "--no-textconv", "-M", "-m", "--first-parent", ...(ignoreWhitespace ? ["-w"] : []), commit, "--", path];
 
+/** A file's change from one commit to another (the Compare page); a renamed file's old path goes along so the two are paired. macOS: RepositoryCodeHistory.comparisonArgs */
+export const comparisonChangeArgs = (base: string, commit: string, path: string, oldPath: string | null, ignoreWhitespace: boolean): string[] =>
+  ["diff", "--no-ext-diff", "--no-textconv", "-M", ...(ignoreWhitespace ? ["-w"] : []), base, commit, "--", ...(oldPath && oldPath !== path ? [oldPath] : []), path];
+
 /** The working tree's change to a file against HEAD */
 export const workingChangeArgs = (path: string, ignoreWhitespace: boolean): string[] =>
   ["diff", "--no-ext-diff", "--no-textconv", ...(ignoreWhitespace ? ["-w"] : []), "HEAD", "--", path];

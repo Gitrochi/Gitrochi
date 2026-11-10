@@ -2742,5 +2742,17 @@
   "{0} not started": "{0} non commencé",
   "{0} of {1} jobs": "{0} jobs sur {1}",
   "{0} passes on {1}": "{0} réussit sur {1}",
+  "To": "À",
+  "Swap From and To": "Inverser De et À",
+  "From the common ancestor": "Depuis l'ancêtre commun",
+  "Updates as soon as either side changes. Uncommitted changes are excluded.": "Se met à jour dès qu'un des deux côtés change. Les modifications non validées sont exclues.",
+  "Compare {0} with the current branch": "Comparer {0} avec la branche actuelle",
+  "{0}, compared now": "{0}, comparé actuellement",
+  "No commits between these revisions.": "Aucun commit entre ces révisions.",
+  "Couldn't compare these revisions": "Impossible de comparer ces révisions",
+  "Changes from {0} to {1}": "Modifications de {0} à {1}",
+  "Compare with the current branch": "Comparer avec la branche actuelle",
+  "Comparing…": "Comparaison…",
+  "Open in editor": "Ouvrir dans l'éditeur",
   "Checking push destination…": "Vérification de la destination du push…"
 }

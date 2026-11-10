@@ -3421,4 +3421,14 @@
 "on this branch" = "このブランチ";
 "pipeline #%@" = "パイプライン #%@";
 "run #%@" = "実行 #%@";
+"To" = "比較先";
+"Swap From and To" = "比較元と比較先を入れ替え";
+"From the common ancestor" = "共通の祖先から";
+"Updates as soon as either side changes. Uncommitted changes are excluded." = "どちらかが変わるとすぐに更新されます。コミットしていない変更は含まれません。";
+"Compare %@ with the current branch" = "%@ を現在のブランチと比較";
+"%@, compared now" = "%@、比較中";
+"No commits between these revisions." = "この2つのリビジョンの間にコミットはありません。";
+"Couldn't compare these revisions" = "これらのリビジョンを比較できませんでした";
+"Changes from %@ to %@" = "%1$@ から %2$@ への変更";
+"Open in editor" = "エディタで開く";
 "Checking push destination…" = "Push 先を確認しています…";

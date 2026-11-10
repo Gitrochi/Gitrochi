@@ -115,6 +115,7 @@ struct FixtureRef: Identifiable {
 @MainActor @Observable final class RepoStore {
     func openChangeQuestion(code: ChangeQuestionCode) async {}
     var url: URL? = URL(fileURLWithPath: "/fixture/repository")
+    var errorMessage: String?
     let localBranches = [FixtureRef(name: "main"), FixtureRef(name: "feature/code-reader")]
     let remoteBranches = [FixtureRef(name: "origin/main")]
     let tags = [FixtureRef(name: "v1.0")]
