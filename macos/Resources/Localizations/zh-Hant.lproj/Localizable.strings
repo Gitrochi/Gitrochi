@@ -2660,3 +2660,4 @@
 "on this branch" = "在此分支上";
 "pipeline #%@" = "管線 #%@";
 "run #%@" = "執行 #%@";
+"Changes from %@ to %@" = "從 %1$@ 到 %2$@ 的變更";

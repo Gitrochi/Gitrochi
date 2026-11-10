@@ -2687,5 +2687,6 @@
   "{0} issues are open in {1}.": "Otwarte zgłoszenia w {1}: {0}.",
   "{0} not started": "{0} nierozpoczęte",
   "{0} of {1} jobs": "Zadania: {0} z {1}",
-  "{0} passes on {1}": "{0} przechodzi w {1}"
+  "{0} passes on {1}": "{0} przechodzi w {1}",
+  "Changes from {0} to {1}": "Zmiany od {0} do {1}"
 }

@@ -2740,5 +2740,6 @@
   "{0} issues are open in {1}.": "Hay {0} incidencias abiertas en {1}.",
   "{0} not started": "{0} sin empezar",
   "{0} of {1} jobs": "{0} de {1} trabajos",
-  "{0} passes on {1}": "{0} pasa en {1}"
+  "{0} passes on {1}": "{0} pasa en {1}",
+  "Changes from {0} to {1}": "Cambios de {0} a {1}"
 }

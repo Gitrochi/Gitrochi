@@ -2658,5 +2658,6 @@
   "{0} issues are open in {1}.": "{0} issue terbuka di {1}.",
   "{0} not started": "{0} belum dimulai",
   "{0} of {1} jobs": "{0} dari {1} job",
-  "{0} passes on {1}": "{0} lolos di {1}"
+  "{0} passes on {1}": "{0} lolos di {1}",
+  "Changes from {0} to {1}": "Perubahan dari {0} ke {1}"
 }

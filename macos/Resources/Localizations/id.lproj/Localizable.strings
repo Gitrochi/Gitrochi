@@ -2611,3 +2611,4 @@
 "on this branch" = "di branch ini";
 "pipeline #%@" = "pipeline #%@";
 "run #%@" = "run #%@";
+"Changes from %@ to %@" = "Perubahan dari %1$@ ke %2$@";

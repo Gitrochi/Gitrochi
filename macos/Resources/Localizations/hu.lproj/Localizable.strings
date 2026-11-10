@@ -2640,3 +2640,4 @@
 "on this branch" = "ezen az ágon";
 "pipeline #%@" = "pipeline #%@";
 "run #%@" = "futtatás #%@";
+"Changes from %@ to %@" = "Változások: %1$@ → %2$@";

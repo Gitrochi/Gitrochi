@@ -2674,5 +2674,6 @@
   "{0} issues are open in {1}.": "{0} issues abertas em {1}.",
   "{0} not started": "{0} não iniciadas",
   "{0} of {1} jobs": "{0} de {1} jobs",
-  "{0} passes on {1}": "{0} passa em {1}"
+  "{0} passes on {1}": "{0} passa em {1}",
+  "Changes from {0} to {1}": "Alterações de {0} para {1}"
 }

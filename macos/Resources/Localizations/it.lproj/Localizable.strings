@@ -2632,3 +2632,4 @@
 "on this branch" = "su questo branch";
 "pipeline #%@" = "pipeline #%@";
 "run #%@" = "esecuzione #%@";
+"Changes from %@ to %@" = "Modifiche da %1$@ a %2$@";

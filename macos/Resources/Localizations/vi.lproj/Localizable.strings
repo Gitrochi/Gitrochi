@@ -2616,3 +2616,4 @@
 "on this branch" = "trên nhánh này";
 "pipeline #%@" = "pipeline #%@";
 "run #%@" = "lượt chạy #%@";
+"Changes from %@ to %@" = "Thay đổi từ %1$@ đến %2$@";

@@ -2637,3 +2637,4 @@
 "on this branch" = "na této větvi";
 "pipeline #%@" = "pipeline #%@";
 "run #%@" = "běh #%@";
+"Changes from %@ to %@" = "Změny od %1$@ do %2$@";

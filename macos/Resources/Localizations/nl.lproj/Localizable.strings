@@ -2603,3 +2603,4 @@
 "on this branch" = "op deze branch";
 "pipeline #%@" = "pipeline #%@";
 "run #%@" = "run #%@";
+"Changes from %@ to %@" = "Wijzigingen van %1$@ tot %2$@";

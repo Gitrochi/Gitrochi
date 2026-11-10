@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { CornerDownLeft, Equal, FileArchive, TriangleAlert } from "lucide-react";
-import { MoreHorizontal, Pilcrow } from "@/shared/icons";
+import { ChevronDown, ChevronUp, MoreHorizontal, Pilcrow } from "@/shared/icons";
 import { diffSides, parseDiffAsync, splitRows, StatusBadge, type ChangeKind, type DiffDocument, type DiffLine } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
 import { Empty, IconButton, Segmented, showMenuBelow, Spinner } from "@/shared/ui";
-import { diffGaps, fileAtCommitArgs, fileChangeArgs, shortFolder, sourceLines, workingChangeArgs, type DiffGap } from "../lib/code-history";
+import { comparisonChangeArgs, diffGaps, fileAtCommitArgs, fileChangeArgs, shortFolder, sourceLines, workingChangeArgs, type DiffGap } from "../lib/code-history";
+import "./repository-code.css";
 
 interface Props {
   store: RepoStore;
@@ -13,12 +14,20 @@ interface Props {
   path: string;
   /** null for the working tree against HEAD */
   commit: string | null;
+  /** The commit to compare from instead of the commit's first parent (the Compare page) */
+  base?: string | null;
+  /** A renamed file's path at base */
+  oldPath?: string | null;
+  /** Where the file sits among a list of files: the header's "2 / 6" with its previous and next buttons */
+  position?: CodeFilePosition;
   read: (args: string[], repo: string) => Promise<string>;
   wrap: boolean;
   setWrap: (value: boolean) => void;
   /** The line count of the file as the commit has it, for the status bar */
   onLines: (count: number | null) => void;
 }
+/** Where the open file sits among a list of files, and the step to the one before or after it. macOS: CodeFilePosition */
+export interface CodeFilePosition { index: number; count: number; step: (by: number) => void }
 interface Cell { kind: DiffLine["kind"]; text: string; oldNo: number | null; newNo: number | null; changes?: Array<[number, number]> }
 type Row = { key: string } & ({ fold: DiffGap } | { hunk: DiffLine } | { note: DiffLine } | { line: Cell } | { pair: [Cell | null, Cell | null] });
 // a file's change in one commit is short; a generated file must not fill the page
@@ -34,11 +43,12 @@ export function hangingIndent(text: string, wrapping: boolean): CSSProperties | 
 }
 
 /**
- * One file's change on the Code page, read only: a commit against its first parent, or the working tree against HEAD.
- * One 44px header, then the lines, with the unchanged lines between hunks folded until asked for.
+ * One file's change on the Code page, read only: a commit against its first parent, or the working tree against HEAD;
+ * the Compare page shows a file's change from one commit to another with it. One 44px header, then the lines, with the
+ * unchanged lines between hunks folded until asked for.
  * (macOS: RepositoryCodeChangesView)
  */
-export function CodeChangesView({ store, repo, path, commit, read, wrap, setWrap, onLines }: Props) {
+export function CodeChangesView({ store, repo, path, commit, base = null, oldPath = null, position, read, wrap, setWrap, onLines }: Props) {
   const [doc, setDoc] = useState<DiffDocument | null>(null), [source, setSource] = useState<string[] | null>(null), [expanded, setExpanded] = useState<ReadonlySet<number>>(new Set());
   const ignoreWhitespace = store.diffIgnoreWhitespace, split = store.diffSplit;
   useEffect(() => {
@@ -46,7 +56,8 @@ export function CodeChangesView({ store, repo, path, commit, read, wrap, setWrap
     setDoc(null); setSource(null); setExpanded(new Set()); onLines(null);
     void (async () => {
       try {
-        const value = await parseDiffAsync(await read(commit ? fileChangeArgs(commit, path, ignoreWhitespace) : workingChangeArgs(path, ignoreWhitespace), repo), lineLimit);
+        const args = commit ? base ? comparisonChangeArgs(base, commit, path, oldPath, ignoreWhitespace) : fileChangeArgs(commit, path, ignoreWhitespace) : workingChangeArgs(path, ignoreWhitespace);
+        const value = await parseDiffAsync(await read(args, repo), lineLimit);
         if (!current) return;
         setDoc(value);
         if (!commit || value.isBinary || value.info?.deletedFile || !value.lines.length) return;
@@ -57,7 +68,7 @@ export function CodeChangesView({ store, repo, path, commit, read, wrap, setWrap
       } catch { if (current) setDoc({ lines: [], isBinary: false, truncated: false, header: [], hunks: [], error: t("Couldn't read this commit's changes.") }); }
     })();
     return () => { current = false; };
-  }, [repo, path, commit, ignoreWhitespace, read]);
+  }, [repo, path, commit, base, oldPath, ignoreWhitespace, read]);
 
   // two halves wrap in place: scrolling them sideways together would hide one of them
   const halves = !!doc && split && diffSides(doc.lines).old && diffSides(doc.lines).new, wrapping = wrap || halves;
@@ -105,18 +116,24 @@ export function CodeChangesView({ store, repo, path, commit, read, wrap, setWrap
   const line = (cell: Cell | null, numbers: Array<number | null>) => cell
     ? <div className={`code-diff-line ${cell.kind}`}>{numbers.map((value, index) => <span className="no" key={index}>{value ?? ""}</span>)}<span className="sign">{cell.kind === "added" ? "+" : cell.kind === "removed" ? "−" : ""}</span><span className="code" style={hangingIndent(cell.text, wrapping)}>{code(cell)}</span></div>
     : <div className="code-diff-line none"/>;
-  return <section className="code-changes" aria-label={commit ? t("Changes in {0} against its parent", commit.slice(0, 7)) : t("Uncommitted changes against HEAD")}>
+  const scope = commit && base ? t("Changes from {0} to {1}", base.slice(0, 7), commit.slice(0, 7)) : commit ? t("Changes in {0} against its parent", commit.slice(0, 7)) : t("Uncommitted changes against HEAD");
+  return <section className="code-changes" aria-label={scope}>
     <header className="code-changes-head">
       {doc && !doc.error && <StatusBadge kind={kind}/>}
       <strong>{name}</strong>
       {shortFolder(folder) && <span className="code-changes-folder" title={folder}>{shortFolder(folder)}</span>}
       <span className="spacer"/>
+      {position && <span className="code-changes-nav">
+        <span className="code-changes-count mono">{position.index + 1} / {position.count}</span>
+        <IconButton icon={<ChevronUp size={13}/>} disabled={position.index <= 0} aria-label={t("Previous file (K)")} aria-keyshortcuts="K" tip={t("Previous file (K)")} onClick={() => position.step(-1)}/>
+        <IconButton icon={<ChevronDown size={13}/>} disabled={position.index >= position.count - 1} aria-label={t("Next file (J)")} aria-keyshortcuts="J" tip={t("Next file (J)")} onClick={() => position.step(1)}/>
+      </span>}
       <Segmented value={split ? "split" : "unified"} options={[{ value: "unified", label: t("Unified") }, { value: "split", label: t("Split") }]} onChange={(value) => store.setDiffSplit(value === "split")}/>
       <IconButton className={ignoreWhitespace ? "on" : ""} icon={<Pilcrow size={14}/>} aria-label={t("Hide whitespace")} aria-pressed={ignoreWhitespace} tip={t("Hide whitespace")} onClick={() => { store.setDiffIgnoreWhitespace(!ignoreWhitespace); store.changed(); }}/>
-      <button type="button" className="code-text-button" disabled={!doc || doc.isBinary} data-tip={t("Ask questions about the selected changes")} onClick={() => { if (doc) void store.openChangeQuestion(false, { scope: commit ? `${t("Commit")} ${commit}` : t("Uncommitted changes against HEAD"), path, doc }); }}>{t("Ask AI…")}</button>
+      <button type="button" className="code-text-button" disabled={!doc || doc.isBinary} data-tip={t("Ask questions about the selected changes")} onClick={() => { if (doc) void store.openChangeQuestion(false, { scope: commit && !base ? `${t("Commit")} ${commit}` : scope, path, doc }); }}>{t("Ask AI…")}</button>
       <IconButton icon={<MoreHorizontal size={14}/>} aria-label={t("More file actions")} aria-haspopup="menu" tip={t("More file actions")} onClick={(event) => showMenuBelow(event.currentTarget, [
         { label: t("Wrap lines"), checked: wrap, onClick: () => setWrap(!wrap) },
-        ...(commit ? [{ label: t("Show commit"), onClick: () => store.reveal(commit) }] : []),
+        ...(commit && !base ? [{ label: t("Show commit"), onClick: () => store.reveal(commit) }] : []),
         { label: t("Copy path"), onClick: () => store.copy(path) },
       ])}/>
     </header>

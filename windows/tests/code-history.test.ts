@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { fileHistoryFormat, parseBlame, parseDiff, parseFileHistory } from "../src/entities/git";
-import { blameArgs, blameBefore, blameLineLimit, diffGaps, droppedFolders, fileAtCommitArgs, fileChangeArgs, fileHistoryArgs, fileHistoryLimit, historyCountLabel, localCommitArgs, revisionName, shortFolder, sourceLines, workingChangeArgs } from "../src/widgets/local-workbench/lib/code-history";
+import { blameArgs, blameBefore, blameLineLimit, comparisonChangeArgs, diffGaps, droppedFolders, fileAtCommitArgs, fileChangeArgs, fileHistoryArgs, fileHistoryLimit, historyCountLabel, localCommitArgs, revisionName, shortFolder, sourceLines, workingChangeArgs } from "../src/widgets/local-workbench/lib/code-history";
 
 // macOS: the same cases are preconditions in macos/Tools/test-repository-browser.sh
 describe("Code page history, blame and changes", () => {
@@ -15,6 +15,9 @@ describe("Code page history, blame and changes", () => {
     expect(blameArgs("abc", "a.ts", 0)[3]).toBe("1,1");
     expect(blameArgs("abc", "a.ts", 90_000)[3]).toBe(`1,${blameLineLimit}`);
     expect(fileAtCommitArgs("abc", "src/a.ts")).toEqual(["cat-file", "blob", "abc:src/a.ts"]);
+    expect(comparisonChangeArgs("base", "abc", "a.ts", null, false)).toEqual(["diff", "--no-ext-diff", "--no-textconv", "-M", "base", "abc", "--", "a.ts"]);
+    expect(comparisonChangeArgs("base", "abc", "new.ts", "old.ts", true)).toEqual(["diff", "--no-ext-diff", "--no-textconv", "-M", "-w", "base", "abc", "--", "old.ts", "new.ts"]);
+    expect(comparisonChangeArgs("base", "abc", "a.ts", "a.ts", false).filter((arg) => arg === "a.ts")).toHaveLength(1);
   });
 
   it("labels the History tab's count and stops at the limit", () => {
