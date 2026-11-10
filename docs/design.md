@@ -91,8 +91,31 @@ Each of these has one form. Build it once per platform and reuse it; don't draw 
 
 ![Repository: a selected commit in the graph and its inspector](design/repository-commit.png)
 
+## App shell
+
+On macOS the window and sidebar are native (`NavigationSplitView` with a `.listStyle(.sidebar)` source list); the toolbar is a unified toolbar whose items each draw their own 36pt capsule, 8pt apart. Windows has no native shell, so it draws the same structure with the frame values below.
+
+- **No page title band.** The selected sidebar item names the page; the toolbar is the only title. The page name still reaches VoiceOver as the content's accessibility label.
+- **Toolbar by page**:
+  - Every window starts with the sidebar toggle (⌃⌘S) and the repository button: the repository, its branch and `↑2 ↓5` against the upstream, opening the repository menu. Ahead/behind counts live only there. A page reached from the repository screen (pull requests, issues, Actions, releases) adds "‹ Repository" (⌘[).
+  - Repository screen: Changes N · Fetch, Pull, Push · Branch ▾ and ⋯ · terminal and right panel · account.
+  - Every other page with a repository (pull requests, issues, Actions, releases, Projects, Account, Compare, Code, Rebase, Flows, Ledger): ⋯ · terminal · account.
+  - No repository open (Home, Projects): the account only. ⋯ and the terminal act on a repository, so they are left out rather than disabled.
+- **Fetch, Pull and Push** share a capsule. The recommended one moves into a filled capsule of its own: Push when there are only commits to push, Pull when a fast-forward is possible, none when the branch has diverged.
+- **⋯ is the same menu on every page**: it starts with Fetch ⇧⌘F, Pull ⇧⌘L and Push ⇧⌘P, then `Undo "<last operation>"` ⌥⌘Z, then the rest. Undo has no toolbar button. Branch, worktree and stash actions sit under Branch ▾.
+- **Toggles** (Changes, terminal, right panel) are on only while the thing they show is visible; their label flips to "Hide …". The on state is a neutral fill inside the capsule.
+- **Account** is the last item: the profile photo (initials only for an account without one). A small warning badge appears only when the current repository's own account needs attention. Its popover shows this repository's account with the reason it was chosen and "Change…", the other accounts, Inbox (the Account page), "Add account…" (the same sheet as Settings) and "Manage accounts…".
+- **The account in the toolbar is the push check.** Push review shows where and as whom a push goes; it runs no gitch preflight. gitch keeps its preflight for the command line, where nothing shows the account, and the terminal keeps its Preflight button.
+- **Sidebar**: Home on top (⇧⌘H), then Repository (Repository, Compare, Rebase, Code), GitHub or GitLab (Pull requests or Merge requests, Issues, Actions or Pipelines, Releases, Projects, Account) and Tools (Flows, Ledger), with Settings pinned at the bottom. ⌘1–⌘9 go to Repository through Ledger in that order; a row shows its shortcut while ⌘ is held or the pointer is over it. Only the Ledger row carries a count. Icons are secondary-toned so colour stays for status.
+- **Selection in the sidebar** is a neutral fill, like selection everywhere else; it never uses the accent.
+- **Collapsed sidebar** is a 52pt icon rail with the same sections and Settings at the bottom; the toolbar's sidebar toggle expands it. A narrow window folds the sidebar into the rail by itself. Pages that need a repository are drawn dimmed while none is open.
+- **Pages fill the window.** A board's `max-width` is the size it was drawn at, not a limit. List and detail pages keep their 312px list column; the detail takes the rest. A list page with an obvious first item opens on it (this branch's pull request, the latest release) rather than on an empty detail.
+- **Icons** are the boards' own drawings: a 16px grid, 1.5px stroke, one family across both platforms. An icon no board draws uses Lucide's drawing (ISC) at the same stroke weight. Code never draws an SF Symbol directly; macOS maps symbol names to the drawings.
+- **Sheets** attach under the toolbar, horizontally centred, without dimming the window. Header: 15px semibold title, one 12px context line, 20 padding, a 1px line below. Footer: secondary actions on the left; on the right Cancel, a reason line when the primary is disabled, then the one filled primary.
+- **Terminal panel** docks under the centre column only; the sidebar and the right panel keep the full window height. The tab bar has no logo. Tab status is a shape in a reserved 12px slot: a ring while a command runs, an accent dot for unseen output or a session waiting for the user, a hollow circle when exited, nothing when idle. When the panel narrows, the commands fold into "Commands ▾".
+
 ## Frames and spacing
 
-- Repository screens: a 44px toolbar, a 240px sidebar, a 340px inspector (header 44px). List/detail pages: a 312px list column. Blame: a 280px gutter with a 56px age column.
+- Repository screens: no page toolbar under the window toolbar (see App shell), a 240px sidebar, a 340px inspector (header 44px). List/detail pages: a 312px list column. Blame: a 280px gutter with a 56px age column.
 - Spacing steps: 4, 6, 8, 10, 12, 16, 20, 24, 28, 32. Card padding 12 16.
 - Avatars: 24 in conversations, 20 in meta and side cards, 22 as graph nodes, 16 in dense rows.
