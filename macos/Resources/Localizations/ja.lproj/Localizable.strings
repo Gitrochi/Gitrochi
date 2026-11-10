@@ -3421,3 +3421,4 @@
 "on this branch" = "このブランチ";
 "pipeline #%@" = "パイプライン #%@";
 "run #%@" = "実行 #%@";
+"Checking push destination…" = "Push 先を確認しています…";

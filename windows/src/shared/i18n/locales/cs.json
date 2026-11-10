@@ -2686,5 +2686,6 @@
   "{0} issues are open in {1}.": "Otevřené issues v {1}: {0}.",
   "{0} not started": "{0} nezahájeno",
   "{0} of {1} jobs": "Úlohy: {0} z {1}",
-  "{0} passes on {1}": "{0} prochází v {1}"
+  "{0} passes on {1}": "{0} prochází v {1}",
+  "Checking push destination…": "Kontroluje se cíl odeslání…"
 }

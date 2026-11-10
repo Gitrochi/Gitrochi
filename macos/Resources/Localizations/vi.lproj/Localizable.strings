@@ -2616,3 +2616,4 @@
 "on this branch" = "trên nhánh này";
 "pipeline #%@" = "pipeline #%@";
 "run #%@" = "lượt chạy #%@";
+"Checking push destination…" = "Đang kiểm tra đích push…";

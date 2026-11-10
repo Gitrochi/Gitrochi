@@ -2632,3 +2632,4 @@
 "on this branch" = "su questo branch";
 "pipeline #%@" = "pipeline #%@";
 "run #%@" = "esecuzione #%@";
+"Checking push destination…" = "Verifica della destinazione del push…";

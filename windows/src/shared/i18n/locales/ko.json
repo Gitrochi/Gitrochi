@@ -567,7 +567,6 @@
   "Checking dependency rules…": "의존 규칙 검사하는 중…",
   "Checking out '{0}'…": "'{0}' 체크아웃 중…",
   "Checking out…": "체크아웃 중…",
-  "Checking push destination and preflight…": "Push 대상과 사전 점검을 확인하는 중…",
   "Checking repository…": "저장소 확인 중…",
   "Checking saved account access…": "저장된 계정 접근 확인 중…",
   "Checking staged changes…": "스테이지 내용 확인 중…",
@@ -2257,7 +2256,6 @@
   "The flow engine (gitch-flow) isn't in this Gitrochi. Update Gitrochi to run flows.": "이 Gitrochi 에 흐름 엔진(gitch-flow)이 없습니다. 흐름을 돌리려면 Gitrochi 를 업데이트하세요.",
   "The flow engine (gitch-flow) isn't in this Gitrochi. Update Gitrochi, or build it with tools/gitch-flow/build.sh.": "이 Gitrochi 에 흐름 엔진(gitch-flow)이 없습니다. Gitrochi 를 업데이트하거나 tools/gitch-flow/build.sh 로 빌드하세요.",
   "The gitch inside Gitrochi doesn't support structure graphs. Update Gitrochi and try again.": "Gitrochi 안의 gitch 가 구조 그래프를 지원하지 않습니다. Gitrochi 를 업데이트한 뒤 다시 시도하세요.",
-  "The gitch preflight check is unavailable. Open Settings → CLI and repair gitch before pushing.": "gitch 사전 점검을 실행할 수 없습니다. 설정 → CLI에서 gitch를 확인한 뒤 Push하세요.",
   "The good commit must be an ancestor of the bad commit.": "정상 커밋은 문제 커밋보다 앞선 조상 커밋이어야 합니다.",
   "The installer runs only if its Gitrochi signature is valid. The window closes briefly and reopens during installation.": "설치 파일은 Gitrochi 서명이 맞을 때만 설치됩니다. 설치하는 동안 창이 잠깐 닫혔다가 다시 열립니다.",
   "The issue or pull request stays in its repository.": "이슈나 풀 리퀘스트는 저장소에 그대로 유지됩니다.",
@@ -4660,5 +4658,6 @@
   "{0} issues are open in {1}.": "{1}에 열린 이슈가 {0}개 있습니다.",
   "{0} not started": "{0} 시작 전",
   "{0} of {1} jobs": "작업 {1}개 중 {0}개",
-  "{0} passes on {1}": "{0}: {1} 통과"
+  "{0} passes on {1}": "{0}: {1} 통과",
+  "Checking push destination…": "Push 대상을 확인하는 중…"
 }

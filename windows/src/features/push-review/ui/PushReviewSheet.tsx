@@ -20,10 +20,10 @@ export function PushReviewSheet({ store, close, branch, force, remoteOverride }:
     <Button disabled={loading} onClick={() => void store.loadPushReview(branch, force, remoteOverride)}>{t("Refresh review")}</Button>
     <span className="grow" />
     <Button disabled={pushing} onClick={cancel}>{t("Cancel")}</Button>
-    <Button kind="primary" disabled={!plan || loading || plan.preflight.result === "STOP"} onClick={() => void store.confirmPushReview()}>{t(force ? "Confirm force push" : "Confirm push")}</Button>
+    <Button kind="primary" disabled={!plan || loading} onClick={() => void store.confirmPushReview()}>{t(force ? "Confirm force push" : "Confirm push")}</Button>
   </>}>
     <div className="push-review col">
-      {loading && <div className="row"><Spinner /> {t("Checking push destination and preflight…")}</div>}
+      {loading && <div className="row"><Spinner /> {t("Checking push destination…")}</div>}
       {store.pushReviewError && <div className="error-text" role="alert">{store.pushReviewError}</div>}
       {force && <div className="push-review-warning">{t("Force push can replace remote history. The reviewed remote revision is protected by an explicit lease.")}</div>}
       {plan && <>
@@ -35,10 +35,6 @@ export function PushReviewSheet({ store, close, branch, force, remoteOverride }:
         <Row label={t("Destination branch")}><span className="mono break">{plan.remote} / {plan.destination.replace(/^refs\/heads\//, "")}</span></Row>
         <Row label={t("Source revision")}><span className="mono">{plan.branch} · {plan.sourceOID.slice(0, 12)}</span></Row>
         <Row label={t("Remote revision")}><span className="mono">{plan.destinationOID?.slice(0, 12) ?? t("New branch")}</span></Row>
-        <div className={`push-review-checks ${plan.preflight.result === "STOP" ? "error-text" : ""}`}>
-          <strong>{t("Preflight")} · {plan.preflight.result}</strong>
-          {plan.preflight.checks.map((check, i) => <div key={i}>[{check.level}] {check.message}</div>)}
-        </div>
         <strong>{t("Outgoing commits ({0})", plan.commitCount)}</strong>
         <div className="push-review-list">{plan.commits.map((c) => <div key={c.sha}><span className="mono hint">{c.sha.slice(0, 8)}</span> {c.subject}<div className="hint">{c.author} &lt;{c.email}&gt;</div></div>)}{!plan.commitCount && <p className="hint">{t("No outgoing commits")}</p>}</div>
         {plan.commitCount > plan.commits.length && <span className="hint">{t("Showing the first {0} items", plan.commits.length)}</span>}

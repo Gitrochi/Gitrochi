@@ -2655,3 +2655,4 @@
 "on this branch" = "в этой ветке";
 "pipeline #%@" = "конвейер #%@";
 "run #%@" = "запуск #%@";
+"Checking push destination…" = "Проверка назначения push…";

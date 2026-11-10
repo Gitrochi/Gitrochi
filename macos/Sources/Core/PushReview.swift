@@ -22,7 +22,6 @@ struct PushReviewPlan {
     let author: String
     let account: String
     let credentialAccount: String
-    let preflight: Gitch.Preflight
     let commits: [Commit]
     let commitCount: Int
     let files: [String]

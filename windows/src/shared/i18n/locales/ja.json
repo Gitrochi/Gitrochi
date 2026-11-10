@@ -3496,5 +3496,6 @@
   "{0} issues are open in {1}.": "{1} にはオープンな Issue が {0} 件あります。",
   "{0} not started": "{0} は未着手",
   "{0} of {1} jobs": "ジョブ {1} 件中 {0} 件",
-  "{0} passes on {1}": "{0} は {1} で合格"
+  "{0} passes on {1}": "{0} は {1} で合格",
+  "Checking push destination…": "Push 先を確認しています…"
 }

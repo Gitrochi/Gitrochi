@@ -2838,5 +2838,6 @@
   "{0} issues are open in {1}.": "{1} 中有 {0} 个开放议题。",
   "{0} not started": "{0} 未开始",
   "{0} of {1} jobs": "{0}/{1} 个作业",
-  "{0} passes on {1}": "{0} 在{1}中通过"
+  "{0} passes on {1}": "{0} 在{1}中通过",
+  "Checking push destination…": "正在检查推送目标…"
 }

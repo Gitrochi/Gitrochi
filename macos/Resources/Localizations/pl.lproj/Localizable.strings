@@ -2639,3 +2639,4 @@
 "on this branch" = "na tej gałęzi";
 "pipeline #%@" = "pipeline #%@";
 "run #%@" = "uruchomienie #%@";
+"Checking push destination…" = "Sprawdzanie miejsca docelowego push…";
