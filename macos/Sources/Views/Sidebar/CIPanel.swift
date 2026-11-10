@@ -1,8 +1,9 @@
 import SwiftUI
 import AppKit
 
-/// The Actions page's list column, as the Actions board draws it: search with the sort and filter menu (order, all
-/// branches or this one, grouping), the segments that count what failed, runs or waits, and two-line rows.
+/// The Actions page's list column, as the Actions board draws it: the runs scheduled for later, search with the sort
+/// and filter menu (order, all branches or this one, grouping), the segments that count what failed, runs or waits,
+/// and two-line rows.
 /// A row shows the run on the right (CIRunDetailView). (Windows: features/ci-panel/ui/CIPanel.tsx)
 struct CIPanel: View {
     @Environment(RepoStore.self) private var store
@@ -26,6 +27,7 @@ struct CIPanel: View {
                     Task { await store.loadCI() }
                 }
             }
+            ScheduledRunsGroup()
             HostedListSearch(prompt: String(localized: "Search runs"), text: $search, menuTitle: menuTitle) {
                 Picker("Sort", selection: $oldestFirst) {
                     Text("Newest first").tag(false)

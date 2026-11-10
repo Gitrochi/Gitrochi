@@ -27,6 +27,7 @@ import {
   IconButton, Spinner,
 } from "@/shared/ui";
 import { runMenu, runName, runTitle } from "./CIRunDetail";
+import { ScheduledRunsGroup } from "./ScheduledRunsGroup";
 import "./ci-panel.css";
 
 /**
@@ -77,8 +78,9 @@ export function useRuns(store: RepoStore, enabled = true) {
 }
 
 /**
- * The Actions page's list column, as the Actions board draws it: search with the sort and filter menu (order, all
- * branches or this one, grouping), the segments that count what failed, runs or waits, and two-line rows.
+ * The Actions page's list column, as the Actions board draws it: the runs scheduled for later, search with the sort
+ * and filter menu (order, all branches or this one, grouping), the segments that count what failed, runs or waits,
+ * and two-line rows.
  * A row shows the run on the right (CIRunDetail). On the page (`page`) the page reads the runs and holds Refresh and
  * Run; standing alone it does both itself. (macOS: CIPanel.swift)
  */
@@ -175,6 +177,7 @@ export function CIPanel({
         </div>
       )}
       {st.kind === "failed" && ci.pipelines.length > 0 && <FailureBlock title={t("Couldn't reach {0}", host)} caption={hostedListAge(ci.loadedAt)} detail={st.message} retry={() => void ci.load()} />}
+      <ScheduledRunsGroup store={store} />
       <HostedListSearch
         prompt={t("Search runs")}
         text={search}

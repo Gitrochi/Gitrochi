@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import type { CIInput, CIWorkflow } from "@/entities/ci";
+import { canSchedule, type CIInput, type CIWorkflow, dateTimeInputValue, nextFullHour, parseDateTimeInput, scheduledRuns } from "@/entities/ci";
 import type { Provider } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
 import { describe } from "@/shared/platform";
-import { Button, Checkbox, IconButton, Modal, Spinner } from "@/shared/ui";
+import { Button, Checkbox, IconButton, Modal, Segmented, Spinner } from "@/shared/ui";
 
 interface Variable {
   id: number;
@@ -30,7 +30,13 @@ export function RunPipelineSheet({ store, close }: { store: RepoStore; close: ()
   const [values, setValues] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  // Run later: the app keeps the run and starts it itself at this local date and time
+  const [later, setLater] = useState(false);
+  const [runAt, setRunAt] = useState(() => dateTimeInputValue(nextFullHour(scheduledRuns.now())));
+  // the time is checked again when the primary is pressed: it may have passed while the sheet was open
+  const [checkedAt, setCheckedAt] = useState(() => scheduledRuns.now());
   const workflow = workflows.find((w) => w.id === workflowID) ?? null;
+  const timeOK = canSchedule(parseDateTimeInput(runAt), Math.max(checkedAt, scheduledRuns.now()));
 
   useEffect(() => {
     if (provider !== "gitlab") return;
@@ -82,16 +88,30 @@ export function RunPipelineSheet({ store, close }: { store: RepoStore; close: ()
 
   const run = () => {
     if (!canRun) return;
+    const vars = variables.map((v): [string, string] => [v.key.trim(), v.value]).filter(([k]) => !!k);
+    const inputs = workflow ? Object.fromEntries(Object.entries(values).filter(([k, v]) => !!v && workflow.inputs.some((i) => i.name === k))) : {};
+    if (later) return schedule(vars, inputs);
     close();
     if (provider === "gitlab") {
-      void ci.runPipeline(
-        ref.trim(),
-        variables.map((v): [string, string] => [v.key.trim(), v.value]).filter(([k]) => !!k),
-      );
+      void ci.runPipeline(ref.trim(), vars);
     } else if (workflow) {
-      const inputs = Object.fromEntries(Object.entries(values).filter(([k, v]) => !!v && workflow.inputs.some((i) => i.name === k)));
       void ci.runWorkflow(workflow, ref.trim(), inputs);
     }
+  };
+
+  /** Keeps the run with this repository and its account (never the token) for the app to start at the chosen time */
+  const schedule = (vars: [string, string][], inputs: Record<string, string>) => {
+    const now = scheduledRuns.now(), at = parseDateTimeInput(runAt);
+    setCheckedAt(now);
+    const target = store.target, account = store.hostingAccount, path = store.path;
+    if (!canSchedule(at, now) || !target || !account || !path || (provider === "github" && !workflow)) return;
+    scheduledRuns.add({
+      id: crypto.randomUUID(), repoPath: path, provider, host: target.host, remote: target.remote, path: target.path, accountID: account.id,
+      workflowID: provider === "github" ? (workflow?.id ?? null) : null, workflowName: provider === "github" ? (workflow?.name ?? null) : null,
+      ref: ref.trim(), inputs: provider === "github" ? inputs : {}, variables: provider === "gitlab" ? vars : [],
+      runAt: at, createdAt: now, state: "scheduled", message: null,
+    });
+    close();
   };
 
   const update = (id: number, patch: Partial<Variable>) => setVariables((vs) => vs.map((v) => (v.id === id ? { ...v, ...patch } : v)));
@@ -106,8 +126,10 @@ export function RunPipelineSheet({ store, close }: { store: RepoStore; close: ()
           {loading && <Spinner />}
           <span className="spacer" />
           <Button onClick={close}>{t("Cancel")}</Button>
-          <Button kind="primary" disabled={!canRun} onClick={run}>
-            {t("Run")}</Button>
+          {/* the reason sits beside the primary it disables */}
+          {later && !timeOK && <span className="muted">{t("Choose a time in the future.")}</span>}
+          <Button kind="primary" disabled={!canRun || (later && !timeOK)} onClick={run}>
+            {later ? t("Schedule run") : t("Run")}</Button>
         </>
       }
     >
@@ -200,6 +222,25 @@ export function RunPipelineSheet({ store, close }: { store: RepoStore; close: ()
             )}
           </>
         )}
+
+        {/* run now, or at a date and time: the app keeps the run and starts it then */}
+        <div className="col" style={{ gap: 8 }}>
+          <div className="row">
+            <Segmented value={later ? "later" : "now"} onChange={(v) => setLater(v === "later")}
+              options={[{ value: "now", label: t("Run now") }, { value: "later", label: t("Run later") }]} />
+          </div>
+          {later && (
+            <>
+              <div className="form-row">
+                <label htmlFor="run-later-at">{t("Run at")}</label>
+                <div className="row">
+                  <input id="run-later-at" type="datetime-local" className="input grow" value={runAt} onChange={(e) => setRunAt(e.target.value)} />
+                </div>
+              </div>
+              <span className="muted">{t("Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed.")}</span>
+            </>
+          )}
+        </div>
       </div>
     </Modal>
   );
