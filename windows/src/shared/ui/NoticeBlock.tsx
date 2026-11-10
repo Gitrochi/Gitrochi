@@ -51,12 +51,15 @@ export function NoticeBlock({ icon, tone = "waiting", title, caption, detail, ac
   return (
     <div className={`notice-block status-tone ${className}`} data-tone={tone} role={alert ? "alert" : "status"} title={detail ?? undefined}>
       <span className="notice-block-icon" aria-hidden>{icon}</span>
-      <span className="notice-block-text">
-        <span className="notice-block-title selectable">{title}</span>
-        {caption && <span className="notice-block-caption selectable">{caption}</span>}
-        {actions.length > 1 && buttons}
+      {/* one action sits on the right while the words keep 160px, and drops below them in a narrow column */}
+      <span className="notice-block-body">
+        <span className="notice-block-text">
+          <span className="notice-block-title selectable">{title}</span>
+          {caption && <span className="notice-block-caption selectable">{caption}</span>}
+          {actions.length > 1 && buttons}
+        </span>
+        {(actions.length === 1 || (!actions.length && busy)) && buttons}
       </span>
-      {(actions.length === 1 || (!actions.length && busy)) && buttons}
     </div>
   );
 }

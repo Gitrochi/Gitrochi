@@ -26,6 +26,7 @@ export async function noticeBlockSelfTest(): Promise<[boolean, string]> {
       <FailureBlock className="fixture-failure" title={t("Couldn't reach {0}", "github.com")} caption={t("Showing data from {0}", "12m")} retrying={retrying} retry={() => retried++} />
       <NoticeBlock className="fixture-one" icon={<KeyRound size={14} />} title="One action" caption="Caption" actions={[{ label: "Approve…", filled: true, onClick: () => approved++ }]} />
       <NoticeBlock className="fixture-two" icon={<KeyRound size={14} />} title="Two actions" caption="Caption" actions={[{ label: "First", onClick: () => {} }, { label: "Second", onClick: () => {} }]} />
+      <div style={{ width: 240 }}><NoticeBlock className="fixture-narrow" icon={<KeyRound size={14} />} title="Saved sign-in needs your approval" actions={[{ label: "Restore saved account access", onClick: () => {} }]} /></div>
       <div className="fixture-footer" style={{ display: "flex" }}>
         <DisabledReason reason={retryAbove()}><Button kind="primary" className="fixture-blocked">Confirm</Button></DisabledReason>
         <DisabledReason reason={null}><Button className="fixture-open">Open</Button></DisabledReason>
@@ -42,7 +43,7 @@ export async function noticeBlockSelfTest(): Promise<[boolean, string]> {
     // failure: the failed tone, an alert, the 13px semibold title, the 12px caption and a plain Retry on the right
     const failure = $(".fixture-failure")!;
     const title = $(".fixture-failure .notice-block-title")!, caption = $(".fixture-failure .notice-block-caption")!;
-    const retry = $<HTMLButtonElement>(".fixture-failure > .notice-block-actions .btn")!;
+    const retry = $<HTMLButtonElement>(".fixture-failure .notice-block-body > .notice-block-actions .btn")!;
     if (failure.dataset.tone !== "failed" || failure.getAttribute("role") !== "alert") return [false, "Failure block lost its tone or alert role"];
     if (getComputedStyle(title).fontSize !== "13px" || getComputedStyle(title).fontWeight !== "600" || getComputedStyle(caption).fontSize !== "12px") return [false, "Failure block type sizes changed"];
     if (!retry || retry.textContent !== t("Retry") || retry.classList.contains("primary")) return [false, "Failure block needs a plain Retry"];
@@ -56,13 +57,16 @@ export async function noticeBlockSelfTest(): Promise<[boolean, string]> {
     details.push("failure");
 
     // one action on the right, two on a row below the words
-    if (!$(".fixture-one > .notice-block-actions") || $(".fixture-one .notice-block-text > .notice-block-actions")) return [false, "One action must sit on the right"];
-    if (box(".fixture-one > .notice-block-actions").left < box(".fixture-one .notice-block-text").right) return [false, "One action overlaps the words"];
+    if (!$(".fixture-one .notice-block-body > .notice-block-actions") || $(".fixture-one .notice-block-text > .notice-block-actions")) return [false, "One action must sit on the right"];
+    if (box(".fixture-one .notice-block-body > .notice-block-actions").left < box(".fixture-one .notice-block-text").right) return [false, "One action overlaps the words"];
     $<HTMLButtonElement>(".fixture-one .btn.primary")!.click();
     if (!await until(() => approved === 1)) return [false, "Notice action did not run"];
     const row = $(".fixture-two .notice-block-text > .notice-block-actions");
-    if (!row || row.querySelectorAll(".btn").length !== 2 || $(".fixture-two > .notice-block-actions")) return [false, "Two actions must go on a row below"];
+    if (!row || row.querySelectorAll(".btn").length !== 2 || $(".fixture-two .notice-block-body > .notice-block-actions")) return [false, "Two actions must go on a row below"];
     if (box(".fixture-two .notice-block-text > .notice-block-actions").top < box(".fixture-two .notice-block-caption").bottom) return [false, "The action row must sit below the caption"];
+    // in a narrow column (a sidebar section) the one action drops below the words instead of squeezing them
+    if (box(".fixture-narrow .notice-block-title").width < 150) return [false, "A narrow notice squeezed its words"];
+    if (box(".fixture-narrow .notice-block-actions").top < box(".fixture-narrow .notice-block-title").bottom) return [false, "A narrow notice must put its action below the words"];
     details.push("notice");
 
     // a disabled button says why, 8px beside it, and is neutral rather than faded

@@ -1,7 +1,8 @@
 /* One form for failures and notices, and the reason beside a disabled button. macOS: Views/Shared/NoticeBlock.swift. */
 .notice-block { flex: none; display: flex; align-items: flex-start; gap: 10px; min-width: 0; box-sizing: border-box; padding: 10px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 13px; text-align: left; }
 .notice-block-icon { flex: none; display: inline-flex; margin-top: 2px; color: var(--status-text); }
-.notice-block-text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.notice-block-body { flex: 1 1 auto; min-width: 0; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 6px 10px; }
+.notice-block-text { flex: 1 1 160px; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .notice-block-title { font-size: 13px; line-height: 18px; font-weight: 600; color: var(--status-text); overflow-wrap: anywhere; }
 .notice-block-caption { font-size: 12px; line-height: 16px; color: var(--text-2); overflow-wrap: anywhere; white-space: pre-wrap; }
 .notice-block-actions { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }

@@ -28,23 +28,36 @@ struct NoticeBlock: View {
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
             SymbolIcon(symbol).font(.system(size: 14)).foregroundStyle(tone.text).frame(height: 17).accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(verbatim: title).font(.system(size: 13, weight: .semibold)).foregroundStyle(tone.text)
-                    .fixedSize(horizontal: false, vertical: true).textSelection(.enabled)
-                if let caption {
-                    Text(verbatim: caption).font(.system(size: 12)).foregroundStyle(HostedList.caption)
-                        .fixedSize(horizontal: false, vertical: true).textSelection(.enabled)
+            if actions.count == 1 || (actions.isEmpty && busy) {
+                // one action sits on the right while the words keep 160 pt, and drops below them in a narrow column
+                ViewThatFits(in: .horizontal) {
+                    HStack(alignment: .top, spacing: 10) {
+                        words(below: false).frame(minWidth: 160, idealWidth: 160, maxWidth: .infinity, alignment: .leading)
+                        buttons
+                    }
+                    words(below: true).frame(maxWidth: .infinity, alignment: .leading)
                 }
-                if actions.count > 1 { buttons.padding(.top, 6) }
+            } else {
+                words(below: actions.count > 1).frame(maxWidth: .infinity, alignment: .leading)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            if actions.count == 1 || (actions.isEmpty && busy) { buttons }
         }
         .padding(.horizontal, 12).padding(.vertical, 10)
         .background(RoundedRectangle(cornerRadius: 6).fill(StudioStyle.surface))
         .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(StudioStyle.border))
         .help(detail ?? "")
         .accessibilityElement(children: .contain)
+    }
+
+    private func words(below: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(verbatim: title).font(.system(size: 13, weight: .semibold)).foregroundStyle(tone.text)
+                .fixedSize(horizontal: false, vertical: true).textSelection(.enabled)
+            if let caption {
+                Text(verbatim: caption).font(.system(size: 12)).foregroundStyle(HostedList.caption)
+                    .fixedSize(horizontal: false, vertical: true).textSelection(.enabled)
+            }
+            if below { buttons.padding(.top, 6) }
+        }
     }
 
     private var buttons: some View {
