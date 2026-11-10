@@ -36,18 +36,15 @@ struct SavedAccountAccessNotice: View {
         }
     }
 
+    /// One action sits on the right; when the credential can't be read at all, Account settings joins it below
     private var note: some View {
-        let accounts = AccountStore.shared
-        return VStack(alignment: .leading, spacing: 10) {
-            Label("@" + account.username + " · " + account.host, symbol: "person.crop.circle.badge.checkmark").font(.callout.weight(.medium))
-            Text(accounts.savedAccessMessage(for: account)).font(.callout).foregroundStyle(.secondary)
-            if accounts.credentialState(for: account) == .loading { ProgressView().controlSize(.small) }
-            else {
-                Button("Restore saved account access", action: allow).disabled(allowing)
-                if accounts.credentialState(for: account) == .unavailable { Button("Account settings…") { openSettings() } }
-            }
-            if allowing { ProgressView().controlSize(.small) }
-            if let error { Text(error).font(.caption).foregroundStyle(.secondary).textSelection(.enabled) }
-        }.frame(maxWidth: .infinity, alignment: .leading)
+        let accounts = AccountStore.shared, state = accounts.credentialState(for: account)
+        var actions: [NoticeAction] = []
+        if state != .loading {
+            actions.append(NoticeAction(title: String(localized: "Restore saved account access"), run: allow))
+            if state == .unavailable { actions.append(NoticeAction(title: String(localized: "Account settings…")) { openSettings() }) }
+        }
+        return NoticeBlock(symbol: "key", title: String(localized: "Saved sign-in needs your approval"),
+                           caption: error ?? accounts.savedAccessMessage(for: account), actions: actions, busy: allowing || state == .loading)
     }
 }

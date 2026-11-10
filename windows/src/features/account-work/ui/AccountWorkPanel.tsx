@@ -7,7 +7,7 @@ import { accounts, workStateTitle, type AccountWorkItem, type AccountWorkKind } 
 import { ipc } from "@/shared/api";
 import { language, t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
-import { Avatar, Button, Segmented, showContextMenu, showMenuBelow, Spinner, StatusPill, type StatusTone } from "@/shared/ui";
+import { Avatar, Button, FailureBlock, Segmented, showContextMenu, showMenuBelow, Spinner, StatusPill, type StatusTone } from "@/shared/ui";
 import { inboxReason, inboxReasonLabel, isLocalWork, repositoryName, visibleWork, workGroups, workReference, workWhen, type InboxReason } from "../lib/account-inbox";
 import type { AccountWorkFailure, AccountWorkModel } from "../model/account-work-model";
 import "./account-work.css";
@@ -157,14 +157,8 @@ export function AccountWorkPanel({ model, account, target, onOpen, openSettings 
         <aside className="account-list" aria-label={t(model.inbox ? "Inbox" : "My work")}>
           {model.failure && !failed && (
             // a refresh that failed leaves the last rows and says how old they are
-            <div className="account-notice" role="alert">
-              <span className="status-tone account-notice-icon" data-tone="failed" aria-hidden><CircleX size={14} /></span>
-              <span className="account-notice-text">
-                <span className="status-tone account-notice-lead selectable" data-tone="failed">{title(model.failure)}</span>
-                {model.loadedAt !== null && <span className="account-caption">{t("Showing data from {0}", workWhen(model.loadedAt, now, language))}</span>}
-              </span>
-              <Button disabled={model.busy} onClick={reload}>{t("Retry")}</Button>
-            </div>
+            <FailureBlock className="account-notice" title={title(model.failure)} retrying={model.busy} retry={reload}
+              caption={model.loadedAt !== null ? t("Showing data from {0}", workWhen(model.loadedAt, now, language)) : null} />
           )}
           <div className="account-list-controls">
             <div className="account-list-search">
