@@ -50,7 +50,7 @@ struct PullRequestSection: View {
                     .buttonStyle(.link)
                 }
             case .failed(let m):
-                Text(m).font(.caption).foregroundStyle(.red).lineLimit(3)
+                FailureBlock(title: String(localized: "Couldn't reach \(target.host)"), caption: m) { Task { await store.loadPullRequests() } }
             case .loading where store.pullRequests.isEmpty:
                 ProgressView().controlSize(.small)
             case .loaded where store.pullRequests.isEmpty:

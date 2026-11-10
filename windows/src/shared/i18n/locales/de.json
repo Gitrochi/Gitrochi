@@ -2714,5 +2714,7 @@
   "Comparing…": "Vergleich läuft…",
   "Open in editor": "Im Editor öffnen",
   "Checking push destination…": "Push-Ziel wird geprüft…",
-  "Retry above": "Oben erneut versuchen"
+  "Retry above": "Oben erneut versuchen",
+  "Couldn't read the saved account credentials": "Gespeicherte Kontozugangsdaten konnten nicht gelesen werden",
+  "Unlock your credentials, then retry.": "Entsperren Sie Ihre Zugangsdaten und versuchen Sie es erneut."
 }

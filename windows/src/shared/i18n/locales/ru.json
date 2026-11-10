@@ -2717,5 +2717,7 @@
   "Comparing…": "Сравнение…",
   "Open in editor": "Открыть в редакторе",
   "Checking push destination…": "Проверка назначения push…",
-  "Retry above": "Повторите попытку выше"
+  "Retry above": "Повторите попытку выше",
+  "Couldn't read the saved account credentials": "Не удалось прочитать сохранённые учётные данные",
+  "Unlock your credentials, then retry.": "Разблокируйте учётные данные и повторите попытку."
 }

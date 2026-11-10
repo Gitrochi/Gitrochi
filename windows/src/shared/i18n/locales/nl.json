@@ -2672,5 +2672,7 @@
   "Comparing…": "Vergelijken…",
   "Open in editor": "Openen in editor",
   "Checking push destination…": "Pushbestemming controleren…",
-  "Retry above": "Probeer het hierboven opnieuw"
+  "Retry above": "Probeer het hierboven opnieuw",
+  "Couldn't read the saved account credentials": "Opgeslagen accountgegevens kunnen niet worden gelezen",
+  "Unlock your credentials, then retry.": "Ontgrendel je inloggegevens en probeer het opnieuw."
 }

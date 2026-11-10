@@ -2722,5 +2722,7 @@
   "Comparing…": "正在比較…",
   "Open in editor": "在編輯器中開啟",
   "Checking push destination…": "正在檢查推送目標…",
-  "Retry above": "請在上方重試"
+  "Retry above": "請在上方重試",
+  "Couldn't read the saved account credentials": "無法讀取已儲存的帳號憑證",
+  "Unlock your credentials, then retry.": "請解鎖憑證後重試。"
 }

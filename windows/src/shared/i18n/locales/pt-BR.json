@@ -2688,5 +2688,7 @@
   "Comparing…": "Comparando…",
   "Open in editor": "Abrir no editor",
   "Checking push destination…": "Verificando o destino do push…",
-  "Retry above": "Tente novamente acima"
+  "Retry above": "Tente novamente acima",
+  "Couldn't read the saved account credentials": "Não foi possível ler as credenciais da conta salva",
+  "Unlock your credentials, then retry.": "Desbloqueie suas credenciais e tente novamente."
 }

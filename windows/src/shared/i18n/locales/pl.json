@@ -2701,5 +2701,7 @@
   "Comparing…": "Porównywanie…",
   "Open in editor": "Otwórz w edytorze",
   "Checking push destination…": "Sprawdzanie miejsca docelowego push…",
-  "Retry above": "Ponów powyżej"
+  "Retry above": "Ponów powyżej",
+  "Couldn't read the saved account credentials": "Nie udało się odczytać zapisanych danych logowania konta",
+  "Unlock your credentials, then retry.": "Odblokuj dane logowania i ponów próbę."
 }

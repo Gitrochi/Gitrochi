@@ -2852,5 +2852,7 @@
   "Comparing…": "正在比较…",
   "Open in editor": "在编辑器中打开",
   "Checking push destination…": "正在检查推送目标…",
-  "Retry above": "请在上方重试"
+  "Retry above": "请在上方重试",
+  "Couldn't read the saved account credentials": "无法读取已保存的账户凭据",
+  "Unlock your credentials, then retry.": "请解锁凭据后重试。"
 }

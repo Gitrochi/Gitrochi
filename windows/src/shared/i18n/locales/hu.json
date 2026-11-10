@@ -2702,5 +2702,7 @@
   "Comparing…": "Összehasonlítás…",
   "Open in editor": "Megnyitás szerkesztőben",
   "Checking push destination…": "A push célja ellenőrzése…",
-  "Retry above": "Próbálja újra fent"
+  "Retry above": "Próbálja újra fent",
+  "Couldn't read the saved account credentials": "Nem sikerült beolvasni a mentett fiók hitelesítő adatait",
+  "Unlock your credentials, then retry.": "Oldja fel a hitelesítő adatokat, majd próbálja újra."
 }

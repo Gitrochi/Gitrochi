@@ -30,7 +30,8 @@ struct IssueListSection: View {
                 }
             }
             if let error = list.error {
-                Text(error).font(.caption).foregroundStyle(.red).lineLimit(3).textSelection(.enabled).sidebarRow()
+                FailureBlock(title: String(localized: "Couldn't reach \(store.target?.host ?? "")"), caption: error) { Task { await store.loadIssues() } }
+                    .sidebarRow()
             }
             if list.busy, list.items.isEmpty {
                 ProgressView().controlSize(.small).sidebarRow()

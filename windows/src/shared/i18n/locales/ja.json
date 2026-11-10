@@ -3510,5 +3510,7 @@
   "Comparing…": "比較中…",
   "Open in editor": "エディタで開く",
   "Checking push destination…": "Push 先を確認しています…",
-  "Retry above": "上で再試行してください"
+  "Retry above": "上で再試行してください",
+  "Couldn't read the saved account credentials": "保存されたアカウントの資格情報を読み取れませんでした",
+  "Unlock your credentials, then retry.": "資格情報のロックを解除してから再試行してください。"
 }

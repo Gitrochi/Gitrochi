@@ -2712,5 +2712,7 @@
   "Comparing…": "กำลังเปรียบเทียบ…",
   "Open in editor": "เปิดในโปรแกรมแก้ไข",
   "Checking push destination…": "กำลังตรวจปลายทาง push…",
-  "Retry above": "ลองอีกครั้งด้านบน"
+  "Retry above": "ลองอีกครั้งด้านบน",
+  "Couldn't read the saved account credentials": "อ่านข้อมูลรับรองของบัญชีที่บันทึกไว้ไม่ได้",
+  "Unlock your credentials, then retry.": "ปลดล็อกข้อมูลรับรอง แล้วลองอีกครั้ง"
 }

@@ -2755,5 +2755,7 @@
   "Comparing…": "Comparaison…",
   "Open in editor": "Ouvrir dans l'éditeur",
   "Checking push destination…": "Vérification de la destination du push…",
-  "Retry above": "Réessayez ci-dessus"
+  "Retry above": "Réessayez ci-dessus",
+  "Couldn't read the saved account credentials": "Impossible de lire les identifiants du compte enregistré",
+  "Unlock your credentials, then retry.": "Déverrouillez vos identifiants, puis réessayez."
 }

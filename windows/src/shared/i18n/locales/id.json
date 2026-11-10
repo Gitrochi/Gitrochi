@@ -2672,5 +2672,7 @@
   "Comparing…": "Membandingkan…",
   "Open in editor": "Buka di editor",
   "Checking push destination…": "Memeriksa tujuan push…",
-  "Retry above": "Coba lagi di atas"
+  "Retry above": "Coba lagi di atas",
+  "Couldn't read the saved account credentials": "Tidak dapat membaca kredensial akun yang disimpan",
+  "Unlock your credentials, then retry.": "Buka kunci kredensial Anda, lalu coba lagi."
 }
