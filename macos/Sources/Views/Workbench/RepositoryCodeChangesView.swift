@@ -2,15 +2,30 @@ import SwiftUI
 import AppKit
 import CoreText
 
+/// Where the open file sits among a list of files, and the step to the one before or after it (the diff header's
+/// "2 / 6" with its previous and next buttons)
+struct CodeFilePosition {
+    let index: Int
+    let count: Int
+    let step: (Int) -> Void
+}
+
 /// One file's change on the Code page, read only: a commit against its first parent, or the working tree against
-/// HEAD. One 44 pt header, then the lines, with the unchanged lines between hunks folded until asked for.
-/// (Windows: widgets/local-workbench/ui/CodeChangesView.tsx)
+/// HEAD; the Compare page shows a file's change from one commit to another with it. One 44 pt header, then the lines,
+/// with the unchanged lines between hunks folded until asked for. (Windows: widgets/local-workbench/ui/CodeChangesView.tsx)
 struct RepositoryCodeChangesView: View {
     @Environment(RepoStore.self) private var store
     let repository: URL
     let path: String
     /// nil for the working tree against HEAD
     let commit: String?
+    /// The commit to compare from instead of the commit's first parent (the Compare page)
+    var base: String? = nil
+    /// A renamed file's path at `base`
+    var oldPath: String? = nil
+    var position: CodeFilePosition? = nil
+    /// The Compare page: More offers the file as it is in the working tree to an external editor
+    var opensInEditor = false
     @Binding var wraps: Bool
     /// The line count of the file as the commit has it, for the status bar
     @Binding var lineCount: Int?
@@ -20,8 +35,9 @@ struct RepositoryCodeChangesView: View {
     @ViewState private var expanded: Set<Int> = []
     /// The widest line, so the lines scroll sideways as one sheet
     @ViewState private var textWidth: CGFloat = 0
+    @ViewState private var editors: [ExternalEditor] = []
 
-    private struct Key: Equatable { let repository: URL; let path: String; let commit: String?; let ignoreWhitespace: Bool }
+    private struct Key: Equatable { let repository: URL; let path: String; let commit: String?; let base: String?; let ignoreWhitespace: Bool }
     private struct Cell { let kind: DiffLine.Kind; let text: String; let oldNo: Int?; let newNo: Int?; let changes: [Range<Int>] }
     private enum Row: Identifiable {
         case fold(RepositoryCodeHistory.Gap)
@@ -50,7 +66,8 @@ struct RepositoryCodeChangesView: View {
             Divider()
             content.frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .task(id: Key(repository: repository, path: path, commit: commit, ignoreWhitespace: store.diffIgnoreWhitespace)) { await load() }
+        .task(id: Key(repository: repository, path: path, commit: commit, base: base, ignoreWhitespace: store.diffIgnoreWhitespace)) { await load() }
+        .task(id: opensInEditor) { if opensInEditor && editors.isEmpty { editors = ExternalEditors.editors() } }
     }
 
     // MARK: Header
@@ -64,6 +81,18 @@ struct RepositoryCodeChangesView: View {
                     .help((path as NSString).deletingLastPathComponent)
             }
             Spacer(minLength: 8)
+            if let position {
+                HStack(spacing: 4) {
+                    Text(verbatim: "\(position.index + 1) / \(position.count)").font(.system(size: 11, design: .monospaced))
+                        .foregroundStyle(StudioStyle.Rail.icon).padding(.trailing, 4).fixedSize()
+                    Button { position.step(-1) } label: { DesignIconImage(icon: .chevronUp) }
+                        .buttonStyle(PullRequestIconButtonStyle()).disabled(position.index == 0)
+                        .help("Previous file (K)").accessibilityLabel("Previous file (K)")
+                    Button { position.step(1) } label: { DesignIconImage(icon: .chevronDown) }
+                        .buttonStyle(PullRequestIconButtonStyle()).disabled(position.index + 1 >= position.count)
+                        .help("Next file (J)").accessibilityLabel("Next file (J)")
+                }
+            }
             PullRequestSegmented(label: "Diff layout", items: [
                 .init(value: false, title: String(localized: "Unified")),
                 .init(value: true, title: String(localized: "Split")),
@@ -75,7 +104,8 @@ struct RepositoryCodeChangesView: View {
                 .accessibilityValue(hidden ? String(localized: "On") : String(localized: "Off"))
             Button("Ask AI…") {
                 guard let document else { return }
-                let scope = commit.map { String(localized: "Commit") + " " + $0 } ?? String(localized: "Uncommitted changes against HEAD")
+                let scope = base.flatMap { base in commit.map { String(localized: "Changes from \(String(base.prefix(7))) to \(String($0.prefix(7)))") } }
+                    ?? commit.map { String(localized: "Commit") + " " + $0 } ?? String(localized: "Uncommitted changes against HEAD")
                 Task { await store.openChangeQuestion(code: ChangeQuestionCode(scope: scope, path: path, document: document)) }
             }
             .buttonStyle(PullRequestTextButtonStyle())
@@ -83,8 +113,9 @@ struct RepositoryCodeChangesView: View {
             .help("Ask questions about the selected changes")
             Menu {
                 Toggle("Wrap lines", isOn: $wraps)
-                if let commit { Button("Show commit") { store.reveal(commit) } }
+                if let commit, base == nil { Button("Show commit") { store.reveal(commit) } }
                 Button("Copy path") { store.copy(path) }
+                if opensInEditor { editorMenu }
             } label: {
                 DesignIconImage(icon: .more, size: 12).foregroundStyle(StudioStyle.Tone.neutral.text)
                     .frame(width: 24, height: 24).contentShape(Rectangle())
@@ -94,6 +125,28 @@ struct RepositoryCodeChangesView: View {
         }
         .padding(.horizontal, 16)
         .frame(height: 44)
+    }
+
+    /// The working tree's file, not the compared version; a file that is not there cannot open
+    @ViewBuilder private var editorMenu: some View {
+        let local = (try? repository.appendingPathComponent(path).resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true
+        Menu("Open in editor") {
+            ForEach(editors) { editor in
+                Button(editor.available ? editor.name : editor.name + " · " + String(localized: "Not installed")) { open(editor.id) }
+                    .disabled(!editor.available)
+            }
+        }
+        .disabled(!local || !editors.contains(where: \.available))
+        .help(local ? String(localized: "External editors open the current local file, not the revision preview.")
+                    : String(localized: "The local file is missing or is not a regular file."))
+    }
+
+    private func open(_ editorID: String) {
+        let repository = repository, path = path, applications = editors
+        Task {
+            do { try await ExternalEditors.open(repository: repository, editorID: editorID, file: path, available: applications) }
+            catch { if store.url == repository { store.errorMessage = store.describe(error) } }
+        }
     }
 
     private func kind(_ document: DiffDocument) -> ChangeKind {
@@ -270,8 +323,11 @@ struct RepositoryCodeChangesView: View {
 
     private func load() async {
         document = nil; source = nil; expanded = []; lineCount = nil; textWidth = 0
-        let args = commit.map { RepositoryCodeHistory.changeArgs(commit: $0, path: path, ignoreWhitespace: store.diffIgnoreWhitespace) }
-            ?? RepositoryCodeHistory.workingArgs(path: path, ignoreWhitespace: store.diffIgnoreWhitespace)
+        let whitespace = store.diffIgnoreWhitespace
+        let args = commit.map { commit in
+            base.map { RepositoryCodeHistory.comparisonArgs(base: $0, commit: commit, path: path, oldPath: oldPath, ignoreWhitespace: whitespace) }
+                ?? RepositoryCodeHistory.changeArgs(commit: commit, path: path, ignoreWhitespace: whitespace)
+        } ?? RepositoryCodeHistory.workingArgs(path: path, ignoreWhitespace: whitespace)
         guard let output = try? await Git.run(args, in: repository).output else {
             if !Task.isCancelled { document = DiffDocument(error: String(localized: "Couldn't read this commit's changes.")) }
             return

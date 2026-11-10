@@ -9,4 +9,5 @@ export { HostingDate } from "./HostingDate";
 export { StatusPill, type StatusTone } from "./StatusPill";
 export { HostedAccountNeeded, hostedListAge, HostedListChip, HostedListColumns, HostedListEmpty, HostedListHeader, HostedListIconButton, HostedListLoading, HostedListNotice, HostedListPage, HostedListRow, HostedListSearch, HostedListSegments, HostedListSummary, HostedListTextButton } from "./HostedList";
 export { CodeEditor } from "./CodeEditor";
+export { FileViewToggle, requestFileView, useFileViewMode } from "./FileViewToggle";
 export { SourceSplit } from "./SourceSplit";

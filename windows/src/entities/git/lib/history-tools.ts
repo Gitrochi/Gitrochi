@@ -28,6 +28,47 @@ export function parseLineHistory(output: string): LineHistoryEntry[] {
     return [{ sha: fields[0], author: fields[1], date: fields[2], subject: fields.slice(3).join("\x1f"), patch: nl < 0 ? "" : record.slice(nl + 1) }];
   });
 }
+/** A commit on the Compare page's Commits tab; date in seconds. macOS: ComparisonCommit */
+export interface ComparisonCommit { id: string; author: string; date: number | null; subject: string }
+/** A branch or tag the Compare page offers to compare with the current branch. macOS: ComparisonReference */
+export interface ComparisonReference { name: string; kind: "branch" | "remote" | "tag" }
+/** The Compare page's Commits tab lists this many and counts "200+" past it */
+export const comparisonCommitLimit = 200;
+/** The commits To has that the base lacks, newest first, and one more so the count knows there are more. macOS: HistoryTools.comparisonLogArgs */
+export const comparisonLogArgs = (base: string, right: string): string[] =>
+  ["log", "-n", String(comparisonCommitLimit + 1), "--format=%H%x1f%an%x1f%ct%x1f%s%x1e", `${base}..${right}`, "--"];
+export function parseComparisonCommits(output: string): ComparisonCommit[] {
+  return output.split("\x1e").flatMap((record) => {
+    const fields = record.replace(/^[\r\n]+|[\r\n]+$/g, "").split("\x1f");
+    if (fields.length < 4 || !fullObjectID(fields[0])) return [];
+    return [{ id: fields[0], author: fields[1], date: /^\d+$/.test(fields[2]) ? Number(fields[2]) : null, subject: fields.slice(3).join("\x1f") }];
+  });
+}
+export const commitCountLabel = (count: number): string => (count > comparisonCommitLimit ? `${comparisonCommitLimit}+` : String(count));
+/**
+ * The list beside "Compare with the current branch": the usual bases first, then local branches, remote branches and
+ * tags, without the current branch or a remote's HEAD. macOS: HistoryTools.comparisonReferences
+ */
+export function comparisonReferences(local: string[], remote: string[], tags: string[], current: string | null): ComparisonReference[] {
+  const found: ComparisonReference[] = [
+    ...local.filter((name) => name !== current).map((name) => ({ name, kind: "branch" as const })),
+    ...remote.filter((name) => !name.endsWith("/HEAD")).map((name) => ({ name, kind: "remote" as const })),
+    ...tags.map((name) => ({ name, kind: "tag" as const })),
+  ];
+  const usual = ["origin/main", "main", "origin/master", "master"];
+  const rank = (reference: ComparisonReference) => {
+    const index = reference.kind === "tag" ? -1 : usual.indexOf(reference.name);
+    return index >= 0 ? index : usual.length + (reference.kind === "branch" ? 0 : reference.kind === "remote" ? 1 : 2);
+  };
+  return found.map((reference, index) => ({ reference, index })).sort((a, b) => rank(a.reference) - rank(b.reference) || a.index - b.index).map(({ reference }) => reference);
+}
+export const referenceMatches = (name: string, filter: string): boolean => !filter.trim() || name.toLowerCase().includes(filter.trim().toLowerCase());
+/**
+ * What a comparison depends on: both sides, the mode, and where HEAD and the two sides' refs point, so a branch that
+ * moves compares again. macOS: HistoryTools.comparisonKey
+ */
+export const comparisonKey = (repository: string, left: string, right: string, mergeBase: boolean, head: string | null, targets: ReadonlyMap<string, string>): string =>
+  [repository, left, right, mergeBase ? "ancestor" : "direct", head ?? "", targets.get(left) ?? "", targets.get(right) ?? ""].join("\0");
 /** 그래프 순서와 무관하게 사용자가 실행 순서를 검토하고 바꿀 수 있다. */
 export function toggleGraphSelection(ids: string[], selected: string[], anchor: string | null, sha: string, extend: boolean, toggle: boolean): string[] {
   if (extend && anchor && ids.includes(anchor) && ids.includes(sha)) {

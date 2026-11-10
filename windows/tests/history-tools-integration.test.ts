@@ -48,6 +48,9 @@ describe("history tools with actual Git", () => {
     store.historyTools.useMergeBase = true; await store.loadRevisionComparison();
     expect(store.historyTools.comparison?.base).toBe(base);
     expect(store.historyTools.comparison?.files.map((f) => f.path)).toEqual(["f.txt"]);
+    // the Commits tab: what To has past the common ancestor, with its author and time
+    expect(store.historyTools.comparison?.commits.map((c) => [c.id, c.author, c.subject])).toEqual([[topic, "Fixture", "Topic"]]);
+    expect(store.historyTools.comparison?.commits[0].date).toBeGreaterThan(0);
   });
   it("traces changed lines and function history from a committed snapshot", async () => {
     await commit("Create function", "function example() {\n  return 1;\n}\n", "a.js");

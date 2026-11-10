@@ -2642,6 +2642,16 @@
 "on this branch" = "auf diesem Branch";
 "pipeline #%@" = "Pipeline #%@";
 "run #%@" = "Ausführung #%@";
+"To" = "Bis";
+"Swap From and To" = "Von und Bis tauschen";
+"From the common ancestor" = "Ab dem gemeinsamen Vorfahren";
+"Updates as soon as either side changes. Uncommitted changes are excluded." = "Wird aktualisiert, sobald sich eine Seite ändert. Nicht committete Änderungen sind ausgenommen.";
+"Compare %@ with the current branch" = "%@ mit dem aktuellen Branch vergleichen";
+"%@, compared now" = "%@, wird gerade verglichen";
+"No commits between these revisions." = "Keine Commits zwischen diesen Revisionen.";
+"Couldn't compare these revisions" = "Diese Revisionen konnten nicht verglichen werden";
+"Changes from %@ to %@" = "Änderungen von %1$@ bis %2$@";
+"Open in editor" = "Im Editor öffnen";
 "Checking push destination…" = "Push-Ziel wird geprüft…";
 "in %lldm" = "in %1$lld Min.";
 "in %lldh" = "in %1$lld Std.";

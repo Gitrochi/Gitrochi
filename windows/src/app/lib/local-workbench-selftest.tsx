@@ -2,6 +2,7 @@ import { createRoot } from "react-dom/client";
 import type { ReactNode } from "react";
 import { RepoStore } from "@/entities/repo";
 import { RepositoryCodePanel, RevisionComparisonPanel, RebaseWorkbenchPanel, type RepositoryCodeSource, type RepositoryEditorSource } from "@/widgets/local-workbench";
+import { settings } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { codePreviewSelfTest } from "./code-preview-selftest";
 const pause = () => new Promise<void>((resolve) => setTimeout(resolve, 40));
@@ -19,20 +20,48 @@ export async function localWorkbenchSelfTest(): Promise<[boolean, string]> {
     await codePreviewSelfTest();
     store.localBranches = [{ name: "main", target: a, upstream: "origin/main", ahead: 1, behind: 0, upstreamGone: false, isCurrent: true, isRemote: false }, { name: "topic", target: b, upstream: null, ahead: 0, behind: 0, upstreamGone: false, isCurrent: false, isRemote: false }];
     store.remoteBranches = [{ ...store.localBranches[1], name: "origin/topic", isRemote: true }]; store.tags = [{ name: "v1", target: a }]; store.stashes = [{ ref: "stash@{0}", hash: b, message: "Saved fixture" }];
-    store.loadRevisionComparison = async () => { comparisons++; const s = store.historyTools; s.comparison = { left: a, right: b, base: a, mergeBase: false, files: [], stats: {} }; store.changed(); };
-    store.headBranch = "main";
-    await mount(<RevisionComparisonPanel store={store}/>);
-    check(host.querySelector(".compare-side") && host.querySelector(".compare-main") && host.textContent?.includes(t("Choose two revisions to compare")), "Compare page did not show its two columns and empty state");
-    const refs = () => [...host.querySelectorAll<HTMLElement>(".compare-branch")].map((row) => row.dataset.ref).join(",");
-    check(refs() === "main,topic,origin/topic,v1", `Branch list order: ${refs()}`);
+    // The Compare page compares by itself: the usual base against the current branch on arrival, then on every change
+    let opened: boolean | undefined;
+    const comparedFiles = [{ path: "src/b.ts", oldPath: null, kind: "modified" as const, staged: false }, { path: "src/a.ts", oldPath: "src/old.ts", kind: "renamed" as const, staged: false }];
+    store.loadRevisionComparison = async (openFirst = true) => {
+      comparisons++; opened = openFirst; const s = store.historyTools;
+      s.comparison = { left: b, right: a, base: b, mergeBase: s.useMergeBase, files: comparedFiles, stats: { "src/b.ts": { added: 3, deleted: 1 } }, commits: [{ id: a, author: "Fixture Author", date: Math.floor(Date.now() / 1000), subject: "Fixture commit" }] };
+      store.changed();
+    };
+    store.headBranch = "main"; store.path = "C:/gitrochi-compare-fixture";
+    const compareReads: string[][] = [];
+    const compareRead = async (args: string[]) => { compareReads.push(args); return args[0] === "diff" ? `diff --git a/${args.at(-1)} b/${args.at(-1)}\n--- a/${args.at(-1)}\n+++ b/${args.at(-1)}\n@@ -1 +1 @@\n-old\n+new\n` : "new\n"; };
+    const workingChecks: string[] = [], compareEditors = { list: async () => [{ id: "system" as const, name: "System default", available: true, supportsFolders: true }], open: async () => {} };
+    // another step may have switched comparisons to a list; the order below is the tree's
+    const savedView = settings.get<"list" | "tree" | undefined>("requestFileViewMode", undefined); settings.set("requestFileViewMode", "tree");
+    await mount(<RevisionComparisonPanel store={store} read={compareRead} editorSource={compareEditors} exists={async (_repo, path) => { workingChecks.push(path); return true; }}/>);
+    check(host.querySelector(".compare-column") && host.querySelector(".compare-main") && !host.querySelector("h1, h2"), "Compare page did not show its list column and comparison without a large title");
+    await waitFor(() => comparisons === 1, "Compare did not compare on arrival");
+    check(opened === false && store.historyTools.left === "topic" && store.historyTools.right === "main" && store.historyTools.useMergeBase, `Compare did not start with the usual base against the current branch: ${store.historyTools.left} → ${store.historyTools.right}`);
+    const refs = () => [...host.querySelectorAll<HTMLElement>(".compare-refs .compare-ref")].map((row) => row.dataset.ref).join(",");
+    check(refs() === "topic,origin/topic,v1", `Branch list order (the current branch left out): ${refs()}`);
+    check(host.querySelector('.compare-ref[data-ref="topic"]')?.classList.contains("on") && host.querySelector('.compare-ref[data-ref="topic"]')?.getAttribute("aria-current") === "true", "The branch compared now is not tinted");
     const filter = host.querySelector<HTMLInputElement>(`input[aria-label="${t("Filter branches and tags")}"]`)!;
     Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(filter, "top"); filter.dispatchEvent(new Event("input", { bubbles: true })); await pause();
     check(refs() === "topic,origin/topic", `Filtered branch list: ${refs()}`);
-    host.querySelector<HTMLButtonElement>('.compare-branch[data-ref="topic"] button')!.click(); await pause();
-    check(comparisons === 1 && store.historyTools.left === "main" && store.historyTools.right === "topic", "The row's Compare did not compare the current branch with that branch");
-    check(host.querySelector('.compare-branch[data-ref="topic"]')?.classList.contains("on") && host.querySelector(".compare-result") && !host.querySelector('[role="dialog"]'), "The compared branch is not highlighted or the result is not on the page");
-    await click("Compare"); check(comparisons === 2, "The main Compare button did not run the comparison");
-    check(!host.querySelector("h1, h2"), "Compare must not show a large page title");
+    host.querySelector<HTMLButtonElement>('.compare-ref[data-ref="origin/topic"]')!.click();
+    await waitFor(() => comparisons === 2, "Choosing a branch did not compare it with the current branch");
+    check(store.historyTools.left === "origin/topic" && store.historyTools.right === "main" && !host.querySelector('[role="dialog"]'), "The row did not make the branch From and the current branch To");
+    await waitFor(() => host.querySelector(".code-changes-count")?.textContent === "1 / 2", "The first file's diff did not open with its position");
+    // comparisons list files as a tree, so src/a.ts (renamed from src/old.ts) opens first;
+    // the diff and the working-tree check are read in effects that can run after the position shows
+    await waitFor(() => compareReads.some((args) => args[0] === "diff" && args.includes(b) && args.includes(a) && args.at(-2) === "src/old.ts" && args.at(-1) === "src/a.ts"), "The diff was not read between the base and To, with a rename's old path");
+    await waitFor(() => workingChecks.includes("src/a.ts"), "Open in editor did not check the open file in the working tree");
+    check([...host.querySelectorAll(".compare-tab")].map((tab) => tab.textContent).join("|") === `${t("Files")}2|${t("Commits")}1`, "The tabs do not own their counts");
+    document.body.dispatchEvent(new KeyboardEvent("keydown", { key: "j", bubbles: true }));
+    await waitFor(() => host.querySelector(".code-changes-count")?.textContent === "2 / 2", "J did not step to the next file");
+    await waitFor(() => compareReads.some((args) => args[0] === "diff" && args.includes(b) && args.includes(a) && args.at(-1) === "src/b.ts"), "J did not read the next file's diff");
+    host.querySelectorAll<HTMLButtonElement>(".compare-tab")[1].click(); await pause(); check(host.querySelectorAll(".compare-commit").length === 1 && host.textContent?.includes("Fixture commit"), "The Commits tab did not list To's commits");
+    host.querySelector<HTMLButtonElement>(`button[aria-label="${t("Swap From and To")}"]`)!.click();
+    await waitFor(() => comparisons === 3, "Swapping did not compare again");
+    check(store.historyTools.left === "main" && store.historyTools.right === "origin/topic", "Swap did not exchange From and To");
+    store.historyTools.left = "HEAD~1"; store.historyTools.right = "HEAD"; store.historyTools.useMergeBase = false; store.historyTools.comparison = null; store.historyTools.comparisonKey = "";
+    settings.set("requestFileViewMode", savedView);
     reset(); store.path = "C:/gitrochi-workbench-fixture";
     // The formats the Code page asks Git for: the history list, a porcelain blame and a patch
     const stamp = Math.floor(Date.now() / 1000), fixtureText = ["const fixture = 1;", "const second = 2;", "const third = 3;", "const fourth = 4;", "const fifth = 5;", "const sixth = 6;"].join("\n") + "\n";

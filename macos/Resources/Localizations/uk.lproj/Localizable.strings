@@ -2655,6 +2655,16 @@
 "on this branch" = "у цій гілці";
 "pipeline #%@" = "конвеєр #%@";
 "run #%@" = "запуск #%@";
+"To" = "До";
+"Swap From and To" = "Поміняти Від і До місцями";
+"From the common ancestor" = "Від спільного предка";
+"Updates as soon as either side changes. Uncommitted changes are excluded." = "Оновлюється, щойно змінюється будь-яка зі сторін. Незакомічені зміни не враховуються.";
+"Compare %@ with the current branch" = "Порівняти %@ з поточною гілкою";
+"%@, compared now" = "%@, порівнюється зараз";
+"No commits between these revisions." = "Між цими ревізіями немає комітів.";
+"Couldn't compare these revisions" = "Не вдалося порівняти ці ревізії";
+"Changes from %@ to %@" = "Зміни від %1$@ до %2$@";
+"Open in editor" = "Відкрити в редакторі";
 "Checking push destination…" = "Перевірка призначення push…";
 "in %lldm" = "через %1$lld хв";
 "in %lldh" = "через %1$lld год";

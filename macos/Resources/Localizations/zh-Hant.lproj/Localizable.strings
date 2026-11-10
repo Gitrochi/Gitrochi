@@ -2660,6 +2660,16 @@
 "on this branch" = "在此分支上";
 "pipeline #%@" = "管線 #%@";
 "run #%@" = "執行 #%@";
+"To" = "終點";
+"Swap From and To" = "交換起點和終點";
+"From the common ancestor" = "從共同祖先開始";
+"Updates as soon as either side changes. Uncommitted changes are excluded." = "任一側變更時立即更新。不包含未提交的變更。";
+"Compare %@ with the current branch" = "將 %@ 與目前分支比較";
+"%@, compared now" = "%@，目前比較中";
+"No commits between these revisions." = "這兩個修訂之間沒有提交。";
+"Couldn't compare these revisions" = "無法比較這些修訂";
+"Changes from %@ to %@" = "從 %1$@ 到 %2$@ 的變更";
+"Open in editor" = "在編輯器中開啟";
 "Checking push destination…" = "正在檢查推送目標…";
 "in %lldm" = "%1$lld 分鐘後";
 "in %lldh" = "%1$lld 小時後";

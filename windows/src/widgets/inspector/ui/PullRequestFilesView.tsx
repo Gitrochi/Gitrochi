@@ -1,15 +1,14 @@
 import { Space } from "lucide-react";
 import { Check, ChevronDown, ChevronRight, ChevronUp, Ellipsis, Folder, MessageSquare } from "@/shared/icons";
 import { type CSSProperties, type ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { fileDir, fileName, StatusBadge } from "@/entities/git";
+import { fileDir, fileName, StatusBadge, treeRows } from "@/entities/git";
 import { type PullRequestReview, type ReviewFile, reviewFileChange } from "@/entities/hosting";
 import type { RepoStore } from "@/entities/repo";
 import { settings } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
-import { showMenuBelow, Spinner, StatusPill } from "@/shared/ui";
+import { FileViewToggle, requestFileView, showMenuBelow, Spinner, StatusPill, useFileViewMode } from "@/shared/ui";
 import { folderLabel, splitAllowed, threadCount, treeWidth, viewedKey, withViewed } from "../lib/pull-request-page";
-import { FileViewToggle, requestFileView, treeRows, useFileViewMode } from "./FileList";
 import { ReviewDraftPanel } from "./ReviewPanels";
 
 const viewedSetting = "pullRequestViewed";
