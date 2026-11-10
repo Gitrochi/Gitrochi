@@ -1474,7 +1474,6 @@
 "Ask AI about changes…" = "변경 내용에 AI 질문…";
 "Ask AI…" = "AI에게 질문…";
 "Ask questions about the selected changes" = "선택한 변경 내용에 대해 AI에게 질문합니다";
-"Checking push destination and preflight…" = "Push 대상과 사전 점검을 확인하는 중…";
 "Commit identity" = "커밋 작성자";
 "Confirm push" = "확인 후 Push";
 "Confirm force push" = "확인 후 강제 Push";
@@ -1525,7 +1524,6 @@
 "The account follows gitch policy. SSH and credential helpers choose the network login." = "계정은 gitch 규칙을 따릅니다. 실제 서버 인증에는 SSH와 저장된 인증 설정을 사용합니다.";
 "The branch, account or push destination changed. Review the updated details and confirm again." = "브랜치·계정 또는 Push 대상이 바뀌었습니다. 갱신된 내용을 다시 확인하세요.";
 "The displayed diff was truncated." = "화면의 변경 내용이 길어 일부만 포함했습니다.";
-"The gitch preflight check is unavailable. Open Settings → CLI and repair gitch before pushing." = "gitch 사전 점검을 실행할 수 없습니다. 설정 → CLI에서 gitch를 확인한 뒤 Push하세요.";
 "The remote branch could not be read. Refresh and review the push again." = "원격 브랜치를 읽지 못했습니다. 새로 고친 뒤 Push 내용을 다시 확인하세요.";
 "The repository or branch changed. Review the pull request again; your draft has been kept." = "저장소 또는 브랜치가 바뀌었습니다. PR을 다시 확인하세요. 작성한 초안은 보관했습니다.";
 "The repository was closed. Open it and review the push again." = "저장소가 닫혔습니다. 다시 열고 Push 내용을 확인하세요.";
@@ -4712,3 +4710,4 @@
 "on this branch" = "이 브랜치";
 "pipeline #%@" = "파이프라인 #%@";
 "run #%@" = "실행 #%@";
+"Checking push destination…" = "Push 대상을 확인하는 중…";

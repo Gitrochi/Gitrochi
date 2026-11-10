@@ -2650,3 +2650,4 @@
 "on this branch" = "บนแบรนช์นี้";
 "pipeline #%@" = "ไปป์ไลน์ #%@";
 "run #%@" = "การรัน #%@";
+"Checking push destination…" = "กำลังตรวจปลายทาง push…";

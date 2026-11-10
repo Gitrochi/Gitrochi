@@ -2603,3 +2603,4 @@
 "on this branch" = "op deze branch";
 "pipeline #%@" = "pipeline #%@";
 "run #%@" = "run #%@";
+"Checking push destination…" = "Pushbestemming controleren…";

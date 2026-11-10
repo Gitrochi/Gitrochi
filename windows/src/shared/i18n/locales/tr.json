@@ -2691,5 +2691,6 @@
   "{0} issues are open in {1}.": "{1} içinde {0} açık issue var.",
   "{0} not started": "{0} başlanmadı",
   "{0} of {1} jobs": "{1} işten {0}",
-  "{0} passes on {1}": "{0}, {1} ile geçiyor"
+  "{0} passes on {1}": "{0}, {1} ile geçiyor",
+  "Checking push destination…": "Push hedefi denetleniyor…"
 }

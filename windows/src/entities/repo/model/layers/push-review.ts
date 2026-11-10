@@ -54,10 +54,10 @@ export abstract class RepoPushReview extends RepoFilters {
     const repo = this.path;
     if (!repo) throw new Error(t("The repository was closed. Open it and review the push again."));
     const g = async (args: string[]) => (await git(args, repo)).stdout;
-    const [configOutput, remoteOutput, sourceOutput, currentOutput, status, preflight] = await Promise.all([
+    const [configOutput, remoteOutput, sourceOutput, currentOutput, status] = await Promise.all([
       g(["config", "--null", "--list"]), g(["remote"]), g(["rev-parse", "--verify", `refs/heads/${branch}^{commit}`]),
       git(["symbolic-ref", "--quiet", "--short", "HEAD"], repo, { ok: [0, 1] }).then((r) => r.stdout.trim()),
-      gitch.status(repo), gitch.preflight(repo, false),
+      gitch.status(repo),
     ]);
     const config = parsePushConfig(configOutput);
     const sourceOID = sourceOutput.trim();
@@ -105,7 +105,6 @@ export abstract class RepoPushReview extends RepoFilters {
       repo, branch, sourceOID, remote, destination, pushURL, displayURL: displayPushURL(pushURL), destinationOID, force, setUpstream,
       stamp: JSON.stringify([pushConfigStamp(config), sourceOID, remote, destination, pushURL, destinationOID, account, credentialAccount, author, accounts.revision, remoteOverride ?? null, observedHeads, comparisonBase]),
       author: author || t("Not configured"), account, credentialAccount,
-      preflight: preflight ? { result: preflight.result, checks: preflight.checks.map((check) => ({ ...check, message: displayPushURL(check.message) })) } : { result: "STOP", checks: [{ level: "STOP", code: "unavailable", message: t("The gitch preflight check is unavailable. Open Settings → CLI and repair gitch before pushing.") }] },
       commits: log.trim().split("\n").filter(Boolean).map((line) => { const [sha, author, email, ...subject] = line.split("\x1f"); return { sha, author, email, subject: subject.join("\x1f") }; }),
       commitCount: Number(count.trim()) || 0, files: files.slice(0, 500), fileCount: files.length, fileScope: comparisonBase ? "changes" : "snapshot", comparisonBase,
     };
@@ -115,7 +114,7 @@ export abstract class RepoPushReview extends RepoFilters {
   async confirmPushReview(): Promise<boolean> {
     const plan = this.pushReview;
     const sheet = this.sheet;
-    if (!plan || this.pushReviewLoading || this.busy || sheet?.kind !== "pushReview" || plan.preflight.result === "STOP") return false;
+    if (!plan || this.pushReviewLoading || this.busy || sheet?.kind !== "pushReview") return false;
     const gen = this.pushReviewGeneration;
     this.pushReviewLoading = true;
     this.pushReviewError = null;
@@ -129,7 +128,6 @@ export abstract class RepoPushReview extends RepoFilters {
         this.pushReviewError = t("The branch, account or push destination changed. Review the updated details and confirm again.");
         return false;
       }
-      if (fresh.preflight.result === "STOP") return false;
       const target = findTarget([plan.remote], { [plan.remote]: plan.pushURL }, accounts.accounts.map(accountHost), accounts.sshHostAliases);
       const env = await accounts.gitEnvironment(target, plan.repo);
       if (!active()) return false;

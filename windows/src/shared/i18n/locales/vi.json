@@ -2660,5 +2660,6 @@
   "{0} issues are open in {1}.": "Có {0} issue đang mở trong {1}.",
   "{0} not started": "{0} chưa bắt đầu",
   "{0} of {1} jobs": "{0}/{1} job",
-  "{0} passes on {1}": "{0} đạt ở {1}"
+  "{0} passes on {1}": "{0} đạt ở {1}",
+  "Checking push destination…": "Đang kiểm tra đích push…"
 }

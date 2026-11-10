@@ -2708,5 +2708,6 @@
   "{0} issues are open in {1}.": "{1} 中有 {0} 個開放議題。",
   "{0} not started": "{0} 尚未開始",
   "{0} of {1} jobs": "{0}/{1} 個作業",
-  "{0} passes on {1}": "{0} 在{1}中通過"
+  "{0} passes on {1}": "{0} 在{1}中通過",
+  "Checking push destination…": "正在檢查推送目標…"
 }

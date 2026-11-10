@@ -2660,3 +2660,4 @@
 "on this branch" = "在此分支上";
 "pipeline #%@" = "管線 #%@";
 "run #%@" = "執行 #%@";
+"Checking push destination…" = "正在檢查推送目標…";

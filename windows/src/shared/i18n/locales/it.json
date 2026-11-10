@@ -2682,5 +2682,6 @@
   "{0} issues are open in {1}.": "{0} issue aperte in {1}.",
   "{0} not started": "{0} non iniziate",
   "{0} of {1} jobs": "{0} job su {1}",
-  "{0} passes on {1}": "{0} passa su {1}"
+  "{0} passes on {1}": "{0} passa su {1}",
+  "Checking push destination…": "Verifica della destinazione del push…"
 }

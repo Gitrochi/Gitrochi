@@ -2688,5 +2688,6 @@
   "{0} issues are open in {1}.": "{0} nyitott issue van itt: {1}.",
   "{0} not started": "{0} nincs elkezdve",
   "{0} of {1} jobs": "{1} jobból {0}",
-  "{0} passes on {1}": "{0} sikeres itt: {1}"
+  "{0} passes on {1}": "{0} sikeres itt: {1}",
+  "Checking push destination…": "A push célja ellenőrzése…"
 }

@@ -2637,3 +2637,4 @@
 "on this branch" = "na této větvi";
 "pipeline #%@" = "pipeline #%@";
 "run #%@" = "běh #%@";
+"Checking push destination…" = "Kontroluje se cíl odeslání…";

@@ -2640,3 +2640,4 @@
 "on this branch" = "ezen az ágon";
 "pipeline #%@" = "pipeline #%@";
 "run #%@" = "futtatás #%@";
+"Checking push destination…" = "A push célja ellenőrzése…";

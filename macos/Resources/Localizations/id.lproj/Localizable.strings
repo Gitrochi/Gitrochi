@@ -2611,3 +2611,4 @@
 "on this branch" = "di branch ini";
 "pipeline #%@" = "pipeline #%@";
 "run #%@" = "run #%@";
+"Checking push destination…" = "Memeriksa tujuan push…";
