@@ -23,7 +23,7 @@ import { settings } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { listWhen, useObserve } from "@/shared/lib";
 import {
-  hostedListAge, HostedAccountNeeded, HostedListChip, HostedListEmpty, HostedListLoading, HostedListNotice, HostedListRow, HostedListSearch, HostedListSegments,
+  FailureBlock, hostedListAge, HostedAccountNeeded, HostedListChip, HostedListEmpty, HostedListLoading, HostedListRow, HostedListSearch, HostedListSegments,
   IconButton, Spinner,
 } from "@/shared/ui";
 import { runMenu, runName, runTitle } from "./CIRunDetail";
@@ -174,7 +174,7 @@ export function CIPanel({
           />
         </div>
       )}
-      {st.kind === "failed" && ci.pipelines.length > 0 && <HostedListNotice title={t("Couldn't reach {0}", host)} caption={hostedListAge(ci.loadedAt)} detail={st.message} retry={() => void ci.load()} />}
+      {st.kind === "failed" && ci.pipelines.length > 0 && <FailureBlock title={t("Couldn't reach {0}", host)} caption={hostedListAge(ci.loadedAt)} detail={st.message} retry={() => void ci.load()} />}
       <HostedListSearch
         prompt={t("Search runs")}
         text={search}

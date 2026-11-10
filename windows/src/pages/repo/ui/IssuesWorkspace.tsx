@@ -10,8 +10,8 @@ import {
 import { t } from "@/shared/i18n";
 import { listDay, listWhen, useObserve } from "@/shared/lib";
 import {
-  Avatar, Button, hostedListAge, HostedAccountNeeded, HostedListChip, HostedListColumns, HostedListEmpty, HostedListHeader, HostedListIconButton,
-  HostedListLoading, HostedListNotice, HostedListPage, HostedListRow, HostedListSearch, HostedListSegments, HostedListSummary, HostedListTextButton,
+  Avatar, Button, FailureBlock, hostedListAge, HostedAccountNeeded, HostedListChip, HostedListColumns, HostedListEmpty, HostedListHeader, HostedListIconButton,
+  HostedListLoading, HostedListPage, HostedListRow, HostedListSearch, HostedListSegments, HostedListSummary, HostedListTextButton,
   showContextMenu,
 } from "@/shared/ui";
 import "./issues-workspace.css";
@@ -154,7 +154,7 @@ function IssueListColumn({ store }: { store: RepoStore }) {
   const icon = <CircleDot size={24} />;
   return (
     <aside className="hosted-list" aria-label={t("Issue list")}>
-      {st.kind === "failed" && store.issues.length > 0 && <HostedListNotice title={t("Couldn't reach {0}", host)} caption={hostedListAge(store.issueLoadedAt)} detail={st.message} retry={reload} />}
+      {st.kind === "failed" && store.issues.length > 0 && <FailureBlock title={t("Couldn't reach {0}", host)} caption={hostedListAge(store.issueLoadedAt)} detail={st.message} retry={reload} />}
       <HostedListSearch
         prompt={t("Search issues")}
         text={store.issueSearch}

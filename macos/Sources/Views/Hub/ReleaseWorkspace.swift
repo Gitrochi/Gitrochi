@@ -62,7 +62,7 @@ struct ReleaseWorkspace: View {
                         summary
                         if let notice = store.hostingHub.notice { noticeView(notice) }
                         if let error = store.hostingHub.error, !store.hostingHub.items.isEmpty {
-                            HostedListNotice(title: error) { retry() }.padding(.horizontal, compact ? 12 : 20).padding(.bottom, 12)
+                            FailureBlock(title: error) { retry() }.padding(.horizontal, compact ? 12 : 20).padding(.bottom, 12)
                         }
                         Divider()
                         columns

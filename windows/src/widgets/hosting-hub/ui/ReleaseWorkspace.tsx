@@ -4,7 +4,7 @@ import { accounts, HostingHubStore, deleteHubItem, hubSafeURL, orderedReleases, 
 import { ipc } from "@/shared/api";
 import { t } from "@/shared/i18n";
 import { listWhen, useObserve } from "@/shared/lib";
-import { Button, HostedAccountNeeded, HostedListChip, HostedListColumns, HostedListEmpty, HostedListHeader, HostedListIconButton, HostedListLoading, HostedListNotice, HostedListPage, HostedListRow, HostedListSearch, HostedListSegments, HostedListTextButton, type MenuItem, showContextMenu, showMenuBelow, Spinner, StatusPill } from "@/shared/ui";
+import { Button, FailureBlock, HostedAccountNeeded, HostedListChip, HostedListColumns, HostedListEmpty, HostedListHeader, HostedListIconButton, HostedListLoading, HostedListPage, HostedListRow, HostedListSearch, HostedListSegments, HostedListTextButton, type MenuItem, showContextMenu, showMenuBelow, Spinner, StatusPill } from "@/shared/ui";
 import { ProjectReviewDialog } from "./ProjectReviewDialog";
 import { ReleaseMarkdown } from "./ReleaseMarkdown";
 import { ReleaseSummary } from "./ReleaseSummary";
@@ -116,7 +116,7 @@ export function ReleaseWorkspace({ source, openSettings }: { source: HubSource; 
     {!hub.account ? <HostedAccountNeeded gitlab={target.provider === "gitlab"} host={target.host} path={target.path} onConnect={settingsOpener}/> : <>
       <ReleaseSummary source={source} items={packaged} family={current}/>
       {hub.notice && <div className="hub-notice" role="status">{hub.notice}</div>}
-      {hub.error && hub.items.length > 0 && <div className="release-notice"><HostedListNotice title={hub.error} retry={retry}/></div>}
+      {hub.error && hub.items.length > 0 && <FailureBlock className="release-notice" title={hub.error} retry={retry}/>}
       <HostedListColumns detail={detailOpen} list={list}>
         <div className="hosted-back"><Button onClick={() => { setDetailOpen(false); setEditor(null); setReview(null); }}><ChevronLeft size={14}/>{t("Back to releases")}</Button></div>
         {dialog}
