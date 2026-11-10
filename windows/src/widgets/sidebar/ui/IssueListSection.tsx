@@ -4,7 +4,7 @@ import { accounts, type IssueScope, workStateTitle } from "@/entities/hosting";
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
-import { IconButton, showContextMenu, Spinner } from "@/shared/ui";
+import { FailureRow, IconButton, showContextMenu, Spinner } from "@/shared/ui";
 import { ListFilterCaption } from "./ListSearchRow";
 import { Section } from "./Section";
 
@@ -42,8 +42,8 @@ export function IssueListSection({ store, openSettings }: { store: RepoStore; op
       />}
       <div style={{ padding: "0 6px" }}>
         {st.kind === "needsAccount" && !store.hostingAccount && <button className="link" onClick={openSettings}>{t("Connect account…")}</button>}
-        {st.kind === "needsAccount" && store.hostingAccount && <div className="col"><span className="hint">{t("Couldn't read the saved account credentials. Unlock your credentials, then retry.")}</span><button className="link" onClick={() => void store.loadIssues()}>{t("Retry")}</button></div>}
-        {st.kind === "failed" && <div className="col"><div className="error-text selectable" style={{ fontSize: 11.5 }}>{st.message}</div><button className="link" onClick={() => void store.loadIssues()}>{t("Retry")}</button></div>}
+        {st.kind === "needsAccount" && store.hostingAccount && <FailureRow title={t("Couldn't read the saved account credentials")} caption={t("Unlock your credentials, then retry.")} retry={() => void store.loadIssues()} />}
+        {st.kind === "failed" && <FailureRow title={t("Couldn't reach {0}", store.target?.host ?? "")} caption={st.message} retry={() => void store.loadIssues()} />}
         {st.kind === "loading" && !store.issues.length && <Spinner size={12} />}
         {st.kind === "loaded" && !store.issues.length && <div className="muted">{t("No issues match this filter.")}</div>}
       </div>

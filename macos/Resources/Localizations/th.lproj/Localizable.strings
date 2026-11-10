@@ -2676,3 +2676,6 @@
 "Pipeline" = "ไปป์ไลน์";
 "Missed" = "พลาด";
 "Start this run now?" = "เริ่มการรันนี้ตอนนี้หรือไม่";
+"Retry above" = "ลองอีกครั้งด้านบน";
+"Couldn't check the push destination" = "ตรวจปลายทาง push ไม่ได้";
+"Needs approval" = "ต้องอนุมัติ";

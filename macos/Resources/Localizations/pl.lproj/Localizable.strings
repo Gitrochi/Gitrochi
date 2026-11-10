@@ -2665,3 +2665,6 @@
 "Pipeline" = "Pipeline";
 "Missed" = "Pominięte";
 "Start this run now?" = "Uruchomić to teraz?";
+"Retry above" = "Ponów powyżej";
+"Couldn't check the push destination" = "Nie udało się sprawdzić miejsca docelowego push";
+"Needs approval" = "Wymaga zatwierdzenia";

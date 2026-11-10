@@ -38,17 +38,19 @@ private struct WorkspaceAccountNotice: View {
     @Environment(\.openSettings) private var openSettings
     var body: some View {
         if let account = store.pendingCredentialAccount {
-            WorkspaceCard { CredentialAccessNotice(account: account) }
+            CredentialAccessNotice(account: account)
         } else if store.collaborationAccess == nil {
-            WorkspaceCard {
-                if store.target == nil {
-                    Text("Open a repository with a GitHub or GitLab remote to use this workspace.").foregroundStyle(.secondary)
-                    Button("Open repository…") { store.presentOpenPanel() }
-                } else if let account = store.hostingAccount {
-                    SavedAccountAccessNotice(account: account) { Task { await store.loadInbox() } }
-                } else {
-                    Text("Connect an account to load this workspace.").foregroundStyle(.secondary)
-                    Button("Connect account…") { openSettings() }
+            if store.target != nil, let account = store.hostingAccount {
+                SavedAccountAccessNotice(account: account) { Task { await store.loadInbox() } }
+            } else {
+                WorkspaceCard {
+                    if store.target == nil {
+                        Text("Open a repository with a GitHub or GitLab remote to use this workspace.").foregroundStyle(.secondary)
+                        Button("Open repository…") { store.presentOpenPanel() }
+                    } else {
+                        Text("Connect an account to load this workspace.").foregroundStyle(.secondary)
+                        Button("Connect account…") { openSettings() }
+                    }
                 }
             }
         }

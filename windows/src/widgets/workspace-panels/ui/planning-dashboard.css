@@ -291,14 +291,6 @@
   gap: 5px;
   flex-wrap: wrap;
 }
-.planning-error {
-  display: flex;
-  gap: 10px;
-  justify-content: space-between;
-  align-items: center;
-  color: var(--red);
-  font-size: 12px;
-}
 .planning-warning {
   color: var(--orange) !important;
   font-size: 11px;

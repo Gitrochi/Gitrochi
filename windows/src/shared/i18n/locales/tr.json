@@ -2719,5 +2719,9 @@
   "Scheduled runs": "Zamanlanmış çalıştırmalar",
   "Pipeline": "Pipeline",
   "Missed": "Kaçırıldı",
-  "Start this run now?": "Bu çalıştırma şimdi başlatılsın mı?"
+  "Start this run now?": "Bu çalıştırma şimdi başlatılsın mı?",
+  "Retry above": "Yukarıdan yeniden deneyin",
+  "Couldn't check the push destination": "Push hedefi denetlenemedi",
+  "Couldn't read the saved account credentials": "Kayıtlı hesap kimlik bilgileri okunamadı",
+  "Unlock your credentials, then retry.": "Kimlik bilgilerinizin kilidini açıp yeniden deneyin."
 }

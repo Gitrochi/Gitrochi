@@ -23,10 +23,9 @@ struct CIPanel: View {
         let target = store.target
         VStack(alignment: .leading, spacing: 10) {
             if case .failed(let message) = store.ciState, !store.ciPipelines.isEmpty {
-                HostedListNotice(title: String(localized: "Couldn't reach \(host)"), caption: hostedListAge(store.ciLoadedAt, locale: locale)) {
+                FailureBlock(title: String(localized: "Couldn't reach \(host)"), caption: hostedListAge(store.ciLoadedAt, locale: locale), detail: message) {
                     Task { await store.loadCI() }
                 }
-                .help(message)
             }
             ScheduledRunsGroup()
             HostedListSearch(prompt: String(localized: "Search runs"), text: $search, menuTitle: menuTitle) {

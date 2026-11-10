@@ -2642,3 +2642,6 @@
 "Pipeline" = "Pipeline";
 "Missed" = "Bị lỡ";
 "Start this run now?" = "Bắt đầu lượt chạy này ngay?";
+"Retry above" = "Thử lại ở trên";
+"Couldn't check the push destination" = "Không thể kiểm tra đích push";
+"Needs approval" = "Cần phê duyệt";

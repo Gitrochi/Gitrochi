@@ -2686,3 +2686,6 @@
 "Pipeline" = "管線";
 "Missed" = "已錯過";
 "Start this run now?" = "現在開始此執行？";
+"Retry above" = "請在上方重試";
+"Couldn't check the push destination" = "無法檢查推送目標";
+"Needs approval" = "需要核准";

@@ -2731,5 +2731,9 @@
   "Scheduled runs": "Заплановані запуски",
   "Pipeline": "Конвеєр",
   "Missed": "Пропущено",
-  "Start this run now?": "Почати цей запуск зараз?"
+  "Start this run now?": "Почати цей запуск зараз?",
+  "Retry above": "Повторіть спробу вище",
+  "Couldn't check the push destination": "Не вдалося перевірити призначення push",
+  "Couldn't read the saved account credentials": "Не вдалося прочитати збережені облікові дані",
+  "Unlock your credentials, then retry.": "Розблокуйте облікові дані й повторіть спробу."
 }

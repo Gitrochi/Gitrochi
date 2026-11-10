@@ -216,19 +216,6 @@ struct AccountState: View {
     }
 }
 
-/// A notice (docs/design.md, Selection): white with a hairline, never tinted, so a tint keeps meaning selection
-struct AccountNotice<Content: View>: View {
-    @ViewBuilder let content: Content
-
-    var body: some View {
-        content
-            .padding(.horizontal, 12).padding(.vertical, 10)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(RoundedRectangle(cornerRadius: 6).fill(StudioStyle.surface))
-            .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(StudioStyle.border))
-    }
-}
-
 /// A 28 pt bordered control whose whole frame opens a menu. A borderless menu keeps only one icon and one text of
 /// its label and puts the icon first, so this one is a plain button, which draws the label as it is laid out (as the
 /// toolbar's menus do). The label brings its own padding.

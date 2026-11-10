@@ -212,18 +212,26 @@ struct ProjectWorkspace: View {
     @ViewBuilder private var accessNotice: some View {
         if let error = hub.error {
             // Missing access blocks the page, so its action is the filled one; anything else is a plain retry.
-            let access = store.hubCredentialState == .authorizationRequired || hub.projectPermissionRequired
-            strip(symbol: access ? "lock.shield" : "xmark.circle.fill", color: access ? StudioStyle.Rail.icon : StudioStyle.Tone.failed.text) {
-                Text(error).font(.system(size: 13)).textSelection(.enabled).fixedSize(horizontal: false, vertical: true).frame(maxWidth: .infinity, alignment: .leading)
+            Group {
                 if store.hubCredentialState == .authorizationRequired {
-                    Button("Allow saved account access") { Task { await store.allowHubStoredAccess(); await selectInitialProject() } }.buttonStyle(.borderedProminent).disabled(locked)
+                    NoticeBlock(symbol: "lock.shield", title: error, actions: [NoticeAction(title: String(localized: "Allow saved account access"), filled: true) {
+                        Task { await store.allowHubStoredAccess(); await selectInitialProject() }
+                    }], busy: locked)
                 } else if hub.projectPermissionRequired, let account = store.hubAccount {
-                    Button("Connect project access") { permissionAccount = account }.buttonStyle(.borderedProminent).disabled(locked)
-                } else { Button("Retry") { Task { if let detail { await store.selectHostingHubItem(detail.item) } else { await store.loadHostingHub(); await selectInitialProject() } } }.disabled(locked) }
+                    NoticeBlock(symbol: "lock.shield", title: error,
+                                actions: [NoticeAction(title: String(localized: "Connect project access"), filled: true) { permissionAccount = account }], busy: locked)
+                } else {
+                    FailureBlock(title: error, retrying: locked) {
+                        Task { if let detail { await store.selectHostingHubItem(detail.item) } else { await store.loadHostingHub(); await selectInitialProject() } }
+                    }
+                }
             }
+            .padding(.horizontal, 20).padding(.bottom, 8)
         }
         if hub.allowingCredentialAccess {
-            strip(symbol: "key", color: StudioStyle.Rail.icon) { Text("Waiting for your macOS approval. You can continue using local Git tools.").font(.system(size: 13)).frame(maxWidth: .infinity, alignment: .leading) }
+            NoticeBlock(symbol: "key", title: String(localized: "Saved sign-in needs your approval"),
+                        caption: String(localized: "Waiting for your macOS approval. You can continue using local Git tools."), busy: true)
+                .padding(.horizontal, 20).padding(.bottom, 8)
         }
         if let notice = detail?.notice { Text(notice).font(.system(size: 12)).foregroundStyle(StudioStyle.Rail.icon).padding(.horizontal, 20).padding(.bottom, 8).frame(maxWidth: .infinity, alignment: .leading) }
         if let sharedView, !sharedView.filter.isEmpty {

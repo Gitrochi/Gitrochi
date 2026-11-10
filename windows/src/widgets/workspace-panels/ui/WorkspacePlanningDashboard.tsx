@@ -22,7 +22,7 @@ import {
 } from "@/entities/hosting";
 import { language, t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
-import { Button, Spinner } from "@/shared/ui";
+import { Button, FailureBlock, Spinner } from "@/shared/ui";
 import {
   WorkspacePlanningControls,
   WorkspacePlanningSource,
@@ -332,12 +332,7 @@ export function WorkspacePlanningDashboard({
             </div>
           )}
           {(readError || data.error) && (
-            <div className="planning-error" role="alert">
-              {readError || data.error}
-              <Button disabled={data.loading} onClick={() => void refresh()}>
-                {t("Retry")}
-              </Button>
-            </div>
+            <FailureBlock title={readError || data.error || ""} retrying={data.loading} retry={() => void refresh()} />
           )}
           {!!Object.keys(data.projectErrors).length && (
             <p className="planning-warning">

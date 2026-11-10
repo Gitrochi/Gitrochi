@@ -2686,5 +2686,9 @@
   "Scheduled runs": "Run terjadwal",
   "Pipeline": "Pipeline",
   "Missed": "Terlewat",
-  "Start this run now?": "Mulai run ini sekarang?"
+  "Start this run now?": "Mulai run ini sekarang?",
+  "Retry above": "Coba lagi di atas",
+  "Couldn't check the push destination": "Tidak dapat memeriksa tujuan push",
+  "Couldn't read the saved account credentials": "Tidak dapat membaca kredensial akun yang disimpan",
+  "Unlock your credentials, then retry.": "Buka kunci kredensial Anda, lalu coba lagi."
 }

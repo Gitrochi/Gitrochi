@@ -2824,3 +2824,6 @@
 "Pipeline" = "流水线";
 "Missed" = "已错过";
 "Start this run now?" = "现在开始此运行？";
+"Retry above" = "请在上方重试";
+"Couldn't check the push destination" = "无法检查推送目标";
+"Needs approval" = "需要批准";

@@ -2663,3 +2663,6 @@
 "Pipeline" = "Pipeline";
 "Missed" = "Zmeškáno";
 "Start this run now?" = "Spustit tento běh nyní?";
+"Retry above" = "Zkuste to znovu výše";
+"Couldn't check the push destination" = "Cíl odeslání se nepodařilo zkontrolovat";
+"Needs approval" = "Vyžaduje schválení";

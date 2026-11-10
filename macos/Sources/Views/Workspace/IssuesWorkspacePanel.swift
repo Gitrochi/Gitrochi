@@ -278,8 +278,7 @@ private struct IssueListColumn: View {
         @Bindable var list = store.issueList
         VStack(alignment: .leading, spacing: 10) {
             if let error = list.error, !list.items.isEmpty {
-                HostedListNotice(title: String(localized: "Couldn't reach \(host)"), caption: hostedListAge(list.loadedAt, locale: locale)) { reload() }
-                    .help(error)
+                FailureBlock(title: String(localized: "Couldn't reach \(host)"), caption: hostedListAge(list.loadedAt, locale: locale), detail: error) { reload() }
             }
             HostedListSearch(prompt: String(localized: "Search issues"), text: $list.search,
                              menuTitle: String(localized: "Sort") + ": " + (Self.sorts.first { $0.value == list.sort }?.title ?? ""),

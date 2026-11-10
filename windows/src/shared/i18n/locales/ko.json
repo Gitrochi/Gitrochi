@@ -4685,5 +4685,9 @@
   "Scheduled runs": "예약된 실행",
   "Pipeline": "파이프라인",
   "Missed": "놓침",
-  "Start this run now?": "이 실행을 지금 시작할까요?"
+  "Start this run now?": "이 실행을 지금 시작할까요?",
+  "Retry above": "위에서 다시 시도하세요",
+  "Couldn't check the push destination": "Push 대상을 확인하지 못했습니다",
+  "Couldn't read the saved account credentials": "저장된 계정 자격 증명을 읽지 못했습니다",
+  "Unlock your credentials, then retry.": "자격 증명 잠금을 해제한 뒤 다시 시도하세요."
 }

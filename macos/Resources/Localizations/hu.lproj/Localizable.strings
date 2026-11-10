@@ -2666,3 +2666,6 @@
 "Pipeline" = "Pipeline";
 "Missed" = "Kihagyva";
 "Start this run now?" = "Elindítja most ezt a futtatást?";
+"Retry above" = "Próbálja újra fent";
+"Couldn't check the push destination" = "Nem sikerült ellenőrizni a push célját";
+"Needs approval" = "Jóváhagyás szükséges";

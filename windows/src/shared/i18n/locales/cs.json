@@ -2714,5 +2714,9 @@
   "Scheduled runs": "Naplánované běhy",
   "Pipeline": "Pipeline",
   "Missed": "Zmeškáno",
-  "Start this run now?": "Spustit tento běh nyní?"
+  "Start this run now?": "Spustit tento běh nyní?",
+  "Retry above": "Zkuste to znovu výše",
+  "Couldn't check the push destination": "Cíl odeslání se nepodařilo zkontrolovat",
+  "Couldn't read the saved account credentials": "Uložené přihlašovací údaje účtu se nepodařilo přečíst",
+  "Unlock your credentials, then retry.": "Odemkněte přihlašovací údaje a zkuste to znovu."
 }

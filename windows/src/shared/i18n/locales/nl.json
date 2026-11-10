@@ -2686,5 +2686,9 @@
   "Scheduled runs": "Geplande runs",
   "Pipeline": "Pipeline",
   "Missed": "Gemist",
-  "Start this run now?": "Deze run nu starten?"
+  "Start this run now?": "Deze run nu starten?",
+  "Retry above": "Probeer het hierboven opnieuw",
+  "Couldn't check the push destination": "Pushbestemming kan niet worden gecontroleerd",
+  "Couldn't read the saved account credentials": "Opgeslagen accountgegevens kunnen niet worden gelezen",
+  "Unlock your credentials, then retry.": "Ontgrendel je inloggegevens en probeer het opnieuw."
 }

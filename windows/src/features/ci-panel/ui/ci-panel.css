@@ -57,9 +57,7 @@
 .ci-link.mono { font-family: var(--mono); font-size: 11px; }
 .ci-link:hover { text-decoration: underline; }
 :root[data-theme="dark"] .ci-link { color: #6cb0ff; }
-.ci-approval { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 10px 16px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); }
-.ci-approval > svg { flex: none; color: var(--status-text); }
-.ci-approval-title { flex: 1 1 200px; min-width: 0; font-size: 12px; font-weight: 600; color: var(--status-text); }
+.ci-approval { margin: 10px 16px; }
 
 .ci-run-body { flex: 1; min-height: 0; display: flex; align-items: stretch; }
 .ci-run-jobs { flex: 0 0 220px; min-width: 0; overflow: auto; box-sizing: border-box; border-right: 1px solid var(--border); padding: 12px; display: flex; flex-direction: column; gap: 4px; }

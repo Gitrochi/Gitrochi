@@ -2688,5 +2688,9 @@
   "Scheduled runs": "Lượt chạy đã lên lịch",
   "Pipeline": "Pipeline",
   "Missed": "Bị lỡ",
-  "Start this run now?": "Bắt đầu lượt chạy này ngay?"
+  "Start this run now?": "Bắt đầu lượt chạy này ngay?",
+  "Retry above": "Thử lại ở trên",
+  "Couldn't check the push destination": "Không thể kiểm tra đích push",
+  "Couldn't read the saved account credentials": "Không thể đọc thông tin xác thực tài khoản đã lưu",
+  "Unlock your credentials, then retry.": "Hãy mở khóa thông tin xác thực rồi thử lại."
 }

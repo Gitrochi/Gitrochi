@@ -2681,3 +2681,6 @@
 "Pipeline" = "Конвейер";
 "Missed" = "Пропущен";
 "Start this run now?" = "Начать этот запуск сейчас?";
+"Retry above" = "Повторите попытку выше";
+"Couldn't check the push destination" = "Не удалось проверить назначение push";
+"Needs approval" = "Требуется одобрение";

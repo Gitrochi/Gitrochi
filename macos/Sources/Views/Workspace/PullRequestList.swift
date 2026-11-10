@@ -148,11 +148,7 @@ struct PullRequestList: View {
                 .padding(.horizontal, 10)
             }
         case .failed(let message):
-            VStack(alignment: .leading, spacing: 6) {
-                Label(message, symbol: "exclamationmark.circle").font(.system(size: 12)).foregroundStyle(StudioStyle.Tone.failed.text).lineLimit(3)
-                Button("Retry") { Task { await store.loadPullRequests() } }.buttonStyle(PullRequestButtonStyle())
-            }
-            .padding(.horizontal, 10)
+            FailureBlock(title: String(localized: "Couldn't reach \(target.host)"), caption: message) { Task { await store.loadPullRequests() } }
         case .loading where store.pullRequests.isEmpty:
             ProgressView().controlSize(.small).padding(10)
         case .loaded where store.pullRequests.isEmpty:

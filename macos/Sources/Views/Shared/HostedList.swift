@@ -303,29 +303,6 @@ struct HostedListEmpty: View {
     }
 }
 
-/// A list could not be refreshed and its last items stay: white with a hairline, the failed icon, what happened in
-/// the failed tone, how old the data is, and Retry
-struct HostedListNotice: View {
-    let title: String
-    var caption: String? = nil
-    let retry: () -> Void
-
-    var body: some View {
-        HStack(alignment: .top, spacing: 10) {
-            SymbolIcon("xmark.circle.fill").font(.system(size: 14)).foregroundStyle(StudioStyle.Tone.failed.text).accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(verbatim: title).font(.system(size: 13, weight: .semibold)).foregroundStyle(StudioStyle.Tone.failed.text)
-                if let caption { Text(verbatim: caption).font(.system(size: 12)).foregroundStyle(HostedList.caption) }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            Button("Retry", action: retry).buttonStyle(HostedListButtonStyle())
-        }
-        .padding(.horizontal, 12).padding(.vertical, 10)
-        .background(RoundedRectangle(cornerRadius: 6).fill(StudioStyle.surface))
-        .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(StudioStyle.border))
-    }
-}
-
 /// A list on its way: the words first, then three grey rows where the items will be
 struct HostedListLoading: View {
     let caption: String

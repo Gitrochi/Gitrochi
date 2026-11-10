@@ -2717,3 +2717,6 @@
 "Pipeline" = "Pipeline";
 "Missed" = "Manquée";
 "Start this run now?" = "Lancer cette exécution maintenant ?";
+"Retry above" = "Réessayez ci-dessus";
+"Couldn't check the push destination" = "Impossible de vérifier la destination du push";
+"Needs approval" = "Approbation requise";

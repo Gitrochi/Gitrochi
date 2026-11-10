@@ -2668,3 +2668,6 @@
 "Pipeline" = "Pipeline";
 "Missed" = "Kaçırıldı";
 "Start this run now?" = "Bu çalıştırma şimdi başlatılsın mı?";
+"Retry above" = "Yukarıdan yeniden deneyin";
+"Couldn't check the push destination" = "Push hedefi denetlenemedi";
+"Needs approval" = "Onay gerekiyor";

@@ -34,10 +34,10 @@ struct PullRequestSection: View {
             if let warning = store.collaboration.warning { Text(warning).font(.caption).foregroundStyle(.secondary) }
             switch store.prState {
             case .authorizationRequired:
-                if let account = store.hostingAccount { SavedAccountAccessNotice(account: account) { Task { await store.loadPullRequests() } } }
+                if let account = store.hostingAccount { SavedAccountAccessNotice(account: account, row: true) { Task { await store.loadPullRequests() } }.sidebarRow() }
             case .needsAccount:
                 if let account = store.hostingAccount {
-                    SavedAccountAccessNotice(account: account) { Task { await store.loadPullRequests() } }
+                    SavedAccountAccessNotice(account: account, row: true) { Task { await store.loadPullRequests() } }.sidebarRow()
                 } else {
                 // An account on this very host cannot be an alias for it, so only other servers are worth a try.
                 let others = AccountStore.shared.accounts(for: target.provider).filter { $0.host != target.host }
@@ -50,7 +50,7 @@ struct PullRequestSection: View {
                     .buttonStyle(.link)
                 }
             case .failed(let m):
-                Text(m).font(.caption).foregroundStyle(.red).lineLimit(3)
+                FailureRow(title: String(localized: "Couldn't reach \(target.host)"), caption: m) { Task { await store.loadPullRequests() } }.sidebarRow()
             case .loading where store.pullRequests.isEmpty:
                 ProgressView().controlSize(.small)
             case .loaded where store.pullRequests.isEmpty:

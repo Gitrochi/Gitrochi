@@ -2710,5 +2710,9 @@
   "Scheduled runs": "Esecuzioni pianificate",
   "Pipeline": "Pipeline",
   "Missed": "Persa",
-  "Start this run now?": "Avviare ora questa esecuzione?"
+  "Start this run now?": "Avviare ora questa esecuzione?",
+  "Retry above": "Riprova sopra",
+  "Couldn't check the push destination": "Impossibile verificare la destinazione del push",
+  "Couldn't read the saved account credentials": "Impossibile leggere le credenziali dell'account salvato",
+  "Unlock your credentials, then retry.": "Sblocca le credenziali, quindi riprova."
 }

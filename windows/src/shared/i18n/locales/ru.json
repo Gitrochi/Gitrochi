@@ -2731,5 +2731,9 @@
   "Scheduled runs": "Запланированные запуски",
   "Pipeline": "Конвейер",
   "Missed": "Пропущен",
-  "Start this run now?": "Начать этот запуск сейчас?"
+  "Start this run now?": "Начать этот запуск сейчас?",
+  "Retry above": "Повторите попытку выше",
+  "Couldn't check the push destination": "Не удалось проверить назначение push",
+  "Couldn't read the saved account credentials": "Не удалось прочитать сохранённые учётные данные",
+  "Unlock your credentials, then retry.": "Разблокируйте учётные данные и повторите попытку."
 }

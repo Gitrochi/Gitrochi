@@ -3447,3 +3447,6 @@
 "Pipeline" = "パイプライン";
 "Missed" = "見逃し";
 "Start this run now?" = "この実行を今すぐ開始しますか？";
+"Retry above" = "上で再試行してください";
+"Couldn't check the push destination" = "Push 先を確認できませんでした";
+"Needs approval" = "承認が必要";

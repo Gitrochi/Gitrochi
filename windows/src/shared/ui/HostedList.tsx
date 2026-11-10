@@ -1,5 +1,4 @@
 import { CircleUserRound } from "lucide-react";
-import { CircleX } from "@/shared/icons";
 import { ArrowUpDown, Search, X } from "@/shared/icons";
 import type { ButtonHTMLAttributes, HTMLAttributes, MouseEvent, ReactNode } from "react";
 import { t } from "@/shared/i18n";
@@ -162,23 +161,6 @@ export function HostedAccountNeeded({ gitlab, host, path, onConnect }: { gitlab:
       caption={t("{0} is on {1}. Connect an account to see its pull requests, issues and runs.", path, host)}
       action={{ label: t("Connect account…"), filled: true, onClick: onConnect }}
     />
-  );
-}
-
-/**
- * A list could not be refreshed and its last items stay: white with a hairline, the failed icon, what happened in the
- * failed tone, how old the data is, and Retry
- */
-export function HostedListNotice({ title, caption, detail, retry }: { title: string; caption?: string; /** The server's own words, on hover */ detail?: string; retry: () => void }) {
-  return (
-    <div className="hosted-notice status-tone" data-tone="failed" role="alert" title={detail}>
-      <CircleX size={14} />
-      <span className="hosted-notice-text">
-        <span className="hosted-notice-title">{title}</span>
-        {caption && <span className="hosted-caption">{caption}</span>}
-      </span>
-      <Button onClick={retry}>{t("Retry")}</Button>
-    </div>
   );
 }
 

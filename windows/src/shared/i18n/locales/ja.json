@@ -3524,5 +3524,9 @@
   "Scheduled runs": "予約された実行",
   "Pipeline": "パイプライン",
   "Missed": "見逃し",
-  "Start this run now?": "この実行を今すぐ開始しますか？"
+  "Start this run now?": "この実行を今すぐ開始しますか？",
+  "Retry above": "上で再試行してください",
+  "Couldn't check the push destination": "Push 先を確認できませんでした",
+  "Couldn't read the saved account credentials": "保存されたアカウントの資格情報を読み取れませんでした",
+  "Unlock your credentials, then retry.": "資格情報のロックを解除してから再試行してください。"
 }

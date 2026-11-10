@@ -164,12 +164,10 @@ private struct AccountWorkPanel: View {
     /// macOS asks before a saved sign-in is used; one that cannot be read at all offers to restore it
     private var access: some View {
         VStack(alignment: .leading, spacing: 0) {
-            AccountNotice {
-                if AccountStore.shared.awaitsAccess(account) {
-                    CredentialAccessNotice(account: account)
-                } else {
-                    SavedAccountAccessNotice(account: account) { Task { await model.load(account) } }
-                }
+            if AccountStore.shared.awaitsAccess(account) {
+                CredentialAccessNotice(account: account)
+            } else {
+                SavedAccountAccessNotice(account: account) { Task { await model.load(account) } }
             }
         }
         .padding(.horizontal, 20).padding(.vertical, 16)
@@ -280,21 +278,10 @@ private struct AccountWorkPanel: View {
 
     /// A refresh that failed leaves the last rows and says how old they are
     private func failed(_ failure: AccountWorkModel.Failure) -> some View {
-        AccountNotice {
-            HStack(alignment: .top, spacing: 10) {
-                SymbolIcon("xmark.circle.fill").font(.system(size: 14)).foregroundStyle(StudioStyle.Tone.failed.text).accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(verbatim: title(failure)).font(.system(size: 13, weight: .semibold)).foregroundStyle(StudioStyle.Tone.failed.text)
-                        .fixedSize(horizontal: false, vertical: true).textSelection(.enabled)
-                    if let loadedAt = model.loadedAt {
-                        Text("Showing data from \(AccountInbox.when(loadedAt, locale: AppLanguage.locale))").font(.system(size: 12)).foregroundStyle(StudioStyle.Rail.icon)
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                Button("Retry") { Task { await model.load(account) } }.accountButtonSize().disabled(model.busy)
-            }
-        }
-        .padding(.bottom, 6)
+        FailureBlock(title: title(failure),
+                     caption: model.loadedAt.map { String(localized: "Showing data from \(AccountInbox.when($0, locale: AppLanguage.locale))") },
+                     retrying: model.busy) { Task { await model.load(account) } }
+            .padding(.bottom, 6)
     }
 
     @ViewBuilder private func group(_ title: LocalizedStringKey, _ items: [AccountWorkItem], selected: AccountWorkItem?) -> some View {

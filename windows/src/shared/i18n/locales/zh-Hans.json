@@ -2866,5 +2866,9 @@
   "Scheduled runs": "已计划的运行",
   "Pipeline": "流水线",
   "Missed": "已错过",
-  "Start this run now?": "现在开始此运行？"
+  "Start this run now?": "现在开始此运行？",
+  "Retry above": "请在上方重试",
+  "Couldn't check the push destination": "无法检查推送目标",
+  "Couldn't read the saved account credentials": "无法读取已保存的账户凭据",
+  "Unlock your credentials, then retry.": "请解锁凭据后重试。"
 }

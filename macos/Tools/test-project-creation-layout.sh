@@ -49,15 +49,14 @@ for source in (root / 'Sources').rglob('*.swift'):
         text = replace_once(text, 'static let shared = LocalProjectStore()',
                             'static let shared = LocalProjectStore(storage: ProjectCreationFixtureStorage())', 'In-memory local storage')
     elif relative == 'Views/Shared/SavedAccountAccessNotice.swift':
-        text = replace_once(text, '}.disabled(allowing)',
-                            '}.disabled(allowing).background(ProjectCreationProbe(identifier: "creation-restore-access"))',
-                            'Saved-account restore action measurement')
-        text = replace_once(text, 'Button("Account settings…") { openSettings() }',
-                            'Button("Account settings…") { openSettings() }.background(ProjectCreationProbe(identifier: "creation-account-settings"))',
-                            'Saved-account settings action measurement')
-        text = replace_once(text, '}.frame(maxWidth: .infinity, alignment: .leading)',
-                            '}.frame(maxWidth: .infinity, alignment: .leading).background(ProjectCreationProbe(identifier: "creation-saved-access-notice"))',
+        text = replace_once(text, 'actions: actions, busy: allowing || state == .loading)',
+                            'actions: actions, busy: allowing || state == .loading).background(ProjectCreationProbe(identifier: "creation-saved-access-notice"))',
                             'Saved-account recovery notice measurement')
+    elif relative == 'Views/Shared/NoticeBlock.swift':
+        # The saved-account notice draws its actions through the shared notice block
+        text = replace_once(text, 'NoticeButton(action: actions[index]).disabled(busy)',
+                            'NoticeButton(action: actions[index]).disabled(busy).background(ProjectCreationProbe(identifier: ["Restore saved account access": "creation-restore-access", "Account settings…": "creation-account-settings"][actions[index].title] ?? "notice-action"))',
+                            'Saved-account action measurement')
     elif relative == 'Views/Hub/ProjectCreationSheet.swift':
         text = replace_once(text, '@ViewState private var mode = "local"', '@ViewState private var mode = projectCreationFixtureMode', 'Initial scenario')
         text = replace_once(text, '@ViewState private var title = ""', '@ViewState private var title = "Desktop release"', 'Synthetic title')

@@ -5,6 +5,8 @@ struct SavedAccountAccessNotice: View {
     let account: HostAccount
     /// The whole page is waiting on it: the blocked state of docs/design.md, not a note among other things
     var page = false
+    /// A sidebar section: one row, the explanation on hover
+    var row = false
     var restored: () -> Void = {}
     @Environment(\.openSettings) private var openSettings
     @ViewState private var allowing = false
@@ -19,7 +21,7 @@ struct SavedAccountAccessNotice: View {
     }
 
     var body: some View {
-        if page { pageState } else { note }
+        if page { pageState } else if row { rowState } else { note }
     }
 
     @ViewBuilder private var pageState: some View {
@@ -36,18 +38,24 @@ struct SavedAccountAccessNotice: View {
         }
     }
 
+    private var rowState: some View {
+        let accounts = AccountStore.shared, state = accounts.credentialState(for: account)
+        let action = state == .loading ? nil : state == .unavailable
+            ? NoticeAction(title: String(localized: "Account settings…")) { openSettings() }
+            : NoticeAction(title: String(localized: "Approve…"), run: allow)
+        return NoticeRow(symbol: "key", title: String(localized: "Needs approval"),
+                         caption: error ?? accounts.savedAccessMessage(for: account), action: action, busy: allowing || state == .loading)
+    }
+
+    /// One action sits on the right; when the credential can't be read at all, Account settings joins it below
     private var note: some View {
-        let accounts = AccountStore.shared
-        return VStack(alignment: .leading, spacing: 10) {
-            Label("@" + account.username + " · " + account.host, symbol: "person.crop.circle.badge.checkmark").font(.callout.weight(.medium))
-            Text(accounts.savedAccessMessage(for: account)).font(.callout).foregroundStyle(.secondary)
-            if accounts.credentialState(for: account) == .loading { ProgressView().controlSize(.small) }
-            else {
-                Button("Restore saved account access", action: allow).disabled(allowing)
-                if accounts.credentialState(for: account) == .unavailable { Button("Account settings…") { openSettings() } }
-            }
-            if allowing { ProgressView().controlSize(.small) }
-            if let error { Text(error).font(.caption).foregroundStyle(.secondary).textSelection(.enabled) }
-        }.frame(maxWidth: .infinity, alignment: .leading)
+        let accounts = AccountStore.shared, state = accounts.credentialState(for: account)
+        var actions: [NoticeAction] = []
+        if state != .loading {
+            actions.append(NoticeAction(title: String(localized: "Restore saved account access"), run: allow))
+            if state == .unavailable { actions.append(NoticeAction(title: String(localized: "Account settings…")) { openSettings() }) }
+        }
+        return NoticeBlock(symbol: "key", title: String(localized: "Saved sign-in needs your approval"),
+                           caption: error ?? accounts.savedAccessMessage(for: account), actions: actions, busy: allowing || state == .loading)
     }
 }

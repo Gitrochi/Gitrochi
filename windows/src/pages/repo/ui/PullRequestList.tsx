@@ -9,7 +9,7 @@ import type { RepoStore } from "@/entities/repo";
 import { settings } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { listWhen, longDate, useObserve } from "@/shared/lib";
-import { Avatar, Button, Segmented, showContextMenu, showMenuBelow, Spinner, StatusPill } from "@/shared/ui";
+import { Avatar, Button, FailureBlock, Segmented, showContextMenu, showMenuBelow, Spinner, StatusPill } from "@/shared/ui";
 
 const sortSetting = "pullRequestSort";
 
@@ -104,8 +104,8 @@ export function PullRequestList({ store, target, openSettings, onHide }: { store
           <button className="link" onClick={openSettings}>{gitlab ? t("Connect a self-hosted GitLab ({0}) account…", target.host) : t("Connect a GitHub account…")}</button>
         </div>
       )}
-      {st.kind === "needsAccount" && store.hostingAccount && <div className="pr-list-state"><span className="pr-list-note">{t("Couldn't read the saved account credentials. Unlock your credentials, then retry.")}</span><button className="link" onClick={() => void store.loadPullRequests()}>{t("Retry")}</button></div>}
-      {st.kind === "failed" && <div className="pr-list-state"><span className="error-text selectable">{st.message}</span><button className="link" onClick={() => void store.loadPullRequests()}>{t("Retry")}</button></div>}
+      {st.kind === "needsAccount" && store.hostingAccount && <FailureBlock title={t("Couldn't read the saved account credentials")} caption={t("Unlock your credentials, then retry.")} retry={() => void store.loadPullRequests()} />}
+      {st.kind === "failed" && <FailureBlock title={t("Couldn't reach {0}", target.host)} caption={st.message} retry={() => void store.loadPullRequests()} />}
       {st.kind === "loading" && !store.pullRequests.length && <div className="pr-list-state"><Spinner size={12} /></div>}
       {st.kind === "loaded" && !store.pullRequests.length && <div className="pr-list-note">{t(gitlab ? "No merge requests match this filter." : "No pull requests match this filter.")}</div>}
       <div className="pr-rows">

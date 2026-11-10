@@ -12,26 +12,17 @@ struct CredentialAccessNotice: View {
     var body: some View {
         let state = accounts.credentialState(for: account)
         if state != .ready {
-            VStack(alignment: .leading, spacing: 8) {
-                if state == .loading && !allowing {
-                    HStack(spacing: 6) {
-                        ProgressView().controlSize(.small)
-                        Text("Checking saved account access…").font(.caption).foregroundStyle(.secondary)
-                    }
-                } else {
-                    Text("Allow access to the saved account to use repository services.").font(.caption).foregroundStyle(.secondary)
-                }
-                if allowing {
-                    HStack(spacing: 6) {
-                        ProgressView().controlSize(.small)
-                        Text("Waiting for your macOS approval. You can continue using local Git tools.").font(.caption).foregroundStyle(.secondary)
-                    }
-                }
-                Button("Allow saved account access") { allow() }.disabled(allowing)
-                if let failure { Text(failure).font(.caption).foregroundStyle(.red).textSelection(.enabled) }
-            }
-            .accessibilityElement(children: .contain)
+            NoticeBlock(symbol: "key", title: String(localized: "Saved sign-in needs your approval"), caption: caption(loading: state == .loading),
+                        actions: [NoticeAction(title: String(localized: "Allow saved account access"), run: allow)],
+                        busy: allowing || state == .loading)
         }
+    }
+
+    private func caption(loading: Bool) -> String {
+        if let failure { return failure }
+        if allowing { return String(localized: "Waiting for your macOS approval. You can continue using local Git tools.") }
+        if loading { return String(localized: "Checking saved account access…") }
+        return String(localized: "Allow access to the saved account to use repository services.")
     }
 
     private func allow() {

@@ -542,7 +542,7 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
     ensure(commentInput.value === "Check the uncertain reply." && writes.length === uncertainWrites, "Unknown comment was retried or lost input");
     uncertainComment = false;
     // The scope strip has a Retry of its own; this one belongs to the error notice.
-    host.querySelector<HTMLButtonElement>(".hub-error .hub-actions button")!.click();
+    host.querySelector<HTMLButtonElement>(".hub-error .notice-block-actions button")!.click();
     ensure(await until(() => button("Comment")?.disabled === false), "Project refresh did not reconcile the unknown comment lock");
     enter(commentInput, "");
     await pause(25);

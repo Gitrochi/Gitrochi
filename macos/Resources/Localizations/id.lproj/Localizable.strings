@@ -2637,3 +2637,6 @@
 "Pipeline" = "Pipeline";
 "Missed" = "Terlewat";
 "Start this run now?" = "Mulai run ini sekarang?";
+"Retry above" = "Coba lagi di atas";
+"Couldn't check the push destination" = "Tidak dapat memeriksa tujuan push";
+"Needs approval" = "Perlu persetujuan";
