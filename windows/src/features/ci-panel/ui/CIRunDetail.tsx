@@ -25,7 +25,7 @@ import type { RepoStore } from "@/entities/repo";
 import { settings } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { listWhen, useObserve } from "@/shared/lib";
-import { Button, HostedListChip, HostedListIconButton, HostedListTextButton, IconButton, type MenuItem, showContextMenu, showMenuBelow, Spinner, StatusPill, type StatusTone } from "@/shared/ui";
+import { Button, HostedListChip, HostedListIconButton, HostedListTextButton, IconButton, type MenuItem, NoticeBlock, showContextMenu, showMenuBelow, Spinner, StatusPill, type StatusTone } from "@/shared/ui";
 
 /**
  * The run picked on the Actions page, as the Actions board draws it: which run and its state, the title with its
@@ -455,8 +455,8 @@ function JobRow({
 }
 
 /**
- * A deployment that waits for approval (GitHub environment protection rules): white with a hairline, the waiting icon
- * and words in its tone, and the two answers
+ * A deployment that waits for approval (GitHub environment protection rules): a notice in the waiting tone with the
+ * two answers on a row below, or why this account can't give them
  */
 function DeploymentApproval({
   store,
@@ -469,26 +469,15 @@ function DeploymentApproval({
 }) {
   const mine = deployments.filter((d) => d.canApprove);
   return (
-    <div className="ci-approval status-tone" data-tone="waiting">
-      <Hand size={14} />
-      <span className="ci-approval-title">
-        {t(
-          "Waiting for deployment approval: {0}",
-          deployments.map((d) => d.environment).join(", "),
-        )}
-      </span>
-      {mine.length ? (
-        <>
-          <Button kind="primary" onClick={() => store.ci.reviewDeployment(pipeline, mine, true)}>
-            {t("Approve")}
-          </Button>
-          <Button onClick={() => store.ci.reviewDeployment(pipeline, mine, false)}>
-            {t("Reject")}
-          </Button>
-        </>
-      ) : (
-        <span className="hosted-caption">{t("This account can't approve.")}</span>
-      )}
-    </div>
+    <NoticeBlock
+      className="ci-approval"
+      icon={<Hand size={14} />}
+      title={t("Waiting for deployment approval: {0}", deployments.map((d) => d.environment).join(", "))}
+      caption={mine.length ? null : t("This account can't approve.")}
+      actions={mine.length ? [
+        { label: t("Approve"), filled: true, onClick: () => store.ci.reviewDeployment(pipeline, mine, true) },
+        { label: t("Reject"), onClick: () => store.ci.reviewDeployment(pipeline, mine, false) },
+      ] : []}
+    />
   );
 }

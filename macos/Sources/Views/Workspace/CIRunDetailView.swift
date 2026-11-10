@@ -525,8 +525,8 @@ private struct CIJobRow: View {
     }
 }
 
-/// A deployment that waits for approval (GitHub environment protection rules): white with a hairline, the waiting
-/// icon and words in its tone, and the two answers
+/// A deployment that waits for approval (GitHub environment protection rules): a notice in the waiting tone with the
+/// two answers on a row below, or why this account can't give them
 private struct DeploymentApproval: View {
     @Environment(RepoStore.self) private var store
     let pipeline: CIPipeline
@@ -534,22 +534,14 @@ private struct DeploymentApproval: View {
 
     var body: some View {
         let mine = deployments.filter(\.canApprove)
-        HStack(spacing: 10) {
-            SymbolIcon("hand.raised.fill").font(.system(size: 14)).foregroundStyle(StudioStyle.Tone.waiting.text).accessibilityHidden(true)
-            Text("Waiting for deployment approval: \(deployments.map(\.environment).joined(separator: ", "))")
-                .font(.system(size: 12, weight: .semibold)).foregroundStyle(StudioStyle.Tone.waiting.text)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            if mine.isEmpty {
-                Text("This account can't approve.").font(.system(size: 12)).foregroundStyle(HostedList.caption)
-            } else {
-                Button("Approve") { store.reviewDeployment(pipeline, mine, approve: true) }.hostedListFilledButton()
-                Button("Reject") { store.reviewDeployment(pipeline, mine, approve: false) }.buttonStyle(HostedListButtonStyle())
-            }
-        }
-        .padding(.horizontal, 12).padding(.vertical, 8)
-        .background(RoundedRectangle(cornerRadius: 6).fill(StudioStyle.surface))
-        .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(StudioStyle.border))
-        .padding(.horizontal, 16).padding(.vertical, 10)
+        NoticeBlock(symbol: "hand.raised.fill",
+                    title: String(localized: "Waiting for deployment approval: \(deployments.map(\.environment).joined(separator: ", "))"),
+                    caption: mine.isEmpty ? String(localized: "This account can't approve.") : nil,
+                    actions: mine.isEmpty ? [] : [
+                        NoticeAction(title: String(localized: "Approve"), filled: true) { store.reviewDeployment(pipeline, mine, approve: true) },
+                        NoticeAction(title: String(localized: "Reject")) { store.reviewDeployment(pipeline, mine, approve: false) },
+                    ])
+            .padding(.horizontal, 16).padding(.vertical, 10)
     }
 }
 
