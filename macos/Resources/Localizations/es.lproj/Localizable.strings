@@ -2695,3 +2695,9 @@
 "in %lldd" = "en %1$lld d";
 "The account for this run is no longer connected." = "La cuenta de esta ejecución ya no está conectada.";
 "Couldn't read the account's token." = "No se pudo leer el token de la cuenta.";
+"Run now" = "Ejecutar ahora";
+"Run later" = "Ejecutar más tarde";
+"Run at" = "Ejecutar a las";
+"Schedule run" = "Programar ejecución";
+"Choose a time in the future." = "Elige una hora en el futuro.";
+"Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed." = "Gitrochi inicia la ejecución a esta hora si está abierto. Si no, se marca como perdida.";

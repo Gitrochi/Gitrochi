@@ -2661,3 +2661,9 @@
 "in %lldd" = "через %1$lld д";
 "The account for this run is no longer connected." = "Учётная запись для этого запуска больше не подключена.";
 "Couldn't read the account's token." = "Не удалось прочитать токен учётной записи.";
+"Run now" = "Запустить сейчас";
+"Run later" = "Запустить позже";
+"Run at" = "Запустить в";
+"Schedule run" = "Запланировать запуск";
+"Choose a time in the future." = "Выберите время в будущем.";
+"Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed." = "Gitrochi начнёт запуск в это время, если приложение открыто. Иначе запуск будет отмечен как пропущенный.";

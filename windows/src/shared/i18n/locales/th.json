@@ -2704,5 +2704,11 @@
   "in {0}h": "ในอีก {0} ชม.",
   "in {0}d": "ในอีก {0} วัน",
   "The account for this run is no longer connected.": "บัญชีของการรันนี้ไม่ได้เชื่อมต่ออยู่แล้ว",
-  "Couldn't read the account's token.": "อ่านโทเค็นของบัญชีไม่ได้"
+  "Couldn't read the account's token.": "อ่านโทเค็นของบัญชีไม่ได้",
+  "Run now": "รันเลย",
+  "Run later": "รันภายหลัง",
+  "Run at": "รันเวลา",
+  "Schedule run": "ตั้งเวลารัน",
+  "Choose a time in the future.": "เลือกเวลาในอนาคต",
+  "Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed.": "Gitrochi จะเริ่มการรันในเวลานี้หากแอปเปิดอยู่ มิฉะนั้นการรันจะถูกทำเครื่องหมายว่าพลาด"
 }

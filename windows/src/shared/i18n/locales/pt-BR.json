@@ -2680,5 +2680,11 @@
   "in {0}h": "em {0} h",
   "in {0}d": "em {0} d",
   "The account for this run is no longer connected.": "A conta desta execução não está mais conectada.",
-  "Couldn't read the account's token.": "Não foi possível ler o token da conta."
+  "Couldn't read the account's token.": "Não foi possível ler o token da conta.",
+  "Run now": "Executar agora",
+  "Run later": "Executar mais tarde",
+  "Run at": "Executar às",
+  "Schedule run": "Agendar execução",
+  "Choose a time in the future.": "Escolha um horário no futuro.",
+  "Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed.": "O Gitrochi inicia a execução neste horário se estiver aberto. Caso contrário, ela é marcada como perdida."
 }

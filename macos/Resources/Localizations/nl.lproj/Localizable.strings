@@ -2609,3 +2609,9 @@
 "in %lldd" = "over %1$lld d";
 "The account for this run is no longer connected." = "Het account voor deze run is niet meer verbonden.";
 "Couldn't read the account's token." = "Kan het token van het account niet lezen.";
+"Run now" = "Nu uitvoeren";
+"Run later" = "Later uitvoeren";
+"Run at" = "Uitvoeren om";
+"Schedule run" = "Run plannen";
+"Choose a time in the future." = "Kies een tijd in de toekomst.";
+"Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed." = "Gitrochi start de run op dit tijdstip als het geopend is. Anders wordt de run als gemist gemarkeerd.";

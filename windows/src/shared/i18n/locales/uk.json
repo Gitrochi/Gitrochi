@@ -2709,5 +2709,11 @@
   "in {0}h": "через {0} год",
   "in {0}d": "через {0} д",
   "The account for this run is no longer connected.": "Обліковий запис для цього запуску більше не під’єднано.",
-  "Couldn't read the account's token.": "Не вдалося прочитати токен облікового запису."
+  "Couldn't read the account's token.": "Не вдалося прочитати токен облікового запису.",
+  "Run now": "Запустити зараз",
+  "Run later": "Запустити пізніше",
+  "Run at": "Запустити о",
+  "Schedule run": "Запланувати запуск",
+  "Choose a time in the future.": "Виберіть час у майбутньому.",
+  "Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed.": "Gitrochi почне запуск у цей час, якщо застосунок відкрито. Інакше запуск буде позначено як пропущений."
 }

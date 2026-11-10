@@ -2648,3 +2648,9 @@
 "in %lldd" = "%1$lld gün sonra";
 "The account for this run is no longer connected." = "Bu çalıştırmanın hesabı artık bağlı değil.";
 "Couldn't read the account's token." = "Hesabın belirteci okunamadı.";
+"Run now" = "Şimdi çalıştır";
+"Run later" = "Sonra çalıştır";
+"Run at" = "Çalıştırma zamanı";
+"Schedule run" = "Çalıştırmayı zamanla";
+"Choose a time in the future." = "Gelecekte bir zaman seçin.";
+"Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed." = "Gitrochi açıksa çalıştırmayı bu zamanda başlatır. Değilse çalıştırma kaçırıldı olarak işaretlenir.";
