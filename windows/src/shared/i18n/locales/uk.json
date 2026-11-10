@@ -2704,5 +2704,15 @@
   "{0} not started": "{0} не розпочато",
   "{0} of {1} jobs": "Завдань: {0} із {1}",
   "{0} passes on {1}": "{0} проходить: {1}",
-  "Changes from {0} to {1}": "Зміни від {0} до {1}"
+  "To": "До",
+  "Swap From and To": "Поміняти Від і До місцями",
+  "From the common ancestor": "Від спільного предка",
+  "Updates as soon as either side changes. Uncommitted changes are excluded.": "Оновлюється, щойно змінюється будь-яка зі сторін. Незакомічені зміни не враховуються.",
+  "Compare {0} with the current branch": "Порівняти {0} з поточною гілкою",
+  "{0}, compared now": "{0}, порівнюється зараз",
+  "No commits between these revisions.": "Між цими ревізіями немає комітів.",
+  "Couldn't compare these revisions": "Не вдалося порівняти ці ревізії",
+  "Changes from {0} to {1}": "Зміни від {0} до {1}",
+  "Compare with the current branch": "Порівняти з поточною гілкою",
+  "Comparing…": "Порівняння…"
 }

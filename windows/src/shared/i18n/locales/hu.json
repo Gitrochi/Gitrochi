@@ -2689,5 +2689,15 @@
   "{0} not started": "{0} nincs elkezdve",
   "{0} of {1} jobs": "{1} jobból {0}",
   "{0} passes on {1}": "{0} sikeres itt: {1}",
-  "Changes from {0} to {1}": "Változások: {0} → {1}"
+  "To": "Eddig",
+  "Swap From and To": "Ettől és Eddig felcserélése",
+  "From the common ancestor": "A közös őstől",
+  "Updates as soon as either side changes. Uncommitted changes are excluded.": "Frissül, amint bármelyik oldal változik. A nem véglegesített változtatások kimaradnak.",
+  "Compare {0} with the current branch": "{0} összehasonlítása a jelenlegi ággal",
+  "{0}, compared now": "{0}, most összehasonlítva",
+  "No commits between these revisions.": "Nincs commit a két revízió között.",
+  "Couldn't compare these revisions": "Nem sikerült összehasonlítani ezeket a revíziókat",
+  "Changes from {0} to {1}": "Változások: {0} → {1}",
+  "Compare with the current branch": "Összehasonlítás a jelenlegi ággal",
+  "Comparing…": "Összehasonlítás…"
 }

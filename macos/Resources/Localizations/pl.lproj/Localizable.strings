@@ -2639,4 +2639,12 @@
 "on this branch" = "na tej gałęzi";
 "pipeline #%@" = "pipeline #%@";
 "run #%@" = "uruchomienie #%@";
+"To" = "Do";
+"Swap From and To" = "Zamień Od i Do";
+"From the common ancestor" = "Od wspólnego przodka";
+"Updates as soon as either side changes. Uncommitted changes are excluded." = "Aktualizuje się, gdy tylko zmieni się którakolwiek strona. Niezatwierdzone zmiany są pomijane.";
+"Compare %@ with the current branch" = "Porównaj %@ z bieżącą gałęzią";
+"%@, compared now" = "%@, obecnie porównywane";
+"No commits between these revisions." = "Brak commitów między tymi rewizjami.";
+"Couldn't compare these revisions" = "Nie udało się porównać tych rewizji";
 "Changes from %@ to %@" = "Zmiany od %1$@ do %2$@";

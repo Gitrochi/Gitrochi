@@ -31,11 +31,11 @@ extension RepoStore {
         state.comparison = nil; state.comparisonError = nil; state.comparisonPatch = ""
         sheet = .compareRevisions
     }
-    /// Opens the Compare page on two revisions, e.g. a release tag and the checkout (Windows: showRevisionComparison).
+    /// Opens the Compare page on two revisions, e.g. a release tag and the checkout; the page compares as soon as it
+    /// shows them (Windows: showRevisionComparison).
     func showRevisionComparison(left: String, right: String) {
         guard navigate(.compare) else { return }
         historyTools.left = left; historyTools.right = right; historyTools.useMergeBase = false
-        Task { await loadRevisionComparison() }
     }
     private func resolveHistoryRevision(_ value: String, in url: URL) async throws -> String {
         guard HistoryTools.validRevision(value) else { throw HistoryToolsError.invalidRevision }
@@ -44,13 +44,16 @@ extension RepoStore {
         guard HistoryTools.objectID(sha) else { throw HistoryToolsError.invalidRevision }
         return sha
     }
-    func loadRevisionComparison() async {
+    /// Compares the two revisions. The last result stays on screen until the new one replaces it, so a page that
+    /// compares again as a branch moves does not flash. `openFirst` reads the first file's patch for the dialog;
+    /// the Compare page reads its diffs itself.
+    func loadRevisionComparison(openFirst: Bool = true) async {
         guard let url else { return }
         let state = historyTools, generation = UUID()
         state.generation = generation
         let leftInput = state.left, rightInput = state.right, useMergeBase = state.useMergeBase
         func current() -> Bool { self.url == url && state.generation == generation }
-        state.comparisonLoading = true; state.comparisonError = nil; state.comparison = nil; state.comparisonPatch = ""
+        state.comparisonLoading = true; state.comparisonError = nil
         defer { if current() { state.comparisonLoading = false } }
         do {
             async let leftRequest = resolveHistoryRevision(leftInput, in: url)
@@ -60,12 +63,15 @@ extension RepoStore {
             guard HistoryTools.objectID(base) else { throw HistoryToolsError.invalidRevision }
             async let files = Git.run(["diff", "--no-ext-diff", "-M", "--name-status", "-z", base, right, "--"], in: url)
             async let stats = Git.run(["diff", "--no-ext-diff", "-M", "--numstat", "-z", base, right, "--"], in: url)
-            let (filesResult, statsResult) = try await (files, stats)
+            async let log = Git.run(HistoryTools.comparisonLogArgs(base: base, right: right), in: url)
+            let (filesResult, statsResult, logResult) = try await (files, stats, log)
             guard current() else { return }
+            state.comparisonPatch = ""
             state.comparison = RevisionComparison(left: left, right: right, base: base, mergeBase: useMergeBase,
-                                                  files: Parsers.nameStatus(filesResult.data), stats: Parsers.numstat(statsResult.data))
-            if let first = state.comparison?.files.first { await selectComparisonFile(first) }
-        } catch { if current() { state.comparisonError = describe(error) } }
+                                                  files: Parsers.nameStatus(filesResult.data), stats: Parsers.numstat(statsResult.data),
+                                                  commits: HistoryTools.comparisonCommits(logResult.output))
+            if openFirst, let first = state.comparison?.files.first { await selectComparisonFile(first) }
+        } catch { if current() { state.comparison = nil; state.comparisonPatch = ""; state.comparisonError = describe(error) } }
     }
     func selectComparisonFile(_ file: FileChange) async {
         guard let url, let comparison = historyTools.comparison else { return }

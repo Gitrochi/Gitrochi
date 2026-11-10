@@ -2839,5 +2839,15 @@
   "{0} not started": "{0} 未开始",
   "{0} of {1} jobs": "{0}/{1} 个作业",
   "{0} passes on {1}": "{0} 在{1}中通过",
-  "Changes from {0} to {1}": "从 {0} 到 {1} 的更改"
+  "To": "终点",
+  "Swap From and To": "交换起点和终点",
+  "From the common ancestor": "从共同祖先开始",
+  "Updates as soon as either side changes. Uncommitted changes are excluded.": "任一侧发生变化时立即更新。不包括未提交的更改。",
+  "Compare {0} with the current branch": "将 {0} 与当前分支比较",
+  "{0}, compared now": "{0}，当前比较中",
+  "No commits between these revisions.": "这两个修订之间没有提交。",
+  "Couldn't compare these revisions": "无法比较这些修订",
+  "Changes from {0} to {1}": "从 {0} 到 {1} 的更改",
+  "Compare with the current branch": "与当前分支比较",
+  "Comparing…": "正在比较…"
 }

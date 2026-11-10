@@ -2659,5 +2659,15 @@
   "{0} not started": "{0} niet gestart",
   "{0} of {1} jobs": "{0} van {1} jobs",
   "{0} passes on {1}": "{0} slaagt in {1}",
-  "Changes from {0} to {1}": "Wijzigingen van {0} tot {1}"
+  "To": "Tot",
+  "Swap From and To": "Van en Tot omwisselen",
+  "From the common ancestor": "Vanaf de gemeenschappelijke voorouder",
+  "Updates as soon as either side changes. Uncommitted changes are excluded.": "Wordt bijgewerkt zodra een van beide kanten verandert. Niet-gecommitte wijzigingen worden niet meegenomen.",
+  "Compare {0} with the current branch": "{0} vergelijken met de huidige branch",
+  "{0}, compared now": "{0}, nu vergeleken",
+  "No commits between these revisions.": "Geen commits tussen deze revisies.",
+  "Couldn't compare these revisions": "Kan deze revisies niet vergelijken",
+  "Changes from {0} to {1}": "Wijzigingen van {0} tot {1}",
+  "Compare with the current branch": "Vergelijken met de huidige branch",
+  "Comparing…": "Vergelijken…"
 }

@@ -8,6 +8,24 @@ struct RevisionComparison {
     let mergeBase: Bool
     var files: [FileChange]
     var stats: [String: LineStat]
+    /// What To has that the base lacks, newest first; one past the limit means there are more
+    var commits: [ComparisonCommit] = []
+}
+
+/// A commit on the Compare page's Commits tab (Windows: ComparisonCommit)
+struct ComparisonCommit: Identifiable, Equatable {
+    let id: String
+    let author: String
+    let date: Date?
+    let subject: String
+}
+
+/// A branch or tag the Compare page offers to compare with the current branch (Windows: ComparisonReference)
+struct ComparisonReference: Identifiable, Equatable {
+    enum Kind: String { case branch, remote, tag }
+    let name: String
+    let kind: Kind
+    var id: String { kind.rawValue + ":" + name }
 }
 
 enum BatchCommitAction: String, CaseIterable, Identifiable {
@@ -53,6 +71,8 @@ struct LineHistoryEntry: Identifiable {
     var comparisonLoading = false
     var comparisonError: String?
     var comparisonFileToken = UUID()
+    /// What the Compare page last asked to compare (HistoryTools.comparisonKey), so it compares again only on a change
+    var comparisonKey = ""
     var batch: [BatchCommitItem] = []
     var batchHead = ""
     var batchBranch = ""
@@ -89,6 +109,50 @@ enum HistoryTools {
         !value.isEmpty && value.count <= 1024 && !value.hasPrefix("-") && !value.unicodeScalars.contains { $0.value <= 32 || $0.value == 127 }
     }
     static func objectID(_ value: String) -> Bool { (value.count == 40 || value.count == 64) && value.allSatisfy { $0.isHexDigit } }
+
+    /// The Compare page's Commits tab lists this many and counts "200+" past it
+    static let comparisonCommitLimit = 200
+
+    /// The commits To has that the base lacks, newest first, and one more so the count knows there are more
+    static func comparisonLogArgs(base: String, right: String) -> [String] {
+        ["log", "-n", String(comparisonCommitLimit + 1), "--format=%H%x1f%an%x1f%ct%x1f%s%x1e", base + ".." + right, "--"]
+    }
+
+    static func comparisonCommits(_ output: String) -> [ComparisonCommit] {
+        output.components(separatedBy: "\u{1e}").compactMap { record in
+            let fields = record.trimmingCharacters(in: .newlines).components(separatedBy: "\u{1f}")
+            guard fields.count >= 4, objectID(fields[0]) else { return nil }
+            return ComparisonCommit(id: fields[0], author: fields[1], date: TimeInterval(fields[2]).map { Date(timeIntervalSince1970: $0) },
+                                    subject: fields.dropFirst(3).joined(separator: "\u{1f}"))
+        }
+    }
+
+    static func commitCountLabel(_ count: Int) -> String { count > comparisonCommitLimit ? "\(comparisonCommitLimit)+" : String(count) }
+
+    /// The list beside "Compare with the current branch": the usual bases first, then local branches, remote branches
+    /// and tags, without the current branch or a remote's HEAD. (Windows: comparisonReferences)
+    static func comparisonReferences(local: [String], remote: [String], tags: [String], current: String?) -> [ComparisonReference] {
+        let found = local.filter { $0 != current }.map { ComparisonReference(name: $0, kind: .branch) }
+            + remote.filter { !$0.hasSuffix("/HEAD") }.map { ComparisonReference(name: $0, kind: .remote) }
+            + tags.map { ComparisonReference(name: $0, kind: .tag) }
+        let usual = ["origin/main", "main", "origin/master", "master"]
+        func rank(_ reference: ComparisonReference) -> Int {
+            if reference.kind != .tag, let index = usual.firstIndex(of: reference.name) { return index }
+            return usual.count + (reference.kind == .branch ? 0 : reference.kind == .remote ? 1 : 2)
+        }
+        return found.enumerated().sorted { (rank($0.element), $0.offset) < (rank($1.element), $1.offset) }.map(\.element)
+    }
+
+    static func referenceMatches(_ name: String, filter: String) -> Bool {
+        let words = filter.trimmingCharacters(in: .whitespaces)
+        return words.isEmpty || name.localizedCaseInsensitiveContains(words)
+    }
+
+    /// What a comparison depends on: both sides, the mode, and where HEAD and the two sides' refs point, so a branch
+    /// that moves compares again. (Windows: comparisonKey)
+    static func comparisonKey(repository: String, left: String, right: String, mergeBase: Bool, head: String?, targets: [String: String]) -> String {
+        [repository, left, right, mergeBase ? "ancestor" : "direct", head ?? "", targets[left] ?? "", targets[right] ?? ""].joined(separator: "\u{0}")
+    }
     static func range(path: String, start: Int, end: Int, function: String = "") throws -> String {
         guard !path.isEmpty, !path.contains("\0"), !path.contains("\n"), !path.contains("\r") else { throw HistoryToolsError.invalidFile }
         let name = function.trimmingCharacters(in: .whitespacesAndNewlines)

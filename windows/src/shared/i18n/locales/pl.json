@@ -2688,5 +2688,15 @@
   "{0} not started": "{0} nierozpoczęte",
   "{0} of {1} jobs": "Zadania: {0} z {1}",
   "{0} passes on {1}": "{0} przechodzi w {1}",
-  "Changes from {0} to {1}": "Zmiany od {0} do {1}"
+  "To": "Do",
+  "Swap From and To": "Zamień Od i Do",
+  "From the common ancestor": "Od wspólnego przodka",
+  "Updates as soon as either side changes. Uncommitted changes are excluded.": "Aktualizuje się, gdy tylko zmieni się którakolwiek strona. Niezatwierdzone zmiany są pomijane.",
+  "Compare {0} with the current branch": "Porównaj {0} z bieżącą gałęzią",
+  "{0}, compared now": "{0}, obecnie porównywane",
+  "No commits between these revisions.": "Brak commitów między tymi rewizjami.",
+  "Couldn't compare these revisions": "Nie udało się porównać tych rewizji",
+  "Changes from {0} to {1}": "Zmiany od {0} do {1}",
+  "Compare with the current branch": "Porównaj z bieżącą gałęzią",
+  "Comparing…": "Porównywanie…"
 }

@@ -2689,4 +2689,12 @@
 "on this branch" = "en esta rama";
 "pipeline #%@" = "pipeline #%@";
 "run #%@" = "ejecución #%@";
+"To" = "Hasta";
+"Swap From and To" = "Intercambiar Desde y Hasta";
+"From the common ancestor" = "Desde el ancestro común";
+"Updates as soon as either side changes. Uncommitted changes are excluded." = "Se actualiza en cuanto cambia cualquiera de los dos lados. Los cambios sin confirmar quedan excluidos.";
+"Compare %@ with the current branch" = "Comparar %@ con la rama actual";
+"%@, compared now" = "%@, comparado ahora";
+"No commits between these revisions." = "No hay commits entre estas revisiones.";
+"Couldn't compare these revisions" = "No se pudieron comparar estas revisiones";
 "Changes from %@ to %@" = "Cambios de %1$@ a %2$@";

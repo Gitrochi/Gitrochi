@@ -4661,5 +4661,15 @@
   "{0} not started": "{0} 시작 전",
   "{0} of {1} jobs": "작업 {1}개 중 {0}개",
   "{0} passes on {1}": "{0}: {1} 통과",
-  "Changes from {0} to {1}": "{0}부터 {1}까지의 변경"
+  "To": "대상",
+  "Swap From and To": "기준과 대상 바꾸기",
+  "From the common ancestor": "공통 조상부터",
+  "Updates as soon as either side changes. Uncommitted changes are excluded.": "어느 쪽이든 바뀌면 바로 다시 비교합니다. 커밋하지 않은 변경은 빠집니다.",
+  "Compare {0} with the current branch": "{0}와 현재 브랜치 비교",
+  "{0}, compared now": "{0}, 지금 비교 중",
+  "No commits between these revisions.": "두 시점 사이에 커밋이 없습니다.",
+  "Couldn't compare these revisions": "두 시점을 비교하지 못했습니다",
+  "Changes from {0} to {1}": "{0}부터 {1}까지의 변경",
+  "Compare with the current branch": "현재 브랜치와 비교",
+  "Comparing…": "비교하는 중…"
 }

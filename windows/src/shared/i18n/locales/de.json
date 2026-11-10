@@ -2701,5 +2701,15 @@
   "{0} not started": "{0} nicht begonnen",
   "{0} of {1} jobs": "{0} von {1} Jobs",
   "{0} passes on {1}": "{0} besteht in {1}",
-  "Changes from {0} to {1}": "Änderungen von {0} bis {1}"
+  "To": "Bis",
+  "Swap From and To": "Von und Bis tauschen",
+  "From the common ancestor": "Ab dem gemeinsamen Vorfahren",
+  "Updates as soon as either side changes. Uncommitted changes are excluded.": "Wird aktualisiert, sobald sich eine Seite ändert. Nicht committete Änderungen sind ausgenommen.",
+  "Compare {0} with the current branch": "{0} mit dem aktuellen Branch vergleichen",
+  "{0}, compared now": "{0}, wird gerade verglichen",
+  "No commits between these revisions.": "Keine Commits zwischen diesen Revisionen.",
+  "Couldn't compare these revisions": "Diese Revisionen konnten nicht verglichen werden",
+  "Changes from {0} to {1}": "Änderungen von {0} bis {1}",
+  "Compare with the current branch": "Mit dem aktuellen Branch vergleichen",
+  "Comparing…": "Vergleich läuft…"
 }

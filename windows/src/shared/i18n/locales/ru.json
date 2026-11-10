@@ -2704,5 +2704,15 @@
   "{0} not started": "{0} не начато",
   "{0} of {1} jobs": "Заданий: {0} из {1}",
   "{0} passes on {1}": "{0} проходит: {1}",
-  "Changes from {0} to {1}": "Изменения с {0} по {1}"
+  "To": "До",
+  "Swap From and To": "Поменять От и До местами",
+  "From the common ancestor": "От общего предка",
+  "Updates as soon as either side changes. Uncommitted changes are excluded.": "Обновляется, как только меняется любая из сторон. Незакоммиченные изменения не учитываются.",
+  "Compare {0} with the current branch": "Сравнить {0} с текущей веткой",
+  "{0}, compared now": "{0}, сравнивается сейчас",
+  "No commits between these revisions.": "Между этими ревизиями нет коммитов.",
+  "Couldn't compare these revisions": "Не удалось сравнить эти ревизии",
+  "Changes from {0} to {1}": "Изменения с {0} по {1}",
+  "Compare with the current branch": "Сравнить с текущей веткой",
+  "Comparing…": "Сравнение…"
 }

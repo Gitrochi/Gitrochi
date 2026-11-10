@@ -2798,4 +2798,12 @@
 "on this branch" = "在此分支上";
 "pipeline #%@" = "流水线 #%@";
 "run #%@" = "运行 #%@";
+"To" = "终点";
+"Swap From and To" = "交换起点和终点";
+"From the common ancestor" = "从共同祖先开始";
+"Updates as soon as either side changes. Uncommitted changes are excluded." = "任一侧发生变化时立即更新。不包括未提交的更改。";
+"Compare %@ with the current branch" = "将 %@ 与当前分支比较";
+"%@, compared now" = "%@，当前比较中";
+"No commits between these revisions." = "这两个修订之间没有提交。";
+"Couldn't compare these revisions" = "无法比较这些修订";
 "Changes from %@ to %@" = "从 %1$@ 到 %2$@ 的更改";

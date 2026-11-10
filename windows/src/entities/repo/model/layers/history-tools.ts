@@ -1,13 +1,16 @@
-import { batchArguments, historyOperationInProgress, changePaths, fullObjectID, lineHistoryRange, makePlan, parseLineHistory, parseNameStatus, parseNumstat, isPending, toggleGraphSelection, validRevisionInput, type BatchCommitAction, type BatchCommitItem, type FileChange, type LineHistoryEntry, type LineStat } from "@/entities/git";
+import { batchArguments, historyOperationInProgress, changePaths, comparisonLogArgs, fullObjectID, parseComparisonCommits, type ComparisonCommit, lineHistoryRange, makePlan, parseLineHistory, parseNameStatus, parseNumstat, isPending, toggleGraphSelection, validRevisionInput, type BatchCommitAction, type BatchCommitItem, type FileChange, type LineHistoryEntry, type LineStat } from "@/entities/git";
 import { t } from "@/shared/i18n";
 import { describe, git } from "@/shared/platform";
 import { RepoGitch } from "./gitch";
 
-interface RevisionComparison { left: string; right: string; base: string; mergeBase: boolean; files: FileChange[]; stats: Record<string, LineStat> }
+/** commits: what To has that the base lacks, newest first; one past the limit means there are more */
+export interface RevisionComparison { left: string; right: string; base: string; mergeBase: boolean; files: FileChange[]; stats: Record<string, LineStat>; commits: ComparisonCommit[] }
 const newState = () => ({
   selected: [] as string[], anchor: null as string | null,
   left: "HEAD~1", right: "HEAD", useMergeBase: false, comparison: null as RevisionComparison | null,
   comparisonPath: null as string | null, comparisonPatch: "", comparisonLoading: false, comparisonError: null as string | null,
+  /** what the Compare page last asked to compare (comparisonKey), so it compares again only on a change */
+  comparisonKey: "",
   batch: [] as BatchCommitItem[], batchHead: "", batchBranch: "", batchAction: "cherry-pick" as BatchCommitAction, batchLoading: false, batchError: null as string | null,
   linePath: "", lineRevision: "HEAD", lineStart: 1, lineEnd: 1, functionName: "", lineEntries: [] as LineHistoryEntry[], lineSelected: null as string | null, lineLoading: false, lineError: null as string | null, lineTruncated: false,
 });
@@ -50,12 +53,11 @@ export abstract class RepoHistoryTools extends RepoGitch {
     s.comparison = null; s.comparisonPatch = ""; s.comparisonError = null;
     this.sheet = { kind: "compareRevisions" }; this.emit();
   }
-  /** Opens the Compare page on two revisions, e.g. a release tag and the checkout (macOS: showRevisionComparison). */
+  /** Opens the Compare page on two revisions, e.g. a release tag and the checkout; the page compares as soon as it shows them (macOS: showRevisionComparison). */
   showRevisionComparison(left: string, right: string) {
     if (!this.navigate("compare")) return;
     const s = this.historyTools;
-    s.left = left; s.right = right; s.useMergeBase = false;
-    void this.loadRevisionComparison();
+    s.left = left; s.right = right; s.useMergeBase = false; this.emit();
   }
   private async resolveHistoryRevision(value: string, path: string): Promise<string> {
     if (!validRevisionInput(value)) throw new Error(t("Enter a branch, tag or commit without spaces or leading dashes."));
@@ -64,21 +66,27 @@ export abstract class RepoHistoryTools extends RepoGitch {
     if (!fullObjectID(sha)) throw new Error(t("Couldn't resolve this commit."));
     return sha;
   }
-  async loadRevisionComparison() {
+  /**
+   * Compares the two revisions. The last result stays on screen until the new one replaces it, so a page that compares
+   * again as a branch moves does not flash. openFirst reads the first file's patch for the dialog; the Compare page reads
+   * its diffs itself. (macOS: loadRevisionComparison)
+   */
+  async loadRevisionComparison(openFirst = true) {
     const path = this.path; if (!path) return;
     const request = ++this.historyToolsGeneration, s = this.historyTools;
     const current = () => request === this.historyToolsGeneration && this.path === path && this.historyTools === s;
     const { left: leftInput, right: rightInput, useMergeBase } = s;
-    s.comparisonLoading = true; s.comparisonError = null; s.comparison = null; s.comparisonPatch = ""; this.emit();
+    s.comparisonLoading = true; s.comparisonError = null; this.emit();
     try {
       const [left, right] = await Promise.all([this.resolveHistoryRevision(leftInput, path), this.resolveHistoryRevision(rightInput, path)]);
       const base = useMergeBase ? (await git(["merge-base", left, right], path)).stdout.trim() : left;
       if (!fullObjectID(base)) throw new Error(t("These revisions have no common ancestor. Use direct comparison."));
-      const [files, stats] = await Promise.all([git(["diff", "--no-ext-diff", "-M", "--name-status", "-z", base, right, "--"], path), git(["diff", "--no-ext-diff", "-M", "--numstat", "-z", base, right, "--"], path)]);
+      const [files, stats, log] = await Promise.all([git(["diff", "--no-ext-diff", "-M", "--name-status", "-z", base, right, "--"], path), git(["diff", "--no-ext-diff", "-M", "--numstat", "-z", base, right, "--"], path), git(comparisonLogArgs(base, right), path)]);
       if (!current()) return;
-      s.comparison = { left, right, base, mergeBase: useMergeBase, files: parseNameStatus(files.stdout), stats: parseNumstat(stats.stdout) };
-      if (s.comparison.files[0]) await this.selectComparisonFile(s.comparison.files[0]);
-    } catch (e) { if (current()) s.comparisonError = describe(e); }
+      s.comparisonPatch = "";
+      s.comparison = { left, right, base, mergeBase: useMergeBase, files: parseNameStatus(files.stdout), stats: parseNumstat(stats.stdout), commits: parseComparisonCommits(log.stdout) };
+      if (openFirst && s.comparison.files[0]) await this.selectComparisonFile(s.comparison.files[0]);
+    } catch (e) { if (current()) { s.comparison = null; s.comparisonPatch = ""; s.comparisonError = describe(e); } }
     finally { if (current()) { s.comparisonLoading = false; this.emit(); } }
   }
   async selectComparisonFile(file: FileChange) {

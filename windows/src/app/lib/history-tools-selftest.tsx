@@ -19,7 +19,7 @@ export async function historyToolsSelfTest(): Promise<[boolean, string]> {
   try {
     store.loadRevisionComparison = async () => {
       comparisons++;
-      s.comparison = { left: a, right: b, base: a, mergeBase: false, files: [{ path: "source.ts", oldPath: null, kind: "modified", staged: false }, { path: "test.ts", oldPath: null, kind: "added", staged: false }], stats: {} };
+      s.comparison = { left: a, right: b, base: a, mergeBase: false, files: [{ path: "source.ts", oldPath: null, kind: "modified", staged: false }, { path: "test.ts", oldPath: null, kind: "added", staged: false }], stats: {}, commits: [] };
       s.comparisonPath = "source.ts"; s.comparisonPatch = "-before\n+after"; store.changed();
     };
     store.selectComparisonFile = async (file) => { selections++; s.comparisonPath = file.path; s.comparisonPatch = "+selected-test"; store.changed(); };

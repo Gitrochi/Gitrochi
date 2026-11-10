@@ -2611,4 +2611,12 @@
 "on this branch" = "di branch ini";
 "pipeline #%@" = "pipeline #%@";
 "run #%@" = "run #%@";
+"To" = "Ke";
+"Swap From and To" = "Tukar Dari dan Ke";
+"From the common ancestor" = "Dari leluhur bersama";
+"Updates as soon as either side changes. Uncommitted changes are excluded." = "Diperbarui begitu salah satu sisi berubah. Perubahan yang belum di-commit tidak disertakan.";
+"Compare %@ with the current branch" = "Bandingkan %@ dengan cabang saat ini";
+"%@, compared now" = "%@, sedang dibandingkan";
+"No commits between these revisions." = "Tidak ada commit di antara revisi ini.";
+"Couldn't compare these revisions" = "Tidak dapat membandingkan revisi ini";
 "Changes from %@ to %@" = "Perubahan dari %1$@ ke %2$@";

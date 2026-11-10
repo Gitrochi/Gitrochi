@@ -2642,4 +2642,12 @@
 "on this branch" = "bu dalda";
 "pipeline #%@" = "pipeline #%@";
 "run #%@" = "çalıştırma #%@";
+"To" = "Bitiş";
+"Swap From and To" = "Başlangıç ve Bitişi değiştir";
+"From the common ancestor" = "Ortak atadan itibaren";
+"Updates as soon as either side changes. Uncommitted changes are excluded." = "Taraflardan biri değiştiği anda güncellenir. İşlenmemiş değişiklikler dahil edilmez.";
+"Compare %@ with the current branch" = "%@ öğesini geçerli dalla karşılaştır";
+"%@, compared now" = "%@, şu anda karşılaştırılıyor";
+"No commits between these revisions." = "Bu revizyonlar arasında commit yok.";
+"Couldn't compare these revisions" = "Bu revizyonlar karşılaştırılamadı";
 "Changes from %@ to %@" = "%1$@ ile %2$@ arasındaki değişiklikler";

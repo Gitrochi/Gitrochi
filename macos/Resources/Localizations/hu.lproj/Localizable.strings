@@ -2640,4 +2640,12 @@
 "on this branch" = "ezen az ágon";
 "pipeline #%@" = "pipeline #%@";
 "run #%@" = "futtatás #%@";
+"To" = "Eddig";
+"Swap From and To" = "Ettől és Eddig felcserélése";
+"From the common ancestor" = "A közös őstől";
+"Updates as soon as either side changes. Uncommitted changes are excluded." = "Frissül, amint bármelyik oldal változik. A nem véglegesített változtatások kimaradnak.";
+"Compare %@ with the current branch" = "%@ összehasonlítása a jelenlegi ággal";
+"%@, compared now" = "%@, most összehasonlítva";
+"No commits between these revisions." = "Nincs commit a két revízió között.";
+"Couldn't compare these revisions" = "Nem sikerült összehasonlítani ezeket a revíziókat";
 "Changes from %@ to %@" = "Változások: %1$@ → %2$@";

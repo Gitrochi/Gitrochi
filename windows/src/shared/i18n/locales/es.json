@@ -2741,5 +2741,15 @@
   "{0} not started": "{0} sin empezar",
   "{0} of {1} jobs": "{0} de {1} trabajos",
   "{0} passes on {1}": "{0} pasa en {1}",
-  "Changes from {0} to {1}": "Cambios de {0} a {1}"
+  "To": "Hasta",
+  "Swap From and To": "Intercambiar Desde y Hasta",
+  "From the common ancestor": "Desde el ancestro común",
+  "Updates as soon as either side changes. Uncommitted changes are excluded.": "Se actualiza en cuanto cambia cualquiera de los dos lados. Los cambios sin confirmar quedan excluidos.",
+  "Compare {0} with the current branch": "Comparar {0} con la rama actual",
+  "{0}, compared now": "{0}, comparado ahora",
+  "No commits between these revisions.": "No hay commits entre estas revisiones.",
+  "Couldn't compare these revisions": "No se pudieron comparar estas revisiones",
+  "Changes from {0} to {1}": "Cambios de {0} a {1}",
+  "Compare with the current branch": "Comparar con la rama actual",
+  "Comparing…": "Comparando…"
 }

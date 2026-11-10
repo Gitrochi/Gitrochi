@@ -2655,4 +2655,12 @@
 "on this branch" = "в этой ветке";
 "pipeline #%@" = "конвейер #%@";
 "run #%@" = "запуск #%@";
+"To" = "До";
+"Swap From and To" = "Поменять От и До местами";
+"From the common ancestor" = "От общего предка";
+"Updates as soon as either side changes. Uncommitted changes are excluded." = "Обновляется, как только меняется любая из сторон. Незакоммиченные изменения не учитываются.";
+"Compare %@ with the current branch" = "Сравнить %@ с текущей веткой";
+"%@, compared now" = "%@, сравнивается сейчас";
+"No commits between these revisions." = "Между этими ревизиями нет коммитов.";
+"Couldn't compare these revisions" = "Не удалось сравнить эти ревизии";
 "Changes from %@ to %@" = "Изменения с %1$@ по %2$@";
