@@ -2643,3 +2643,4 @@
 "Changes from %@ to %@" = "Modifiche da %1$@ a %2$@";
 "Open in editor" = "Apri nell'editor";
 "Checking push destination…" = "Verifica della destinazione del push…";
+"Retry above" = "Riprova sopra";

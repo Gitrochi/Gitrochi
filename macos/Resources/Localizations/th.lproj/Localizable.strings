@@ -2661,3 +2661,4 @@
 "Changes from %@ to %@" = "การเปลี่ยนแปลงจาก %1$@ ถึง %2$@";
 "Open in editor" = "เปิดในโปรแกรมแก้ไข";
 "Checking push destination…" = "กำลังตรวจปลายทาง push…";
+"Retry above" = "ลองอีกครั้งด้านบน";

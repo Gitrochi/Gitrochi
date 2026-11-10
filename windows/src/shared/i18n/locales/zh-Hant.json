@@ -2721,5 +2721,6 @@
   "Compare with the current branch": "與目前分支比較",
   "Comparing…": "正在比較…",
   "Open in editor": "在編輯器中開啟",
-  "Checking push destination…": "正在檢查推送目標…"
+  "Checking push destination…": "正在檢查推送目標…",
+  "Retry above": "請在上方重試"
 }

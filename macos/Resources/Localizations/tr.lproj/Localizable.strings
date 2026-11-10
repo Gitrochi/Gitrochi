@@ -2653,3 +2653,4 @@
 "Changes from %@ to %@" = "%1$@ ile %2$@ arasındaki değişiklikler";
 "Open in editor" = "Düzenleyicide aç";
 "Checking push destination…" = "Push hedefi denetleniyor…";
+"Retry above" = "Yukarıdan yeniden deneyin";

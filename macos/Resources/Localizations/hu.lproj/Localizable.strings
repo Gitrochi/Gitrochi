@@ -2651,3 +2651,4 @@
 "Changes from %@ to %@" = "Változások: %1$@ → %2$@";
 "Open in editor" = "Megnyitás szerkesztőben";
 "Checking push destination…" = "A push célja ellenőrzése…";
+"Retry above" = "Próbálja újra fent";

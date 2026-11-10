@@ -2671,3 +2671,4 @@
 "Changes from %@ to %@" = "從 %1$@ 到 %2$@ 的變更";
 "Open in editor" = "在編輯器中開啟";
 "Checking push destination…" = "正在檢查推送目標…";
+"Retry above" = "請在上方重試";

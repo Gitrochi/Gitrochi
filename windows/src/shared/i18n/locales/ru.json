@@ -2716,5 +2716,6 @@
   "Compare with the current branch": "Сравнить с текущей веткой",
   "Comparing…": "Сравнение…",
   "Open in editor": "Открыть в редакторе",
-  "Checking push destination…": "Проверка назначения push…"
+  "Checking push destination…": "Проверка назначения push…",
+  "Retry above": "Повторите попытку выше"
 }

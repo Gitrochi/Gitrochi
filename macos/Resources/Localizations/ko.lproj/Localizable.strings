@@ -4721,3 +4721,4 @@
 "Changes from %@ to %@" = "%1$@부터 %2$@까지의 변경";
 "Open in editor" = "편집기에서 열기";
 "Checking push destination…" = "Push 대상을 확인하는 중…";
+"Retry above" = "위에서 다시 시도하세요";

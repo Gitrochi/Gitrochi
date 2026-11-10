@@ -2704,5 +2704,6 @@
   "Compare with the current branch": "Geçerli dalla karşılaştır",
   "Comparing…": "Karşılaştırılıyor…",
   "Open in editor": "Düzenleyicide aç",
-  "Checking push destination…": "Push hedefi denetleniyor…"
+  "Checking push destination…": "Push hedefi denetleniyor…",
+  "Retry above": "Yukarıdan yeniden deneyin"
 }

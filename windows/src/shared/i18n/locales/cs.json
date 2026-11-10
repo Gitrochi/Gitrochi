@@ -2699,5 +2699,6 @@
   "Compare with the current branch": "Porovnat s aktuální větví",
   "Comparing…": "Porovnávání…",
   "Open in editor": "Otevřít v editoru",
-  "Checking push destination…": "Kontroluje se cíl odeslání…"
+  "Checking push destination…": "Kontroluje se cíl odeslání…",
+  "Retry above": "Zkuste to znovu výše"
 }

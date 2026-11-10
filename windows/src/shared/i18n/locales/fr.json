@@ -2754,5 +2754,6 @@
   "Compare with the current branch": "Comparer avec la branche actuelle",
   "Comparing…": "Comparaison…",
   "Open in editor": "Ouvrir dans l'éditeur",
-  "Checking push destination…": "Vérification de la destination du push…"
+  "Checking push destination…": "Vérification de la destination du push…",
+  "Retry above": "Réessayez ci-dessus"
 }

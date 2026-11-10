@@ -7,6 +7,7 @@ export { theme, themeModes } from "./theme";
 export { Avatar, Button, Card, ChangeBar, Checkbox, Empty, IconButton, LineStatText, MenuHost, type MenuItem, Modal, Segmented, showContextMenu, showMenuBelow, Spinner, tip, TooltipHost } from "./ui";
 export { HostingDate } from "./HostingDate";
 export { StatusPill, type StatusTone } from "./StatusPill";
+export { DisabledReason, FailureBlock, NoticeBlock, type NoticeAction, retryAbove } from "./NoticeBlock";
 export { HostedAccountNeeded, hostedListAge, HostedListChip, HostedListColumns, HostedListEmpty, HostedListHeader, HostedListIconButton, HostedListLoading, HostedListNotice, HostedListPage, HostedListRow, HostedListSearch, HostedListSegments, HostedListSummary, HostedListTextButton } from "./HostedList";
 export { CodeEditor } from "./CodeEditor";
 export { FileViewToggle, requestFileView, useFileViewMode } from "./FileViewToggle";

@@ -2809,3 +2809,4 @@
 "Changes from %@ to %@" = "从 %1$@ 到 %2$@ 的更改";
 "Open in editor" = "在编辑器中打开";
 "Checking push destination…" = "正在检查推送目标…";
+"Retry above" = "请在上方重试";

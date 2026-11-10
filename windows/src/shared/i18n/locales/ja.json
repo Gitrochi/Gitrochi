@@ -3509,5 +3509,6 @@
   "Compare with the current branch": "現在のブランチと比較",
   "Comparing…": "比較中…",
   "Open in editor": "エディタで開く",
-  "Checking push destination…": "Push 先を確認しています…"
+  "Checking push destination…": "Push 先を確認しています…",
+  "Retry above": "上で再試行してください"
 }

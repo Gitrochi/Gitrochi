@@ -2671,5 +2671,6 @@
   "Compare with the current branch": "Vergelijken met de huidige branch",
   "Comparing…": "Vergelijken…",
   "Open in editor": "Openen in editor",
-  "Checking push destination…": "Pushbestemming controleren…"
+  "Checking push destination…": "Pushbestemming controleren…",
+  "Retry above": "Probeer het hierboven opnieuw"
 }

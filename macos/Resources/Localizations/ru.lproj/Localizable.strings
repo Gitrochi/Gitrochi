@@ -2666,3 +2666,4 @@
 "Changes from %@ to %@" = "Изменения с %1$@ по %2$@";
 "Open in editor" = "Открыть в редакторе";
 "Checking push destination…" = "Проверка назначения push…";
+"Retry above" = "Повторите попытку выше";

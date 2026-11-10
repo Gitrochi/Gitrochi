@@ -2648,3 +2648,4 @@
 "Changes from %@ to %@" = "Změny od %1$@ do %2$@";
 "Open in editor" = "Otevřít v editoru";
 "Checking push destination…" = "Kontroluje se cíl odeslání…";
+"Retry above" = "Zkuste to znovu výše";

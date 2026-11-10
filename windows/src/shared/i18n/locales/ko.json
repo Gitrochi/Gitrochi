@@ -4671,5 +4671,6 @@
   "Compare with the current branch": "현재 브랜치와 비교",
   "Comparing…": "비교하는 중…",
   "Open in editor": "편집기에서 열기",
-  "Checking push destination…": "Push 대상을 확인하는 중…"
+  "Checking push destination…": "Push 대상을 확인하는 중…",
+  "Retry above": "위에서 다시 시도하세요"
 }

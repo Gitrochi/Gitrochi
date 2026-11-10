@@ -2650,3 +2650,4 @@
 "Changes from %@ to %@" = "Zmiany od %1$@ do %2$@";
 "Open in editor" = "Otwórz w edytorze";
 "Checking push destination…" = "Sprawdzanie miejsca docelowego push…";
+"Retry above" = "Ponów powyżej";
