@@ -11,6 +11,11 @@ struct RunPipelineSheet: View {
     @ViewState private var values: [String: String] = [:]
     @ViewState private var loading = false
     @ViewState private var loadError: String?
+    /// Run later: the app starts the run itself at `runAt`
+    @ViewState private var later = false
+    @ViewState private var runAt = ScheduledRuns.nextFullHour(after: Date())
+    /// Redraws the time check when the primary button found the time already gone
+    @ViewState private var checkedAt = Date()
 
     struct Variable: Identifiable {
         let id = UUID()
@@ -40,14 +45,19 @@ struct RunPipelineSheet: View {
                 }
             }
             if provider == .gitlab { gitlabForm } else { githubForm }
+            whenForm
             HStack {
                 if loading { ProgressView().controlSize(.small) }
                 Spacer()
                 Button("Cancel", role: .cancel) { dismiss() }
                     .keyboardShortcut(.cancelAction)
-                Button("Run") { run() }
+                // the reason sits beside the primary it disables
+                if later, !timeOK {
+                    Text("Choose a time in the future.").font(.caption).foregroundStyle(.secondary)
+                }
+                Button { run() } label: { later ? Text("Schedule run") : Text("Run") }
                     .keyboardShortcut(.defaultAction)
-                    .disabled(!canRun)
+                    .disabled(!canRun || (later && !timeOK))
             }
         }
         .padding(20)
@@ -154,6 +164,28 @@ struct RunPipelineSheet: View {
         (i.description.isEmpty ? i.name : i.description) + (i.required ? " *" : "")
     }
 
+    // MARK: Run later
+
+    /// Run now or at a date and time; the app keeps the run and starts it then (ScheduledRunStore)
+    @ViewBuilder private var whenForm: some View {
+        Picker("", selection: $later) {
+            Text("Run now").tag(false)
+            Text("Run later").tag(true)
+        }
+        .pickerStyle(.segmented)
+        .labelsHidden()
+        .fixedSize()
+        if later {
+            LabeledContent("Run at") {
+                DatePicker("", selection: $runAt, displayedComponents: [.date, .hourAndMinute]).labelsHidden()
+            }
+            Text("Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed.")
+                .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private var timeOK: Bool { ScheduledRuns.canSchedule(runAt, now: max(checkedAt, Date())) }
+
     // MARK: 동작
 
     private var canRun: Bool {
@@ -201,14 +233,37 @@ struct RunPipelineSheet: View {
 
     private func run() {
         let r = ref.trimmed
+        if later {
+            checkedAt = Date()
+            guard timeOK else { return }
+        }
         if provider == .gitlab {
             let vars = variables.map { ($0.key.trimmed, $0.value) }.filter { !$0.0.isEmpty }
+            if later {
+                let pairs = vars.map { ScheduledRun.Variable(key: $0.0, value: $0.1) }
+                schedule(ref: r) { $0.variables = pairs }
+                return
+            }
             dismiss()
             Task { await store.runPipeline(ref: r, variables: vars) }
         } else if let w = workflow {
             let inputs = values.filter { k, v in !v.isEmpty && w.inputs.contains { $0.name == k } }
+            if later {
+                schedule(ref: r) { $0.workflowID = w.id; $0.workflowName = w.name; $0.inputs = inputs }
+                return
+            }
             dismiss()
             Task { await store.runWorkflow(w, ref: r, inputs: inputs) }
         }
+    }
+
+    /// Keeps the run with this repository and its account (never the token) for the app to start at `runAt`
+    private func schedule(ref r: String, _ fill: (inout ScheduledRun) -> Void) {
+        guard let target = store.target, let account = store.hostingAccount, let path = store.url?.path else { return }
+        var run = ScheduledRun(repoPath: path, provider: target.provider, host: target.host, remote: target.remote, path: target.path,
+                               accountID: account.id, ref: r, runAt: runAt)
+        fill(&run)
+        ScheduledRunStore.shared.add(run)
+        dismiss()
     }
 }
