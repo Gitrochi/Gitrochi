@@ -2667,3 +2667,4 @@
 "Open in editor" = "Відкрити в редакторі";
 "Checking push destination…" = "Перевірка призначення push…";
 "Retry above" = "Повторіть спробу вище";
+"Couldn't check the push destination" = "Не вдалося перевірити призначення push";

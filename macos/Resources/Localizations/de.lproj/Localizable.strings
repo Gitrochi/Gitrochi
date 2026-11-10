@@ -2654,3 +2654,4 @@
 "Open in editor" = "Im Editor öffnen";
 "Checking push destination…" = "Push-Ziel wird geprüft…";
 "Retry above" = "Oben erneut versuchen";
+"Couldn't check the push destination" = "Push-Ziel konnte nicht geprüft werden";

@@ -2615,3 +2615,4 @@
 "Open in editor" = "Openen in editor";
 "Checking push destination…" = "Pushbestemming controleren…";
 "Retry above" = "Probeer het hierboven opnieuw";
+"Couldn't check the push destination" = "Pushbestemming kan niet worden gecontroleerd";

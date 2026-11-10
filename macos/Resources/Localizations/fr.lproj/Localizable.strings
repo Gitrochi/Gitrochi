@@ -2703,3 +2703,4 @@
 "Open in editor" = "Ouvrir dans l'éditeur";
 "Checking push destination…" = "Vérification de la destination du push…";
 "Retry above" = "Réessayez ci-dessus";
+"Couldn't check the push destination" = "Impossible de vérifier la destination du push";

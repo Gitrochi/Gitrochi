@@ -2649,3 +2649,4 @@
 "Open in editor" = "Otevřít v editoru";
 "Checking push destination…" = "Kontroluje se cíl odeslání…";
 "Retry above" = "Zkuste to znovu výše";
+"Couldn't check the push destination" = "Cíl odeslání se nepodařilo zkontrolovat";

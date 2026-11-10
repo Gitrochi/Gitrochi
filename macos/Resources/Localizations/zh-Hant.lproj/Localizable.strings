@@ -2672,3 +2672,4 @@
 "Open in editor" = "在編輯器中開啟";
 "Checking push destination…" = "正在檢查推送目標…";
 "Retry above" = "請在上方重試";
+"Couldn't check the push destination" = "無法檢查推送目標";

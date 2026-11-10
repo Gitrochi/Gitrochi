@@ -2662,3 +2662,4 @@
 "Open in editor" = "เปิดในโปรแกรมแก้ไข";
 "Checking push destination…" = "กำลังตรวจปลายทาง push…";
 "Retry above" = "ลองอีกครั้งด้านบน";
+"Couldn't check the push destination" = "ตรวจปลายทาง push ไม่ได้";

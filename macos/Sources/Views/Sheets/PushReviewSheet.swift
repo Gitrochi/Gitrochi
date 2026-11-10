@@ -8,6 +8,11 @@ struct PushReviewSheet: View {
     let force: Bool
     let remoteOverride: String?
 
+    /// The review could not be read, so there is nothing to confirm until it is retried
+    private var reviewFailed: Bool { store.pushReview == nil && store.pushReviewError != nil && !store.pushReviewLoading }
+
+    private func refresh() { Task { await store.loadPushReview(branch: branch, force: force, remoteOverride: remoteOverride) } }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Review push").font(.title3.weight(.semibold))
@@ -16,7 +21,14 @@ struct PushReviewSheet: View {
                     if store.pushReviewLoading {
                         HStack { ProgressView().controlSize(.small); Text("Checking push destination…") }
                     }
-                    if let error = store.pushReviewError { Text(error).foregroundStyle(.red).textSelection(.enabled) }
+                    if let error = store.pushReviewError {
+                        // a review that could not be read blocks the push; a later failure leaves the review in place
+                        if reviewFailed {
+                            FailureBlock(title: String(localized: "Couldn't check the push destination"), caption: error) { refresh() }
+                        } else {
+                            Text(error).foregroundStyle(.red).textSelection(.enabled)
+                        }
+                    }
                     if force {
                         Label("Force push can replace remote history. The reviewed remote revision is protected by an explicit lease.", symbol: "exclamationmark.triangle")
                             .foregroundStyle(.orange).font(.callout)
@@ -63,7 +75,7 @@ struct PushReviewSheet: View {
             }
             .frame(maxHeight: 560)
             HStack {
-                Button("Refresh review") { Task { await store.loadPushReview(branch: branch, force: force, remoteOverride: remoteOverride) } }
+                Button("Refresh review") { refresh() }
                     .disabled(store.pushReviewLoading)
                 Spacer()
                 Button("Cancel", role: .cancel) { store.cancelPushReview(); dismiss() }
@@ -73,6 +85,7 @@ struct PushReviewSheet: View {
                 }
                 .keyboardShortcut(.defaultAction)
                 .disabled(store.pushReview == nil || store.pushReviewLoading)
+                .disabledReason(reviewFailed ? DisabledReason.retryAbove : nil)
             }
         }
         .padding(20).frame(width: 700)

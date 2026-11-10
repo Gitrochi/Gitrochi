@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
-import { Button, Modal, Row, Spinner } from "@/shared/ui";
+import { Button, DisabledReason, FailureBlock, Modal, retryAbove, Row, Spinner } from "@/shared/ui";
 import "./push-review.css";
 
 /** 실제 전송될 계정·목적지·커밋·파일을 사용자가 확인한다. */
@@ -16,15 +16,22 @@ export function PushReviewSheet({ store, close, branch, force, remoteOverride }:
   const loading = store.pushReviewLoading;
   const pushing = store.busy != null;
   const cancel = () => { store.cancelPushReview(); close(); };
+  const refresh = () => void store.loadPushReview(branch, force, remoteOverride);
+  // the review could not be read, so there is nothing to confirm until it is retried
+  const reviewFailed = !plan && !!store.pushReviewError && !loading;
   return <Modal title={t("Review push")} width={720} onClose={() => { if (!pushing) cancel(); }} footer={<>
-    <Button disabled={loading} onClick={() => void store.loadPushReview(branch, force, remoteOverride)}>{t("Refresh review")}</Button>
+    <Button disabled={loading} onClick={refresh}>{t("Refresh review")}</Button>
     <span className="grow" />
     <Button disabled={pushing} onClick={cancel}>{t("Cancel")}</Button>
-    <Button kind="primary" disabled={!plan || loading} onClick={() => void store.confirmPushReview()}>{t(force ? "Confirm force push" : "Confirm push")}</Button>
+    <DisabledReason reason={reviewFailed ? retryAbove() : null}>
+      <Button kind="primary" disabled={!plan || loading} onClick={() => void store.confirmPushReview()}>{t(force ? "Confirm force push" : "Confirm push")}</Button>
+    </DisabledReason>
   </>}>
     <div className="push-review col">
       {loading && <div className="row"><Spinner /> {t("Checking push destination…")}</div>}
-      {store.pushReviewError && <div className="error-text" role="alert">{store.pushReviewError}</div>}
+      {store.pushReviewError && (reviewFailed
+        ? <FailureBlock title={t("Couldn't check the push destination")} caption={store.pushReviewError} retry={refresh} />
+        : <div className="error-text" role="alert">{store.pushReviewError}</div>)}
       {force && <div className="push-review-warning">{t("Force push can replace remote history. The reviewed remote revision is protected by an explicit lease.")}</div>}
       {plan && <>
         <Row label={t("Push account")}><span>{plan.account}</span></Row>

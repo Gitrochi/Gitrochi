@@ -2715,6 +2715,7 @@
   "Open in editor": "Im Editor öffnen",
   "Checking push destination…": "Push-Ziel wird geprüft…",
   "Retry above": "Oben erneut versuchen",
+  "Couldn't check the push destination": "Push-Ziel konnte nicht geprüft werden",
   "Couldn't read the saved account credentials": "Gespeicherte Kontozugangsdaten konnten nicht gelesen werden",
   "Unlock your credentials, then retry.": "Entsperren Sie Ihre Zugangsdaten und versuchen Sie es erneut."
 }

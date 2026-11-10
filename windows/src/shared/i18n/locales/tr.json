@@ -2706,6 +2706,7 @@
   "Open in editor": "Düzenleyicide aç",
   "Checking push destination…": "Push hedefi denetleniyor…",
   "Retry above": "Yukarıdan yeniden deneyin",
+  "Couldn't check the push destination": "Push hedefi denetlenemedi",
   "Couldn't read the saved account credentials": "Kayıtlı hesap kimlik bilgileri okunamadı",
   "Unlock your credentials, then retry.": "Kimlik bilgilerinizin kilidini açıp yeniden deneyin."
 }

@@ -2654,3 +2654,4 @@
 "Open in editor" = "Düzenleyicide aç";
 "Checking push destination…" = "Push hedefi denetleniyor…";
 "Retry above" = "Yukarıdan yeniden deneyin";
+"Couldn't check the push destination" = "Push hedefi denetlenemedi";

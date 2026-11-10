@@ -2701,6 +2701,7 @@
   "Open in editor": "Otevřít v editoru",
   "Checking push destination…": "Kontroluje se cíl odeslání…",
   "Retry above": "Zkuste to znovu výše",
+  "Couldn't check the push destination": "Cíl odeslání se nepodařilo zkontrolovat",
   "Couldn't read the saved account credentials": "Uložené přihlašovací údaje účtu se nepodařilo přečíst",
   "Unlock your credentials, then retry.": "Odemkněte přihlašovací údaje a zkuste to znovu."
 }

@@ -2644,3 +2644,4 @@
 "Open in editor" = "Apri nell'editor";
 "Checking push destination…" = "Verifica della destinazione del push…";
 "Retry above" = "Riprova sopra";
+"Couldn't check the push destination" = "Impossibile verificare la destinazione del push";
