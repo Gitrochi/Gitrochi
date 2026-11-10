@@ -11,6 +11,7 @@ export { accountApiBase, accountHost, type BlameLine, type Branch, branchRemote,
 export { RefBadge, StatusBadge } from "./ui/badges";
 export { type PushReviewPlan, type PushConfig, parsePushConfig, displayPushURL, resolvePushDestination, pushConfigStamp, reviewedPushArguments } from "./lib/push-review";
 export { type BatchCommitAction, type BatchCommitItem, type LineHistoryEntry, batchArguments, fullObjectID, lineHistoryRange, parseLineHistory, toggleGraphSelection, validRevisionInput, historyOperationInProgress } from "./lib/history-tools";
+export { treeRows } from "./lib/file-tree";
 export { initialRepositoryFile, repositoryFolderCount, loadRepositoryTree, loadRepositoryBlob, safeRepositoryPath, parseRepositoryTree, repositoryImageMime, type RepositoryTreeEntry, type RepositoryTree, type RepositoryBlob } from "./lib/repository-browser";
 
 export { defaultRebaseBase, loadRebaseBases, loadRebasePreview, parseRebaseBases, rebaseBaseMatches, type RebaseBase, type RebasePreview } from "./lib/rebase-preview";
