@@ -10,7 +10,7 @@ struct RepositoryHTMLPreview: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Label("Scripts and external resources are disabled in preview.", systemImage: "info.circle")
+            Label("Scripts and external resources are disabled in preview.", symbol: "info.circle")
                 .font(.caption).foregroundStyle(.secondary).padding(12)
             if let document {
                 if document.missingResources { Text("Some local resources could not be loaded.").font(.caption).foregroundStyle(.secondary).padding(.horizontal, 12).padding(.bottom, 8) }

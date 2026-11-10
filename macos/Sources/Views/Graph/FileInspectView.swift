@@ -8,10 +8,10 @@ struct FileInspectView: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
-                Button { store.closeFileInspect() } label: { Label(store.area == .changes ? "Changes" : "Graph", systemImage: "chevron.left") }
+                Button { store.closeFileInspect() } label: { Label(store.area == .changes ? "Changes" : "Graph", symbol: "chevron.left") }
                     .keyboardShortcut(.escape, modifiers: [])
                     .help("Back to graph (Esc)")
-                Image(systemName: inspect.mode == .history ? "clock.arrow.circlepath" : "person.text.rectangle")
+                SymbolIcon(inspect.mode == .history ? "clock.arrow.circlepath" : "person.text.rectangle")
                     .foregroundStyle(.secondary)
                 VStack(alignment: .leading, spacing: 0) {
                     Text((inspect.path as NSString).lastPathComponent).font(.headline).lineLimit(1)
@@ -25,7 +25,7 @@ struct FileInspectView: View {
             WorkbenchFlow(spacing: 10) {
                 Button("Trace lines…") { store.openLineHistory(path: inspect.path, revision: inspect.rev, start: store.fileInspectLine ?? 1) }
                 if store.fileInspectLoading { ProgressView().controlSize(.small) }
-                Button { store.revealInFinder(path: inspect.path) } label: { Image(systemName: "folder") }
+                Button { store.revealInFinder(path: inspect.path) } label: { DesignIconImage(icon: .repository) }
                     .buttonStyle(.borderless)
                     .help("Show in Finder")
                     .accessibilityLabel("Show in Finder")
@@ -44,7 +44,7 @@ struct FileInspectView: View {
             Divider()
 
             if let error = store.fileInspectError {
-                ContentUnavailableView("Couldn't read", systemImage: "exclamationmark.triangle", description: Text(error))
+                ContentUnavailableView("Couldn't read", symbol: "exclamationmark.triangle", description: Text(error))
             } else if inspect.mode == .history {
                 HistoryPane()
             } else {
@@ -99,9 +99,9 @@ private struct HistoryPane: View {
             Group {
                 if let doc = store.fileHistoryDiff {
                     if let error = doc.error {
-                        ContentUnavailableView("Couldn't read the changes", systemImage: "exclamationmark.triangle", description: Text(error))
+                        ContentUnavailableView("Couldn't read the changes", symbol: "exclamationmark.triangle", description: Text(error))
                     } else if doc.isBinary {
-                        ContentUnavailableView("Binary file", systemImage: "doc.zipper")
+                        ContentUnavailableView("Binary file", symbol: "doc.zipper")
                     } else if doc.lines.isEmpty {
                         DiffEmptyState(doc: doc)
                     } else {
@@ -110,7 +110,7 @@ private struct HistoryPane: View {
                 } else if !store.fileHistory.isEmpty {
                     ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if !store.fileInspectLoading {
-                    ContentUnavailableView("No history", systemImage: "clock", description: Text("This file hasn't been committed yet."))
+                    ContentUnavailableView("No history", symbol: "clock", description: Text("This file hasn't been committed yet."))
                 }
             }
             .frame(maxWidth: .infinity, minHeight: 160, idealHeight: 600, maxHeight: .infinity)
@@ -155,7 +155,7 @@ private struct BlamePane: View {
         .background(Color(nsColor: .textBackgroundColor))
         .overlay {
             if lines.isEmpty && !store.fileInspectLoading {
-                ContentUnavailableView("No content", systemImage: "doc", description: Text("The file is empty or not committed yet."))
+                ContentUnavailableView("No content", symbol: "doc", description: Text("The file is empty or not committed yet."))
             }
         }
         .onChange(of: store.fileInspectLine, initial: true) { _, line in

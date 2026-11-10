@@ -105,16 +105,16 @@ struct PullRequestSection: View {
                 Spacer()
                 // the account for this repository is chosen in the toolbar's account control
                 if !onPage {
-                    Button { store.navigate(.pullRequests) } label: { Image(systemName: "arrow.up.forward.square") }
+                    Button { store.navigate(.pullRequests) } label: { DesignIconImage(icon: .external) }
                         .buttonStyle(.borderless)
                         .help(target.provider == .gitlab ? "Open in Merge requests" : "Open in Pull requests")
                 }
                 if onPage {
-                    Button { Task { await store.loadPullRequests() } } label: { Image(systemName: "arrow.clockwise") }
+                    Button { Task { await store.loadPullRequests() } } label: { DesignIconImage(icon: .refresh) }
                         .buttonStyle(.borderless)
                         .help("Refresh list")
                 }
-                Button { store.sheet = .createPullRequest } label: { Image(systemName: "plus") }
+                Button { store.sheet = .createPullRequest } label: { DesignIconImage(icon: .plus) }
                     .buttonStyle(.borderless)
                     .disabled(store.headBranch == nil)
                     .help("New \(target.provider.requestShort) from the current branch")

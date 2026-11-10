@@ -6,12 +6,17 @@ use crate::{Error, Result};
 use serde::Serialize;
 use serde_json::{json, Value};
 use std::fs::{self, File, OpenOptions};
-use std::io::Write;
+use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
+use std::process::{Command, Stdio};
 use std::sync::atomic::{AtomicUsize, Ordering};
+use std::time::{Duration, Instant};
 
 const MARKER: &str = " --managed-hook";
 static NEXT: AtomicUsize = AtomicUsize::new(0);
+
+/// A client only edits its own settings, but its first start can wait on a malware scan.
+const CLIENT_TIMEOUT: Duration = Duration::from_secs(30);
 
 /// The explicit owner operation on passive hook configuration.
 #[derive(Clone, Copy, Debug)]
@@ -250,15 +255,7 @@ fn remove_owned(value: &mut Value, client: Client) {
 /// them working; `older` is set when this build cannot write the database.
 pub fn app_call(database: &Path, method: &str, args: &Value, older: bool) -> Result<Value> {
     use crate::util::arg_str;
-    let client = Client::parse(&arg_str(args, "client").unwrap_or_default())?;
-    let path = |key: &str, default: fn(Client) -> Result<PathBuf>| {
-        arg_str(args, key)
-            .map(|p| Ok(PathBuf::from(p)))
-            .unwrap_or_else(|| default(client))
-    };
-    let config = path("config", default_config)?;
-    let mcp_config = path("mcpConfig", default_mcp_config)?;
-    let stable = path("path", |_| Ok(crate::stable_command::default_path()))?;
+    let (client, config, mcp_config, stable) = app_paths(args)?;
     let action = match method {
         "integration_install" => Action::Install,
         "integration_remove" => Action::Remove,
@@ -276,6 +273,157 @@ pub fn app_call(database: &Path, method: &str, args: &Value, older: bool) -> Res
         &stable,
         database,
     )?)?)
+}
+
+/// The client and its files, from the apps' arguments or the user-level defaults.
+fn app_paths(args: &Value) -> Result<(Client, PathBuf, PathBuf, PathBuf)> {
+    use crate::util::arg_str;
+    let client = Client::parse(&arg_str(args, "client").unwrap_or_default())?;
+    let path = |key: &str, default: fn(Client) -> Result<PathBuf>| {
+        arg_str(args, key)
+            .map(|p| Ok(PathBuf::from(p)))
+            .unwrap_or_else(|| default(client))
+    };
+    let config = path("config", default_config)?;
+    let mcp_config = path("mcpConfig", default_mcp_config)?;
+    let stable = path("path", |_| Ok(crate::stable_command::default_path()))?;
+    Ok((client, config, mcp_config, stable))
+}
+
+/// The apps' `integration_mcp` (`{client, action, bundled?, program?, path?, config?, mcpConfig?}`).
+/// `register` makes the stable command exist and has the client add it; `remove` has the client
+/// drop it. The client does this itself, through `program`, because its settings are its own:
+/// Claude Code keeps rewriting `~/.claude.json` while it runs, so writing that file here would race
+/// with it. A registration that works is left alone, whoever made it.
+pub fn app_mcp(database: &Path, args: &Value, older: bool) -> Result<Value> {
+    use crate::util::arg_str;
+    let (client, config, mcp_config, stable) = app_paths(args)?;
+    let status = || {
+        configure(
+            client,
+            Action::Status,
+            &config,
+            &mcp_config,
+            &stable,
+            database,
+        )
+    };
+    let program = arg_str(args, "program").unwrap_or_else(|| client.key().to_string());
+    let registration = status()?.connection.mcp;
+    let register = match arg_str(args, "action").as_deref() {
+        Some("register") => true,
+        Some("remove") => false,
+        _ => return Err(Error::invalid("Action must be register or remove")),
+    };
+    if register {
+        let bundled = arg_str(args, "bundled").ok_or_else(|| Error::invalid("Missing bundled"))?;
+        crate::stable_command::refresh(Path::new(&bundled), &stable, true, older)?;
+        if !registration.works() {
+            // `add` refuses a server that exists, and `remove` one that does not
+            if registration.registered {
+                run_client(client, &program, &mcp_args(client, "remove"))?;
+            }
+            run_client(client, &program, &mcp_add_args(client, &stable, database)?)?;
+        }
+    } else if registration.registered {
+        run_client(client, &program, &mcp_args(client, "remove"))?;
+    }
+    let result = status()?;
+    if register && !result.connection.mcp.registered {
+        return Err(Error::new(
+            "CLIENT_FAILED",
+            format!("{} did not keep the registration.", client.title()),
+        ));
+    }
+    Ok(serde_json::to_value(result)?)
+}
+
+fn mcp_args(client: Client, verb: &str) -> Vec<String> {
+    let scope: &[&str] = match client {
+        Client::Claude => &["--scope", "user"],
+        Client::Codex => &[],
+    };
+    ["mcp", verb]
+        .iter()
+        .chain(scope)
+        .chain(&[connection::SERVER])
+        .map(|word| word.to_string())
+        .collect()
+}
+
+/// The server runs the stable command on this ledger, the way the hooks do.
+fn mcp_add_args(client: Client, cli: &Path, database: &Path) -> Result<Vec<String>> {
+    let mut args = mcp_args(client, "add");
+    args.extend(["--", path_text(cli)?, "--db", path_text(database)?, "mcp"].map(str::to_string));
+    Ok(args)
+}
+
+/// Runs the client's own command from the home folder, so a user-level change cannot depend on
+/// the folder the app happens to run in.
+fn run_client(client: Client, program: &str, args: &[String]) -> Result<()> {
+    let title = client.title();
+    let mut command = Command::new(program);
+    command
+        .args(args)
+        .current_dir(home()?)
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::piped());
+    // A client installed with npm starts through `env node`, and an app opened from Finder has a
+    // short PATH; node lives next to such a client.
+    if let Some(folder) = Path::new(program)
+        .parent()
+        .filter(|f| !f.as_os_str().is_empty())
+    {
+        let current = std::env::var_os("PATH").unwrap_or_default();
+        let paths = std::iter::once(folder.to_path_buf()).chain(std::env::split_paths(&current));
+        if let Ok(joined) = std::env::join_paths(paths) {
+            command.env("PATH", joined);
+        }
+    }
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        // CREATE_NO_WINDOW: a client started from the app must not flash a console.
+        command.creation_flags(0x0800_0000);
+    }
+    let mut child = command.spawn().map_err(|e| match e.kind() {
+        std::io::ErrorKind::NotFound => {
+            Error::not_found(format!("The {title} command was not found."))
+        }
+        _ => Error::new("CLIENT_FAILED", format!("{title} did not start: {e}.")),
+    })?;
+    let deadline = Instant::now() + CLIENT_TIMEOUT;
+    let exit = loop {
+        match child.try_wait() {
+            Ok(Some(exit)) => break exit,
+            Ok(None) if Instant::now() < deadline => std::thread::sleep(Duration::from_millis(20)),
+            _ => {
+                let _ = child.kill();
+                let _ = child.wait();
+                return Err(Error::new(
+                    "CLIENT_FAILED",
+                    format!("{title} did not finish changing its MCP settings."),
+                ));
+            }
+        }
+    };
+    if exit.success() {
+        return Ok(());
+    }
+    let mut output = String::new();
+    if let Some(stderr) = child.stderr.take() {
+        let _ = stderr.take(65_536).read_to_string(&mut output);
+    }
+    let reason = output
+        .lines()
+        .map(|line| line.trim().trim_end_matches('.'))
+        .find(|line| !line.is_empty())
+        .unwrap_or("it gave no reason");
+    Err(Error::new(
+        "CLIENT_FAILED",
+        format!("{title} could not change its MCP settings: {reason}."),
+    ))
 }
 
 /// Update only owned handlers. No MCP entries, permissions, feature flags or trust hashes change;
@@ -438,6 +586,49 @@ fn write_config(path: &Path, before: Option<&[u8]>, value: &Value) -> Result<Opt
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn each_client_gets_its_own_mcp_command_and_the_arguments_stay_whole() {
+        let cli = Path::new("/Applications/Team's Tools/gitrochi-ledger");
+        let db = Path::new("/data/my ledger.sqlite3");
+        let add = |client| mcp_add_args(client, cli, db).unwrap();
+        assert_eq!(
+            add(Client::Claude),
+            [
+                "mcp",
+                "add",
+                "--scope",
+                "user",
+                "gitrochi-ledger",
+                "--",
+                "/Applications/Team's Tools/gitrochi-ledger",
+                "--db",
+                "/data/my ledger.sqlite3",
+                "mcp"
+            ]
+        );
+        assert_eq!(
+            add(Client::Codex),
+            [
+                "mcp",
+                "add",
+                "gitrochi-ledger",
+                "--",
+                "/Applications/Team's Tools/gitrochi-ledger",
+                "--db",
+                "/data/my ledger.sqlite3",
+                "mcp"
+            ]
+        );
+        assert_eq!(
+            mcp_args(Client::Claude, "remove"),
+            ["mcp", "remove", "--scope", "user", "gitrochi-ledger"]
+        );
+        assert_eq!(
+            mcp_args(Client::Codex, "remove"),
+            ["mcp", "remove", "gitrochi-ledger"]
+        );
+    }
 
     #[test]
     fn hook_commands_quote_paths_without_interpolating_them() {

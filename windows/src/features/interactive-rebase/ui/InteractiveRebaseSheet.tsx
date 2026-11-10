@@ -1,4 +1,5 @@
-import { ArrowDown, ArrowUp, TriangleAlert } from "lucide-react";
+import { TriangleAlert } from "lucide-react";
+import { ArrowDown, ArrowUp } from "@/shared/icons";
 import { useState } from "react";
 import { planChanged, planProblem, rebaseActions, type RebaseItem, type RebasePlan } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";

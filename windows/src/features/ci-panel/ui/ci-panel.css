@@ -1,187 +1,89 @@
-/* features/ci-panel — the Actions page: runs on the left, the picked run on the right (macOS: CIPanel.swift, CIRunDetailView.swift) */
+/* features/ci-panel — the Actions page: this branch's runs, the run list and the picked run (macOS: CIPanel.swift, CIRunDetailView.swift) */
 
-.ci-run,
-.ci-job {
-  cursor: default;
+/* the list standing alone (Flows) keeps Refresh and Run above its search */
+.ci-list-actions { flex: none; display: flex; align-items: center; gap: 4px; min-height: 20px; }
+.ci-run-which { white-space: nowrap; }
+/* the branch on the right is cut last, and from the front */
+.ci-run .ci-run-which { flex: none; }
+.ci-run .ci-run-ref { flex: 0 1 auto; min-width: 24px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; direction: rtl; text-align: right; }
+.ci-run .hosted-chip { flex: 0 1 auto; }
+.ci-branch { flex: none; display: flex; flex-direction: column; gap: 4px; }
+.ci-branch-head { display: flex; align-items: center; gap: 6px; width: 100%; height: 28px; padding: 0 10px; border: 0; border-radius: 6px; background: transparent; font: inherit; color: var(--text); text-align: left; cursor: pointer; }
+.ci-branch-head:hover { background: var(--hover); }
+.ci-branch-head .chev { flex: none; color: var(--text-2); transform: rotate(90deg); transition: transform 0.1s; }
+.ci-branch-head.collapsed .chev { transform: none; }
+.ci-branch-runs { display: flex; flex-direction: column; gap: 4px; padding-left: 14px; }
+
+/* the summary: this branch's latest runs as nodes on a line */
+.ci-summary-branch { direction: rtl; text-align: left; }
+.ci-summary-base { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.ci-track { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.ci-track-label { text-align: center; font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--status-text); }
+/* when they do not all fit, the oldest runs are the ones cut off */
+.ci-track-runs { display: flex; justify-content: flex-end; overflow: hidden; padding: 0 8px; }
+.ci-track-node { position: relative; flex: 1 0 64px; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 11px; white-space: nowrap; color: var(--text-2); }
+.ci-track-node.latest { color: var(--text); font-weight: 600; }
+.ci-track-icon { height: 16px; display: flex; align-items: center; }
+/* the line joins the icons' middles and stops short of each icon; the way to a run still going is dashed */
+.ci-track-node.joined::before { content: ""; position: absolute; top: 7px; right: calc(50% + 12px); width: calc(100% - 24px); border-top: 2px solid var(--border-strong); }
+.ci-track-node.dashed::before { border-top: 2px dashed #a35200; }
+.ci-strip-label { flex: 0 1 auto; min-width: 0; font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--status-text); }
+
+.ci-run-detail { flex: 1; min-width: 0; min-height: 0; height: 100%; container: ci-detail / inline-size; font-size: 13px; }
+.ci-run-head { flex: none; padding: 20px 24px 16px; display: flex; flex-direction: column; gap: 8px; border-bottom: 1px solid var(--border); }
+.ci-run-head-top { display: flex; align-items: center; gap: 8px; }
+.ci-run-head-top > .ci-run-which { font-size: 13px; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; }
+.ci-run-head-title { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; }
+.ci-run-detail .ci-run-head-title h2 { margin: 0; font-size: 22px; line-height: 1.25; font-weight: 600; flex: 1 1 360px; min-width: 0; overflow-wrap: anywhere; }
+.ci-run-head-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.ci-run-head-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; color: var(--text-2); font-size: 12px; }
+/* links take the link colour, never the accent */
+.ci-link { padding: 0; border: 0; background: transparent; font: inherit; color: #0b5cad; cursor: pointer; }
+.ci-link.mono { font-family: var(--mono); font-size: 11px; }
+.ci-link:hover { text-decoration: underline; }
+:root[data-theme="dark"] .ci-link { color: #6cb0ff; }
+.ci-approval { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 10px 16px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); }
+.ci-approval > svg { flex: none; color: var(--status-text); }
+.ci-approval-title { flex: 1 1 200px; min-width: 0; font-size: 12px; font-weight: 600; color: var(--status-text); }
+
+.ci-run-body { flex: 1; min-height: 0; display: flex; align-items: stretch; }
+.ci-run-jobs { flex: 0 0 220px; min-width: 0; overflow: auto; box-sizing: border-box; border-right: 1px solid var(--border); padding: 12px; display: flex; flex-direction: column; gap: 4px; }
+.ci-job-group { display: flex; flex-direction: column; gap: 4px; }
+.ci-job-group-title { font-size: 12px; font-weight: 600; color: var(--text-2); padding: 4px 8px; }
+.ci-job-group + .ci-job-group > .ci-job-group-title { padding-top: 10px; }
+.ci-job { display: flex; align-items: center; gap: 4px; min-height: 28px; border-radius: 6px; padding-right: 2px; }
+.ci-job:hover { background: var(--hover); }
+.ci-job.selected { background: var(--select); }
+.ci-job-select { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 8px; min-height: 28px; padding: 5px 8px; border: 0; border-radius: 6px; background: transparent; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.ci-job-name { flex: 1 1 auto; font-size: 13px; }
+.ci-job.selected .ci-job-name { font-weight: 600; }
+.ci-job-time { flex: none; font-size: 11px; color: var(--text-2); }
+.ci-job-allowed { flex: none; display: inline-flex; color: var(--status-text); }
+
+.ci-run-log { flex: 1 1 0; min-width: 0; min-height: 0; }
+.ci-log-head { flex: none; padding: 10px 16px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 4px; }
+.ci-log-head-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; min-width: 0; }
+.ci-log-head-row > strong { flex: 0 1 auto; font-size: 13px; font-weight: 600; }
+.ci-log-outcome { flex: none; font-size: 12px; color: var(--text-2); }
+.ci-log-outcome.status-tone { color: var(--status-text); }
+.ci-log-buttons { flex: none; display: flex; flex-wrap: wrap; gap: 6px; }
+.ci-log-note { padding-left: 22px; }
+.ci-log-message { margin: 0; padding: 12px 16px; }
+.ci-log-empty { flex: 1; display: flex; align-items: center; justify-content: center; padding: 20px; text-align: center; }
+/* the log in its box: numbered lines; unwrapped lines scroll sideways */
+.ci-log-text { flex: 1; min-height: 0; margin: 10px 16px; padding: 6px 0; overflow: auto; border: 1px solid var(--border); border-radius: 6px; background: var(--sidebar); font-size: 12px; line-height: 20px; tab-size: 4; }
+.ci-log-earlier { margin: 0 12px 4px 62px; font-family: var(--font); }
+.ci-log-line { display: flex; gap: 16px; width: max-content; min-width: 100%; box-sizing: border-box; padding: 0 12px; white-space: pre; }
+.ci-log-text.wrap .ci-log-line { width: 100%; white-space: pre-wrap; }
+.ci-log-number { flex: 0 0 34px; text-align: right; color: var(--text-2); user-select: none; }
+.ci-log-words { flex: 1 1 auto; min-width: 0; }
+.ci-log-text.wrap .ci-log-words { overflow-wrap: anywhere; }
+/* a line that names an error: the failed tone, on its fill */
+.ci-log-line.error { background: var(--status-fill); color: var(--status-text); }
+.ci-run-detail button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* too narrow for the jobs beside the log: the jobs go above it */
+@container ci-detail (max-width: 620px) {
+  .ci-run-body { flex-direction: column; }
+  .ci-run-jobs { flex: 0 0 180px; border-right: 0; border-bottom: 1px solid var(--border); }
 }
-
-.ci-run.selected,
-.ci-job.selected {
-  background: var(--select);
-}
-
-.ci-manual {
-  gap: 2px;
-  color: var(--orange);
-  font-weight: 600;
-  font-size: 11px;
-  flex: none;
-}
-
-.ci-run-detail {
-  flex: 1;
-  min-width: 0;
-  min-height: 0;
-  height: 100%;
-}
-
-.ci-run-head {
-  gap: 6px;
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--border);
-  flex: none;
-}
-
-.ci-run-summary {
-  gap: 12px;
-  padding: 12px;
-  border-bottom: 1px solid var(--border);
-  flex: none;
-}
-
-.ci-run-summary h2 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.ci-run-facts {
-  display: grid;
-  grid-template-columns: max-content minmax(0, 1fr);
-  gap: 6px 10px;
-  margin: 0;
-}
-
-.ci-run-facts dd {
-  margin: 0;
-  overflow-wrap: anywhere;
-}
-
-.ci-run-actions {
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.ci-run-actions .btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.ci-run-body {
-  display: flex;
-  flex: 1;
-  min-height: 0;
-}
-
-.ci-run-jobs {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  flex: 0 0 280px;
-  min-width: 0;
-  overflow: auto;
-  padding: 8px;
-  border-right: 1px solid var(--border);
-  background: var(--sidebar);
-}
-
-.ci-jobs-head {
-  gap: 6px;
-  font-weight: 600;
-  color: var(--text-2);
-}
-
-.ci-stage {
-  margin-top: 6px;
-  font-size: 10.5px;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.ci-run-log {
-  flex: 1;
-  min-width: 0;
-  min-height: 0;
-  background: var(--surface);
-}
-
-.ci-log-head {
-  gap: 6px;
-  padding: 6px 12px;
-  border-bottom: 1px solid var(--border);
-  flex: none;
-  min-width: 0;
-}
-
-.ci-log-message {
-  margin: 0;
-  padding: 6px 12px;
-  font-size: 11.5px;
-}
-
-.ci-log-text {
-  flex: 1;
-  min-height: 0;
-  margin: 0;
-  padding: 6px 10px;
-  overflow: auto;
-  font-size: 11.5px;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
-.ci-log-empty {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-@media (max-width: 850px) {
-  .ci-run-body {
-    flex-direction: column;
-  }
-
-  .ci-run-jobs {
-    flex: 0 0 34%;
-    border-right: 0;
-    border-bottom: 1px solid var(--border);
-  }
-}
-
-.ci-run-detail { container:ci-detail / inline-size; }
-.ci-run-head { flex-wrap:wrap; padding:12px 20px; }
-.ci-status-pill { background:var(--hover); border-radius:999px; padding:3px 8px; font-size:11px; font-weight:600; }
-.ci-run-summary { padding:18px 20px; gap:14px; overflow:auto; max-height:46%; }
-.ci-run-summary h2 { font-size:21px; line-height:1.4; overflow-wrap:anywhere; }
-.ci-job-summary { display:flex; flex-wrap:wrap; gap:8px 14px; font-size:11px; color:var(--text-2); }
-.ci-job-summary > span { display:inline-flex; align-items:center; gap:5px; }
-.ci-job-summary strong { font-variant-numeric:tabular-nums; color:var(--text); }
-.ci-run-facts { font-size:12px; }
-.ci-run-jobs { padding:14px 10px; gap:12px; }
-.ci-stage-group { position:relative; display:flex; flex-direction:column; gap:3px; padding-left:13px; border-left:1px solid var(--border); margin:0 0 10px 6px; }
-.ci-stage { display:flex; align-items:center; gap:8px; margin:0 0 7px; font-size:11px; text-transform:none; color:var(--text-2); overflow-wrap:anywhere; }
-.ci-stage:before { content:""; position:absolute; left:-4px; top:3px; width:7px; height:7px; border-radius:50%; background:var(--border-strong); }
-.ci-job { padding:3px; gap:3px; border:1px solid transparent; }
-.ci-job.selected { border-color:var(--accent); }
-.ci-job-select { display:flex; align-items:center; gap:8px; padding:6px 4px; flex:1; min-width:0; border:0; background:transparent; text-align:left; }
-.ci-job-label { display:flex; flex-direction:column; gap:3px; flex:1; min-width:0; }
-.ci-job-label strong { font-size:12px; font-weight:550; overflow-wrap:anywhere; }
-.ci-job-label > span { font-size:10.5px; color:var(--text-2); }
-.ci-run { padding:10px 8px; align-items:flex-start; }
-.ci-run-title { overflow-wrap:anywhere; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; font-weight:550; }
-.ci-run-status { font-size:10.5px; margin:3px 0; }
-.ci-log-head { flex-wrap:wrap; padding:10px 12px; }
-.ci-log-head > strong { flex:1; min-width:80px; }
-.ci-log-text { line-height:1.65; padding:12px 16px; tab-size:4; }
-.ci-log-empty { padding:20px; text-align:center; font-size:12px; }
-.ci-run:focus-visible, .ci-run-detail button:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; }
-@container ci-detail (max-width:620px) {
-  .ci-run-body { flex-direction:column; }
-  .ci-run-jobs { flex:0 0 36%; border-right:0; border-bottom:1px solid var(--border); }
-  .ci-run-summary { padding:14px; }
-  .ci-run-summary h2 { font-size:18px; }
-}
-
-.ci-stage-count { padding:1px 6px; border-radius:999px; background:var(--hover); font-size:10px; font-variant-numeric:tabular-nums; }

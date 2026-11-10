@@ -30,7 +30,7 @@ struct LedgerChatGPTDraftSheet: View {
             Text("Bring a ChatGPT draft…").font(.title3.weight(.semibold))
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
-                    Label("Pasted by you", systemImage: "doc.on.clipboard").font(.callout).foregroundStyle(.secondary)
+                    Label("Pasted by you", symbol: "doc.on.clipboard").font(.callout).foregroundStyle(.secondary)
                     Text("Accept the suggestion with Tab in its original app without sending it. Copy the draft or question and paste it here. Review the destination before using it.")
                         .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                     Text("This is a manual transfer. The Ledger does not read ChatGPT or Codex input boxes automatically.")
@@ -87,7 +87,7 @@ struct LedgerChatGPTDraftSheet: View {
     @ViewBuilder private var answerTarget: some View {
         if questions.isEmpty {
             VStack(spacing: 6) {
-                Image(systemName: "bubble.left").font(.system(size: 24)).foregroundStyle(.secondary).accessibilityHidden(true)
+                DesignIconImage(icon: .comment, size: 24).foregroundStyle(.secondary).accessibilityHidden(true)
                 Text("No open questions").font(.callout.weight(.semibold))
                 Text("Add a question from the pasted text, or choose another project in the Ledger.")
                     .font(.system(size: 11)).foregroundStyle(.secondary).multilineTextAlignment(.center)

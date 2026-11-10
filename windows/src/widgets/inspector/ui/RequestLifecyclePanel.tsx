@@ -1,40 +1,87 @@
+import { CircleCheck, CircleDot, CircleX } from "@/shared/icons";
+import { CircleAlert, Clock } from "@/shared/icons";
 import { useEffect, useState } from "react";
+import { CIStatusIcon } from "@/entities/ci";
+import type { PullRequest } from "@/entities/git";
+import { type MergeMethod, type PullRequestReview, workStateTitle } from "@/entities/hosting";
 import type { RepoStore } from "@/entities/repo";
-import type { MergeMethod } from "@/entities/hosting";
 import { t } from "@/shared/i18n";
-import { Button, Spinner } from "@/shared/ui";
 import { useObserve } from "@/shared/lib";
+import { Avatar, Button, Spinner } from "@/shared/ui";
+import { ownAvatarURL } from "../lib/own-avatar";
+import { type checksBadge, linkedIssues, mergeReason } from "../lib/pull-request-page";
 
-/** 서버 정책을 확인한 뒤 PR·MR 수명주기를 마무리한다. */
-export function RequestLifecyclePanel({ store, number }: { store: RepoStore; number: number }) {
+const methodTitle = (method: MergeMethod) => t(method === "merge" ? "Create a merge commit" : method === "squash" ? "Squash and merge" : "Rebase and merge");
+
+/**
+ * The side cards of a request's conversation: Merge, Reviewers, Linked issue, and the request's own fields while they
+ * are edited. The server's policy decides what Merge may do. macOS: RequestLifecyclePanel.swift.
+ */
+export function RequestLifecyclePanel({ store, number, pr, review, badge, editing, onEditing }: { store: RepoStore; number: number; pr: PullRequest; review: PullRequestReview | null; badge: ReturnType<typeof checksBadge>; editing: boolean; onEditing: (value: boolean) => void }) {
   useObserve(store);
-  const [editing, setEditing] = useState(false), [title, setTitle] = useState(""), [body, setBody] = useState(""), [base, setBase] = useState(""), [reviewers, setReviewers] = useState("");
-  const [method, setMethod] = useState<MergeMethod>("merge");
-  useEffect(() => { setEditing(false); void store.loadRequestLifecycle(number); }, [store, number]);
+  useObserve(store.ci);
+  const [title, setTitle] = useState(""), [body, setBody] = useState(""), [base, setBase] = useState(""), [reviewers, setReviewers] = useState("");
+  const [method, setMethod] = useState<MergeMethod>("merge"), [requesting, setRequesting] = useState(false);
+  useEffect(() => { onEditing(false); setRequesting(false); void store.loadRequestLifecycle(number); }, [store, number]);
   const r = store.requestLifecycle?.number === number ? store.requestLifecycle : null;
   useEffect(() => { if (r) setMethod(r.methods[0] ?? "merge"); }, [r?.headSHA, r?.methods.join(",")]);
+  // the fields start from the server's values each time the editor opens
+  useEffect(() => { if (editing && r) { setTitle(r.title); setBody(r.body); setBase(r.base); } }, [editing]);
   const disabled = store.lifecycleBusy || store.lifecycleLoading;
-  return <div className="col" style={{ gap: 7, border: "1px solid var(--border)", borderRadius: 7, padding: 9 }}>
-    <div className="row"><strong>{t("Request management")}</strong><span className="spacer" />{disabled && <Spinner size={12} />}<Button size="small" disabled={disabled} onClick={() => void store.loadRequestLifecycle(number)}>{t("Refresh")}</Button></div>
-    {store.lifecycleError && <span className="error-text" style={{ whiteSpace: "pre-wrap" }}>{store.lifecycleError}</span>}
-    {r && <>
-      <span>{t("State: {0}", t(r.state))} · <code>{r.headSHA.slice(0, 12)}</code></span>
-      <span className="muted">{r.checks}</span><span className="muted" style={{ fontSize: 11 }}>{r.policy}</span>
-      {r.blockers.map((b) => <span className="muted" key={b}>• {b}</span>)}
-      <div className="row" style={{ flexWrap: "wrap" }}>
-        {r.state === "open" && <><select aria-label={t("Merge method")} value={method} disabled={disabled || !r.methods.length} onChange={(e) => setMethod(e.target.value as MergeMethod)}>{r.methods.map((m) => <option value={m} key={m}>{t(m === "merge" ? "Merge" : m === "squash" ? "Squash" : "Rebase")}</option>)}</select><Button size="small" kind="primary" disabled={disabled || !!r.blockers.length} onClick={() => store.confirmMergeRequest(method)}>{t("Merge…")}</Button></>}
-        {r.canRebase && <Button size="small" disabled={disabled} onClick={() => store.confirmRequestRebase()}>{t("Rebase on server…")}</Button>}
-        {r.state !== "merged" && r.canEdit && <Button size="small" disabled={disabled} onClick={() => store.confirmRequestState(r.state !== "open")}>{r.state === "open" ? t("Close request…") : t("Reopen…")}</Button>}
-        {r.canEdit && <Button size="small" disabled={disabled} onClick={() => { setTitle(r.title); setBody(r.body); setBase(r.base); setReviewers(r.reviewers.join(", ")); setEditing(!editing); }}>{t("Edit request…")}</Button>}
-      </div>
-      {editing && <div className="col" style={{ gap: 6 }}>
-        <label>{t("Title")}<input value={title} disabled={disabled} onChange={(e) => setTitle(e.target.value)} /></label>
-        <label>{t("Description")}<textarea rows={5} value={body} disabled={disabled} onChange={(e) => setBody(e.target.value)} /></label>
-        <label>{t("Target branch")}<input value={base} disabled={disabled} onChange={(e) => setBase(e.target.value)} /></label>
-        <Button size="small" disabled={disabled || !title.trim() || !base.trim()} onClick={() => void store.saveRequestMetadata(number, title, body, base).then((ok) => { if (ok) setEditing(false); })}>{t("Save request")}</Button>
-        <label>{t("Reviewers (comma-separated usernames)")}<input value={reviewers} disabled={disabled} onChange={(e) => setReviewers(e.target.value)} /></label>
-        <Button size="small" disabled={disabled} onClick={() => void store.saveRequestReviewers(number, reviewers.split(","))}>{t("Save reviewers")}</Button>
-      </div>}
-    </>}
-  </div>;
+  const state = review?.state;
+  const run = pr.headSHA ? store.ci.bySha.get(pr.headSHA) : undefined;
+  const approved = !!state && state.approvedBy.length > 0 && !state.changesRequestedBy.length && !(state.approvalsLeft && state.approvalsLeft > 0);
+  const names = [...new Set([...(r?.reviewers ?? []), ...(state?.approvedBy ?? []), ...(state?.changesRequestedBy ?? [])])];
+  const issues = linkedIssues(pr.body);
+  const checksText = badge?.kind === "failed" ? (badge.count === 1 ? t("1 check failed") : t("{0} checks failed", badge.count))
+    : badge?.kind === "running" ? (badge.count === 1 ? t("1 check running") : t("{0} checks running", badge.count))
+    : t(run?.status === "success" ? "All checks passed" : "Checks pending");
+  const reason = r && mergeReason(r.conflicts, r.base, badge, state?.approvalsLeft, r.blockers);
+  const issueURL = (issue: number) => store.target ? `https://${store.target.host}/${store.target.path}/${store.target.provider === "gitlab" ? "-/issues" : "issues"}/${issue}` : "";
+  return <>
+    {store.lifecycleError && <p className="error-text selectable" role="alert" style={{ whiteSpace: "pre-wrap", margin: 0 }}>{store.lifecycleError}</p>}
+    {editing && r && <section className="pr-card" aria-label={t("Edit request…")}>
+      <label>{t("Title")}<input className="input" value={title} disabled={disabled} onChange={(e) => setTitle(e.target.value)} /></label>
+      <label>{t("Description")}<textarea className="textarea" rows={5} value={body} disabled={disabled} onChange={(e) => setBody(e.target.value)} /></label>
+      <label>{t("Target branch")}<input className="input" value={base} disabled={disabled} onChange={(e) => setBase(e.target.value)} /></label>
+      <div className="pr-card-actions"><Button onClick={() => onEditing(false)}>{t("Cancel")}</Button><Button kind="primary" disabled={disabled || !title.trim() || !base.trim()} onClick={() => void store.saveRequestMetadata(number, title, body, base).then((ok) => { if (ok) onEditing(false); })}>{t("Save request")}</Button></div>
+    </section>}
+    <section className="pr-card" aria-label={t("Merge")}>
+      <span className="pr-card-title">{t("Merge")}{disabled && <Spinner size={11} />}</span>
+      {r ? <>
+        <span className="pr-card-row">{badge?.kind === "failed" ? <CircleX size={14} className="status-tone" data-tone="failed" aria-hidden="true" /> : badge?.kind === "running" ? <Clock size={14} className="status-tone" data-tone="waiting" aria-hidden="true" /> : run ? <CIStatusIcon status={run.status} size={14} /> : <CircleDot size={14} className="pr-neutral-icon" aria-hidden="true" />}<span>{checksText}</span></span>
+        <span className="pr-card-row">{r.conflicts ? <CircleX size={14} className="status-tone" data-tone="failed" aria-hidden="true" /> : <CircleCheck size={14} className="status-tone" data-tone="passed" aria-hidden="true" />}<span>{t(r.conflicts ? "Conflicts with {0}" : "No conflicts with {0}", r.base)}</span></span>
+        {state && <span className="pr-card-row status-tone" data-tone={approved ? "passed" : "waiting"}>{approved ? <CircleCheck size={14} aria-hidden="true" /> : <CircleAlert size={14} aria-hidden="true" />}<span>{state.approvalsLeft && state.approvalsLeft > 0 ? t("{0} more approvals needed.", state.approvalsLeft) : t("Approvals")}</span></span>}
+        {r.state === "open" ? <>
+          <div className="pr-merge-row">
+            <select className="select" aria-label={t("Merge method")} value={method} disabled={disabled || !r.methods.length} onChange={(e) => setMethod(e.target.value as MergeMethod)}>{r.methods.map((m) => <option value={m} key={m}>{methodTitle(m)}</option>)}</select>
+            <Button kind={r.blockers.length ? "default" : "primary"} tip={[r.policy, ...r.blockers].join("\n")} disabled={disabled || !!r.blockers.length} aria-describedby={r.blockers.length ? "request-merge-reason" : undefined} onClick={() => store.confirmMergeRequest(method)}>{t("Merge…")}</Button>
+          </div>
+          {reason && <span id="request-merge-reason" className="pr-cap pr-merge-reason">{reason}</span>}
+        </> : <span className="pr-cap">{workStateTitle(r.state)}</span>}
+      </> : !disabled && <span className="pr-cap">{t("No checks reported")}</span>}
+    </section>
+    {(names.length > 0 || r?.canEdit) && <section className="pr-card" aria-label={t("Reviewers")}>
+      <span className="pr-card-title">{t("Reviewers")}</span>
+      {names.map((name) => {
+        const status = state?.changesRequestedBy.includes(name) ? "changes" : state?.approvedBy.includes(name) ? "approved" : "waiting";
+        return <span className="pr-card-row" key={name}>
+          <span aria-hidden="true"><Avatar name={name} email={name} size={20} url={ownAvatarURL(store, name)} /></span><span className="ellipsis grow">@{name}</span>
+          <span className="pr-reviewer-status status-tone" data-tone={status === "approved" ? "passed" : status === "changes" ? "failed" : "waiting"}>
+            {status === "approved" ? <CircleCheck size={12} aria-hidden="true" /> : status === "changes" ? <CircleX size={12} aria-hidden="true" /> : <Clock size={12} aria-hidden="true" />}
+            {t(status === "approved" ? "Approved" : status === "changes" ? "Changes requested" : "Waiting")}
+          </span>
+        </span>;
+      })}
+      {r?.canEdit && <span><button type="button" className="pr-text-button" aria-expanded={requesting} disabled={disabled} onClick={() => { setReviewers(r.reviewers.join(", ")); setRequesting(!requesting); }}>{t("Request review…")}</button></span>}
+      {requesting && r?.canEdit && <>
+        <label>{t("Reviewers (comma-separated usernames)")}<input className="input" value={reviewers} disabled={disabled} onChange={(e) => setReviewers(e.target.value)} /></label>
+        <div className="pr-card-actions"><Button disabled={disabled} onClick={() => void store.saveRequestReviewers(number, reviewers.split(",")).then(() => setRequesting(false))}>{t("Save reviewers")}</Button></div>
+      </>}
+    </section>}
+    {issues.length > 0 && <section className="pr-card" aria-label={t("Linked issue")}>
+      <span className="pr-card-title">{t("Linked issue")}</span>
+      {issues.map((issue) => <button type="button" className="pr-card-row pr-issue-link" key={issue} onClick={() => store.openUrl(issueURL(issue))}><CircleDot size={14} aria-hidden="true" /><span className="mono">#{issue}</span></button>)}
+    </section>}
+  </>;
 }

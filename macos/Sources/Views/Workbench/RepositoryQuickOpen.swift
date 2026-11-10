@@ -16,19 +16,19 @@ struct RepositoryQuickOpen: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
-                Image(systemName: "doc.text.magnifyingglass").foregroundStyle(Color.accentColor)
+                SymbolIcon("doc.text.magnifyingglass").foregroundStyle(Color.accentColor)
                 TextField("Search files by name or path", text: $query).textFieldStyle(.plain)
                     .focused($focused).onSubmit(activate)
                     .onKeyPress(.downArrow) { move(1); return .handled }
                     .onKeyPress(.upArrow) { move(-1); return .handled }
                     .accessibilityLabel("Search files by name or path").accessibilityIdentifier("code-quick-open-search")
-                Button(action: close) { Image(systemName: "xmark") }.buttonStyle(.borderless)
+                Button(action: close) { DesignIconImage(icon: .close) }.buttonStyle(.borderless)
                     .help("Close quick open").accessibilityLabel("Close quick open").keyboardShortcut(.cancelAction)
             }.padding(17)
             Divider()
             HStack { Text(query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "Recent files" : "Files").font(.caption.weight(.semibold)).foregroundStyle(.secondary); Spacer() }.padding(.horizontal, 17).padding(.vertical, 11)
             if results.isEmpty {
-                ContentUnavailableView("No matching files", systemImage: "doc.text.magnifyingglass").frame(maxHeight: .infinity)
+                ContentUnavailableView("No matching files", symbol: "doc.text.magnifyingglass").frame(maxHeight: .infinity)
             } else {
                 ScrollViewReader { proxy in
                     ScrollView {
@@ -36,13 +36,13 @@ struct RepositoryQuickOpen: View {
                             ForEach(results, id: \.self) { path in
                                 Button { open(path) } label: {
                                     HStack(spacing: 10) {
-                                        Image(systemName: "doc.text").foregroundStyle(.secondary)
+                                        DesignIconImage(icon: .file).foregroundStyle(.secondary)
                                         VStack(alignment: .leading, spacing: 4) {
                                             Text((path as NSString).lastPathComponent).font(.callout.weight(.medium)).lineLimit(1).truncationMode(.middle)
                                             Text(path).font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
                                         }
                                         Spacer(minLength: 0)
-                                        if highlighted == path { Image(systemName: "return").font(.caption).foregroundStyle(.secondary) }
+                                        if highlighted == path { SymbolIcon("return").font(.caption).foregroundStyle(.secondary) }
                                     }.padding(10).frame(maxWidth: .infinity, alignment: .leading)
                                         .background(highlighted == path ? Color.accentColor.opacity(0.12) : .clear, in: RoundedRectangle(cornerRadius: 7))
                                         .contentShape(Rectangle())

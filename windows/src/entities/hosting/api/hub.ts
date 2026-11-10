@@ -6,9 +6,10 @@ import { localProjects, isLocalProject } from "../model/local-projects";
 
 export type HostingHubSection = "releases" | "projects" | "organizations";
 export type HubProjectScope = "repository" | "personal" | `organization:${string}`;
-/** Accept a GitHub organization login without turning arbitrary input into an API owner. */
-export function hubProjectOrganization(scope: HubProjectScope): string | undefined {
+/** Accept a GitHub organization login or a GitLab group path without turning arbitrary input into an API owner. */
+export function hubProjectOrganization(scope: HubProjectScope, provider: Provider = "github"): string | undefined {
   const login = scope.startsWith("organization:") ? scope.slice("organization:".length) : "";
+  if (provider === "gitlab") return login && login.length <= 255 && login.split("/").every(part => part !== "." && part !== ".." && /^[a-z0-9_.][a-z0-9_.-]*$/i.test(part)) ? login : undefined;
   return login.length <= 39 && /^[a-z0-9]+(?:-[a-z0-9]+)*$/i.test(login) ? login : undefined;
 }
 export interface HubAccess { target: RepoTarget; token: string; apiBase: string; me: string; stillCurrent?: () => boolean; local?: boolean; projectOrganization?: string }
@@ -71,14 +72,47 @@ export function hubSafeURL(c: {target: Pick<RepoTarget, "provider" | "host">}, v
 export function hubError(error: unknown, token?: string): string { let s = error instanceof Error ? error.message : String(error); if (token) s = s.split(token).join("[redacted]"); return s.replace(/(https?:\/\/)[^\s/@]+:[^\s/@]+@/gi, "$1[redacted]@").replace(/\b(?:gh[pousr]_[\w]+|github_pat_[\w]+|glpat-[\w-]+)\b/g, "[redacted]").replace(/([?&](?:access_token|private_token|token|api_key)=)[^&\s]+/gi, "$1[redacted]").slice(0, 1200); }
 export class HubUncertainWriteError extends Error { constructor(message: string, readonly createdProject?: HubItem) { super(message); } }
 async function create(c:HubAccess,url:string,body:unknown){try{await raw(c,url,"POST",body);}catch(e){if(e instanceof H.HostingError&&e.status>=400&&e.status<500)throw e;throw new HubUncertainWriteError(`${hubError(e,c.token)}\n\n${t("The server may have accepted the last change. Refresh and check the remote item before trying again.")}`);}}
-export function hubBoardIssueQuery(board: J, page: number): string {
-  const q=new URLSearchParams({state:board.hide_closed_list?"opened":"all",scope:"all",per_page:"30",page:String(Math.max(1,page)),order_by:"updated_at"});
+export function hubBoardIssueQuery(board: J, page: number, perPage = pageSize): string {
+  const q=new URLSearchParams({state:board.hide_closed_list?"opened":"all",scope:"all",per_page:String(perPage),page:String(Math.max(1,page)),order_by:"updated_at"});
   const labels=(board.labels??[]).map((l:J)=>l.name).filter(Boolean);if(labels.length)q.set("labels",labels.join(","));
   if(board.assignee?.id!=null)q.set("assignee_id",String(board.assignee.id));
   if(board.milestone?.title)q.set("milestone",board.milestone.title);
   if(board.weight!=null)q.set("weight",String(board.weight));
   if(board.iteration?.id)q.set("iteration_id",String(board.iteration.id));
   return q.toString();
+}
+/** GitLab answers 20 rows unless asked, so board reads walk every 100-row page instead of showing a partial list. */
+async function everyPage(c: HubAccess, url: (page: number) => string): Promise<J[]> {
+  const rows: J[] = [];
+  for (let page = 1; page <= 100; page++) {
+    const batch = await request<J[]>(c, url(page));
+    if (!Array.isArray(batch)) throw new Error(t("The server returned an unexpected response."));
+    rows.push(...batch);
+    if (batch.length < 100) return rows;
+  }
+  throw new Error(t("Project items could not be fully loaded. Retry the project."));
+}
+/** Without an open repository, GitLab boards come from the chosen group. */
+const gitlabBoards = (c: HubAccess) => c.projectOrganization ? `${c.apiBase}/groups/${H.projectID(c.projectOrganization)}` : repo(c);
+/** Group boards mix projects, so their rows carry the issue's own project and number. */
+function gitlabIssue(c: HubAccess, row: HubProjectRow): string {
+  if (!c.projectOrganization) return `${repo(c)}/issues/${enc(row.id)}`;
+  if (!row.number || row.number < 1 || !row.repository) throw new Error(t("Select a loaded project field and item."));
+  return `${c.apiBase}/projects/${H.projectID(row.repository)}/issues/${row.number}`;
+}
+const gitlabIssueProject = (x: J): string => { const full = String(x.references?.full ?? ""), hash = full.lastIndexOf("#"); return hash > 0 ? full.slice(0, hash) : String(x.project_id ?? ""); };
+/** macOS: gitlabBoard. The first read loads every issue in the board's scope; explicit later pages stay available. */
+async function gitlabBoard(c: HubAccess, item: HubItem, page: number): Promise<HubDetail> {
+  const base = gitlabBoards(c), group = c.projectOrganization, board = await request<J>(c, `${base}/boards/${enc(item.id)}`);
+  const lists = await everyPage(c, n => `${base}/boards/${enc(item.id)}/lists?per_page=100&page=${n}`);
+  const labels = lists.filter(x=>x.label).map(x=>({id:String(x.label.id),name:x.label.name}));
+  const issues = page === 1 ? await everyPage(c, n => `${base}/issues?${hubBoardIssueQuery(board,n,100)}`) : await request<J[]>(c, `${base}/issues?${hubBoardIssueQuery(board,page)}`);
+  const d=empty({...item,title:board.name,data:board}); d.fields=[{id:"board",name:t("Board column"),options:[{id:"__open",name:t("Open")},...labels,{id:"__closed",name:t("Closed")}]}];
+  // Issue numbers repeat across a group's projects, so group rows use the global issue ID.
+  const seen = new Set<string>();
+  d.rows=issues.filter(x=>{const id=String(group?x.id:x.iid);if(seen.has(id))return false;seen.add(id);return true;}).map(x=>({id:String(group?x.id:x.iid),title:x.title,body:x.description??"",url:x.web_url,contentID:String(x.id),kind:"issue",number:x.iid,repository:group?gitlabIssueProject(x):c.target.path,state:x.state==="closed"?"CLOSED":"OPEN",assignees:(x.assignees??[]).map((a:J)=>a.username),updatedAt:x.updated_at??"",author:x.author?.username||undefined,createdAt:x.created_at||undefined,labels:x.labels??[],statuses:{board:x.state==="closed"?"__closed":labels.find(l=>(x.labels??[]).includes(l.name))?.id??"__open"}}));
+  d.more=page>1&&issues.length===pageSize; d.notice=t("GitLab board scope filters are applied. Only label columns can be moved here; assignee, milestone, iteration and custom status columns remain available in the browser. Moving to Open reopens the issue and removes its board column labels.");
+  return d;
 }
 const empty = (item: HubItem): HubDetail => ({item, members: [], repositories: [], assets: [], fields: [], rows: [], more: false});
 const memberRole = (level?: number): string => {
@@ -189,7 +223,12 @@ export async function hubPage(c: HubAccess, section: HostingHubSection, page = 1
     }
     return {items: list.map(x => ({id: String(c.target.provider === "github" ? x.login : x.id), title: x.name || x.login || x.full_name, subtitle: x.full_path ?? x.login, body: x.description ?? "", url: x.html_url ?? x.web_url ?? `https://${c.target.host}/${enc(x.login)}`, avatarURL: organizationAvatarURL(c, x.avatar_url), data: x})), more: list.length === pageSize};
   }
-  if (c.target.provider === "gitlab") { if (c.target.path.endsWith("/workspace")) throw new Error(t("Open a GitLab repository to browse its issue boards.")); const list = await request<J[]>(c, `${repo(c)}/boards`); return {items: list.slice((page-1)*pageSize,page*pageSize).map(x => ({id: String(x.id), title: x.name, subtitle: t("GitLab issue board"), body: "", url: `https://${c.target.host}/${c.target.path}/-/boards/${x.id}`, data: x})), more: list.length > page*pageSize}; }
+  if (c.target.provider === "gitlab") {
+    if (!c.projectOrganization && c.target.path.endsWith("/workspace")) throw new Error(t("Choose a group or open a GitLab repository to browse its issue boards."));
+    const base = gitlabBoards(c), web = c.projectOrganization ? `groups/${c.projectOrganization}` : c.target.path;
+    const list = await everyPage(c, n => `${base}/boards?per_page=100&page=${n}`);
+    return {items: list.map(x => ({id: String(x.id), title: x.name, subtitle: t("GitLab issue board"), body: "", url: `https://${c.target.host}/${web}/-/boards/${x.id}`, data: x})), more: false};
+  }
   const [repositoryOwner, name] = c.target.path.split("/");
   const owner = c.projectOrganization ?? repositoryOwner;
   const noRepo = name === "workspace";
@@ -204,7 +243,7 @@ export async function hubDetail(c: HubAccess, section: HostingHubSection, item: 
   const p = c.target.provider;
   if (section === "releases") { const x = await request<J>(c, `${repo(c)}/releases/${enc(item.id)}`); const d = empty(releaseItem(p,x)); d.assets = p === "github" ? (x.assets ?? []).map((a: J) => ({id:String(a.id),name:a.name,size:a.size,downloads:a.download_count,url:a.browser_download_url})) : [...(x.assets?.links ?? []).map((a: J) => ({id:String(a.id),name:a.name,url:a.direct_asset_url ?? a.url})), ...(x.assets?.sources ?? []).map((a: J) => ({id:a.format,name:a.format,url:a.url}))]; return d; }
   if (section === "organizations") return hubOrganizationDetail(c, item, page, tab);
-  if (p === "gitlab") { const board = await request<J>(c, `${repo(c)}/boards/${enc(item.id)}`); const lists = await request<J[]>(c, `${repo(c)}/boards/${enc(item.id)}/lists?per_page=100`); const labels = lists.filter(x=>x.label).map(x=>({id:String(x.label.id),name:x.label.name})); const issues = await request<J[]>(c, `${repo(c)}/issues?${hubBoardIssueQuery(board,page)}`); const d=empty({...item,title:board.name,data:board}); d.fields=[{id:"board",name:t("Board column"),options:[{id:"__open",name:t("Open")},...labels,{id:"__closed",name:t("Closed")}]}]; d.rows=issues.map(x=>({id:String(x.iid),title:x.title,body:x.description??"",url:x.web_url,contentID:String(x.id),kind:"issue",number:x.iid,repository:c.target.path,state:x.state==="closed"?"CLOSED":"OPEN",assignees:(x.assignees??[]).map((a:J)=>a.username),updatedAt:x.updated_at??"",author:x.author?.username||undefined,createdAt:x.created_at||undefined,labels:x.labels??[],statuses:{board:x.state==="closed"?"__closed":labels.find(l=>(x.labels??[]).includes(l.name))?.id??"__open"}})); d.more=issues.length===pageSize; d.notice=t("GitLab board scope filters are applied. Only label columns can be moved here; assignee, milestone, iteration and custom status columns remain available in the browser. Moving to Open reopens the issue and removes its board column labels."); return d; }
+  if (p === "gitlab") return gitlabBoard(c, item, page);
   return page === 1 && cursor === undefined ? completeGithubProject(c, item) : githubProjectPage(c, item, cursor);
 }
 export async function saveHubRelease(c: HubAccess, input: HubReleaseInput, previous?: HubItem) {
@@ -289,8 +328,8 @@ export async function moveHubProjectItem(c:HubAccess,detail:HubDetail,row:HubPro
   if(c.target.provider==="github"){await updateHubProjectField(c,detail,row,field,option);return;}
   const loaded=loadedProjectRow(detail,row),actual=detail.fields.find(value=>value.id===field.id);
   if(!actual?.options.some(value=>value.id===option))throw new Error(t("Select a loaded project field and item."));
-  const fresh=await request<J>(c,`${repo(c)}/issues/${enc(loaded.id)}`),boardLabels=actual.options.filter(value=>!value.id.startsWith("__")).map(value=>value.name),label=actual.options.find(value=>value.id===option&&!value.id.startsWith("__"))?.name;
-  await raw(c,`${repo(c)}/issues/${enc(loaded.id)}`,"PUT",{remove_labels:(fresh.labels??[]).filter((value:string)=>boardLabels.includes(value)&&value!==label).join(","),...(label?{add_labels:label}:{}),state_event:option==="__closed"?"close":"reopen"});
+  const issue=gitlabIssue(c,loaded),fresh=await request<J>(c,issue),boardLabels=actual.options.filter(value=>!value.id.startsWith("__")).map(value=>value.name),label=actual.options.find(value=>value.id===option&&!value.id.startsWith("__"))?.name;
+  await raw(c,issue,"PUT",{remove_labels:(fresh.labels??[]).filter((value:string)=>boardLabels.includes(value)&&value!==label).join(","),...(label?{add_labels:label}:{}),state_event:option==="__closed"?"close":"reopen"});
 }
 export async function addHubProjectIssue(c:HubAccess,detail:HubDetail,issueURL:string,option?:string){
   const u=hubSafeURL(c,issueURL);if(!u||new URL(u).hostname.toLowerCase()!==c.target.host.toLowerCase())throw new Error(t("Enter an issue URL from the connected server."));
@@ -301,7 +340,12 @@ export async function addHubProjectIssue(c:HubAccess,detail:HubDetail,issueURL:s
     if(!issue.node_id||(!isPR&&issue.pull_request))throw new Error(t("Select an issue or pull request from this server."));
     await graphql(c,"mutation($input:AddProjectV2ItemByIdInput!){addProjectV2ItemById(input:$input){item{id}}}",{input:{projectId:detail.item.id,contentId:issue.node_id}});
   }else{
-    if(decodeURIComponent(match[1])!==c.target.path)throw new Error(t("Select an issue from this board's repository."));const field=detail.fields[0];if(!field)throw new Error(t("Refresh the board before adding an issue."));
+    const project=decodeURIComponent(match[1]),group=c.projectOrganization;
+    if(group){
+      if(!project.toLowerCase().startsWith(`${group.toLowerCase()}/`))throw new Error(t("Select an issue from a repository in this group."));const field=detail.fields[0];if(!field)throw new Error(t("Refresh the board before adding an issue."));
+      const x=await request<J>(c,`${c.apiBase}/projects/${H.projectID(project)}/issues/${match[2]}`),row:HubProjectRow={id:String(x.id),title:x.title,body:"",url:u,contentID:String(x.id),statuses:{},labels:x.labels??[],number:Number(match[2]),repository:project};await moveHubProjectItem(c,{...detail,rows:[...detail.rows,row]},row,field,option??"__open");return;
+    }
+    if(project!==c.target.path)throw new Error(t("Select an issue from this board's repository."));const field=detail.fields[0];if(!field)throw new Error(t("Refresh the board before adding an issue."));
     const x=await request<J>(c,`${repo(c)}/issues/${match[2]}`),row:HubProjectRow={id:String(x.iid),title:x.title,body:"",url:u,contentID:String(x.id),statuses:{},labels:x.labels??[]};await moveHubProjectItem(c,{...detail,rows:[...detail.rows,row]},row,field,option??"__open");
   }
 }

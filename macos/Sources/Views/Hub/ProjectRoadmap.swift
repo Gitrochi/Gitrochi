@@ -34,14 +34,14 @@ struct ProjectRoadmap: View {
                 VStack(alignment: .leading, spacing: 16) {
                     if let dependencyRows { ProjectDependencyView(rows: dependencyRows, select: select, selectedID: selectedID) }
                     HStack(spacing: 10) {
-                        Label("Roadmap", systemImage: "chart.bar.xaxis").font(.system(size: 13, weight: .semibold))
+                        Label("Roadmap", symbol: "chart.bar.xaxis").font(.system(size: 13, weight: .semibold))
                         Text(scheduled.count.formatted()).font(.caption.monospacedDigit()).foregroundStyle(.secondary)
                         Spacer(minLength: 12)
                         dateConfiguration
                     }
                     if dateFields.isEmpty {
-                        Label("Add a date field to this project to see real task dates on the roadmap.", systemImage: "calendar.badge.plus")
-                            .font(.callout).foregroundStyle(.secondary).padding(16).frame(maxWidth: 760, alignment: .leading)
+                        Label("Add a date field to this project to see real task dates on the roadmap.", symbol: "calendar.badge.plus")
+                            .font(.callout).foregroundStyle(.secondary).padding(16).frame(maxWidth: .infinity, alignment: .leading)
                             .background(Color.secondary.opacity(0.035), in: RoundedRectangle(cornerRadius: 12))
                     }
                     if !scheduled.isEmpty {
@@ -52,15 +52,15 @@ struct ProjectRoadmap: View {
                             }
                         } else {
                             timeline(width: max(600, geometry.size.width - 40))
-                            if !undated.isEmpty { undatedList.frame(maxWidth: 760, alignment: .leading) }
+                            if !undated.isEmpty { undatedList.frame(maxWidth: .infinity, alignment: .leading) }
                         }
                     } else {
                         VStack(alignment: .leading, spacing: 7) {
-                            Label("Give your work a timeline", systemImage: "calendar").font(.system(size: 14, weight: .semibold))
+                            Label("Give your work a timeline", symbol: "calendar").font(.system(size: 14, weight: .semibold))
                             Text("No loaded tasks have dates yet. Select a task to set its date fields.").font(.system(size: 12)).foregroundStyle(.secondary)
-                        }.padding(16).frame(maxWidth: 760, alignment: .leading)
+                        }.padding(16).frame(maxWidth: .infinity, alignment: .leading)
                             .background(Color.accentColor.opacity(0.035), in: RoundedRectangle(cornerRadius: 12))
-                        if !undated.isEmpty { undatedList.frame(maxWidth: 760, alignment: .leading) }
+                        if !undated.isEmpty { undatedList.frame(maxWidth: .infinity, alignment: .leading) }
                     }
                 }.padding(20).frame(maxWidth: .infinity, minHeight: geometry.size.height, alignment: .topLeading)
             }.defaultScrollAnchor(.top)
@@ -79,13 +79,13 @@ struct ProjectRoadmap: View {
                 Text("None").tag("")
                 ForEach(dateFields) { Text($0.name).tag($0.id) }
             }
-        } label: { Label("Schedule settings", systemImage: "slider.horizontal.3") }.controlSize(.small)
+        } label: { Label("Schedule settings", symbol: "slider.horizontal.3") }.controlSize(.small)
     }
 
     private var undatedList: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 8) {
-                Label("Unscheduled", systemImage: "calendar.badge.questionmark").font(.system(size: 12, weight: .semibold))
+                Label("Unscheduled", symbol: "calendar.badge.questionmark").font(.system(size: 12, weight: .semibold))
                 Text(undated.count.formatted()).font(.caption.monospacedDigit()).foregroundStyle(.secondary)
                 Spacer(minLength: 0)
             }.padding(13)
@@ -94,7 +94,7 @@ struct ProjectRoadmap: View {
                 HStack(alignment: .center, spacing: 12) {
                     Button { select(entry.row) } label: {
                         HStack(alignment: .top, spacing: 8) {
-                            Image(systemName: entry.invalidDate || entry.invalidRange ? "exclamationmark.triangle" : ProjectTaskStyle.symbol(entry.row))
+                            SymbolIcon(entry.invalidDate || entry.invalidRange ? "exclamationmark.triangle" : ProjectTaskStyle.symbol(entry.row))
                                 .foregroundStyle(entry.invalidDate || entry.invalidRange ? .orange : ProjectTaskStyle.color(entry.row)).padding(.top, 2)
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(entry.row.title).font(.system(size: 12, weight: .medium)).foregroundStyle(.primary).lineLimit(2).multilineTextAlignment(.leading)
@@ -105,7 +105,7 @@ struct ProjectRoadmap: View {
                     Button {
                         if let field = resolved.due ?? resolved.start, let editDate { editDate(entry.row, field) }
                         else { select(entry.row) }
-                    } label: { Label("Schedule", systemImage: "calendar.badge.plus").font(.system(size: 11, weight: .medium)) }
+                    } label: { Label("Schedule…", symbol: "calendar.badge.plus").font(.system(size: 11, weight: .medium)) }
                         .buttonStyle(.borderless).fixedSize().disabled(dateFields.isEmpty).help("Edit task date")
                     Spacer(minLength: 0)
                 }.padding(13).frame(minHeight: 54, alignment: .leading)
@@ -135,7 +135,7 @@ struct ProjectRoadmap: View {
                         HStack(spacing: 0) {
                             Button { select(entry.row) } label: {
                                 HStack(spacing: 8) {
-                                    Image(systemName: entry.completed ? "checkmark.circle.fill" : ProjectTaskStyle.symbol(entry.row)).foregroundStyle(entry.completed ? .green : ProjectTaskStyle.color(entry.row))
+                                    SymbolIcon(entry.completed ? "checkmark.circle.fill" : ProjectTaskStyle.symbol(entry.row)).foregroundStyle(entry.completed ? .green : ProjectTaskStyle.color(entry.row))
                                     Text(entry.row.title).font(.system(size: 12, weight: .medium)).lineLimit(2).multilineTextAlignment(.leading)
                                 }.padding(.horizontal, 12).frame(width: titleWidth, height: 48, alignment: .leading).contentShape(Rectangle())
                             }.buttonStyle(.plain)

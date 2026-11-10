@@ -191,7 +191,7 @@ const readAccess = async () => ({
 });
 createRoot(document.getElementById("root")!).render(
   <section
-    className="hosting-hub hosting-hub-projects"
+    className="hosting-hub hosting-hub-projects project-page"
     style={{
       height: "100vh",
       overflow: "auto",
@@ -217,6 +217,8 @@ createRoot(document.getElementById("root")!).render(
       }}
       me="alex"
       readAccess={readAccess}
+      // The page header opens settings and the composer; without it the fixture asks the workspace directly.
+      command={params.has("settings") ? (params.get("settings") === "fields" ? "fields" : params.get("settings") === "views" ? "views" : "project") : null}
     />
   </section>,
 );
@@ -232,7 +234,7 @@ if (params.get("view"))
   setTimeout(
     () =>
       document
-        .querySelectorAll<HTMLButtonElement>(".project-view-switch .btn")
+        .querySelectorAll<HTMLButtonElement>(".project-tabs > button")
         [
           ["overview", "calendar", "board", "list", "timeline"].indexOf(
             params.get("view")!,
@@ -252,30 +254,12 @@ if (params.has("selftest")) {
   document.body.append(output);
 }
 
-if (params.has("settings"))
-  setTimeout(() => {
-    document
-      .querySelector<HTMLButtonElement>(
-        ".project-hero-actions button:last-child",
-      )
-      ?.click();
-    if (params.get("settings") !== "project")
-      setTimeout(
-        () =>
-          document
-            .querySelectorAll<HTMLButtonElement>(
-              ".project-settings .project-composer-tabs button",
-            )
-            [params.get("settings") === "fields" ? 1 : 2]?.click(),
-        100,
-      );
-  }, 250);
 if (params.has("bulk"))
   setTimeout(
     () =>
       [
         ...document.querySelectorAll<HTMLButtonElement>(
-          ".project-toolbar button",
+          ".project-filters button",
         ),
       ]
         .find(

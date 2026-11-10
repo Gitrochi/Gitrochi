@@ -18,7 +18,7 @@ struct CommitComposer: View {
                     .lineLimit(1)
                 Spacer(minLength: 4)
                 Button { Task { await store.generateCommitMessage() } } label: {
-                    Label("AI message", systemImage: "sparkles")
+                    Label("AI message", symbol: "sparkles")
                 }
                 .buttonStyle(.borderless)
                 .foregroundStyle(StudioStyle.accent)
@@ -30,7 +30,7 @@ struct CommitComposer: View {
                     Divider()
                     Toggle("Amend previous commit", isOn: Binding(get: { store.amend }, set: { value in Task { await store.setAmend(value) } }))
                         .disabled(store.headHash == nil)
-                } label: { Label("Options", systemImage: "ellipsis").labelStyle(.iconOnly) }
+                } label: { Label("Options", symbol: "ellipsis").labelStyle(.iconOnly) }
                 .menuStyle(.borderlessButton)
                 .menuIndicator(.hidden)
                 .accessibilityLabel("Options")
@@ -40,7 +40,7 @@ struct CommitComposer: View {
             }
             .controlSize(.small)
             if let me = store.me {
-                Label { Text(verbatim: "\(me.name) · \(me.email)") } icon: { Image(systemName: "person.crop.circle") }
+                Label { Text(verbatim: "\(me.name) · \(me.email)") } icon: { SymbolIcon("person.crop.circle") }
                     .font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
                     .help("\(me.name) <\(me.email)>")
             }
@@ -72,7 +72,7 @@ struct CommitComposer: View {
             }
             .font(.system(size: 12)).foregroundStyle(.secondary)
             if store.amend {
-                Label("Amend previous commit", systemImage: "arrow.uturn.backward")
+                Label("Amend previous commit", symbol: "arrow.uturn.backward")
                     .font(.caption).foregroundStyle(.orange)
             }
             if let working = store.aiWorking {

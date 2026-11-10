@@ -16,7 +16,7 @@ struct ProjectActionReviewSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .top, spacing: 14) {
-                Image(systemName: destructive ? "trash" : "checklist").font(.system(size: 20, weight: .medium))
+                SymbolIcon(destructive ? "trash" : "checklist").font(.system(size: 20, weight: .medium))
                     .foregroundStyle(destructive ? Color.red : Color.accentColor).frame(width: 44, height: 44)
                     .background((destructive ? Color.red : Color.accentColor).opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
                 VStack(alignment: .leading, spacing: 6) {
@@ -27,7 +27,7 @@ struct ProjectActionReviewSheet: View {
             }.padding(24)
             VStack(alignment: .leading, spacing: 12) {
                 if !project.isEmpty {
-                    HStack { Label("Project", systemImage: "rectangle.3.group").foregroundStyle(.secondary); Spacer(); Text(project).fontWeight(.medium).lineLimit(2).multilineTextAlignment(.trailing) }.font(.callout)
+                    HStack { Label("Project", symbol: "rectangle.3.group").foregroundStyle(.secondary); Spacer(); Text(project).fontWeight(.medium).lineLimit(2).multilineTextAlignment(.trailing) }.font(.callout)
                 }
                 if !items.isEmpty {
                     Divider()
@@ -36,7 +36,7 @@ struct ProjectActionReviewSheet: View {
                 }
             }.padding(16).background(Color.secondary.opacity(0.04), in: RoundedRectangle(cornerRadius: 12)).padding(.horizontal, 24).padding(.bottom, 20)
             if let error {
-                Label(error, systemImage: "exclamationmark.circle").font(.callout).foregroundStyle(.red).fixedSize(horizontal: false, vertical: true).textSelection(.enabled).padding(.horizontal, 24).padding(.bottom, 18)
+                Label(error, symbol: "exclamationmark.circle").font(.callout).foregroundStyle(.red).fixedSize(horizontal: false, vertical: true).textSelection(.enabled).padding(.horizontal, 24).padding(.bottom, 18)
             }
             Divider()
             HStack(spacing: 12) {
@@ -56,7 +56,7 @@ struct ProjectActionReviewSheet: View {
         LazyVStack(alignment: .leading, spacing: 10) {
             ForEach(Array(items.enumerated()), id: \.offset) { _, item in
                 HStack(alignment: .top, spacing: 9) {
-                    Image(systemName: "circle.fill").font(.system(size: 4)).foregroundStyle(.tertiary).padding(.top, 6)
+                    SymbolIcon("circle.fill").font(.system(size: 4)).foregroundStyle(.tertiary).padding(.top, 6)
                     Text(item).font(.callout).lineLimit(3).fixedSize(horizontal: false, vertical: true).textSelection(.enabled).help(item)
                     Spacer(minLength: 0)
                 }

@@ -9,8 +9,6 @@ struct ReviewDraftPanel: View {
         let review = store.review?.number == number ? store.review : nil
         VStack(alignment: .leading, spacing: 8) {
             ForEach(review?.warnings ?? [], id: \.self) { warning in Text(warning).font(.caption).foregroundStyle(.orange) }
-            Text("Use the comment button beside a diff line to add it to your review. Drafts stay on this device until submitted.")
-                .font(.caption).foregroundStyle(.secondary)
             if !drafts.isEmpty {
                 Text("Pending line comments (\(drafts.count))").font(.subheadline.weight(.semibold))
                 if store.target?.provider == .gitlab {
@@ -19,11 +17,11 @@ struct ReviewDraftPanel: View {
                 ForEach(drafts) { draft in
                     VStack(alignment: .leading, spacing: 6) {
                         HStack(spacing: 6) {
-                            Image(systemName: "text.bubble").font(.caption)
+                            SymbolIcon("text.bubble").font(.caption)
                             Text("\(draft.anchor.path):\(draft.anchor.line)").font(.caption.monospaced()).lineLimit(2)
                             Text(draft.anchor.side == .left ? String(localized: "Old version") : String(localized: "New version")).font(.caption).foregroundStyle(.secondary)
                             Spacer()
-                            Button { store.removeReviewDraft(draft.id) } label: { Image(systemName: "trash") }
+                            Button { store.removeReviewDraft(draft.id) } label: { DesignIconImage(icon: .trash) }
                                 .buttonStyle(.borderless).help("Remove draft").disabled(store.reviewBusy)
                         }
                         if let review, draft.anchor.refs != review.refs {
@@ -55,21 +53,22 @@ struct ReviewThreadActions: View {
     var body: some View {
         if comment.threadID != nil, comment.kind == .comment {
             VStack(alignment: .leading, spacing: 6) {
-                HStack(spacing: 6) {
+                // text buttons, as the conversation draws its actions
+                HStack(spacing: 16) {
                     Button("Reply") { replying.toggle() }
                     if comment.resolvable {
-                        Button(comment.resolved ? String(localized: "Reopen thread") : String(localized: "Resolve thread")) {
+                        Button(comment.resolved ? String(localized: "Reopen thread") : String(localized: "Resolve")) {
                             Task { await store.resolveReviewThread(number, comment: comment) }
                         }
                     }
-                    if comment.resolved { Text("Resolved").font(.caption).foregroundStyle(.secondary) }
                 }
-                .controlSize(.small).disabled(store.reviewBusy)
+                .buttonStyle(PullRequestTextButtonStyle()).disabled(store.reviewBusy)
                 if replying {
-                    TextEditor(text: $bodyText).font(.callout).frame(height: 55).accessibilityLabel("Reply").disabled(store.reviewBusy)
+                    TextEditor(text: $bodyText).font(.system(size: 13)).frame(height: 55).accessibilityLabel("Reply").disabled(store.reviewBusy)
+                        .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.primary.opacity(0.16)))
                     Button("Send reply") {
                         Task { if await store.replyReviewComment(number, comment: comment, body: bodyText) { bodyText = ""; replying = false } }
-                    }.disabled(store.reviewBusy || bodyText.trimmed.isEmpty).controlSize(.small)
+                    }.buttonStyle(PullRequestButtonStyle()).disabled(store.reviewBusy || bodyText.trimmed.isEmpty)
                 }
             }
         }

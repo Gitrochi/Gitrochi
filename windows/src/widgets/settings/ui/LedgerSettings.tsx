@@ -1,4 +1,6 @@
-import { ClipboardPaste, DatabaseBackup, Globe, FolderOpen, History, Plus, PlugZap, RefreshCw, Undo2, X } from "lucide-react";
+import { ClipboardPaste, DatabaseBackup, History, PlugZap } from "lucide-react";
+import { Globe, FolderOpen, Undo2 } from "@/shared/icons";
+import { Plus, RefreshCw, X } from "@/shared/icons";
 import { useCallback, useEffect, useState } from "react";
 import { backupSize, BACKUPS_SHOWN, DEFAULT_WAIT_SEC, type LedgerAutoContinue, type LedgerBackupFile, type LedgerBaselineSource, ledgerBaselineSources, type LedgerInfo, type LedgerKindRule, type LedgerProjectChange, type LedgerProjectSettings, type LedgerRole, type LedgerHubSharing, ledgerHubSharing, type LedgerHubStatus, ledgerNotifier, ledgerRoles, type LedgerScanResult, type LedgerSettings as Settings, type LedgerStore, ledgerStore, ledgerTracking, type LedgerWakeAgents, repositoryPolicies, repositoryPolicy, shownBackups, WAKE_MAX_SEC, WAKE_MIN_SEC, wakeSetting, withRepositoryPolicy } from "@/entities/ledger";
 import { LedgerBrowserSheet } from "@/features/connect-chatgpt-browser";
@@ -156,7 +158,7 @@ export function LedgerSettings({ ledger }: { ledger?: LedgerStore }) {
       <div className="form-section" data-ledger-section="connections">
         <span className="form-section-title">{t("Connections")}</span>
         <LedgerConnections store={store} onOpenBrowser={() => setSheet("browser")} />
-        <span className="hint">{t("Hooks run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Gitrochi never edits MCP settings; copy the MCP command and run it yourself.")}</span>
+        <span className="hint">{t("Hooks and the MCP server run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Set up has the client register the server; if it cannot, copy the MCP command and run it yourself.")}</span>
       </div>
 
       <div className="form-section">

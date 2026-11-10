@@ -235,6 +235,8 @@ final class RepoStore: Identifiable {
     var ciBySha: [String: CIPipeline] = [:]
     var ciBadgeTask: Task<Void, Never>?
     var ciState: LoadState = .idle
+    /// When the runs last arrived, for "Showing data from 12m ago" after a refresh fails
+    var ciLoadedAt: Date?
     var ciJobs: [Int: [CIJob]] = [:]
     var ciDeployments: [Int: [CIDeployment]] = [:]
     /// 진행 중인 버튼 동작(같은 버튼을 두 번 누르지 않게)
@@ -513,7 +515,7 @@ final class RepoStore: Identifiable {
 
     // MARK: - 새로 고침
 
-    private static let statusArgs = ["status", "--porcelain=v2", "-z", "--branch", "--untracked-files=all"]
+    static let statusArgs = ["status", "--porcelain=v2", "-z", "--branch", "--untracked-files=all"]
 
     /// GITROCHI_TRACE=1 이면 새로 고침 종류와 걸린 시간을 표준 오류로(성능 확인용)
     static let tracing = ProcessInfo.processInfo.environment["GITROCHI_TRACE"] == "1"

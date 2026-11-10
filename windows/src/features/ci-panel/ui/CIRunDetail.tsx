@@ -1,44 +1,36 @@
-import {
-  CircleStop,
-  CirclePlay,
-  Copy,
-  Globe,
-  Hand,
-  Link,
-  RefreshCw,
-  RotateCw,
-  TriangleAlert,
-  X,
-} from "lucide-react";
-import {
-  type MouseEvent,
-  type ReactNode,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import { CircleStop, Hand, TriangleAlert } from "lucide-react";
+import { CirclePlay } from "@/shared/icons";
+import { Ellipsis, ExternalLink, RotateCw } from "@/shared/icons";
+import { type MouseEvent, type ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   canPlay,
   type CIDeployment,
   type CIJob,
   type CIPipeline,
+  type CIStatus,
   CIStatusIcon,
-  eventTitle,
+  firstLogLine,
   isActiveCI,
   isFinishedCI,
+  isLogError,
+  logLines,
+  type JobGroup,
+  jobGroups,
+  runTook,
   statusInfo,
 } from "@/entities/ci";
 import type { Provider } from "@/entities/git";
 import { accounts, workspaceJobLog } from "@/entities/hosting";
 import type { RepoStore } from "@/entities/repo";
+import { settings } from "@/shared/config";
 import { t } from "@/shared/i18n";
-import { longDate, useObserve } from "@/shared/lib";
-import { Button, IconButton, showContextMenu, Spinner } from "@/shared/ui";
+import { listWhen, useObserve } from "@/shared/lib";
+import { Button, HostedListChip, HostedListIconButton, HostedListTextButton, IconButton, type MenuItem, showContextMenu, showMenuBelow, Spinner, StatusPill, type StatusTone } from "@/shared/ui";
 
 /**
- * The run picked on the Actions page: its summary and commands on top, the jobs by stage on the left and the
- * picked job's log on the right, as on GitHub's run page. (macOS: CIRunDetailView.swift)
+ * The run picked on the Actions page, as the Actions board draws it: which run and its state, the title with its
+ * actions, the branch, commit and how long it took; then the jobs by result on the left and the picked job's log on
+ * the right. (macOS: CIRunDetailView.swift)
  */
 export function CIRunDetail({
   store,
@@ -64,122 +56,61 @@ export function CIRunDetail({
   }, [jobs, p.id]);
   const selected = jobs?.find((j) => j.id === job) ?? null;
   const busy = ci.busy.has(`pipeline:${p.id}`);
-  const failed = p.status === "failed" || p.status === "canceled";
   const deployments = ci.deployments.get(p.id) ?? [];
-  const trigger = [eventTitle(p.event), p.actor ? `@${p.actor}` : ""]
-    .filter(Boolean)
-    .join(" · ");
+  const took = runTook(p), start = p.started ?? p.created;
+  const more = t("More run actions");
   return (
     <div className="ci-run-detail col">
-      <header className="ci-run-head row">
-        <CIStatusIcon status={p.status} />
-        <strong>
-          {provider === "gitlab"
-            ? t("Pipeline #{0}", p.number)
-            : t("Run #{0}", p.number)}
-        </strong>
-        <span className="ci-status-pill" style={{ color: statusInfo[p.status].color }}>{statusInfo[p.status].title}</span>
-        <span className="spacer" />
-        {busy && <Spinner size={12} />}
-        <IconButton
-          small
-          icon={<RefreshCw size={12} />}
-          tip={t("Refresh")}
-          aria-label={t("Refresh")}
-          onClick={() => void ci.loadJobs(p)}
-        />
-      </header>
-      <section className="ci-run-summary col">
-        <h2 className="selectable">{runTitle(store, p)}</h2>
-        {jobs && <div className="ci-job-summary" aria-label={t("Loaded jobs")}>
-          <span>{t("Loaded jobs")} <strong>{jobs.length}</strong></span>
-          {[...new Set(jobs.map(item => item.status))].map(status => <span key={status}><CIStatusIcon status={status} size={12}/>{statusInfo[status].title} <strong>{jobs.filter(item => item.status === status).length}</strong></span>)}
-        </div>}
-        <dl className="ci-run-facts">
-          {provider === "github" && p.name && (
-            <>
-              <dt className="muted">{t("Workflow")}</dt>
-              <dd>{p.name}</dd>
-            </>
-          )}
-          <dt className="muted">{t("Branch")}</dt>
-          <dd className="mono selectable">{p.ref}</dd>
-          <dt className="muted">{t("Commit")}</dt>
-          <dd>
-            <button
-              className="link mono"
-              data-tip={t("View commit")}
-              onClick={() => store.reveal(p.sha)}
-            >
-              {p.sha.slice(0, 8)}
-            </button>
-          </dd>
-          <dt className="muted">{t("Trigger")}</dt>
-          <dd>{trigger}</dd>
-          {p.created != null && (
-            <>
-              <dt className="muted">{t("Created")}</dt>
-              <dd>{longDate(p.created)}</dd>
-            </>
-          )}
-        </dl>
-        <div className="row ci-run-actions">
-          {isActiveCI(p.status) ? (
-            <Button disabled={busy} onClick={() => ci.cancelPipeline(p)}>
-              <CircleStop size={13} /> {t("Cancel run")}
-            </Button>
-          ) : provider === "github" ? (
-            <>
-              <Button
-                disabled={busy || !failed}
-                onClick={() => void ci.retryPipeline(p, true)}
-              >
-                <RotateCw size={13} /> {t("Rerun failed jobs only")}
-              </Button>
-              <Button
-                disabled={busy}
-                onClick={() => void ci.retryPipeline(p, false)}
-              >
-                <RotateCw size={13} /> {t("Rerun all jobs")}
-              </Button>
-            </>
-          ) : (
-            <Button
-              disabled={busy || !failed}
-              onClick={() => void ci.retryPipeline(p, true)}
-            >
-              <RotateCw size={13} /> {t("Rerun failed and canceled jobs")}
-            </Button>
-          )}
-          <Button onClick={() => store.openUrl(p.url)}>
-            <Globe size={13} /> {t("Browser")}
-          </Button>
-          <Button onClick={() => store.copy(p.url)}>
-            <Link size={13} /> {t("Copy link")}
-          </Button>
+      <header className="ci-run-head">
+        <div className="ci-run-head-top">
+          <span className="ci-run-which">{p.name && `${p.name} · `}<span className="mono">{runName(provider, p)}</span></span>
+          <StatusPill tone={statusTone(p.status)} icon={<CIStatusIcon status={p.status} size={12} plain />}>{statusInfo[p.status].title}</StatusPill>
+          {busy && <Spinner size={12} />}
         </div>
-        {deployments.length > 0 && (
-          <DeploymentApproval
-            store={store}
-            pipeline={p}
-            deployments={deployments}
-          />
-        )}
-      </section>
-      <div className="ci-run-body">
-        <div className="ci-run-jobs">
-          <div className="ci-jobs-head row">
-            <span>{t("Jobs")}</span>
-            {!!jobs?.length && <span className="muted">{jobs.length}</span>}
+        <div className="ci-run-head-title">
+          <h2 className="selectable">{runTitle(store, p)}</h2>
+          {/* Open in browser stays in sight; rerunning, cancelling and the rest are in the More menu */}
+          <div className="ci-run-head-actions">
+            <Button onClick={() => store.openUrl(p.url)}>
+              <ExternalLink size={14} />
+              {t("Open in browser")}
+            </Button>
+            <HostedListIconButton label={more} aria-haspopup="menu" onClick={(event) => showMenuBelow(event.currentTarget, [
+              ...runCommands(store, p, provider, busy),
+              "divider",
+              { label: t("View commit"), onClick: () => store.reveal(p.sha) },
+              { label: t("Copy link"), onClick: () => store.copy(p.url) },
+              { label: t("Refresh"), onClick: () => void ci.loadJobs(p) },
+            ])}>
+              <Ellipsis size={14} />
+            </HostedListIconButton>
           </div>
+        </div>
+        <div className="ci-run-head-meta">
+          {/* a branch name is set in the UI font, a commit in the monospaced one */}
+          <HostedListChip square>{p.ref}</HostedListChip>
+          <button className="ci-link mono" data-tip={t("View commit")} onClick={() => store.reveal(p.sha)}>{p.sha.slice(0, 7)}</button>
+          {p.request != null && (
+            <button className="ci-link" onClick={() => { store.navigate("pullRequests"); store.select({ kind: "pullRequest", number: p.request! }); }}>
+              {t("Pull request #{0}", String(p.request))}
+            </button>
+          )}
+          {/* the list row owns the date; the detail says how long the run took */}
+          {took != null ? <span>{t("Took {0}", duration(took))}</span> : isActiveCI(p.status) && start != null ? <span>{t("Started {0}", listWhen(start))}</span> : null}
+        </div>
+      </header>
+      {deployments.length > 0 && <DeploymentApproval store={store} pipeline={p} deployments={deployments} />}
+      <div className="ci-run-body">
+        <nav className="ci-run-jobs" aria-label={t("Jobs")}>
           {!jobs ? (
             <Spinner size={12} />
           ) : !jobs.length ? (
-            <span className="muted">{t("No jobs")}</span>
+            <span className="hosted-caption">{t("No jobs")}</span>
           ) : (
-            stages(jobs).map(([stage, list]) => (
-              <section key={stage || "-"} className="ci-stage-group">
-                <div className="ci-stage"><span>{stage || t("Jobs")}</span><span className="ci-stage-count">{list.length}</span></div>
+            // the jobs by result, what failed first; each group says how many it holds
+            jobGroups(jobs).map(({ group, jobs: list }) => (
+              <section key={group} className="ci-job-group">
+                <span className="ci-job-group-title">{jobGroupTitle(group)} {list.length}</span>
                 {list.map((j) => (
                   <JobRow
                     key={j.id}
@@ -193,12 +124,12 @@ export function CIRunDetail({
               </section>
             ))
           )}
-        </div>
+        </nav>
         <div className="ci-run-log col">
           {selected ? (
-            <JobLog store={store} job={selected} close={() => setJob(null)} />
+            <JobLog store={store} job={selected} pipeline={p} close={() => setJob(null)} />
           ) : (
-            <div className="ci-log-empty muted">
+            <div className="ci-log-empty hosted-caption">
               {jobs?.length ? t("Choose a job to read its log here.") : null}
             </div>
           )}
@@ -213,6 +144,42 @@ export function runTitle(store: RepoStore, p: CIPipeline) {
   return p.title || store.ci.subject(p.sha) || p.name || p.sha.slice(0, 8);
 }
 
+/** Runs are written "run #318", never a bare number (docs/design.md, Text); GitLab calls them pipelines */
+export function runName(provider: Provider, p: CIPipeline) {
+  return provider === "gitlab" ? t("pipeline #{0}", String(p.number)) : t("run #{0}", String(p.number));
+}
+
+/** The tone a status badge takes; a status never uses the accent */
+export function statusTone(status: CIStatus): StatusTone {
+  if (status === "success") return "passed";
+  if (status === "failed") return "failed";
+  return status === "canceled" || status === "skipped" || status === "neutral" || status === "unknown" ? "neutral" : "waiting";
+}
+
+/** "5m 48s" */
+export function duration(s: number) {
+  const secs = Math.round(s);
+  return secs >= 60
+    ? t("{0}m {1}s", Math.floor(secs / 60), secs % 60)
+    : t("{0}s", secs);
+}
+
+const jobGroupTitle = (group: JobGroup) =>
+  t(({ failed: "Failed", running: "Running", waiting: "Waiting", passed: "Passed", other: "Other" } as const)[group]);
+
+/** Cancelling a run that is going, or rerunning one that ended */
+function runCommands(store: RepoStore, p: CIPipeline, provider: Provider, busy = false): MenuItem[] {
+  const ci = store.ci;
+  const failed = p.status === "failed" || p.status === "canceled";
+  if (isActiveCI(p.status)) return [{ label: t("Cancel run"), disabled: busy, onClick: () => ci.cancelPipeline(p) }];
+  if (provider === "github")
+    return [
+      { label: t("Rerun failed jobs only"), disabled: busy || !failed, onClick: () => void ci.retryPipeline(p, true) },
+      { label: t("Rerun all jobs"), disabled: busy, onClick: () => void ci.retryPipeline(p, false) },
+    ];
+  return [{ label: t("Rerun failed and canceled jobs"), disabled: busy || !failed, onClick: () => void ci.retryPipeline(p, true) }];
+}
+
 /** The run's commands, for the list's context menu */
 export function runMenu(
   e: MouseEvent,
@@ -220,72 +187,46 @@ export function runMenu(
   p: CIPipeline,
   provider: Provider,
 ) {
-  const ci = store.ci;
-  const failed = p.status === "failed" || p.status === "canceled";
   showContextMenu(e, [
     { label: t("Open in browser"), onClick: () => store.openUrl(p.url) },
     { label: t("View commit"), onClick: () => store.reveal(p.sha) },
     "divider",
-    ...(isActiveCI(p.status)
-      ? [{ label: t("Cancel run"), onClick: () => ci.cancelPipeline(p) }]
-      : provider === "github"
-        ? [
-            {
-              label: t("Rerun all jobs"),
-              onClick: () => void ci.retryPipeline(p, false),
-            },
-            {
-              label: t("Rerun failed jobs only"),
-              disabled: !failed,
-              onClick: () => void ci.retryPipeline(p, true),
-            },
-          ]
-        : [
-            {
-              label: t("Rerun failed and canceled jobs"),
-              disabled: !failed,
-              onClick: () => void ci.retryPipeline(p, true),
-            },
-          ]),
+    ...runCommands(store, p, provider),
     "divider",
     { label: t("Copy link"), onClick: () => store.copy(p.url) },
   ]);
 }
 
-/** GitLab orders jobs by stage; GitHub jobs have none and stay in one group */
-function stages(jobs: CIJob[]): [string, CIJob[]][] {
-  const order: string[] = [];
-  const by = new Map<string, CIJob[]>();
-  for (const j of jobs) {
-    if (!by.has(j.stage)) order.push(j.stage);
-    by.set(j.stage, [...(by.get(j.stage) ?? []), j]);
-  }
-  return order.map((stage) => [stage, by.get(stage)!]);
-}
-
 /**
  * The picked job's log, read with the account and masked for secrets; it stays on this computer.
- * A running job's log is read again every ten seconds, and the view keeps following the end while it is there.
+ * A running job's log is read again every ten seconds. Lines that name an error are marked in the failed tone; a log
+ * without one opens at its end and keeps following the end while it is there, one with an error opens on it.
  */
 function JobLog({
   store,
   job,
+  pipeline,
   close,
 }: {
   store: RepoStore;
   job: CIJob;
+  pipeline: CIPipeline;
   close: () => void;
 }) {
   useObserve(accounts);
+  useObserve(settings);
+  const wrap = settings.get<boolean>("ciLogWrap", false);
   const [text, setText] = useState(""),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
     [truncated, setTruncated] = useState(false),
-    [reload, setReload] = useState(0);
+    [reload, setReload] = useState(0),
+    // the lines before the part the log opens on are shown on request
+    [showAll, setShowAll] = useState(false);
   const generation = useRef(0),
     loaded = useRef<number | null>(null),
     following = useRef(true),
-    pre = useRef<HTMLPreElement>(null);
+    box = useRef<HTMLDivElement>(null);
   const identity = `${job.id}|${job.status}|${store.path}|${store.collaborationRevision}|${store.hostingAccount?.id}|${accounts.revision}`;
   useEffect(() => {
     let stop = false;
@@ -296,6 +237,7 @@ function JobLog({
       following.current = true;
       setText("");
       setTruncated(false);
+      setShowAll(false);
     }
     const run = async () => {
       setBusy(true);
@@ -325,86 +267,98 @@ function JobLog({
     // the job, its status and the account decide what to read; `reload` is the button
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [identity, reload]);
-  // it opens at the end, where a failure usually is
+  const lines = useMemo(() => logLines(text), [text]);
+  const errors = useMemo(() => lines.map(isLogError), [lines]);
+  const hasError = errors.includes(true);
+  const first = showAll ? 0 : firstLogLine(lines);
   useLayoutEffect(() => {
-    const el = pre.current;
-    if (el && following.current) el.scrollTop = el.scrollHeight;
-  }, [text]);
+    const el = box.current;
+    if (el && following.current && !hasError) el.scrollTop = el.scrollHeight;
+  }, [text, hasError]);
+  const provider = store.target?.provider ?? "gitlab";
+  const canRetry =
+    provider === "gitlab"
+      ? job.status === "failed" || job.status === "canceled" || job.status === "success"
+      : isFinishedCI(job.status) && !isActiveCI(pipeline.status);
+  // "Failed after 3m 12s" for a failed job, how long any other finished one took, else its state
+  const outcome =
+    job.duration != null && job.duration > 0
+      ? t(job.status === "failed" ? "Failed after {0}" : "Took {0}", duration(job.duration))
+      : statusInfo[job.status].title;
+  const more = t("More job actions");
   return (
     <>
-      <div className="ci-log-head row">
-        <CIStatusIcon status={job.status} size={12} />
-        <strong className="ellipsis">{job.name}</strong>
-        {job.duration != null && job.duration > 0 && (
-          <span className="muted">{duration(job.duration)}</span>
-        )}
-        {busy && <Spinner size={11} />}
-        <span className="spacer" />
-        <IconButton
-          small
-          icon={<RefreshCw size={12} />}
-          tip={t("Reload log")}
-          aria-label={t("Reload log")}
-          disabled={busy}
-          onClick={() => setReload((n) => n + 1)}
-        />
-        <IconButton
-          small
-          icon={<Copy size={12} />}
-          tip={t("Copy redacted log")}
-          aria-label={t("Copy redacted log")}
-          disabled={!text}
-          onClick={() => store.copy(text)}
-        />
-        <IconButton
-          small
-          icon={<Globe size={12} />}
-          tip={t("Open in browser")}
-          aria-label={t("Open in browser")}
-          onClick={() => store.openUrl(job.url)}
-        />
-        <IconButton
-          small
-          icon={<X size={13} />}
-          tip={t("Close log")}
-          aria-label={t("Close log")}
-          onClick={close}
-        />
+      <div className="ci-log-head">
+        <div className="ci-log-head-row">
+          <CIStatusIcon status={job.status} size={14} />
+          <strong className="mono ellipsis">{job.name}</strong>
+          {/* the failed tone on words that say it failed; the icon says it too */}
+          <span className={`ci-log-outcome${job.status === "failed" ? " status-tone" : ""}`} data-tone="failed">{outcome}</span>
+          {busy && <Spinner size={11} />}
+          <span className="spacer" />
+          <span className="ci-log-buttons">
+            {hasError && (
+              <Button onClick={() => { setShowAll(false); requestAnimationFrame(() => box.current?.querySelector(".ci-log-line.error")?.scrollIntoView({ block: "center" })); }}>
+                {t("Jump to first error")}
+              </Button>
+            )}
+            {canRetry && (
+              <Button disabled={store.ci.busy.has(`job:${job.id}`)} onClick={() => void store.ci.retryJob(job, pipeline)}>
+                <RotateCw size={14} />
+                {t("Re-run job")}
+              </Button>
+            )}
+            <HostedListIconButton label={t("Open in browser")} onClick={() => store.openUrl(job.url)}>
+              <ExternalLink size={13} />
+            </HostedListIconButton>
+            <HostedListIconButton label={more} aria-haspopup="menu" onClick={(event) => showMenuBelow(event.currentTarget, [
+              { label: t("Wrap long lines"), checked: wrap, onClick: () => settings.set("ciLogWrap", !wrap) },
+              { label: t("Copy redacted log"), disabled: !text, onClick: () => store.copy(text) },
+              { label: t("Reload log"), disabled: busy, onClick: () => setReload((n) => n + 1) },
+              "divider",
+              { label: t("Close log"), onClick: close },
+            ])}>
+              <Ellipsis size={14} />
+            </HostedListIconButton>
+          </span>
+        </div>
+        {truncated && <span className="hosted-caption ci-log-note">{t("Log preview is limited to 2 MB. Open the browser for the complete log.")}</span>}
       </div>
       {error ? (
         <p className="error-text selectable ci-log-message" role="alert">
           {error}
         </p>
       ) : !text ? (
-        <div className="ci-log-empty muted">{busy ? <Spinner size={14} /> : t("No log output yet.")}</div>
+        <div className="ci-log-empty hosted-caption">{busy ? <Spinner size={14} /> : t("No log output yet.")}</div>
       ) : (
-        <>
-          {truncated && (
-            <p className="muted ci-log-message">
-              {t(
-                "Log preview is limited to 2 MB. Open the browser for the complete log.",
-              )}
-            </p>
-          )}
-          <pre
-            ref={pre}
-            className="selectable mono ci-log-text"
-            aria-label={t("Job log")}
-            onScroll={(e) => {
-              const el = e.currentTarget;
-              following.current =
-                el.scrollTop + el.clientHeight >= el.scrollHeight - 8;
-            }}
-          >
-            {text}
-          </pre>
-        </>
+        <div
+          ref={box}
+          className={`ci-log-text selectable mono${wrap ? " wrap" : ""}`}
+          role="region"
+          aria-label={t("Job log")}
+          tabIndex={0}
+          onScroll={(e) => {
+            const el = e.currentTarget;
+            following.current = el.scrollTop + el.clientHeight >= el.scrollHeight - 8;
+          }}
+        >
+          {first > 0 && <HostedListTextButton className="ci-log-earlier" onClick={() => setShowAll(true)}>{t("Show {0} earlier lines", first)}</HostedListTextButton>}
+          {lines.slice(first).map((line, index) => (
+            <div key={first + index} className={`ci-log-line${errors[first + index] ? " error status-tone" : ""}`} data-tone="failed">
+              <span className="ci-log-number">{first + index + 1}</span>
+              <span className="ci-log-words">{line}</span>
+            </div>
+          ))}
+        </div>
       )}
     </>
   );
 }
 
-/** One job: status, name and duration, with its run, cancel or rerun button; a click shows its log */
+/**
+ * One job: status, name and duration; a click shows its log. A job that waits to be run, or one that can be stopped,
+ * carries that one button.
+ */
 function JobRow({
   store,
   job,
@@ -428,54 +382,33 @@ function JobRow({
       : isFinishedCI(job.status) && !isActiveCI(pipeline.status);
   const playable = canPlay(job) && provider === "gitlab";
   const cancellable = isActiveCI(job.status) && provider === "gitlab";
-  const stop = (e: React.MouseEvent) => e.stopPropagation();
   let action: ReactNode = null;
   if (ci.busy.has(`job:${job.id}`)) action = <Spinner size={11} />;
   else if (playable)
     action = (
       <IconButton
-        small
         icon={<CirclePlay size={15} />}
-        style={{ color: "var(--accent)" }}
         tip={
           job.status === "scheduled"
             ? t("Run now (don't wait for the schedule)")
             : t("Run manual job")
         }
-        onClick={(e) => {
-          stop(e);
-          ci.playJob(job, pipeline);
-        }}
+        onClick={() => ci.playJob(job, pipeline)}
       />
     );
   else if (cancellable)
     action = (
       <IconButton
-        small
         icon={<CircleStop size={13} />}
         tip={t("Cancel job")}
-        onClick={(e) => {
-          stop(e);
-          void ci.cancelJob(job, pipeline);
-        }}
-      />
-    );
-  else if (canRetry && job.status !== "success")
-    action = (
-      <IconButton
-        small
-        icon={<RotateCw size={12} />}
-        tip={t("Rerun job")}
-        onClick={(e) => {
-          stop(e);
-          void ci.retryJob(job, pipeline);
-        }}
+        onClick={() => void ci.cancelJob(job, pipeline)}
       />
     );
   return (
     <div
-      className={`side-row ci-job ${selected ? "selected" : ""}`}
+      className={`ci-job ${selected ? "selected" : ""}`}
       data-job={job.id}
+      data-tip={job.stage ? `${job.stage} · ${statusInfo[job.status].title}` : statusInfo[job.status].title}
       onContextMenu={(e) =>
         showContextMenu(e, [
           {
@@ -507,34 +440,24 @@ function JobRow({
       }
     >
       <button className="ci-job-select" aria-pressed={selected} onClick={select}>
-        <CIStatusIcon status={job.status} size={14}/>
-        <span className="ci-job-label"><strong>{job.name}</strong><span>{statusInfo[job.status].title}</span></span>
-      {job.allowFailure && job.status === "failed" && (
-        <span
-          data-tip={t("Allowed to fail")}
-          style={{ color: "var(--orange)", display: "inline-flex" }}
-        >
-          <TriangleAlert size={11} />
-        </span>
-      )}
-      {job.duration != null && job.duration > 0 && (
-        <span className="side-sub" style={{ flex: "none" }}>
-          {duration(job.duration)}
-        </span>
-      )}
+        <CIStatusIcon status={job.status} size={14} />
+        <span className="ci-job-name mono ellipsis">{job.name}</span>
+        {job.allowFailure && job.status === "failed" && (
+          <span className="status-tone ci-job-allowed" data-tone="waiting" data-tip={t("Allowed to fail")}>
+            <TriangleAlert size={11} />
+          </span>
+        )}
+        {job.duration != null && job.duration > 0 && <span className="ci-job-time mono">{duration(job.duration)}</span>}
       </button>
       {action}
     </div>
   );
 }
 
-function duration(s: number) {
-  const secs = Math.round(s);
-  return secs >= 60
-    ? t("{0}m {1}s", Math.floor(secs / 60), secs % 60)
-    : t("{0}s", secs);
-}
-
+/**
+ * A deployment that waits for approval (GitHub environment protection rules): white with a hairline, the waiting icon
+ * and words in its tone, and the two answers
+ */
 function DeploymentApproval({
   store,
   pipeline,
@@ -546,46 +469,25 @@ function DeploymentApproval({
 }) {
   const mine = deployments.filter((d) => d.canApprove);
   return (
-    <div
-      className="col"
-      style={{
-        gap: 6,
-        padding: 8,
-        margin: "2px 0 4px",
-        borderRadius: 6,
-        background: "color-mix(in srgb, var(--orange) 10%, transparent)",
-      }}
-    >
-      <span
-        className="row"
-        style={{ gap: 4, color: "var(--orange)", fontWeight: 600, fontSize: 11.5 }}
-      >
-        <Hand size={12} />{" "}
+    <div className="ci-approval status-tone" data-tone="waiting">
+      <Hand size={14} />
+      <span className="ci-approval-title">
         {t(
           "Waiting for deployment approval: {0}",
           deployments.map((d) => d.environment).join(", "),
         )}
       </span>
       {mine.length ? (
-        <div className="row" style={{ gap: 6 }}>
-          <Button
-            kind="primary"
-            size="small"
-            onClick={() => store.ci.reviewDeployment(pipeline, mine, true)}
-          >
+        <>
+          <Button kind="primary" onClick={() => store.ci.reviewDeployment(pipeline, mine, true)}>
             {t("Approve")}
           </Button>
-          <Button
-            size="small"
-            onClick={() => store.ci.reviewDeployment(pipeline, mine, false)}
-          >
+          <Button onClick={() => store.ci.reviewDeployment(pipeline, mine, false)}>
             {t("Reject")}
           </Button>
-        </div>
+        </>
       ) : (
-        <span className="muted" style={{ fontSize: 11.5 }}>
-          {t("This account can't approve.")}
-        </span>
+        <span className="hosted-caption">{t("This account can't approve.")}</span>
       )}
     </div>
   );

@@ -108,7 +108,7 @@ private struct MarkdownBlock: View {
 
     private static func marker(ordered: Bool, number: Int, task: Bool?) -> Text {
         if let task {
-            return Text(Image(systemName: task ? "checkmark.square.fill" : "square")).foregroundStyle(task ? Color.accentColor : Color.secondary)
+            return Text(DesignSymbols.labelImage(task ? "checkmark.square.fill" : "square")).foregroundStyle(task ? Color.accentColor : Color.secondary)
         }
         return ordered ? Text(verbatim: "\(number).").monospacedDigit() : Text(verbatim: "•")
     }

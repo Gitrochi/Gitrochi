@@ -1,6 +1,9 @@
 import Foundation
 
 struct AccountWorkItem: Identifiable {
+    /// What the item is about; only requests and issues can open on a page of the app
+    enum Kind { case request, issue, other }
+
     let id: String
     let title: String
     let repository: String
@@ -12,6 +15,18 @@ struct AccountWorkItem: Identifiable {
     var unread: Bool
     let readID: String?
     let origin: String
+    var kind = Kind.other
+    /// Why the server put it in the inbox, as it says it (`review_requested`, `mentioned` ...); empty in My work
+    var reason = ""
+    /// Who caused the notification, when the server names them
+    var actor = ""
+    var updated: Date?
+    /// open, draft, merged or closed; empty when the list does not say
+    var status = ""
+    var body = ""
+    /// A request's branches, when the list carries them
+    var source = ""
+    var target = ""
 }
 @MainActor enum AccountWorkAPI {
     static func origin(_ c: ReviewAccess, accountID: String = "") -> String {
@@ -149,13 +164,41 @@ struct AccountWorkItem: Identifiable {
         let author =
             text(obj(record, "user"), "login").isEmpty
             ? text(obj(record, "author"), "username") : text(obj(record, "user"), "login")
-        return AccountWorkItem(
+        var item = AccountWorkItem(
             id: "\(kind)-\(id)-\(repository)", title: title, repository: repository,
             host: c.target.host, url: url.absoluteString, number: number, state: state,
             author: author,
             unread: kind == "inbox"
                 && (c.target.provider == .gitlab || CollaborationAPI.bool(record, "unread")),
             readID: kind == "inbox" ? id : nil, origin: origin(c, accountID: accountID))
+        // What the list already carries about the subject; nothing more is requested for a row
+        let type = text(subject, "type").isEmpty ? text(record, "target_type") : text(subject, "type")
+        if kind == "inbox" {
+            item.kind = ["PullRequest", "MergeRequest"].contains(type) ? .request : type == "Issue" ? .issue : .other
+            item.reason = text(record, "reason").isEmpty ? text(record, "action_name") : text(record, "reason")
+            let who = obj(record, "author")
+            item.actor = text(who, "name").isEmpty ? text(who, "username") : text(who, "name")
+        } else {
+            item.kind = ["issues", "myIssues"].contains(kind) ? .issue : .request
+        }
+        // a GitLab to-do describes its request or issue in `target`; everywhere else the record is the subject
+        let details = kind == "inbox" ? target : record
+        item.updated = date(text(record, "updated_at").isEmpty ? text(record, "created_at") : text(record, "updated_at"))
+        let draft = CollaborationAPI.bool(details, "draft") || CollaborationAPI.bool(details, "work_in_progress")
+        let subjectState = text(details, "state")
+        item.status = ["open", "opened"].contains(subjectState) ? (draft ? "draft" : "open") : ["merged", "closed"].contains(subjectState) ? subjectState : ""
+        item.body = text(details, "body").isEmpty ? text(details, "description") : text(details, "body")
+        item.source = text(details, "source_branch")
+        item.target = text(details, "target_branch")
+        return item
+    }
+    /// The servers' timestamps, with or without fractional seconds
+    static func date(_ value: String) -> Date? {
+        guard !value.isEmpty else { return nil }
+        let formatter = ISO8601DateFormatter()
+        if let date = formatter.date(from: value) { return date }
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter.date(from: value)
     }
     static func read(_ c: ReviewAccess, item: AccountWorkItem, accountID: String = "") async throws
     {

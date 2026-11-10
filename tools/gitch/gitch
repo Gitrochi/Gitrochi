@@ -784,9 +784,18 @@ parse_url() {
       h=${hp##*@}; p=${u#*:}; U_KIND=ssh ;;
     *) U_KIND=local; return 1 ;;
   esac
-  p=${p#/}; p=${p%/}; p=${p%.git}
+  p=${p#/}; p=${p%/}
   h=$(lower "$h")
   [ -z "$h" ] && { U_KIND=local; return 1; }
+  if [ "$U_KIND" = https ]; then
+    # A page address copied from the browser (…/tree/main, …/pull/3, GitLab's …/-/merge_requests/4)
+    # names the repository it belongs to; keep only that repository path.
+    p=${p%%[?#]*}
+    case "$p" in */-/*) p=${p%%/-/*} ;; esac
+    case "$h/$p" in github.com/*/*/*) rest=${p#*/}; p=${p%%/*}/${rest%%/*} ;; esac
+    p=${p%/}
+  fi
+  p=${p%.git}
   if find_alias "$h"; then U_ALIAS=${B_ALIAS[$BI]}; U_HOST=${B_HOST[$BI]}; else U_HOST=$h; fi
   U_PATH=$p; U_OWNER=${p%%/*}
   return 0

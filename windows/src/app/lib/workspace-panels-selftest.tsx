@@ -2,11 +2,12 @@ import { createRoot } from "react-dom/client";
 import type { ReactNode } from "react";
 import type { SheetKind } from "@/entities/git";
 import { RepoStore } from "@/entities/repo";
-import { accounts } from "@/entities/hosting";
+import { accounts, workStateTitle } from "@/entities/hosting";
 import { AccountWorkspacePanel, WorkspaceContent } from "@/pages/repo";
-import { WorkspaceHomePanel, ActionsWorkspacePanel } from "@/widgets/workspace-panels";
+import { WorkspaceHomePanel, ActionsWorkspacePanel, RemoteRepositorySearch } from "@/widgets/workspace-panels";
 import { HostingHubPanel } from "@/widgets/hosting-hub";
 import { IssueListSection } from "@/widgets/sidebar";
+import { Toolbar } from "@/widgets/toolbar";
 import { IssueEditorSheet } from "@/features/edit-issue";
 import { ipc } from "@/shared/api";
 import { keyLabel, settings } from "@/shared/config";
@@ -24,7 +25,7 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
   const requests: { method: string; path: string }[] = [];
   let copies = "", writes = 0, mentions = 0, releases = 0, projectReads = 0;
   const profile = { id: "workspace-fixture", provider: "github" as const, server: "https://github.com", username: "fixture", name: null, avatarURL: null };
-  const issue = { number: 7, title: "Fixture issue", body: "Fixture body", state: "open", html_url: "https://github.com/fixture/repo/issues/7", user: { login: "fixture" } };
+  const issue = { number: 7, title: "Fixture issue", body: "Fixture body", state: "open", html_url: "https://github.com/fixture/repo/issues/7", user: { login: "fixture" }, comments: 2, assignees: [{ login: "fixture" }], labels: [{ name: "fixture-label", color: "1f5a9e" }] };
   const check = (value: unknown, message: string) => { if (!value) throw new Error(message); };
   const until = async (test: () => boolean) => {
     const deadline = Date.now() + 3500;
@@ -80,13 +81,15 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
       return { status: 200, body: JSON.stringify(issue) };
     };
     ipc.ciLog = async () => ({ body: "build passed\nAuthorization: Bearer private-secret\nfixture-token", truncated: false });
-    // Home: the welcome actions, recents and the search of repositories on a server
+    // Home: the three repository actions, the filter and today's tasks, and nothing else
     await mount(<WorkspaceHomePanel store={store} />);
-    check(await until(() => projectReads === 1 && [...host.querySelectorAll("button")].some((button) => button.textContent?.trim() === t("Open project workspace"))), "Home project catalog did not finish loading");
-    check(!host.querySelector(".planning-error"), "Home project catalog returned a hidden fixture error");
+    check(await until(() => projectReads === 1 && !!host.querySelector(".home-tasks .home-list")), "Home task list did not finish loading");
     check(writes === 0, `Home performed an unexpected mutation: ${writeDetails()}`);
-    check(host.querySelector(".welcome") && [...host.querySelectorAll("button")].some((b) => b.textContent?.trim() === t("Open repository…")), "Home missing the welcome actions");
-    check(host.textContent?.includes(t("Recent repositories")) && host.textContent?.includes(t("Repositories on a server")), "Home missing recents or the server search");
+    check(host.querySelector(".home-page") && [t("Open…"), t("Clone…"), t("New repository…")].every((label) => [...host.querySelectorAll(".home-actions button")].some((b) => b.textContent?.trim() === label)), "Home missing the repository actions");
+    check(host.querySelector(".home-filter input") && host.textContent?.includes(t("Tasks for today")) && [...host.querySelectorAll("button")].some((b) => b.textContent?.trim() === t("Open Projects")), "Home missing the filter or today's tasks");
+    check(!host.querySelector(".planning-dashboard") && !host.querySelector(".remote-search") && !host.querySelector(".welcome"), "Home must show only repositories and today's tasks");
+    // The search of repositories on a server, no longer on Home, keeps its checks
+    await mount(<RemoteRepositorySearch store={store} />);
     await change(host.querySelector(".remote-search select")!, profile.id);
     await change(host.querySelector(".remote-search input")!, "fixture remote");
     await click("Search");
@@ -101,19 +104,26 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
     // Account: Inbox, My work and Organizations on one page; Releases and Projects have pages of their own
     settings.set("accountPageSection", "inbox");
     await mount(<AccountWorkspacePanel store={store} openSettings={() => {}} />);
-    check(host.querySelectorAll(".account-page-sections .segmented button").length === 3, "Account page must offer its three sections");
-    check([...host.querySelectorAll(".account-page-sections button")].every((b) => b.textContent?.trim() !== t("Projects") && b.textContent?.trim() !== t("Releases")), "Releases and Projects must not be account sections");
+    const sectionTabs = [...host.querySelectorAll<HTMLButtonElement>('.account-tabs [role="tab"]')];
+    check(sectionTabs.length === 3, "Account page must offer its three sections");
+    check(sectionTabs.every((b) => b.textContent?.trim() !== t("Projects") && b.textContent?.trim() !== t("Releases")), "Releases and Projects must not be account sections");
+    check(sectionTabs.every((b) => !/\d/.test(b.textContent ?? "")), "The section tabs carry no count; the filter owns the unread count");
     check(!host.querySelector("h1"), "Account sections must not show a large page title");
-    check(mentions > 0 && host.textContent?.includes("Fixture mention"), "Inbox did not query mentions");
+    check(host.querySelector(".account-picker")?.textContent?.includes("github.com · @fixture"), "The page must name the account it reads");
+    check(await until(() => mentions > 0 && !!host.querySelector(".account-row")), "Inbox did not load the account's notifications");
+    const inboxRow = host.querySelector<HTMLButtonElement>(".account-row")!;
+    check(inboxRow.textContent?.includes("Fixture mention") && inboxRow.textContent.includes("#7") && inboxRow.textContent.includes(t("Mentioned")), "An inbox row must show its title, number and reason");
+    check(inboxRow.classList.contains("unread") && inboxRow.getAttribute("aria-current") === "true", "The first notification must be unread and selected");
+    check(host.querySelector(".account-list .segmented")?.textContent === t("Unread {0}", 1) + t("All {0}", 1), "The filter must count the unread and all notifications");
     check(!host.querySelector('[role="dialog"]'), "Inbox is still a modal");
-    host.querySelector<HTMLButtonElement>(".inbox-item")!.click();
-    await pause();
-    check(host.textContent?.includes("Fixture comment"), "Inbox conversation missing");
+    // the open repository's own issue is handed to the Issues page; marking it read is one request
+    check([...host.querySelectorAll(".account-detail-actions button")].some((b) => b.textContent?.trim() === t("Open in Issues")), "A notification of the open repository must open on its page");
     await click("Mark as read");
-    check(await until(() => writes === 1 && !store.inboxBusy && store.inboxDetail?.item.unread === false), `Mark-read mutation did not finish: ${writeDetails()}`);
+    check(await until(() => writes === 1 && !host.querySelector(".account-row.unread")), `Mark-read mutation did not finish: ${writeDetails()}`);
+    check(requests.some((request) => request.method === "PATCH" && request.path === "/notifications/threads/44"), "Mark as read reached the wrong thread");
+    check(host.querySelector<HTMLButtonElement>(".account-text-button")?.disabled === true, "Mark all as read must be disabled when nothing is unread");
     await click("My work");
-    await pause();
-    check(await until(() => host.textContent?.includes("Fixture pull request") === true && host.textContent?.includes("Fixture issue") === true), `My work summaries missing: ${writeDetails()}`);
+    check(await until(() => host.querySelector(".account-row")?.textContent?.includes("Fixture global work") === true), `My work did not list the account's open work: ${writeDetails()}`);
     check(settings.get<string>("accountPageSection", "") === "myWork", "The account section was not remembered");
     check([...host.querySelectorAll("button")].every((b) => b.textContent?.trim() !== t("Gists")), "Gists must be gone");
     reset();
@@ -125,11 +135,13 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
     store.target = null;
     settings.set("accountPageSection", "myWork");
     await mount(<AccountWorkspacePanel store={store} openSettings={() => {}} />);
-    check(host.textContent?.includes(t("Select an account to load work across its repositories.")), "Global work did not require an explicit account");
-    await change(host.querySelector('select[aria-label="' + t("Account and server") + '"]')!, profile.id);
-    check(host.textContent?.includes("Fixture global work") && host.textContent?.includes("github.com/fixture/other"), "No-repository account work missing");
-    await click("Assigned requests");
-    check(host.textContent?.includes("Fixture global work"), "Global assigned requests missing");
+    // without a repository the page reads the account its picker shows
+    check(await until(() => host.querySelector(".account-row")?.textContent?.includes("Fixture global work") === true), "No-repository account work missing");
+    check(host.querySelector(".account-detail-meta")?.textContent?.includes("github.com/fixture/other"), "The detail must say where the item lives");
+    check([...host.querySelectorAll(".account-detail-actions button")].every((b) => b.textContent?.trim() !== t("Open in Pull requests")), "Another repository's request must open in the browser only");
+    const searches = () => requests.filter((request) => request.path === "/search/issues").length, searched = searches();
+    await change(host.querySelector<HTMLSelectElement>(`select[aria-label="${t("Work category")}"]`)!, "assignedRequests");
+    check(await until(() => searches() > searched && host.querySelector(".account-row")?.textContent?.includes("Fixture global work") === true), "Global assigned requests missing");
     reset();
     store.target = repositoryTarget;
     store.path = "C:/fixture/repo";
@@ -140,10 +152,18 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
     host.querySelector<HTMLElement>('.side-row[data-issue="7"]')!.click(); await pause();
     check(store.destination === "issues" && store.inboxDetail?.item.number === 7, "A sidebar issue did not open on the Issues page");
     reset();
-    // the page keeps the issue that was just opened and shows it like a pull request
-    await mount(<WorkspaceContent store={store} openSettings={() => {}} />);
-    check(host.querySelector(".workspace-pr-list .side-row[data-issue=\"7\"]") && !host.querySelector(".workspace-pr-list .side-head .chev"), "The Issues page must show the fixed shared list");
-    check(host.textContent?.includes(t("Issue #{0}", 7)) && host.textContent?.includes("Fixture comment") && host.querySelector(".issue-detail .md"), "The opened issue was cleared or its Markdown conversation is missing");
+    // the page keeps the issue that was just opened and shows it like a pull request; the way back is in the toolbar
+    await mount(<><Toolbar store={store} /><WorkspaceContent store={store} openSettings={() => {}} /></>);
+    const issueRow = host.querySelector('.hosted-list .hosted-row[data-issue="7"]');
+    check(issueRow?.classList.contains("selected") && !host.querySelector(".hosted-list .side-head"), "The Issues page must show its own list column with the open issue selected");
+    // a row ends with its comment count and its author's avatar, like a pull request row
+    check(issueRow?.querySelector(".issue-row-comments")?.textContent === "2" && issueRow.querySelector(".issue-row-author .avatar"), "An issue row must end with its comment count and avatar");
+    // only the segment that needs attention counts; a count appears once per screen
+    check(await until(() => [...host.querySelectorAll(".hosted-list .hosted-segments button")].map((b) => b.textContent?.trim()).join("|") === [workStateTitle("open"), `${t("Assigned to you")} 1`, workStateTitle("closed")].join("|")),
+      `The issue filters must be Open, Assigned to you with its count, and Closed: ${[...host.querySelectorAll(".hosted-list .hosted-segments button")].map((b) => b.textContent).join("|")}`);
+    check(host.querySelector(".hosted-summary")?.textContent?.includes(t("Assigned to you")) && [...host.querySelectorAll(".hosted-summary button")].some((b) => b.textContent?.trim() === t("Create branch for #{0}", "7")), "The summary must say what is assigned and offer the next step");
+    check(host.querySelector(".issue-detail .issue-number")?.textContent === "#7" && host.querySelector(".issue-detail .issue-head .status-pill") && host.textContent?.includes("Fixture comment") && host.querySelector(".issue-detail .md"), "The opened issue was cleared or its Markdown conversation is missing");
+    check(host.querySelector(".issue-detail .issue-facts")?.textContent?.includes("@fixture") && host.querySelector(".issue-detail .issue-labels")?.textContent?.includes("fixture-label"), "The Details card must list assignees and labels");
     check(writes === 1, `Navigation performed an unexpected mutation: ${writeDetails()}`);
     const before = writes;
     const composer = host.querySelector<HTMLTextAreaElement>(`.issue-detail textarea[aria-label="${t("Comment")}"]`)!;
@@ -154,7 +174,7 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
     check(store.confirm?.destructive === false, "Closing an issue must ask first");
     store.confirm = null;
     // new and edited issues use the editor dialog
-    host.querySelector<HTMLButtonElement>(`button[aria-label="${t("New issue")}"]`)!.click(); await pause();
+    await click("New issue…");
     check(sheet()?.kind === "issueEditor" && (sheet() as { number?: number }).number === undefined, "New issue did not open the editor dialog");
     const dialog = document.createElement("div"); document.body.append(dialog);
     let editor = createRoot(dialog);
@@ -170,12 +190,12 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
     };
     check(await editIn(sheet(), "Created fixture issue") && await until(() => writes === before + 2), `Creating an issue did not reach the fixture server: ${writeDetails()}`);
     store.sheet = null;
-    await click("Edit issue");
-    check(sheet()?.kind === "issueEditor" && (sheet() as { number?: number }).number === 7, "Edit issue did not open the editor dialog");
+    await click("Edit");
+    check(sheet()?.kind === "issueEditor" && (sheet() as { number?: number }).number === 7, "Edit did not open the editor dialog");
     check(await editIn(sheet(), "Edited fixture issue") && await until(() => writes === before + 3), `Editing an issue did not reach the fixture server: ${writeDetails()}`);
     store.sheet = null; dialog.remove();
-    // opened from the repository screen, the page offers the way back; from another page it does not
-    const back = () => host.querySelector<HTMLButtonElement>(`.page-header button[aria-label="${t("Back to the repository screen")}"]`);
+    // opened from the repository screen, the toolbar offers the way back; from another page it does not
+    const back = () => host.querySelector<HTMLButtonElement>(`.toolbar button[aria-label="${t("Back to the repository screen")}"]`);
     check(back()?.textContent?.includes(t("Repository")), "The Issues page opened from the repository screen must offer the way back");
     check(back()?.dataset.tip === keyLabel(t("Back to the repository screen (Ctrl+[)")), "The back button's tooltip must name its shortcut");
     back()!.click(); await pause();
@@ -190,15 +210,24 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
     // a row selects the run; a job shows its log beside the jobs
     host.querySelector<HTMLElement>('.ci-run[data-pipeline="1"]')!.click(); await pause(); await pause();
     check(store.ciSelected === 1 && host.querySelector(".ci-run-detail")?.textContent?.includes("Fixture run"), "Selecting a run did not show it");
-    check(!!host.querySelector(".ci-job-summary") && !!host.querySelector(".ci-stage-group"), "Run status summary or stage hierarchy is missing");
+    check(host.querySelector(".ci-run-detail .ci-run-head .status-pill") && host.querySelector(".ci-run-detail .ci-run-which")?.textContent === `CI · ${t("run #{0}", "12")}`, "The run header must name the workflow and the run and show its state");
+    check(host.querySelector(".ci-job-group-title")?.textContent === `${t("Passed")} 1`, "The jobs must be grouped by result with their count");
+    // counts only on the segments that need attention or are live; nothing failed, runs or waits here
+    check([...host.querySelectorAll(".ci-runs .hosted-segments button")].map((b) => b.textContent?.trim()).join("|") === [t("All"), t("Failed"), t("Running"), t("Waiting")].join("|"), "The run filters must be All, Failed, Running and Waiting, without counts of zero");
+    // the branch filter lives in the list's sort and filter menu
+    host.querySelector<HTMLButtonElement>(".ci-runs .hosted-sort")!.click(); await pause();
+    check([t("Newest first"), t("All branches"), t("Group by branch")].every((label) => [...document.querySelectorAll(".menu .menu-item")].some((item) => item.textContent?.trim() === label)), "The sort and filter menu must hold the order, the branch filter and the grouping");
+    window.dispatchEvent(new MouseEvent("mousedown")); await pause();
     host.querySelector<HTMLButtonElement>(".ci-job-select")!.click(); await pause(); await pause(); await pause();
     check(host.querySelector(".ci-log-text")?.textContent?.includes("build passed"), "Job log preview missing");
     check(host.querySelector(".ci-job-select")?.getAttribute("aria-pressed") === "true", "Selected job is not accessible");
-    host.querySelector<HTMLButtonElement>('button[aria-label="' + t("Copy redacted log") + '"]')!.click(); await pause();
+    check(host.querySelector(".ci-log-line .ci-log-number")?.textContent === "1", "Log lines must be numbered");
+    host.querySelector<HTMLButtonElement>('button[aria-label="' + t("More job actions") + '"]')!.click(); await pause();
+    [...document.querySelectorAll<HTMLElement>(".menu .menu-item")].find((item) => item.textContent?.trim() === t("Copy redacted log"))!.click(); await pause();
     check(copies.includes("[redacted]") && !copies.includes("private-secret") && !copies.includes("fixture-token"), "Copied log did not redact credentials");
     store.ciSelected = null;
     check(writes === 4, `Unexpected mutation total: ${writeDetails()}`);
-    return [true, `Home project catalog query=${projectReads} with zero mutations; exact read/comment/create/edit mutations=${writes}; Home welcome actions and remote clone, Account page with inbox mentions/read, my-work summaries, a Releases page and no gists, account-only work, sidebar issue opening the Issues page, issue detail with Markdown, composer, close confirmation and the create/edit dialog, and CI bounded redacted log passed`];
+    return [true, `Home project catalog query=${projectReads} with zero mutations; exact read/comment/create/edit mutations=${writes}; Home welcome actions and remote clone, Account page with its three tabs, the account's inbox and mark-read, my work across repositories, a Releases page and no gists, account-only work, sidebar issue opening the Issues page, issue detail with Markdown, composer, close confirmation and the create/edit dialog, and CI bounded redacted log passed`];
   } catch (error) {
     return [false, error instanceof Error ? error.message : String(error)];
   } finally {

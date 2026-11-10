@@ -82,7 +82,7 @@ struct RequestFixtureAvatarImage<Content: View>: View {
         let target = RepoTarget(provider: .github, remote: "origin", host: "github.com", path: "team/Gitrochi")
         let sha = String(repeating: "a", count: 40)
         var results: [[String: Any]] = []
-        let allScenarios = ["conversation", "checks", "organizations", "members", "empty", "activity", "pipeline"]
+        let allScenarios = ["conversation", "checks", "files", "organizations", "members", "empty", "activity", "pipeline"]
         let requestedScenarios = ProcessInfo.processInfo.environment["GITROCHI_REQUEST_LAYOUT_SCENARIOS"]
             .map { Set($0.split(separator: ",").map { String($0).trimmingCharacters(in: .whitespaces) }) }
         if let requestedScenarios {
@@ -90,8 +90,8 @@ struct RequestFixtureAvatarImage<Content: View>: View {
         }
         let scenarios = allScenarios.filter { requestedScenarios?.contains($0) ?? true }
         for scenario in scenarios {
-            requestFixtureDetailTab = scenario == "checks" ? "checks" : "conversation"
-            let sizes: [(CGFloat, CGFloat)] = ["activity", "pipeline"].contains(scenario) ? [(1080, 800), (1440, 1000), (700, 800)] : [(1080, 1200), (700, 1200)]
+            requestFixtureDetailTab = scenario == "checks" ? "checks" : scenario == "files" ? "files" : "conversation"
+            let sizes: [(CGFloat, CGFloat)] = scenario == "files" ? [(1440, 900), (1080, 900)] : ["activity", "pipeline"].contains(scenario) ? [(1080, 800), (1440, 1000), (700, 800)] : [(1080, 1200), (700, 1200)]
             for (width, height) in sizes {
                 for dark in [false, true] {
                     let store = RepoStore()
@@ -117,6 +117,21 @@ struct RequestFixtureAvatarImage<Content: View>: View {
                             ReviewComment(id: "feedback", author: "reviewer", body: "Looks ready. The **review timeline** makes the next step clear.", date: Date(timeIntervalSince1970: 1_792_973_000)),
                             ReviewComment(id: "approved", author: "maintainer", body: "The updated layouts are ready.", date: Date(timeIntervalSince1970: 1_792_973_100), kind: .approved)
                         ], state: ReviewState(approvedBy: ["maintainer"]))
+                    }
+                    if scenario == "files" {
+                        // the list keeps the fixture's file order, so the first file is the one with the patch
+                        requestFixtureDefaults.set("list", forKey: requestFileViewModeKey)
+                        // Changed files: the list shown in the wide window (compact header, 280pt tree) and hidden in the narrow one
+                        requestFixtureDefaults.set(width < 1200, forKey: "pullRequestListHidden")
+                        let patch = "@@ -1,4 +1,5 @@\n import SwiftUI\n \n-struct MemberCard: View {\n+/// One member of an organization\n+struct MemberProfileCard: View {\n     let name: String\n"
+                        store.review?.files = [
+                            ReviewFile(path: "macos/Sources/Views/Hub/HostingHubPanel.swift", oldPath: nil, kind: .modified, additions: 2, deletions: 1, patch: patch),
+                            ReviewFile(path: "macos/Sources/Views/Hub/MemberProfileCard.swift", oldPath: "macos/Sources/Views/Hub/MemberCard.swift", kind: .renamed, additions: 4, deletions: 0, patch: patch),
+                            ReviewFile(path: "docs/members.md", oldPath: nil, kind: .added, additions: 2, deletions: 0, patch: "@@ -0,0 +1,2 @@\n+# Members\n+Profiles of an organization's members.\n"),
+                        ]
+                        store.review?.comments.append(ReviewComment(id: "three", author: "morgan", body: "Rename the preview too?", date: nil, path: "macos/Sources/Views/Hub/MemberProfileCard.swift", line: 2, threadID: "three", replyID: 3, resolvable: true))
+                    } else {
+                        requestFixtureDefaults.removeObject(forKey: "pullRequestListHidden")
                     }
                     if scenario == "pipeline" {
                         store.target = RepoTarget(provider: .gitlab, remote: "origin", host: "gitlab.example.com", path: "demo/review-workspace")
@@ -169,7 +184,7 @@ struct RequestFixtureAvatarImage<Content: View>: View {
                     let recognition = VNRecognizeTextRequest(); recognition.recognitionLevel = .accurate; recognition.recognitionLanguages = ["en-US"]
                     try VNImageRequestHandler(data: data).perform([recognition])
                     let text = (recognition.results ?? []).compactMap { $0.topCandidates(1).first?.string }.joined(separator: "\n")
-                    let expected = scenario == "pipeline" ? ["Improve review and pipeline workspaces", "Loaded jobs", "Build workspace", "Update the dependency lockfile"] : scenario == "activity" ? ["Review workspace refresh", "Marked ready", "Conversation"] : scenario == "organizations" ? ["Gitrochi team", "Studio", "Repositories", "team/Gitrochi", "Desktop Git client", "Copy clone URL"] : scenario == "members" ? ["Alex Kim", "Sam Lee", "Maintainer", "Members"] : scenario == "checks" ? ["Review workspace refresh", "Build macOS", "External security", "TESTS PASSED"] : scenario == "empty" ? ["No pull requests match this filter", "Select a pull request"] : ["Review workspace refresh", "Implementation notes", "Review preview image", "Looks ready", "Approve"]
+                    let expected = scenario == "pipeline" ? ["Improve review and pipeline workspaces", "Open in browser", "Build workspace", "Update the dependency lockfile"] : scenario == "activity" ? ["Review workspace refresh", "Marked ready", "Conversation"] : scenario == "organizations" ? ["Gitrochi team", "Studio", "Repositories", "team/Gitrochi", "Desktop Git client", "Copy clone URL"] : scenario == "members" ? ["Alex Kim", "Sam Lee", "Maintainer", "Members"] : scenario == "checks" ? ["Review workspace refresh", "Build macOS", "External security", "TESTS PASSED"] : scenario == "files" ? ["Review workspace refresh", "HostingHubPanel.swift", "MemberProfileCard", "viewed", "Unified", "Split", "One member of an organization"] : scenario == "empty" ? ["No pull requests match this filter", "Select a pull request"] : ["Review workspace refresh", "Implementation notes", "Review preview image", "Looks ready", "Approve"]
                     try text.write(to: output.appendingPathComponent(name + ".txt"), atomically: true, encoding: .utf8)
                     let searchable = text.replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
                     for value in expected { precondition(searchable.localizedCaseInsensitiveContains(value), "Missing \(value): \(name)\n\(text)") }

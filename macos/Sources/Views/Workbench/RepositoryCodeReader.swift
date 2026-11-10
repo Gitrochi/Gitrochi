@@ -11,6 +11,8 @@ struct RepositoryCodeReader: View {
     @Binding var findText: String
     @Binding var matchIndex: Int
     var editableText: Binding<String>? = nil
+    /// false where the page draws the status bar itself: the tools then sit beside Find instead
+    var statusBar = true
     @ViewState private var tokens: [RepositoryCodeReading.Token] = []
     @ViewState private var starts: [Int] = []
     @ViewState private var matches: [NSRange] = []
@@ -37,66 +39,37 @@ struct RepositoryCodeReader: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 7) {
-                Button { findFocused = true } label: { Image(systemName: "magnifyingglass") }
+                Button { findFocused = true } label: { DesignIconImage(icon: .search) }
                     .keyboardShortcut("f", modifiers: .command).help("Find in file").accessibilityLabel("Find in file")
                 TextField("Find in file", text: $findText).textFieldStyle(.plain).focused($findFocused)
                     .onSubmit { advance(1) }.accessibilityLabel("Find in file")
                 if !findText.isEmpty {
                     Text(counter).font(.caption.monospacedDigit()).foregroundStyle(.secondary).fixedSize()
-                    Button { advance(-1) } label: { Image(systemName: "chevron.up") }.disabled(matches.isEmpty).help("Previous match").accessibilityLabel("Previous match")
-                    Button { advance(1) } label: { Image(systemName: "chevron.down") }.disabled(matches.isEmpty).help("Next match").accessibilityLabel("Next match")
-                    Button { findText = "" } label: { Image(systemName: "xmark") }.help("Clear search").accessibilityLabel("Clear search")
+                    Button { advance(-1) } label: { DesignIconImage(icon: .chevronUp) }.disabled(matches.isEmpty).help("Previous match").accessibilityLabel("Previous match")
+                    Button { advance(1) } label: { DesignIconImage(icon: .chevronDown) }.disabled(matches.isEmpty).help("Next match").accessibilityLabel("Next match")
+                    Button { findText = "" } label: { DesignIconImage(icon: .close) }.help("Clear search").accessibilityLabel("Clear search")
                 }
                 if editableText != nil {
-                    Button { replaceRequest = UUID() } label: { Image(systemName: "arrow.triangle.2.circlepath") }
+                    Button { replaceRequest = UUID() } label: { SymbolIcon("arrow.triangle.2.circlepath") }
                         .keyboardShortcut("f", modifiers: [.command, .option]).help("Find and replace").accessibilityLabel("Find and replace")
                 }
-            }.buttonStyle(.borderless).font(.callout).padding(.horizontal, 14).padding(.vertical, 11)
+                if !statusBar { tools.labelStyle(.iconOnly).foregroundStyle(.secondary) }
+            }.buttonStyle(.borderless).font(.callout).padding(.horizontal, 14).padding(.vertical, statusBar ? 11 : 8)
             Divider()
             if truncatedMatches {
                 Text("More than 10,000 matches. Refine your search.").font(.caption).foregroundStyle(.secondary).frame(maxWidth: .infinity, alignment: .leading).padding(10)
             }
             RepositorySourceView(text: text, tokens: tokens, lineStarts: starts, fontSize: fontSize, wraps: wraps, activeMatch: activeMatch, targetLine: targetLine, jumpID: jumpID, editableText: editableText, replaceRequest: replaceRequest)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-            Divider()
-            WorkbenchFlow(spacing: 12) {
-                Label(LocalizedStringKey(syntax ? RepositoryCodeReading.language(for: path) : "Plain text"), systemImage: "chevron.left.forwardslash.chevron.right")
-                Text(verbatim: String(localized: "{0} lines").replacingOccurrences(of: "{0}", with: starts.count.formatted()))
-                Button { goToLine = true } label: { Label("Go to line", systemImage: "list.number") }
-                    .keyboardShortcut("l", modifiers: .command).disabled(starts.isEmpty)
-                    .help("Go to line").accessibilityIdentifier("code-go-to-line")
-                    .popover(isPresented: $goToLine) { lineNavigation }
-                if syntax {
-                    Menu {
-                        if symbols.isEmpty { Text("No symbols found") }
-                        ForEach(symbols) { symbol in
-                            Button {
-                                jump(to: symbol.line)
-                            } label: { Text(symbol.name + " · " + String(localized: "Line {0}").replacingOccurrences(of: "{0}", with: symbol.line.formatted())) }
-                                .accessibilityIdentifier("code-symbol-\(symbol.line)")
-                        }
-                    } label: { Label("Outline", systemImage: "list.bullet.indent") }
-                        .menuStyle(.borderlessButton).fixedSize().help("Outline").accessibilityIdentifier("code-outline")
-                }
-                if editableText == nil { Label("Read only", systemImage: "lock") }
-                else { Label("Editable", systemImage: "pencil").help("Tab indents, Shift-Tab outdents. Undo and redo use the standard Edit menu shortcuts.") }
-                Button { wraps.toggle() } label: {
-                    Image(systemName: "text.word.spacing").foregroundStyle(wraps ? Color.accentColor : .secondary)
-                }.help("Wrap lines").accessibilityLabel("Wrap lines").accessibilityValue(wraps ? String(localized: "On") : String(localized: "Off"))
-                HStack(spacing: 6) {
-                    Button { fontSize = max(11, fontSize - 1) } label: { Image(systemName: "textformat.size.smaller") }.disabled(fontSize <= 11).help("Decrease font size").accessibilityLabel("Decrease font size")
-                    Text("\(Int(fontSize))").monospacedDigit().frame(minWidth: 15)
-                    Button { fontSize = min(20, fontSize + 1) } label: { Image(systemName: "textformat.size.larger") }.disabled(fontSize >= 20).help("Increase font size").accessibilityLabel("Increase font size")
-                }
-                Button {
-                    NSPasteboard.general.clearContents()
-                    NSPasteboard.general.setString(text, forType: .string)
-                    copied = true
-                } label: { Image(systemName: copied ? "checkmark" : "doc.on.doc") }
-                    .help(copied ? String(localized: "Copied") : String(localized: "Copy source"))
-                    .accessibilityLabel(copied ? String(localized: "Copied") : String(localized: "Copy source"))
-            }.buttonStyle(.borderless).font(.caption).foregroundStyle(.secondary).padding(.horizontal, 14).padding(.vertical, 10)
-                .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
+            if statusBar {
+                Divider()
+                WorkbenchFlow(spacing: 12) {
+                    Label(LocalizedStringKey(syntax ? RepositoryCodeReading.language(for: path) : "Plain text"), symbol: "chevron.left.forwardslash.chevron.right")
+                    Text(verbatim: String(localized: "{0} lines").replacingOccurrences(of: "{0}", with: starts.count.formatted()))
+                    tools
+                }.buttonStyle(.borderless).font(.caption).foregroundStyle(.secondary).padding(.horizontal, 14).padding(.vertical, 10)
+                    .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
+            }
         }
         .task(id: Document(text: text, path: path, syntax: syntax)) {
             if editableText == nil { tokens = []; starts = []; symbols = [] }
@@ -124,6 +97,45 @@ struct RepositoryCodeReader: View {
             Task { try? await Task.sleep(for: .seconds(2)); copied = false }
         }
         .onExitCommand { if findFocused { findText = "" } }
+    }
+
+    /// Go to line, the outline and the display controls: in the bar below the source, or beside Find
+    @ViewBuilder private var tools: some View {
+        Button { goToLine = true } label: { Label("Go to line", symbol: "list.number") }
+            .keyboardShortcut("l", modifiers: .command).disabled(starts.isEmpty)
+            .help("Go to line").accessibilityIdentifier("code-go-to-line")
+            .popover(isPresented: $goToLine) { lineNavigation }
+        if syntax {
+            Menu {
+                if symbols.isEmpty { Text("No symbols found") }
+                ForEach(symbols) { symbol in
+                    Button {
+                        jump(to: symbol.line)
+                    } label: { Text(symbol.name + " · " + String(localized: "Line {0}").replacingOccurrences(of: "{0}", with: symbol.line.formatted())) }
+                        .accessibilityIdentifier("code-symbol-\(symbol.line)")
+                }
+            } label: { Label("Outline", symbol: "list.bullet.indent") }
+                .menuStyle(.borderlessButton).fixedSize().help("Outline").accessibilityIdentifier("code-outline")
+        }
+        if statusBar {
+            if editableText == nil { Label("Read only", symbol: "lock") }
+            else { Label("Editable", symbol: "pencil").help("Tab indents, Shift-Tab outdents. Undo and redo use the standard Edit menu shortcuts.") }
+        }
+        Button { wraps.toggle() } label: {
+            SymbolIcon("text.word.spacing").foregroundStyle(wraps ? Color.accentColor : .secondary)
+        }.help("Wrap lines").accessibilityLabel("Wrap lines").accessibilityValue(wraps ? String(localized: "On") : String(localized: "Off"))
+        HStack(spacing: 6) {
+            Button { fontSize = max(11, fontSize - 1) } label: { SymbolIcon("textformat.size.smaller") }.disabled(fontSize <= 11).help("Decrease font size").accessibilityLabel("Decrease font size")
+            Text("\(Int(fontSize))").monospacedDigit().frame(minWidth: 15)
+            Button { fontSize = min(20, fontSize + 1) } label: { SymbolIcon("textformat.size.larger") }.disabled(fontSize >= 20).help("Increase font size").accessibilityLabel("Increase font size")
+        }
+        Button {
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(text, forType: .string)
+            copied = true
+        } label: { SymbolIcon(copied ? "checkmark" : "doc.on.doc") }
+            .help(copied ? String(localized: "Copied") : String(localized: "Copy source"))
+            .accessibilityLabel(copied ? String(localized: "Copied") : String(localized: "Copy source"))
     }
 
     private var lineNavigation: some View {

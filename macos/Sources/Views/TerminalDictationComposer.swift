@@ -54,7 +54,7 @@ struct TerminalDictationComposer: View {
                                                       confirm: { perform(confirmation) })
                                 .id("voice-confirmation")
                         }
-                        Label("Speech stays on your Mac. Clean up and AI destinations use your configured provider only when you send.", systemImage: "lock.shield")
+                        Label("Speech stays on your Mac. Clean up and AI destinations use your configured provider only when you send.", symbol: "lock.shield")
                             .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                     }
                     .padding(18)
@@ -204,7 +204,7 @@ struct TerminalDictationComposer: View {
     private var cleanupSection: some View {
         VStack(alignment: .leading, spacing: 9) {
             HStack(spacing: 8) {
-                Label("Polish your words", systemImage: "wand.and.stars").font(.callout.weight(.medium))
+                Label("Polish your words", symbol: "wand.and.stars").font(.callout.weight(.medium))
                 Spacer()
                 if cleanup.working {
                     ProgressView().controlSize(.small)

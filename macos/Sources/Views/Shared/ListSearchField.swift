@@ -16,7 +16,7 @@ struct ListSearchRow<Value: Hashable>: View {
     var body: some View {
         HStack(spacing: 4) {
             HStack(spacing: 5) {
-                Image(systemName: "magnifyingglass").font(.system(size: 11)).foregroundStyle(.secondary)
+                DesignIconImage(icon: .search, size: 11).foregroundStyle(.secondary)
                 TextField(prompt, text: $text)
                     .textFieldStyle(.plain)
                     .font(.callout)
@@ -28,7 +28,7 @@ struct ListSearchRow<Value: Hashable>: View {
                         return .handled
                     }
                 if !text.isEmpty {
-                    Button { text = ""; onSearch() } label: { Image(systemName: "xmark.circle.fill") }
+                    Button { text = ""; onSearch() } label: { SymbolIcon("xmark.circle.fill") }
                         .buttonStyle(.borderless).foregroundStyle(.secondary)
                         .help("Clear search").accessibilityLabel("Clear search")
                 }
@@ -41,11 +41,11 @@ struct ListSearchRow<Value: Hashable>: View {
             Menu {
                 ForEach(filters, id: \.value) { filter in
                     Button { onFilter(filter.value) } label: {
-                        if filter.value == selection { Label(filter.title, systemImage: "checkmark") } else { Text(filter.title) }
+                        if filter.value == selection { Label(filter.title, symbol: "checkmark") } else { Text(filter.title) }
                     }
                 }
             } label: {
-                Image(systemName: selection == defaultFilter ? "line.3.horizontal.decrease.circle" : "line.3.horizontal.decrease.circle.fill")
+                SymbolIcon(selection == defaultFilter ? "line.3.horizontal.decrease.circle" : "line.3.horizontal.decrease.circle.fill")
                     .font(.system(size: 15))
                     .foregroundStyle(selection == defaultFilter ? Color.secondary : Color.accentColor)
             }
@@ -68,11 +68,11 @@ struct ListFilterCaption: View {
 
     var body: some View {
         HStack(spacing: 5) {
-            Image(systemName: "line.3.horizontal.decrease.circle.fill").foregroundStyle(Color.accentColor)
+            SymbolIcon("line.3.horizontal.decrease.circle.fill").foregroundStyle(Color.accentColor)
             Text("Filtered: \(search.isEmpty ? filter : filter + " · “" + search + "”")")
                 .lineLimit(1).truncationMode(.tail)
             Spacer(minLength: 2)
-            Button(action: onClear) { Image(systemName: "xmark.circle.fill") }
+            Button(action: onClear) { SymbolIcon("xmark.circle.fill") }
                 .buttonStyle(.borderless).foregroundStyle(.secondary)
                 .help("Clear filter").accessibilityLabel("Clear filter")
         }

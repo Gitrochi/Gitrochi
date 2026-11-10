@@ -28,4 +28,11 @@ struct SidebarPresentationState {
     }
 
     mutating func expand() { setVisibility(.all) }
+
+    /// The repository screen folds the page list on purpose. Unlike the automatic collapse of a narrow window, widening
+    /// the window must not bring the list back, also when the narrow window had already collapsed it.
+    mutating func fold() {
+        visibilityBeforeAutomaticCollapse = nil
+        visibility = .detailOnly
+    }
 }

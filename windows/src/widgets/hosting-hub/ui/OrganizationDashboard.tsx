@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink } from "@/shared/icons";
 import { hubSafeURL, type HostingHubStore, type HubDetail, type HubMember, type HubOrganizationTeam, type HubOrganizationSectionState, type HubOrganizationInvitation } from "@/entities/hosting";
 import { accountHost } from "@/entities/git";
 import { Avatar, Button, Spinner } from "@/shared/ui";

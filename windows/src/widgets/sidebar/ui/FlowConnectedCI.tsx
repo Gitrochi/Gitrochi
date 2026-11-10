@@ -1,4 +1,4 @@
-import { Cloud } from "lucide-react";
+import { Cloud } from "@/shared/icons";
 import type { RepoStore } from "@/entities/repo";
 import { CIPanel, CIRunDetail } from "@/features/ci-panel";
 import { t } from "@/shared/i18n";

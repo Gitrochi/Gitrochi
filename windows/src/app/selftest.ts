@@ -53,6 +53,7 @@ import { issueWorkflowSelfTest } from "./lib/issue-workflow-selftest";
 import { releaseOverviewSelfTest } from "./lib/release-overview-selftest";
 import { hostingHubSelfTest } from "./lib/hosting-hub-selftest";
 import { workspacePanelsSelfTest } from "./lib/workspace-panels-selftest";
+import { toolbarSelfTest } from "./lib/toolbar-selftest";
 import { browserLoginGuidanceSelfTest, browserProjectAccessSelfTest } from "./lib/browser-login-selftest";
 import { accountQuickControlsSelfTest, accountQuickControlsWithoutRepositorySelfTest } from "./lib/account-quick-controls-selftest";
 import { prConversationSelfTest } from "./lib/pr-conversation-selftest";
@@ -203,6 +204,8 @@ export async function runSelfTest(): Promise<boolean> {
     } catch (e) {
       check(name, false, e instanceof Error ? e.stack ?? e.message : e);
     }
+    // A settings save this step left pending would otherwise fire inside the next step's fakes
+    await settings.flush();
     await selfTestProgress(`${name}: finished`, checks);
   };
 
@@ -262,12 +265,12 @@ export async function runSelfTest(): Promise<boolean> {
   await step("우측 계정 선택·Git 잠금 표시·명시적 프로젝트 추가 승인", accountQuickControlsSelfTest);
   await step("저장소·원격 없이도 연결된 계정과 전역 Git 작성자 표시", accountQuickControlsWithoutRepositorySelfTest);
   await step("Push 검토·PR 줄 리뷰·변경 AI 질문의 실제 React 화면", reviewWorkflowsSelfTest);
-  await step("PR timeline, keyboard tabs, checks and retained review drafts", prConversationSelfTest);
+  await step("Pull requests page: list controls and the Hide list choice kept across tabs, one-line composer, Split reason, timeline, keyboard tabs and retained drafts", prConversationSelfTest);
   await step("PR·이슈 목록의 검색 줄·필터·페이지 이동", listSectionsSelfTest);
   await step("Sidebar branch tree indentation, aligned rows and disclosure controls", sidebarTreeSelfTest);
   await step("다른 앱에서 도는 에이전트 목록과 그 앱 앞으로 가져오기(가짜 프로세스 목록)", externalAgentsSelfTest);
   await step("레인이 많은 그래프: 머리줄 스크롤 막대·옆 스크롤·선택한 노드 보이기", graphLanesSelfTest);
-  await step("Author, time and SHA columns: off by default, turned on from the column menu, lined up with the header, resized and reset", graphColumnsSelfTest);
+  await step("Graph columns: author, time and SHA off by default and turned on from the column menu, lined up with the header, every column resized by its edge, and reset", graphColumnsSelfTest);
   await step("커밋 비교·일괄 작업·줄 이력의 실제 React 화면", historyToolsSelfTest);
   await step("PR 병합·이슈함의 실제 React 화면", collaborationSelfTest);
   await step("복구·LFS·Submodule·Bisect·충돌 편집의 실제 React 화면", localWorkflowsSelfTest);
@@ -301,6 +304,7 @@ export async function runSelfTest(): Promise<boolean> {
   await step("Complete organization project tasks, refresh, and expandable Home agenda", projectItemCompletenessSelfTest);
   await step("Local planning persistence and project creation choices", localPlannerSelfTest);
   await step("홈·계정·이슈·CI 작업 화면", workspacePanelsSelfTest);
+  await step("Toolbar by page: repository, other pages and no repository; the More menu", toolbarSelfTest);
 
   const file = joinPath(repo, "selftest-새파일.txt");
   await step("파일 감시 → 새 파일 표시", async () => {

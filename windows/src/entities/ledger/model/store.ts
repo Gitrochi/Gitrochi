@@ -56,10 +56,16 @@ export class LedgerStore extends LedgerReader {
     return this.backend.call("integration_command", { bundled: bundledLedgerCommand() ?? "" });
   }
 
-  /** Repairing an MCP entry: the stable command it will name, created from the bundled one */
-  createStableCommand() {
-    return this.backend.call("integration_command", { bundled: bundledLedgerCommand() ?? "", create: true });
+  /** Set up and Repair: `program`, the client's own command, registers the ledger's MCP server. One that works stays. */
+  registerMcp(client: LedgerIntegrationStatus["client"], program: string | null) {
+    return this.backend.call("integration_mcp", { client, action: "register", bundled: bundledLedgerCommand() ?? "", ...(program ? { program } : {}) });
   }
+
+  /** Remove: `program`, the client's own command, drops the ledger's MCP server */
+  removeMcp(client: LedgerIntegrationStatus["client"], program: string | null) {
+    return this.backend.call("integration_mcp", { client, action: "remove", ...(program ? { program } : {}) });
+  }
+
   // MARK: A person's operations
 
   /** One operation; confirm, archive, status changes and snoozes show a toast with Undo */
@@ -267,5 +273,13 @@ let shared: LedgerStore | null = null;
 export function ledgerStore(repoPath: string | null): LedgerStore {
   const demo = env.ledgerDemo;
   shared ??= new LedgerStore(demo ? new DemoLedgerBackend({ ...(repoPath ? { repoPath } : {}), large: demo === "large", empty: demo === "empty", lively: true }) : nativeLedgerBackend);
+  return shared;
+}
+
+/**
+ * The app's Ledger if something has opened it. For readers that only show what it holds, like the sidebar's count:
+ * opening it from there would fix its backend before the first repository could bind the demo.
+ */
+export function openedLedgerStore(): LedgerStore | null {
   return shared;
 }

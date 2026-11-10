@@ -37,8 +37,8 @@ export async function projectDependenciesSelfTest(): Promise<[boolean, string]> 
     await fixture.store.hostingHub.selectProjectSource("local");
     await fixture.store.hostingHub.select(detail.item);
     root.render(<LocalPlannerFixtureShell fixture={fixture} />);
-    ensure(await until(() => !!button("Timeline")), "Roadmap navigation missing");
-    button("Timeline")!.click();
+    ensure(await until(() => !!button("Roadmap")), "Roadmap navigation missing");
+    button("Roadmap")!.click();
     ensure(await until(() => !!host.querySelector(".project-dependency-view")), "Local roadmap dependency graph missing");
     await focus("Implementation");
     predecessor("Outline").click(); enter(duration(), "3"); await pause();

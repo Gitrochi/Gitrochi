@@ -44,13 +44,23 @@
 .organization-hero h3 { margin:0; font-size:20px; }
 .organization-primary-actions { display:flex; gap:8px; flex-wrap:wrap; }
 .organization-purpose { margin-top:-8px !important; }
-.organization-invitation-summary { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; border:1px solid var(--border); border-radius:8px; background:var(--hover); }
+.organization-invitation-summary { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; border:1px solid var(--border); border-radius:8px; background:var(--surface); }
 .organization-invitation-summary > div { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
 .organization-pending-preview { min-width:0; font-size:12px; }
 .organization-pending-preview > span { color:var(--text-2); overflow-wrap:anywhere; }
 .organization-navigation { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; }
 .organization-navigation .organization-tabs { padding:0; border:0; }
 .organization-search { flex:1; min-width:200px; max-width:340px; }
+/* switching content uses underline tabs (docs/design.md, Controls): medium text, the current one with a 2px accent
+   underline, never a filled button and never text in the accent */
+.organization-navigation { align-items:flex-end; border-bottom:1px solid var(--border); }
+.organization-navigation .organization-tabs { gap:4px; }
+/* wide enough to type in: in a narrow window it wraps under the tabs instead of shrinking */
+.organization-navigation .organization-search { min-width:200px; margin-bottom:6px; }
+.organization-tab { font:inherit; font-weight:500; color:color-mix(in srgb, var(--text) 87%, var(--surface)); background:transparent; border:0; border-bottom:2px solid transparent; padding:8px 12px; cursor:pointer; }
+.organization-tab.on { color:var(--text); border-bottom-color:var(--accent); }
+.organization-tab:disabled { cursor:default; }
+.organization-tab:focus-visible { outline:2px solid color-mix(in srgb, var(--accent) 40%, transparent); outline-offset:-2px; }
 .organization-provider-tools { border-top:1px solid var(--border); padding-top:12px; }
 .organization-provider-tools > summary { color:var(--text-2); cursor:pointer; }
 .organization-provider-tools[open] { display:flex; flex-direction:column; gap:12px; }

@@ -339,7 +339,7 @@ struct LedgerSettings: View {
             }
             .labelsHidden().fixedSize()
             .help(rule == nil ? Text("Sessions of this kind count as Other until it has a role") : Text("The role of sessions of this kind"))
-            Button { setKind(kind, nil) } label: { Image(systemName: "minus.circle") }
+            Button { setKind(kind, nil) } label: { SymbolIcon("minus.circle") }
                 .buttonStyle(.borderless)
                 .disabled(rule == nil)
                 .help("Remove this kind's rule")
@@ -485,7 +485,7 @@ struct LedgerSettings: View {
         } header: {
             Text("Connections")
         } footer: {
-            Text("Hooks run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Gitrochi never edits MCP settings; copy the MCP command and run it yourself.")
+            Text("Hooks and the MCP server run a stable copy of the Ledger command that Gitrochi keeps up to date, so they keep working when the app moves or updates. Set up has the client register the server; if it cannot, copy the MCP command and run it yourself.")
                 .font(.system(size: 11)).foregroundStyle(.secondary)
         }
     }
@@ -519,7 +519,7 @@ struct LedgerSettings: View {
             }
             Button("Choose…") { if let folder = Self.chooseFolder(start: path) { set(folder) } }
             if path != nil {
-                Button { set(nil) } label: { Image(systemName: "xmark.circle.fill") }
+                Button { set(nil) } label: { SymbolIcon("xmark.circle.fill") }
                     .buttonStyle(.borderless)
                     .help("Clear")
                     .accessibilityLabel("Clear")

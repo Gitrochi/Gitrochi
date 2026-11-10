@@ -8,7 +8,7 @@ struct FlowDesignDiagnosticsView: View {
         VStack(alignment: .leading, spacing: 9) {
             ForEach(FlowDesignDiagnostic.grouped(diagnostics)) { group in
                 HStack(alignment: .top, spacing: 7) {
-                    Image(systemName: group.severity == "error" ? "xmark.circle" : "info.circle")
+                    SymbolIcon(group.severity == "error" ? "xmark.circle" : "info.circle")
                         .foregroundStyle(group.severity == "error" ? Color.red : .secondary)
                     VStack(alignment: .leading, spacing: 4) {
                         Text(LocalizedStringKey(group.message))

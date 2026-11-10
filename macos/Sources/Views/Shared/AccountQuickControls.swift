@@ -34,14 +34,14 @@ struct AccountQuickControls: View {
                     Text(verbatim: title)
                         .font(.system(size: 12, weight: .semibold)).lineLimit(1).truncationMode(.middle)
                     HStack(spacing: 3) {
-                        if store.gitchStatus?.lockedAccount != nil { Image(systemName: "lock.fill").font(.system(size: 8)) }
+                        if store.gitchStatus?.lockedAccount != nil { DesignIconImage(icon: .lock, size: 8) }
                         Group {
                             if store.url == nil { Text("Open repository…") }
                             else { Text("Git: \(gitAccount)") }
                         }.font(.system(size: 10)).lineLimit(1).truncationMode(.middle)
                     }.foregroundStyle(.secondary)
                 }
-                Image(systemName: "chevron.down").font(.system(size: 9, weight: .semibold)).foregroundStyle(.secondary)
+                DesignIconImage(icon: .chevronDown, size: 9).foregroundStyle(.secondary)
             }
             .frame(maxWidth: 190, alignment: .leading)
             .padding(.leading, 4).padding(.trailing, 8)
@@ -126,7 +126,7 @@ struct AccountQuickControls: View {
                                     Text(verbatim: a.hosts).font(.caption).foregroundStyle(.secondary)
                                 }
                                 Spacer()
-                                if a.id == store.gitchStatus?.lockedAccount { Label("Locked", systemImage: "lock.fill").font(.caption) }
+                                if a.id == store.gitchStatus?.lockedAccount { Label("Locked", symbol: "lock.fill").font(.caption) }
                             }
                         }
                         Button("Manage Git accounts…") { present(.gitAccounts) }
@@ -141,7 +141,7 @@ struct AccountQuickControls: View {
                     HStack {
                         Text("Git identity").font(.callout.weight(.semibold))
                         Spacer()
-                        if store.gitchStatus?.lockedAccount != nil { Label("Locked", systemImage: "lock.fill").font(.caption).foregroundStyle(.secondary) }
+                        if store.gitchStatus?.lockedAccount != nil { Label("Locked", symbol: "lock.fill").font(.caption).foregroundStyle(.secondary) }
                     }
                     accountLine("Git account", value: gitAccount)
                     accountLine("Author", value: store.me?.name ?? String(localized: "Not configured"))
@@ -178,7 +178,7 @@ struct AccountQuickControls: View {
                         Text(verbatim: "@\(a.username) · \(a.host)").font(.caption).foregroundStyle(.secondary).lineLimit(1)
                     }
                     Spacer()
-                    if a.id == shown?.id { Image(systemName: "checkmark").foregroundStyle(.secondary) }
+                    if a.id == shown?.id { DesignIconImage(icon: .check).foregroundStyle(.secondary) }
                 }.contentShape(Rectangle()) }.buttonStyle(.plain)
                 if accounts.credentialState(for: a) != .ready { SavedAccountAccessNotice(account: a) }
             }
@@ -211,7 +211,7 @@ struct AccountQuickControls: View {
             image.resizable().scaledToFill()
         } placeholder: {
             if let value { Avatar(name: value.name ?? value.username, email: value.username, size: size) }
-            else { Image(systemName: "person.crop.circle").resizable().scaledToFit().foregroundStyle(.secondary) }
+            else { DesignSymbols.labelImage("person.crop.circle").resizable().scaledToFit().foregroundStyle(.secondary) }
         }.frame(width: size, height: size).clipShape(Circle())
     }
 }

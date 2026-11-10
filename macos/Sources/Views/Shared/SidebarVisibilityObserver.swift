@@ -15,6 +15,7 @@ struct SidebarVisibilityObserver: NSViewRepresentable {
     func updateNSView(_ view: SidebarVisibilityProbe, context: Context) {
         view.onChange = onChange
         view.animateExpansion = animateExpansion
+        view.expansionAllowed = expansionAllowed
         view.requestExpansion(expandRequest, allowed: expansionAllowed)
         view.scheduleMeasurement()
     }
@@ -23,6 +24,8 @@ struct SidebarVisibilityObserver: NSViewRepresentable {
 @MainActor final class SidebarVisibilityProbe: NSView {
     var onChange: (Bool) -> Void
     var animateExpansion = false
+    /// False while the app wants the list folded; the width fix must not touch a list that is folding
+    var expansionAllowed = true
     private var lastValue: Bool?
     private var measurementScheduled = false
     private var wasAttachedToWindow = false
@@ -70,10 +73,46 @@ struct SidebarVisibilityObserver: NSViewRepresentable {
             guard let self else { return }
             self.measurementScheduled = false
             self.refreshObservers()
-            guard let collapsed = self.measuredCollapse(), collapsed != self.lastValue else { return }
+            guard let collapsed = self.measuredCollapse() else { return }
+            if !collapsed { self.scheduleWidthCorrection() }
+            guard collapsed != self.lastValue else { return }
             self.lastValue = collapsed
             self.onChange(collapsed)
         }
+    }
+
+    private var widthCorrectionScheduled = false
+    /// AppKit opens a window's page list at 144pt, below its 210pt minimum, and SwiftUI's column width does not move it.
+    /// A list that has settled that narrow opens at the design's 240pt. The width must hold still for a moment first,
+    /// so a collapse or expand animation passing through a narrow width is left alone, and a list the app is folding
+    /// is never touched: moving its divider mid-collapse would open it again.
+    private func scheduleWidthCorrection() {
+        guard expansionAllowed, !widthCorrectionScheduled, let (split, column) = sidebarColumn() else { return }
+        let width = column.frame.width
+        guard !split.isSubviewCollapsed(column), width > 1, width < 210 else { return }
+        widthCorrectionScheduled = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { [weak self] in
+            guard let self else { return }
+            self.widthCorrectionScheduled = false
+            guard self.expansionAllowed, let (split, column) = self.sidebarColumn(), !split.isSubviewCollapsed(column) else { return }
+            if column.frame.width == width {
+                split.setPosition(240, ofDividerAt: 0)
+            } else {
+                self.scheduleWidthCorrection()
+            }
+        }
+    }
+
+    /// The split view's leading column that holds this probe
+    private func sidebarColumn() -> (NSSplitView, NSView)? {
+        var child: NSView = self
+        while let parent = child.superview {
+            if let split = parent as? NSSplitView, split.isVertical, split.arrangedSubviews.first === child {
+                return (split, child)
+            }
+            child = parent
+        }
+        return nil
     }
 
     /// 바인딩이 이미 .all인 채 네이티브 화면만 접혀도 이 창의 사이드바를 펼친다.

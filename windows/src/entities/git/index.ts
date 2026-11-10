@@ -1,5 +1,5 @@
 // entities/git 의 공개 API — 다른 조각은 이 파일로만 가져온다
-export { workspaceDestinations, previewDestinations, destinationEnabled, repositoryDestinations, returnsToRepository, isWorkspaceDestination, restoredDestination, type WorkspaceDestination } from "./model/workspace-navigation";
+export { workspaceDestinations, previewDestinations, destinationEnabled, destinationForDigit, destinationShortcut, repositoryDestinations, returnsToRepository, isWorkspaceDestination, restoredDestination, toolbarSet, recommendedSync, type ToolbarSet, type WorkspaceDestination } from "./model/workspace-navigation";
 export { choiceLines, choiceTitle, conflictProjection, type ConflictBlock, type ConflictChoice, type ConflictDocument, parseConflict, resolveConflict } from "./lib/conflict";
 export { buildPatch, canEditLines, diffSides, modeSummary, type SplitRow, splitRows } from "./lib/diff";
 export { layoutGraph, layoutGraphAsync } from "./lib/graph";
@@ -13,6 +13,6 @@ export { type PushReviewPlan, type PushConfig, parsePushConfig, displayPushURL, 
 export { type BatchCommitAction, type BatchCommitItem, type LineHistoryEntry, batchArguments, fullObjectID, lineHistoryRange, parseLineHistory, toggleGraphSelection, validRevisionInput, historyOperationInProgress } from "./lib/history-tools";
 export { initialRepositoryFile, repositoryFolderCount, loadRepositoryTree, loadRepositoryBlob, safeRepositoryPath, parseRepositoryTree, repositoryImageMime, type RepositoryTreeEntry, type RepositoryTree, type RepositoryBlob } from "./lib/repository-browser";
 
-export { defaultRebaseBase, loadRebasePreview, type RebasePreview } from "./lib/rebase-preview";
+export { defaultRebaseBase, loadRebaseBases, loadRebasePreview, parseRebaseBases, rebaseBaseMatches, type RebaseBase, type RebasePreview } from "./lib/rebase-preview";
 
 export type { ProjectTaskReference } from "./model/types";

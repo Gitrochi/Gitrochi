@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp } from "lucide-react";
+import { ArrowDown, ArrowUp } from "@/shared/icons";
 import { useState } from "react";
 import { type SplitGroup, StatusBadge } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";

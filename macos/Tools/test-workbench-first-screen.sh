@@ -26,6 +26,15 @@ enum Git { static func run(_ args: [String], in: URL) async throws -> GitResult 
         let result = try await RebasePreview.load(in: URL(fileURLWithPath: "/fixture"), base: "main", head: "HEAD", read: read)
         precondition(result.base == b && result.head == a && result.incoming == 3 && result.replay == 2 && result.commits.map(\.subject) == ["Newest commit", "Older commit"])
         do { _ = try await RebasePreview.load(in: URL(fileURLWithPath: "/fixture"), base: "--all", head: "HEAD", read: { _, _ in fatalError("Invalid revision reached Git") }); fatalError("Invalid base accepted") } catch {}
+        let bases = RebaseBase.parse(["refs/heads/topic\t0 0", "refs/heads/feature/a\t3 1", "refs/heads/main\t0 4", "refs/remotes/origin/HEAD\t5 0", "refs/remotes/origin/main\t5 0", "refs/tags/v1.0\t0 9", "refs/heads/odd"].joined(separator: "\n"), current: "topic")
+        precondition(bases.map(\.name) == ["origin/main", "main", "feature/a", "odd", "v1.0"] && bases.map(\.incoming) == [5, 0, 3, nil, 0] && bases.map(\.kind) == [.remote, .branch, .branch, .branch, .tag], "Bases list their new commits, the usual ones first, without the current branch or remote HEADs")
+        precondition(bases.filter { RebaseBase.matches($0, search: " MAIN ") }.map(\.name) == ["origin/main", "main"], "The base search matches any part of the name")
+        let timed = try await RebasePreview.load(in: URL(fileURLWithPath: "/fixture"), base: "main", head: "HEAD", read: { args, _ in
+            if args[0] == "rev-parse" { return args[2].hasPrefix("main") ? b : a }
+            if args[0] == "rev-list" { return "0\t2\n" }
+            return a + "\tTabbed\tsubject\t1762300800\n" + b + "\tNo time\n"
+        })
+        precondition(timed.commits.map(\.subject) == ["Tabbed\tsubject", "No time"] && timed.commits.map(\.date) == [Date(timeIntervalSince1970: 1_762_300_800), nil], "A commit's time follows its subject, which may hold tabs")
         print("Workbench first screen: safe default file, README preference, directory count, existing base preference and immutable read-only rebase summary passed")
     }
 }

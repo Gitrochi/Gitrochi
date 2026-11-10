@@ -21,7 +21,7 @@ struct FlowSchemaField: View {
                 if required { Text("*").foregroundStyle(.orange) }
                 Spacer()
                 if value != .null {
-                    Button { value = .null; jsonDraft = ""; onError(nil) } label: { Image(systemName: "xmark.circle").font(.system(size: 10)) }
+                    Button { value = .null; jsonDraft = ""; onError(nil) } label: { SymbolIcon("xmark.circle").font(.system(size: 10)) }
                         .buttonStyle(.borderless).help("Clear input")
                 }
             } }
@@ -170,7 +170,7 @@ private struct FlowObjectFields: View {
                 Button {
                     let newValue: FlowJSON = kind == "object" ? .object([:]) : kind == "array" ? .array([]) : kind == "boolean" ? .bool(false) : kind == "number" ? .number(0) : .string("")
                     value = value.setting([key], to: newValue); key = ""; onError(nil)
-                } label: { Image(systemName: "plus") }
+                } label: { DesignIconImage(icon: .plus) }
                 .disabled(key.isEmpty || value.object[key] != nil).help("Add field")
             }
         }.padding(10).background(Color.secondary.opacity(0.035), in: RoundedRectangle(cornerRadius: 8))

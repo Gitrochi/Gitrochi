@@ -1,4 +1,5 @@
-import { FileText, type LucideIcon, MessageCircleQuestion, Search, Tag, Waypoints } from "lucide-react";
+import { type LucideIcon, MessageCircleQuestion, Waypoints } from "lucide-react";
+import { FileText, Search, Tag } from "@/shared/icons";
 import { useEffect, useRef, useState } from "react";
 import { type LedgerSearchHit, type LedgerSearchKind, type LedgerStore, stepIndex } from "@/entities/ledger";
 import { t } from "@/shared/i18n";

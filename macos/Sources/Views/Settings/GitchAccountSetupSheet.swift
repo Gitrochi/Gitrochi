@@ -94,7 +94,7 @@ struct GitchAccountSetupSheet: View {
                 LabeledContent("SSH port") {
                     HStack(spacing: 4) {
                         TextField("SSH port", text: $port).labelsHidden().accessibilityLabel("SSH port")
-                        Button { showPortHelp.toggle() } label: { Image(systemName: "questionmark.circle") }
+                        Button { showPortHelp.toggle() } label: { SymbolIcon("questionmark.circle") }
                             .buttonStyle(.borderless)
                             .help(portHelp)
                             .accessibilityLabel("About SSH ports")
@@ -127,12 +127,12 @@ struct GitchAccountSetupSheet: View {
     private func keySteps(_ state: Gitch.AccountSetup) -> some View {
         Group {
             Section {
-                Label(state.id, systemImage: "person.crop.circle.badge.checkmark").font(.headline)
+                Label(state.id, symbol: "person.crop.circle.badge.checkmark").font(.headline)
                 Text(state.email + " · " + state.host + ":" + String(state.port)).foregroundStyle(.secondary)
             } header: { Text("1. Account saved") }
             Section {
                 if state.keyExists {
-                    Label("SSH key found", systemImage: "checkmark.circle.fill").foregroundStyle(.green)
+                    Label("SSH key found", symbol: "checkmark.circle.fill").foregroundStyle(.green)
                     if state.aliasConfigured == false {
                         Button("Set up connection for existing key…") { confirmAlias = true }.disabled(busy)
                     }
@@ -167,7 +167,7 @@ struct GitchAccountSetupSheet: View {
             Section {
                 Button("Check SSH connection") { Task { await check() } }.disabled(busy || !state.keyExists)
                 if let authenticated = state.authenticated {
-                    Label(authenticated ? String(localized: "SSH connection verified") : String(localized: "SSH connection needs attention"), systemImage: authenticated ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                    Label(authenticated ? String(localized: "SSH connection verified") : String(localized: "SSH connection needs attention"), symbol: authenticated ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
                         .foregroundStyle(authenticated ? .green : .orange)
                     if authenticated {
                         Text("Your account is ready. Choose Done, then open or clone a repository in Gitrochi.")

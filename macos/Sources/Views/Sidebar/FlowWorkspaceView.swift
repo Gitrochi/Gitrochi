@@ -81,15 +81,15 @@ struct FlowWorkspaceView: View {
                 }
             } else if let planError {
                 VStack(spacing: 12) {
-                    Image(systemName: "exclamationmark.triangle").font(.title).foregroundStyle(.orange)
+                    SymbolIcon("exclamationmark.triangle").font(.title).foregroundStyle(.orange)
                     Text(planError).font(.callout).foregroundStyle(.secondary).textSelection(.enabled)
                     Button("Edit flow file…", action: onEdit)
                 }
                 .padding(24).frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if flow == nil {
                 VStack(spacing: 12) {
-                    ContentUnavailableView("No flows", systemImage: "point.3.connected.trianglepath.dotted", description: Text("Add a script to create your first flow."))
-                    Button(action: onCreate) { Label("Create flow", systemImage: "plus") }
+                    ContentUnavailableView("No flows", symbol: "point.3.connected.trianglepath.dotted", description: Text("Add a script to create your first flow."))
+                    Button(action: onCreate) { Label("Create flow", symbol: "plus") }
                         .buttonStyle(.borderedProminent).padding(.bottom, 24)
                 }
             } else {
@@ -101,16 +101,16 @@ struct FlowWorkspaceView: View {
     private var selector: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Label("Flows", systemImage: "arrow.triangle.branch").font(.callout.weight(.semibold))
+                Label("Flows", symbol: "arrow.triangle.branch").font(.callout.weight(.semibold))
                 Spacer()
                 Text("\(list.flows.count)").font(.caption.monospacedDigit()).foregroundStyle(.secondary)
             }.padding(.horizontal, 4)
             HStack(spacing: 7) {
-                Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
+                DesignIconImage(icon: .search).foregroundStyle(.secondary)
                 TextField("Find flows", text: $search).textFieldStyle(.plain)
                     .accessibilityLabel("Find flows")
                 if !search.isEmpty {
-                    Button { search = "" } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary) }
+                    Button { search = "" } label: { SymbolIcon("xmark.circle.fill").foregroundStyle(.secondary) }
                         .buttonStyle(.plain).help("Clear search").accessibilityLabel("Clear search")
                 }
             }
@@ -122,18 +122,18 @@ struct FlowWorkspaceView: View {
                     ForEach(matchingFlows) { item in flowChoice(item) }
                     if matchingFlows.isEmpty, !search.isEmpty {
                         VStack(spacing: 10) {
-                            Image(systemName: "magnifyingglass").font(.title3).foregroundStyle(.tertiary)
+                            DesignIconImage(icon: .search).font(.title3).foregroundStyle(.tertiary)
                             Text("No matching flows").font(.caption).foregroundStyle(.secondary)
                             Button("Clear search") { search = "" }.buttonStyle(.borderless).font(.caption)
                         }.frame(maxWidth: .infinity).padding(.vertical, 28)
                     }
                 }
             }
-            Button(action: onCreate) { Label("Create flow", systemImage: "plus").frame(maxWidth: .infinity) }
+            Button(action: onCreate) { Label("Create flow", symbol: "plus").frame(maxWidth: .infinity) }
                 .buttonStyle(.borderedProminent).controlSize(.large)
             if !list.trusted, !list.flows.isEmpty {
                 VStack(alignment: .leading, spacing: 6) {
-                    Label("Review required", systemImage: "hand.raised")
+                    Label("Review required", symbol: "hand.raised")
                         .font(.caption.weight(.medium)).foregroundStyle(.orange)
                     Text("This flow file is new or changed. Review the commands before running it.")
                         .font(.caption).foregroundStyle(.secondary)
@@ -150,12 +150,12 @@ struct FlowWorkspaceView: View {
         return Button { chooseFlow(item.name) } label: {
             VStack(alignment: .leading, spacing: 8) {
                 HStack(spacing: 8) {
-                    Image(systemName: "arrow.triangle.branch")
+                    DesignIconImage(icon: .branch)
                         .font(.system(size: 12, weight: .medium)).foregroundStyle(.secondary)
                         .frame(width: 25, height: 25).background(Color.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 7))
                     Text(item.name).font(.callout.weight(.semibold)).lineLimit(1)
                     Spacer(minLength: 0)
-                    Image(systemName: "chevron.right").font(.system(size: 9, weight: .semibold)).foregroundStyle(.tertiary)
+                    DesignIconImage(icon: .chevronRight, size: 9).foregroundStyle(.tertiary)
                 }
                 if let description = item.description, !description.isEmpty {
                     Text(description).font(.caption).foregroundStyle(.secondary).lineLimit(2)
@@ -177,14 +177,14 @@ struct FlowWorkspaceView: View {
 
     private var compactSelector: some View {
         HStack(spacing: 10) {
-            Image(systemName: "arrow.triangle.branch").foregroundStyle(.secondary)
+            DesignIconImage(icon: .branch).foregroundStyle(.secondary)
             Picker("Flow", selection: Binding(get: { flow?.name ?? "" }, set: { name in
                 chooseFlow(name)
             })) {
                 ForEach(list.flows) { Text($0.name).tag($0.name) }
             }.labelsHidden().frame(maxWidth: .infinity, alignment: .leading)
             Text("\(list.flows.count)").font(.caption.monospacedDigit()).foregroundStyle(.secondary)
-            Button(action: onCreate) { Label("Create flow", systemImage: "plus") }.buttonStyle(.bordered)
+            Button(action: onCreate) { Label("Create flow", symbol: "plus") }.buttonStyle(.bordered)
         }
         .padding(.horizontal, 16).padding(.vertical, 9)
         .background(Color(nsColor: .windowBackgroundColor))
@@ -201,10 +201,10 @@ struct FlowWorkspaceView: View {
 
     private var creationNotice: some View {
         HStack(spacing: 9) {
-            Image(systemName: "checkmark.circle.fill").foregroundStyle(.green).accessibilityHidden(true)
+            SymbolIcon("checkmark.circle.fill").foregroundStyle(.green).accessibilityHidden(true)
             Text("Flow created. Review its commands, then run it.").font(.caption)
             Spacer(minLength: 0)
-            Button { createdFlowNotice = nil } label: { Image(systemName: "xmark") }
+            Button { createdFlowNotice = nil } label: { DesignIconImage(icon: .close) }
                 .buttonStyle(.borderless).help("Close").accessibilityLabel("Close")
         }
         .padding(12).background(Color(nsColor: .controlBackgroundColor))
@@ -242,7 +242,7 @@ struct FlowWorkspaceView: View {
 
     private var heading: some View {
         HStack(spacing: 11) {
-            Image(systemName: page == 2 ? "network" : page == 1 ? "clock.arrow.circlepath" : "point.3.connected.trianglepath.dotted")
+            SymbolIcon(page == 2 ? "network" : page == 1 ? "clock.arrow.circlepath" : "point.3.connected.trianglepath.dotted")
                 .font(.system(size: 17, weight: .medium)).foregroundStyle(.secondary)
                 .frame(width: 40, height: 40)
                 .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 11))
@@ -266,17 +266,17 @@ struct FlowWorkspaceView: View {
     private var actions: some View {
         if page == 0, let flow {
             HStack(spacing: 8) {
-                Button(action: onEdit) { Label("Edit flow file…", systemImage: "square.and.pencil") }
+                Button(action: onEdit) { Label("Edit flow file…", symbol: "square.and.pencil") }
                     .buttonStyle(.bordered).help("Edit flow file…")
                 Button { if let plan { onReview(plan) } } label: {
-                    Image(systemName: "checkmark.shield").frame(width: 23, height: 23)
+                    SymbolIcon("checkmark.shield").frame(width: 23, height: 23)
                 }
                 .buttonStyle(.borderless).disabled(plan == nil || loadingPlan)
                 .help("Review commands…").accessibilityLabel("Review commands…")
                 Button { onRun(flow.name) } label: {
                     HStack(spacing: 6) {
                         if starting == flow.name { ProgressView().controlSize(.mini) }
-                        else { Image(systemName: "play.fill") }
+                        else { SymbolIcon("play.fill") }
                         Text("Run flow")
                     }.padding(.horizontal, 4)
                 }
@@ -298,7 +298,7 @@ struct FlowWorkspaceView: View {
         HStack(spacing: 8) {
             if page == 0 {
                 if let plan {
-                    Label(plan.env, systemImage: "square.stack.3d.up")
+                    Label(plan.env, symbol: "square.stack.3d.up")
                         .help("Environment: \(plan.env)").modifier(FlowMetadataStyle())
                 }
                 if let flow { Text("\(flow.nodes) steps").modifier(FlowMetadataStyle()) }
@@ -306,13 +306,13 @@ struct FlowWorkspaceView: View {
                     Button { onOpenRun(latest.runId) } label: {
                         HStack(spacing: 5) {
                             FlowStatusBadge(state: FlowRunHistory.presentationState(latest), compact: true)
-                            Image(systemName: "chevron.right").font(.system(size: 9, weight: .semibold)).foregroundStyle(.secondary)
+                            DesignIconImage(icon: .chevronRight, size: 9).foregroundStyle(.secondary)
                         }
                     }.buttonStyle(.plain).help("Show last run").accessibilityLabel("Show last run")
                         .accessibilityValue(FlowFormat.stateTitle(FlowRunHistory.presentationState(latest)))
                 }
                 if !list.trusted {
-                    Label("Review required", systemImage: "hand.raised").font(.system(size: 10)).foregroundStyle(.orange)
+                    Label("Review required", symbol: "hand.raised").font(.system(size: 10)).foregroundStyle(.orange)
                 }
             }
         }.fixedSize(horizontal: true, vertical: false)
@@ -330,7 +330,7 @@ struct FlowWorkspaceView: View {
         if let activeRun, let view = flows.view(activeRun.runId), !view.done, !view.nodes.isEmpty {
             VStack(alignment: .leading, spacing: 18) {
                 HStack(spacing: 10) {
-                    Image(systemName: "waveform.path").font(.system(size: 17)).foregroundStyle(Color.accentColor)
+                    SymbolIcon("waveform.path").font(.system(size: 17)).foregroundStyle(Color.accentColor)
                         .frame(width: 36, height: 36).background(Color.accentColor.opacity(0.1), in: RoundedRectangle(cornerRadius: 10))
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Live run").font(.system(size: 10, weight: .medium)).foregroundStyle(.secondary)
@@ -348,7 +348,7 @@ struct FlowWorkspaceView: View {
                 Text("This graph follows the running flow. Open the run for step output.").font(.caption).foregroundStyle(.secondary)
                     .padding(12).background(Color.accentColor.opacity(0.04), in: RoundedRectangle(cornerRadius: 9))
                 Button { onOpenRun(activeRun.runId) } label: {
-                    Label("Show run details", systemImage: "text.alignleft").frame(maxWidth: .infinity)
+                    Label("Show run details", symbol: "text.alignleft").frame(maxWidth: .infinity)
                 }.buttonStyle(.bordered).controlSize(.small)
                 Spacer()
             }

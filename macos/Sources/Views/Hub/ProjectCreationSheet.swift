@@ -29,7 +29,7 @@ struct ProjectCreationSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .top, spacing: 14) {
-                Image(systemName: review ? "checklist" : "rectangle.stack.badge.plus")
+                SymbolIcon(review ? "checklist" : "rectangle.stack.badge.plus")
                     .font(.system(size: 20, weight: .medium)).foregroundStyle(Color.accentColor)
                     .frame(width: 44, height: 44).background(Color.accentColor.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
                 VStack(alignment: .leading, spacing: 6) {
@@ -38,14 +38,14 @@ struct ProjectCreationSheet: View {
                         .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer(minLength: 0)
-                Button { dismiss() } label: { Image(systemName: "xmark") }.buttonStyle(.borderless).disabled(saving).help("Close")
+                Button { dismiss() } label: { DesignIconImage(icon: .close) }.buttonStyle(.borderless).disabled(saving).help("Close")
             }.padding(24)
             Divider()
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
                     if review { creationReview } else { creationForm }
                     if let error {
-                        Label(error, systemImage: "exclamationmark.circle").foregroundStyle(.red).font(.callout)
+                        Label(error, symbol: "exclamationmark.circle").foregroundStyle(.red).font(.callout)
                             .fixedSize(horizontal: false, vertical: true).textSelection(.enabled)
                     }
                     if uncertain {
@@ -62,7 +62,7 @@ struct ProjectCreationSheet: View {
             }
             Divider()
             HStack(spacing: 12) {
-                Label(modeTitle, systemImage: mode == "local" ? "internaldrive" : mode == "public" ? "globe" : "lock")
+                Label(modeTitle, symbol: mode == "local" ? "internaldrive" : mode == "public" ? "globe" : "lock")
                     .font(.caption).foregroundStyle(.secondary)
                 Spacer()
                 if saving { ProgressView().controlSize(.small) }
@@ -93,7 +93,7 @@ struct ProjectCreationSheet: View {
                 choice("public", "Public GitHub project", symbol: "globe", description: "Share your project with everyone on GitHub.")
             }.disabled(saving || uncertain)
             if mode == "local" {
-                Label("Saved on this device. Local projects do not sync with GitHub.", systemImage: "internaldrive")
+                Label("Saved on this device. Local projects do not sync with GitHub.", symbol: "internaldrive")
                     .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             } else { remoteAccess }
             VStack(alignment: .leading, spacing: 16) {
@@ -129,11 +129,11 @@ struct ProjectCreationSheet: View {
             }.padding(18).frame(maxWidth: .infinity, alignment: .leading)
                 .background(Color.secondary.opacity(0.04), in: RoundedRectangle(cornerRadius: 12))
             if mode == "public" {
-                Label("Everyone on GitHub can see this project.", systemImage: "globe").font(.callout.weight(.medium))
+                Label("Everyone on GitHub can see this project.", symbol: "globe").font(.callout.weight(.medium))
                     .padding(16).frame(maxWidth: .infinity, alignment: .leading)
                     .background(Color.accentColor.opacity(0.07), in: RoundedRectangle(cornerRadius: 12))
             } else if mode == "local" {
-                Label("Saved on this device. Local projects do not sync with GitHub.", systemImage: "internaldrive")
+                Label("Saved on this device. Local projects do not sync with GitHub.", symbol: "internaldrive")
                     .font(.callout).foregroundStyle(.secondary)
             }
         }
@@ -148,7 +148,7 @@ struct ProjectCreationSheet: View {
     private func choice(_ value: String, _ label: LocalizedStringKey, symbol: String, description: LocalizedStringKey) -> some View {
         Button { mode = value; error = nil } label: {
             VStack(alignment: .leading, spacing: 12) {
-                HStack { Image(systemName: symbol).font(.system(size: 22)).foregroundStyle(Color.accentColor); Spacer(); Image(systemName: mode == value ? "checkmark.circle.fill" : "circle").foregroundStyle(mode == value ? Color.accentColor : .secondary) }
+                HStack { SymbolIcon(symbol).font(.system(size: 22)).foregroundStyle(Color.accentColor); Spacer(); SymbolIcon(mode == value ? "checkmark.circle.fill" : "circle").foregroundStyle(mode == value ? Color.accentColor : .secondary) }
                 Text(label).font(.callout.weight(.semibold)).foregroundStyle(.primary).fixedSize(horizontal: false, vertical: true)
                 Text(description).font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }.padding(16).frame(maxWidth: .infinity, minHeight: 144, alignment: .topLeading).background(mode == value ? Color.accentColor.opacity(0.07) : Color.secondary.opacity(0.025), in: RoundedRectangle(cornerRadius: 14)).overlay(RoundedRectangle(cornerRadius: 14).stroke(mode == value ? Color.accentColor : Color.secondary.opacity(0.15), lineWidth: mode == value ? 2 : 1))
@@ -156,7 +156,7 @@ struct ProjectCreationSheet: View {
     }
     @ViewBuilder private var remoteAccess: some View {
         VStack(alignment: .leading, spacing: 14) {
-            if accounts.isEmpty { Label("Connect a GitHub account in Settings → Accounts to create a synced project.", systemImage: "person.crop.circle.badge.exclamationmark").font(.callout) }
+            if accounts.isEmpty { Label("Connect a GitHub account in Settings → Accounts to create a synced project.", symbol: "person.crop.circle.badge.exclamationmark").font(.callout) }
             else {
                 HStack {
                     Picker("GitHub account", selection: $accountID) { ForEach(accounts) { account in Text("@" + account.username + " · " + account.host).tag(account.id) } }
@@ -168,7 +168,7 @@ struct ProjectCreationSheet: View {
                 if probing { HStack { ProgressView().controlSize(.small); Text("Checking account and project capabilities…").font(.callout).foregroundStyle(.secondary) } }
                 if let capabilities {
                     HStack(spacing: 22) { plan("Account plan", capabilities.accountPlan); plan("Project owner plan", capabilities.ownerPlan) }
-                    HStack(spacing: 24) { Label(String(localized: "Up to {0} fields").replacingOccurrences(of: "{0}", with: String(capabilities.limits.fields)), systemImage: "list.bullet.rectangle"); Label(capabilities.limits.autoAddWorkflows.map { String(localized: "Up to {0} auto-add workflows").replacingOccurrences(of: "{0}", with: String($0)) } ?? String(localized: "Workflow limit unknown"), systemImage: "arrow.triangle.branch") }.font(.caption)
+                    HStack(spacing: 24) { Label(String(localized: "Up to {0} fields").replacingOccurrences(of: "{0}", with: String(capabilities.limits.fields)), symbol: "list.bullet.rectangle"); Label(capabilities.limits.autoAddWorkflows.map { String(localized: "Up to {0} auto-add workflows").replacingOccurrences(of: "{0}", with: String($0)) } ?? String(localized: "Workflow limit unknown"), symbol: "arrow.triangle.branch") }.font(.caption)
                     if let notice = capabilities.notice { Text(notice).font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true) }
                     Link("GitHub plan and workflow limits", destination: URL(string: "https://docs.github.com/en/issues/planning-and-tracking-with-projects/automating-your-project/adding-items-automatically")!).font(.caption)
                 }

@@ -116,7 +116,7 @@ export async function reviewWorkflowsSelfTest(): Promise<[boolean, string]> {
     const pushes = new RepoStore(); stores.push(pushes);
     pushes.path = fixturePath; pushes.headBranch = "topic"; pushes.headHash = sha;
     const plan: PushReviewPlan = { repo: fixturePath, branch: "topic", sourceOID: sha, remote: "reviewed-origin", destination: "refs/heads/reviewed-topic", pushURL: "ssh://git@selftest.example.invalid/selftest/review.git", displayURL: "ssh://git@selftest.example.invalid/selftest/review.git",
-      destinationOID: old, force: false, setUpstream: false, stamp: "selftest-stable-plan", author: "Self Test <selftest@example.invalid>", account: "selftest", credentialAccount: "selftest", preflight: { result: "OK", checks: [] },
+      destinationOID: old, force: false, setUpstream: false, stamp: "selftest-stable-plan", author: "Self Test <selftest@example.invalid>", account: "selftest", credentialAccount: "selftest",
       commits: [{ sha, author: "Self Test", email: "selftest@example.invalid", subject: "Self-test change" }], commitCount: 1, files: ["source.ts"], fileCount: 1, fileScope: "changes", comparisonBase: old };
     const pushStore = pushes as unknown as { buildPushReview(branch: string, force: boolean, remoteOverride?: string): Promise<PushReviewPlan> };
     pushStore.buildPushReview = async () => plan;

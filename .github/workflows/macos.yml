@@ -126,6 +126,7 @@ jobs:
           bash macos/Tools/test-hosting-target.sh
           bash macos/Tools/test-hosting-hub.sh
           bash macos/Tools/test-hosting-hub-credentials.sh
+          bash macos/Tools/test-project-item-completeness.sh
           bash macos/Tools/test-project-workbench.sh
           bash macos/Tools/test-project-schedule.sh
           bash macos/Tools/test-project-scheduling.sh

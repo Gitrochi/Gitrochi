@@ -1,4 +1,5 @@
-import { AppWindow, GitBranch, House, Pencil, Plus, ShieldOff, Sparkles, SquareArrowOutUpRight, Zap } from "lucide-react";
+import { AppWindow, House, ShieldOff, Zap } from "lucide-react";
+import { GitBranch, Pencil, Plus, Sparkles, SquareArrowOutUpRight } from "@/shared/icons";
 import { useEffect } from "react";
 import { agentKind, agents, type AgentSession, type AgentStatus, agentStatusTitle, appDisplayName, containingRoot, type ExternalAgent, relativeFolder, skipsPermissions, type TerminalAgent } from "@/entities/agent";
 import { statsClean, type Worktree, type WorktreeStats } from "@/entities/git";

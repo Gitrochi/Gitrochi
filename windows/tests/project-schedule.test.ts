@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { HubProjectField, HubProjectRow } from "@/entities/hosting";
 import {
   localScheduleToday, parseScheduleDay, resolveScheduleFields, scheduleAddDays,
-  scheduleEntries, scheduleMonthDays, scheduleReschedule, scheduleSummary,
+  scheduleEntries, scheduleMonthDays, scheduleOverview, scheduleProgress, scheduleReschedule, scheduleStage, scheduleSummary,
   scheduleWeekDays, scheduleWorkload,
 } from "../src/entities/hosting/model/project-schedule";
 
@@ -78,6 +78,28 @@ describe("project scheduling derived data", () => {
     expect(workloads.find((value) => value.assignee === "sam")).toMatchObject({ active: 1, overdue: 1 });
     expect(workloads.at(-1)?.assignee).toBe("");
     expect(workloads.reduce((count, value) => count + value.active, 0)).toBe(9);
+
+    // macOS: the same cases in macos/Tools/test-project-schedule.sh
+    const overview = scheduleOverview([...entries, ...scheduleEntries([row("ahead", { due: "2026-10-29" }, { statuses: { status: "done" } })], fields, settings)], "2026-10-27");
+    expect(overview.rows.map((entry) => entry.row.id)).toEqual(["late", "today", "ahead", "week", "unscheduled", "bad"]);
+    const counted = scheduleSummary(entries, "2026-10-27");
+    expect(overview.counts).toEqual({ overdue: counted.overdue, today: counted.today, upcoming: counted.upcoming, unscheduled: counted.unscheduled });
+    expect(Object.values(overview.counts).reduce((sum, count) => sum + count, 0)).toBe(overview.rows.filter((entry) => !entry.completed).length);
+    expect(overview.done.map((entry) => entry.row.id)).toEqual(["configured", "closed", "merged"]);
+    expect(overview.later.map((entry) => entry.row.id)).toEqual(["later"]);
+    expect(scheduleOverview(entries, "invalid").rows.map((entry) => entry.row.id)).toEqual(["unscheduled", "bad"]);
+  });
+  it("sorts tasks into to do, in progress and done from the first open status", () => {
+    const stages: HubProjectField = { id: "stage", name: "Status", kind: "singleSelect", options: [{ id: "shipped", name: "Shipped" }, { id: "todo", name: "Todo" }, { id: "doing", name: "Doing" }, { id: "review", name: "Review" }] };
+    const chosen = { completedOptionIDs: ["shipped"] };
+    const staged = scheduleEntries([
+      row("a", {}, { statuses: { stage: "todo" } }), row("b", {}, { statuses: { stage: "doing" } }), row("c", { stage: "review" }), row("d", {}, { statuses: { stage: "shipped" } }),
+      row("e"), row("f", {}, { statuses: { stage: "removed" } }), row("g", {}, { state: "CLOSED", statuses: { stage: "doing" } }),
+    ], [stages], chosen);
+    expect(staged.map((entry) => scheduleStage(entry, stages, chosen))).toEqual(["todo", "inProgress", "inProgress", "done", "todo", "todo", "done"]);
+    expect(scheduleProgress(staged, stages, chosen)).toEqual({ done: 2, inProgress: 2, todo: 3, percent: 29 });
+    expect(scheduleProgress(staged, undefined)).toEqual({ done: 2, inProgress: 0, todo: 5, percent: 29 });
+    expect(scheduleProgress([], stages).percent).toBe(0);
   });
   it("moves both dates by calendar duration and refuses ambiguous or invalid edits", () => {
     expect(scheduleReschedule(row("range", { start: "2026-03-07", due: "2026-03-09" }), fields, settings, "2026-11-02")).toEqual([{ fieldID: "start", value: "2026-10-31" }, { fieldID: "due", value: "2026-11-02" }]);

@@ -1,5 +1,6 @@
 import { ProjectScopePicker } from "@/features/select-project-scope";
-import { Cloud, HardDrive, Plus } from "lucide-react";
+import { HardDrive } from "lucide-react";
+import { Cloud, Plus } from "@/shared/icons";
 import { accountHost, type HostAccount } from "@/entities/git";
 import type { HubProjectScope, ProjectPortfolioState } from "@/entities/hosting";
 import { t } from "@/shared/i18n";

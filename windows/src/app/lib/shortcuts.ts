@@ -1,4 +1,4 @@
-import { destinationEnabled } from "@/entities/git";
+import { destinationEnabled, destinationForDigit } from "@/entities/git";
 import { workspace } from "@/entities/workspace";
 import { isMac, settings } from "@/shared/config";
 
@@ -43,31 +43,20 @@ export function handleShortcut(e: KeyboardEvent, openSettings: () => void) {
         return run(() => settings.set("navigationSidebarCollapsed", !settings.get("navigationSidebarCollapsed", false)));
       case "g":
         return run(() => s.nextMatch());
-      // the pages, numbered as in the macOS View menu
-      case "0":
-        return run(() => s.navigate("home"));
-      case "1":
-        return run(() => { if (s.navigate("repository")) s.select({ kind: "wip" }); });
-      case "2":
-        return run(() => { if (s.navigate("repository") && s.headHash) s.select({ kind: "commit", sha: s.headHash }); });
-      case "3":
-        return run(() => s.navigate("compare"));
-      case "4":
-        return run(() => s.navigate("pullRequests"));
-      case "5":
-        return run(() => s.navigate("actions"));
-      case "6":
-        return run(() => s.navigate("flows"));
-      case "7":
-        if (destinationEnabled("ledger")) return run(() => s.navigate("ledger"));
-        break;
       case "z":
         // 입력 칸 밖에서만(입력 칸에서는 글자 되돌리기 — 위에서 걸러 짐)
         return run(() => s.path && s.confirmUndo());
       case ",":
         return run(openSettings);
+      default: {
+        // the pages, numbered in the sidebar's order as in the macOS Go menu (docs/design.md › App shell)
+        const page = /^[1-9]$/.test(k) ? destinationForDigit(Number(k)) : null;
+        if (page && destinationEnabled(page)) return run(() => s.navigate(page));
+      }
     }
   }
+  // Home, with or without a repository (macOS ⇧⌘H)
+  if (e.shiftKey && !e.altKey && k === "h") return run(() => s.navigate("home"));
   if (e.shiftKey && !e.altKey && s.path) {
     switch (k) {
       case "g":

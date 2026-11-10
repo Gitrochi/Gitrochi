@@ -146,6 +146,12 @@ describe("Ledger filters", () => {
     expect(projectForRepository({ ...state, sessions: [] }, "D:/code/other")).toBeNull();
     expect(projectForRepository(state, null)).toBeNull();
   });
+  it("finds the project of sessions in a linked worktree from the main checkout and from the worktree", () => {
+    const state = { projects: [{ key: "harbor", name: "Harbor", open: 1 }], sessions: [session({ project: "harbor", links: { repoPath: "C:\\Work\\Site", worktree: "C:/Work/Site/.claude/worktrees/nimble-otter/" } })] };
+    expect(projectForRepository(state, "C:/Work/Site")).toBe("harbor");
+    expect(projectForRepository(state, "C:\\Work\\Site\\.claude\\worktrees\\nimble-otter")).toBe("harbor");
+    expect(projectForRepository(state, "C:/Work/Other")).toBeNull();
+  });
 });
 
 describe("Ledger Inbox", () => {

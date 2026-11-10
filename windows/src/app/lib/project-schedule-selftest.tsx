@@ -75,6 +75,13 @@ export async function projectScheduleSelfTest(): Promise<[boolean, string]> {
       }
       return false;
     },
+    // The owner's projects are the choices of the title menu, which the app mounts at its root.
+    chooseProject = async (title: string) => {
+      const item = () => [...document.querySelectorAll<HTMLElement>(".menu .menu-item")].find((value) => value.querySelector(".label")?.textContent === title);
+      host.querySelector<HTMLButtonElement>("button.project-title-menu")!.click();
+      ensure(await until(() => !!item()), `Project missing from the title menu: ${title}`);
+      item()!.click();
+    },
     node = (id = "PROJECT") => ({
       id,
       title: id === "PROJECT" ? "Release plan" : "Other project",
@@ -225,9 +232,11 @@ export async function projectScheduleSelfTest(): Promise<[boolean, string]> {
     ensure(await until(() => !!host.querySelector(".project-list")), "Default project table missing");
     button("Overview")!.click();
     ensure(await until(() => !!host.querySelector(".project-overview")), "Schedule overview missing");
+    // Overdue, Today and Next 7 days; Unscheduled hides at 0. The one task is due today and open.
+    const counts = [...host.querySelectorAll(".project-stats > button .project-stat-n")].map((value) => Number(value.textContent));
     ensure(
-      host.querySelectorAll(".project-schedule-metrics>button").length === 5,
-      "Schedule metrics missing",
+      counts.length === 3 && counts[1] === 1 && counts.reduce((sum, count) => sum + count, 0) === host.querySelectorAll(".project-todo:not(.done)").length,
+      "Schedule chips do not count the open tasks the list shows",
     );
     ensure(
       host.querySelector<HTMLButtonElement>(".project-complete-task")!.disabled,
@@ -310,13 +319,11 @@ export async function projectScheduleSelfTest(): Promise<[boolean, string]> {
     const beforeStale = writes.length;
     drag();
     await pause();
-    [...host.querySelectorAll<HTMLButtonElement>(".hub-item")]
-      .find((value) => value.textContent?.includes("Other project"))!
-      .click();
+    await chooseProject("Other project");
     ensure(
       await until(
         () =>
-          host.querySelector(".project-hero h1")?.textContent ===
+          host.querySelector(".project-title-menu > span")?.textContent ===
           "Other project",
       ),
       "Project switch failed",
@@ -325,13 +332,11 @@ export async function projectScheduleSelfTest(): Promise<[boolean, string]> {
       !button("Confirm") && writes.length === beforeStale,
       "Stale project confirmation survived navigation",
     );
-    [...host.querySelectorAll<HTMLButtonElement>(".hub-item")]
-      .find((value) => value.textContent?.includes("Release plan"))!
-      .click();
+    await chooseProject("Release plan");
     ensure(
       await until(
         () =>
-          host.querySelector(".project-hero h1")?.textContent ===
+          host.querySelector(".project-title-menu > span")?.textContent ===
           "Release plan",
       ),
       "Project did not restore",
@@ -371,7 +376,8 @@ export async function projectScheduleSelfTest(): Promise<[boolean, string]> {
       "Uncertain schedule writes did not lock drag actions",
     );
     failDue = false;
-    button("Retry")!.click();
+    // The scope strip has a Retry of its own; this one belongs to the error notice.
+    host.querySelector<HTMLButtonElement>(".hub-error .hub-actions button")!.click();
     ensure(
       await until(
         () =>

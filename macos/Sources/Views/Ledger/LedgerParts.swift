@@ -91,7 +91,7 @@ struct LedgerToastView: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            Image(systemName: "checkmark.circle.fill").font(.system(size: 14)).foregroundStyle(StudioStyle.Tone.passed.text)
+            SymbolIcon("checkmark.circle.fill").font(.system(size: 14)).foregroundStyle(StudioStyle.Tone.passed.text)
                 .accessibilityHidden(true)
             Text(toast.message).font(.callout).lineLimit(2).fixedSize(horizontal: false, vertical: true)
             if toast.canUndo {
@@ -99,7 +99,7 @@ struct LedgerToastView: View {
                     .keyboardShortcut("z", modifiers: .command)
                     .help("Undo (⌘Z)")
             }
-            Button(action: close) { Image(systemName: "xmark") }
+            Button(action: close) { DesignIconImage(icon: .close) }
                 .buttonStyle(.borderless).foregroundStyle(.secondary)
                 .help("Close").accessibilityLabel("Close")
         }
@@ -128,7 +128,7 @@ struct LedgerLinkChip: View {
 
     var body: some View {
         let chip = HStack(spacing: 4) {
-            Image(systemName: symbol).font(.system(size: 11, weight: .semibold))
+            SymbolIcon(symbol).font(.system(size: 11, weight: .semibold))
             Text(text).font(.system(size: 11, weight: .medium)).lineLimit(1).truncationMode(.middle)
         }
         .padding(.horizontal, 6).padding(.vertical, 3)

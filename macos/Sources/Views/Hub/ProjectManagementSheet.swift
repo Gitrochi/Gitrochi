@@ -76,7 +76,7 @@ struct ProjectManagementSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .top, spacing: 14) {
-                Image(systemName: tab == .fields ? "list.bullet.rectangle" : tab == .views ? "rectangle.3.group" : "slider.horizontal.3")
+                SymbolIcon(tab == .fields ? "list.bullet.rectangle" : tab == .views ? "rectangle.3.group" : "slider.horizontal.3")
                     .font(.system(size: 20, weight: .medium)).foregroundStyle(Color.accentColor)
                     .frame(width: 44, height: 44).background(Color.accentColor.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
                 VStack(alignment: .leading, spacing: 6) {
@@ -126,7 +126,7 @@ struct ProjectManagementSheet: View {
 
     private var newProjectForm: some View {
         VStack(alignment: .leading, spacing: 18) {
-            Label(store.hubProjectOwner, systemImage: "person.crop.square").font(.callout.weight(.semibold))
+            Label(store.hubProjectOwner, symbol: "person.crop.square").font(.callout.weight(.semibold))
             fieldLabel("Project name") { TextField("Project name", text: $newTitle).textFieldStyle(.roundedBorder).controlSize(.large) }
             Text("The project will be created for the selected owner. You can configure fields and views after creating it.").font(.callout).foregroundStyle(.secondary)
         }
@@ -205,7 +205,7 @@ struct ProjectManagementSheet: View {
                     ForEach(options.indices, id: \.self) { index in
                         HStack {
                             TextField("Option name", text: Binding(get: { options[index].name }, set: { options[index].name = $0 })).textFieldStyle(.roundedBorder)
-                            Button { options.remove(at: index) } label: { Image(systemName: "minus.circle") }.buttonStyle(.borderless).help("Remove option")
+                            Button { options.remove(at: index) } label: { SymbolIcon("minus.circle") }.buttonStyle(.borderless).help("Remove option")
                         }
                     }
                     Button("Add option") { options.append(HubProjectFieldOptionInput(name: "")) }
@@ -261,7 +261,7 @@ struct ProjectManagementSheet: View {
         VStack(alignment: .leading, spacing: 8) { Text(title).font(.callout.weight(.semibold)); content() }
     }
     private func errorMessage(_ message: String) -> some View {
-        Label(message, systemImage: "exclamationmark.circle").font(.callout).foregroundStyle(.red).fixedSize(horizontal: false, vertical: true).textSelection(.enabled)
+        Label(message, symbol: "exclamationmark.circle").font(.callout).foregroundStyle(.red).fixedSize(horizontal: false, vertical: true).textSelection(.enabled)
     }
     private func saveCurrentForm() {
         guard canSave else { return }

@@ -259,8 +259,8 @@ private struct TerminalPaneView: View {
     private func actions(_ shown: TerminalSession?, compact: Bool) -> some View {
         Menu {
             if compact {
-                Button("New terminal", systemImage: "plus") { newTerminal(at: shown) }
-                Button("Voice input", systemImage: "mic") { openDictation(for: shown) }
+                Button("New terminal", symbol: "plus") { newTerminal(at: shown) }
+                Button("Voice input", symbol: "mic") { openDictation(for: shown) }
                     .disabled(shown?.running != true)
             }
             Section("Insert command") {
@@ -270,17 +270,17 @@ private struct TerminalPaneView: View {
             }
             .disabled(shown?.running != true)
             Section {
-                Button("Split right", systemImage: "rectangle.split.2x1") { store.splitTerminal(pane, .sideBySide) }
-                Button("Split down", systemImage: "rectangle.split.1x2") { store.splitTerminal(pane, .stacked) }
+                Button("Split right", symbol: "rectangle.split.2x1") { store.splitTerminal(pane, .sideBySide) }
+                Button("Split down", symbol: "rectangle.split.1x2") { store.splitTerminal(pane, .stacked) }
                 if let shown {
-                    Button("Open in Terminal", systemImage: "arrow.up.forward.app") { Launcher.openTerminal(at: shown.directory) }
+                    Button("Open in Terminal", symbol: "arrow.up.forward.app") { Launcher.openTerminal(at: shown.directory) }
                 }
                 if compact && isCorner {
-                    Button("Hide terminal", systemImage: "chevron.down") { store.showTerminal = false }
+                    Button("Hide terminal", symbol: "chevron.down") { store.showTerminal = false }
                 }
             }
         } label: {
-            Image(systemName: "ellipsis")
+            DesignIconImage(icon: .more)
                 .font(.system(size: 12, weight: .semibold))
                 .frame(width: 26, height: 26)
         }
@@ -310,7 +310,7 @@ private struct TerminalPaneView: View {
 
     private func ended(_ session: TerminalSession, focused: Bool) -> some View {
         VStack(spacing: 10) {
-            Image(systemName: session.exitCode == 0 ? "checkmark.circle" : "terminal")
+            SymbolIcon(session.exitCode == 0 ? "checkmark.circle" : "terminal")
                 .font(.title2).foregroundStyle(.secondary)
             Text(session.command != nil ? "The process exited" : "The shell exited")
                 .font(.headline)

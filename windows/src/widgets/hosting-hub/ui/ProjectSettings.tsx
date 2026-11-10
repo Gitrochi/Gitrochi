@@ -1,6 +1,7 @@
 import { useProjectEdit } from "../model/use-project-edit";
 import { useState } from "react";
-import { ExternalLink, Settings2, X } from "lucide-react";
+import { Settings2 } from "lucide-react";
+import { ExternalLink, X } from "@/shared/icons";
 import {
   localProjects,
   saveHubProjectSettings,

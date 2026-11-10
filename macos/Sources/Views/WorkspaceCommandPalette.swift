@@ -26,7 +26,7 @@ struct WorkspaceCommandPalette: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
-                Image(systemName: "magnifyingglass").foregroundStyle(StudioStyle.accent)
+                DesignIconImage(icon: .search).foregroundStyle(StudioStyle.accent)
                 TextField("Search views, branches and actions…", text: $query)
                     .textFieldStyle(.plain).font(.system(size: 14))
                     .focused($searchFocused)
@@ -107,7 +107,7 @@ struct WorkspaceCommandPalette: View {
 
     private func commandRow(_ item: WorkspaceCommand) -> some View {
         HStack(spacing: 10) {
-            Image(systemName: item.icon).font(.system(size: 14)).foregroundStyle(StudioStyle.accent).frame(width: 22)
+            SymbolIcon(item.icon).font(.system(size: 14)).foregroundStyle(StudioStyle.accent).frame(width: 22)
             VStack(alignment: .leading, spacing: 3) {
                 Text(item.title).font(.system(size: 13, weight: .medium)).lineLimit(1).truncationMode(.middle)
                 if !item.subtitle.isEmpty {

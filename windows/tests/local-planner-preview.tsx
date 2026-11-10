@@ -59,7 +59,7 @@ createRoot(document.getElementById("root")!).render(
 );
 if (params.has("layout"))
   setTimeout(() => {
-    document.querySelectorAll<HTMLButtonElement>(".project-view-switch button")[["overview", "calendar", "board", "list", "timeline"].indexOf(params.get("layout")!)]?.click();
+    document.querySelectorAll<HTMLButtonElement>(".project-tabs > button")[["overview", "calendar", "board", "list", "timeline"].indexOf(params.get("layout")!)]?.click();
   }, 200);
 if (params.has("create"))
   setTimeout(

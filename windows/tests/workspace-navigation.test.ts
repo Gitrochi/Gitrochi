@@ -4,7 +4,7 @@ vi.mock("@/entities/terminal", () => ({ TerminalSession: class {} }));
 import { handleShortcut } from "@/app/lib/shortcuts";
 import { RepoStore } from "@/entities/repo";
 import { workspace } from "@/entities/workspace";
-import { isWorkspaceDestination, repositoryDestinations, restoredDestination, workspaceDestinations, type FileChange, type Selection } from "@/entities/git";
+import { destinationForDigit, destinationShortcut, isWorkspaceDestination, recommendedSync, repositoryDestinations, restoredDestination, toolbarSet, workspaceDestinations, type FileChange, type Selection } from "@/entities/git";
 import { env, settings } from "@/shared/config";
 import { ipc } from "@/shared/api";
 
@@ -26,6 +26,36 @@ beforeEach(() => {
 });
 afterEach(() => { expect(ipc.writeText).not.toHaveBeenCalled(); expect(ipc.run).not.toHaveBeenCalled(); vi.restoreAllMocks(); });
 
+describe("page shortcuts", () => {
+  it("numbers the pages Ctrl+1–Ctrl+9 in the sidebar's order, Home Ctrl+Shift+H (macOS: shortcutDigit)", () => {
+    const numbered = ["repository", "compare", "rebase", "code", "pullRequests", "issues", "actions", "flows", "ledger"] as const;
+    numbered.forEach((page, i) => {
+      expect(destinationShortcut(page)).toBe(`Ctrl+${i + 1}`);
+      expect(destinationForDigit(i + 1)).toBe(page);
+    });
+    expect(destinationShortcut("home")).toBe("Ctrl+Shift+H");
+    for (const page of ["releases", "projects", "account"] as const) expect(destinationShortcut(page)).toBeNull();
+    expect(destinationForDigit(0)).toBeNull();
+    expect(destinationForDigit(10)).toBeNull();
+  });
+});
+
+describe("toolbar by page", () => {
+  it("gives the repository screen the Git actions, other pages the short set and no repository only the account", () => {
+    expect(toolbarSet("repository", true)).toBe("repository");
+    for (const page of workspaceDestinations.filter((page) => page !== "repository")) expect(toolbarSet(page, true)).toBe("page");
+    expect(toolbarSet("ledger", true)).toBe("page");
+    for (const page of workspaceDestinations) expect(toolbarSet(page, false)).toBe("noRepository");
+  });
+  it("draws one sync action prominent only when it is the clear next step", () => {
+    expect(recommendedSync(2, 0, true)).toBe("push");
+    expect(recommendedSync(0, 5, true)).toBe("pull");
+    expect(recommendedSync(2, 5, true)).toBe("none");
+    expect(recommendedSync(0, 0, true)).toBe("none");
+    expect(recommendedSync(2, 0, false)).toBe("none");
+  });
+});
+
 describe("workspace navigation", () => {
   it.each([
     ["windows", null], ["windows", "C:/fixture/first"],
@@ -36,7 +66,7 @@ describe("workspace navigation", () => {
     vi.spyOn(workspace, "active", "get").mockReturnValue(store);
     vi.stubGlobal("document", { querySelector: () => null });
     const press = (extra: Partial<KeyboardEvent> = {}) => {
-      const event = { key: "7", ctrlKey: os === "windows", metaKey: os === "macos", altKey: false, shiftKey: false, defaultPrevented: false, target: null, preventDefault: vi.fn(), stopPropagation: vi.fn(), ...extra };
+      const event = { key: "9", ctrlKey: os === "windows", metaKey: os === "macos", altKey: false, shiftKey: false, defaultPrevented: false, target: null, preventDefault: vi.fn(), stopPropagation: vi.fn(), ...extra };
       handleShortcut(event as unknown as KeyboardEvent, () => {});
       return event;
     };
@@ -58,8 +88,26 @@ describe("workspace navigation", () => {
       expect(opened.preventDefault).toHaveBeenCalledOnce();
       expect(opened.stopPropagation).toHaveBeenCalledOnce();
       if (path) {
-        press({ key: "6" });
+        press({ key: "8" });
         expect(store.destination).toBe("flows");
+      }
+    } finally {
+      env.os = original.os;
+      vi.unstubAllGlobals();
+    }
+  });
+  it("opens Home with Ctrl+Shift+H with or without a repository (macOS ⇧⌘H)", () => {
+    const original = { os: env.os };
+    try {
+      env.os = "windows";
+      for (const path of [null, "C:/fixture/first"]) {
+        const store = fixture(); store.path = path; store.destination = "issues";
+        vi.spyOn(workspace, "active", "get").mockReturnValue(store);
+        vi.stubGlobal("document", { querySelector: () => null });
+        const event = { key: "H", ctrlKey: true, metaKey: false, altKey: false, shiftKey: true, defaultPrevented: false, target: null, preventDefault: vi.fn(), stopPropagation: vi.fn() };
+        handleShortcut(event as unknown as KeyboardEvent, () => {});
+        expect(store.destination).toBe("home");
+        expect(event.preventDefault).toHaveBeenCalledOnce();
       }
     } finally {
       env.os = original.os;

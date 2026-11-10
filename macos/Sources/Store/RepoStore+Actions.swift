@@ -146,8 +146,9 @@ extension RepoStore {
         await run(String(localized: "Merging…"), ["merge", name])
     }
 
-    func rebase(onto name: String) async {
-        await run(String(localized: "Rebasing…"), ["rebase", name])
+    /// autostash: stash uncommitted changes first and restore them once the rebase has finished
+    func rebase(onto name: String, autostash: Bool = false) async {
+        await run(String(localized: "Rebasing…"), ["rebase"] + (autostash ? ["--autostash"] : []) + [name])
     }
 
     func cherryPick(_ sha: String) async {

@@ -1,4 +1,5 @@
-import { CircleCheck, Info, OctagonX, TriangleAlert } from "lucide-react";
+import { Info, OctagonX, TriangleAlert } from "lucide-react";
+import { CircleCheck } from "@/shared/icons";
 import { useState } from "react";
 import type { GraphViolation } from "@/entities/gitch";
 import type { RepoStore } from "@/entities/repo";

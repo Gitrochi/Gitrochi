@@ -43,7 +43,7 @@ for source in (root / 'Sources').rglob('*.swift'):
         end = text.index('/// 창(탭) 하나 = 저장소 하나', start)
         text = text[:start] + text[end:]
     elif relative == 'Views/Sidebar/NavigationSidebar.swift':
-        needle = '.background(Color(nsColor: .windowBackgroundColor))'
+        needle = '.listStyle(.sidebar)'
         assert text.count(needle) == 1, 'Sidebar measurement attachment changed'
         text = text.replace(needle, needle + '\n        .background(WindowContentProbe(identifier: "sidebar"))')
     elif relative == 'Views/RepoView.swift':
@@ -51,13 +51,15 @@ for source in (root / 'Sources').rglob('*.swift'):
         assert text.count(needle) == 1, 'Workspace content measurement attachment changed'
         text = text.replace(needle, needle + '                        .background(WindowContentProbe(identifier: "workspace-header"))\n')
     elif relative == 'Views/Workspace/WorkspaceDestinationContent.swift':
-        needle = '.font(.title2.weight(.semibold))\n                .lineLimit(1)'
-        assert text.count(needle) == 1, 'Page title measurement attachment changed'
-        text = text.replace(needle, needle + '\n                .background(WindowContentProbe(identifier: "page-title:" + page.rawValue))')
+        # Pages have no title row; the probe measures the page itself, which must stay below the native titlebar.
+        needle = '.accessibilityLabel(Text(store.destination.title(gitlab: store.target?.provider == .gitlab)))'
+        assert text.count(needle) == 1, 'Page measurement attachment changed'
+        text = text.replace(needle, needle + '\n            .background(WindowContentProbe(identifier: "page-title:" + store.destination.rawValue))')
     elif relative == 'Views/Sidebar/NavigationSidebarRail.swift':
-        needle = '.accessibilityIdentifier("navigation-rail-expand")'
+        # The rail's first button (Home) is the control that must stay below the titlebar and answer clicks.
+        needle = '.accessibilityIdentifier("navigation-rail-" + page.rawValue)'
         assert text.count(needle) == 1, 'Rail control measurement attachment changed'
-        text = text.replace(needle, needle + '\n            .background(WindowContentProbe(identifier: "rail-control"))')
+        text = text.replace(needle, needle + '\n            .background(WindowContentProbe(identifier: page == .home ? "rail-control" : "rail-" + page.rawValue))')
     elif relative == 'Views/Hub/HostingHubPanel.swift':
         needle = 'Text(title).font(.title2.weight(.semibold))'
         assert text.count(needle) == 1, 'Hosting heading measurement attachment changed'
@@ -72,17 +74,17 @@ for source in (root / 'Sources').rglob('*.swift'):
         assert text.count(needle) == 1, 'Hosting detail footer measurement attachment changed'
         text = text.replace(needle, needle + '.overlay(alignment: .bottom) { Color.clear.frame(height: 1).background(WindowContentProbe(identifier: "hub-detail-end")) }')
     elif relative == 'Views/Hub/ReleaseWorkspace.swift':
-        # The page's own top row (repository, package, Refresh, New release) is what must stay below the titlebar.
-        needle = '}.padding(.horizontal, 20).padding(.top, 14).padding(.bottom, 12)'
+        # The page's own top row (repository, Refresh, New release) is what must stay below the titlebar.
+        needle = 'HostedListHeader(target: target) { headerActions }'
         assert text.count(needle) == 1, 'Release heading measurement attachment changed'
         text = text.replace(needle, needle + '.background(WindowContentProbe(identifier: "hub-title:releases"))')
-        needle = '}.padding(.horizontal, 10).padding(.vertical, 8).frame(maxWidth: .infinity, alignment: .leading).contentShape(Rectangle())'
+        needle = 'HostedListRowTitle(title: item.title, when: when(item), selected: selected)'
         assert text.count(needle) == 1, 'Release list measurement attachment changed'
         text = text.replace(needle, needle + '.background(WindowContentProbe(identifier: "hub-item:" + item.id))')
         needle = 'label: { Text("Load more").frame(maxWidth: .infinity) }.disabled(locked)'
         assert text.count(needle) == 1, 'Release pagination measurement attachment changed'
         text = text.replace(needle, needle + '.background(WindowContentProbe(identifier: "hub-pagination"))')
-        needle = '}.frame(maxWidth: 1100, alignment: .leading).frame(maxWidth: .infinity, alignment: .topLeading).padding(22)'
+        needle = '.padding(.horizontal, 24).padding(.vertical, 20)\n        }\n        .frame(maxWidth: .infinity, alignment: .topLeading)'
         assert text.count(needle) == 1, 'Release detail footer measurement attachment changed'
         text = text.replace(needle, needle + '.overlay(alignment: .bottom) { Color.clear.frame(height: 1).background(WindowContentProbe(identifier: "hub-detail-end")) }')
     elif relative == 'Services/Accounts.swift':

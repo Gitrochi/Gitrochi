@@ -82,5 +82,5 @@ struct Fixture: View {
  }
 }
 SWIFT
-xcrun swiftc -parse-as-library -O "$TASK_TMP/main.swift" "$ROOT/Sources/Views/Inspector/FileTree.swift" "$ROOT/Sources/Views/Shared/StudioStyle.swift" -o "$TASK_TMP/large-changes"
+xcrun swiftc -parse-as-library -O "$TASK_TMP/main.swift" "$ROOT/Sources/Views/Shared/DesignIcon.swift" "$ROOT/Sources/Views/Shared/DesignSymbols.swift" "$ROOT/Sources/Views/Inspector/FileTree.swift" "$ROOT/Sources/Views/Shared/StudioStyle.swift" -o "$TASK_TMP/large-changes"
 "$TASK_TMP/large-changes"

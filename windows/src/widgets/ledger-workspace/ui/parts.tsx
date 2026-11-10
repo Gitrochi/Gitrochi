@@ -1,4 +1,5 @@
-import { Archive, BellRing, CircleCheck, CircleDot, ClockAlert, GitMerge, Library, type LucideIcon, MessageCircleQuestion, PackageCheck } from "lucide-react";
+import { Archive, BellRing, ClockAlert, Library, type LucideIcon, MessageCircleQuestion, PackageCheck } from "lucide-react";
+import { CircleCheck, CircleDot, GitMerge } from "@/shared/icons";
 import type { ReactNode } from "react";
 import { type AnswerKind, type LedgerSession, type LedgerVerdict, type VerdictIcon, verdictLook } from "@/entities/ledger";
 import { t } from "@/shared/i18n";

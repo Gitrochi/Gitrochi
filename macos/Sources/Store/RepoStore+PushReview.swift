@@ -45,8 +45,7 @@ extension RepoStore {
         async let sourceOutput = g(["rev-parse", "--verify", "refs/heads/\(branch)^{commit}"])
         async let current = Git.run(["symbolic-ref", "--quiet", "--short", "HEAD"], in: repo, ok: [0, 1])
         async let statusOutput = Gitch.status(in: repo)
-        async let checks = Gitch.preflight(in: repo, fetch: false)
-        let (rawConfig, rawRemotes, rawSource, rawCurrent, status, preflight) = try await (configOutput, remoteOutput, sourceOutput, current, statusOutput, checks)
+        let (rawConfig, rawRemotes, rawSource, rawCurrent, status) = try await (configOutput, remoteOutput, sourceOutput, current, statusOutput)
         let config = PushReview.config(rawConfig), sourceOID = rawSource.trimmed
         let resolved = try PushReview.destination(config: config, remotes: rawRemotes.split(separator: "\n").map(String.init), branch: branch,
                                                  currentBranch: rawCurrent.output.trimmed, remoteOverride: remoteOverride)
@@ -106,13 +105,12 @@ extension RepoStore {
         return PushReviewPlan(repo: repo, branch: branch, sourceOID: sourceOID, remote: resolved.remote, destination: resolved.destination,
                               pushURL: pushURL, destinationOID: destinationOID, force: force, setUpstream: resolved.setUpstream, stamp: stamp,
                               author: author.isEmpty ? String(localized: "Not configured") : author, account: account, credentialAccount: credentialAccount,
-                              preflight: preflight.map { value in Gitch.Preflight(result: value.result, checks: value.checks.map { .init(level: $0.level, code: $0.code, message: PushReview.displayURL($0.message)) }) } ?? .init(result: "STOP", checks: [.init(level: "STOP", code: "unavailable", message: String(localized: "The gitch preflight check is unavailable. Open Settings → CLI and repair gitch before pushing."))]),
                               commits: commits, commitCount: Int(count.trimmed) ?? 0, files: Array(files.prefix(500)), fileCount: files.count, fileScope: comparisonBase == nil ? "snapshot" : "changes", comparisonBase: comparisonBase)
     }
 
     @discardableResult
     func confirmPushReview() async -> Bool {
-        guard let plan = pushReview, !pushReviewLoading, busy == nil, plan.preflight.result != "STOP",
+        guard let plan = pushReview, !pushReviewLoading, busy == nil,
               case .pushReview(_, _, let remoteOverride) = sheet else { return false }
         let generation = pushReviewGeneration
         func active() -> Bool {
@@ -131,7 +129,6 @@ extension RepoStore {
                 pushReviewError = String(localized: "The branch, account or push destination changed. Review the updated details and confirm again.")
                 return false
             }
-            guard fresh.preflight.result != "STOP" else { return false }
             let target = Hosting.target(remotes: [plan.remote], urls: [plan.remote: plan.pushURL], gitlabHosts: AccountStore.shared.accounts.map(\.host), sshAliases: AccountStore.shared.sshHostAliases)
             let env = AccountStore.shared.gitEnvironment(target: target, repoPath: plan.repo.path)
             let success = await run(String(localized: "Pushing…"), fresh.arguments, network: true, env: env)

@@ -55,6 +55,13 @@ export function recents(): string[] {
 export function addRecent(path: string) {
   const list = [path, ...recents().filter((p) => p !== path)].slice(0, 12);
   settings.set("recentRepositories", list);
+  const opened = { ...settings.get<Record<string, number>>("recentRepositoryOpened", {}), [path]: Date.now() };
+  settings.set("recentRepositoryOpened", Object.fromEntries(Object.entries(opened).filter(([p]) => list.includes(p))));
+}
+
+/** When the repository was last opened; undefined for one opened before this was recorded (Home shows it) */
+export function recentOpened(path: string): number | undefined {
+  return settings.get<Record<string, number>>("recentRepositoryOpened", {})[path];
 }
 
 export function removeRecent(path: string) {

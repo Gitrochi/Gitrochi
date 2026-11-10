@@ -78,7 +78,7 @@ struct LedgerInspector: View {
                 if LedgerWake.waits(s, now: LedgerStore.localNow() + ledger.clockSkew) { LedgerWakePill() }
                 LedgerVerdictBadge(verdict: s.verdict)
                 if let close {
-                    Button(action: close) { Image(systemName: "xmark") }
+                    Button(action: close) { DesignIconImage(icon: .close) }
                         .buttonStyle(.borderless).keyboardShortcut(.cancelAction)
                         .help("Close").accessibilityLabel("Close")
                 }
@@ -104,7 +104,7 @@ struct LedgerInspector: View {
                 let current = s.baseCurrent ?? base
                 let behind = LedgerProjects.behind(s, baselines: ledger.state?.baselines ?? [])
                 HStack(spacing: 4) {
-                    Image(systemName: "tag").font(.system(size: 11)).foregroundStyle(.secondary).accessibilityHidden(true)
+                    DesignIconImage(icon: .releases, size: 11).foregroundStyle(.secondary).accessibilityHidden(true)
                     Text(current == base ? base : base + " → " + current).font(.system(size: 11))
                     if behind > 0 {
                         Text("\(behind) behind").font(.system(size: 11, weight: .semibold)).foregroundStyle(StudioStyle.Tone.waiting.text)
@@ -234,7 +234,7 @@ struct LedgerInspector: View {
                         }
                         if q.state == .answered {
                             HStack(alignment: .firstTextBaseline, spacing: 5) {
-                                Image(systemName: q.answeredBy == .auto ? "timer" : "person.fill").font(.system(size: 11)).foregroundStyle(.secondary)
+                                SymbolIcon(q.answeredBy == .auto ? "timer" : "person.fill").font(.system(size: 11)).foregroundStyle(.secondary)
                                     .help(q.answeredBy == .auto ? String(localized: "Answered by auto-continue") : String(localized: "Answered by a person"))
                                 Text(q.answer ?? "").font(.system(size: 11)).fixedSize(horizontal: false, vertical: true).textSelection(.enabled)
                             }
@@ -366,7 +366,7 @@ struct LedgerInspector: View {
                 LedgerSectionHeader(title: String(localized: "Touches"), count: s.touches.count)
                 ForEach(s.touches, id: \.self) { path in
                     HStack(spacing: 6) {
-                        Image(systemName: "doc").font(.system(size: 11)).foregroundStyle(.secondary).accessibilityHidden(true)
+                        DesignIconImage(icon: .file, size: 11).foregroundStyle(.secondary).accessibilityHidden(true)
                         // the file name whole, then its folder shortened from the start (docs/design.md, Text)
                         Text((path as NSString).lastPathComponent).font(.system(size: 12)).lineLimit(1).fixedSize()
                             .textSelection(.enabled)
@@ -378,7 +378,7 @@ struct LedgerInspector: View {
                         ForEach(detail.overlaps.filter { $0.kind == .same && $0.paths.contains(path) }, id: \.self) { o in
                             let other = o.a == s.id ? o.b : o.a
                             Button { open(other) } label: {
-                                Label(other, systemImage: "exclamationmark.triangle.fill").font(.system(size: 11, weight: .semibold))
+                                Label(other, symbol: "exclamationmark.triangle.fill").font(.system(size: 11, weight: .semibold))
                                     .foregroundStyle(StudioStyle.Tone.waiting.text)
                             }
                             .buttonStyle(.plain)
@@ -390,7 +390,7 @@ struct LedgerInspector: View {
                 ForEach(detail.overlaps.filter { $0.kind == .coupled }, id: \.self) { o in
                     let other = o.a == s.id ? o.b : o.a
                     Button { open(other) } label: {
-                        Label("Likely overlap with \(other): \(o.paths.joined(separator: ", "))", systemImage: "link")
+                        Label("Likely overlap with \(other): \(o.paths.joined(separator: ", "))", symbol: "link")
                             .font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(2)
                     }
                     .buttonStyle(.plain)
@@ -440,7 +440,7 @@ private struct LedgerTimelineRow: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
-            Image(systemName: icon).font(.system(size: 11)).foregroundStyle(person ? Color.secondary : tint)
+            SymbolIcon(icon).font(.system(size: 11)).foregroundStyle(person ? Color.secondary : tint)
                 .frame(width: 16).padding(.top, 2)
                 .help(actor)
             VStack(alignment: .leading, spacing: 4) {

@@ -81,7 +81,7 @@ struct FlowRunSheet: View {
                 Section("Services and rollback") {
                     ForEach(steps) { s in
                         HStack(spacing: 6) {
-                            Image(systemName: stepIcon(s.state)).foregroundStyle(.secondary)
+                            SymbolIcon(stepIcon(s.state)).foregroundStyle(.secondary)
                             Text(s.node.map { "\($0): \(s.text)" } ?? s.text).lineLimit(1).truncationMode(.middle)
                             Spacer(minLength: 0)
                             Text(s.state).font(.caption2.monospaced()).foregroundStyle(.secondary)
@@ -124,7 +124,7 @@ struct FlowRunSheet: View {
                     Text(n.block).font(.caption.monospaced()).foregroundStyle(.secondary)
                     Spacer()
                     if let log = n.log, let dir = record?["runDir"].string {
-                        Button { NSWorkspace.shared.open(URL(fileURLWithPath: dir).appendingPathComponent(log)) } label: { Image(systemName: "doc.text.magnifyingglass") }
+                        Button { NSWorkspace.shared.open(URL(fileURLWithPath: dir).appendingPathComponent(log)) } label: { SymbolIcon("doc.text.magnifyingglass") }
                             .buttonStyle(.borderless)
                             .help("Open the full log")
                     }
@@ -194,10 +194,10 @@ struct FlowRunSheet: View {
         if let rb = record?["rollback"], rb != .null {
             VStack(alignment: .leading, spacing: 4) {
                 if rb["state"].string == "ROLLBACK_FAILED" {
-                    Label("Rollback failed. The environment is on hold until a person checks it and releases it (gitch flow hold release).", systemImage: "exclamationmark.octagon.fill")
+                    Label("Rollback failed. The environment is on hold until a person checks it and releases it (gitch flow hold release).", symbol: "exclamationmark.octagon.fill")
                         .foregroundStyle(.red)
                 } else if rb["state"].string == "ROLLED_BACK" {
-                    Label("The changes were undone in reverse order.", systemImage: "arrow.uturn.backward.circle")
+                    Label("The changes were undone in reverse order.", symbol: "arrow.uturn.backward.circle")
                         .foregroundStyle(.orange)
                 }
                 if let why = rb["why"].string, !why.isEmpty { Text(why).font(.caption).foregroundStyle(.secondary) }
@@ -234,7 +234,7 @@ struct FlowRunSheet: View {
                     Task {
                         do { try await flows.cancel(runId) } catch { self.error = error.localizedDescription }
                     }
-                } label: { Label("Cancel run", systemImage: "stop.fill") }
+                } label: { Label("Cancel run", symbol: "stop.fill") }
                 .disabled(cancelling)
                 .help("Stops every step and its child processes, then undoes what was changed")
             }
@@ -286,14 +286,14 @@ struct FlowTrustSheet: View {
             }
             .frame(maxHeight: 380)
             if !plan.outward.isEmpty {
-                Label("Acts outside this computer: \(plan.outward.joined(separator: ", "))", systemImage: "arrow.up.forward.app")
+                Label("Acts outside this computer: \(plan.outward.joined(separator: ", "))", symbol: "arrow.up.forward.app")
                     .font(.callout).foregroundStyle(.orange)
             }
             if !plan.services.isEmpty {
-                Label("Starts services: \(plan.services.joined(separator: ", "))", systemImage: "shippingbox")
+                Label("Starts services: \(plan.services.joined(separator: ", "))", symbol: "shippingbox")
                     .font(.callout).foregroundStyle(.secondary)
             }
-            ForEach(plan.warnings, id: \.self) { w in Label(w, systemImage: "exclamationmark.triangle").font(.caption).foregroundStyle(.orange) }
+            ForEach(plan.warnings, id: \.self) { w in Label(w, symbol: "exclamationmark.triangle").font(.caption).foregroundStyle(.orange) }
             HStack {
                 Spacer()
                 Button("Cancel", role: .cancel) { dismiss() }.keyboardShortcut(.cancelAction)
@@ -354,7 +354,7 @@ struct FlowSetupSheet: View {
                     VStack(alignment: .leading, spacing: 3) {
                         ForEach(p.findings, id: \.self) { f in
                             HStack(spacing: 6) {
-                                Image(systemName: "checkmark.circle").foregroundStyle(.green)
+                                SymbolIcon("checkmark.circle").foregroundStyle(.green)
                                 Text(f.kind).font(.callout.weight(.medium))
                                 Text(f.evidence).font(.caption.monospaced()).foregroundStyle(.secondary)
                                 if let n = f.note, !n.isEmpty { Text(n).font(.caption).foregroundStyle(.secondary) }
@@ -371,7 +371,7 @@ struct FlowSetupSheet: View {
                 .frame(height: 300)
                 .background(Color(nsColor: .textBackgroundColor), in: RoundedRectangle(cornerRadius: 6))
                 if p.exists {
-                    Label("A flow file already exists, so nothing will be written. Merge the proposal by hand.", systemImage: "exclamationmark.triangle")
+                    Label("A flow file already exists, so nothing will be written. Merge the proposal by hand.", symbol: "exclamationmark.triangle")
                         .font(.callout).foregroundStyle(.orange)
                 }
             } else if let e = error {

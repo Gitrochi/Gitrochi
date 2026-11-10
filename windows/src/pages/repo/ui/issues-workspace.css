@@ -1,0 +1,16 @@
+/* The Issues page's own parts: the summary of what is assigned to you and the ends of its rows. macOS: IssuesWorkspacePanel. */
+.issue-summary-none { font-size: 15px; line-height: 20px; font-weight: 600; }
+.issue-summary-middle { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.issue-bar { display: flex; gap: 4px; height: 8px; border-radius: 999px; overflow: hidden; background: var(--bar); }
+/* status tones, never the accent: review waits, progress is information, the rest is neutral */
+.issue-bar > .review, .issue-legend i.review { background: #a35200; }
+.issue-bar > .progress, .issue-legend i.progress { background: #1f5a9e; }
+.issue-bar > .idle, .issue-legend i.idle { background: var(--border-strong); }
+:root[data-theme="dark"] .issue-bar > .review, :root[data-theme="dark"] .issue-legend i.review { background: #f2b35e; }
+:root[data-theme="dark"] .issue-bar > .progress, :root[data-theme="dark"] .issue-legend i.progress { background: #8cb8ff; }
+.issue-legend { display: flex; flex-wrap: wrap; gap: 6px 24px; font-size: 12px; }
+.issue-legend > span { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+.issue-legend i { flex: none; width: 8px; height: 8px; border-radius: 50%; }
+.issue-legend b { font-weight: 600; }
+.issue-row-comments { display: inline-flex; align-items: center; gap: 4px; }
+.issue-row-author { display: inline-flex; }

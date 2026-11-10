@@ -41,6 +41,13 @@ struct RepoTarget { var provider: Provider; var host: String; var path: String }
         precondition(timeline.path.map(\.id) == ["v0.9.0", "v1.0.0", "v1.1.0", "v1.2.0", "v1.3.0-rc.1"] && timeline.stable?.id == "v1.2.0" && timeline.prerelease?.id == "v1.3.0-rc.1")
         precondition(ReleaseCatalog.timeline(Array(line.dropFirst(2)), family: "").prerelease == nil)
         precondition(ReleaseCatalog.timeline([line[0]], family: "").stable == nil && ReleaseCatalog.timeline([line[0]], family: "").prerelease?.id == "v1.3.0-rc.1")
+        precondition(ReleaseCatalog.releaseToOpen(Array(line.prefix(4)))?.id == "v1.2.0")
+        precondition(ReleaseCatalog.releaseToOpen([line[1], line[0]])?.id == "v1.3.0-rc.1")
+        precondition(ReleaseCatalog.releaseToOpen([line[1]])?.id == "v1.3.0" && ReleaseCatalog.releaseToOpen([]) == nil)
+        precondition(ReleaseCatalog.taggedOn(commit: "3a28170ffee", target: "main")! == ("3a28170", true))
+        precondition(ReleaseCatalog.taggedOn(commit: nil, target: "main")! == ("main", false))
+        precondition(ReleaseCatalog.taggedOn(commit: "", target: "0123456789abcdef0123456789abcdef01234567")! == ("0123456", true))
+        precondition(ReleaseCatalog.taggedOn(commit: nil, target: "") == nil)
         let names = ["Desktop-0.3.13-macOS.dmg", "Desktop-0.3.13-macOS.zip", "Desktop-0.3.13-macOS.zip.sig", "Desktop_0.3.13_x64-setup.exe", "helper-windows-x64.exe", "helper", "checksums.sha256", "latest.json"]
         let groups = ReleaseCatalog.assetGroups(names, tag: "v0.3.13") { $0 }
         precondition(groups.primary == ["Desktop-0.3.13-macOS.dmg", "Desktop-0.3.13-macOS.zip", "Desktop_0.3.13_x64-setup.exe"] && groups.other.count == 5)

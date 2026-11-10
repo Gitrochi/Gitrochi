@@ -1,4 +1,5 @@
-import { Check, Cloud, Crosshair, GitBranch, Tag as TagIcon } from "lucide-react";
+import { Crosshair } from "lucide-react";
+import { Check, Cloud, GitBranch, Tag as TagIcon } from "@/shared/icons";
 import { t } from "@/shared/i18n";
 import type { ChangeKind, RefLabel } from "../model/types";
 import "./badges.css";

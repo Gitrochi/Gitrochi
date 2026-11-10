@@ -1,10 +1,15 @@
-import { AlertCircle, CheckCircle2, Circle, GitBranch } from "lucide-react";
+import { Square, TriangleAlert } from "lucide-react";
+import { Circle, CircleCheck, CircleDot, SquareCheck } from "@/shared/icons";
+import { CircleAlert } from "@/shared/icons";
 import {
+  scheduleStage,
   type HubProjectField,
   type ProjectScheduleEntry,
+  type ProjectScheduleSettings,
 } from "@/entities/hosting";
 import { language, t } from "@/shared/i18n";
-import { projectFieldValue, projectRepository } from "../lib/project-workspace";
+import { Avatar, StatusPill } from "@/shared/ui";
+import { projectFieldValue } from "../lib/project-workspace";
 
 export const scheduleDateLabel = (
   value: string,
@@ -29,6 +34,10 @@ export const scheduleStatusColor = (id: string) => {
       colors.length
   ];
 };
+/**
+ * The todo row of docs/design.md: checkbox, title, one line of meta, status pill, avatar. A done task shows a check and
+ * a gray title. Every change is left to the parent. macOS: ProjectScheduleTaskRow.
+ */
 export function ProjectAgendaTask({
   entry,
   selected,
@@ -36,8 +45,8 @@ export function ProjectAgendaTask({
   complete,
   completionEnabled,
   status,
+  settings,
   today,
-  localRepository,
 }: {
   entry: ProjectScheduleEntry;
   selected: boolean;
@@ -45,73 +54,63 @@ export function ProjectAgendaTask({
   complete: () => void;
   completionEnabled: boolean;
   status?: HubProjectField;
+  settings?: ProjectScheduleSettings;
   today: string;
-  localRepository?: string;
 }) {
   const value = status ? projectFieldValue(entry.row, status) : "",
     option = status?.options.find((option) => option.id === value),
-    overdue = !entry.completed && !!entry.due && entry.due < today;
+    stage = scheduleStage(entry, status, settings),
+    overdue = !entry.completed && !entry.invalidRange && !!entry.due && entry.due < today,
+    invalid = entry.invalidDate || entry.invalidRange;
+  // The project's own word for the status; a closed item without one is simply done.
+  const name = option ? (entry.row.id.startsWith("local-task:") ? t(option.name) : option.name) : entry.completed ? t("Done") : "";
+  const date = entry.date ? (entry.date === today ? t("Today") : scheduleDateLabel(entry.date)) : t("No due date");
+  const assignee = entry.row.assignees?.[0];
   return (
     <div
-      className={`project-agenda-task ${selected ? "selected" : ""} ${entry.completed ? "completed" : ""}`}
+      className={`project-todo ${selected ? "selected" : ""} ${entry.completed ? "done" : ""}`}
+      role="listitem"
     >
       <button
+        type="button"
         className="project-complete-task"
+        role="checkbox"
+        aria-checked={entry.completed}
         disabled={entry.completed || !completionEnabled}
-        title={
+        data-tip={
           entry.completed
-            ? t("Completed")
+            ? t("Done")
             : completionEnabled
-              ? t("Complete task")
+              ? t("Mark as done")
               : t("Choose a completion status in Schedule setup.")
         }
-        aria-label={t("Complete task: {0}", entry.row.title)}
+        aria-label={t("Mark as done: {0}", entry.row.title)}
         onClick={complete}
       >
-        {entry.completed ? <CheckCircle2 size={19} /> : <Circle size={19} />}
+        {entry.completed ? <SquareCheck size={16} /> : <Square size={16} />}
       </button>
-      <button className="project-agenda-task-main" onClick={select}>
-        <strong>{entry.row.title}</strong>
-        <span>
-          <span>
-            {projectRepository(entry.row) || t(entry.row.id.startsWith("local-task:") ? "Task" : "Draft")}
-            {entry.row.number ? ` #${entry.row.number}` : ""}
-          </span>
-          {option && (
-            <span
-              className="project-agenda-status"
-              style={{ color: scheduleStatusColor(option.id) }}
+      <button type="button" className="project-todo-main" onClick={select}>
+        <span className="project-todo-title">{entry.row.title}</span>
+        {/* Overdue is said in words as well as in colour. */}
+        <span className={`project-todo-meta ${overdue ? "overdue status-tone" : ""}`} data-tone={overdue ? "failed" : undefined}>
+          {overdue ? <CircleAlert size={12} /> : invalid ? <TriangleAlert size={12} aria-label={t("Check task dates")} /> : null}
+          {entry.date ? <time dateTime={entry.date}>{overdue ? `${t("Overdue")} · ${date}` : date}</time> : date}
+        </span>
+        <span className="project-todo-grow" />
+        <span className="project-todo-pill">
+          {name && (
+            <StatusPill
+              tone={stage === "done" ? "passed" : stage === "inProgress" ? "info" : "neutral"}
+              icon={stage === "done" ? <CircleCheck /> : stage === "inProgress" ? <CircleDot /> : <Circle />}
             >
-              {entry.row.id.startsWith("local-task:") ? t(option.name) : option.name}
-            </span>
+              {name}
+            </StatusPill>
           )}
-          {localRepository &&
-            projectRepository(entry.row) === localRepository && (
-              <GitBranch size={12} aria-label={t("Local repository")} />
-            )}
+        </span>
+        <span className="project-todo-avatar" role={assignee ? "img" : undefined} aria-label={assignee ? t("Assigned to @{0}", assignee) : undefined} data-tip={assignee ? `@${assignee}` : undefined}>
+          {assignee && <Avatar name={assignee} email={assignee} size={20} />}
         </span>
       </button>
-      <div className="project-agenda-task-right">
-        <span className={`project-agenda-date ${overdue ? "overdue" : ""}`}>
-          {entry.invalidDate || entry.invalidRange ? (
-            <AlertCircle size={12} aria-label={t("Check task dates")} />
-          ) : null}
-          {entry.due ? (
-            <time dateTime={entry.due}>
-              {entry.due === today ? t("Today") : scheduleDateLabel(entry.due)}
-            </time>
-          ) : (
-            <span>{t("No due date")}</span>
-          )}
-        </span>
-        <span className="project-avatar-group">
-          {entry.row.assignees?.slice(0, 2).map((name) => (
-            <span className="project-avatar" key={name} title={`@${name}`}>
-              {name.slice(0, 1).toUpperCase()}
-            </span>
-          ))}
-        </span>
-      </div>
     </div>
   );
 }

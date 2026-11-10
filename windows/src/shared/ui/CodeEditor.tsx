@@ -1,4 +1,6 @@
-import { ArrowDown, ArrowUp, Minus, Plus, Redo2, Save, Search, Undo2, WrapText, X } from "lucide-react";
+import { Redo2, Save, WrapText } from "lucide-react";
+import { Undo2 } from "@/shared/icons";
+import { ArrowDown, ArrowUp, Minus, Plus, Search, X } from "@/shared/icons";
 import { type CSSProperties, type ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { applyEditorText, editorLineRange, editorText, indentEditorText, sourceLanguage, sourceMatches, sourceTokens, wrappingLineLimit } from "@/shared/lib";
 import { t } from "@/shared/i18n";

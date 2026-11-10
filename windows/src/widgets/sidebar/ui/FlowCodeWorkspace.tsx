@@ -1,4 +1,6 @@
-import { Code2, FileCode2, FilePlus2, Plus, Search } from "lucide-react";
+import { FileCode2, FilePlus2 } from "lucide-react";
+import { Code2 } from "@/shared/icons";
+import { Plus, Search } from "@/shared/icons";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { type FlowBlock, type FlowDesignInspection, type FlowDocument, type FlowModule, designFlowNames, designModules, flowEngine, flowModuleSourceLine, relatedFlowFiles } from "@/entities/flow";
 import { t } from "@/shared/i18n";

@@ -85,8 +85,8 @@ struct HubUncertainWriteError: LocalizedError { let message: String; var created
         catch let error as HostingError where (400..<500).contains(error.status) { throw error }
         catch { throw HubUncertainWriteError(message: Self.error(error, token: c.token) + "\n\n" + String(localized: "The server may have accepted the last change. Refresh and check the remote item before trying again.")) }
     }
-    static func boardIssueQuery(_ board: J, page: Int) -> String {
-        var parameters = ["state": board["hide_closed_list"] as? Bool == true ? "opened" : "all", "scope": "all", "per_page": "30", "page": String(max(1, page)), "order_by": "updated_at"]
+    static func boardIssueQuery(_ board: J, page: Int, perPage: Int = 30) -> String {
+        var parameters = ["state": board["hide_closed_list"] as? Bool == true ? "opened" : "all", "scope": "all", "per_page": String(perPage), "page": String(max(1, page)), "order_by": "updated_at"]
         let labels = arr(board, "labels").map { s($0, "name") }.filter { !$0.isEmpty }; if !labels.isEmpty { parameters["labels"] = labels.joined(separator: ",") }
         let assignee = id(obj(board, "assignee")); if !assignee.isEmpty { parameters["assignee_id"] = assignee }
         let milestone = s(obj(board, "milestone"), "title"); if !milestone.isEmpty { parameters["milestone"] = milestone }
@@ -96,6 +96,16 @@ struct HubUncertainWriteError: LocalizedError { let message: String; var created
     }
     static func object(_ c: HubAccess, _ url: String, method: String = "GET", body: J? = nil) async throws -> J { guard let x = try await value(c, url, method: method, body: body) as? J else { throw fail(String(localized: "The server returned an unexpected response.")) }; return x }
     static func list(_ c: HubAccess, _ url: String) async throws -> [J] { guard let x = try await value(c, url) as? [J] else { throw fail(String(localized: "The server returned an unexpected response.")) }; return x }
+    /// GitLab answers 20 rows unless asked, so board reads walk every 100-row page instead of showing a partial list.
+    static func everyPage(_ c: HubAccess, _ url: (Int) -> String) async throws -> [J] {
+        var rows: [J] = []
+        for page in 1...100 {
+            try Task.checkCancellation()
+            let batch = try await list(c, url(page)); rows += batch
+            if batch.count < 100 { return rows }
+        }
+        throw fail(String(localized: "Project items could not be fully loaded. Retry the project."))
+    }
     static func graph(_ c: HubAccess, _ query: String, _ variables: J) async throws -> J {
         let x = try await object(c, c.apiBase + "/graphql", method: "POST", body: ["query": query, "variables": variables])
         let errors = arr(x, "errors")
@@ -170,11 +180,30 @@ struct HubUncertainWriteError: LocalizedError { let message: String; var created
         return result
     }
     static func error(_ e: Error, token: String? = nil) -> String { var text = e.localizedDescription; if let token, !token.isEmpty { text = text.replacingOccurrences(of: token, with: "[redacted]") }; for pattern in ["\\b(?:gh[pousr]_[\\w]+|github_pat_[\\w]+|glpat-[\\w-]+)\\b", "(?i)[?&](?:access_token|private_token|token|api_key)=[^&\\s]+"] { if let regex = try? NSRegularExpression(pattern: pattern) { text = regex.stringByReplacingMatches(in: text, range: NSRange(text.startIndex..., in: text), withTemplate: "[redacted]") } }; return String(text.prefix(1200)) }
-    static func projectOrganization(scope: String) -> String? {
+    /// GitHub owners are logins; GitLab owners are group paths, which may name a subgroup.
+    static func projectOrganization(scope: String, provider: Provider = .github) -> String? {
         guard scope.hasPrefix("organization:") else { return nil }
         let login = String(scope.dropFirst("organization:".count))
+        if provider == .gitlab {
+            let segments = login.split(separator: "/", omittingEmptySubsequences: false)
+            guard !login.isEmpty, login.count <= 255, segments.allSatisfy({ $0 != "." && $0 != ".." && $0.range(of: "^[A-Za-z0-9_.][A-Za-z0-9_.-]*$", options: .regularExpression) != nil }) else { return nil }
+            return login
+        }
         guard !login.isEmpty, login.count <= 39, login.range(of: "^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$", options: .regularExpression) != nil else { return nil }
         return login
+    }
+    /// Without an open repository, GitLab boards come from the chosen group.
+    static func gitlabBoards(_ c: HubAccess) -> String { c.projectOrganization.map { c.apiBase + "/groups/" + enc($0) } ?? repo(c) }
+    /// Group boards mix projects, so their rows carry the issue's own project and number.
+    static func gitlabIssue(_ c: HubAccess, _ row: HubProjectRow) throws -> String {
+        guard c.projectOrganization != nil else { return repo(c) + "/issues/" + enc(row.id) }
+        guard let number = row.number, number > 0, !row.repository.isEmpty else { throw fail(String(localized: "Select a loaded project field and item.")) }
+        return c.apiBase + "/projects/" + enc(row.repository) + "/issues/\(number)"
+    }
+    static func gitlabIssueProject(_ x: J) -> String {
+        let full = s(obj(x, "references"), "full")
+        if let hash = full.lastIndex(of: "#"), hash > full.startIndex { return String(full[..<hash]) }
+        return id(x, "project_id")
     }
     static func projectTarget(_ repository: RepoTarget?, provider: Provider, host: String, username: String, personal: Bool, organization: String? = nil) -> RepoTarget {
         if let organization { return RepoTarget(provider: provider, remote: "origin", host: host, path: organization + "/workspace") }
@@ -264,7 +293,12 @@ struct HubUncertainWriteError: LocalizedError { let message: String; var created
             let rows = try await list(c, c.apiBase + (p == .github ? "/gists?" : "/snippets?") + query)
             return HubPage(items: rows.map { gistItem(c, $0) }, more: rows.count == 30, notice: p == .gitlab ? String(localized: "GitLab personal snippets correspond to gists. Stars are not supported by its snippets API.") : nil)
         case .projects:
-            if p == .gitlab { guard !c.target.path.hasSuffix("/workspace") else { throw fail(String(localized: "Open a GitLab repository to browse its issue boards.")) }; let rows = try await list(c, repo(c) + "/boards"); return HubPage(items: Array(rows.dropFirst((page - 1) * 30).prefix(30)).map { HubItem(id: id($0), title: s($0, "name"), subtitle: String(localized: "GitLab issue board"), url: "https://\(c.target.host)/\(c.target.path)/-/boards/\(id($0))", data: $0) }, more: rows.count > page * 30) }
+            if p == .gitlab {
+                guard c.projectOrganization != nil || !c.target.path.hasSuffix("/workspace") else { throw fail(String(localized: "Choose a group or open a GitLab repository to browse its issue boards.")) }
+                let base = gitlabBoards(c), web = c.projectOrganization.map { "groups/" + $0 } ?? c.target.path
+                let rows = try await everyPage(c) { base + "/boards?per_page=100&page=\($0)" }
+                return HubPage(items: rows.map { HubItem(id: id($0), title: s($0, "name"), subtitle: String(localized: "GitLab issue board"), url: "https://\(c.target.host)/\(web)/-/boards/\(id($0))", data: $0) }, more: false)
+            }
             let parts = c.target.path.split(separator: "/").map(String.init), owner = parts.first ?? c.me, name = parts.last ?? "workspace", noRepo = name == "workspace"
             let connection = "projectsV2(first:30,after:$cursor){nodes{\(projectFields)} pageInfo{hasNextPage endCursor}}"
             let organization = c.projectOrganization
@@ -290,7 +324,7 @@ struct HubUncertainWriteError: LocalizedError { let message: String; var created
             if p == .github { d.files = obj(x, "files").sorted { $0.key < $1.key }.map { key, value in let f = value as? J ?? [:]; return HubFile(name: key, content: s(f, "content"), truncated: f["truncated"] as? Bool == true) }; do { _ = try await value(c, base + "/star"); d.starred = true } catch let error as HostingError where error.status == 404 { d.starred = false } catch { d.notice = String(localized: "Star status could not be loaded: \(Self.error(error, token: c.token))") }; if x["truncated"] as? Bool == true { d.notice = String(localized: "The server truncated the file list. Open the gist in a browser before editing.") } }
             else { let files = arr(x, "files").isEmpty ? [["path": s(x, "file_name")]] : arr(x, "files"); for f in files.prefix(30) { let name = s(f, "path"), branch = snippetRef(rawURL: s(f, "raw_url"), file: name) ?? "main"; try check(c); let data = try await Hosting.data(Hosting.request(p, base + "/files/\(enc(branch))/\(enc(name))/raw", token: c.token)); try check(c); d.files.append(HubFile(name: name, content: String(decoding: data.prefix(1_000_000), as: UTF8.self), truncated: data.count > 1_000_000)) }; if files.count > 30 { d.notice = String(localized: "The server returned more files. Open the snippet in a browser before editing.") } }; return d
         case .projects:
-            if p == .gitlab { let board = try await object(c, repo(c) + "/boards/" + enc(item.id)), lists = try await list(c, repo(c) + "/boards/" + enc(item.id) + "/lists?per_page=100"), labels = lists.compactMap { x -> HubProjectOption? in guard let label = x["label"] as? J else { return nil }; return HubProjectOption(id: id(label), name: s(label, "name")) }, issues = try await list(c, repo(c) + "/issues?" + boardIssueQuery(board, page: page)); var updated = item; updated.title = s(board, "name"); updated.data = board; var d = HubDetail(item: updated); d.fields = [HubProjectField(id: "board", name: String(localized: "Board column"), options: [HubProjectOption(id: "__open", name: String(localized: "Open"))] + labels + [HubProjectOption(id: "__closed", name: String(localized: "Closed"))])]; d.rows = issues.map { x in let names = x["labels"] as? [String] ?? []; return HubProjectRow(id: id(x, "iid"), title: s(x, "title"), body: s(x, "description"), url: s(x, "web_url"), contentID: id(x), statuses: ["board": s(x, "state") == "closed" ? "__closed" : labels.first { names.contains($0.name) }?.id ?? "__open"], labels: names, number: x["iid"] as? Int, repository: c.target.path, state: s(x, "state") == "closed" ? "CLOSED" : "OPEN", assignees: arr(x, "assignees").map { s($0, "username") }, updatedAt: s(x, "updated_at"), author: obj(x, "author")["username"] as? String, createdAt: x["created_at"] as? String) }; d.more = issues.count == 30; d.notice = String(localized: "GitLab board scope filters are applied. Only label columns can be moved here; assignee, milestone, iteration and custom status columns remain available in the browser. Moving to Open reopens the issue and removes its board column labels."); return d }
+            if p == .gitlab { return try await gitlabBoard(c, item: item, page: page) }
             var result = try await projectDetailPage(c, item: item, cursor: cursor)
             guard page == 1, cursor == nil else { return result }
             var rows: [HubProjectRow] = [], itemIDs = Set<String>(), cursors = Set<String>()
@@ -309,6 +343,26 @@ struct HubUncertainWriteError: LocalizedError { let message: String; var created
             result.rows = rows; result.more = false; result.cursor = nil; result.notice = notice
             return result
         }
+    }
+    /// Windows: gitlabBoard. The first read loads every issue in the board's scope; explicit later pages stay available.
+    private static func gitlabBoard(_ c: HubAccess, item: HubItem, page: Int) async throws -> HubDetail {
+        let base = gitlabBoards(c), group = c.projectOrganization, board = try await object(c, base + "/boards/" + enc(item.id))
+        let lists = try await everyPage(c) { base + "/boards/" + enc(item.id) + "/lists?per_page=100&page=\($0)" }
+        let labels = lists.compactMap { x -> HubProjectOption? in guard let label = x["label"] as? J else { return nil }; return HubProjectOption(id: id(label), name: s(label, "name")) }
+        let issues: [J]
+        if page == 1 { issues = try await everyPage(c) { base + "/issues?" + boardIssueQuery(board, page: $0, perPage: 100) } }
+        else { issues = try await list(c, base + "/issues?" + boardIssueQuery(board, page: page)) }
+        var updated = item; updated.title = s(board, "name"); updated.data = board; var d = HubDetail(item: updated)
+        d.fields = [HubProjectField(id: "board", name: String(localized: "Board column"), options: [HubProjectOption(id: "__open", name: String(localized: "Open"))] + labels + [HubProjectOption(id: "__closed", name: String(localized: "Closed"))])]
+        var seen = Set<String>()
+        // Issue numbers repeat across a group's projects, so group rows use the global issue ID.
+        d.rows = issues.compactMap { x in
+            let names = x["labels"] as? [String] ?? [], rowID = group == nil ? id(x, "iid") : id(x)
+            guard seen.insert(rowID).inserted else { return nil }
+            return HubProjectRow(id: rowID, title: s(x, "title"), body: s(x, "description"), url: s(x, "web_url"), contentID: id(x), statuses: ["board": s(x, "state") == "closed" ? "__closed" : labels.first { names.contains($0.name) }?.id ?? "__open"], labels: names, number: x["iid"] as? Int, repository: group == nil ? c.target.path : gitlabIssueProject(x), state: s(x, "state") == "closed" ? "CLOSED" : "OPEN", assignees: arr(x, "assignees").map { s($0, "username") }, updatedAt: s(x, "updated_at"), author: obj(x, "author")["username"] as? String, createdAt: x["created_at"] as? String)
+        }
+        d.more = page > 1 && issues.count == 30
+        d.notice = String(localized: "GitLab board scope filters are applied. Only label columns can be moved here; assignee, milestone, iteration and custom status columns remain available in the browser. Moving to Open reopens the issue and removes its board column labels."); return d
     }
     /// Explicit cursor reads stay available; default detail reads never present one page as a full project.
     private static func projectDetailPage(_ c: HubAccess, item: HubItem, cursor: String?) async throws -> HubDetail {
@@ -428,9 +482,10 @@ struct HubUncertainWriteError: LocalizedError { let message: String; var created
         if c.target.provider == .github { try await updateProjectField(c, detail: detail, row: row, field: field, value: option); return }
         let loaded = try loadedProjectRow(detail, row: row)
         guard let actual = detail.fields.first(where: { $0.id == field.id }), actual.options.contains(where: { $0.id == option }) else { throw fail(String(localized: "Select a loaded project field and item.")) }
-        let fresh = try await object(c, repo(c) + "/issues/" + enc(loaded.id)), labels = fresh["labels"] as? [String] ?? [], boardLabels = actual.options.filter { !$0.id.hasPrefix("__") }.map(\.name), selectedLabel = actual.options.first(where: { $0.id == option && !$0.id.hasPrefix("__") })?.name
+        let issue = try gitlabIssue(c, loaded)
+        let fresh = try await object(c, issue), labels = fresh["labels"] as? [String] ?? [], boardLabels = actual.options.filter { !$0.id.hasPrefix("__") }.map(\.name), selectedLabel = actual.options.first(where: { $0.id == option && !$0.id.hasPrefix("__") })?.name
         var body: J = ["remove_labels": labels.filter { boardLabels.contains($0) && $0 != selectedLabel }.joined(separator: ","), "state_event": option == "__closed" ? "close" : "reopen"]
-        if let selectedLabel { body["add_labels"] = selectedLabel }; _ = try await value(c, repo(c) + "/issues/" + enc(loaded.id), method: "PUT", body: body)
+        if let selectedLabel { body["add_labels"] = selectedLabel }; _ = try await value(c, issue, method: "PUT", body: body)
     }
     static func addIssue(_ c: HubAccess, detail: HubDetail, issueURL: String) async throws {
         guard let url = safeURL(c, issueURL), url.host?.lowercased() == c.target.host.lowercased() else { throw fail(String(localized: "Enter an issue URL from the connected server.")) }
@@ -442,6 +497,12 @@ struct HubUncertainWriteError: LocalizedError { let message: String; var created
             guard !s(issue, "node_id").isEmpty, isPR || issue["pull_request"] == nil else { throw fail(String(localized: "Select an issue or pull request from this server.")) }
             _ = try await graph(c, "mutation($input:AddProjectV2ItemByIdInput!){addProjectV2ItemById(input:$input){item{id}}}", ["input": ["projectId": detail.item.id, "contentId": s(issue, "node_id")]])
         } else {
+            if let group = c.projectOrganization {
+                guard let split = url.path.range(of: "/-/issues/"), let number = Int(url.path[split.upperBound...]), number > 0, let field = detail.fields.first else { throw fail(String(localized: "Select an issue from a repository in this group.")) }
+                let project = String(url.path[..<split.lowerBound]).trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+                guard project.lowercased().hasPrefix(group.lowercased() + "/") else { throw fail(String(localized: "Select an issue from a repository in this group.")) }
+                let issue = try await object(c, c.apiBase + "/projects/" + enc(project) + "/issues/\(number)"), row = HubProjectRow(id: id(issue), title: s(issue, "title"), body: "", url: issueURL, contentID: id(issue), statuses: [:], number: number, repository: project); var copy = detail; copy.rows.append(row); try await move(c, detail: copy, row: row, field: field, option: "__open"); return
+            }
             guard let split = url.path.range(of: "/-/issues/"), String(url.path[..<split.lowerBound]).trimmingCharacters(in: CharacterSet(charactersIn: "/")) == c.target.path, let number = Int(url.path[split.upperBound...]), number > 0, let field = detail.fields.first else { throw fail(String(localized: "Select an issue from this board's repository.")) }
             let issue = try await object(c, repo(c) + "/issues/\(number)"), row = HubProjectRow(id: id(issue, "iid"), title: s(issue, "title"), body: "", url: issueURL, contentID: id(issue), statuses: [:]); var copy = detail; copy.rows.append(row); try await move(c, detail: copy, row: row, field: field, option: "__open")
         }

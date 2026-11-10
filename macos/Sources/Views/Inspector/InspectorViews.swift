@@ -69,7 +69,7 @@ struct WorkingChangesView: View {
                     CommitImpactView()
                     if store.status.isEmpty {
                         Card {
-                            Label("Working directory is clean", systemImage: "checkmark.circle.fill")
+                            Label("Working directory is clean", symbol: "checkmark.circle.fill")
                                 .foregroundStyle(.green)
                             Text("Modified files appear here.")
                                 .font(.callout).foregroundStyle(.secondary)
@@ -147,7 +147,7 @@ private struct OperationBanner: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Label(store.repoState.title, systemImage: "exclamationmark.triangle.fill")
+            Label(store.repoState.title, symbol: "exclamationmark.triangle.fill")
                 .font(.headline)
                 .foregroundStyle(.orange)
             Text(store.status.conflicted.isEmpty
@@ -179,7 +179,7 @@ struct CommitDetailView: View {
         if let d = store.detail, d.sha == sha {
             VStack(spacing: 0) {
                 WorkbenchFlow(spacing: 8) {
-                    Label(d.parents.count > 1 ? "Merge commit" : "Commit", systemImage: d.parents.count > 1 ? "arrow.triangle.merge" : "smallcircle.filled.circle")
+                    Label(d.parents.count > 1 ? "Merge commit" : "Commit", symbol: d.parents.count > 1 ? "arrow.triangle.merge" : "smallcircle.filled.circle")
                         .font(.headline)
                     Text(String(d.sha.prefix(8))).font(.system(.callout, design: .monospaced)).foregroundStyle(.secondary)
                     Text(Fmt.short(d.commitDate)).font(.callout).foregroundStyle(.secondary)
@@ -251,12 +251,12 @@ struct CommitDetailView: View {
                 }
                 .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
             }
-            Label(Fmt.long(d.date), systemImage: "calendar")
+            Label(Fmt.long(d.date), symbol: "calendar")
                 .font(.caption).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
             if d.committer != d.author || abs(d.commitDate.timeIntervalSince(d.date)) > 60 {
                 Label(d.committer == d.author ? "Commit: \(Fmt.long(d.commitDate))" : "Commit: \(d.committer) · \(Fmt.long(d.commitDate))",
-                      systemImage: "clock.arrow.circlepath")
+                      symbol: "clock.arrow.circlepath")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -266,7 +266,7 @@ struct CommitDetailView: View {
                 Pill(text: String(d.sha.prefix(8)), icon: "number") { store.copy(d.sha) }
                     .help("Copy full SHA")
                 if !d.parents.isEmpty {
-                    Image(systemName: "arrow.left").font(.caption2).foregroundStyle(.tertiary)
+                    SymbolIcon("arrow.left").font(.caption2).foregroundStyle(.tertiary)
                     ForEach(d.parents, id: \.self) { p in
                         Pill(text: String(p.prefix(7)), icon: d.parents.count > 1 ? "arrow.triangle.merge" : nil) { store.reveal(p) }
                             .help("Go to parent commit")
@@ -279,13 +279,13 @@ struct CommitDetailView: View {
     private func commitActions(_ d: CommitDetail) -> some View {
         WorkbenchFlow(spacing: 8) {
             Button { store.requestNewBranch(from: d.sha, label: String(d.sha.prefix(7))) } label: {
-                Label("New branch…", systemImage: "arrow.triangle.branch")
+                Label("New branch…", symbol: "arrow.triangle.branch")
             }
-            Button { store.sheet = .tag(sha: d.sha) } label: { Label("Tag here…", systemImage: "tag") }
+            Button { store.sheet = .tag(sha: d.sha) } label: { Label("Tag here…", symbol: "tag") }
             Menu {
                 CommitMenu(commit: Commit(id: d.sha, parents: d.parents, author: d.author,
                                           email: d.email, date: d.date, subject: d.summary, body: d.body))
-            } label: { Label("More", systemImage: "ellipsis") }
+            } label: { Label("More", symbol: "ellipsis") }
                 .accessibilityLabel("More commit actions")
         }
         .controlSize(.small).disabled(store.busy != nil)
@@ -294,7 +294,7 @@ struct CommitDetailView: View {
     private var claude: some View {
         Card {
             VStack(alignment: .leading, spacing: 8) {
-                Label("\(AIStore.shared.short(for: .explain)) explanation", systemImage: "sparkles")
+                Label("\(AIStore.shared.short(for: .explain)) explanation", symbol: "sparkles")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Color.accentColor)
                 if store.explaining.contains(sha) {
@@ -357,7 +357,7 @@ private struct Pill: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 3) {
-                if let icon { Image(systemName: icon).font(.system(size: 9, weight: .semibold)) }
+                if let icon { SymbolIcon(icon).font(.system(size: 9, weight: .semibold)) }
                 Text(text).font(.system(size: 11, design: .monospaced))
             }
             .padding(.horizontal, 7)

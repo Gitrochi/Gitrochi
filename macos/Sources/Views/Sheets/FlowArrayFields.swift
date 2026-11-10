@@ -48,7 +48,7 @@ struct FlowArrayFields: View {
                         depth: depth, showLabel: false, onError: { error in errors[index] = error; onError(errors.values.first) }))
                     Button {
                         var items = value.array; guard items.indices.contains(index) else { return }; items.remove(at: index); value = .array(items); errors = [:]; onError(nil)
-                    } label: { Image(systemName: "minus.circle") }.buttonStyle(.borderless).help("Remove item")
+                    } label: { SymbolIcon("minus.circle") }.buttonStyle(.borderless).help("Remove item")
                 }
             }
             HStack {
@@ -57,7 +57,7 @@ struct FlowArrayFields: View {
                         ForEach(["string", "number", "boolean", "object", "array"], id: \.self) { Text(FlowValueType.title($0)).tag($0) }
                     }.labelsHidden().frame(maxWidth: 120)
                 }
-                Button { value = .array(value.array + [FlowValueType.empty(schema["type"].string ?? type)]) } label: { Label("Add item", systemImage: "plus") }
+                Button { value = .array(value.array + [FlowValueType.empty(schema["type"].string ?? type)]) } label: { Label("Add item", symbol: "plus") }
                     .controlSize(.small)
             }
         }.padding(9).background(Color.secondary.opacity(0.035), in: RoundedRectangle(cornerRadius: 8))

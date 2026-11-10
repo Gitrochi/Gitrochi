@@ -16,7 +16,6 @@ export interface PushReviewPlan {
   author: string;
   account: string;
   credentialAccount: string;
-  preflight: { result: string; checks: { level: string; code: string; message: string }[] };
   commits: { sha: string; subject: string; author: string; email: string }[];
   commitCount: number;
   files: string[];

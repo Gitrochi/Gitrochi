@@ -172,6 +172,21 @@ struct AppCommands: Commands {
     @AppStorage("repositoryInspectorCollapsed") private var inspectorCollapsed = false
     @Environment(\.openWindow) private var openWindow
 
+    /// One Go menu entry per page, with the shortcut the sidebar shows beside it
+    @ViewBuilder private func goButtons(_ pages: [WorkspaceDestination]) -> some View {
+        ForEach(pages.filter(\.isShown)) { page in
+            let button = Button(page.title(gitlab: store?.target?.provider == .gitlab)) { store?.navigate(page) }
+                .disabled(store == nil)
+            if page == .home {
+                button.keyboardShortcut("h", modifiers: [.command, .shift])
+            } else if let digit = page.shortcutDigit {
+                button.keyboardShortcut(KeyEquivalent(Character(String(digit))), modifiers: .command)
+            } else {
+                button
+            }
+        }
+    }
+
     var body: some Commands {
         // 창이 하나도 없을 때도 새 창을 열 수 있게 메뉴의 openWindow 를 받아 둔다
         let _ = Workspace.shared.setWindowOpener { [openWindow] in openWindow(id: "repo") }
@@ -193,8 +208,18 @@ struct AppCommands: Commands {
                 .keyboardShortcut("o", modifiers: [.command, .shift])
             Button("Create new repository…") { store?.presentInitPanel() }
         }
+        // the pages grouped as in the sidebar, ⌘1–⌘9 in its order and Home ⇧⌘H (docs/design.md › App shell, Sidebar)
+        CommandMenu("Go") {
+            goButtons([.home])
+            Divider()
+            goButtons([.repository, .compare, .rebase, .code])
+            Divider()
+            goButtons([.pullRequests, .issues, .actions, .releases, .projects])
+            Divider()
+            goButtons([.flows, .ledger])
+        }
         CommandMenu("Repository") {
-            Button(store?.undoStack.last.map { "Undo: \($0.title)" } ?? "Undo") { store?.confirmUndo() }
+            Button(store?.undoStack.last.map { String(localized: "Undo: \($0.title)") } ?? String(localized: "Undo")) { store?.confirmUndo() }
                 .keyboardShortcut("z", modifiers: [.command, .option])
                 .disabled(store?.undoStack.isEmpty ?? true)
             Divider()
@@ -213,18 +238,9 @@ struct AppCommands: Commands {
                 .disabled(store?.destination != .repository)
             Button("Quick navigation…") { store?.showCommandPalette = true }
                 .keyboardShortcut("k")
-            Button("Show home") { store?.navigate(.home) }.keyboardShortcut("0")
+            // the pages moved to the Go menu with ⌘1–⌘9; these two switch the repository screen's area
             Button("Show uncommitted changes") { store?.navigate(.repository); store?.showArea(.changes) }
-                .keyboardShortcut("1")
             Button("Show history") { store?.navigate(.repository); store?.showArea(.history) }
-                .keyboardShortcut("2")
-            Button("Show compare") { store?.navigate(.compare) }.keyboardShortcut("3")
-            Button("Show pull requests") { store?.navigate(.pullRequests) }.keyboardShortcut("4")
-            Button("Show CI/CD") { store?.navigate(.actions) }.keyboardShortcut("5")
-            Button("Show flows") { store?.navigate(.flows) }.keyboardShortcut("6")
-            if WorkspaceDestination.ledger.isShown {
-                Button("Show ledger") { store?.navigate(.ledger) }.keyboardShortcut("7")
-            }
             Divider()
             Button("Fetch") { Task { await store?.fetch() } }
                 .keyboardShortcut("f", modifiers: [.command, .shift])

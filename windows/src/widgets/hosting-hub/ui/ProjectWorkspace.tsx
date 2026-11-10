@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { ArrowRight, Target } from "lucide-react";
 import {
+  language,
+  t,
+} from "@/shared/i18n";
+import {
   resolveScheduleFields,
   scheduleEntries,
   type HubAccess,
@@ -8,7 +12,6 @@ import {
   type HubProjectRow,
   type HubProjectView,
 } from "@/entities/hosting";
-import { t } from "@/shared/i18n";
 import { Button } from "@/shared/ui";
 import {
   filterProjectRows,
@@ -22,7 +25,7 @@ import {
 import { ProjectInspector } from "./ProjectInspector";
 import { ProjectComposer, type ProjectIssueLoader } from "./ProjectComposer";
 import { ProjectItems } from "./ProjectItems";
-import { ProjectHero } from "./ProjectHero";
+import type { ProjectWorkspaceCommand } from "./ProjectWorkspaceHeader";
 import { ProjectSettings } from "./ProjectSettings";
 import { ProjectSavedViews } from "./ProjectSavedViews";
 import { ProjectBulkActions } from "./ProjectBulkActions";
@@ -38,7 +41,12 @@ import { ProjectCalendar } from "./ProjectCalendar";
 import "./project-workspace.css";
 import "./project-schedule.css";
 import "./project-compact.css";
+import "./project-page.css";
 
+/**
+ * The open project, as the redesign's Projects board draws it under the header: underline tabs for the layouts, one
+ * search and filter row, the layout, and a footer that says what is loaded and where it is kept. macOS: ProjectWorkspace.
+ */
 export function ProjectWorkspace({
   detail,
   locked,
@@ -53,6 +61,10 @@ export function ProjectWorkspace({
   scheduleContext = "",
   focusRowID,
   onFocusConsumed,
+  command,
+  onCommandHandled,
+  loadMore,
+  host,
 }: {
   detail: HubDetail;
   locked: boolean;
@@ -67,6 +79,13 @@ export function ProjectWorkspace({
   scheduleContext?: string;
   focusRowID?: string | null;
   onFocusConsumed?: (id: string) => void;
+  /** What the page header asked for: a new task or one of the settings tabs */
+  command?: ProjectWorkspaceCommand | null;
+  onCommandHandled?: () => void;
+  /** Present while the server has more items of this project */
+  loadMore?: () => void;
+  /** The server the project is read from, for the footer; empty for a local project */
+  host?: string;
 }) {
   const localProject = detail.item.data.localProject === true;
   const [layout, setLayout] = useState<ProjectLayout>(
@@ -90,6 +109,20 @@ export function ProjectWorkspace({
       onFocusConsumed?.(focusRowID);
     }
   }, [focusRowID, detail.item.id, detail.rows, onFocusConsumed]);
+  useEffect(() => {
+    if (!command) return;
+    if (command === "task") setComposing(true);
+    else setSettings(command);
+    onCommandHandled?.();
+  }, [command, onCommandHandled]);
+  // When the project on screen was last read, for the footer.
+  const [syncedAt, setSyncedAt] = useState(() => Date.now()),
+    [now, setNow] = useState(() => Date.now());
+  useEffect(() => { setSyncedAt(Date.now()); setNow(Date.now()); }, [detail]);
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(timer);
+  }, []);
   const schedule = useProjectSchedule(detail, scheduleContext, ask),
     scheduleFields = resolveScheduleFields(detail.fields, schedule.settings);
   const shared = useProjectViews(
@@ -135,14 +168,13 @@ export function ProjectWorkspace({
     people = [
       ...new Set(detail.rows.flatMap((row) => row.assignees ?? [])),
     ].sort();
-  const activeRows = detail.rows.filter((row) => !row.archived),
-    assigned = me
-      ? activeRows.filter((row) =>
-          row.assignees?.some(
-            (name) => name.toLocaleLowerCase() === me.toLocaleLowerCase(),
-          ),
-        ).length
-      : 0;
+  // "Synced with github.com 2 minutes ago": the server by name, and how old the page is once that is a minute or more.
+  const minutes = Math.floor((now - syncedAt) / 60_000),
+    synced = localProject || !host
+      ? t("Saved on this device")
+      : minutes < 1
+        ? t("Synced with {0}", host)
+        : t("Synced with {0} {1}", host, new Intl.RelativeTimeFormat(language, { numeric: "always", style: "narrow" }).format(minutes < 60 ? -minutes : -Math.floor(minutes / 60), minutes < 60 ? "minute" : "hour"));
   const updateFilter = <K extends keyof ProjectFilters>(
     key: K,
     value: ProjectFilters[K],
@@ -153,21 +185,9 @@ export function ProjectWorkspace({
   };
   return (
     <div className="project-workspace">
-      <ProjectHero
-        detail={detail}
-        localProject={localProject}
-        planning={layout === "overview" || layout === "calendar"}
-        gitlab={gitlab}
-        locked={locked}
-        open={open}
-        safe={safe}
-        add={() => setComposing(true)}
-        settings={() => setSettings("project")}
-      />
       <ProjectWorkspaceControls
         localProject={localProject}
         me={me}
-        assigned={assigned}
         localRepository={local?.repository}
         focusMine={() =>
           updateFilter("assignee", filters.assignee === me ? "" : (me ?? ""))
@@ -211,9 +231,6 @@ export function ProjectWorkspace({
         selecting={selecting}
         setSelecting={setSelecting}
         endSelection={endSelection}
-        rowsCount={rows.length}
-        total={detail.rows.length}
-        selectedView={!!selectedView}
         fields={fields}
         field={field}
         setGroup={setGroup}
@@ -275,10 +292,10 @@ export function ProjectWorkspace({
             <ProjectOverview
               entries={entries}
               today={schedule.today}
-              locked={locked}
               selectedID={selectedID}
               select={select}
               status={scheduleFields.status}
+              settings={schedule.settings}
               complete={(row) => schedule.complete(row, locked)}
               completionEnabled={
                 !locked && !schedule.busy &&
@@ -286,18 +303,10 @@ export function ProjectWorkspace({
                   schedule.settings.completedOptionIDs.includes(value.id),
                 )
               }
-              localRepository={local?.repository}
-              calendar={() => changeLayout("calendar")}
-              viewAll={() => {
-                setFilters({...emptyProjectFilters, archived:true});
-                setViewID("");
-                changeLayout("list");
-              }}
-              add={() => setComposing(true)}
               manageFields={() => setSettings("fields")}
-              hasDueField={!!scheduleFields.due}
-              localProject={localProject}
-              more={detail.more}
+              hasDateField={!!scheduleFields.due || !!scheduleFields.start}
+              person={filters.assignee}
+              setPerson={(value) => updateFilter("assignee", value)}
             />
           ) : layout === "calendar" ? (
             <ProjectCalendar
@@ -388,6 +397,12 @@ export function ProjectWorkspace({
           />
         )}
       </div>
+      <footer className="project-footer">
+        <span>{t("{0} of {1} loaded items", rows.length, detail.rows.length)}</span>
+        {loadMore && <Button size="small" disabled={locked} onClick={loadMore}>{t("Load more")}</Button>}
+        <span className="grow" />
+        <span>{synced}</span>
+      </footer>
     </div>
   );
 }

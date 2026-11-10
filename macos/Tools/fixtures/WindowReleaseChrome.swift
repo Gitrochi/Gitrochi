@@ -188,6 +188,11 @@ private struct ReleaseChromeFixtureAttachment: NSViewRepresentable {
             stores[1].navigate(.releases, prepare: false)
             await settle(0.7)
             try require(stores[1].cameFromRepository, "Release navigation must retain the repository back link")
+            // the page needs a remote the fixture's account can use, and the synthetic folder's first read drops any remote
+            stores[1].target = RepoTarget(provider: .github, remote: "origin", host: "github.com", path: "fixture/repository-1")
+            seedReleases()
+            await settle(0.3)
+            // the page opens the latest release itself, which has no server here to answer: put the detail back
             seedReleases()
             await settle(0.3)
             try await capture("swiftui-releases-\(name)-wide", window: selected, expectedFrame: original)
@@ -251,7 +256,7 @@ private struct ReleaseChromeFixtureAttachment: NSViewRepresentable {
             if identifier == "rail-control" {
                 let center = content.convert(NSPoint(x: frame.midX, y: frame.midY), from: nil)
                 if frame.width < 36 || frame.height < 30 || content.hitTest(center) == nil {
-                    failures.append("The rail expand button has no visible hit target")
+                    failures.append("The rail's first button has no visible hit target")
                 }
             }
             for kind in [NSWindow.ButtonType.closeButton, .miniaturizeButton, .zoomButton] {
@@ -362,7 +367,7 @@ private struct ReleaseChromeFixtureAttachment: NSViewRepresentable {
         let attempts = windowFixtureNetworkAttempts()
         if ok { try require(attempts == 0, "The isolated WindowGroup requested remote data") }
         var result: [String: Any] = ["ok": ok, "actualWindowGroup": true, "networkAttempts": attempts,
-                                    "actualViews": ["RepoContainer", "RepoView", "PageHeader", "HostingHubPanel", "ReleaseWorkspace", "NavigationSidebarRail"], "checks": checks]
+                                    "actualViews": ["RepoContainer", "RepoView", "WorkspaceDestinationContent", "HostingHubPanel", "ReleaseWorkspace", "NavigationSidebarRail"], "checks": checks]
         if let error { result["error"] = error }
         let data = try JSONSerialization.data(withJSONObject: result, options: [.prettyPrinted, .sortedKeys])
         if let output {

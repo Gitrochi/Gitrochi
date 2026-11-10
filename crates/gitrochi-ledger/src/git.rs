@@ -164,6 +164,17 @@ pub fn start(dir: &Path) -> Option<Start> {
     })
 }
 
+/// The repository's main checkout seen from any of its worktrees, or `None` outside a repository.
+/// git lists it first, whichever worktree asks.
+pub fn main_checkout(dir: &Path) -> Option<String> {
+    stdout_of(command(dir).args(["worktree", "list", "--porcelain"]))?
+        .lines()
+        .next()?
+        .strip_prefix("worktree ")
+        .filter(|path| !path.is_empty())
+        .map(str::to_string)
+}
+
 /// The commit HEAD is on in `dir`, or `None` before the first commit or outside a repository.
 pub fn head_commit(dir: &Path) -> Option<String> {
     stdout_of(command(dir).args(["rev-parse", "--verify", "--quiet", "HEAD^{commit}"]))
@@ -387,6 +398,11 @@ pub(crate) mod tests {
             (linked.linked, linked.head.as_deref()),
             (true, Some(head.as_str()))
         );
+        // every worktree names the same main checkout
+        let main_root = checkout(&repo).unwrap().root;
+        assert_eq!(main_checkout(&worktree), Some(main_root.clone()));
+        assert_eq!(main_checkout(&repo), Some(main_root));
+        assert_eq!(main_checkout(&dir.join("not-a-repository")), None);
         // every branch's tip in one call, from any folder of the repository
         let tips = branch_tips(&repo).unwrap();
         assert_eq!(tips.get("retry"), Some(&head));

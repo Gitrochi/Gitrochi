@@ -1,7 +1,8 @@
 import Foundation
 
-/// The demo's local connections, one in each state the Connections list draws: Claude Code delivering, Codex running an
-/// outdated command until it is repaired, the browser extension not set up. Nothing outside the demo is read or written.
+/// The demo's local connections, one in each state the Connections list draws: Claude Code delivering activity without an
+/// MCP entry until it is set up, Codex running an outdated command until it is repaired, the browser extension not set up.
+/// Nothing outside the demo is read or written.
 /// (Windows: entities/ledger/api/demo-connections.ts)
 final class LedgerDemoConnections {
     private struct Hooks {
@@ -14,6 +15,7 @@ final class LedgerDemoConnections {
     private static let stablePath = "demo/bin/gitrochi-ledger"
     private var stable = true
     private var hooks: [String: Hooks]
+    private var registered: Set<String> = []
 
     init(now: LedgerMs) {
         hooks = [
@@ -40,6 +42,13 @@ final class LedgerDemoConnections {
                 current = Hooks(installed: true, command: Self.stablePath, schema: 8, observedAt: current.observedAt)
             } else if method == "integration_remove" {
                 current.installed = false
+            } else if method == "integration_mcp" {
+                if args["action"].string == "remove" {
+                    registered.remove(client)
+                } else {
+                    stable = true
+                    registered.insert(client)
+                }
             }
             hooks[client] = current
             return status(client, current)
@@ -52,13 +61,14 @@ final class LedgerDemoConnections {
             ? .object(["path": .string(hooks.command), "exists": .bool(true), "executable": .bool(true), "writesSchema": .number(Double(hooks.schema)),
                        "canWrite": .bool(canWrite), "sameDatabase": .bool(true)])
             : .null
-        let health = !hooks.installed ? "not_installed" : !canWrite ? "outdated_command" : hooks.observedAt == nil ? "no_data_yet" : "ok"
+        let mcp = registered.contains(client)
+        let health = !hooks.installed ? (mcp ? "ok" : "not_installed") : !canWrite ? "outdated_command" : hooks.observedAt == nil ? "no_data_yet" : "ok"
         let expected = client == "claude" ? 8 : 7
         return .object([
             "client": .string(client), "installed": .bool(hooks.installed), "ownedHookCount": .number(Double(hooks.installed ? expected : 0)),
             "requiresClientTrust": .bool(client == "codex"), "hooksDisabled": .bool(false), "hookCommand": command,
             "mcp": .object(["configPath": .string(client == "claude" ? "demo/.claude.json" : "demo/.codex/config.toml"),
-                            "registered": .bool(false), "command": .null]),
+                            "registered": .bool(mcp), "command": .null]),
             "databaseSchema": .number(8),
             "lastObservedAt": hooks.installed ? hooks.observedAt.map { .number(Double($0)) } ?? .null : .null,
             "lastReportAt": .null, "health": .string(health),

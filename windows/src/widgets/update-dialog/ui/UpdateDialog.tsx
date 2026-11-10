@@ -1,5 +1,5 @@
 import { releaseMarkdownLinks } from "@/entities/hosting";
-import { Download } from "lucide-react";
+import { Download } from "@/shared/icons";
 import { env } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";

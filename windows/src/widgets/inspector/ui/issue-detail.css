@@ -1,29 +1,61 @@
-.issue-detail .panel-scroll { padding: 20px; gap: 20px; }
-.issue-title-block h2 { font-size: 22px; line-height: 1.35; letter-spacing: -.025em; margin: 10px 0 14px; overflow-wrap: anywhere; }
-.issue-state { display: inline-flex; border-radius: 20px; padding: 4px 10px; background: var(--hover); color: var(--text-2); font-size: 11px; }
-.issue-state.issue-open { color: var(--green); background: color-mix(in srgb, var(--green) 10%, var(--surface)); }
-.issue-author, .issue-comment-header { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 12px; }
-.issue-workflow-actions { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; }
-.issue-description { border-top: 1px solid var(--border); padding-top: 16px; font-size: 13px; line-height: 1.7; }
-.issue-development { border: 1px solid var(--border); border-radius: 12px; padding: 14px; background: color-mix(in srgb, var(--text) 2%, var(--surface)); display: flex; flex-direction: column; align-items: stretch; gap: 10px; }
-.issue-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; font-weight: 600; }
-.issue-section-heading > span:first-child { display: inline-flex; align-items: center; gap: 7px; }
-.issue-development p { margin: 0; }
-.issue-branch-chip, .issue-request-link { border: 1px solid var(--border); border-radius: 8px; color: var(--text); background: var(--surface); padding: 10px; display: flex; align-items: center; gap: 8px; text-align: left; cursor: pointer; overflow-wrap: anywhere; }
-.issue-branch-chip > span { margin-left: auto; font-size: 10px; color: var(--accent); }
-.issue-request-link > span { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 0; }
-.issue-request-link small { color: var(--text-2); }
-.issue-conversation { display: flex; flex-direction: column; gap: 14px; }
-.issue-count { padding: 2px 7px; border-radius: 10px; background: var(--hover); color: var(--text-2); font-size: 11px; }
-.issue-comment { min-width: 0; border: 1px solid var(--border); border-radius: 11px; overflow: hidden; }
-.issue-comment-header { background: var(--hover); padding: 11px 13px; border-bottom: 1px solid var(--border); }
-.issue-comment-header .hosting-date { margin-left: auto; }
-.issue-comment > .md, .issue-comment > .col { padding: 13px; }
-.issue-comment-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 0 10px 10px; }
-.issue-composer { display: flex; flex-direction: column; gap: 9px; padding: 14px; border-top: 1px solid var(--border); background: var(--surface); }
-.issue-composer-tabs { display: flex; gap: 5px; }
-.issue-composer-tabs [aria-pressed="true"] { color: var(--accent); background: var(--select); }
-.issue-composer textarea[hidden] { display: none; }
-.issue-comment-preview { max-height: 160px; overflow: auto; min-height: 70px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; }
+/* The open issue, as the Issues board draws it. macOS: IssueDetailView, IssueDevelopmentPanel. */
+.issue-detail { height: 100%; min-height: 0; min-width: 0; font-size: 13px; }
+.issue-head { flex: none; padding: 20px 24px 0; display: flex; flex-direction: column; gap: 8px; }
+.issue-head-top { display: flex; align-items: center; gap: 8px; }
+.issue-number { font-size: 13px; color: var(--text-2); }
+.issue-head-title { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; }
+.issue-detail .issue-head-title h2 { margin: 0; font-size: 22px; line-height: 1.25; font-weight: 600; flex: 1 1 360px; min-width: 0; overflow-wrap: anywhere; }
+.issue-head-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.issue-head-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; color: var(--text-2); font-size: 12px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+.issue-author { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.issue-author > strong { color: var(--text); font-weight: 600; font-size: 13px; min-width: 0; overflow-wrap: anywhere; }
 
-.issue-comment-header > strong, .issue-author > strong { min-width: 0; overflow-wrap: anywhere; }
+/* the description and activity grow with the window; the cards keep their width and go under the text when it is narrow */
+.issue-body { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 20px 24px; display: flex; flex-wrap: wrap; gap: 24px 28px; align-items: flex-start; align-content: flex-start; }
+.issue-main { flex: 999 1 420px; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+.issue-side { flex: 0 0 280px; width: 280px; max-width: 100%; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+.issue-description { line-height: 1.55; }
+.issue-detail .issue-activity-title { margin: 0; font-size: 15px; font-weight: 600; border-top: 1px solid var(--border); padding-top: 16px; }
+.issue-activity { display: flex; flex-direction: column; align-items: flex-start; gap: 20px; }
+.issue-comment { align-self: stretch; display: flex; gap: 10px; align-items: flex-start; min-width: 0; }
+.issue-comment-body { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.issue-comment-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.issue-comment-head > strong { font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
+.issue-comment-actions { display: flex; flex-wrap: wrap; gap: 0 16px; }
+
+.issue-card { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.issue-card-title { font-size: 12px; font-weight: 600; color: var(--text-2); }
+.issue-card p { margin: 0; }
+.issue-card-actions { display: flex; flex-wrap: wrap; gap: 0 16px; }
+.issue-steps { display: grid; grid-template-columns: 18px minmax(0, 1fr); column-gap: 10px; }
+.issue-step-rail { display: flex; flex-direction: column; align-items: center; }
+.issue-step-line { flex: 1 1 auto; width: 2px; min-height: 12px; background: var(--border-strong); }
+.issue-step { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; padding-bottom: 12px; }
+.issue-step.last { padding-bottom: 0; }
+.issue-mark { flex: none; box-sizing: border-box; border-radius: 50%; }
+.issue-mark.done { width: 10px; height: 10px; margin-top: 5px; background: #2f8f46; }
+.issue-mark.closed { width: 10px; height: 10px; margin-top: 5px; background: var(--text-2); }
+.issue-mark.next { width: 12px; height: 12px; margin-top: 4px; border: 2px solid var(--text-3); background: var(--surface); }
+/* the current marker of docs/design.md: a 12 px dot in an 18 px halo, in the accent */
+.issue-mark.current { width: 18px; height: 18px; margin-top: 1px; background: radial-gradient(circle, var(--accent) 0 6px, var(--accent-soft) 6.5px); }
+.issue-step-link { display: flex; flex-direction: column; align-items: flex-start; max-width: 100%; padding: 0; border: 0; background: transparent; font: inherit; color: var(--text); text-align: left; cursor: pointer; overflow-wrap: anywhere; }
+.issue-step-link:disabled { cursor: default; }
+.issue-step-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.issue-branch > strong { font-weight: 600; max-width: 100%; }
+.issue-facts { display: grid; grid-template-columns: 84px minmax(0, 1fr); align-items: center; gap: 8px 10px; font-size: 12px; }
+.issue-assignees { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.issue-assignees > span { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.issue-labels { display: flex; gap: 4px; flex-wrap: wrap; }
+.issue-labels i { flex: none; width: 8px; height: 8px; border-radius: 50%; }
+
+.issue-composer { flex: none; border-top: 1px solid var(--border); padding: 10px 24px; display: flex; flex-direction: column; gap: 8px; background: var(--sidebar); }
+.issue-composer-tabs { display: flex; align-items: center; gap: 5px; }
+.issue-composer-tabs [aria-pressed="true"] { background: var(--card); font-weight: 600; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12); }
+.issue-composer-tabs > .hint { margin-left: 8px; }
+.issue-composer-row { display: flex; align-items: flex-end; gap: 8px; }
+.issue-composer-row > .btn, .issue-composer-row > span { flex: none; }
+.issue-detail .issue-composer textarea { flex: 1 1 0; width: 0; min-width: 0; height: 36px; box-sizing: border-box; padding: 8px 12px; border: 1px solid var(--border-strong); border-radius: 6px; background: var(--input); color: var(--text); font: inherit; line-height: 18px; resize: none; outline: none; user-select: text; }
+.issue-detail .issue-composer textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.issue-detail .issue-composer.composing textarea { height: 92px; }
+.issue-composer textarea[hidden] { display: none; }
+.issue-comment-preview { flex: 1 1 0; min-width: 0; height: 92px; box-sizing: border-box; overflow: auto; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--input); }

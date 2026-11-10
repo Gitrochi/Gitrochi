@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Exercise the production reader with synthetic Git objects and capture both appearances.
+# Exercise the production reader with synthetic Git objects and capture both appearances. The History and Blame
+# views read through the shared core's parsers, so the fixture links it.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 TASK_TMP="$(mktemp -d)"
@@ -9,12 +10,24 @@ mkdir -p "$TASK_OUTPUT"
 # A stable snapshot also lets the fixture submit through the real palette action without a global key event.
 TASK_SOURCES=()
 for TASK_SOURCE in \
+    "$ROOT/Sources/Core/RustCore.swift" \
+    "$ROOT/Sources/Core/Markdown.swift" \
+    "$ROOT/Sources/Core/MarkdownInline.swift" \
+    "$ROOT/Sources/Core/ProjectTaskReference.swift" \
+    "$ROOT/Sources/Core/Models.swift" \
+    "$ROOT/Sources/Core/Parsers.swift" \
+    "$ROOT/Sources/Core/AppLanguage.swift" \
     "$ROOT/Sources/Core/RepositoryBrowser.swift" \
+    "$ROOT/Sources/Core/RepositoryCodeHistory.swift" \
     "$ROOT/Sources/Core/RepositoryCodeReading.swift" \
+    "$ROOT/Sources/Core/RepositoryCodeEditing.swift" \
     "$ROOT/Sources/Core/RepositoryCodeNavigation.swift" \
     "$ROOT/Sources/Core/RepositoryLanguages.swift" \
     "$ROOT/Sources/Services/ExternalEditors.swift" \
     "$ROOT/Sources/Services/RepositoryHTMLDocument.swift" \
+    "$ROOT/Sources/Views/Shared/Theme.swift" \
+    "$ROOT/Sources/Views/Shared/StudioStyle.swift" \
+    "$ROOT/Sources/Views/Shared/StatusPill.swift" \
     "$ROOT/Sources/Views/Workbench/AdaptiveWorkbenchLayout.swift" \
     "$ROOT/Sources/Views/Workbench/RepositorySourceView.swift" \
     "$ROOT/Sources/Views/Workbench/RepositoryCodeReader.swift" \
@@ -22,6 +35,9 @@ for TASK_SOURCE in \
     "$ROOT/Sources/Views/Workbench/RepositoryLanguageSummary.swift" \
     "$ROOT/Sources/Views/Workbench/RepositoryExternalEditorMenu.swift" \
     "$ROOT/Sources/Views/Workbench/RepositoryHTMLPreview.swift" \
+    "$ROOT/Sources/Views/Shared/DesignIcon.swift" "$ROOT/Sources/Views/Shared/DesignSymbols.swift" "$ROOT/Sources/Views/Shared/PageControls.swift" "$ROOT/Sources/Core/ChangeQuestionCode.swift" "$ROOT/Sources/Core/ListDate.swift" "$ROOT/Sources/Views/Workbench/RepositoryCodeChangesView.swift" \
+    "$ROOT/Sources/Views/Workbench/RepositoryCodeHistoryView.swift" \
+    "$ROOT/Sources/Views/Workbench/RepositoryCodeBlameView.swift" \
     "$ROOT/Sources/Views/Workbench/RepositoryCodePanel.swift" \
     "$ROOT/Tools/fixtures/RepositoryCodeLayout.swift" \
     "$ROOT/Tools/fixtures/RepositoryHTMLLayout.swift"; do
@@ -42,6 +58,17 @@ replacement = needle[:-2] + """
         }"""
 path.write_text(source.replace(needle, replacement))
 PYTHON
+# The fixture opens the first file on History or Blame, as choosing that tab would.
+python3 - "$TASK_TMP/RepositoryCodePanel.swift" <<'PYTHON'
+from pathlib import Path
+import sys
+path = Path(sys.argv[1])
+source = path.read_text()
+needle = 'revisionInput = "HEAD"; findText = ""; await loadTree() }'
+assert source.count(needle) == 1, "The Code panel's first load changed"
+replacement = 'revisionInput = "HEAD"; findText = ""; await loadTree(reopen: repositoryCodeLayoutView == nil ? nil : "src/Preview.swift", view: repositoryCodeLayoutView ?? "Source") }'
+path.write_text(source.replace(needle, replacement))
+PYTHON
 TASK_APP="$TASK_TMP/RepositoryCodeLayout.app"
 mkdir -p "$TASK_APP/Contents/MacOS"
 cat > "$TASK_APP/Contents/Info.plist" <<'PLIST'
@@ -53,6 +80,7 @@ cat > "$TASK_APP/Contents/Info.plist" <<'PLIST'
 <key>CFBundlePackageType</key><string>APPL</string>
 </dict></plist>
 PLIST
-swiftc -parse-as-library -swift-version 5 -target "$(uname -m)-apple-macos15.0" \
-    "${TASK_SOURCES[@]}" -o "$TASK_APP/Contents/MacOS/RepositoryCodeLayout"
+TASK_CORE="$(bash "$ROOT/../tools/build-core-native.sh")"
+swiftc -parse-as-library -swift-version 5 -target "$(uname -m)-apple-macos15.0" -I "$ROOT/../crates/gitrochi-core/include" \
+    "${TASK_SOURCES[@]}" "$TASK_CORE" -o "$TASK_APP/Contents/MacOS/RepositoryCodeLayout"
 "$TASK_APP/Contents/MacOS/RepositoryCodeLayout" "$TASK_OUTPUT"

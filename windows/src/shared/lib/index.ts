@@ -1,6 +1,7 @@
 // shared/lib 의 공개 API — 다른 조각은 이 파일로만 가져온다
 export { drag } from "./drag";
 export { laneColor, longDate, shortDate, stableHash, validBranchName } from "./format";
+export { listDay, listWhen } from "./list-date";
 export { type MdBlock, type MdInline, type MdRefs, parseMarkdown } from "./markdown";
 export { markdownImageURL } from "./markdown-inline";
 export { Observable, useObserve } from "./observable";
@@ -12,3 +13,4 @@ export { flowEvidence, safeWorkPath, decodeAgentAssignments, decodeValidationBin
 export { teamHubEndpoint, teamRepoKey, decodeTeamSnapshot, readTeamSnapshot, type TeamSnapshot, type TeamOverlap, type TeamPresence, decodePresenceAnswer, publishTeamPresence, withdrawTeamPresence, type TeamPresenceAnswer } from "./team-hub";
 export { sourceLanguage, sourceTokens, sourceMatches, sourceLineCount, sourceMatchLimit, syntaxCharacterLimit, syntaxTokenLimit, wrappingLineLimit, type SourceMatch, type SourceToken } from "./source-reader";
 export { applyEditorText, editorLineRange, editorText, indentEditorText } from "./source-editing";
+export { isLogError, logLines } from "./job-log";

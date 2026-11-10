@@ -1,4 +1,6 @@
-import { ChevronLeft, Columns2, CornerDownLeft, Equal, FileArchive, FileText, FolderOpen, History, ImageOff, LockOpen, Pencil, Rows3, ScanText, Space, Sparkles, Trash2, TriangleAlert } from "lucide-react";
+import { Columns2, CornerDownLeft, Equal, FileArchive, History, ImageOff, LockOpen, Rows3, ScanText, Space, TriangleAlert } from "lucide-react";
+import { FolderOpen } from "@/shared/icons";
+import { ChevronLeft, FileText, Pencil, Sparkles, Trash2 } from "@/shared/icons";
 import { type ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ConflictView } from "@/features/resolve-conflict";
 import { type DiffDocument, type DiffLine, diffSides, modeSummary, short, type SplitRow, splitRows, StatusBadge } from "@/entities/git";
@@ -17,17 +19,24 @@ const HUNK_H = 26;
  * 파일 하나의 변경 내용. 그래프 자리를 대신 차지하고, ← 또는 Esc 로 그래프로 돌아간다.
  * 한 줄로 / 나란히 보기, 공백 무시, 단어 단위 강조, 이미지 비교, 덩어리·줄 단위 스테이지. (맥 버전 DiffView)
  */
-export function DiffView({ store }: { store: RepoStore }) {
+export function DiffView({ store, chrome = true, split }: {
+  store: RepoStore;
+  /** false leaves out the header and the Esc shortcut, for a page that draws its own header around the diff */
+  chrome?: boolean;
+  /** the layout when the page decides it, for example unified while the diff is too narrow to split */
+  split?: boolean;
+}) {
   useObserve(store);
   const source = store.diffSource!;
   const c = source.change;
   useEffect(() => {
+    if (!chrome) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape" && !document.querySelector(".modal-backdrop") && !(e.target as HTMLElement)?.closest?.(".xterm")) store.closeDiff();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [store]);
+  }, [store, chrome]);
 
   const subtitle =
     source.kind === "working"
@@ -42,7 +51,7 @@ export function DiffView({ store }: { store: RepoStore }) {
 
   return (
     <div className="col grow">
-      <div className="diff-head">
+      {chrome && <div className="diff-head">
         <Button size="small" onClick={() => store.closeDiff()} tip={`${backLabel} (Esc)`}>
           <ChevronLeft size={14} /> {" "}{backLabel}</Button>
         <StatusBadge kind={c.kind} />
@@ -100,7 +109,7 @@ export function DiffView({ store }: { store: RepoStore }) {
                 {t("Stage")}</Button>
             </>
           ))}
-      </div>
+      </div>}
       {source.kind === "working" && c.kind === "conflicted" ? (
         <ConflictView store={store} change={c} />
       ) : !doc ? (
@@ -119,7 +128,7 @@ export function DiffView({ store }: { store: RepoStore }) {
         <DiffBody
           store={store}
           doc={doc}
-          split={store.diffSplit}
+          split={split ?? store.diffSplit}
           editable={store.canEditDiffLines}
           staged={store.diffSource?.kind === "working" && store.diffSource.change.staged}
         />

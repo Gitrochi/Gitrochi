@@ -6,14 +6,22 @@ import AppKit
 struct DiffView: View {
     @Environment(RepoStore.self) private var store
     let source: DiffSource
+    /// false where the page draws the header itself (a request's Changed files)
+    var chrome = true
+    /// false where the diff is too narrow for two columns: it renders unified and the stored preference stays
+    var splitAllowed = true
 
     var body: some View {
         let change = source.change
         let _ = store.diffSettingsVersion
+        if chrome { framed(change) } else { content.frame(maxWidth: .infinity, maxHeight: .infinity) }
+    }
+
+    private func framed(_ change: FileChange) -> some View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
                 Button { store.closeDiff() } label: {
-                    Label(backLabel, systemImage: "chevron.left")
+                    Label(backLabel, symbol: "chevron.left")
                 }
                 .keyboardShortcut(.escape, modifiers: [])
                 .help("Close diff (Esc)")
@@ -59,17 +67,17 @@ struct DiffView: View {
             ConflictView(change: c)
         } else if let doc = store.diff {
             if let error = doc.error {
-                ContentUnavailableView("Couldn't load the changes", systemImage: "exclamationmark.triangle",
+                ContentUnavailableView("Couldn't load the changes", symbol: "exclamationmark.triangle",
                                        description: Text(error))
             } else if let images = store.diffImages {
                 ImageDiffView(images: images)
             } else if doc.isBinary {
-                ContentUnavailableView("Binary file", systemImage: "doc.zipper",
+                ContentUnavailableView("Binary file", symbol: "doc.zipper",
                                        description: Text("This isn't a text file, so a line-by-line comparison isn't shown."))
             } else if doc.lines.isEmpty {
                 DiffEmptyState(doc: doc, ignoreWhitespace: store.diffIgnoreWhitespace)
             } else {
-                DiffLinesView(doc: doc, split: store.diffSplit, editable: store.canEditDiffLines,
+                DiffLinesView(doc: doc, split: store.diffSplit && splitAllowed, editable: store.canEditDiffLines,
                               staged: { if case .working(let c) = source { return c.staged } else { return false } }())
             }
         } else {
@@ -96,7 +104,7 @@ struct DiffView: View {
         if !isReview && !isWorktree && change.kind != .untracked {
             Button("Trace lines…") { store.openSelectedLineHistory() }.disabled(store.diffLoading || store.diff?.isBinary == true)
         }
-        Button { Task { await store.openChangeQuestion() } } label: { Label("Ask AI…", systemImage: "sparkles") }
+        Button { Task { await store.openChangeQuestion() } } label: { Label("Ask AI…", symbol: "sparkles") }
             .help("Ask questions about the selected changes")
             .disabled(store.diffLoading || store.diff?.isBinary == true)
     }
@@ -105,14 +113,14 @@ struct DiffView: View {
     @ViewBuilder
     private func fileButtons(_ c: FileChange) -> some View {
         if c.kind != .untracked, !isReview, !isWorktree {
-            Button { store.openFileHistory(c.path) } label: { Image(systemName: "clock.arrow.circlepath") }
+            Button { store.openFileHistory(c.path) } label: { SymbolIcon("clock.arrow.circlepath") }
                 .buttonStyle(.borderless)
                 .help("File history — commits that changed this file")
                 .accessibilityLabel("File history")
             if c.kind != .deleted {
                 Button {
                     if case .commit(let sha, _, _) = source { store.openBlame(c.path, rev: sha) } else { store.openBlame(c.path) }
-                } label: { Image(systemName: "person.text.rectangle") }
+                } label: { SymbolIcon("person.text.rectangle") }
                     .buttonStyle(.borderless)
                     .help("Blame — who changed each line and when")
                     .accessibilityLabel("Blame")
@@ -124,7 +132,7 @@ struct DiffView: View {
             } else {
                 store.revealInFinder(c)
             }
-        } label: { Image(systemName: "folder") }
+        } label: { DesignIconImage(icon: .repository) }
             .buttonStyle(.borderless)
             .help("Show in Finder")
             .accessibilityLabel("Show in Finder")
@@ -137,15 +145,15 @@ struct DiffView: View {
     private var viewOptions: some View {
         HStack(spacing: 6) {
             Picker("", selection: Binding(get: { store.diffSplit }, set: { store.diffSplit = $0 })) {
-                Image(systemName: "list.bullet").help("Unified view").accessibilityLabel("Unified view").tag(false)
-                Image(systemName: "rectangle.split.2x1").help("Side by side (old on the left · new on the right)").accessibilityLabel("Side by side").tag(true)
+                SymbolIcon("list.bullet").help("Unified view").accessibilityLabel("Unified view").tag(false)
+                SymbolIcon("rectangle.split.2x1").help("Side by side (old on the left · new on the right)").accessibilityLabel("Side by side").tag(true)
             }
             .pickerStyle(.segmented)
             .labelsHidden()
             .fixedSize()
             let on = store.diffIgnoreWhitespace
             Button { store.diffIgnoreWhitespace.toggle() } label: {
-                Image(systemName: "text.word.spacing")
+                SymbolIcon("text.word.spacing")
                     .foregroundStyle(on ? Color.accentColor : .secondary)
                     .frame(width: 26, height: 20)
                     .background(RoundedRectangle(cornerRadius: 5).fill(on ? Color.accentColor.opacity(0.18) : .clear))
@@ -168,7 +176,7 @@ struct DiffView: View {
             } else {
                 Menu {
                     Button("Discard changes…", role: .destructive) { store.confirmDiscard(c) }
-                } label: { Image(systemName: "ellipsis.circle") }
+                } label: { SymbolIcon("ellipsis.circle") }
                 .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
                 .accessibilityLabel("File actions")
                 Button("Stage") { Task { await store.stage([c]) } }
@@ -195,7 +203,7 @@ struct DiffEmptyState: View {
             if ignoreWhitespace { return (String(localized: "No changes to show"), "equal.circle", String(localized: "Only whitespace changed (turn off Ignore whitespace to see it).")) }
             return (String(localized: "No changes to show"), "equal.circle", String(localized: "Only permissions or the name may have changed, without content changes."))
         }()
-        ContentUnavailableView(title, systemImage: icon, description: Text(detail))
+        ContentUnavailableView(title, symbol: icon, description: Text(detail))
     }
 }
 
@@ -265,7 +273,7 @@ struct DiffLinesView: View {
             HunkHeader(line: line, hunk: h, editable: editable, staged: staged)
         } else {
             // "\ No newline at end of file"
-            Label(line.text, systemImage: "arrow.turn.down.left")
+            Label(line.text, symbol: "arrow.turn.down.left")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .padding(.leading, gutter)
@@ -319,7 +327,7 @@ private struct FileInfoBar: View {
         if !items.isEmpty {
             VStack(alignment: .leading, spacing: 3) {
                 ForEach(items, id: \.1) { icon, text in
-                    Label(text, systemImage: icon).lineLimit(1).truncationMode(.middle)
+                    Label(text, symbol: icon).lineLimit(1).truncationMode(.middle)
                 }
             }
             .font(.callout)
@@ -357,6 +365,7 @@ private struct ReviewCommentable: ViewModifier {
     let line: DiffLine
     let side: ReviewLineSide?
     let enabled: Bool
+    @ViewState private var hovered = false
 
     @ViewBuilder func body(content: Content) -> some View {
         let actualSide = side ?? (line.newNo != nil ? .right : .left)
@@ -367,7 +376,7 @@ private struct ReviewCommentable: ViewModifier {
                 Button {
                     store.addReviewDraft(request, path: change.path, line: number, side: actualSide, oldLine: line.oldNo)
                 } label: {
-                    Image(systemName: "plus.bubble.fill")
+                    SymbolIcon("plus.bubble.fill")
                         .font(.system(size: 11)).foregroundStyle(Color.accentColor)
                         .frame(width: 22, height: 18)
                 }
@@ -375,8 +384,10 @@ private struct ReviewCommentable: ViewModifier {
                 .help("Add review comment")
                 .accessibilityLabel(Text("Add review comment on line \(number)"))
                 .disabled(store.reviewBusy || store.reviewLoading)
+                .opacity(hovered ? 1 : 0)
                 content
             }
+            .onHover { hovered = $0 }
         } else { content }
     }
 }
@@ -541,7 +552,7 @@ private struct ImageDiffView: View {
                     .overlay(Rectangle().strokeBorder(tint.opacity(0.5)))
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                ContentUnavailableView(data == nil ? "None" : "Can't open this image", systemImage: "photo",
+                ContentUnavailableView(data == nil ? "None" : "Can't open this image", symbol: "photo",
                                        description: Text(data == nil ? (title == String(localized: "Before") ? "This file was newly added." : "This file was deleted.") : ""))
             }
         }

@@ -1,4 +1,6 @@
-import { Bot, BookOpen, ClipboardPaste, DatabaseBackup, Globe, Inbox, MessageSquare, MoreHorizontal, PlugZap, Search, SquareKanban, SquareTerminal, Timer, Waves, Waypoints } from "lucide-react";
+import { Bot, BookOpen, ClipboardPaste, DatabaseBackup, PlugZap, SquareKanban, Timer, Waves, Waypoints } from "lucide-react";
+import { Globe } from "@/shared/icons";
+import { Inbox, MessageSquare, MoreHorizontal, Search, SquareTerminal } from "@/shared/icons";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { agents } from "@/entities/agent";
 import { filterSessions, inboxCount, inboxGroups, type LedgerPendingPrompt, type LedgerSearchHit, type LedgerStore, ledgerLayout, ledgerStore, ledgerTracking, type LedgerView } from "@/entities/ledger";

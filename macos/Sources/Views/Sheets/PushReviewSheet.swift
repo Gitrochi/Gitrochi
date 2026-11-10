@@ -14,11 +14,11 @@ struct PushReviewSheet: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
                     if store.pushReviewLoading {
-                        HStack { ProgressView().controlSize(.small); Text("Checking push destination and preflight…") }
+                        HStack { ProgressView().controlSize(.small); Text("Checking push destination…") }
                     }
                     if let error = store.pushReviewError { Text(error).foregroundStyle(.red).textSelection(.enabled) }
                     if force {
-                        Label("Force push can replace remote history. The reviewed remote revision is protected by an explicit lease.", systemImage: "exclamationmark.triangle")
+                        Label("Force push can replace remote history. The reviewed remote revision is protected by an explicit lease.", symbol: "exclamationmark.triangle")
                             .foregroundStyle(.orange).font(.callout)
                     }
                     if let plan = store.pushReview {
@@ -33,15 +33,6 @@ struct PushReviewSheet: View {
                         }
                         Text("The account follows gitch policy. SSH and credential helpers choose the network login.")
                             .font(.caption).foregroundStyle(.secondary)
-                        VStack(alignment: .leading, spacing: 5) {
-                            Text("Preflight").bold() + Text(" · " + plan.preflight.result)
-                            ForEach(Array(plan.preflight.checks.enumerated()), id: \.offset) { _, check in
-                                Text("[" + check.level + "] " + check.message).font(.caption)
-                            }
-                        }
-                        .foregroundStyle(plan.preflight.result == "STOP" ? Color.red : Color.primary)
-                        .padding(10).frame(maxWidth: .infinity, alignment: .leading)
-                        .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 6))
                         Divider()
                         Text("Outgoing commits (\(plan.commitCount))").font(.headline)
                         if plan.commitCount == 0 { Text("No outgoing commits").foregroundStyle(.secondary) }
@@ -81,7 +72,7 @@ struct PushReviewSheet: View {
                     Task { await store.confirmPushReview() }
                 }
                 .keyboardShortcut(.defaultAction)
-                .disabled(store.pushReview == nil || store.pushReviewLoading || store.pushReview?.preflight.result == "STOP")
+                .disabled(store.pushReview == nil || store.pushReviewLoading)
             }
         }
         .padding(20).frame(width: 700)

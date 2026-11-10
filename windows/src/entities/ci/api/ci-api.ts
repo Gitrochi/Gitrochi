@@ -4,11 +4,12 @@ import { t } from "@/shared/i18n";
 import { dispatchInputs } from "../lib/yaml";
 import { type CIDeployment, type CIJob, type CIPipeline, type CIRequestCheck, type CIWorkflow, githubStatus, gitlabStatus } from "../model/types";
 
-interface GLPipeline { id: number; project_id?: number; iid?: number; sha: string; ref: string; status: string; source?: string; created_at?: string; web_url: string; name?: string | null; user?: { username: string } | null }
+interface GLPipeline { id: number; project_id?: number; iid?: number; sha: string; ref: string; status: string; source?: string; created_at?: string; updated_at?: string; web_url: string; name?: string | null; user?: { username: string } | null }
 interface GLJob { id: number; name: string; stage: string; status: string; web_url: string; allow_failure?: boolean; duration?: number | null }
 interface GHRun {
   id: number; name?: string | null; display_title?: string | null; run_number: number; head_branch?: string | null; head_sha: string;
-  status?: string | null; conclusion?: string | null; html_url: string; created_at?: string; event: string; actor?: { login: string } | null;
+  status?: string | null; conclusion?: string | null; html_url: string; created_at?: string; run_started_at?: string; updated_at?: string; event: string; actor?: { login: string } | null;
+  pull_requests?: { number: number }[] | null;
 }
 interface GHJob { id: number; name: string; status?: string | null; conclusion?: string | null; html_url?: string | null; started_at?: string | null; completed_at?: string | null }
 interface GHWorkflow { id: number; name: string; path: string; state: string }
@@ -23,7 +24,7 @@ export interface CIAccess {
 const project = (c: CIAccess) => `${c.apiBase}/projects/${Hosting.projectID(c.target.path)}`;
 const repoBase = (c: CIAccess) => `${c.apiBase}/repos/${c.target.path}`;
 const q = encodeURIComponent;
-const glPipeline = (p: GLPipeline): CIPipeline => ({ id: p.id, projectID: p.project_id, number: p.iid ?? p.id, name: p.name ?? "", title: "", ref: p.ref, sha: p.sha, status: gitlabStatus(p.status), url: p.web_url, created: Hosting.date(p.created_at), event: p.source ?? "", actor: p.user?.username ?? null });
+const glPipeline = (p: GLPipeline): CIPipeline => ({ id: p.id, projectID: p.project_id, number: p.iid ?? p.id, name: p.name ?? "", title: "", ref: p.ref, sha: p.sha, status: gitlabStatus(p.status), url: p.web_url, created: Hosting.date(p.created_at), event: p.source ?? "", actor: p.user?.username ?? null, started: Hosting.date(p.created_at), updated: Hosting.date(p.updated_at) });
 
 /** base64(줄바꿈 포함) → UTF-8 글 */
 function decodeBase64(b64: string): string {
@@ -51,6 +52,9 @@ export const CIAPI = {
       created: Hosting.date(p.created_at),
       event: p.event,
       actor: p.actor?.login ?? null,
+      started: Hosting.date(p.run_started_at ?? p.created_at),
+      updated: Hosting.date(p.updated_at),
+      request: p.pull_requests?.[0]?.number ?? null,
     }));
   },
 
