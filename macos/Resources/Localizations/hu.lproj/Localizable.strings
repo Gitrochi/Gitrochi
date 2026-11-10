@@ -2649,3 +2649,4 @@
 "No commits between these revisions." = "Nincs commit a két revízió között.";
 "Couldn't compare these revisions" = "Nem sikerült összehasonlítani ezeket a revíziókat";
 "Changes from %@ to %@" = "Változások: %1$@ → %2$@";
+"Open in editor" = "Megnyitás szerkesztőben";

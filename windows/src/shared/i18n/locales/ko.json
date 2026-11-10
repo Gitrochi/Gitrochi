@@ -4671,5 +4671,6 @@
   "Couldn't compare these revisions": "두 시점을 비교하지 못했습니다",
   "Changes from {0} to {1}": "{0}부터 {1}까지의 변경",
   "Compare with the current branch": "현재 브랜치와 비교",
-  "Comparing…": "비교하는 중…"
+  "Comparing…": "비교하는 중…",
+  "Open in editor": "편집기에서 열기"
 }

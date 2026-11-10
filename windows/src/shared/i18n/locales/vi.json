@@ -2671,5 +2671,6 @@
   "Couldn't compare these revisions": "Không thể so sánh hai phiên bản này",
   "Changes from {0} to {1}": "Thay đổi từ {0} đến {1}",
   "Compare with the current branch": "So sánh với nhánh hiện tại",
-  "Comparing…": "Đang so sánh…"
+  "Comparing…": "Đang so sánh…",
+  "Open in editor": "Mở trong trình soạn thảo"
 }

@@ -2612,3 +2612,4 @@
 "No commits between these revisions." = "Geen commits tussen deze revisies.";
 "Couldn't compare these revisions" = "Kan deze revisies niet vergelijken";
 "Changes from %@ to %@" = "Wijzigingen van %1$@ tot %2$@";
+"Open in editor" = "Openen in editor";

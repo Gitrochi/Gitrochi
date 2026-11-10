@@ -2714,5 +2714,6 @@
   "Couldn't compare these revisions": "Не удалось сравнить эти ревизии",
   "Changes from {0} to {1}": "Изменения с {0} по {1}",
   "Compare with the current branch": "Сравнить с текущей веткой",
-  "Comparing…": "Сравнение…"
+  "Comparing…": "Сравнение…",
+  "Open in editor": "Открыть в редакторе"
 }

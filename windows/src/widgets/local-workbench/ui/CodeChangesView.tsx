@@ -4,8 +4,10 @@ import { ChevronDown, ChevronUp, MoreHorizontal, Pilcrow } from "@/shared/icons"
 import { diffSides, parseDiffAsync, splitRows, StatusBadge, type ChangeKind, type DiffDocument, type DiffLine } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
+import { describe, type ExternalEditor } from "@/shared/platform";
 import { Empty, IconButton, Segmented, showMenuBelow, Spinner } from "@/shared/ui";
 import { comparisonChangeArgs, diffGaps, fileAtCommitArgs, fileChangeArgs, shortFolder, sourceLines, workingChangeArgs, type DiffGap } from "../lib/code-history";
+import type { RepositoryEditorSource } from "./CodeExternalEditors";
 import "./repository-code.css";
 
 interface Props {
@@ -20,6 +22,8 @@ interface Props {
   oldPath?: string | null;
   /** Where the file sits among a list of files: the header's "2 / 6" with its previous and next buttons */
   position?: CodeFilePosition;
+  /** The Compare page: More offers the file as it is in the working tree to an external editor */
+  editors?: CodeWorkingFileEditors;
   read: (args: string[], repo: string) => Promise<string>;
   wrap: boolean;
   setWrap: (value: boolean) => void;
@@ -27,6 +31,8 @@ interface Props {
   onLines: (count: number | null) => void;
 }
 /** Where the open file sits among a list of files, and the step to the one before or after it. macOS: CodeFilePosition */
+/** The external editors and the working-tree check behind "Open in editor". macOS: RepositoryCodeChangesView.opensInEditor */
+export interface CodeWorkingFileEditors { source: RepositoryEditorSource; exists: (repo: string, path: string) => Promise<boolean> }
 export interface CodeFilePosition { index: number; count: number; step: (by: number) => void }
 interface Cell { kind: DiffLine["kind"]; text: string; oldNo: number | null; newNo: number | null; changes?: Array<[number, number]> }
 type Row = { key: string } & ({ fold: DiffGap } | { hunk: DiffLine } | { note: DiffLine } | { line: Cell } | { pair: [Cell | null, Cell | null] });
@@ -48,9 +54,19 @@ export function hangingIndent(text: string, wrapping: boolean): CSSProperties | 
  * unchanged lines between hunks folded until asked for.
  * (macOS: RepositoryCodeChangesView)
  */
-export function CodeChangesView({ store, repo, path, commit, base = null, oldPath = null, position, read, wrap, setWrap, onLines }: Props) {
+export function CodeChangesView({ store, repo, path, commit, base = null, oldPath = null, position, editors, read, wrap, setWrap, onLines }: Props) {
   const [doc, setDoc] = useState<DiffDocument | null>(null), [source, setSource] = useState<string[] | null>(null), [expanded, setExpanded] = useState<ReadonlySet<number>>(new Set());
   const ignoreWhitespace = store.diffIgnoreWhitespace, split = store.diffSplit;
+  // the applications, and whether the file is in the working tree; null while unknown
+  const [applications, setApplications] = useState<ExternalEditor[] | null>(null), [local, setLocal] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (!editors) return;
+    let current = true;
+    setLocal(null);
+    void editors.exists(repo, path).catch(() => false).then((value) => { if (current) setLocal(value); });
+    if (!applications) void editors.source.list().catch(() => []).then((value) => { if (current) setApplications(value); });
+    return () => { current = false; };
+  }, [editors, repo, path]);
   useEffect(() => {
     let current = true;
     setDoc(null); setSource(null); setExpanded(new Set()); onLines(null);
@@ -135,6 +151,11 @@ export function CodeChangesView({ store, repo, path, commit, base = null, oldPat
         { label: t("Wrap lines"), checked: wrap, onClick: () => setWrap(!wrap) },
         ...(commit && !base ? [{ label: t("Show commit"), onClick: () => store.reveal(commit) }] : []),
         { label: t("Copy path"), onClick: () => store.copy(path) },
+        // the working tree's file, not the compared version; a file that is not there cannot open
+        ...(editors ? [{ label: t("Open in editor"), disabled: !local || !applications?.some((editor) => editor.available),
+          tip: local === false ? t("The local file is missing or is not a regular file.") : applications && !applications.some((editor) => editor.available) ? t("This application is not installed.") : t("External editors open the current local file, not the revision preview."),
+          submenu: (applications ?? []).map((editor) => ({ label: editor.id === "system" ? t("System default") : editor.name, disabled: !editor.available, tip: editor.available ? undefined : t("Not installed"),
+            onClick: () => { editors.source.open(repo, editor.id, path).catch((cause) => { store.errorMessage = describe(cause); store.changed(); }); } })) }] : []),
       ])}/>
     </header>
     {!doc ? <div className="code-loading" role="status"><Spinner/></div>

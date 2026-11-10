@@ -2620,3 +2620,4 @@
 "No commits between these revisions." = "Tidak ada commit di antara revisi ini.";
 "Couldn't compare these revisions" = "Tidak dapat membandingkan revisi ini";
 "Changes from %@ to %@" = "Perubahan dari %1$@ ke %2$@";
+"Open in editor" = "Buka di editor";

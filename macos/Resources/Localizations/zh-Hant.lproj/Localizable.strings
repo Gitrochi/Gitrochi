@@ -2669,3 +2669,4 @@
 "No commits between these revisions." = "這兩個修訂之間沒有提交。";
 "Couldn't compare these revisions" = "無法比較這些修訂";
 "Changes from %@ to %@" = "從 %1$@ 到 %2$@ 的變更";
+"Open in editor" = "在編輯器中開啟";

@@ -4721,3 +4721,4 @@
 "No commits between these revisions." = "두 시점 사이에 커밋이 없습니다.";
 "Couldn't compare these revisions" = "두 시점을 비교하지 못했습니다";
 "Changes from %@ to %@" = "%1$@부터 %2$@까지의 변경";
+"Open in editor" = "편집기에서 열기";

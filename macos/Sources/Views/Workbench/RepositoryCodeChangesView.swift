@@ -24,6 +24,8 @@ struct RepositoryCodeChangesView: View {
     /// A renamed file's path at `base`
     var oldPath: String? = nil
     var position: CodeFilePosition? = nil
+    /// The Compare page: More offers the file as it is in the working tree to an external editor
+    var opensInEditor = false
     @Binding var wraps: Bool
     /// The line count of the file as the commit has it, for the status bar
     @Binding var lineCount: Int?
@@ -33,6 +35,7 @@ struct RepositoryCodeChangesView: View {
     @ViewState private var expanded: Set<Int> = []
     /// The widest line, so the lines scroll sideways as one sheet
     @ViewState private var textWidth: CGFloat = 0
+    @ViewState private var editors: [ExternalEditor] = []
 
     private struct Key: Equatable { let repository: URL; let path: String; let commit: String?; let base: String?; let ignoreWhitespace: Bool }
     private struct Cell { let kind: DiffLine.Kind; let text: String; let oldNo: Int?; let newNo: Int?; let changes: [Range<Int>] }
@@ -64,6 +67,7 @@ struct RepositoryCodeChangesView: View {
             content.frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .task(id: Key(repository: repository, path: path, commit: commit, base: base, ignoreWhitespace: store.diffIgnoreWhitespace)) { await load() }
+        .task(id: opensInEditor) { if opensInEditor && editors.isEmpty { editors = ExternalEditors.editors() } }
     }
 
     // MARK: Header
@@ -111,6 +115,7 @@ struct RepositoryCodeChangesView: View {
                 Toggle("Wrap lines", isOn: $wraps)
                 if let commit, base == nil { Button("Show commit") { store.reveal(commit) } }
                 Button("Copy path") { store.copy(path) }
+                if opensInEditor { editorMenu }
             } label: {
                 DesignIconImage(icon: .more, size: 12).foregroundStyle(StudioStyle.Tone.neutral.text)
                     .frame(width: 24, height: 24).contentShape(Rectangle())
@@ -120,6 +125,28 @@ struct RepositoryCodeChangesView: View {
         }
         .padding(.horizontal, 16)
         .frame(height: 44)
+    }
+
+    /// The working tree's file, not the compared version; a file that is not there cannot open
+    @ViewBuilder private var editorMenu: some View {
+        let local = (try? repository.appendingPathComponent(path).resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true
+        Menu("Open in editor") {
+            ForEach(editors) { editor in
+                Button(editor.available ? editor.name : editor.name + " · " + String(localized: "Not installed")) { open(editor.id) }
+                    .disabled(!editor.available)
+            }
+        }
+        .disabled(!local || !editors.contains(where: \.available))
+        .help(local ? String(localized: "External editors open the current local file, not the revision preview.")
+                    : String(localized: "The local file is missing or is not a regular file."))
+    }
+
+    private func open(_ editorID: String) {
+        let repository = repository, path = path, applications = editors
+        Task {
+            do { try await ExternalEditors.open(repository: repository, editorID: editorID, file: path, available: applications) }
+            catch { if store.url == repository { store.errorMessage = store.describe(error) } }
+        }
     }
 
     private func kind(_ document: DiffDocument) -> ChangeKind {

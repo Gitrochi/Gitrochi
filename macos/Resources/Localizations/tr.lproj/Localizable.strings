@@ -2651,3 +2651,4 @@
 "No commits between these revisions." = "Bu revizyonlar arasında commit yok.";
 "Couldn't compare these revisions" = "Bu revizyonlar karşılaştırılamadı";
 "Changes from %@ to %@" = "%1$@ ile %2$@ arasındaki değişiklikler";
+"Open in editor" = "Düzenleyicide aç";

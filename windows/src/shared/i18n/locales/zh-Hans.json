@@ -2849,5 +2849,6 @@
   "Couldn't compare these revisions": "无法比较这些修订",
   "Changes from {0} to {1}": "从 {0} 到 {1} 的更改",
   "Compare with the current branch": "与当前分支比较",
-  "Comparing…": "正在比较…"
+  "Comparing…": "正在比较…",
+  "Open in editor": "在编辑器中打开"
 }

@@ -5,15 +5,19 @@ import { commitCountLabel, comparisonCommitLimit, comparisonKey, comparisonRefer
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
 import { listWhen, useObserve } from "@/shared/lib";
-import { git } from "@/shared/platform";
+import { externalEditors, git } from "@/shared/platform";
+import { ipc } from "@/shared/api";
+import { joinPath } from "@/shared/config";
 import { Button, Checkbox, FileViewToggle, HostedListEmpty, LineStatText, requestFileView, Spinner, StatusPill, useFileViewMode } from "@/shared/ui";
-import { CodeChangesView } from "./CodeChangesView";
+import { CodeChangesView, type CodeWorkingFileEditors } from "./CodeChangesView";
+import type { RepositoryEditorSource } from "./CodeExternalEditors";
 import { shortFolder } from "../lib/code-history";
 import "./local-workbench.css";
 
 type Read = (args: string[], repo: string) => Promise<string>;
 const defaultRead: Read = async (args, repo) => (await git(args, repo)).stdout;
 const ignoreLines = () => {};
+const workingFileExists = (repo: string, path: string) => ipc.exists(joinPath(repo, path));
 const refIcon = (reference: ComparisonReference) => reference.kind === "remote" ? <Cloud size={13}/> : reference.kind === "tag" ? <TagIcon size={13}/> : <GitBranch size={13}/>;
 
 /** From or To: the name chosen, and a popover where any revision can be typed or a branch or tag chosen */
@@ -49,11 +53,12 @@ function RevisionField({ title, value, resolved, references, onChoose }: { title
  * file's diff. The page compares as soon as either side changes. The "Compare revisions…" dialog keeps its own
  * one-column layout. (macOS: RevisionComparisonPanel)
  */
-export function RevisionComparisonPanel({ store, read = defaultRead }: { store: RepoStore; read?: Read }) {
+export function RevisionComparisonPanel({ store, read = defaultRead, editorSource = externalEditors, exists = workingFileExists }: { store: RepoStore; read?: Read; editorSource?: RepositoryEditorSource; exists?: CodeWorkingFileEditors["exists"] }) {
   useObserve(store);
   const mode = useFileViewMode(...requestFileView);
   const [tab, setTab] = useState<"files" | "commits">("files"), [filter, setFilter] = useState(""), [selected, setSelected] = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState(new Set<string>()), [wrap, setWrap] = useState(false);
+  const editors = useMemo<CodeWorkingFileEditors>(() => ({ source: editorSource, exists }), [editorSource, exists]);
   const s = store.historyTools, result = s.comparison, head = store.headBranch ?? "HEAD";
   const change = () => store.changed();
   useEffect(() => () => store.cancelHistoryTools(), [store]);
@@ -134,7 +139,7 @@ export function RevisionComparisonPanel({ store, read = defaultRead }: { store: 
             : result.files.map((file) => fileRow(file, null))}
         </div>
       </section>
-      {open && store.path && <CodeChangesView store={store} repo={store.path} path={open.path} commit={result.right} base={result.base} oldPath={open.oldPath} position={{ index, count: files.length, step }} read={read} wrap={wrap} setWrap={setWrap} onLines={ignoreLines}/>}
+      {open && store.path && <CodeChangesView store={store} repo={store.path} path={open.path} commit={result.right} base={result.base} oldPath={open.oldPath} position={{ index, count: files.length, step }} editors={editors} read={read} wrap={wrap} setWrap={setWrap} onLines={ignoreLines}/>}
     </div>;
 
   const commitsView = () => !result ? null : !result.commits.length

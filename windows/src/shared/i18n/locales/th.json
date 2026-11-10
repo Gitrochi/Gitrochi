@@ -2709,5 +2709,6 @@
   "Couldn't compare these revisions": "ไม่สามารถเปรียบเทียบรีวิชันเหล่านี้ได้",
   "Changes from {0} to {1}": "การเปลี่ยนแปลงจาก {0} ถึง {1}",
   "Compare with the current branch": "เปรียบเทียบกับสาขาปัจจุบัน",
-  "Comparing…": "กำลังเปรียบเทียบ…"
+  "Comparing…": "กำลังเปรียบเทียบ…",
+  "Open in editor": "เปิดในโปรแกรมแก้ไข"
 }

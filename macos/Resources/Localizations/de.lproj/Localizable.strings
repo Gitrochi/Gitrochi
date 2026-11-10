@@ -2651,3 +2651,4 @@
 "No commits between these revisions." = "Keine Commits zwischen diesen Revisionen.";
 "Couldn't compare these revisions" = "Diese Revisionen konnten nicht verglichen werden";
 "Changes from %@ to %@" = "Änderungen von %1$@ bis %2$@";
+"Open in editor" = "Im Editor öffnen";

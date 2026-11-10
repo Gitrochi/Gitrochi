@@ -2699,5 +2699,6 @@
   "Couldn't compare these revisions": "Nem sikerült összehasonlítani ezeket a revíziókat",
   "Changes from {0} to {1}": "Változások: {0} → {1}",
   "Compare with the current branch": "Összehasonlítás a jelenlegi ággal",
-  "Comparing…": "Összehasonlítás…"
+  "Comparing…": "Összehasonlítás…",
+  "Open in editor": "Megnyitás szerkesztőben"
 }

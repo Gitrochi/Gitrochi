@@ -30,7 +30,8 @@ export async function localWorkbenchSelfTest(): Promise<[boolean, string]> {
     store.headBranch = "main"; store.path = "C:/gitrochi-compare-fixture";
     const compareReads: string[][] = [];
     const compareRead = async (args: string[]) => { compareReads.push(args); return args[0] === "diff" ? `diff --git a/${args.at(-1)} b/${args.at(-1)}\n--- a/${args.at(-1)}\n+++ b/${args.at(-1)}\n@@ -1 +1 @@\n-old\n+new\n` : "new\n"; };
-    await mount(<RevisionComparisonPanel store={store} read={compareRead}/>);
+    const workingChecks: string[] = [], compareEditors = { list: async () => [{ id: "system" as const, name: "System default", available: true, supportsFolders: true }], open: async () => {} };
+    await mount(<RevisionComparisonPanel store={store} read={compareRead} editorSource={compareEditors} exists={async (_repo, path) => { workingChecks.push(path); return true; }}/>);
     check(host.querySelector(".compare-column") && host.querySelector(".compare-main") && !host.querySelector("h1, h2"), "Compare page did not show its list column and comparison without a large title");
     await waitFor(() => comparisons === 1, "Compare did not compare on arrival");
     check(opened === false && store.historyTools.left === "topic" && store.historyTools.right === "main" && store.historyTools.useMergeBase, `Compare did not start with the usual base against the current branch: ${store.historyTools.left} → ${store.historyTools.right}`);
@@ -45,6 +46,7 @@ export async function localWorkbenchSelfTest(): Promise<[boolean, string]> {
     check(store.historyTools.left === "origin/topic" && store.historyTools.right === "main" && !host.querySelector('[role="dialog"]'), "The row did not make the branch From and the current branch To");
     await waitFor(() => host.querySelector(".code-changes-count")?.textContent === "1 / 2", "The first file's diff did not open with its position");
     check(compareReads.some((args) => args[0] === "diff" && args.includes(b) && args.includes(a) && args.at(-1) === "src/b.ts"), "The diff was not read between the base and To");
+    check(workingChecks.includes("src/b.ts"), "Open in editor did not check the open file in the working tree");
     check([...host.querySelectorAll(".compare-tab")].map((tab) => tab.textContent).join("|") === `${t("Files")}2|${t("Commits")}1`, "The tabs do not own their counts");
     document.body.dispatchEvent(new KeyboardEvent("keydown", { key: "j", bubbles: true }));
     await waitFor(() => host.querySelector(".code-changes-count")?.textContent === "2 / 2", "J did not step to the next file");

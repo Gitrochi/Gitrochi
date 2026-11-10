@@ -3430,3 +3430,4 @@
 "No commits between these revisions." = "この2つのリビジョンの間にコミットはありません。";
 "Couldn't compare these revisions" = "これらのリビジョンを比較できませんでした";
 "Changes from %@ to %@" = "%1$@ から %2$@ への変更";
+"Open in editor" = "エディタで開く";

@@ -2714,5 +2714,6 @@
   "Couldn't compare these revisions": "Не вдалося порівняти ці ревізії",
   "Changes from {0} to {1}": "Зміни від {0} до {1}",
   "Compare with the current branch": "Порівняти з поточною гілкою",
-  "Comparing…": "Порівняння…"
+  "Comparing…": "Порівняння…",
+  "Open in editor": "Відкрити в редакторі"
 }

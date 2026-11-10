@@ -3507,5 +3507,6 @@
   "Couldn't compare these revisions": "これらのリビジョンを比較できませんでした",
   "Changes from {0} to {1}": "{0} から {1} への変更",
   "Compare with the current branch": "現在のブランチと比較",
-  "Comparing…": "比較中…"
+  "Comparing…": "比較中…",
+  "Open in editor": "エディタで開く"
 }

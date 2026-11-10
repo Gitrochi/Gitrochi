@@ -2751,5 +2751,6 @@
   "Couldn't compare these revisions": "No se pudieron comparar estas revisiones",
   "Changes from {0} to {1}": "Cambios de {0} a {1}",
   "Compare with the current branch": "Comparar con la rama actual",
-  "Comparing…": "Comparando…"
+  "Comparing…": "Comparando…",
+  "Open in editor": "Abrir en el editor"
 }

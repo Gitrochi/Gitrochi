@@ -2664,3 +2664,4 @@
 "No commits between these revisions." = "Між цими ревізіями немає комітів.";
 "Couldn't compare these revisions" = "Не вдалося порівняти ці ревізії";
 "Changes from %@ to %@" = "Зміни від %1$@ до %2$@";
+"Open in editor" = "Відкрити в редакторі";

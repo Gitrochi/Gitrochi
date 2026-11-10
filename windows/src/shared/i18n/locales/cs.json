@@ -2697,5 +2697,6 @@
   "Couldn't compare these revisions": "Tyto revize nelze porovnat",
   "Changes from {0} to {1}": "Změny od {0} do {1}",
   "Compare with the current branch": "Porovnat s aktuální větví",
-  "Comparing…": "Porovnávání…"
+  "Comparing…": "Porovnávání…",
+  "Open in editor": "Otevřít v editoru"
 }

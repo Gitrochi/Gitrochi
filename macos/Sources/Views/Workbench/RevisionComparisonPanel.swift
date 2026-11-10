@@ -315,7 +315,7 @@ struct RevisionComparisonPanel: View {
                 if let file = open(result), let url = store.url {
                     let files = ordered(result), index = files.firstIndex(of: file) ?? 0
                     RepositoryCodeChangesView(repository: url, path: file.path, commit: result.right, base: result.base, oldPath: file.oldPath,
-                                              position: CodeFilePosition(index: index, count: files.count, step: step),
+                                              position: CodeFilePosition(index: index, count: files.count, step: step), opensInEditor: true,
                                               wraps: $wraps, lineCount: $lineCount)
                 }
             }

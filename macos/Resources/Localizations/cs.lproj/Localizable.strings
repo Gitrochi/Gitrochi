@@ -2646,3 +2646,4 @@
 "No commits between these revisions." = "Mezi těmito revizemi nejsou žádné commity.";
 "Couldn't compare these revisions" = "Tyto revize nelze porovnat";
 "Changes from %@ to %@" = "Změny od %1$@ do %2$@";
+"Open in editor" = "Otevřít v editoru";

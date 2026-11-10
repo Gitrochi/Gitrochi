@@ -2669,5 +2669,6 @@
   "Couldn't compare these revisions": "Tidak dapat membandingkan revisi ini",
   "Changes from {0} to {1}": "Perubahan dari {0} ke {1}",
   "Compare with the current branch": "Bandingkan dengan cabang saat ini",
-  "Comparing…": "Membandingkan…"
+  "Comparing…": "Membandingkan…",
+  "Open in editor": "Buka di editor"
 }
