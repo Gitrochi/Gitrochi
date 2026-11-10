@@ -27,6 +27,7 @@ struct RevisionComparisonPanel: View {
             listColumn(state)
                 .frame(width: 312)
                 .frame(maxHeight: .infinity, alignment: .top)
+                .clipped()
                 .background(StudioStyle.canvas)
             Divider()
             results(state).frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -92,13 +93,15 @@ struct RevisionComparisonPanel: View {
                     picker(.from, state)
                     picker(.to, state)
                 }
+                .frame(maxWidth: .infinity)
                 Button { let left = state.left; state.left = state.right; state.right = left } label: { SymbolIcon("arrow.up.arrow.down").font(.system(size: 12)) }
                     .buttonStyle(PullRequestButtonStyle(iconOnly: true))
                     .help("Swap From and To").accessibilityLabel("Swap From and To")
             }
             Toggle("From the common ancestor", isOn: $state.useMergeBase).toggleStyle(.checkbox).font(.system(size: 13))
             caption(String(localized: "Updates as soon as either side changes. Uncommitted changes are excluded."))
-            StudioStyle.border.frame(height: 1).padding(.horizontal, -12).padding(.vertical, 4)
+            // the rule runs to the column's edges without widening the column
+            Color.clear.frame(height: 1).overlay(StudioStyle.border.padding(.horizontal, -12)).padding(.vertical, 4)
             Text("Compare with the current branch").font(.system(size: 13, weight: .semibold))
             HStack(spacing: 6) {
                 DesignIconImage(icon: .search, size: 12).foregroundStyle(StudioStyle.Rail.icon)
@@ -111,6 +114,7 @@ struct RevisionComparisonPanel: View {
                 VStack(spacing: 4) {
                     ForEach(references.filter { HistoryTools.referenceMatches($0.name, filter: filter) }) { referenceRow($0, state) }
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
             .accessibilityLabel("Compare with the current branch")
         }
@@ -197,7 +201,7 @@ struct RevisionComparisonPanel: View {
             HStack(spacing: 8) {
                 SymbolIcon(icon(reference)).font(.system(size: 12)).foregroundStyle(StudioStyle.Rail.icon).frame(width: 14)
                 Text(reference.name).lineLimit(1).truncationMode(.middle).fontWeight(compared ? .semibold : .regular)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .frame(maxWidth: .infinity, alignment: .leading).layoutPriority(-1)
                 if hover && !compared {
                     Text("Compare").padding(.horizontal, 8).frame(height: 24)
                         .background(RoundedRectangle(cornerRadius: 6).fill(StudioStyle.surface))
@@ -328,6 +332,7 @@ struct RevisionComparisonPanel: View {
             }
             .padding(.leading, 6)
             .frame(height: 28)
+            // the rows scroll under the header, never over it; a row wider than the column cuts its name, not the column
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     if mode == "tree" {
@@ -341,9 +346,13 @@ struct RevisionComparisonPanel: View {
                         ForEach(result.files) { fileRow($0, result, selected: $0.path == current, indent: 6, folder: true) }
                     }
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
+            .clipped()
         }
         .padding(10)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .clipped()
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Changed files")
     }
@@ -354,14 +363,14 @@ struct RevisionComparisonPanel: View {
             HStack(spacing: 6) {
                 SymbolIcon(open ? "chevron.down" : "chevron.right").font(.system(size: 9, weight: .semibold)).foregroundStyle(StudioStyle.Rail.icon).frame(width: 12)
                 DesignIconImage(icon: .repository, size: 11).foregroundStyle(StudioStyle.Rail.icon)
-                Text(verbatim: name).fontWeight(.medium).lineLimit(1).truncationMode(.head)
+                Text(verbatim: name).fontWeight(.medium).lineLimit(1).truncationMode(.head).layoutPriority(-1)
                 // a folder holding a single file needs no count
                 if count > 1 { StatusPill(title: String(count), symbol: nil, tone: .neutral) }
                 Spacer(minLength: 0)
             }
             .font(.system(size: 13))
             .padding(.leading, 6 + CGFloat(depth) * 14).padding(.trailing, 6)
-            .frame(height: 28)
+            .frame(maxWidth: .infinity, minHeight: 28, maxHeight: 28, alignment: .leading)
             .background(RoundedRectangle(cornerRadius: 6).fill(hovered == id ? StudioStyle.hover : Color.clear))
             .contentShape(Rectangle())
         }
@@ -374,18 +383,18 @@ struct RevisionComparisonPanel: View {
         return Button { selectedPath = file.path } label: {
             HStack(spacing: 6) {
                 StatusBadge(kind: file.kind)
-                // a rename's old name gives way first; the file name is never cut
+                // a rename's old name gives way first, then the folder, then the name; the counts are never cut
                 if let old = file.oldPath, old != file.path {
-                    Text(verbatim: (old as NSString).lastPathComponent + " →").font(.system(size: 11)).foregroundStyle(StudioStyle.Rail.icon).lineLimit(1).layoutPriority(-1)
+                    Text(verbatim: (old as NSString).lastPathComponent + " →").font(.system(size: 11)).foregroundStyle(StudioStyle.Rail.icon).lineLimit(1).layoutPriority(-2)
                 }
-                Text(verbatim: file.fileName).fontWeight(selected ? .semibold : .regular).lineLimit(1).fixedSize()
-                if folder { PullRequestFolderLabel(path: file.path, color: selected ? Color.primary.opacity(0.72) : StudioStyle.Rail.icon).layoutPriority(-2) }
+                Text(verbatim: file.fileName).fontWeight(selected ? .semibold : .regular).lineLimit(1).truncationMode(.middle)
+                if folder { PullRequestFolderLabel(path: file.path, color: selected ? Color.primary.opacity(0.72) : StudioStyle.Rail.icon).layoutPriority(-3) }
                 Spacer(minLength: 0)
-                if let stat { LineStatText(added: stat.added ?? 0, deleted: stat.deleted ?? 0).fixedSize() }
+                if let stat { LineStatText(added: stat.added ?? 0, deleted: stat.deleted ?? 0).fixedSize().layoutPriority(1) }
             }
             .font(.system(size: 13))
             .padding(.leading, indent).padding(.trailing, 8)
-            .frame(height: 28)
+            .frame(maxWidth: .infinity, minHeight: 28, maxHeight: 28, alignment: .leading)
             .background(RoundedRectangle(cornerRadius: 6).fill(selected ? StudioStyle.selection : hovered == id ? StudioStyle.hover : Color.clear))
             .contentShape(Rectangle())
         }

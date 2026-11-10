@@ -6,13 +6,14 @@
 
 /* The Compare page (the redesign's Compare board): From and To above the branches in a 312px list column, Files and Commits beside it. macOS: RevisionComparisonPanel. */
 .compare-page { display: flex; height: 100%; min-height: 0; min-width: 0; background: var(--surface); color: var(--text); font-size: 13px; container: compare / inline-size; }
-.compare-column { flex: 0 0 312px; min-width: 0; min-height: 0; box-sizing: border-box; background: var(--sidebar); border-right: 1px solid var(--border); padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.compare-column { flex: 0 0 312px; min-width: 0; min-height: 0; box-sizing: border-box; overflow: hidden; background: var(--sidebar); border-right: 1px solid var(--border); padding: 12px; display: flex; flex-direction: column; gap: 10px; }
 .compare-column > strong { font-weight: 600; }
 .compare-cap { font-size: 12px; color: var(--text-2); }
 .compare-cap > code { font: 11px var(--mono); }
 .compare-sides { flex: none; display: grid; grid-template-columns: minmax(0, 1fr) 28px; grid-template-rows: 28px 28px; gap: 6px; align-items: center; }
 .compare-sides > .compare-field:first-child { grid-column: 1; grid-row: 1; }
 .compare-sides > .compare-field:last-child { grid-column: 1; grid-row: 2; }
+.compare-sides > .compare-field { min-width: 0; }
 .compare-swap { grid-column: 2; grid-row: 1 / span 2; width: 28px; height: 28px; padding: 0; justify-content: center; }
 .compare-field { position: relative; min-width: 0; display: flex; }
 .compare-picker { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 8px; height: 28px; box-sizing: border-box; padding: 0 10px; border: 1px solid var(--border-strong); border-radius: 6px; background: var(--input); font: inherit; color: var(--text); text-align: left; cursor: pointer; }
@@ -31,7 +32,7 @@
 .compare-refs { flex: 1 1 auto; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 4px; }
 .compare-ref { flex: none; display: flex; align-items: center; gap: 8px; width: 100%; height: 28px; box-sizing: border-box; padding: 0 4px 0 8px; border: 0; border-radius: 6px; background: transparent; font: inherit; color: var(--text); text-align: left; cursor: pointer; }
 .compare-ref > svg { flex: none; color: var(--text-2); }
-.compare-ref > .ellipsis { flex: 1 1 auto; min-width: 0; }
+.compare-ref > .ellipsis { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .compare-ref:hover { background: var(--hover); }
 .compare-ref.on { background: var(--select); }
 .compare-ref.on > .ellipsis { font-weight: 600; }
@@ -48,21 +49,21 @@
 .compare-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
 .compare-loading { flex: 1; display: flex; align-items: center; justify-content: center; }
 .compare-files { flex: 1 1 auto; min-height: 0; display: flex; }
-.compare-tree { flex: 0 0 300px; min-width: 0; min-height: 0; box-sizing: border-box; border-right: 1px solid var(--border); padding: 10px; display: flex; flex-direction: column; gap: 8px; overflow: auto; }
+.compare-tree { flex: 0 0 300px; min-width: 0; min-height: 0; box-sizing: border-box; border-right: 1px solid var(--border); padding: 10px; display: flex; flex-direction: column; gap: 8px; overflow: hidden; }
 .compare-tree-head { flex: none; display: flex; align-items: center; gap: 8px; height: 28px; padding-left: 6px; }
 .compare-tree-head > strong { flex: 1 1 auto; font-weight: 600; }
-.compare-tree-rows { display: flex; flex-direction: column; }
-.compare-folder, .compare-file { flex: none; display: flex; align-items: center; gap: 6px; width: 100%; height: 28px; box-sizing: border-box; padding-right: 8px; border: 0; border-radius: 6px; background: transparent; font: inherit; color: var(--text); text-align: left; cursor: pointer; min-width: 0; }
+.compare-tree-rows { flex: 1 1 auto; min-height: 0; overflow-x: hidden; overflow-y: auto; display: flex; flex-direction: column; }
+.compare-folder, .compare-file { flex: none; display: flex; align-items: center; gap: 6px; width: 100%; height: 28px; box-sizing: border-box; padding-right: 8px; border: 0; border-radius: 6px; background: transparent; font: inherit; color: var(--text); text-align: left; cursor: pointer; min-width: 0; overflow: hidden; }
 .compare-folder > svg { flex: none; color: var(--text-2); }
-.compare-folder > .ellipsis { flex: 0 1 auto; font-weight: 500; }
+.compare-folder > .ellipsis { flex: 0 1 auto; min-width: 0; font-weight: 500; }
 .compare-folder:hover, .compare-file:hover:not(.on) { background: var(--hover); }
 .compare-file.on { background: var(--select); }
 .compare-file.on .compare-file-name { font-weight: 600; }
 .compare-file:focus-visible, .compare-folder:focus-visible, .compare-commit:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-.compare-file-name { flex: none; white-space: nowrap; }
+.compare-file-name { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .compare-file-from { flex: 0 100 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; color: var(--text-2); }
-.compare-file > .spacer { flex: 1 1 auto; }
-.compare-file > .linestat { flex: none; }
+.compare-file > .spacer { flex: 1 1 0; min-width: 0; }
+.compare-file > .linestat, .compare-file > .status-badge, .compare-folder > .status-pill { flex: none; }
 .compare-commits { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 10px; display: flex; flex-direction: column; }
 .compare-commit { flex: none; display: flex; align-items: center; gap: 10px; height: 28px; box-sizing: border-box; padding: 0 10px; border: 0; border-radius: 6px; background: transparent; font: inherit; color: var(--text); text-align: left; cursor: pointer; }
 .compare-commit:hover { background: var(--hover); }
@@ -72,7 +73,7 @@
 /* too narrow for the tree beside a readable diff: the tree goes on top; a narrow page puts the list column on top */
 @container compare (max-width: 1040px) {
   .compare-files { flex-direction: column; }
-  .compare-tree { flex: 0 0 auto; max-height: 40%; border-right: 0; border-bottom: 1px solid var(--border); }
+  .compare-tree { flex: 0 0 40%; border-right: 0; border-bottom: 1px solid var(--border); }
 }
 @container compare (max-width: 680px) {
   .compare-page { flex-direction: column; overflow: auto; }
