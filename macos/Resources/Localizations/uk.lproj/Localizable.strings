@@ -2667,3 +2667,7 @@
 "Schedule run" = "Запланувати запуск";
 "Choose a time in the future." = "Виберіть час у майбутньому.";
 "Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed." = "Gitrochi почне запуск у цей час, якщо застосунок відкрито. Інакше запуск буде позначено як пропущений.";
+"Scheduled runs" = "Заплановані запуски";
+"Pipeline" = "Конвеєр";
+"Missed" = "Пропущено";
+"Start this run now?" = "Почати цей запуск зараз?";

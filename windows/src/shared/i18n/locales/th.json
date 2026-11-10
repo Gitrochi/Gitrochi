@@ -2710,5 +2710,10 @@
   "Run at": "รันเวลา",
   "Schedule run": "ตั้งเวลารัน",
   "Choose a time in the future.": "เลือกเวลาในอนาคต",
-  "Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed.": "Gitrochi จะเริ่มการรันในเวลานี้หากแอปเปิดอยู่ มิฉะนั้นการรันจะถูกทำเครื่องหมายว่าพลาด"
+  "Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed.": "Gitrochi จะเริ่มการรันในเวลานี้หากแอปเปิดอยู่ มิฉะนั้นการรันจะถูกทำเครื่องหมายว่าพลาด",
+  "Scheduled": "ตั้งเวลาไว้",
+  "Scheduled runs": "การรันที่ตั้งเวลาไว้",
+  "Pipeline": "ไปป์ไลน์",
+  "Missed": "พลาด",
+  "Start this run now?": "เริ่มการรันนี้ตอนนี้หรือไม่"
 }

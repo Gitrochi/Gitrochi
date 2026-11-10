@@ -2670,5 +2670,10 @@
   "Run at": "Jalankan pada",
   "Schedule run": "Jadwalkan run",
   "Choose a time in the future.": "Pilih waktu di masa depan.",
-  "Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed.": "Gitrochi memulai run pada waktu ini jika sedang terbuka. Jika tidak, run ditandai terlewat."
+  "Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed.": "Gitrochi memulai run pada waktu ini jika sedang terbuka. Jika tidak, run ditandai terlewat.",
+  "Scheduled": "Terjadwal",
+  "Scheduled runs": "Run terjadwal",
+  "Pipeline": "Pipeline",
+  "Missed": "Terlewat",
+  "Start this run now?": "Mulai run ini sekarang?"
 }

@@ -2850,5 +2850,10 @@
   "Run at": "运行时间",
   "Schedule run": "计划运行",
   "Choose a time in the future.": "请选择将来的时间。",
-  "Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed.": "如果 Gitrochi 处于打开状态，将在此时间开始运行；否则该运行会被标记为已错过。"
+  "Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed.": "如果 Gitrochi 处于打开状态，将在此时间开始运行；否则该运行会被标记为已错过。",
+  "Scheduled": "已计划",
+  "Scheduled runs": "已计划的运行",
+  "Pipeline": "流水线",
+  "Missed": "已错过",
+  "Start this run now?": "现在开始此运行？"
 }

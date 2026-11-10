@@ -53,6 +53,7 @@ import { issueWorkflowSelfTest } from "./lib/issue-workflow-selftest";
 import { releaseOverviewSelfTest } from "./lib/release-overview-selftest";
 import { hostingHubSelfTest } from "./lib/hosting-hub-selftest";
 import { workspacePanelsSelfTest } from "./lib/workspace-panels-selftest";
+import { scheduledRunsSelfTest } from "./lib/scheduled-runs-selftest";
 import { toolbarSelfTest } from "./lib/toolbar-selftest";
 import { browserLoginGuidanceSelfTest, browserProjectAccessSelfTest } from "./lib/browser-login-selftest";
 import { accountQuickControlsSelfTest, accountQuickControlsWithoutRepositorySelfTest } from "./lib/account-quick-controls-selftest";
@@ -304,6 +305,7 @@ export async function runSelfTest(): Promise<boolean> {
   await step("Complete organization project tasks, refresh, and expandable Home agenda", projectItemCompletenessSelfTest);
   await step("Local planning persistence and project creation choices", localPlannerSelfTest);
   await step("홈·계정·이슈·CI 작업 화면", workspacePanelsSelfTest);
+  await step("Actions: Run later in the run sheet, the Scheduled group, and missed and failed runs", scheduledRunsSelfTest);
   await step("Toolbar by page: repository, other pages and no repository; the More menu", toolbarSelfTest);
 
   const file = joinPath(repo, "selftest-새파일.txt");

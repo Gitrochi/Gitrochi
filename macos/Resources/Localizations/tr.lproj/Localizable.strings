@@ -2654,3 +2654,7 @@
 "Schedule run" = "Çalıştırmayı zamanla";
 "Choose a time in the future." = "Gelecekte bir zaman seçin.";
 "Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed." = "Gitrochi açıksa çalıştırmayı bu zamanda başlatır. Değilse çalıştırma kaçırıldı olarak işaretlenir.";
+"Scheduled runs" = "Zamanlanmış çalıştırmalar";
+"Pipeline" = "Pipeline";
+"Missed" = "Kaçırıldı";
+"Start this run now?" = "Bu çalıştırma şimdi başlatılsın mı?";

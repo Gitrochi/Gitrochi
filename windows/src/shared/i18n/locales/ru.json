@@ -2715,5 +2715,10 @@
   "Run at": "Запустить в",
   "Schedule run": "Запланировать запуск",
   "Choose a time in the future.": "Выберите время в будущем.",
-  "Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed.": "Gitrochi начнёт запуск в это время, если приложение открыто. Иначе запуск будет отмечен как пропущенный."
+  "Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed.": "Gitrochi начнёт запуск в это время, если приложение открыто. Иначе запуск будет отмечен как пропущенный.",
+  "Scheduled": "По расписанию",
+  "Scheduled runs": "Запланированные запуски",
+  "Pipeline": "Конвейер",
+  "Missed": "Пропущен",
+  "Start this run now?": "Начать этот запуск сейчас?"
 }

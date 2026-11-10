@@ -2615,3 +2615,7 @@
 "Schedule run" = "Run plannen";
 "Choose a time in the future." = "Kies een tijd in de toekomst.";
 "Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed." = "Gitrochi start de run op dit tijdstip als het geopend is. Anders wordt de run als gemist gemarkeerd.";
+"Scheduled runs" = "Geplande runs";
+"Pipeline" = "Pipeline";
+"Missed" = "Gemist";
+"Start this run now?" = "Deze run nu starten?";

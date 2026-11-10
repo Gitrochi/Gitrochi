@@ -3508,5 +3508,9 @@
   "Run at": "実行日時",
   "Schedule run": "実行を予約",
   "Choose a time in the future.": "未来の日時を選んでください。",
-  "Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed.": "Gitrochi が開いていれば、この日時に実行を開始します。開いていない場合は見逃した実行として表示されます。"
+  "Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed.": "Gitrochi が開いていれば、この日時に実行を開始します。開いていない場合は見逃した実行として表示されます。",
+  "Scheduled runs": "予約された実行",
+  "Pipeline": "パイプライン",
+  "Missed": "見逃し",
+  "Start this run now?": "この実行を今すぐ開始しますか？"
 }

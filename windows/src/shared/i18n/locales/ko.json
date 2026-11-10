@@ -4669,5 +4669,9 @@
   "Run at": "실행 시각",
   "Schedule run": "실행 예약",
   "Choose a time in the future.": "지금 이후의 시각을 고르세요.",
-  "Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed.": "Gitrochi가 열려 있으면 이 시각에 실행을 시작합니다. 열려 있지 않으면 놓친 실행으로 표시됩니다."
+  "Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed.": "Gitrochi가 열려 있으면 이 시각에 실행을 시작합니다. 열려 있지 않으면 놓친 실행으로 표시됩니다.",
+  "Scheduled runs": "예약된 실행",
+  "Pipeline": "파이프라인",
+  "Missed": "놓침",
+  "Start this run now?": "이 실행을 지금 시작할까요?"
 }

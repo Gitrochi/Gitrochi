@@ -2752,5 +2752,10 @@
   "Run at": "Ejecutar a las",
   "Schedule run": "Programar ejecución",
   "Choose a time in the future.": "Elige una hora en el futuro.",
-  "Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed.": "Gitrochi inicia la ejecución a esta hora si está abierto. Si no, se marca como perdida."
+  "Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed.": "Gitrochi inicia la ejecución a esta hora si está abierto. Si no, se marca como perdida.",
+  "Scheduled": "Programado",
+  "Scheduled runs": "Ejecuciones programadas",
+  "Pipeline": "Pipeline",
+  "Missed": "Perdida",
+  "Start this run now?": "¿Iniciar esta ejecución ahora?"
 }

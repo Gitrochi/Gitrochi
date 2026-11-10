@@ -2628,3 +2628,7 @@
 "Schedule run" = "Lên lịch chạy";
 "Choose a time in the future." = "Hãy chọn một thời điểm trong tương lai.";
 "Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed." = "Gitrochi bắt đầu lượt chạy vào thời điểm này nếu ứng dụng đang mở. Nếu không, lượt chạy được đánh dấu là bị lỡ.";
+"Scheduled runs" = "Lượt chạy đã lên lịch";
+"Pipeline" = "Pipeline";
+"Missed" = "Bị lỡ";
+"Start this run now?" = "Bắt đầu lượt chạy này ngay?";

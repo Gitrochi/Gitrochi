@@ -2644,3 +2644,7 @@
 "Schedule run" = "Pianifica esecuzione";
 "Choose a time in the future." = "Scegli un orario nel futuro.";
 "Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed." = "Gitrochi avvia l'esecuzione a quest'ora se è aperto. Altrimenti viene segnata come persa.";
+"Scheduled runs" = "Esecuzioni pianificate";
+"Pipeline" = "Pipeline";
+"Missed" = "Persa";
+"Start this run now?" = "Avviare ora questa esecuzione?";

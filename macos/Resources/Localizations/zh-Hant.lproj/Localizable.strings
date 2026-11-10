@@ -2672,3 +2672,7 @@
 "Schedule run" = "排程執行";
 "Choose a time in the future." = "請選擇未來的時間。";
 "Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed." = "若 Gitrochi 開啟中，會在此時間開始執行；否則此執行會標示為已錯過。";
+"Scheduled runs" = "已排程的執行";
+"Pipeline" = "管線";
+"Missed" = "已錯過";
+"Start this run now?" = "現在開始此執行？";

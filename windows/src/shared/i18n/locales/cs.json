@@ -2698,5 +2698,10 @@
   "Run at": "Spustit v",
   "Schedule run": "Naplánovat běh",
   "Choose a time in the future.": "Vyberte čas v budoucnosti.",
-  "Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed.": "Gitrochi spustí běh v tento čas, pokud bude otevřený. Jinak bude běh označen jako zmeškaný."
+  "Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed.": "Gitrochi spustí běh v tento čas, pokud bude otevřený. Jinak bude běh označen jako zmeškaný.",
+  "Scheduled": "Naplánováno",
+  "Scheduled runs": "Naplánované běhy",
+  "Pipeline": "Pipeline",
+  "Missed": "Zmeškáno",
+  "Start this run now?": "Spustit tento běh nyní?"
 }
