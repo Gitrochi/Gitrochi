@@ -2655,3 +2655,4 @@
 "Checking push destination…" = "Push-Ziel wird geprüft…";
 "Retry above" = "Oben erneut versuchen";
 "Couldn't check the push destination" = "Push-Ziel konnte nicht geprüft werden";
+"Needs approval" = "Freigabe nötig";

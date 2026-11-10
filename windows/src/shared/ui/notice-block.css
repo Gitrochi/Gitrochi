@@ -10,6 +10,12 @@
 .notice-block-text > .notice-block-actions { margin-top: 6px; }
 .notice-block .btn { font-size: 13px; }
 
+/* the sidebar's one-row form */
+.notice-row { display: flex; align-items: center; gap: 6px; min-width: 0; min-height: 22px; font-size: 13px; color: var(--status-text); }
+.notice-row-icon { flex: none; display: inline-flex; }
+.notice-row-title { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.notice-row-action { flex: none; font-size: 12px; }
+
 .disabled-reason { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
 .disabled-reason-text { min-width: 0; font-size: 12px; line-height: 16px; font-weight: 400; color: var(--text-2); text-align: right; }
 /* a disabled button is neutral, never faded (docs/design.md, Controls) */

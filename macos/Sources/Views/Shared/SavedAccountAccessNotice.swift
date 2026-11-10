@@ -5,6 +5,8 @@ struct SavedAccountAccessNotice: View {
     let account: HostAccount
     /// The whole page is waiting on it: the blocked state of docs/design.md, not a note among other things
     var page = false
+    /// A sidebar section: one row, the explanation on hover
+    var row = false
     var restored: () -> Void = {}
     @Environment(\.openSettings) private var openSettings
     @ViewState private var allowing = false
@@ -19,7 +21,7 @@ struct SavedAccountAccessNotice: View {
     }
 
     var body: some View {
-        if page { pageState } else { note }
+        if page { pageState } else if row { rowState } else { note }
     }
 
     @ViewBuilder private var pageState: some View {
@@ -34,6 +36,15 @@ struct SavedAccountAccessNotice: View {
                             caption: error ?? String(localized: "macOS asks before Gitrochi uses the saved sign-in for @\(account.username). Your drafts are kept."),
                             actionTitle: String(localized: "Approve…"), filled: true, action: allow)
         }
+    }
+
+    private var rowState: some View {
+        let accounts = AccountStore.shared, state = accounts.credentialState(for: account)
+        let action = state == .loading ? nil : state == .unavailable
+            ? NoticeAction(title: String(localized: "Account settings…")) { openSettings() }
+            : NoticeAction(title: String(localized: "Approve…"), run: allow)
+        return NoticeRow(symbol: "key", title: String(localized: "Needs approval"),
+                         caption: error ?? accounts.savedAccessMessage(for: account), action: action, busy: allowing || state == .loading)
     }
 
     /// One action sits on the right; when the credential can't be read at all, Account settings joins it below

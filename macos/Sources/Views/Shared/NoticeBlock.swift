@@ -103,6 +103,46 @@ struct FailureBlock: View {
     }
 }
 
+/// The sidebar's form of a notice: one row as tall as its neighbours, the title in its tone, one small action on the
+/// right and the caption on hover. The page keeps the full block. (Windows: NoticeRow)
+struct NoticeRow: View {
+    let symbol: String
+    var tone = StudioStyle.Tone.waiting
+    let title: String
+    var caption: String? = nil
+    var action: NoticeAction? = nil
+    var busy = false
+
+    var body: some View {
+        HStack(spacing: 6) {
+            SymbolIcon(symbol).font(.system(size: 12)).foregroundStyle(tone.text).accessibilityHidden(true)
+            Text(verbatim: title).font(.system(size: 13)).foregroundStyle(tone.text).lineLimit(1).truncationMode(.tail)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            if busy {
+                ProgressView().controlSize(.mini)
+            } else if let action {
+                Button(action.title, action: action.run).buttonStyle(.link).font(.system(size: 12)).fixedSize()
+                    .disabled(action.disabledReason != nil)
+            }
+        }
+        .help(caption.map { "\(title)\n\($0)" } ?? title)
+        .accessibilityElement(children: .contain)
+    }
+}
+
+/// A failure in the sidebar: the failed icon, "Couldn't reach github.com" and Retry, the server's words on hover
+struct FailureRow: View {
+    let title: String
+    var caption: String? = nil
+    var retrying = false
+    let retry: () -> Void
+
+    var body: some View {
+        NoticeRow(symbol: "xmark.circle.fill", tone: .failed, title: title, caption: caption,
+                  action: NoticeAction(title: String(localized: "Retry"), run: retry), busy: retrying)
+    }
+}
+
 /// A disabled button says why, in 12 pt grey 8 pt before it; without a reason it is the button alone
 struct DisabledReason: ViewModifier {
     let reason: String?

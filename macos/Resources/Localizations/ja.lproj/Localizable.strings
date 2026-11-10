@@ -3434,3 +3434,4 @@
 "Checking push destination…" = "Push 先を確認しています…";
 "Retry above" = "上で再試行してください";
 "Couldn't check the push destination" = "Push 先を確認できませんでした";
+"Needs approval" = "承認が必要";

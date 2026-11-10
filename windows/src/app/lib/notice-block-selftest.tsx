@@ -2,7 +2,7 @@ import { useState } from "react";
 import { createRoot } from "react-dom/client";
 import { KeyRound } from "@/shared/icons";
 import { t } from "@/shared/i18n";
-import { Button, DisabledReason, FailureBlock, NoticeBlock, retryAbove } from "@/shared/ui";
+import { Button, DisabledReason, FailureBlock, FailureRow, NoticeBlock, retryAbove } from "@/shared/ui";
 
 const pause = () => new Promise<void>((resolve) => setTimeout(resolve, 30));
 async function until(test: () => boolean) {
@@ -17,7 +17,7 @@ export async function noticeBlockSelfTest(): Promise<[boolean, string]> {
   Object.assign(host.style, { position: "fixed", left: "-10000px", top: "0", width: "520px", visibility: "hidden" });
   document.body.append(host);
   const root = createRoot(host);
-  let retried = 0, approved = 0;
+  let retried = 0, approved = 0, rowRetried = 0;
   let fail = (_retrying: boolean) => {};
   function Fixture() {
     const [retrying, setRetrying] = useState(false);
@@ -27,6 +27,7 @@ export async function noticeBlockSelfTest(): Promise<[boolean, string]> {
       <NoticeBlock className="fixture-one" icon={<KeyRound size={14} />} title="One action" caption="Caption" actions={[{ label: "Approve…", filled: true, onClick: () => approved++ }]} />
       <NoticeBlock className="fixture-two" icon={<KeyRound size={14} />} title="Two actions" caption="Caption" actions={[{ label: "First", onClick: () => {} }, { label: "Second", onClick: () => {} }]} />
       <div style={{ width: 240 }}><NoticeBlock className="fixture-narrow" icon={<KeyRound size={14} />} title="Saved sign-in needs your approval" actions={[{ label: "Restore saved account access", onClick: () => {} }]} /></div>
+      <div style={{ width: 240 }}><FailureRow className="fixture-row" title={t("Couldn't read the saved account credentials")} caption="Caption" retry={() => rowRetried++} /></div>
       <div className="fixture-footer" style={{ display: "flex" }}>
         <DisabledReason reason={retryAbove()}><Button kind="primary" className="fixture-blocked">Confirm</Button></DisabledReason>
         <DisabledReason reason={null}><Button className="fixture-open">Open</Button></DisabledReason>
@@ -67,6 +68,12 @@ export async function noticeBlockSelfTest(): Promise<[boolean, string]> {
     // in a narrow column (a sidebar section) the one action drops below the words instead of squeezing them
     if (box(".fixture-narrow .notice-block-title").width < 150) return [false, "A narrow notice squeezed its words"];
     if (box(".fixture-narrow .notice-block-actions").top < box(".fixture-narrow .notice-block-title").bottom) return [false, "A narrow notice must put its action below the words"];
+    // the sidebar's row: one line as tall as its neighbours, the title cut short rather than wrapped, Retry on the right
+    const sidebarRow = $(".fixture-row")!;
+    if (sidebarRow.getBoundingClientRect().height > 26) return [false, `A sidebar notice row is ${sidebarRow.getBoundingClientRect().height}px tall`];
+    if (getComputedStyle($(".fixture-row .notice-row-title")!).textOverflow !== "ellipsis" || !sidebarRow.title.includes("Caption")) return [false, "A sidebar notice row must cut its title and keep the caption on hover"];
+    $<HTMLButtonElement>(".fixture-row .notice-row-action")!.click();
+    if (!await until(() => rowRetried === 1)) return [false, "A sidebar notice row's Retry did not run"];
     details.push("notice");
 
     // a disabled button says why, 8px beside it, and is neutral rather than faded

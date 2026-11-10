@@ -7,7 +7,7 @@ import { accounts, workStateTitle } from "@/entities/hosting";
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
-import { FailureBlock, IconButton, type MenuItem, showContextMenu, Spinner } from "@/shared/ui";
+import { FailureRow, IconButton, type MenuItem, showContextMenu, Spinner } from "@/shared/ui";
 import { ListFilterCaption, ListSearchRow } from "./ListSearchRow";
 import { Section } from "./Section";
 import "./pull-request-section.css";
@@ -85,8 +85,8 @@ export function PullRequestSection({ store, target, openSettings, onPage = false
             </button>
           </div>
         )}
-        {st.kind === "needsAccount" && store.hostingAccount && <FailureBlock title={t("Couldn't read the saved account credentials")} caption={t("Unlock your credentials, then retry.")} retry={() => void store.loadPullRequests()} />}
-        {st.kind === "failed" && <FailureBlock title={t("Couldn't reach {0}", target.host)} caption={st.message} retry={() => void store.loadPullRequests()} />}
+        {st.kind === "needsAccount" && store.hostingAccount && <FailureRow title={t("Couldn't read the saved account credentials")} caption={t("Unlock your credentials, then retry.")} retry={() => void store.loadPullRequests()} />}
+        {st.kind === "failed" && <FailureRow title={t("Couldn't reach {0}", target.host)} caption={st.message} retry={() => void store.loadPullRequests()} />}
         {st.kind === "loading" && !store.pullRequests.length && <Spinner size={12} />}
         {st.kind === "loaded" && !store.pullRequests.length && <div className="muted">{t(gitlab ? "No merge requests match this filter." : "No pull requests match this filter.")}</div>}
       </div>

@@ -4723,3 +4723,4 @@
 "Checking push destination…" = "Push 대상을 확인하는 중…";
 "Retry above" = "위에서 다시 시도하세요";
 "Couldn't check the push destination" = "Push 대상을 확인하지 못했습니다";
+"Needs approval" = "승인 필요";

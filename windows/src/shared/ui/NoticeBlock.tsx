@@ -84,6 +84,39 @@ export function FailureBlock({ title, caption, detail, retrying = false, retry, 
   );
 }
 
+/**
+ * The sidebar's form of a notice: one row as tall as its neighbours, the title in its tone, one small action on the
+ * right and the caption on hover. The page keeps the full block. (macOS: NoticeRow)
+ */
+export function NoticeRow({ icon, tone = "waiting", title, caption, action, busy = false, className = "" }: {
+  icon: ReactNode;
+  tone?: StatusTone;
+  title: string;
+  caption?: string | null;
+  action?: NoticeAction;
+  busy?: boolean;
+  className?: string;
+}) {
+  return (
+    <div className={`notice-row status-tone ${className}`} data-tone={tone} role={tone === "failed" ? "alert" : "status"} title={caption ? `${title}\n${caption}` : title}>
+      <span className="notice-row-icon" aria-hidden>{icon}</span>
+      <span className="notice-row-title">{title}</span>
+      {busy ? <Spinner size={12} /> : action && <button type="button" className="link notice-row-action" disabled={!!action.disabledReason} onClick={action.onClick}>{action.label}</button>}
+    </div>
+  );
+}
+
+/** A failure in the sidebar: the failed icon, "Couldn't reach github.com" and Retry, the server's words on hover */
+export function FailureRow({ title, caption, retrying = false, retry, className }: {
+  title: string;
+  caption?: string | null;
+  retrying?: boolean;
+  retry: () => void;
+  className?: string;
+}) {
+  return <NoticeRow icon={<CircleX size={12} />} tone="failed" title={title} caption={caption} busy={retrying} action={{ label: t("Retry"), onClick: retry }} className={className} />;
+}
+
 /** The reason a primary action gives while a failure above it blocks it */
 export const retryAbove = () => t("Retry above");
 

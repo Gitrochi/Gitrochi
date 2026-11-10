@@ -24,13 +24,13 @@ struct IssueListSection: View {
             }
             if store.collaborationAccess == nil {
                 if let account = store.hostingAccount {
-                    SavedAccountAccessNotice(account: account) { Task { await store.loadIssues() } }.sidebarRow()
+                    SavedAccountAccessNotice(account: account, row: true) { Task { await store.loadIssues() } }.sidebarRow()
                 } else {
                     Button("Connect account…") { openSettings() }.buttonStyle(.link).sidebarRow()
                 }
             }
             if let error = list.error {
-                FailureBlock(title: String(localized: "Couldn't reach \(store.target?.host ?? "")"), caption: error) { Task { await store.loadIssues() } }
+                FailureRow(title: String(localized: "Couldn't reach \(store.target?.host ?? "")"), caption: error) { Task { await store.loadIssues() } }
                     .sidebarRow()
             }
             if list.busy, list.items.isEmpty {

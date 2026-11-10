@@ -2702,3 +2702,4 @@
 "Checking push destination…" = "Comprobando el destino del push…";
 "Retry above" = "Reintenta arriba";
 "Couldn't check the push destination" = "No se pudo comprobar el destino del push";
+"Needs approval" = "Requiere aprobación";
