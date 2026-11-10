@@ -45,12 +45,13 @@ export async function localWorkbenchSelfTest(): Promise<[boolean, string]> {
     await waitFor(() => comparisons === 2, "Choosing a branch did not compare it with the current branch");
     check(store.historyTools.left === "origin/topic" && store.historyTools.right === "main" && !host.querySelector('[role="dialog"]'), "The row did not make the branch From and the current branch To");
     await waitFor(() => host.querySelector(".code-changes-count")?.textContent === "1 / 2", "The first file's diff did not open with its position");
-    check(compareReads.some((args) => args[0] === "diff" && args.includes(b) && args.includes(a) && args.at(-1) === "src/b.ts"), "The diff was not read between the base and To");
-    check(workingChecks.includes("src/b.ts"), "Open in editor did not check the open file in the working tree");
+    // the diff and the working-tree check are read in effects that can run after the position shows
+    await waitFor(() => compareReads.some((args) => args[0] === "diff" && args.includes(b) && args.includes(a) && args.at(-1) === "src/b.ts"), "The diff was not read between the base and To");
+    await waitFor(() => workingChecks.includes("src/b.ts"), "Open in editor did not check the open file in the working tree");
     check([...host.querySelectorAll(".compare-tab")].map((tab) => tab.textContent).join("|") === `${t("Files")}2|${t("Commits")}1`, "The tabs do not own their counts");
     document.body.dispatchEvent(new KeyboardEvent("keydown", { key: "j", bubbles: true }));
     await waitFor(() => host.querySelector(".code-changes-count")?.textContent === "2 / 2", "J did not step to the next file");
-    check(compareReads.some((args) => args[0] === "diff" && args.at(-2) === "src/old.ts" && args.at(-1) === "src/a.ts"), "A renamed file's diff did not include its old path");
+    await waitFor(() => compareReads.some((args) => args[0] === "diff" && args.at(-2) === "src/old.ts" && args.at(-1) === "src/a.ts"), "A renamed file's diff did not include its old path");
     host.querySelectorAll<HTMLButtonElement>(".compare-tab")[1].click(); await pause(); check(host.querySelectorAll(".compare-commit").length === 1 && host.textContent?.includes("Fixture commit"), "The Commits tab did not list To's commits");
     host.querySelector<HTMLButtonElement>(`button[aria-label="${t("Swap From and To")}"]`)!.click();
     await waitFor(() => comparisons === 3, "Swapping did not compare again");
