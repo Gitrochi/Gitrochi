@@ -2659,5 +2659,10 @@
   "{0} not started": "{0} niet gestart",
   "{0} of {1} jobs": "{0} van {1} jobs",
   "{0} passes on {1}": "{0} slaagt in {1}",
-  "Checking push destination…": "Pushbestemming controleren…"
+  "Checking push destination…": "Pushbestemming controleren…",
+  "in {0}m": "over {0} min",
+  "in {0}h": "over {0} u",
+  "in {0}d": "over {0} d",
+  "The account for this run is no longer connected.": "Het account voor deze run is niet meer verbonden.",
+  "Couldn't read the account's token.": "Kan het token van het account niet lezen."
 }

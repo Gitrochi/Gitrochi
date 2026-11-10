@@ -3497,5 +3497,10 @@
   "{0} not started": "{0} は未着手",
   "{0} of {1} jobs": "ジョブ {1} 件中 {0} 件",
   "{0} passes on {1}": "{0} は {1} で合格",
-  "Checking push destination…": "Push 先を確認しています…"
+  "Checking push destination…": "Push 先を確認しています…",
+  "in {0}m": "{0}分後",
+  "in {0}h": "{0}時間後",
+  "in {0}d": "{0}日後",
+  "The account for this run is no longer connected.": "この実行のアカウントはもう接続されていません。",
+  "Couldn't read the account's token.": "アカウントのトークンを読み取れませんでした。"
 }

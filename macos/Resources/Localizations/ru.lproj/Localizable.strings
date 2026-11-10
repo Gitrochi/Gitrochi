@@ -2656,3 +2656,8 @@
 "pipeline #%@" = "конвейер #%@";
 "run #%@" = "запуск #%@";
 "Checking push destination…" = "Проверка назначения push…";
+"in %lldm" = "через %1$lld мин";
+"in %lldh" = "через %1$lld ч";
+"in %lldd" = "через %1$lld д";
+"The account for this run is no longer connected." = "Учётная запись для этого запуска больше не подключена.";
+"Couldn't read the account's token." = "Не удалось прочитать токен учётной записи.";

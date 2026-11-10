@@ -2604,3 +2604,8 @@
 "pipeline #%@" = "pipeline #%@";
 "run #%@" = "run #%@";
 "Checking push destination…" = "Pushbestemming controleren…";
+"in %lldm" = "over %1$lld min";
+"in %lldh" = "over %1$lld u";
+"in %lldd" = "over %1$lld d";
+"The account for this run is no longer connected." = "Het account voor deze run is niet meer verbonden.";
+"Couldn't read the account's token." = "Kan het token van het account niet lezen.";

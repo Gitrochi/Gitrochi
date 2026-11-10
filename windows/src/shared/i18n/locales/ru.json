@@ -2704,5 +2704,10 @@
   "{0} not started": "{0} не начато",
   "{0} of {1} jobs": "Заданий: {0} из {1}",
   "{0} passes on {1}": "{0} проходит: {1}",
-  "Checking push destination…": "Проверка назначения push…"
+  "Checking push destination…": "Проверка назначения push…",
+  "in {0}m": "через {0} мин",
+  "in {0}h": "через {0} ч",
+  "in {0}d": "через {0} д",
+  "The account for this run is no longer connected.": "Учётная запись для этого запуска больше не подключена.",
+  "Couldn't read the account's token.": "Не удалось прочитать токен учётной записи."
 }

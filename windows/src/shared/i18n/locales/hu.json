@@ -2689,5 +2689,10 @@
   "{0} not started": "{0} nincs elkezdve",
   "{0} of {1} jobs": "{1} jobból {0}",
   "{0} passes on {1}": "{0} sikeres itt: {1}",
-  "Checking push destination…": "A push célja ellenőrzése…"
+  "Checking push destination…": "A push célja ellenőrzése…",
+  "in {0}m": "{0} perc múlva",
+  "in {0}h": "{0} óra múlva",
+  "in {0}d": "{0} nap múlva",
+  "The account for this run is no longer connected.": "A futtatáshoz tartozó fiók már nincs csatlakoztatva.",
+  "Couldn't read the account's token.": "Nem sikerült beolvasni a fiók tokenjét."
 }

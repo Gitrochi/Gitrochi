@@ -2661,5 +2661,10 @@
   "{0} not started": "{0} chưa bắt đầu",
   "{0} of {1} jobs": "{0}/{1} job",
   "{0} passes on {1}": "{0} đạt ở {1}",
-  "Checking push destination…": "Đang kiểm tra đích push…"
+  "Checking push destination…": "Đang kiểm tra đích push…",
+  "in {0}m": "sau {0} phút",
+  "in {0}h": "sau {0} giờ",
+  "in {0}d": "sau {0} ngày",
+  "The account for this run is no longer connected.": "Tài khoản cho lượt chạy này không còn được kết nối.",
+  "Couldn't read the account's token.": "Không đọc được token của tài khoản."
 }

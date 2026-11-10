@@ -2692,3 +2692,8 @@
 "pipeline #%@" = "pipeline #%@";
 "run #%@" = "exécution #%@";
 "Checking push destination…" = "Vérification de la destination du push…";
+"in %lldm" = "dans %1$lld min";
+"in %lldh" = "dans %1$lld h";
+"in %lldd" = "dans %1$lld j";
+"The account for this run is no longer connected." = "Le compte de cette exécution n’est plus connecté.";
+"Couldn't read the account's token." = "Impossible de lire le jeton du compte.";

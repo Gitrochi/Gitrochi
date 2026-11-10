@@ -4659,5 +4659,10 @@
   "{0} not started": "{0} 시작 전",
   "{0} of {1} jobs": "작업 {1}개 중 {0}개",
   "{0} passes on {1}": "{0}: {1} 통과",
-  "Checking push destination…": "Push 대상을 확인하는 중…"
+  "Checking push destination…": "Push 대상을 확인하는 중…",
+  "in {0}m": "{0}분 후",
+  "in {0}h": "{0}시간 후",
+  "in {0}d": "{0}일 후",
+  "The account for this run is no longer connected.": "이 실행에 쓸 계정이 더 이상 연결되어 있지 않습니다.",
+  "Couldn't read the account's token.": "계정 토큰을 읽지 못했습니다."
 }

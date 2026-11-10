@@ -2659,5 +2659,10 @@
   "{0} not started": "{0} belum dimulai",
   "{0} of {1} jobs": "{0} dari {1} job",
   "{0} passes on {1}": "{0} lolos di {1}",
-  "Checking push destination…": "Memeriksa tujuan push…"
+  "Checking push destination…": "Memeriksa tujuan push…",
+  "in {0}m": "dalam {0} mnt",
+  "in {0}h": "dalam {0} jam",
+  "in {0}d": "dalam {0} hari",
+  "The account for this run is no longer connected.": "Akun untuk run ini tidak lagi terhubung.",
+  "Couldn't read the account's token.": "Tidak dapat membaca token akun."
 }

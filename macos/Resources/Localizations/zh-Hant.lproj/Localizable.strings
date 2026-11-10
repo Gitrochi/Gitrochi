@@ -2661,3 +2661,8 @@
 "pipeline #%@" = "管線 #%@";
 "run #%@" = "執行 #%@";
 "Checking push destination…" = "正在檢查推送目標…";
+"in %lldm" = "%1$lld 分鐘後";
+"in %lldh" = "%1$lld 小時後";
+"in %lldd" = "%1$lld 天後";
+"The account for this run is no longer connected." = "此執行使用的帳號已不再連線。";
+"Couldn't read the account's token." = "無法讀取帳號的權杖。";

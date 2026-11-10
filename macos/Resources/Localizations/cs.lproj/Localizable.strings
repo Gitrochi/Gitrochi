@@ -2638,3 +2638,8 @@
 "pipeline #%@" = "pipeline #%@";
 "run #%@" = "běh #%@";
 "Checking push destination…" = "Kontroluje se cíl odeslání…";
+"in %lldm" = "za %1$lld min";
+"in %lldh" = "za %1$lld h";
+"in %lldd" = "za %1$lld d";
+"The account for this run is no longer connected." = "Účet pro tento běh už není připojen.";
+"Couldn't read the account's token." = "Token účtu se nepodařilo přečíst.";

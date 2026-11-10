@@ -2675,5 +2675,10 @@
   "{0} not started": "{0} não iniciadas",
   "{0} of {1} jobs": "{0} de {1} jobs",
   "{0} passes on {1}": "{0} passa em {1}",
-  "Checking push destination…": "Verificando o destino do push…"
+  "Checking push destination…": "Verificando o destino do push…",
+  "in {0}m": "em {0} min",
+  "in {0}h": "em {0} h",
+  "in {0}d": "em {0} d",
+  "The account for this run is no longer connected.": "A conta desta execução não está mais conectada.",
+  "Couldn't read the account's token.": "Não foi possível ler o token da conta."
 }

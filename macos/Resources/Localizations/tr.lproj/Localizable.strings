@@ -2643,3 +2643,8 @@
 "pipeline #%@" = "pipeline #%@";
 "run #%@" = "çalıştırma #%@";
 "Checking push destination…" = "Push hedefi denetleniyor…";
+"in %lldm" = "%1$lld dk sonra";
+"in %lldh" = "%1$lld sa sonra";
+"in %lldd" = "%1$lld gün sonra";
+"The account for this run is no longer connected." = "Bu çalıştırmanın hesabı artık bağlı değil.";
+"Couldn't read the account's token." = "Hesabın belirteci okunamadı.";

@@ -2651,3 +2651,8 @@
 "pipeline #%@" = "ไปป์ไลน์ #%@";
 "run #%@" = "การรัน #%@";
 "Checking push destination…" = "กำลังตรวจปลายทาง push…";
+"in %lldm" = "ในอีก %1$lld นาที";
+"in %lldh" = "ในอีก %1$lld ชม.";
+"in %lldd" = "ในอีก %1$lld วัน";
+"The account for this run is no longer connected." = "บัญชีของการรันนี้ไม่ได้เชื่อมต่ออยู่แล้ว";
+"Couldn't read the account's token." = "อ่านโทเค็นของบัญชีไม่ได้";

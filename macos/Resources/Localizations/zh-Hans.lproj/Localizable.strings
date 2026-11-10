@@ -2799,3 +2799,8 @@
 "pipeline #%@" = "流水线 #%@";
 "run #%@" = "运行 #%@";
 "Checking push destination…" = "正在检查推送目标…";
+"in %lldm" = "%1$lld 分钟后";
+"in %lldh" = "%1$lld 小时后";
+"in %lldd" = "%1$lld 天后";
+"The account for this run is no longer connected." = "此运行使用的账户已不再连接。";
+"Couldn't read the account's token." = "无法读取账户的令牌。";

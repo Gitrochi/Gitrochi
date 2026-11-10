@@ -2612,3 +2612,8 @@
 "pipeline #%@" = "pipeline #%@";
 "run #%@" = "run #%@";
 "Checking push destination…" = "Memeriksa tujuan push…";
+"in %lldm" = "dalam %1$lld mnt";
+"in %lldh" = "dalam %1$lld jam";
+"in %lldd" = "dalam %1$lld hari";
+"The account for this run is no longer connected." = "Akun untuk run ini tidak lagi terhubung.";
+"Couldn't read the account's token." = "Tidak dapat membaca token akun.";

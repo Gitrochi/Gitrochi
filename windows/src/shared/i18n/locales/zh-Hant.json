@@ -2709,5 +2709,10 @@
   "{0} not started": "{0} 尚未開始",
   "{0} of {1} jobs": "{0}/{1} 個作業",
   "{0} passes on {1}": "{0} 在{1}中通過",
-  "Checking push destination…": "正在檢查推送目標…"
+  "Checking push destination…": "正在檢查推送目標…",
+  "in {0}m": "{0} 分鐘後",
+  "in {0}h": "{0} 小時後",
+  "in {0}d": "{0} 天後",
+  "The account for this run is no longer connected.": "此執行使用的帳號已不再連線。",
+  "Couldn't read the account's token.": "無法讀取帳號的權杖。"
 }

@@ -2640,3 +2640,8 @@
 "pipeline #%@" = "pipeline #%@";
 "run #%@" = "uruchomienie #%@";
 "Checking push destination…" = "Sprawdzanie miejsca docelowego push…";
+"in %lldm" = "za %1$lld min";
+"in %lldh" = "za %1$lld godz.";
+"in %lldd" = "za %1$lld d";
+"The account for this run is no longer connected." = "Konto dla tego uruchomienia nie jest już połączone.";
+"Couldn't read the account's token." = "Nie można odczytać tokenu konta.";

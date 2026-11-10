@@ -2617,3 +2617,8 @@
 "pipeline #%@" = "pipeline #%@";
 "run #%@" = "lượt chạy #%@";
 "Checking push destination…" = "Đang kiểm tra đích push…";
+"in %lldm" = "sau %1$lld phút";
+"in %lldh" = "sau %1$lld giờ";
+"in %lldd" = "sau %1$lld ngày";
+"The account for this run is no longer connected." = "Tài khoản cho lượt chạy này không còn được kết nối.";
+"Couldn't read the account's token." = "Không đọc được token của tài khoản.";

@@ -2641,3 +2641,8 @@
 "pipeline #%@" = "pipeline #%@";
 "run #%@" = "futtatás #%@";
 "Checking push destination…" = "A push célja ellenőrzése…";
+"in %lldm" = "%1$lld perc múlva";
+"in %lldh" = "%1$lld óra múlva";
+"in %lldd" = "%1$lld nap múlva";
+"The account for this run is no longer connected." = "A futtatáshoz tartozó fiók már nincs csatlakoztatva.";
+"Couldn't read the account's token." = "Nem sikerült beolvasni a fiók tokenjét.";

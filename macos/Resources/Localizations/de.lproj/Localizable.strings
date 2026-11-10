@@ -2643,3 +2643,8 @@
 "pipeline #%@" = "Pipeline #%@";
 "run #%@" = "Ausführung #%@";
 "Checking push destination…" = "Push-Ziel wird geprüft…";
+"in %lldm" = "in %1$lld Min.";
+"in %lldh" = "in %1$lld Std.";
+"in %lldd" = "in %1$lld T.";
+"The account for this run is no longer connected." = "Das Konto für diese Ausführung ist nicht mehr verbunden.";
+"Couldn't read the account's token." = "Das Token des Kontos konnte nicht gelesen werden.";

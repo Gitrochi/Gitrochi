@@ -2839,5 +2839,10 @@
   "{0} not started": "{0} 未开始",
   "{0} of {1} jobs": "{0}/{1} 个作业",
   "{0} passes on {1}": "{0} 在{1}中通过",
-  "Checking push destination…": "正在检查推送目标…"
+  "Checking push destination…": "正在检查推送目标…",
+  "in {0}m": "{0} 分钟后",
+  "in {0}h": "{0} 小时后",
+  "in {0}d": "{0} 天后",
+  "The account for this run is no longer connected.": "此运行使用的账户已不再连接。",
+  "Couldn't read the account's token.": "无法读取账户的令牌。"
 }

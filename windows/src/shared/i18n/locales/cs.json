@@ -2687,5 +2687,10 @@
   "{0} not started": "{0} nezahájeno",
   "{0} of {1} jobs": "Úlohy: {0} z {1}",
   "{0} passes on {1}": "{0} prochází v {1}",
-  "Checking push destination…": "Kontroluje se cíl odeslání…"
+  "Checking push destination…": "Kontroluje se cíl odeslání…",
+  "in {0}m": "za {0} min",
+  "in {0}h": "za {0} h",
+  "in {0}d": "za {0} d",
+  "The account for this run is no longer connected.": "Účet pro tento běh už není připojen.",
+  "Couldn't read the account's token.": "Token účtu se nepodařilo přečíst."
 }

@@ -30,6 +30,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         MainActor.assumeIsolated { LedgerNotifier.shared.refresh() }
         // Settings › Ledger › Team hub: shares this computer's sessions only while a person turned it on
         MainActor.assumeIsolated { LedgerHubSharing.shared.refresh() }
+        // Actions runs scheduled for later start while the app is open, whichever repositories are
+        MainActor.assumeIsolated { ScheduledRunStore.shared.start() }
         // 시스템이 첫 창을 만들지 않고 넘어가는 때가 있다(백그라운드 실행 등) — 그러면 직접 하나 연다
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             MainActor.assumeIsolated { Workspace.shared.ensureWindow() }

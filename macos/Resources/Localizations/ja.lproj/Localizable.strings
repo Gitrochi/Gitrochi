@@ -3422,3 +3422,8 @@
 "pipeline #%@" = "パイプライン #%@";
 "run #%@" = "実行 #%@";
 "Checking push destination…" = "Push 先を確認しています…";
+"in %lldm" = "%1$lld分後";
+"in %lldh" = "%1$lld時間後";
+"in %lldd" = "%1$lld日後";
+"The account for this run is no longer connected." = "この実行のアカウントはもう接続されていません。";
+"Couldn't read the account's token." = "アカウントのトークンを読み取れませんでした。";

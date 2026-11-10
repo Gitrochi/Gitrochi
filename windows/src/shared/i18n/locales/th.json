@@ -2699,5 +2699,10 @@
   "{0} not started": "{0} ยังไม่เริ่ม",
   "{0} of {1} jobs": "{0} จาก {1} จ็อบ",
   "{0} passes on {1}": "{0} ผ่านใน{1}",
-  "Checking push destination…": "กำลังตรวจปลายทาง push…"
+  "Checking push destination…": "กำลังตรวจปลายทาง push…",
+  "in {0}m": "ในอีก {0} นาที",
+  "in {0}h": "ในอีก {0} ชม.",
+  "in {0}d": "ในอีก {0} วัน",
+  "The account for this run is no longer connected.": "บัญชีของการรันนี้ไม่ได้เชื่อมต่ออยู่แล้ว",
+  "Couldn't read the account's token.": "อ่านโทเค็นของบัญชีไม่ได้"
 }
