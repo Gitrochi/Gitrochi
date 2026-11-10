@@ -377,7 +377,7 @@ export async function projectScheduleSelfTest(): Promise<[boolean, string]> {
     );
     failDue = false;
     // The scope strip has a Retry of its own; this one belongs to the error notice.
-    host.querySelector<HTMLButtonElement>(".hub-error .hub-actions button")!.click();
+    host.querySelector<HTMLButtonElement>(".hub-error .notice-block-actions button")!.click();
     ensure(
       await until(
         () =>

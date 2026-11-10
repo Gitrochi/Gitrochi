@@ -1,13 +1,13 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Book, Building2, ChevronsUpDown, Monitor } from "lucide-react";
-import { ArrowDownToLine, CircleX } from "@/shared/icons";
+import { ArrowDownToLine } from "@/shared/icons";
 import { Check, RefreshCw } from "@/shared/icons";
 import { avatars } from "@/entities/avatar";
 import { accountHost, type HostAccount } from "@/entities/git";
 import { accounts, hubProjectOrganization, type HubProjectScope } from "@/entities/hosting";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
-import { Avatar, Button, Spinner } from "@/shared/ui";
+import { Avatar, Button, FailureBlock, Spinner } from "@/shared/ui";
 import type { ProjectScopeCatalogs } from "../model/project-scope-catalogs";
 import "./project-scope-menu.css";
 
@@ -125,9 +125,7 @@ export function ProjectScopeFailureStrip({ catalogs, account }: { catalogs: Proj
   useObserve(catalogs);
   if (!account || !catalogs.failed(account)) return null;
   const state = catalogs.state(account), gitlab = account.provider === "gitlab";
-  return <div className="project-scope-strip" role="status" title={state.error ?? undefined}>
-    <CircleX size={14} aria-hidden />
-    <span><strong>{gitlab ? t("Couldn't load groups.") : t("Couldn't load organizations.")}</strong><small>{gitlab ? t("Repository boards are still available.") : t("Your personal projects are still available.")}</small></span>
-    <Button disabled={state.loading} onClick={() => void state.load(state.items.length > 0)}>{t("Retry")}</Button>
-  </div>;
+  return <FailureBlock title={gitlab ? t("Couldn't load groups.") : t("Couldn't load organizations.")}
+    caption={gitlab ? t("Repository boards are still available.") : t("Your personal projects are still available.")}
+    detail={state.error} retrying={state.loading} retry={() => void state.load(state.items.length > 0)} />;
 }

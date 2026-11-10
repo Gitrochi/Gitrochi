@@ -1,7 +1,7 @@
 import { ProjectScopeCatalogs } from "@/features/select-project-scope";
 import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { FileCode } from "lucide-react";
-import { SquareCheck } from "@/shared/icons";
+import { LockKeyhole, SquareCheck } from "@/shared/icons";
 import { ExternalLink, RefreshCw, Plus, Trash2 } from "@/shared/icons";
 import { accounts, HostingHubStore, hubSafeURL, hubError, saveHubRelease, deleteHubItem, issuePage, ensureHubCurrent, localProjects, type HubSource, type HostingHubSection, type HubReleaseInput, type HubAccess } from "@/entities/hosting";
 import { ipc } from "@/shared/api";
@@ -10,7 +10,7 @@ import { accountHost, type HostAccount } from "@/entities/git";
 import { avatars } from "@/entities/avatar";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
-import { Avatar, Button, Spinner } from "@/shared/ui";
+import { Avatar, Button, FailureBlock, NoticeBlock, Spinner } from "@/shared/ui";
 import "./hosting-hub.css";
 import { OrganizationWorkspace } from "./OrganizationWorkspace";
 import { ProjectReviewDialog } from "./ProjectReviewDialog";
@@ -20,6 +20,16 @@ import { ProjectCreateDialog } from "./ProjectCreateDialog";
 import type { ProjectCreationMode } from "./ProjectCreationChooser";
 import type { ProjectLocalActions } from "../lib/project-workspace";
 const ReleaseWorkspace = lazy(() => import("./ReleaseWorkspace").then(module => ({ default: module.ReleaseWorkspace })));
+
+/** The hub's error, next to the list it blocks: a missing project permission is a notice with its one way out; anything else failed and retries. macOS: HostingHubPanel's error block. */
+function HubError({ hub, busy, retry, connect }: { hub: HostingHubStore; busy: boolean; retry: () => void; connect: (login: string) => void }) {
+  const account = hub.account;
+  return hub.projectPermissionRequired && account
+    ? <NoticeBlock className="hub-notice hub-error" icon={<LockKeyhole size={14}/>} alert title={hub.error ?? ""} busy={busy}
+      caption={t("Approve the additional permission in GitHub, then projects will reload automatically.")}
+      actions={[{ label: t("Connect project access"), filled: true, onClick: () => connect(account.username) }]}/>
+    : <FailureBlock className="hub-notice hub-error" title={hub.error ?? ""} retrying={busy} retry={retry}/>;
+}
 
 export function HostingHubPanel(props: Parameters<typeof StandardHostingHubPanel>[0] & { openSettings?: () => void }) {
   return props.section === "releases" ? <Suspense fallback={<Spinner/>}><ReleaseWorkspace source={props.store} openSettings={props.openSettings}/></Suspense> : <StandardHostingHubPanel {...props}/>;
@@ -56,7 +66,7 @@ function StandardHostingHubPanel({store,section,onClone,projectActions}:{store:H
         openBrowser={d&&hubSafeURL(urlContext,d.item.url)?()=>open(d.item.url):undefined}
         deleteProject={d&&hub.isLocalProject?()=>ask(t("Delete local project?"),`${d.item.title}\n${t("This permanently deletes this project and all its local tasks.")}`,()=>localProjects.deleteProject(d),"list"):undefined}/>
       {hub.notice&&<div className="hub-notice" role="status">{hub.notice}</div>}
-      {hub.error&&<div className={`hub-notice hub-error ${hub.projectPermissionRequired?"":"error-text"}`} role="alert"><p>{hub.error}</p><div className="hub-actions">{hub.projectPermissionRequired&&hub.account?<><Button kind="primary" disabled={locked} onClick={()=>setProjectAccessAccount(hub.account!.username)}>{t("Connect project access")}</Button><span className="hint">{t("Approve the additional permission in GitHub, then projects will reload automatically.")}</span></>:<Button disabled={locked} onClick={()=>void (d?hub.select(d.item):hub.load())}>{t("Retry")}</Button>}</div></div>}
+      {hub.error&&<HubError hub={hub} busy={locked} retry={()=>void (d?hub.select(d.item):hub.load())} connect={setProjectAccessAccount}/>}
       {projectAccessAccount&&<div className="hub-project-access"><GitchBrowserLogin capability="projects" expectedLogin={projectAccessAccount} onConnected={()=>{setProjectAccessAccount(null);void hub.activate(section);}}/><Button size="small" onClick={()=>setProjectAccessAccount(null)}>{t("Cancel")}</Button></div>}
       {projectCreation&&<ProjectCreateDialog hub={hub} initialMode={projectCreation} close={()=>setProjectCreation(null)}/>}
       <main className="hub-content">
@@ -69,7 +79,7 @@ function StandardHostingHubPanel({store,section,onClone,projectActions}:{store:H
     </section>;
   }
   return <section className={`hosting-hub ${section==="organizations"?"hosting-hub-organizations":""}`} aria-label={t(names[section])}><header><span className="grow" />{section!=="releases"&&<select className="select" aria-label={t("Workspace account")} disabled={locked||!!projectCreation} value={hub.account?.id??""} onChange={e=>void hub.selectAccount(e.target.value)}>{!accounts.accounts.length&&<option value="">{t("No connected account")}</option>}{accounts.accounts.map(a=><option key={a.id} value={a.id}>{accountHost(a)} · @{a.username}</option>)}</select>}<Button disabled={locked} tip={t("Refresh")} onClick={()=>{setEditor(null);setConfirm(null);void hub.load();}}><RefreshCw size={14}/></Button>{section==="releases"&&<Button disabled={locked||!hub.account} onClick={()=>startEditor(false)}><Plus size={14}/>{t("New")}</Button>}</header>
-    {hub.notice&&<div className="hub-notice" role="status">{hub.notice}</div>}{hub.error&&<div className={`hub-notice hub-error ${hub.projectPermissionRequired?"":"error-text"}`} role="alert"><p>{hub.error}</p><div className="hub-actions">{hub.projectPermissionRequired&&hub.account?<><Button size="small" disabled={locked} onClick={()=>setProjectAccessAccount(hub.account!.username)}>{t("Connect project access")}</Button><span className="hint">{t("Approve the additional permission in GitHub, then projects will reload automatically.")}</span></>:<Button size="small" disabled={locked} onClick={()=>void (d?hub.select(d.item):hub.load())}>{t("Retry")}</Button>}</div></div>}
+    {hub.notice&&<div className="hub-notice" role="status">{hub.notice}</div>}{hub.error&&<HubError hub={hub} busy={locked} retry={()=>void (d?hub.select(d.item):hub.load())} connect={setProjectAccessAccount}/>}
 
     <div className="hub-split"><aside className="hub-list"><input className="input" aria-label={t("Search loaded items")} placeholder={t("Search loaded items")} value={hub.query} onChange={e=>hub.setQuery(e.target.value)}/><p className="hint">{t("Search filters loaded pages. Load more to search older items.")}</p>{hub.filteredItems.map(item=><button key={item.id} className={`hub-item ${section==="organizations"?"hub-organization-row":""} ${d?.item.id===item.id&&!editor?"active":""}`} disabled={hub.busy} onClick={()=>{setEditor(null);setConfirm(null);void hub.select(item);}}>{section==="organizations"?<><Avatar key={`${hub.account?.id}:${item.id}:${item.avatarURL}:${avatars.enabled}`} name={item.title} email={item.id} url={avatars.enabled?item.avatarURL:null} size={36}/><span className="hub-organization-identity"><strong>{item.title}</strong><span className="muted">{item.subtitle}</span></span></>:<><strong>{item.title}</strong><span className="muted">{item.subtitle}</span></>}</button>)}{!hub.loading&&!hub.items.length&&!hub.error&&<div className="hub-empty-list"><p className="hint">{t(section==="releases"?"No releases found for this repository.":"No items returned by this account.")}</p></div>}{hub.loading?<Spinner/>:hub.more&&<Button disabled={locked} onClick={()=>void hub.load(true)}>{t("Load more")}</Button>}</aside>
     <main className="hub-content">{confirm&&<ProjectReviewDialog title={confirm.title} body={confirm.body} project={confirm.project} owner={confirm.owner} busy={hub.busy} disabled={locked||hub.organizationLoading||hub.uncertainWrite||confirm.context!==hub.actionStamp} error={hub.error} confirm={()=>void hub.action(confirm.action,confirm.refresh,confirm.context).then(ok=>{if(ok||hub.uncertainWrite)setConfirm(null);if(hub.uncertainWrite)setEditor(null);})} cancel={()=>setConfirm(null)}/>}

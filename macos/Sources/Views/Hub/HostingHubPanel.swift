@@ -15,7 +15,6 @@ struct HostingHubPanel: View {
     @ViewState private var projectLayout = "board"
     @ViewState private var projectFieldID = ""
     private var locked: Bool { store.hostingHub.loading || store.hostingHub.detailLoading || store.hostingHub.busy || store.hostingHub.allowingCredentialAccess || store.hubCredentialState == .loading }
-    private var accessRequired: Bool { store.hostingHub.projectPermissionRequired || store.hubCredentialState == .authorizationRequired }
     /// The server refused the saved sign-in; the hub keeps its errors as text, so this is the text a 401 becomes
     private var expired: Bool { store.hostingHub.error == HostingError(status: 401, body: Data()).errorDescription }
     private var title: String { if store.hubProvider == .gitlab { switch section { case .gists: return String(localized: "Snippets"); case .organizations: return String(localized: "Groups"); case .projects: return String(localized: "Issue boards"); default: break } }; return section.title }
@@ -63,24 +62,22 @@ struct HostingHubPanel: View {
                              action: String(localized: "Sign in again…"), filled: true) { openSettings() }
             } else {
                 if let error = store.hostingHub.error {
-                    VStack(alignment: .leading, spacing: 10) {
-                        Label { Text(error).textSelection(.enabled).fixedSize(horizontal: false, vertical: true) } icon: { SymbolIcon(accessRequired ? "lock.shield" : "exclamationmark.circle") }
-                            .font(.callout).foregroundStyle(accessRequired ? Color.secondary : Color.red)
-                        WorkbenchFlow(spacing: 8) {
-                            if let account = store.pendingHubCredentialAccount {
-                                CredentialAccessNotice(account: account)
-                            } else if store.hostingHub.projectPermissionRequired, let account = store.hubAccount {
-                                Button("Connect project access") { projectAccessAccount = account }.buttonStyle(.borderedProminent).disabled(locked)
-                                Text("Approve the additional permission in GitHub, then projects will reload automatically.").font(.caption).foregroundStyle(.secondary)
-                            } else {
-                                Button("Retry") { Task { if let d = store.hostingHub.detail { await store.selectHostingHubItem(d.item) } else { await store.loadHostingHub() } } }.disabled(locked)
+                    VStack(alignment: .leading, spacing: 8) {
+                        if let account = store.pendingHubCredentialAccount {
+                            NoticeBlock(symbol: "lock.shield", title: error)
+                            CredentialAccessNotice(account: account)
+                        } else if store.hostingHub.projectPermissionRequired, let account = store.hubAccount {
+                            NoticeBlock(symbol: "lock.shield", title: error,
+                                        caption: String(localized: "Approve the additional permission in GitHub, then projects will reload automatically."),
+                                        actions: [NoticeAction(title: String(localized: "Connect project access"), filled: true) { projectAccessAccount = account }],
+                                        busy: locked)
+                        } else {
+                            FailureBlock(title: error, retrying: locked) {
+                                Task { if let d = store.hostingHub.detail { await store.selectHostingHubItem(d.item) } else { await store.loadHostingHub() } }
                             }
                         }
-                    }.frame(maxWidth: .infinity, alignment: .leading).padding(14)
-                        // a notice is white with a hairline; a tint means selection (docs/design.md)
-                        .background(RoundedRectangle(cornerRadius: 6).fill(StudioStyle.surface))
-                        .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(StudioStyle.border))
-                        .padding(.horizontal, embedded ? 20 : 14).padding(.vertical, 10)
+                    }
+                    .padding(.horizontal, embedded ? 20 : 14).padding(.vertical, 10)
                 }
                 split {
                     VStack(alignment: .leading, spacing: 10) {

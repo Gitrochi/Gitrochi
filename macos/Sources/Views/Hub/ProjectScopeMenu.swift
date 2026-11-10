@@ -264,22 +264,9 @@ private struct ProjectScopeMenuRow: ViewModifier {
 struct ProjectScopeFailureStrip: View {
     let gitlab: Bool
     let retry: () -> Void
-    private var lead: LocalizedStringKey { gitlab ? "Couldn't load groups." : "Couldn't load organizations." }
-    private var caption: LocalizedStringKey { gitlab ? "Repository boards are still available." : "Your personal projects are still available." }
-
     var body: some View {
-        HStack(spacing: 10) {
-            SymbolIcon("xmark.circle.fill").font(.system(size: 14)).foregroundStyle(StudioStyle.Tone.failed.text).accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 0) {
-                Text(lead).font(.system(size: 13, weight: .semibold))
-                Text(caption).font(.system(size: 12)).foregroundStyle(StudioStyle.Rail.icon)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            Button("Retry", action: retry)
-        }
-        .padding(EdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 8))
-        .background(RoundedRectangle(cornerRadius: 8).fill(StudioStyle.surface))
-        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(StudioStyle.border))
-        .accessibilityElement(children: .contain)
+        FailureBlock(title: gitlab ? String(localized: "Couldn't load groups.") : String(localized: "Couldn't load organizations."),
+                     caption: gitlab ? String(localized: "Repository boards are still available.") : String(localized: "Your personal projects are still available."),
+                     retry: retry)
     }
 }
