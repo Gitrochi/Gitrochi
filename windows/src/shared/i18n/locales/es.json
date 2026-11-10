@@ -2752,5 +2752,6 @@
   "Changes from {0} to {1}": "Cambios de {0} a {1}",
   "Compare with the current branch": "Comparar con la rama actual",
   "Comparing…": "Comparando…",
-  "Open in editor": "Abrir en el editor"
+  "Open in editor": "Abrir en el editor",
+  "Checking push destination…": "Comprobando el destino del push…"
 }

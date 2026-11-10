@@ -2665,3 +2665,4 @@
 "Couldn't compare these revisions" = "Не удалось сравнить эти ревизии";
 "Changes from %@ to %@" = "Изменения с %1$@ по %2$@";
 "Open in editor" = "Открыть в редакторе";
+"Checking push destination…" = "Проверка назначения push…";

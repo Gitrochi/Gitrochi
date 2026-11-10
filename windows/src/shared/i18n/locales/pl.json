@@ -2699,5 +2699,6 @@
   "Changes from {0} to {1}": "Zmiany od {0} do {1}",
   "Compare with the current branch": "Porównaj z bieżącą gałęzią",
   "Comparing…": "Porównywanie…",
-  "Open in editor": "Otwórz w edytorze"
+  "Open in editor": "Otwórz w edytorze",
+  "Checking push destination…": "Sprawdzanie miejsca docelowego push…"
 }

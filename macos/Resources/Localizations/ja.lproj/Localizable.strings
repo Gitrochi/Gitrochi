@@ -3431,3 +3431,4 @@
 "Couldn't compare these revisions" = "これらのリビジョンを比較できませんでした";
 "Changes from %@ to %@" = "%1$@ から %2$@ への変更";
 "Open in editor" = "エディタで開く";
+"Checking push destination…" = "Push 先を確認しています…";

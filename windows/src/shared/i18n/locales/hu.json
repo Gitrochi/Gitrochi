@@ -2700,5 +2700,6 @@
   "Changes from {0} to {1}": "Változások: {0} → {1}",
   "Compare with the current branch": "Összehasonlítás a jelenlegi ággal",
   "Comparing…": "Összehasonlítás…",
-  "Open in editor": "Megnyitás szerkesztőben"
+  "Open in editor": "Megnyitás szerkesztőben",
+  "Checking push destination…": "A push célja ellenőrzése…"
 }

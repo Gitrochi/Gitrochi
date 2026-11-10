@@ -2808,3 +2808,4 @@
 "Couldn't compare these revisions" = "无法比较这些修订";
 "Changes from %@ to %@" = "从 %1$@ 到 %2$@ 的更改";
 "Open in editor" = "在编辑器中打开";
+"Checking push destination…" = "正在检查推送目标…";

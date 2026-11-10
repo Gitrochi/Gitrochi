@@ -2660,3 +2660,4 @@
 "Couldn't compare these revisions" = "ไม่สามารถเปรียบเทียบรีวิชันเหล่านี้ได้";
 "Changes from %@ to %@" = "การเปลี่ยนแปลงจาก %1$@ ถึง %2$@";
 "Open in editor" = "เปิดในโปรแกรมแก้ไข";
+"Checking push destination…" = "กำลังตรวจปลายทาง push…";

@@ -2710,5 +2710,6 @@
   "Changes from {0} to {1}": "การเปลี่ยนแปลงจาก {0} ถึง {1}",
   "Compare with the current branch": "เปรียบเทียบกับสาขาปัจจุบัน",
   "Comparing…": "กำลังเปรียบเทียบ…",
-  "Open in editor": "เปิดในโปรแกรมแก้ไข"
+  "Open in editor": "เปิดในโปรแกรมแก้ไข",
+  "Checking push destination…": "กำลังตรวจปลายทาง push…"
 }

@@ -3508,5 +3508,6 @@
   "Changes from {0} to {1}": "{0} から {1} への変更",
   "Compare with the current branch": "現在のブランチと比較",
   "Comparing…": "比較中…",
-  "Open in editor": "エディタで開く"
+  "Open in editor": "エディタで開く",
+  "Checking push destination…": "Push 先を確認しています…"
 }

@@ -2699,3 +2699,4 @@
 "Couldn't compare these revisions" = "No se pudieron comparar estas revisiones";
 "Changes from %@ to %@" = "Cambios de %1$@ a %2$@";
 "Open in editor" = "Abrir en el editor";
+"Checking push destination…" = "Comprobando el destino del push…";

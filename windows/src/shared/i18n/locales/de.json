@@ -2712,5 +2712,6 @@
   "Changes from {0} to {1}": "Änderungen von {0} bis {1}",
   "Compare with the current branch": "Mit dem aktuellen Branch vergleichen",
   "Comparing…": "Vergleich läuft…",
-  "Open in editor": "Im Editor öffnen"
+  "Open in editor": "Im Editor öffnen",
+  "Checking push destination…": "Push-Ziel wird geprüft…"
 }

@@ -2715,5 +2715,6 @@
   "Changes from {0} to {1}": "Изменения с {0} по {1}",
   "Compare with the current branch": "Сравнить с текущей веткой",
   "Comparing…": "Сравнение…",
-  "Open in editor": "Открыть в редакторе"
+  "Open in editor": "Открыть в редакторе",
+  "Checking push destination…": "Проверка назначения push…"
 }

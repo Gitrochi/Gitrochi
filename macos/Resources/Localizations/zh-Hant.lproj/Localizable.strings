@@ -2670,3 +2670,4 @@
 "Couldn't compare these revisions" = "無法比較這些修訂";
 "Changes from %@ to %@" = "從 %1$@ 到 %2$@ 的變更";
 "Open in editor" = "在編輯器中開啟";
+"Checking push destination…" = "正在檢查推送目標…";

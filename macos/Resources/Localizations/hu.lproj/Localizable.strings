@@ -2650,3 +2650,4 @@
 "Couldn't compare these revisions" = "Nem sikerült összehasonlítani ezeket a revíziókat";
 "Changes from %@ to %@" = "Változások: %1$@ → %2$@";
 "Open in editor" = "Megnyitás szerkesztőben";
+"Checking push destination…" = "A push célja ellenőrzése…";

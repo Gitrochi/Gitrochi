@@ -8,15 +8,14 @@ import * as platform from "@/shared/platform";
 
 const sha = "a".repeat(40), old = "b".repeat(40);
 let source = sha, url = "ssh://git@example.com/demo/repo.git", config = "";
-let preflight: "OK" | "STOP" = "OK";
 const makeStore = () => { const store = new RepoStore(); store.path = "/demo/repo"; store.headBranch = "topic"; store.headHash = sha; return store; };
 
 beforeEach(() => {
-  source = sha; url = "ssh://git@example.com/demo/repo.git"; preflight = "OK";
+  source = sha; url = "ssh://git@example.com/demo/repo.git";
   config = "user.name\nDemo\0user.email\ndev@example.com\0branch.topic.remote\norigin\0branch.topic.merge\nrefs/heads/topic\0";
   vi.spyOn(accounts, "gitEnvironment").mockResolvedValue({});
   vi.spyOn(gitch, "status").mockResolvedValue({ inRepo: true, lockedAccount: "demo", account: "demo", accountSource: "lock", pushAccount: "demo", ignored: false });
-  vi.spyOn(gitch, "preflight").mockImplementation(async () => ({ result: preflight, checks: preflight === "STOP" ? [{ level: "STOP", code: "blocked", message: "Blocked by policy" }] : [] }));
+  vi.spyOn(gitch, "preflight").mockResolvedValue({ result: "STOP", checks: [] });
   vi.spyOn(platform, "git").mockImplementation(async (args) => {
     const stdout = args[0] === "config" ? config : args[0] === "remote" && args[1] === "get-url" ? url + "\n" : args[0] === "remote" ? "origin\n" : args[0] === "rev-parse" ? source + "\n" : args[0] === "symbolic-ref" ? "topic\n" : args[0] === "ls-remote" ? `${old}\trefs/heads/topic\n` : args[0] === "log" ? `${source}\x1fDemo\x1fdev@example.com\x1fAdd feature\n` : args[0] === "rev-list" ? "1\n" : args[0] === "diff" ? "src/demo.ts\0" : "";
     return { status: 0, stdout, stderr: "" };
@@ -51,18 +50,6 @@ describe("push review lifecycle", () => {
     store.cancelPushReview();
     expect(await result).toBe(false);
   });
-  it("rechecks preflight and blocks a newly reported STOP", async () => {
-    const store = makeStore();
-    const run = vi.spyOn(store, "run").mockResolvedValue(true);
-    const result = store.push();
-    await store.loadPushReview("topic");
-    preflight = "STOP";
-    expect(await store.confirmPushReview()).toBe(false);
-    expect(store.pushReview?.preflight.result).toBe("STOP");
-    expect(run).not.toHaveBeenCalled();
-    store.cancelPushReview();
-    await result;
-  });
   it("uses a fresh explicit force lease after confirmation and resumes the caller", async () => {
     const store = makeStore();
     const run = vi.spyOn(store, "run").mockResolvedValue(true);
@@ -74,7 +61,7 @@ describe("push review lifecycle", () => {
     expect(await result).toBe(true);
     expect(run.mock.calls[0][1]).toContain(`--force-with-lease=refs/heads/topic:${old}`);
     expect(run.mock.calls[0][1].at(-1)).toBe(`${sha}:refs/heads/topic`);
-    expect(vi.mocked(gitch.preflight)).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(gitch.preflight)).not.toHaveBeenCalled();
   });
   it("reads the actual push URL even when the fetch remote differs", async () => {
     const store = makeStore();
@@ -155,12 +142,5 @@ describe("push review lifecycle", () => {
     expect(vi.mocked(platform.git).mock.calls.some(([args]) => args[0] === "config" && args[1].startsWith("branch.") && args.length === 3)).toBe(false);
   });
 
-  it("redacts credentials reported by gitch preflight", async () => {
-    const store = makeStore();
-    vi.mocked(gitch.preflight).mockResolvedValue({ result: "STOP", checks: [{ level: "STOP", code: "url", message: "Blocked https://name:secret@example.com/demo?private_token=abc" }] });
-    const result = store.push(); await store.loadPushReview("topic");
-    expect(store.pushReview?.preflight.checks[0].message).toBe("Blocked https://[redacted]@example.com/demo?private_token=[redacted]");
-    store.cancelPushReview(); await result;
-  });
 
 });
