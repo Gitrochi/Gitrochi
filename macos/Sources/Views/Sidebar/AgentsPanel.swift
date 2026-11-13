@@ -345,7 +345,7 @@ private struct StatusDot: View {
 
 struct StartAgentSheet: View {
     @Environment(RepoStore.self) private var store
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.closeSheet) private var closeSheet
     let presetPath: String?
     private let tools = ToolStore.shared
 
@@ -358,8 +358,9 @@ struct StartAgentSheet: View {
     @ViewState private var riskAccepted = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text("Start agent session").font(.title3.weight(.semibold)).padding([.top, .horizontal], 20)
+        SharedSheet(title: String(localized: "Start agent session"), context: store.name, width: 580,
+                    primary: SheetPrimary(title: String(localized: "Start"), disabledReason: blocked) { start() },
+                    cancel: { closeSheet() }) {
             Form {
                 Picker("Agents", selection: $kind) {
                     ForEach(AgentKind.allCases) { k in
@@ -393,28 +394,26 @@ struct StartAgentSheet: View {
                     Toggle("I understand the risk", isOn: $riskAccepted)
                         .toggleStyle(.checkbox)
                 }
-            }
-            .formStyle(.grouped)
-            HStack {
                 Text(AgentCenter.Place.current == .app
                      ? "Runs in a new tab of the terminal below; its status is shown in the Agents tab."
                      : "Runs in a new Terminal window; its status is shown in the Agents tab.")
                     .font(.caption).foregroundStyle(.secondary)
-                Spacer()
-                Button("Cancel", role: .cancel) { dismiss() }
-                    .keyboardShortcut(.cancelAction)
-                Button("Start") { start() }
-                    .keyboardShortcut(.defaultAction)
-                    .disabled(tools.path(kind.tool) == nil || (target.isEmpty && !validBranch) || (kind.skipsPermissions(mode) && !riskAccepted))
             }
-            .padding([.horizontal, .bottom], 20)
+            .formStyle(.grouped)
         }
-        .frame(width: 580)
         .onAppear {
             target = presetPath ?? store.url?.path ?? store.worktrees.first?.path ?? ""
         }
         .onChange(of: kind) { _, _ in mode = "" }
         .onChange(of: mode) { _, _ in riskAccepted = false }
+    }
+
+    /// The first thing that keeps Start from working, said beside it
+    private var blocked: String? {
+        if tools.path(kind.tool) == nil { return String(localized: "Agent executable not found") }
+        if target.isEmpty && !validBranch { return String(localized: "Enter a new branch name") }
+        if kind.skipsPermissions(mode) && !riskAccepted { return String(localized: "Confirm the risk first") }
+        return nil
     }
 
     private var validBranch: Bool {
@@ -429,7 +428,7 @@ struct StartAgentSheet: View {
 
     private func start() {
         let path = target, branch = newBranch.trimmed, t = task, m = mode.isEmpty ? nil : mode, k = kind
-        dismiss()
+        closeSheet()
         if path.isEmpty {
             let wtPath = store.defaultWorktreePath(for: branch)
             Task {
