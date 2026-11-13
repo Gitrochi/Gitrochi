@@ -20786,6 +20786,7 @@ completion_candidates() {   # _complete -- 이후: 실행 파일 이름을 뺀 �
         add) printf '%s\n' --id --email --host --port --folder --no-folder --via --no-setup --json --yes ;;
         setup) printf '%s\n' --inspect --generate --check --json --yes ;;
         login) printf '%s\n' --start --status --cancel --json --yes ;;
+        ci) printf '%s\n' --json --connection --ref ;;
         flow|test) printf '%s\n' --json --affected --env --only --jobs --fail-fast --no-fail-fast --no-cache --keep-services --detach --events --summary --ci --yes --dry-run --follow --since --format --out --idempotency-key --watch --lang ;;
       esac
     else
@@ -20800,7 +20801,7 @@ completion_candidates() {   # _complete -- 이후: 실행 파일 이름을 뺀 �
         module) if [ "$n" -eq 2 ]; then printf '%s\n' audit; elif [ "${words[1]:-}" = audit ]; then compgen -d -- "$cur"; fi ;;
         completion) printf '%s\n' bash zsh fish powershell ;;
         flow)
-          if [ "$n" -eq 2 ]; then printf '%s\n' init doctor validate list plan run status events logs report rerun cancel trust hold watch blocks block explain gc export import connect gate schema version help
+          if [ "$n" -eq 2 ]; then printf '%s\n' init doctor validate list plan run test status events logs report rerun cancel trust hold watch blocks block explain gc export import design connect ci gate schema version help
           elif [ "$n" -eq 3 ]; then
             case "${words[1]:-}" in
               plan|run|watch) e=$(flow_engine) && "$e" _names flows 2>/dev/null ;;
@@ -20808,10 +20809,14 @@ completion_candidates() {   # _complete -- 이후: 실행 파일 이름을 뺀 �
               connect) printf '%s\n' list add test remove ;;
               hold) printf '%s\n' list release ;;
               gate) printf '%s\n' status prepush ;;
+              design) printf '%s\n' inspect render source ;;
+              ci) printf '%s\n' status logs report browse ;;
+              test) e=$(flow_engine) && "$e" _names suites 2>/dev/null ;;
               status|events|logs|report|rerun|cancel) printf '%s\n' last ;;
             esac
           fi ;;
         test) e=$(flow_engine) && "$e" _names suites 2>/dev/null ;;
+        ci) [ "$n" -ne 2 ] || printf '%s\n' status logs report browse ;;
         schema) printf '%s\n' public graph error languages status ck preflight rules version list doctor scan audit report pr view watch index account login review overlap move module logo workspace work hosting worktrees ;;
         logo) printf '%s\n' on off status ;;
         login) [ "$n" -ne 2 ] || printf '%s\n' github ;;

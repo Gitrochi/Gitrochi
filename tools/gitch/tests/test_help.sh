@@ -352,3 +352,17 @@ test_help_unknown_command_keeps_the_machine_error() {
   [ ! -s "$T/stdout" ] || fail 'the unknown command wrote to stdout'
   assert_eq "$(cat "$T/stderr")" '{"schemaVersion":1,"error":{"code":"GITCH_ERROR","message":"알 수 없는 명령: pusj","exitCode":1}}'
 }
+
+# ----- completion -----
+
+test_help_completion_ci_and_flow_subcommands() {
+  run gitch _complete -- ci ''; assert_ok; assert_eq "$OUT" $'browse\nlogs\nreport\nstatus'
+  run gitch _complete -- ci st; assert_ok; assert_eq "$OUT" status
+  run gitch _complete -- ci status ''; assert_ok; assert_eq "$OUT" '' 'ci subcommands are completed once'
+  run gitch _complete -- ci status --c; assert_ok; assert_eq "$OUT" --connection
+  run gitch _complete -- ci --; assert_ok; assert_out --json; assert_out --ref
+  run gitch _complete -- flow ''; assert_ok; assert_out test; assert_out ci; assert_out design; assert_out init; assert_out trust
+  run gitch _complete -- flow de; assert_ok; assert_eq "$OUT" design
+  run gitch _complete -- flow design ''; assert_ok; assert_eq "$OUT" $'inspect\nrender\nsource'
+  run gitch _complete -- flow ci ''; assert_ok; assert_eq "$OUT" $'browse\nlogs\nreport\nstatus'
+}
