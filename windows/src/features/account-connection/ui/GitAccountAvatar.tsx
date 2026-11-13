@@ -5,7 +5,7 @@ import { accounts } from "@/entities/hosting";
 import { avatars } from "@/entities/avatar";
 import { ipc } from "@/shared/api";
 import { useObserve } from "@/shared/lib";
-import { Avatar } from "@/shared/ui";
+import { AccountPhoto } from "./AccountAvatar";
 
 /** Reuse connected profiles before public hosting profiles (macOS: GitAccountAvatar). */
 export function GitAccountAvatar({ account, size = 28 }: { account: GitchAccount; size?: number }) {
@@ -31,6 +31,5 @@ export function GitAccountAvatar({ account, size = 28 }: { account: GitchAccount
     })();
     return () => { current = false; };
   }, [account.id, account.hosts, knownURL, avatars.enabled]);
-  const url = avatars.enabled ? knownURL ?? remoteURL : null;
-  return <Avatar key={url ?? "initials"} name={connected?.name ?? account.id} email={account.id} url={url} size={size} />;
+  return <AccountPhoto name={connected?.name ?? account.id} username={account.id} url={knownURL ?? remoteURL} size={size} />;
 }

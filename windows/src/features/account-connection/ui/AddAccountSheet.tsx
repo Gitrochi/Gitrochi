@@ -4,10 +4,10 @@ import type { GitHubLoginCapability } from "@/entities/gitch";
 import { accounts, AccountStore } from "@/entities/hosting";
 import { ipc } from "@/shared/api";
 import { isWindows } from "@/shared/config";
-import { CircleX } from "@/shared/icons";
+import { ChevronRight, CircleX } from "@/shared/icons";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
-import { Button, NoticeBlock, Segmented, SharedSheet } from "@/shared/ui";
+import { NoticeBlock, Segmented, SharedSheet } from "@/shared/ui";
 import { GitchBrowserLogin } from "./GitchBrowserLogin";
 import "./add-account.css";
 
@@ -81,35 +81,38 @@ export function AddAccountSheet({ provider: initialProvider = "github", server: 
 
   if (browser) return <GitHubSignInSheet onClose={onClose} onConnected={onConnected} />;
   return (
-    <SharedSheet className="add-account-sheet" title={t("Add account")} context={t("Pull requests, issues and CI use this account.")} width={520} onClose={onClose} cancelDisabled={working} primary={primary}>
-      <Segmented value={provider} onChange={choose} options={[{ value: "github", label: "GitHub" }, { value: "gitlab", label: t("GitLab (self-hosted)") }]} />
+    <SharedSheet className="add-account-sheet" title={t("Add account")} context={t("Pull requests, issues and CI use this account.")} width={600} onClose={onClose} cancelDisabled={working} primary={primary}
+      accessory={<Segmented value={provider} onChange={choose} options={[{ value: "github", label: "GitHub" }, { value: "gitlab", label: t("GitLab (self-hosted)") }]} />}>
       {provider === "github" ? <>
-        <span className="hint">{t("github.com opens in your browser to approve access. The token is kept in {0}.", isWindows() ? t("Windows Credential Manager") : t("Keychain"))}</span>
-        <button type="button" className="link add-account-toggle" aria-expanded={useToken} onClick={() => { setUseToken(!useToken); setError(null); }}>{t("Use a token instead")}</button>
-        {useToken && (
-          <label className="add-account-field">
-            <span>{t("Personal access token")}</span>
-            <input className="input" type="password" value={githubToken} placeholder="ghp_…" onChange={(e) => setGithubToken(e.target.value)} />
-            <button type="button" className="link" onClick={() => void ipc.openUrl("https://github.com/settings/tokens/new?scopes=repo,read:org,workflow&description=Gitrochi")}>{t("Create token")}</button>
-          </label>
-        )}
-        {accounts.ghPath && (
-          <div className="add-account-import">
-            <Button disabled={working} onClick={() => void run(() => accounts.importGitHubCLI())}>{t("Import gh CLI login")}</Button>
-            <span className="hint">{t("Uses the account the gh command is signed in to.")}</span>
+        <p className="add-account-lead">{t("github.com opens in your browser to approve access. The token is kept in {0}.", isWindows() ? t("Windows Credential Manager") : t("Keychain"))}</p>
+        <div className="add-account-alternatives">
+          <div className="add-account-alternative">
+            <button type="button" className="add-account-disclosure" aria-expanded={useToken} onClick={() => { setUseToken(!useToken); setError(null); }}><ChevronRight size={12} />{t("Use a token instead")}</button>
           </div>
-        )}
+          {useToken && (
+            <label className="add-account-field">
+              <span>{t("Personal access token")}</span>
+              <input className="input add-account-token" type="password" value={githubToken} placeholder="ghp_…" autoComplete="off" spellCheck={false} onChange={(e) => setGithubToken(e.target.value)} />
+              <button type="button" className="add-account-text" onClick={() => void ipc.openUrl("https://github.com/settings/tokens/new?scopes=repo,read:org,workflow&description=Gitrochi")}>{t("Create token")}</button>
+            </label>
+          )}
+          {accounts.ghPath && (
+            <div className="add-account-alternative">
+              <button type="button" className="add-account-text" disabled={working} onClick={() => void run(() => accounts.importGitHubCLI())}>{t("Import gh CLI login")}</button>
+              <span className="add-account-caption">{t("Uses the account the gh command is signed in to.")}</span>
+            </div>
+          )}
+        </div>
       </> : <>
         <label className="add-account-field">
           <span>{t("Server URL")}</span>
-          <input className="input" value={gitlabServer} placeholder="https://gitlab.example.com" spellCheck={false} onChange={(e) => setGitlabServer(e.target.value)} />
+          <input className="input" value={gitlabServer} placeholder="https://gitlab.example.com" autoComplete="off" spellCheck={false} onChange={(e) => setGitlabServer(e.target.value)} />
         </label>
         <label className="add-account-field">
           <span>{t("Personal access token (api scope)")}</span>
-          <input className="input" type="password" value={gitlabToken} onChange={(e) => setGitlabToken(e.target.value)} />
-          {gitlabTokenURL && <button type="button" className="link" onClick={() => void ipc.openUrl(gitlabTokenURL)}>{t("Create token")}</button>}
+          <input className="input add-account-token" type="password" value={gitlabToken} placeholder="glpat-…" autoComplete="off" spellCheck={false} onChange={(e) => setGitlabToken(e.target.value)} />
+          {gitlabTokenURL && <button type="button" className="add-account-text" onClick={() => void ipc.openUrl(gitlabTokenURL)}>{t("Create token")}</button>}
         </label>
-        <span className="hint">{t("Only GitLab servers run by your organization can be connected (gitlab.com isn't supported yet). You can connect several accounts per server.")}</span>
       </>}
       {error && <NoticeBlock className="add-account-error" icon={<CircleX size={14} />} tone="failed" alert title={t("Couldn't add the account")} caption={error} />}
     </SharedSheet>

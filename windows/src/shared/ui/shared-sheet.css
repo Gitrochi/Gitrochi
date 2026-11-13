@@ -7,8 +7,8 @@
 .shared-sheet { max-width: calc(100vw - 32px); box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; background: var(--surface); color: var(--text); border-radius: 0 0 12px 12px; box-shadow: 0 0 0 1px var(--border), 0 10px 30px rgba(0, 0, 0, 0.18); animation: shared-sheet-drop 0.14s ease-out; }
 @keyframes shared-sheet-drop { from { transform: translateY(-8px); opacity: 0; } }
 
-.shared-sheet-header { flex: none; padding: 20px; border-bottom: 1px solid var(--border); }
-.shared-sheet-heading { min-width: 0; display: flex; flex-direction: column; }
+.shared-sheet-header { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 20px; border-bottom: 1px solid var(--border); }
+.shared-sheet-heading { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
 .shared-sheet-title { margin: 0; font-size: 15px; line-height: 20px; font-weight: 600; }
 .shared-sheet-context { font-size: 12px; line-height: 16px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 

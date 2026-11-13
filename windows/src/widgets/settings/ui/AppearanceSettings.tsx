@@ -1,13 +1,15 @@
+import { avatars } from "@/entities/avatar";
 import { workspace } from "@/entities/workspace";
 import { settings } from "@/shared/config";
 import { defaultLanguage, languages, t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
-import { Segmented, theme, themeModes } from "@/shared/ui";
+import { Checkbox, Segmented, theme, themeModes } from "@/shared/ui";
 
 /** 화면: 언어, 테마(시스템·라이트·다크) */
 export function AppearanceSettings() {
   useObserve(theme);
   useObserve(settings);
+  useObserve(avatars);
   const choice = settings.get<string>("language", defaultLanguage);
   return (
     <div className="col" style={{ gap: 14 }}>
@@ -38,6 +40,11 @@ export function AppearanceSettings() {
         <span className="form-section-title">{t("Theme")}</span>
         <Segmented value={theme.mode} onChange={(m) => theme.setMode(m)} options={themeModes.map((m) => ({ value: m.id, label: m.title }))} />
         <span className="hint">{t("System follows your Windows setting (app mode light or dark). The graph, terminal and title bar change with it.")}</span>
+      </div>
+      <div className="form-section">
+        <span className="form-section-title">{t("Commit graph")}</span>
+        <Checkbox checked={avatars.enabled} onChange={(v) => avatars.setEnabled(v)} label={t("Show author profile pictures")} />
+        <span className="hint">{t("Looks for a GitHub profile, then a connected self-hosted GitLab profile, then Gravatar, and uses initials if none is found. An email hash is sent to Gravatar.")}</span>
       </div>
     </div>
   );

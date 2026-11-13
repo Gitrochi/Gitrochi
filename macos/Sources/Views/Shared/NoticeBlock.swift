@@ -24,11 +24,15 @@ struct NoticeBlock: View {
     var actions: [NoticeAction] = []
     /// Something is under way (an approval, a retry): a spinner beside the actions, which wait for it
     var busy = false
+    /// The actions always sit under the words, as in a popover where the notice leads
+    var stacked = false
 
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
             SymbolIcon(symbol).font(.system(size: 14)).foregroundStyle(tone.text).frame(height: 17).accessibilityHidden(true)
-            if actions.count == 1 || (actions.isEmpty && busy) {
+            if stacked {
+                words(below: !actions.isEmpty || busy).frame(maxWidth: .infinity, alignment: .leading)
+            } else if actions.count == 1 || (actions.isEmpty && busy) {
                 // one action sits on the right while the words keep 160 pt, and drops below them in a narrow column
                 ViewThatFits(in: .horizontal) {
                     HStack(alignment: .top, spacing: 10) {

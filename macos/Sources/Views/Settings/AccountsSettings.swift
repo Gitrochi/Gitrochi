@@ -1,8 +1,9 @@
 import SwiftUI
 import AppKit
 
-/// Settings › Accounts (docs/design.md, App shell): the hosting accounts and the Git identities, each listed once.
-/// Accounts are added here or from the account popover, with the same sheet, and removed only here.
+/// Settings › Accounts, as the Settings board draws it (docs/design.md, App shell): the hosting accounts and the Git
+/// identities, each a bordered list of 52 pt rows under its title and add button. Accounts are added here or from the
+/// account popover, with the same sheet, and removed only here.
 /// (Windows: widgets/settings/ui/AccountsSettings.tsx)
 struct AccountsSettings: View {
     private let accounts = AccountStore.shared
@@ -16,52 +17,38 @@ struct AccountsSettings: View {
     var body: some View {
         // a credential that becomes readable, or stops being so, redraws the rows' states
         let _ = accounts.revision
-        Form {
-            Section {
-                if hosting.isEmpty {
-                    Text("Add a GitHub or GitLab account for pull requests, issues and CI. Commits work without one.")
-                        .font(.caption).foregroundStyle(.secondary)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                section("Hosting accounts", action: "Add account…", identifier: "accounts-settings-add", run: { sheet = .add(.github, nil) }) {
+                    if hosting.isEmpty {
+                        note("Add a GitHub or GitLab account for pull requests, issues and CI. Commits work without one.")
+                    }
+                    ForEach(hosting) { account in
+                        if account.id != hosting.first?.id { rule }
+                        HostingAccountRow(account: account, status: accounts.status(for: account), busy: accounts.isBusy(account),
+                                          failure: accounts.accessError(for: account), resolve: { resolve(account) }, present: { sheet = $0 },
+                                          remove: { removing = account })
+                    }
                 }
-                ForEach(hosting) { account in
-                    HostingAccountRow(account: account, status: accounts.status(for: account), busy: accounts.isBusy(account),
-                                      failure: accounts.accessError(for: account), resolve: { resolve(account) }, present: { sheet = $0 },
-                                      remove: { removing = account })
+                section("Git identities", action: "Add identity…", identifier: "accounts-settings-add-identity", run: { sheet = .identity(nil) }) {
+                    if identities.isEmpty {
+                        note("A Git identity is the author name, email and SSH key commits and pushes use.")
+                    }
+                    ForEach(identities) { identity in
+                        if identity.id != identities.first?.id { rule }
+                        GitIdentityRow(identity: identity) { sheet = .identity(identity.id) }
+                    }
                 }
-            } header: {
-                header("Hosting accounts", action: "Add account…", identifier: "accounts-settings-add") { sheet = .add(.github, nil) }
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    DesignIconImage(icon: .people, size: 13).alignmentGuide(.firstTextBaseline) { $0[.bottom] - 2 }
+                    Text("An account used under several host labels (HTTPS, SSH on port 443) is listed once.")
+                        .font(.system(size: 12)).fixedSize(horizontal: false, vertical: true)
+                }
+                .foregroundStyle(HostedList.caption)
             }
-
-            Section {
-                if identities.isEmpty {
-                    Text("A Git identity is the author name, email and SSH key commits and pushes use.").font(.caption).foregroundStyle(.secondary)
-                }
-                ForEach(identities) { identity in
-                    GitIdentityRow(identity: identity) { sheet = .identity(identity.id) }
-                }
-            } header: {
-                header("Git identities", action: "Add identity…", identifier: "accounts-settings-add-identity") { sheet = .identity(nil) }
-            } footer: {
-                Text("An account used under several host labels (HTTPS, SSH on port 443) is listed once.")
-                    .font(.caption).foregroundStyle(.secondary)
-            }
-
-            Section("Commit graph") {
-                Toggle("Show author profile pictures", isOn: Binding(get: { AvatarStore.shared.enabled }, set: { AvatarStore.shared.enabled = $0 }))
-                HStack {
-                    Text("Looks for a GitHub profile, then a connected self-hosted GitLab profile, then Gravatar, and uses initials if none is found. An email hash is sent to Gravatar.")
-                        .font(.caption).foregroundStyle(.secondary)
-                    Spacer()
-                    Button("Download again") { AvatarStore.shared.refresh() }.controlSize(.small)
-                }
-            }
-
-            Section {
-                Text("Tokens are stored per account in the macOS Keychain and used to view and create PRs/MRs, list repositories, and authenticate HTTPS push and pull.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
+            .padding(.horizontal, 24).padding(.top, 20).padding(.bottom, 24)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .formStyle(.grouped)
         .task { identities = await Gitch.accounts() }
         .sheet(item: $sheet) { request in
             switch request {
@@ -82,13 +69,32 @@ struct AccountsSettings: View {
         }
     }
 
-    private func header(_ title: LocalizedStringKey, action: LocalizedStringKey, identifier: String, run: @escaping () -> Void) -> some View {
-        HStack {
-            Text(title)
-            Spacer()
-            Button(action: run) { Label(action, symbol: "plus") }.controlSize(.small).accessibilityIdentifier(identifier)
+    /// A 13 pt semibold title with its add button on the right, over one bordered list
+    private func section<Rows: View>(_ title: LocalizedStringKey, action: LocalizedStringKey, identifier: String, run: @escaping () -> Void,
+                                     @ViewBuilder rows: () -> Rows) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Text(title).font(.system(size: 13, weight: .semibold)).accessibilityAddTraits(.isHeader)
+                Spacer(minLength: 8)
+                Button(action: run) {
+                    HStack(spacing: 6) { DesignIconImage(icon: .plus, size: 13); Text(action).fontWeight(.medium) }
+                }
+                .buttonStyle(HostedListButtonStyle()).accessibilityIdentifier(identifier)
+            }
+            .frame(minHeight: 28)
+            VStack(alignment: .leading, spacing: 0) { rows() }
+                .background(RoundedRectangle(cornerRadius: 10).fill(StudioStyle.surface))
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(StudioStyle.border))
         }
     }
+
+    private func note(_ text: LocalizedStringKey) -> some View {
+        Text(text).font(.system(size: 12)).foregroundStyle(HostedList.caption).fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, alignment: .leading).padding(12)
+    }
+
+    private var rule: some View { StudioStyle.border.frame(height: 1) }
 
     /// The system's approval and a second read happen in place, and the row says what went wrong; github.com accounts
     /// renew in the browser; a GitLab server takes a new token in the Add account sheet
@@ -118,8 +124,21 @@ enum AccountsSettingsSheet: Identifiable {
     }
 }
 
-/// One hosting account: its photo, name and server, its state with the action that settles it, and ⋯ whose last item
-/// removes it
+/// The ⋯ at a row's end: a 28 pt square with the 14 pt dots
+private struct AccountRowMenu<Items: View>: View {
+    @ViewBuilder let items: Items
+
+    var body: some View {
+        Menu { items } label: {
+            DesignIconImage(icon: .more, size: 14).frame(width: 28, height: 28).contentShape(Rectangle())
+        }
+        .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize()
+        .help("More")
+    }
+}
+
+/// One hosting account: its 24 pt photo, name and server, its state with the action that settles it, and ⋯ whose last
+/// item removes it
 struct HostingAccountRow: View {
     let account: HostAccount
     let status: AccountStatus
@@ -140,24 +159,26 @@ struct HostingAccountRow: View {
                 NoticeBlock(symbol: "xmark.circle.fill", tone: .failed, title: String(localized: "Couldn't use the saved sign-in"), caption: failure)
             }
         }
+        .padding(.leading, 12).padding(.trailing, 8).padding(.vertical, 6)
+        .frame(minHeight: 52)
     }
 
     private var row: some View {
         HStack(spacing: 10) {
-            AccountAvatar(account: account, size: 28)
-            VStack(alignment: .leading, spacing: 1) {
-                Text(verbatim: "@" + account.username).fontWeight(.medium).fixedSize(horizontal: false, vertical: true)
+            AccountAvatar(account: account, size: 24)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(verbatim: "@" + account.username).font(.system(size: 13, weight: .semibold)).fixedSize(horizontal: false, vertical: true)
                 Text(verbatim: [account.host, account.name ?? ""].filter { !$0.isEmpty }.joined(separator: " · "))
-                    .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                    .font(.system(size: 12)).foregroundStyle(HostedList.caption).fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             AccountStatusPill(status: status)
             if busy {
                 ProgressView().controlSize(.small)
             } else if let action = status.action {
-                Button(action, action: resolve).fixedSize()
+                Button(action: resolve) { Text(verbatim: action).fontWeight(.medium) }.buttonStyle(HostedListButtonStyle()).fixedSize()
             }
-            Menu {
+            AccountRowMenu {
                 if gitHub {
                     Button("Renew browser connection…") { present(.login(account.username, .standard)) }
                     Button("Connect project access…") { present(.login(account.username, .projects)) }
@@ -167,12 +188,8 @@ struct HostingAccountRow: View {
                 }
                 Divider()
                 Button("Remove account…", role: .destructive, action: remove)
-            } label: {
-                SymbolIcon("ellipsis").frame(width: 24, height: 24).contentShape(Rectangle())
             }
-            .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
             .accessibilityLabel("More actions for \("@" + account.username)")
-            .help("More")
         }
     }
 }
@@ -184,25 +201,23 @@ struct GitIdentityRow: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            GitAccountAvatar(account: identity, size: 28)
-            VStack(alignment: .leading, spacing: 1) {
-                (Text(verbatim: identity.id).fontWeight(.medium) + Text(verbatim: identity.email.isEmpty ? "" : " <\(identity.email)>").foregroundStyle(.secondary))
-                    .fixedSize(horizontal: false, vertical: true).textSelection(.enabled)
+            GitAccountAvatar(account: identity, size: 24)
+            VStack(alignment: .leading, spacing: 2) {
+                (Text(verbatim: identity.id).fontWeight(.semibold) + Text(verbatim: identity.email.isEmpty ? "" : " <\(identity.email)>"))
+                    .font(.system(size: 13)).fixedSize(horizontal: false, vertical: true).textSelection(.enabled)
                 Text(verbatim: [identity.hosts, identity.rules ?? ""].filter { !$0.isEmpty }.joined(separator: " · "))
-                    .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                    .font(.system(size: 12)).foregroundStyle(HostedList.caption).fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            Menu {
+            AccountRowMenu {
                 Button("Connect with SSH…", action: connect)
                 Button("Copy email") {
                     NSPasteboard.general.clearContents(); NSPasteboard.general.setString(identity.email, forType: .string)
                 }.disabled(identity.email.isEmpty)
-            } label: {
-                SymbolIcon("ellipsis").frame(width: 24, height: 24).contentShape(Rectangle())
             }
-            .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
             .accessibilityLabel("More actions for \(identity.id)")
-            .help("More")
         }
+        .padding(.leading, 12).padding(.trailing, 8).padding(.vertical, 6)
+        .frame(minHeight: 52)
     }
 }

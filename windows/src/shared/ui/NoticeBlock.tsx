@@ -24,7 +24,7 @@ export type NoticeAction = {
  * A white strip with a 1 px border (a tint means selection): a 14 px icon, a 13 px semibold line in its tone, a 12 px
  * caption and the actions. One action sits on the right; two go on a row below the words.
  */
-export function NoticeBlock({ icon, tone = "waiting", title, caption, detail, actions = [], busy = false, alert = false, className = "" }: {
+export function NoticeBlock({ icon, tone = "waiting", title, caption, detail, actions = [], busy = false, alert = false, stacked = false, className = "" }: {
   icon: ReactNode;
   tone?: StatusTone;
   title: string;
@@ -36,6 +36,8 @@ export function NoticeBlock({ icon, tone = "waiting", title, caption, detail, ac
   busy?: boolean;
   /** A failure is announced at once; a notice waits its turn */
   alert?: boolean;
+  /** The actions always sit under the words, as in a popover where the notice leads */
+  stacked?: boolean;
   className?: string;
 }) {
   const buttons = (actions.length > 0 || busy) && (
@@ -56,9 +58,9 @@ export function NoticeBlock({ icon, tone = "waiting", title, caption, detail, ac
         <span className="notice-block-text">
           <span className="notice-block-title selectable">{title}</span>
           {caption && <span className="notice-block-caption selectable">{caption}</span>}
-          {actions.length > 1 && buttons}
+          {(actions.length > 1 || stacked) && buttons}
         </span>
-        {(actions.length === 1 || (!actions.length && busy)) && buttons}
+        {!stacked && (actions.length === 1 || (!actions.length && busy)) && buttons}
       </span>
     </div>
   );

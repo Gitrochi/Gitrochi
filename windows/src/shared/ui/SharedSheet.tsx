@@ -21,12 +21,14 @@ export type SheetPrimary = {
  * 1 px line. Footer: secondary actions on the left; on the right Cancel, the reason while the primary is disabled, then
  * the one filled primary. (macOS: Views/Shared/SharedSheet.swift)
  */
-export function SharedSheet({ title, context, width = 560, onClose, secondary, cancelLabel, cancelDisabled = false, primary, className = "", children }: {
+export function SharedSheet({ title, context, width = 560, onClose, accessory, secondary, cancelLabel, cancelDisabled = false, primary, className = "", children }: {
   title: string;
   /** What the sheet acts on, in one line */
   context?: string | null;
   width?: number;
   onClose: () => void;
+  /** A control at the header's right, such as the switch that picks what the sheet is for */
+  accessory?: ReactNode;
   /** Plain actions at the footer's left */
   secondary?: ReactNode;
   /** "Cancel", or "Close" on a sheet with nothing to confirm */
@@ -58,6 +60,7 @@ export function SharedSheet({ title, context, width = 560, onClose, secondary, c
             <h2 id={titleID} className="shared-sheet-title">{title}</h2>
             {context && <span id={contextID} className="shared-sheet-context" title={context}>{context}</span>}
           </div>
+          {accessory}
         </div>
         {children && <div className="shared-sheet-body">{children}</div>}
         <div className="shared-sheet-footer">

@@ -50,29 +50,34 @@ for source in (root / 'Sources').rglob('*.swift'):
         end = text.index('\n    func detect(', start)
         text = text[:start] + '''    private init() {
         states[.git] = State(path: "/usr/bin/git", source: .auto, version: "fixture")
+        // nothing runs it: the Add account sheet only shows the import row when the tool is known
+        states[.gh] = State(path: "/usr/bin/false", source: .auto, version: "fixture")
     }
 ''' + text[end:]
     elif relative == 'Views/Shared/AccountPopover.swift':
-        text = probe(text, '.frame(minHeight: size > 24 ? 52 : 44)', '"row:" + account.id', 'Account row')
+        text = probe(text, '.frame(minHeight: own ? 52 : 44)', '"row:" + account.id', 'Account row')
         text = replace_once(text, '''            .frame(maxWidth: .infinity, alignment: .leading)
-            if ownAction, busy {''', '''            .frame(maxWidth: .infinity, alignment: .leading).background(AccountLayoutProbe(identifier: "words:" + account.id))
-            if ownAction, busy {''', 'Account row words')
-        text = probe(text, 'Button(action) { resolve(account, status) }.buttonStyle(HostedListButtonStyle()).fixedSize()', '"action:" + account.id', 'Account row action')
+            if !own, busy {''', '''            .frame(maxWidth: .infinity, alignment: .leading).background(AccountLayoutProbe(identifier: "words:" + account.id))
+            if !own, busy {''', 'Account row words')
+        text = probe(text, 'Button { resolve(account, status) } label: { Text(verbatim: action).fontWeight(.medium) }.buttonStyle(HostedListButtonStyle()).fixedSize()', '"action:" + account.id', 'Account row action')
         text = probe(text, '.accessibilityIdentifier("account-popover-change")', '"change"', 'Change menu')
         text = probe(text, '.accessibilityIdentifier("account-popover-identity")', '"identity"', 'Identity row')
-        text = probe(text, '.accessibilityIdentifier("account-popover-refresh")', '"refresh"', 'Refresh account status')
+        text = probe(text, '.accessibilityIdentifier("account-popover-locked")', '"status:lock"', 'Locked identity')
+        text = probe(text, '.padding(.horizontal, 8).frame(height: 28)', '"menu-row"', 'Popover action row')
         text = probe(text, 'title: String(localized: "Couldn\'t use the saved sign-in"), caption: failure)', '"failure:" + account.id', 'Account row failure')
         text = probe(text, '.frame(width: Self.width, alignment: .leading)', '"popover"', 'Popover width')
     elif relative == 'Views/Shared/AccountQuickControls.swift':
         text = probe(text, '.offset(x: 3, y: 3)', '"badge"', 'Warning badge')
     elif relative == 'Views/Shared/AccountStatusLabel.swift':
         text = probe(text, 'SymbolIcon(status.symbol).font(.system(size: 12)).accessibilityHidden(true)', '"status:" + status.symbol', 'Status icon')
-        text = probe(text, 'SymbolIcon("lock").font(.system(size: 12)).accessibilityHidden(true)', '"status:lock"', 'Lock icon')
     elif relative == 'Views/Shared/NoticeBlock.swift':
         text = probe(text, 'NoticeButton(action: actions[index]).disabled(busy)', '"notice-action:" + actions[index].title', 'Notice action')
     elif relative == 'Views/Shared/SharedSheet.swift':
         text = probe(text, '.accessibilityIdentifier(primary.identifier ?? "shared-sheet-primary")', '"primary:" + primary.title', 'Sheet primary')
         text = probe(text, '.frame(width: width)', '"sheet"', 'Sheet width')
+    elif relative == 'Views/Settings/AddAccountSheet.swift':
+        text = probe(text, '.accessibilityIdentifier("add-account-provider")', '"provider"', 'Provider switch')
+        text = probe(text, '.accessibilityIdentifier("add-account-import")', '"import"', 'Import gh login')
     elif relative == 'Views/Settings/AccountsSettings.swift':
         assert text.count('await Gitch.accounts()') == 2, 'Identity loading changed'
         text = text.replace('await Gitch.accounts()', 'accountFixtureIdentities')

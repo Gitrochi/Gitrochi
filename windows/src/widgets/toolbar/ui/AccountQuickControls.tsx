@@ -35,7 +35,7 @@ export function AccountQuickControls({ store }: { store: RepoStore }) {
     if (!open) return;
     const positionPopup = () => {
       const bounds = trigger.current?.getBoundingClientRect();
-      if (bounds) setPosition({ top: bounds.bottom + 8, right: Math.max(12, window.innerWidth - bounds.right) });
+      if (bounds) setPosition({ top: bounds.bottom + 14, right: Math.max(12, window.innerWidth - bounds.right) });
     };
     positionPopup(); window.addEventListener("resize", positionPopup);
     popup.current?.querySelector<HTMLElement>("button")?.focus();
@@ -66,16 +66,17 @@ export function AccountQuickControls({ store }: { store: RepoStore }) {
       data-attention={badge || undefined} data-tip={tip(label, badge ? t("This repository's account needs attention") : undefined)}>
       <span className="account-quick-photo">
         {shown ? <AccountAvatar account={shown} size={24} /> : <SignedOut size={22} strokeWidth={1.3} />}
-        {badge && <span className="account-quick-badge status-tone" data-tone="waiting" role="img" aria-label={t("This repository's account needs attention")}>!</span>}
+        {badge && <span className="account-quick-badge status-tone" data-tone="waiting" role="img" aria-label={t("This repository's account needs attention")}><svg width="8" height="8" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" aria-hidden><path d="M8 3.5v5.5M8 12.6v.1" /></svg></span>}
       </span>
     </button>
     {open && createPortal(<div ref={popup} className="account-quick-popover" style={{ top: position.top, right: position.right, maxHeight: `calc(100dvh - ${position.top + 16}px)` }} role="dialog" aria-label={t("Accounts")}>
-      <AccountPopover store={store} actions={{
+      <span className="account-popover-nub" aria-hidden />
+      <div className="account-popover-scroll"><AccountPopover store={store} actions={{
         resolve,
         inbox: () => { setOpen(false); store.navigate("account"); },
         addAccount: () => present({ kind: "add", provider: store.target?.provider === "gitlab" ? "gitlab" : "github" }),
         manageAccounts: () => { setOpen(false); window.dispatchEvent(new CustomEvent("gitrochi-open-settings", { detail: "accounts" })); },
-      }} />
+      }} /></div>
     </div>, document.body)}
     {sheet && createPortal(sheet.kind === "add"
       ? <AddAccountSheet provider={sheet.provider} server={sheet.server} onClose={() => setSheet(null)} onConnected={connected} />

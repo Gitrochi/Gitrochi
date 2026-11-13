@@ -7,7 +7,7 @@
 .notice-block-caption { font-size: 12px; line-height: 16px; color: var(--text-2); overflow-wrap: anywhere; white-space: pre-wrap; }
 .notice-block-actions { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 /* two actions go on a row below the words */
-.notice-block-text > .notice-block-actions { margin-top: 6px; }
+.notice-block-text > .notice-block-actions { margin-top: 6px; align-self: flex-start; }
 .notice-block .btn { font-size: 13px; }
 
 /* the sidebar's one-row form */

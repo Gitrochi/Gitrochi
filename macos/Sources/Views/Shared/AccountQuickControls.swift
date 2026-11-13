@@ -103,13 +103,15 @@ struct AccountButtonPhoto: View {
             if let account {
                 AccountAvatar(account: account, size: 24)
             } else {
-                SymbolIcon("person.crop.circle").font(.system(size: 20)).foregroundStyle(HostedList.caption).frame(width: 24, height: 24)
+                DesignIconImage(icon: .account, size: 22).foregroundStyle(HostedList.caption).frame(width: 24, height: 24)
             }
         }
         .overlay(alignment: .bottomTrailing) {
             if badge {
                 Circle().fill(StudioStyle.Tone.waiting.text).frame(width: 12, height: 12)
-                    .overlay(Text(verbatim: "!").font(.system(size: 9, weight: .bold)).foregroundStyle(Color(nsColor: .controlBackgroundColor)))
+                    // the board's mark: a 1.3 pt stroke with its dot, not a letter
+                    .overlay(VStack(spacing: 1.2) { Capsule().frame(width: 1.3, height: 4); Circle().frame(width: 1.3, height: 1.3) }
+                        .foregroundStyle(Color(nsColor: .controlBackgroundColor)))
                     .overlay(Circle().stroke(Color(nsColor: .controlBackgroundColor), lineWidth: 1.5).padding(-0.75))
                     .offset(x: 3, y: 3)
                     .accessibilityHidden(true)

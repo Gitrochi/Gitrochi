@@ -210,15 +210,22 @@ final class AccountFixtureNetworkBlocker: URLProtocol {
             precondition(!has("action:"), "Settings rows draw their own actions")
         case "add-account", "add-gitlab":
             guard let sheet = frame("sheet") else { fatalError("The Add account sheet must use the shared sheet layout") }
-            precondition(abs(sheet.width - 520) <= 1, "The Add account sheet keeps its width: \(sheet.width)")
             precondition(frame(scenario == "add-gitlab" ? "primary:Connect" : "primary:Sign in with the browser…") != nil, "The sheet's one filled button must be the next step")
+            precondition(abs(sheet.width - 600) <= 1, "The Add account sheet is 600 pt wide: \(sheet.width)")
+            // the GitHub | GitLab switch sits at the header's right, 20 pt from the edge
+            guard let provider = frame("provider") else { fatalError("The provider switch must be in the header") }
+            precondition(abs(sheet.maxX - provider.maxX - 20) <= 2 && provider.maxY <= 60 + 4, "The provider switch belongs to the header: \(provider)")
+            precondition((frame("import") != nil) == (scenario == "add-account"), "GitHub offers the gh login as a text button")
         default:
             guard let popover = frame("popover") else { fatalError("The popover must render") }
             precondition(abs(popover.width - AccountPopover.width) <= 1, "The popover is 360 pt wide: \(popover.width)")
             precondition((frame("badge") != nil) == badge && badge == ["attention", "unreadable", "failed"].contains(scenario), "The badge is for the repository's own account only")
             precondition((frame("change") != nil) == (own != nil), "Change… belongs to the repository's account")
             precondition((frame("identity") != nil) == (own != nil), "The Git identity is shown with a repository")
-            precondition((frame("refresh") != nil) == (own != nil), "Refresh account status sits with the repository's Git identity")
+            // the board's measures: 28 pt action rows; 52 pt for this repository's account, 44 pt for the others
+            precondition(probes().filter { $0.fixtureIdentifier == "menu-row" }.allSatisfy { abs($0.bounds.height - 28) <= 0.5 }, "The popover's actions are 28 pt rows")
+            if let own, let row = frame("row:" + own.id) { precondition(abs(row.height - 52) <= 1, "This repository's row is 52 pt: \(row.height)") }
+            if scenario == "repository", let row = frame("row:" + studio.id) { precondition(abs(row.height - 44) <= 1, "Another account's row is 44 pt: \(row.height)") }
             for probe in probes() where probe.fixtureIdentifier.hasPrefix("words:") {
                 precondition(probe.bounds.width >= 120, "A row's words must not be squeezed: \(probe.fixtureIdentifier) \(probe.bounds.width)")
             }

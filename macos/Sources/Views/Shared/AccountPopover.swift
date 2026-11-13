@@ -29,9 +29,9 @@ struct AccountPopoverActions {
     var manageAccounts: () -> Void = {}
 }
 
-/// The account button's popover (docs/design.md, App shell): this repository's account with the reason it was chosen
-/// and Change…, the Git identity commits use, the other accounts, then Inbox, Add account… and Manage accounts….
-/// (Windows: widgets/toolbar/ui/AccountPopover.tsx)
+/// The account button's popover, as the Accounts board draws it (docs/design.md, App shell): this repository's account
+/// with the reason it was chosen and Change…, the Git identity commits use, the other accounts, then Inbox,
+/// Add account… and Manage accounts…. (Windows: widgets/toolbar/ui/AccountPopover.tsx)
 struct AccountPopover: View {
     /// nil while no repository is open
     let repository: AccountPopoverRepository?
@@ -44,6 +44,8 @@ struct AccountPopover: View {
     let actions: AccountPopoverActions
 
     static let width: CGFloat = 360
+    /// The board's #3a3a3c: an email beside a name, the lock beside it
+    fileprivate static let strong = StudioStyle.Tone.neutral.text
 
     private var others: [HostAccount] { accounts.filter { $0.id != repository?.account?.id } }
 
@@ -55,10 +57,7 @@ struct AccountPopover: View {
                     identity(repository)
                     divider
                 }
-                HostedListEmpty(symbol: "person.crop.circle", title: String(localized: "No account"),
-                                caption: String(localized: "Add a GitHub or GitLab account for pull requests, issues and CI. Commits work without one."),
-                                actionTitle: String(localized: "Add account…"), filled: true, action: actions.addAccount)
-                    .fixedSize(horizontal: false, vertical: true)
+                empty
             } else {
                 if let repository { own(repository) } else {
                     heading(String(localized: "Accounts"))
@@ -73,9 +72,9 @@ struct AccountPopover: View {
                     ForEach(others) { account in AccountPopoverRow(account: account, status: status(account), busy: busy(account), failure: failure(account), resolve: actions.resolve) }
                 }
                 divider
-                AccountPopoverAction(symbol: "tray", title: String(localized: "Inbox"), run: actions.inbox)
-                AccountPopoverAction(symbol: "plus", title: String(localized: "Add account…"), run: actions.addAccount)
-                AccountPopoverAction(symbol: "gearshape", title: String(localized: "Manage accounts…"), run: actions.manageAccounts)
+                AccountPopoverAction(icon: .inbox, title: String(localized: "Inbox"), run: actions.inbox)
+                AccountPopoverAction(icon: .plus, title: String(localized: "Add account…"), run: actions.addAccount)
+                AccountPopoverAction(icon: .people, title: String(localized: "Manage accounts…"), run: actions.manageAccounts)
             }
         }
         .padding(.vertical, 6)
@@ -84,13 +83,27 @@ struct AccountPopover: View {
         .accessibilityLabel("Accounts")
     }
 
+    /// The blocked state: a 24 pt grey icon, one 15 pt semibold line, one 12 pt caption and the one filled action
+    private var empty: some View {
+        VStack(spacing: 0) {
+            DesignIconImage(icon: .account, size: 24).foregroundStyle(HostedList.caption)
+            Text("No account").font(.system(size: 15, weight: .semibold)).padding(.top, 8)
+            Text("Add a GitHub or GitLab account for pull requests, issues and CI. Commits work without one.")
+                .font(.system(size: 12)).foregroundStyle(HostedList.caption).multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true).padding(.top, 4)
+            Button("Add account…", action: actions.addAccount).hostedListFilledButton().padding(.top, 12)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, 16).padding(.vertical, 20)
+    }
+
     @ViewBuilder private func own(_ repository: AccountPopoverRepository) -> some View {
         if let account = repository.account { attention(account) }
         heading(String(localized: "This repository"))
         if let account = repository.account, let target = repository.target {
             let reason = AccountPresentation.reason(account: account, target: target, candidates: repository.candidates, preferredID: repository.preferredID)
             // the notice above carries this account's action, so the row keeps Change… only
-            AccountPopoverRow(account: account, status: status(account), size: 32, caption: reason.text, busy: busy(account), ownAction: false, resolve: actions.resolve) {
+            AccountPopoverRow(account: account, status: status(account), own: true, caption: reason.text, busy: busy(account), resolve: actions.resolve) {
                 Menu {
                     Picker("Account for this repository", selection: Binding(get: { account.id }, set: { id in
                         if let next = repository.candidates.first(where: { $0.id == id }) { actions.choose(next) }
@@ -100,9 +113,11 @@ struct AccountPopover: View {
                     .pickerStyle(.inline).labelsHidden()
                     Divider()
                     Button("Add account…", action: actions.addAccount)
+                    // the board has no button for it, so reading the Git account again sits in the menus
+                    if repository.managed { Button("Refresh account status", action: actions.refreshIdentity).disabled(repository.refreshing) }
                 } label: {
                     // drawn like the buttons beside it: a menu takes no custom button style
-                    Text("Change…").font(.system(size: 13)).padding(.horizontal, 12).frame(height: 28)
+                    Text("Change…").font(.system(size: 13, weight: .medium)).padding(.horizontal, 12).frame(height: 28)
                         .background(RoundedRectangle(cornerRadius: 6).fill(StudioStyle.surface))
                         .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(HostedList.edge))
                         .contentShape(RoundedRectangle(cornerRadius: 6))
@@ -112,7 +127,7 @@ struct AccountPopover: View {
             }
         } else if let target = repository.target {
             HStack(spacing: 10) {
-                AccountPopoverGlyph(symbol: "person", size: 32)
+                AccountPopoverGlyph(icon: .account)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("No account").font(.system(size: 13))
                     Text("Connect an account on \(target.host) to use repository services.").font(.system(size: 12)).foregroundStyle(HostedList.caption)
@@ -120,12 +135,12 @@ struct AccountPopover: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .padding(.horizontal, 14).padding(.vertical, 4).frame(minHeight: 52)
+            .padding(.horizontal, 14).padding(.vertical, 3).frame(minHeight: 52)
         }
         identity(repository)
     }
 
-    /// This repository's own account needs the user: the shared notice, with the one action that settles it. It
+    /// This repository's own account needs the user: the notice on top, its one filled action under the words. It
     /// stays through the attempt, with a spinner, and afterwards says what went wrong.
     @ViewBuilder private func attention(_ account: HostAccount) -> some View {
         let state = status(account), working = busy(account), problem = failure(account)
@@ -134,44 +149,47 @@ struct AccountPopover: View {
                         title: state == .needsYourApproval ? String(localized: "Saved sign-in needs your approval") : state.title,
                         caption: problem ?? (state == .needsYourApproval
                             ? String(localized: "macOS asks before Gitrochi uses the saved sign-in for @\(account.username). Your drafts are kept.") : state.caption),
-                        actions: working ? [] : state.action.map { [NoticeAction(title: $0) { actions.resolve(account, state) }] } ?? [], busy: working)
-                .padding(.horizontal, 12).padding(.top, 6).padding(.bottom, 4)
+                        actions: working ? [] : state.action.map { [NoticeAction(title: $0, filled: true) { actions.resolve(account, state) }] } ?? [],
+                        busy: working, stacked: true)
+                .padding(.horizontal, 8).padding(.top, 4).padding(.bottom, 6)
         }
     }
 
-    /// The author commits in this repository carry, and whether the repository's rules fix it
+    /// The author commits in this repository carry; a lock beside the name and on the second line when the rules fix it
     private func identity(_ repository: AccountPopoverRepository) -> some View {
         HStack(spacing: 10) {
-            AccountPopoverGlyph(symbol: "person", size: 32)
+            AccountPopoverGlyph(icon: .identity)
             VStack(alignment: .leading, spacing: 2) {
-                Group {
-                    if let identity = repository.identity, !(identity.name.isEmpty && identity.email.isEmpty) {
-                        Text(verbatim: identity.name) + Text(verbatim: identity.email.isEmpty ? "" : " <\(identity.email)>").foregroundStyle(HostedList.caption)
-                    } else {
-                        Text("Not configured")
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Group {
+                        if let identity = repository.identity, !(identity.name.isEmpty && identity.email.isEmpty) {
+                            Text(verbatim: identity.name) + Text(verbatim: identity.email.isEmpty ? "" : " <\(identity.email)>").foregroundStyle(Self.strong)
+                        } else {
+                            Text("Not configured")
+                        }
                     }
+                    .font(.system(size: 13)).fixedSize(horizontal: false, vertical: true).textSelection(.enabled)
+                    if repository.locked { DesignIconImage(icon: .lock, size: 12).foregroundStyle(Self.strong) }
                 }
-                .font(.system(size: 13)).fixedSize(horizontal: false, vertical: true).textSelection(.enabled)
                 if repository.locked {
-                    LockedLabel(text: String(localized: "Locked by this repository's rules"))
+                    HStack(alignment: .firstTextBaseline, spacing: 4) {
+                        DesignIconImage(icon: .lock, size: 12).alignmentGuide(.firstTextBaseline) { $0[.bottom] - 2 }
+                        Text("Locked by this repository's rules").font(.system(size: 12)).fixedSize(horizontal: false, vertical: true)
+                    }
+                    .foregroundStyle(HostedList.caption)
+                    .accessibilityIdentifier("account-popover-locked")
                 } else if repository.managed {
                     Text("Author and SSH follow this repository's rules").font(.system(size: 12)).foregroundStyle(HostedList.caption)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            if repository.managed {
-                if repository.refreshing {
-                    ProgressView().controlSize(.small).frame(width: 28, height: 28)
-                } else {
-                    Button(action: actions.refreshIdentity) { SymbolIcon("arrow.clockwise") }
-                        .buttonStyle(HostedListButtonStyle(iconOnly: true))
-                        .accessibilityLabel("Refresh account status").help("Refresh account status")
-                        .accessibilityIdentifier("account-popover-refresh")
-                }
-            }
         }
-        .padding(.horizontal, 14).padding(.vertical, 4).frame(minHeight: 48)
+        .padding(.horizontal, 14).padding(.vertical, 3).frame(minHeight: 48)
+        .contentShape(Rectangle())
+        .contextMenu {
+            if repository.managed { Button("Refresh account status", action: actions.refreshIdentity).disabled(repository.refreshing) }
+        }
         .accessibilityIdentifier("account-popover-identity")
     }
 
@@ -185,17 +203,18 @@ struct AccountPopover: View {
 }
 
 /// One account: its photo, "@name · host", and on the second line the caption (why it was chosen, or that it is signed
-/// in) or the state it is in with the one action that settles it. The words wrap; they are never cut short.
+/// in) or the state it is in. The repository's own row is 52 pt with a 32 pt photo and a semibold name, and leaves its
+/// action to the notice above; the others are 44 pt with a 24 pt photo and carry their action. The words wrap; they
+/// are never cut short.
 struct AccountPopoverRow<Trailing: View>: View {
     let account: HostAccount
     let status: AccountStatus
-    var size: CGFloat = 24
+    /// This repository's account
+    var own = false
     var caption: String? = nil
     var busy = false
     /// Why the last attempt to restore this account's saved sign-in failed
     var failure: String? = nil
-    /// false where a notice above the row already carries the action and what went wrong
-    var ownAction = true
     let resolve: (HostAccount, AccountStatus) -> Void
     @ViewBuilder let trailing: Trailing
 
@@ -205,20 +224,20 @@ struct AccountPopoverRow<Trailing: View>: View {
         VStack(alignment: .leading, spacing: 6) {
             row
             // what went wrong sits right under the account it concerns
-            if ownAction, let failure {
+            if !own, let failure {
                 NoticeBlock(symbol: "xmark.circle.fill", tone: .failed, title: String(localized: "Couldn't use the saved sign-in"), caption: failure)
             }
         }
-        .padding(.horizontal, 14).padding(.vertical, 4)
-        .frame(minHeight: size > 24 ? 52 : 44)
+        .padding(.horizontal, 14).padding(.vertical, 3)
+        .frame(minHeight: own ? 52 : 44)
         .accessibilityElement(children: .contain)
     }
 
     private var row: some View {
         HStack(spacing: 10) {
-            AccountAvatar(account: account, size: size)
+            AccountAvatar(account: account, size: own ? 32 : 24)
             VStack(alignment: .leading, spacing: 2) {
-                (Text(verbatim: "@" + account.username).fontWeight(.semibold) + Text(verbatim: " · " + account.host).foregroundStyle(HostedList.caption))
+                (Text(verbatim: "@" + account.username).fontWeight(own ? .semibold : .regular) + Text(verbatim: " · " + account.host).foregroundStyle(HostedList.caption))
                     .font(.system(size: 13)).fixedSize(horizontal: false, vertical: true)
                 if status == .signedIn {
                     Text(verbatim: caption ?? String(localized: "Signed in") + " · " + service).font(.system(size: 12)).foregroundStyle(HostedList.caption)
@@ -228,10 +247,10 @@ struct AccountPopoverRow<Trailing: View>: View {
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            if ownAction, busy {
+            if !own, busy {
                 ProgressView().controlSize(.small)
-            } else if ownAction, let action = status.action {
-                Button(action) { resolve(account, status) }.buttonStyle(HostedListButtonStyle()).fixedSize()
+            } else if !own, let action = status.action {
+                Button { resolve(account, status) } label: { Text(verbatim: action).fontWeight(.medium) }.buttonStyle(HostedListButtonStyle()).fixedSize()
                     .accessibilityLabel(Text(verbatim: action + " @" + account.username))
             }
             trailing
@@ -240,27 +259,26 @@ struct AccountPopoverRow<Trailing: View>: View {
 }
 
 extension AccountPopoverRow where Trailing == EmptyView {
-    init(account: HostAccount, status: AccountStatus, size: CGFloat = 24, caption: String? = nil, busy: Bool = false, failure: String? = nil,
-         ownAction: Bool = true, resolve: @escaping (HostAccount, AccountStatus) -> Void) {
-        self.init(account: account, status: status, size: size, caption: caption, busy: busy, failure: failure, ownAction: ownAction, resolve: resolve) { EmptyView() }
+    init(account: HostAccount, status: AccountStatus, own: Bool = false, caption: String? = nil, busy: Bool = false, failure: String? = nil,
+         resolve: @escaping (HostAccount, AccountStatus) -> Void) {
+        self.init(account: account, status: status, own: own, caption: caption, busy: busy, failure: failure, resolve: resolve) { EmptyView() }
     }
 }
 
-/// A neutral round slot where a row has no photo
+/// The 32 pt neutral round slot where a row has no photo
 private struct AccountPopoverGlyph: View {
-    let symbol: String
-    let size: CGFloat
+    let icon: DesignIcon
 
     var body: some View {
-        Circle().fill(StudioStyle.canvas).frame(width: size, height: size)
-            .overlay(SymbolIcon(symbol).font(.system(size: 14)).foregroundStyle(HostedList.caption))
+        Circle().fill(StudioStyle.canvas).frame(width: 32, height: 32)
+            .overlay(DesignIconImage(icon: icon, size: 16).foregroundStyle(HostedList.caption))
             .accessibilityHidden(true)
     }
 }
 
 /// A 28 pt menu row with its 14 pt icon
 private struct AccountPopoverAction: View {
-    let symbol: String
+    let icon: DesignIcon
     let title: String
     let run: () -> Void
     @ViewState private var hovered = false
@@ -268,7 +286,7 @@ private struct AccountPopoverAction: View {
     var body: some View {
         Button(action: run) {
             HStack(spacing: 8) {
-                SymbolIcon(symbol).font(.system(size: 13)).foregroundStyle(HostedList.caption).frame(width: 14)
+                DesignIconImage(icon: icon, size: 14).foregroundStyle(HostedList.caption)
                 Text(verbatim: title).font(.system(size: 13))
                 Spacer(minLength: 0)
             }

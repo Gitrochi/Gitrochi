@@ -1,4 +1,5 @@
-/* The account button and its popover (docs/design.md, App shell). macOS: AccountQuickControls, AccountPopover. */
+/* The account button and its popover, with the Accounts board's measures (docs/design.md, App shell).
+   macOS: AccountQuickControls, AccountPopover. */
 .account-quick-trigger {
   display: inline-flex;
   align-items: center;
@@ -30,47 +31,45 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 9px;
-  line-height: 1;
-  font-weight: 600;
 }
 
+/* 360 wide, 12px corners, 6px above and below the rows; the arrow points at the photo */
 .account-quick-popover {
   position: fixed;
   z-index: 150;
   top: 89px;
   right: 12px;
   width: min(360px, calc(100vw - 24px));
-  max-height: calc(100dvh - 105px);
-  overflow: auto;
-  padding: 6px 0;
   box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   border-radius: 12px;
   background: var(--surface);
   color: var(--text);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.16);
 }
-.account-popover-notice { margin: 6px 12px 4px; }
+.account-popover-nub { position: absolute; top: -7px; right: 12px; width: 12px; height: 12px; box-sizing: border-box; background: var(--surface); border-left: 1px solid var(--border-strong); border-top: 1px solid var(--border-strong); transform: rotate(45deg); }
+.account-popover-scroll { position: relative; display: flex; flex-direction: column; max-height: inherit; overflow: auto; padding: 6px 0; box-sizing: border-box; border-radius: 12px; }
+.account-popover-notice { margin: 4px 8px 6px; }
 .account-popover-heading { flex: none; min-height: 26px; box-sizing: border-box; padding: 6px 14px 4px; display: flex; align-items: flex-end; font-size: 11px; line-height: 16px; font-weight: 600; color: var(--text-2); }
 .account-popover-hint { flex: none; padding: 0 14px 6px; font-size: 12px; line-height: 16px; color: var(--text-2); }
 .account-popover-divider { flex: none; height: 1px; background: var(--border); margin: 6px 14px; }
 
-/* a row never clips its words: they wrap and the row grows, while the photo and the button keep their width */
-.account-popover-row { flex: none; display: flex; align-items: center; gap: 10px; min-width: 0; min-height: 44px; box-sizing: border-box; padding: 4px 14px; }
-.account-popover-row.tall { min-height: 52px; }
+/* rows are 44px (52px for this repository's account, 48px for its Git identity) and grow when their words wrap:
+   nothing is cut short, and the photo and the button keep their width */
+.account-popover-row { flex: none; display: flex; align-items: center; gap: 10px; min-width: 0; min-height: 44px; box-sizing: border-box; padding: 3px 14px; }
+.account-popover-row.own { min-height: 52px; }
 .account-popover-row.identity { min-height: 48px; }
-.account-popover-row > .avatar, .account-popover-row > .btn, .account-popover-row > .icon-btn { flex: none; }
-.account-popover-refreshing { flex: none; width: 28px; display: inline-flex; justify-content: center; }
-.account-popover-glyph { flex: none; width: 24px; height: 24px; border-radius: 50%; background: var(--bar); color: var(--text-2); display: inline-flex; align-items: center; justify-content: center; }
-.account-popover-glyph.large { width: 32px; height: 32px; }
+.account-popover-row > .avatar, .account-popover-row > .btn { flex: none; }
+.account-popover-glyph { flex: none; width: 32px; height: 32px; border-radius: 50%; background: var(--bar); color: var(--text-2); display: inline-flex; align-items: center; justify-content: center; }
 .account-popover-text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.account-popover-title { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 6px; min-width: 0; font-size: 13px; line-height: 18px; overflow-wrap: anywhere; }
-.account-popover-title > b { font-weight: 600; }
-.account-popover-host, .account-popover-email { color: var(--text-2); }
+.account-popover-title { display: flex; flex-wrap: wrap; align-items: center; gap: 0 6px; min-width: 0; font-size: 13px; line-height: 18px; overflow-wrap: anywhere; }
+.account-popover-row.own .account-popover-name { font-weight: 600; }
+.account-popover-host { color: var(--text-2); }
+.account-popover-email { color: color-mix(in srgb, var(--text) 82%, var(--surface)); }
+.account-popover-lock { flex: none; color: color-mix(in srgb, var(--text) 82%, var(--surface)); }
 .account-popover-caption { min-width: 0; font-size: 12px; line-height: 16px; color: var(--text-2); overflow-wrap: anywhere; }
+.account-popover-caption.locked { display: flex; align-items: flex-start; gap: 4px; }
+.account-popover-caption.locked > svg { flex: none; margin-top: 2px; }
 .account-popover-row .btn { font-weight: 500; }
 
 .account-popover-action { flex: none; height: 28px; margin: 0 6px; padding: 0 8px; border: 0; border-radius: 6px; background: transparent; font: inherit; font-size: 13px; color: var(--text); display: flex; align-items: center; gap: 8px; cursor: pointer; text-align: left; white-space: nowrap; }

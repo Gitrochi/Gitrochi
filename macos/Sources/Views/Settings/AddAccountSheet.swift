@@ -1,7 +1,9 @@
 import SwiftUI
+import AppKit
 
-/// The one way to add a hosting account, opened from the account popover and from Settings › Accounts: GitHub in the
-/// browser (or with a token, or the gh command's login), or a self-hosted GitLab server with a token.
+/// The one way to add a hosting account, opened from the account popover and from Settings › Accounts, as the Settings
+/// board draws it: the GitHub | GitLab switch at the header's right; GitHub in the browser (or with a token, or the gh
+/// command's login), or a self-hosted GitLab server with a token.
 /// (Windows: features/account-connection/ui/AddAccountSheet.tsx)
 struct AddAccountSheet: View {
     var provider: Provider = .github
@@ -40,21 +42,16 @@ struct AddAccountSheet: View {
     }
 
     var body: some View {
-        SharedSheet(title: String(localized: "Add account"), context: String(localized: "Pull requests, issues and CI use this account."), width: 520,
-                    cancelDisabled: working, primary: primary, cancel: { dismiss() }) {
+        SharedSheet(title: String(localized: "Add account"), context: String(localized: "Pull requests, issues and CI use this account."), width: 600,
+                    cancelDisabled: working, primary: primary, accessory: AnyView(switcher), cancel: { dismiss() }) {
             VStack(alignment: .leading, spacing: 12) {
-                Picker("Provider", selection: Binding(get: { current }, set: { chosen = $0; error = nil })) {
-                    Text(verbatim: "GitHub").tag(Provider.github)
-                    Text("GitLab (self-hosted)").tag(Provider.gitlab)
-                }
-                .pickerStyle(.segmented).labelsHidden().fixedSize()
                 if current == .github { github } else { gitlab }
                 if let error {
                     NoticeBlock(symbol: "xmark.circle.fill", tone: .failed, title: String(localized: "Couldn't add the account"), caption: error)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 20).padding(.vertical, 16)
+            .padding(.horizontal, 20).padding(.top, 16).padding(.bottom, 20)
         }
         .interactiveDismissDisabled(working)
         .onAppear {
@@ -62,31 +59,52 @@ struct AddAccountSheet: View {
         }
     }
 
+    private var switcher: some View {
+        Picker("Provider", selection: Binding(get: { current }, set: { chosen = $0; error = nil })) {
+            Text(verbatim: "GitHub").tag(Provider.github)
+            Text("GitLab (self-hosted)").tag(Provider.gitlab)
+        }
+        // small, so the title and its context line keep the rest of the header; never narrower than its words
+        .pickerStyle(.segmented).labelsHidden().controlSize(.small).fixedSize()
+        .accessibilityIdentifier("add-account-provider")
+    }
+
     @ViewBuilder private var github: some View {
         Text("github.com opens in your browser to approve access. The token is kept in the Keychain.")
-            .font(.system(size: 12)).foregroundStyle(HostedList.caption).fixedSize(horizontal: false, vertical: true)
-        Button("Use a token instead") { useToken.toggle(); error = nil }
-            .buttonStyle(HostedListTextButtonStyle()).accessibilityAddTraits(useToken ? .isSelected : [])
-        if useToken {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Personal access token").font(.system(size: 12)).foregroundStyle(HostedList.caption)
-                SecureField("Personal access token", text: $githubToken, prompt: Text(verbatim: "ghp_…")).labelsHidden().textFieldStyle(.roundedBorder)
-                Link("Create token", destination: URL(string: "https://github.com/settings/tokens/new?scopes=repo,read:org,workflow&description=Gitrochi")!)
-                    .font(.system(size: 12))
+            .font(.system(size: 13)).fixedSize(horizontal: false, vertical: true)
+        VStack(alignment: .leading, spacing: 4) {
+            Button { useToken.toggle(); error = nil } label: {
+                HStack(spacing: 4) {
+                    DesignIconImage(icon: useToken ? .chevronDown : .chevronRight, size: 12)
+                    Text("Use a token instead").font(.system(size: 12))
+                }
+                .foregroundStyle(HostedList.caption).frame(minHeight: 24).contentShape(Rectangle())
             }
-        }
-        if accounts.ghPath != nil {
-            // the caption drops below the button in a narrow sheet rather than squeezing beside it
-            ViewThatFits(in: .horizontal) {
-                HStack(spacing: 10) { importButton; importCaption }
-                VStack(alignment: .leading, spacing: 4) { importButton; importCaption }
+            .buttonStyle(.plain).accessibilityAddTraits(useToken ? .isSelected : [])
+            if useToken {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Personal access token").font(.system(size: 12)).foregroundStyle(HostedList.caption)
+                    SecureField("Personal access token", text: $githubToken, prompt: Text(verbatim: "ghp_…")).labelsHidden().textFieldStyle(.roundedBorder)
+                        .font(.system(size: 12, design: .monospaced))
+                    Button("Create token") { NSWorkspace.shared.open(URL(string: "https://github.com/settings/tokens/new?scopes=repo,read:org,workflow&description=Gitrochi")!) }
+                        .buttonStyle(HostedListTextButtonStyle())
+                }
+                .padding(.bottom, 4)
+            }
+            if accounts.ghPath != nil {
+                // the caption drops below the button in a narrow sheet rather than squeezing beside it
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 8) { importButton; importCaption }
+                    VStack(alignment: .leading, spacing: 0) { importButton; importCaption }
+                }
             }
         }
     }
 
     private var importButton: some View {
         Button("Import gh CLI login") { run { try await accounts.importGitHubCLI() } }
-            .buttonStyle(HostedListButtonStyle()).disabled(working)
+            .buttonStyle(HostedListTextButtonStyle()).disabled(working)
+            .accessibilityIdentifier("add-account-import")
     }
 
     private var importCaption: some View {
@@ -94,20 +112,19 @@ struct AddAccountSheet: View {
     }
 
     @ViewBuilder private var gitlab: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 6) {
             Text("Server URL").font(.system(size: 12)).foregroundStyle(HostedList.caption)
             TextField("Server URL", text: $gitlabServer, prompt: Text(verbatim: "https://gitlab.example.com")).labelsHidden().textFieldStyle(.roundedBorder)
         }
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 6) {
             Text("Personal access token (api scope)").font(.system(size: 12)).foregroundStyle(HostedList.caption)
-            SecureField("Personal access token (api scope)", text: $gitlabToken).labelsHidden().textFieldStyle(.roundedBorder)
+            SecureField("Personal access token (api scope)", text: $gitlabToken, prompt: Text(verbatim: "glpat-…")).labelsHidden().textFieldStyle(.roundedBorder)
+                .font(.system(size: 12, design: .monospaced))
             if !gitlabServer.trimmed.isEmpty,
                let url = URL(string: AccountStore.normalizeServer(gitlabServer) + "/-/user_settings/personal_access_tokens?name=Gitrochi&scopes=api") {
-                Link("Create token", destination: url).font(.system(size: 12))
+                Button("Create token") { NSWorkspace.shared.open(url) }.buttonStyle(HostedListTextButtonStyle())
             }
         }
-        Text("Only GitLab servers run by your organization can be connected (gitlab.com isn't supported yet). You can connect several accounts per server.")
-            .font(.system(size: 12)).foregroundStyle(HostedList.caption).fixedSize(horizontal: false, vertical: true)
     }
 
     private func run(_ work: @escaping @MainActor () async throws -> HostAccount) {

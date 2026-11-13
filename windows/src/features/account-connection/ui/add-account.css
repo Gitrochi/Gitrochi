@@ -1,8 +1,19 @@
-/* The Add account sheet's own parts; the layout is the shared sheet's. macOS: AddAccountSheet. */
-.add-account-sheet .segmented { align-self: flex-start; }
-.add-account-toggle { align-self: flex-start; min-height: 24px; }
-.add-account-field { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; }
+/* The Add account sheet's own parts, as the Settings board draws them; the layout is the shared sheet's.
+   macOS: AddAccountSheet. */
+.add-account-sheet .shared-sheet-header .segmented { flex: none; }
+.add-account-sheet .shared-sheet-body { padding-bottom: 20px; }
+.add-account-lead { margin: 0; font-size: 13px; line-height: 18px; }
+.add-account-alternatives { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.add-account-alternative { display: flex; flex-wrap: wrap; align-items: center; gap: 0 8px; min-height: 24px; min-width: 0; }
+.add-account-disclosure { font: inherit; font-size: 12px; display: inline-flex; align-items: center; gap: 4px; min-height: 24px; border: 0; background: transparent; color: var(--text-2); padding: 0; cursor: pointer; }
+.add-account-disclosure > svg { flex: none; transition: transform 0.12s; }
+.add-account-disclosure[aria-expanded="true"] > svg { transform: rotate(90deg); }
+.add-account-text { font: inherit; font-size: 12px; font-weight: 500; min-height: 24px; display: inline-flex; align-items: center; border: 0; background: transparent; color: var(--text-2); padding: 0; cursor: pointer; }
+.add-account-text:hover:not(:disabled), .add-account-disclosure:hover { color: var(--text); }
+.add-account-text:disabled { color: var(--text-3); cursor: default; }
+.add-account-text:focus-visible, .add-account-disclosure:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.add-account-caption { min-width: 0; font-size: 12px; line-height: 16px; color: var(--text-2); }
+.add-account-field { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; }
 .add-account-field > span { font-size: 12px; color: var(--text-2); }
-.add-account-field > .input { align-self: stretch; min-width: 0; }
-.add-account-import { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; min-width: 0; }
-.add-account-import > .hint { flex: 1 1 160px; min-width: 0; }
+.add-account-field > .input { align-self: stretch; min-width: 0; height: 28px; box-sizing: border-box; padding: 0 10px; }
+.add-account-token { font-family: var(--mono); font-size: 12px; }

@@ -29,6 +29,8 @@ struct SharedSheet<Secondary: View, Content: View>: View {
     var cancelTitle = String(localized: "Cancel")
     var cancelDisabled = false
     var primary: SheetPrimary? = nil
+    /// A control at the header's right, such as the switch that picks what the sheet is for
+    var accessory: AnyView? = nil
     let cancel: () -> Void
     /// Plain actions at the footer's left
     @ViewBuilder let secondary: Secondary
@@ -36,16 +38,19 @@ struct SharedSheet<Secondary: View, Content: View>: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            VStack(alignment: .leading, spacing: 0) {
-                Text(verbatim: title).font(.system(size: 15, weight: .semibold)).frame(minHeight: 20)
-                    .accessibilityAddTraits(.isHeader).accessibilityIdentifier("shared-sheet-title")
-                if let context, !context.isEmpty {
-                    Text(verbatim: context).font(.system(size: 12)).foregroundStyle(HostedList.caption)
-                        .lineLimit(1).truncationMode(.tail).frame(minHeight: 16).help(context)
-                        .accessibilityIdentifier("shared-sheet-context")
+            HStack(spacing: 16) {
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(verbatim: title).font(.system(size: 15, weight: .semibold)).frame(minHeight: 20)
+                        .accessibilityAddTraits(.isHeader).accessibilityIdentifier("shared-sheet-title")
+                    if let context, !context.isEmpty {
+                        Text(verbatim: context).font(.system(size: 12)).foregroundStyle(HostedList.caption)
+                            .lineLimit(1).truncationMode(.tail).frame(minHeight: 16).help(context)
+                            .accessibilityIdentifier("shared-sheet-context")
+                    }
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                if let accessory { accessory }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(20)
             line
             content.frame(maxWidth: .infinity, alignment: .leading)
@@ -80,9 +85,9 @@ struct SharedSheet<Secondary: View, Content: View>: View {
 
 extension SharedSheet where Secondary == EmptyView {
     init(title: String, context: String? = nil, width: CGFloat = 560, cancelTitle: String = String(localized: "Cancel"),
-         cancelDisabled: Bool = false, primary: SheetPrimary? = nil, cancel: @escaping () -> Void,
+         cancelDisabled: Bool = false, primary: SheetPrimary? = nil, accessory: AnyView? = nil, cancel: @escaping () -> Void,
          @ViewBuilder content: () -> Content) {
         self.init(title: title, context: context, width: width, cancelTitle: cancelTitle, cancelDisabled: cancelDisabled,
-                  primary: primary, cancel: cancel, secondary: { EmptyView() }, content: content)
+                  primary: primary, accessory: accessory, cancel: cancel, secondary: { EmptyView() }, content: content)
     }
 }

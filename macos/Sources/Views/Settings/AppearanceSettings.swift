@@ -36,6 +36,15 @@ struct AppearanceSettings: View {
                 Text("With text, each button's name sits to the right of its icon.")
                     .font(.caption).foregroundStyle(.secondary)
             }
+            Section("Commit graph") {
+                Toggle("Show author profile pictures", isOn: Binding(get: { AvatarStore.shared.enabled }, set: { AvatarStore.shared.enabled = $0 }))
+                HStack {
+                    Text("Looks for a GitHub profile, then a connected self-hosted GitLab profile, then Gravatar, and uses initials if none is found. An email hash is sent to Gravatar.")
+                        .font(.caption).foregroundStyle(.secondary)
+                    Spacer()
+                    Button("Download again") { AvatarStore.shared.refresh() }.controlSize(.small)
+                }
+            }
         }
         .formStyle(.grouped)
         .onChange(of: theme) { _, value in AppTheme.apply(AppTheme(rawValue: value) ?? .system) }

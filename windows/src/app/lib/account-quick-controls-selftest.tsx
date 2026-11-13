@@ -52,10 +52,18 @@ export async function accountQuickControlsSelfTest(): Promise<[boolean, string]>
     if (text().includes(t("Remove account…")) || text().includes(t("Disconnect"))) return [false, "Accounts are removed only in Settings"];
 
     // the Git account and its rules can be read again from where they are shown
-    const refresh = popover()!.querySelector<HTMLButtonElement>(".account-popover-row.identity .account-popover-refresh");
-    if (!refresh || refresh.getAttribute("aria-label") !== t("Refresh account status")) return [false, "Refresh account status is missing from the Git identity row"];
-    refresh.click();
-    if (!await until(() => refreshes === 1)) return [false, "Refresh account status did not read the Git account again"];
+    inPopover("Change…")!.click();
+    if (!await until(() => !!menuItem(t("Refresh account status")))) return [false, "Refresh account status is missing from the Change… menu"];
+    menuItem(t("Refresh account status"))!.click();
+    if (!await until(() => refreshes === 1 && !menuItem(t("Refresh account status")))) return [false, "Refresh account status did not read the Git account again"];
+
+    // the board's measures: 360 wide, a 32px photo and a semibold name for this repository, 24px and regular for the others
+    const measure = (selector: string) => popover()!.querySelector<HTMLElement>(selector)!;
+    const own = measure(`[data-account="${alice.id}"]`), other = measure(`[data-account="${bob.id}"]`);
+    if (Math.round(popover()!.getBoundingClientRect().width) !== 360 || !popover()!.querySelector(".account-popover-nub")) return [false, "The popover is 360px wide with its arrow"];
+    if (Math.round(own.getBoundingClientRect().height) !== 52 || Math.round(own.querySelector(".avatar")!.getBoundingClientRect().width) !== 32 || getComputedStyle(own.querySelector(".account-popover-name")!).fontWeight !== "600") return [false, "This repository's row is 52px with a 32px photo and a semibold name"];
+    if (Math.round(other.querySelector(".avatar")!.getBoundingClientRect().width) !== 24 || getComputedStyle(other.querySelector(".account-popover-name")!).fontWeight === "600") return [false, "Another account's row has a 24px photo and a regular name"];
+    if (Math.round(measure(".account-popover-row.identity").getBoundingClientRect().height) !== 48 || Math.round(measure(".account-popover-action").getBoundingClientRect().height) !== 28) return [false, "The identity row is 48px and the actions are 28px"];
 
     // nothing in the 360px popover is squeezed or clipped, even with a long account name
     const panel = popover()!, box = panel.getBoundingClientRect();

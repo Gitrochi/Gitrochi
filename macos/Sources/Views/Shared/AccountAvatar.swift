@@ -38,8 +38,8 @@ final class AccountPhotoStore {
     }
 }
 
-/// One account, one picture: its profile photo, and the initial only for an account without one or while photos are
-/// turned off. (Windows: AccountAvatar)
+/// One account, one picture: its profile photo, or the board's tinted initial for an account without one, while photos
+/// are turned off, or when the picture can't be loaded. The letter is 11 pt, 13 pt from 32 pt up. (Windows: AccountAvatar)
 struct AccountAvatar: View {
     let name: String?
     let username: String
@@ -55,14 +55,18 @@ struct AccountAvatar: View {
         self.name = name; self.username = username; self.avatarURL = avatarURL; self.size = size
     }
 
+    /// One fixed tint for every initial, as the Accounts board draws it (#e6e8fa under #3f4bb8)
+    private static let tint = Color(nsColor: NSColor(name: nil) { $0.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua ? NSColor(srgbRed: 0x2c / 255, green: 0x30 / 255, blue: 0x54 / 255, alpha: 1) : NSColor(srgbRed: 0xe6 / 255, green: 0xe8 / 255, blue: 0xfa / 255, alpha: 1) })
+    private static let letter = Color(nsColor: NSColor(name: nil) { $0.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua ? NSColor(srgbRed: 0xb4 / 255, green: 0xbb / 255, blue: 1, alpha: 1) : NSColor(srgbRed: 0x3f / 255, green: 0x4b / 255, blue: 0xb8 / 255, alpha: 1) })
+
     var body: some View {
         Group {
             if AvatarStore.shared.enabled, let avatarURL, let image = AccountPhotoStore.shared.image(for: avatarURL) {
                 Image(nsImage: image).resizable().interpolation(.high).aspectRatio(contentMode: .fill)
             } else {
-                Circle().fill(Palette.lane(Palette.stableHash(username.lowercased())))
+                Circle().fill(Self.tint)
                     .overlay(Text(verbatim: AccountPresentation.initial(name: name, username: username))
-                        .font(.system(size: size * 0.45, weight: .semibold)).foregroundStyle(.white))
+                        .font(.system(size: size >= 32 ? 13 : 11, weight: .semibold)).foregroundStyle(Self.letter))
             }
         }
         .frame(width: size, height: size)

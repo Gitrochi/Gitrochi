@@ -1,0 +1,3 @@
+/* The initial of an account without a photo: one fixed tint, as the Accounts board draws it. macOS: AccountAvatar. */
+.avatar.account-avatar { background: #e6e8fa; color: #3f4bb8; font-weight: 600; line-height: 1; }
+:root[data-theme="dark"] .avatar.account-avatar { background: #2c3054; color: #b4bbff; }

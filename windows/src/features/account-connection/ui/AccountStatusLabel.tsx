@@ -1,6 +1,5 @@
 import { TriangleAlert } from "lucide-react";
-import { Check, Clock, KeyRound, Lock, ShieldLock } from "@/shared/icons";
-import { t } from "@/shared/i18n";
+import { Check, Clock, KeyRound, ShieldLock } from "@/shared/icons";
 import { StatusPill, type StatusTone } from "@/shared/ui";
 import { type AccountStatus, accountStatusIcon, accountStatusTitle } from "@/entities/hosting";
 import "./account-status.css";
@@ -26,14 +25,4 @@ export function AccountStatusLabel({ status }: { status: AccountStatus }) {
 /** The same state as a badge, where a row has room for one (macOS: AccountStatusPill) */
 export function AccountStatusPill({ status }: { status: AccountStatus }) {
   return <StatusPill tone={tone(status)} icon={<StatusIcon status={status} size={11} />} data-status={status}>{accountStatusTitle(status)}</StatusPill>;
-}
-
-/** A Git identity the repository's rules fix: a lock, never one of the approval drawings (macOS: LockedLabel) */
-export function LockedLabel({ text }: { text?: string }) {
-  return (
-    <span className="account-status-label locked" data-status="locked">
-      <Lock size={12} />
-      <span>{text ?? t("Locked")}</span>
-    </span>
-  );
 }
