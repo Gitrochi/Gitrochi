@@ -2695,5 +2695,21 @@
   "Local agents report their work to this app's Ledger.": "Lokale agents melden hun werk aan de Ledger van deze app.",
   "Agent executable not found": "Uitvoerbaar bestand van agent niet gevonden",
   "Enter a new branch name": "Voer een nieuwe branchnaam in",
-  "Confirm the risk first": "Bevestig eerst het risico"
+  "Confirm the risk first": "Bevestig eerst het risico",
+  "Commands": "Opdrachten",
+  "Copy current folder": "Huidige map kopiëren",
+  "Exited": "Beëindigd",
+  "Folder path copied": "Mappad gekopieerd",
+  "Insert command": "Opdracht invoegen",
+  "Insert, then Enter": "Invoegen, dan Enter",
+  "New output": "Nieuwe uitvoer",
+  "Next terminal with new output": "Volgende terminal met nieuwe uitvoer",
+  "Terminal actions": "Terminalacties",
+  "{0} new": "{0} nieuw",
+  "Idle": "Inactief",
+  "Terminals": "Terminals",
+  "{0} more terminals": "Nog {0} terminals",
+  "CI": "CI",
+  "Preflight": "Voorcontrole",
+  "Pull request": "Pull request"
 }

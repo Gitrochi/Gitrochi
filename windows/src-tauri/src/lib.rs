@@ -74,6 +74,7 @@ pub fn run() {
             process::which,
             agents::external_agents,
             agents::bring_app_forward,
+            agents::process_descendants,
             editors::external_editors,
             editors::open_external_editor,
             pty::pty_spawn,

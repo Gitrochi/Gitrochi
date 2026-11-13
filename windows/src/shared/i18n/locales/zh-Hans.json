@@ -2875,5 +2875,21 @@
   "Local agents report their work to this app's Ledger.": "本地代理将工作报告到此应用的 Ledger。",
   "Agent executable not found": "找不到代理的可执行文件",
   "Enter a new branch name": "请输入新分支名称",
-  "Confirm the risk first": "请先确认风险"
+  "Confirm the risk first": "请先确认风险",
+  "Commands": "命令",
+  "Copy current folder": "复制当前文件夹",
+  "Exited": "已退出",
+  "Folder path copied": "已复制文件夹路径",
+  "Insert command": "插入命令",
+  "Insert, then Enter": "插入后按 Enter 执行",
+  "New output": "新输出",
+  "Next terminal with new output": "下一个有新输出的终端",
+  "Terminal actions": "终端操作",
+  "{0} new": "{0} 个新输出",
+  "Idle": "空闲",
+  "Terminals": "终端",
+  "{0} more terminals": "另外 {0} 个终端",
+  "CI": "CI",
+  "Preflight": "预检",
+  "Pull request": "拉取请求"
 }

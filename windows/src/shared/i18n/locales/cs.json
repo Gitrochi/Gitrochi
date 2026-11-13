@@ -2723,5 +2723,21 @@
   "Local agents report their work to this app's Ledger.": "Místní agenti hlásí svou práci do Ledgeru této aplikace.",
   "Agent executable not found": "Spustitelný soubor agenta nenalezen",
   "Enter a new branch name": "Zadejte název nové větve",
-  "Confirm the risk first": "Nejprve potvrďte riziko"
+  "Confirm the risk first": "Nejprve potvrďte riziko",
+  "Commands": "Příkazy",
+  "Copy current folder": "Kopírovat aktuální složku",
+  "Exited": "Ukončeno",
+  "Folder path copied": "Cesta ke složce zkopírována",
+  "Insert command": "Vložit příkaz",
+  "Insert, then Enter": "Vložit, pak Enter",
+  "New output": "Nový výstup",
+  "Next terminal with new output": "Další terminál s novým výstupem",
+  "Terminal actions": "Akce terminálu",
+  "{0} new": "{0} nových",
+  "Idle": "Nečinný",
+  "Terminals": "Terminály",
+  "{0} more terminals": "Další terminály: {0}",
+  "CI": "CI",
+  "Preflight": "Předběžná kontrola",
+  "Pull request": "Pull request"
 }

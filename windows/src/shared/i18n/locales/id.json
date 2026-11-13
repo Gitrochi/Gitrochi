@@ -2695,5 +2695,21 @@
   "Local agents report their work to this app's Ledger.": "Agen lokal melaporkan pekerjaannya ke Ledger aplikasi ini.",
   "Agent executable not found": "File eksekusi agen tidak ditemukan",
   "Enter a new branch name": "Masukkan nama branch baru",
-  "Confirm the risk first": "Konfirmasi risikonya terlebih dahulu"
+  "Confirm the risk first": "Konfirmasi risikonya terlebih dahulu",
+  "Commands": "Perintah",
+  "Copy current folder": "Salin folder saat ini",
+  "Exited": "Selesai",
+  "Folder path copied": "Jalur folder disalin",
+  "Insert command": "Sisipkan perintah",
+  "Insert, then Enter": "Sisipkan, lalu Enter",
+  "New output": "Output baru",
+  "Next terminal with new output": "Terminal berikutnya dengan output baru",
+  "Terminal actions": "Tindakan terminal",
+  "{0} new": "{0} baru",
+  "Idle": "Diam",
+  "Terminals": "Terminal",
+  "{0} more terminals": "{0} terminal lainnya",
+  "CI": "CI",
+  "Preflight": "Pemeriksaan awal",
+  "Pull request": "Pull request"
 }

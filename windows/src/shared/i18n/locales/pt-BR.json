@@ -2711,5 +2711,21 @@
   "Local agents report their work to this app's Ledger.": "Os agentes locais relatam o trabalho ao Ledger deste app.",
   "Agent executable not found": "Executável do agente não encontrado",
   "Enter a new branch name": "Digite o nome do novo branch",
-  "Confirm the risk first": "Confirme o risco primeiro"
+  "Confirm the risk first": "Confirme o risco primeiro",
+  "Commands": "Comandos",
+  "Copy current folder": "Copiar pasta atual",
+  "Exited": "Encerrado",
+  "Folder path copied": "Caminho da pasta copiado",
+  "Insert command": "Inserir comando",
+  "Insert, then Enter": "Inserir e depois Enter",
+  "New output": "Nova saída",
+  "Next terminal with new output": "Próximo terminal com nova saída",
+  "Terminal actions": "Ações do terminal",
+  "{0} new": "{0} novos",
+  "Idle": "Ocioso",
+  "Terminals": "Terminais",
+  "{0} more terminals": "Mais {0} terminais",
+  "CI": "CI",
+  "Preflight": "Verificação prévia",
+  "Pull request": "Pull request"
 }

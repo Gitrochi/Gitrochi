@@ -4694,5 +4694,19 @@
   "Local agents report their work to this app's Ledger.": "로컬 에이전트가 작업 내용을 이 앱의 원장에 보고합니다.",
   "Agent executable not found": "에이전트 실행 파일을 찾을 수 없습니다",
   "Enter a new branch name": "새 브랜치 이름을 입력하세요",
-  "Confirm the risk first": "먼저 위험을 확인하세요"
+  "Confirm the risk first": "먼저 위험을 확인하세요",
+  "Commands": "명령",
+  "Copy current folder": "현재 폴더 경로 복사",
+  "Exited": "종료됨",
+  "Folder path copied": "폴더 경로를 복사했습니다",
+  "Insert command": "명령 입력",
+  "Insert, then Enter": "입력 후 Enter로 실행",
+  "New output": "새 출력",
+  "Next terminal with new output": "새 출력이 있는 터미널로 이동",
+  "Terminal actions": "터미널 작업",
+  "{0} new": "새 출력 {0}개",
+  "Idle": "대기 중",
+  "Terminals": "터미널",
+  "{0} more terminals": "터미널 {0}개 더",
+  "CI": "CI"
 }

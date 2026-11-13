@@ -2728,5 +2728,21 @@
   "Local agents report their work to this app's Ledger.": "Yerel ajanlar çalışmalarını bu uygulamanın Ledger'ına bildirir.",
   "Agent executable not found": "Ajanın çalıştırılabilir dosyası bulunamadı",
   "Enter a new branch name": "Yeni dal adını girin",
-  "Confirm the risk first": "Önce riski onaylayın"
+  "Confirm the risk first": "Önce riski onaylayın",
+  "Commands": "Komutlar",
+  "Copy current folder": "Geçerli klasörü kopyala",
+  "Exited": "Çıkıldı",
+  "Folder path copied": "Klasör yolu kopyalandı",
+  "Insert command": "Komut ekle",
+  "Insert, then Enter": "Ekle, sonra Enter",
+  "New output": "Yeni çıktı",
+  "Next terminal with new output": "Yeni çıktısı olan sonraki terminal",
+  "Terminal actions": "Terminal eylemleri",
+  "{0} new": "{0} yeni",
+  "Idle": "Boşta",
+  "Terminals": "Terminaller",
+  "{0} more terminals": "{0} terminal daha",
+  "CI": "CI",
+  "Preflight": "Ön kontrol",
+  "Pull request": "Pull request"
 }

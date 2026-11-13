@@ -2735,5 +2735,21 @@
   "Local agents report their work to this app's Ledger.": "เอเจนต์ในเครื่องรายงานงานไปยัง Ledger ของแอปนี้",
   "Agent executable not found": "ไม่พบไฟล์โปรแกรมของเอเจนต์",
   "Enter a new branch name": "ป้อนชื่อแบรนช์ใหม่",
-  "Confirm the risk first": "ยืนยันความเสี่ยงก่อน"
+  "Confirm the risk first": "ยืนยันความเสี่ยงก่อน",
+  "Commands": "คำสั่ง",
+  "Copy current folder": "คัดลอกโฟลเดอร์ปัจจุบัน",
+  "Exited": "จบการทำงานแล้ว",
+  "Folder path copied": "คัดลอกพาธโฟลเดอร์แล้ว",
+  "Insert command": "แทรกคำสั่ง",
+  "Insert, then Enter": "แทรก แล้วกด Enter",
+  "New output": "เอาต์พุตใหม่",
+  "Next terminal with new output": "เทอร์มินัลถัดไปที่มีเอาต์พุตใหม่",
+  "Terminal actions": "การทำงานของเทอร์มินัล",
+  "{0} new": "ใหม่ {0}",
+  "Idle": "ว่าง",
+  "Terminals": "เทอร์มินัล",
+  "{0} more terminals": "เทอร์มินัลอีก {0} รายการ",
+  "CI": "CI",
+  "Preflight": "ตรวจสอบล่วงหน้า",
+  "Pull request": "Pull request"
 }

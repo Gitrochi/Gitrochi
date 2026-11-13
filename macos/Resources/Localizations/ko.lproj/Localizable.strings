@@ -4744,3 +4744,6 @@
 "Confirm the risk first" = "먼저 위험을 확인하세요";
 "Speak or type a draft first" = "먼저 말하거나 내용을 입력하세요";
 "Stop listening first" = "먼저 받아쓰기를 중지하세요";
+"Idle" = "대기 중";
+"Terminals" = "터미널";
+"%lld more terminals" = "터미널 %lld개 더";

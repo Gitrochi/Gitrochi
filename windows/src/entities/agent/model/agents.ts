@@ -302,6 +302,12 @@ class AgentCenter extends Observable {
     for (const s of this.sessions.filter((x) => x.status === "ended")) await this.remove(s.id);
   }
 
+  /** The status of the session started here that runs in this terminal tab (macOS: AgentCenter.status(in:)) */
+  statusIn(term: TerminalSession): AgentStatus | null {
+    for (const [id, link] of this.terminals) if (link.term === term) return this.sessions.find((s) => s.id === id)?.status ?? null;
+    return null;
+  }
+
   canFocus(s: AgentSession) {
     return s.status !== "ended" && this.terminals.has(s.id);
   }
