@@ -1384,13 +1384,11 @@
 "Runs" = "Запуски";
 "Jobs" = "Задания";
 "Choose a job to read its log here." = "Выберите задание, чтобы прочитать здесь его журнал.";
-"Reload log" = "Перезагрузить журнал";
 "Close log" = "Закрыть журнал";
 "Select a run" = "Выберите запуск";
 "Choose a run to see its jobs and read their logs." = "Выберите запуск, чтобы увидеть его задания и журналы.";
 "Pipeline #%lld" = "Конвейер #%1$lld";
 "%lld jobs waiting to be run manually" = "Заданий, ожидающих ручного запуска: %1$lld";
-"Copy redacted log" = "Копировать журнал со скрытыми секретами";
 "Job log" = "Журнал задания";
 "Log preview is limited to 2 MB. Open the browser for the complete log." = "Предпросмотр журнала ограничен 2 МБ. Полный журнал откройте в браузере.";
 "Reset to default layout" = "Восстановить макет по умолчанию";

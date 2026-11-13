@@ -1838,7 +1838,6 @@
 "Connect a GitHub or GitLab account to use this workspace." = "이 작업 공간을 사용하려면 GitHub 또는 GitLab 계정을 연결하세요.";
 "Connect an account to load this workspace." = "이 작업 화면을 보려면 계정을 연결하세요.";
 "Copy clone URL" = "복제 주소 복사";
-"Copy redacted log" = "민감 정보가 가려진 로그 복사";
 "Couldn't read this file." = "이 파일을 읽을 수 없습니다.";
 "Create gist?" = "Gist를 만들까요?";
 "Current" = "현재";
@@ -2288,7 +2287,6 @@
 "Runs" = "실행 목록";
 "Jobs" = "작업";
 "Choose a job to read its log here." = "작업을 고르면 여기에서 로그를 볼 수 있습니다.";
-"Reload log" = "로그 다시 불러오기";
 "Close log" = "로그 닫기";
 "Select a run" = "실행을 선택하세요";
 "Choose a run to see its jobs and read their logs." = "실행을 고르면 작업과 로그를 볼 수 있습니다.";
@@ -2326,7 +2324,6 @@
 "No checks reported for this commit." = "이 커밋에 보고된 검사가 없습니다.";
 "Open check result" = "검사 결과 열기";
 "No log output yet." = "아직 로그가 없습니다.";
-"Log truncated. Open the job in the browser for the full output." = "로그 일부를 표시했습니다. 전체 로그는 브라우저에서 확인하세요.";
 "Refresh log" = "로그 새로고침";
 "Connect an account to load checks." = "검사 결과를 보려면 계정을 연결하세요.";
 "No comments yet." = "아직 댓글이 없습니다.";

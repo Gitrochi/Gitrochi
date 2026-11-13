@@ -1342,13 +1342,11 @@
 "Runs" = "Lượt chạy";
 "Jobs" = "Job";
 "Choose a job to read its log here." = "Chọn một job để đọc log tại đây.";
-"Reload log" = "Tải lại log";
 "Close log" = "Đóng log";
 "Select a run" = "Chọn một lượt chạy";
 "Choose a run to see its jobs and read their logs." = "Chọn một lượt chạy để xem các job và đọc log.";
 "Pipeline #%lld" = "Pipeline #%1$lld";
 "%lld jobs waiting to be run manually" = "%1$lld job đang chờ chạy thủ công";
-"Copy redacted log" = "Sao chép log đã che thông tin nhạy cảm";
 "Job log" = "Log của job";
 "Log preview is limited to 2 MB. Open the browser for the complete log." = "Bản xem trước log giới hạn 2 MB. Mở trình duyệt để xem toàn bộ log.";
 "Reset to default layout" = "Khôi phục bố cục mặc định";

@@ -1874,7 +1874,6 @@
 "With text, each button's name sits to the right of its icon." = "テキストを表示すると、各ボタンの名前がアイコンの右に並びます。";
 "Running in other apps" = "ほかのアプリで実行中";
 "Checking saved account access…" = "保存済みアカウントへのアクセスを確認中…";
-"Copy redacted log" = "秘密情報を伏せたログをコピー";
 "Click to bring %@ to the front" = "クリックすると %1$@ を前面に表示します";
 "Couldn't open %@: it isn't inside a Git repository." = "%1$@ を開けませんでした: Git リポジトリの中にありません。";
 "Search pull requests" = "プルリクエストを検索";
@@ -1916,7 +1915,6 @@
 "Select an issue" = "Issue を選択";
 "Job log" = "ジョブのログ";
 "Compare with the current branch" = "現在のブランチと比較";
-"Reload log" = "ログを再読み込み";
 "Back to the repository screen (⌘[)" = "リポジトリ画面に戻る (⌘[)";
 "Open a repository with a GitHub or GitLab remote to choose the account it uses." = "GitHub または GitLab のリモートがあるリポジトリを開くと、使うアカウントを選べます。";
 "Close search" = "検索を閉じる";

@@ -1380,13 +1380,11 @@
 "Runs" = "รายการรัน";
 "Jobs" = "จ็อบ";
 "Choose a job to read its log here." = "เลือกจ็อบเพื่ออ่านล็อกที่นี่";
-"Reload log" = "โหลดล็อกใหม่";
 "Close log" = "ปิดล็อก";
 "Select a run" = "เลือกการรัน";
 "Choose a run to see its jobs and read their logs." = "เลือกการรันเพื่อดูจ็อบและอ่านล็อก";
 "Pipeline #%lld" = "ไปป์ไลน์ #%1$lld";
 "%lld jobs waiting to be run manually" = "%1$lld จ็อบรอการรันแบบแมนนวล";
-"Copy redacted log" = "คัดลอกล็อกที่ปิดข้อมูลลับแล้ว";
 "Job log" = "ล็อกของจ็อบ";
 "Log preview is limited to 2 MB. Open the browser for the complete log." = "ตัวอย่างล็อกแสดงได้สูงสุด 2 MB เปิดเบราว์เซอร์เพื่อดูล็อกทั้งหมด";
 "Reset to default layout" = "คืนค่าเลย์เอาต์เริ่มต้น";

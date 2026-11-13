@@ -1372,13 +1372,11 @@
 "Runs" = "Çalıştırmalar";
 "Jobs" = "İşler";
 "Choose a job to read its log here." = "Günlüğünü burada okumak için bir iş seçin.";
-"Reload log" = "Günlüğü yeniden yükle";
 "Close log" = "Günlüğü kapat";
 "Select a run" = "Bir çalıştırma seçin";
 "Choose a run to see its jobs and read their logs." = "İşlerini görmek ve günlüklerini okumak için bir çalıştırma seçin.";
 "Pipeline #%lld" = "Pipeline #%1$lld";
 "%lld jobs waiting to be run manually" = "Elle çalıştırılmayı bekleyen %1$lld iş";
-"Copy redacted log" = "Gizlenmiş günlüğü kopyala";
 "Job log" = "İş günlüğü";
 "Log preview is limited to 2 MB. Open the browser for the complete log." = "Günlük önizlemesi 2 MB ile sınırlıdır. Tam günlük için tarayıcıyı açın.";
 "Reset to default layout" = "Varsayılan düzene sıfırla";

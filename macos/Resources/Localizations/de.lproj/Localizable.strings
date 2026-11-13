@@ -1363,13 +1363,11 @@
 "Runs" = "Ausführungen";
 "Jobs" = "Jobs";
 "Choose a job to read its log here." = "Wählen Sie einen Job, um hier sein Log zu lesen.";
-"Reload log" = "Log neu laden";
 "Close log" = "Log schließen";
 "Select a run" = "Ausführung auswählen";
 "Choose a run to see its jobs and read their logs." = "Wählen Sie eine Ausführung, um ihre Jobs und Logs zu sehen.";
 "Pipeline #%lld" = "Pipeline #%1$lld";
 "%lld jobs waiting to be run manually" = "Jobs, die auf manuelle Ausführung warten: %1$lld";
-"Copy redacted log" = "Bereinigtes Log kopieren";
 "Job log" = "Job-Log";
 "Log preview is limited to 2 MB. Open the browser for the complete log." = "Die Log-Vorschau ist auf 2 MB begrenzt. Das vollständige Log finden Sie im Browser.";
 "Reset to default layout" = "Standardlayout wiederherstellen";
