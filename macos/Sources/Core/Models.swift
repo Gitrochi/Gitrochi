@@ -554,12 +554,6 @@ enum SheetKind: Identifiable {
     /// New issue (number nil) or an edit of one
     case issueEditor(number: Int?, title: String, body: String)
 
-    /// On the shared sheet layout, which hangs under the toolbar; the others are still the system's sheets
-    var attachesUnderToolbar: Bool {
-        if case .startAgent = self { return true }
-        return false
-    }
-
     var id: String {
         switch self {
         case .clone: return "clone"

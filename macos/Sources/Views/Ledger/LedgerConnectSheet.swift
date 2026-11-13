@@ -9,7 +9,7 @@ struct LedgerConnectSheet: View {
     var binaryPath = LedgerCommandLine.bundled.path
     /// Opens the browser extension's setup from its Connections row
     var openBrowser: () -> Void = {}
-    @Environment(\.closeSheet) private var closeSheet
+    @Environment(\.dismiss) private var dismiss
     @ViewState private var notice = ""
     @ViewState private var error: String?
     @ViewState private var testing = false
@@ -20,7 +20,7 @@ struct LedgerConnectSheet: View {
     var body: some View {
         SharedSheet(title: String(localized: "Connect agents"),
                     context: String(localized: "Local agents report their work to this app's Ledger."), width: 680,
-                    cancelTitle: String(localized: "Close"), cancel: { closeSheet() }) {
+                    cancelTitle: String(localized: "Close"), cancel: { dismiss() }) {
             Button("Test Ledger") { test() }.disabled(testing)
             if testing { ProgressView().controlSize(.small) }
         } content: {
@@ -83,7 +83,7 @@ struct LedgerConnectSheet: View {
                 .padding(.horizontal, 20).padding(.vertical, 16)
             }
         }
-        .frame(maxHeight: 650)
+        .frame(height: 650)
     }
 
     private func copyBlock(_ text: String, label: String, copyLabel: String) -> some View {

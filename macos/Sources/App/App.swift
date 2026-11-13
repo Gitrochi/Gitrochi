@@ -92,7 +92,6 @@ struct RepoWindow: View {
 
     var body: some View {
         RepoContainer()
-            .sharedSheetHost()
             .environment(store)
             .background(WindowTabbing(onAttach: { store.window = $0 }, onClose: {
                 Workspace.shared.unregister(store)
@@ -322,20 +321,12 @@ struct RepoContainer: View {
             if !active { store.terminalVoice.dismiss() }
         }
         .onDisappear { store.terminalVoice.detach() }
-        .attachedSheet(isPresented: Binding(get: { store.terminalVoice.presented }, set: {
+        .sheet(isPresented: Binding(get: { store.terminalVoice.presented }, set: {
             if !$0 && store.terminalVoice.presented { store.terminalVoice.dismiss() }
         }), onDismiss: { store.terminalVoice.sheetDidClose() }) {
             TerminalVoiceSheet().environment(store)
         }
-        // the sheets on the shared layout hang under the toolbar; the others are still the system's
-        .attachedSheet(item: Binding(get: { store.sheet.flatMap { $0.attachesUnderToolbar ? $0 : nil } }, set: {
-            if $0 == nil, store.sheet?.attachesUnderToolbar == true { store.sheet = nil }
-        })) { kind in
-            if case .startAgent(let path) = kind { StartAgentSheet(presetPath: path) }
-        }
-        .sheet(item: Binding(get: { store.sheet.flatMap { $0.attachesUnderToolbar ? nil : $0 } }, set: {
-            if $0 == nil, store.sheet?.attachesUnderToolbar == false { store.sheet = nil }
-        })) { kind in
+        .sheet(item: $store.sheet) { kind in
             switch kind {
             case .clone: CloneSheet()
             case .cloneURL(let url): CloneSheet(initialURL: url)

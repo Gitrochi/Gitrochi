@@ -80,7 +80,7 @@ struct AccountsSettings: View {
             }
         }
         .formStyle(.grouped)
-        .attachedSheet(isPresented: $showBrowserLogin) { GitHubBrowserLoginSheet { _, _ in } }
+        .sheet(isPresented: $showBrowserLogin) { GitHubBrowserLoginSheet { _, _ in } }
         .onAppear {
             if gitlabServer.isEmpty { gitlabServer = accounts.suggestedGitLabServer }
         }

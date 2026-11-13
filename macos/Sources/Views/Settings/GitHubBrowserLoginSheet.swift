@@ -6,7 +6,7 @@ struct GitHubBrowserLoginSheet: View {
     var expectedLogin: String? = nil
     var capability: Gitch.GitHubLoginCapability = .standard
     let onConnected: (Gitch.BrowserLogin, HostAccount) -> Void
-    @Environment(\.closeSheet) private var closeSheet
+    @Environment(\.dismiss) private var dismiss
     @ViewState private var login: Gitch.BrowserLogin?
     @ViewState private var working = false
     @ViewState private var error: String?
@@ -137,7 +137,7 @@ struct GitHubBrowserLoginSheet: View {
             }
             guard active(attempt) else { return }
             onConnected(state, account)
-            closeSheet()
+            dismiss()
         } catch is CancellationError {} catch {
             guard active(attempt) else { return }
             self.error = AccountConnectionFailure.message(for: error)
@@ -170,7 +170,7 @@ struct GitHubBrowserLoginSheet: View {
     private func cancel() {
         guard !importing else { return }
         invalidate()
-        closeSheet()
+        dismiss()
     }
 
     private func invalidate() {

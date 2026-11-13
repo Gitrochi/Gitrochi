@@ -280,8 +280,7 @@ struct PullRequestFilesView: View {
         monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
             guard event.modifierFlags.intersection([.command, .control, .option]).isEmpty,
                   let key = event.charactersIgnoringModifiers?.lowercased(), key == "j" || key == "k",
-                  let window = event.window, window.attachedSheet == nil, !SharedSheetPresenter.isPresenting(in: window),
-                  !(window.firstResponder is NSText) else { return event }
+                  let window = event.window, window.attachedSheet == nil, !(window.firstResponder is NSText) else { return event }
             step(key == "j")
             return nil
         }

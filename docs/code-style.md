@@ -120,7 +120,7 @@ Run the matching macOS feature checks when those areas change (commands below st
 | Browser login | `bash tools/gitch/tests/run.sh test_login.sh test_cli_contract.sh`, `bash macos/Tools/test-github-login-identity.sh`, `bash macos/Tools/test-browser-login-progress.sh` |
 | Credential access | `bash macos/Tools/test-keychain.sh`, `bash macos/Tools/test-credential-access.sh` |
 | Flows (the app ↔ engine contract) | `bash macos/Tools/test-flow.sh` |
-| Sheets (the shared layout) | `bash macos/Tools/test-shared-sheet-layout.sh`, `bash macos/Tools/test-terminal-layout.sh` for the voice sheet; Windows: the shared sheet self-test |
+| Sheets (the shared layout) | `bash macos/Tools/test-shared-sheet-layout.sh`, `bash macos/Tools/test-terminal-layout.sh` for the voice sheet, `bash macos/Tools/test-terminal-voice-coordinator.sh` for voice under another sheet; Windows: the shared sheet self-test |
 
 Browser-login tests do not change real authentication, account or clipboard settings. Credential-access tests use fake Security entry points to check silent reads, policy restoration, serialization, responsiveness and invalidation of late reads. Server writes and AI responses are simulated in the feature tests; the corresponding Windows checks run through `npm test` and the app self-test.
 

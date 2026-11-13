@@ -268,11 +268,11 @@ struct FlowTrustSheet: View {
     let plan: FlowPlan
     let actionTitle: String
     let onApprove: () -> Void
-    @Environment(\.closeSheet) private var closeSheet
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         SharedSheet(title: String(localized: "Review this flow"), context: plan.flow, width: 640,
-                    primary: SheetPrimary(title: actionTitle) { closeSheet(); onApprove() }, cancel: { closeSheet() }) {
+                    primary: SheetPrimary(title: actionTitle) { dismiss(); onApprove() }, cancel: { dismiss() }) {
             review.padding(.horizontal, 20).padding(.vertical, 16)
         }
     }

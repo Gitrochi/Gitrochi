@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
-# Renders the production shared sheet off screen, in light and dark, and measures it: it hangs from the top of the
-# window's content without dimming it, the header and footer keep their layout, a blocked primary says why, nothing
-# behind the sheet takes a click, the caret moves into the sheet and back, and a window without a host shows the
-# system's sheet instead.
+# Renders the production shared sheet layout off screen, in light and dark, and measures it: the header's padding and
+# type sizes, the footer's order, the reason 8 pt before a disabled primary, and a size that follows the content (the
+# system's sheet, which shows it on macOS, takes that size).
 #   macos/Tools/test-shared-sheet-layout.sh [output folder for the screenshots]
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -24,8 +23,7 @@ def instrument(text, needle, suffix):
 
 text = (root / 'Sources/Views/Shared/SharedSheet.swift').read_text()
 for needle, suffix in [('.accessibilityIdentifier("shared-sheet-title")', 'title'), ('.accessibilityIdentifier("shared-sheet-context")', 'context'),
-                       ('.accessibilityIdentifier("shared-sheet-cancel")', 'cancel'), ('.accessibilityIdentifier(primary.identifier ?? "shared-sheet-primary")', 'primary'),
-                       ('.accessibilityIdentifier("shared-sheet")', 'sheet')]:
+                       ('.accessibilityIdentifier("shared-sheet-cancel")', 'cancel'), ('.accessibilityIdentifier(primary.identifier ?? "shared-sheet-primary")', 'primary')]:
     text = instrument(text, needle, suffix)
 # the reason beside a disabled primary comes from the notice file
 notice = (root / 'Sources/Views/Shared/NoticeBlock.swift').read_text()

@@ -82,14 +82,9 @@ struct LedgerSettings: View {
         }
         .formStyle(.grouped)
         .task(id: generation) { await load() }
-        // Connect agents is on the shared layout; Settings has no sheet host, so it is shown as the system's sheet
-        .attachedSheet(item: Binding(get: { sheet == .connect ? sheet : nil }, set: { if $0 == nil, sheet == .connect { sheet = nil } }),
-                       onDismiss: { generation += 1 }) { _ in
-            LedgerConnectSheet(ledger: ledger, openBrowser: { switchSheet(to: .browser) })
-        }
-        .sheet(item: Binding(get: { sheet == .connect ? nil : sheet }, set: { if $0 == nil, sheet != .connect { sheet = nil } }), onDismiss: { generation += 1 }) { sheet in
+        .sheet(item: $sheet, onDismiss: { generation += 1 }) { sheet in
             switch sheet {
-            case .connect: EmptyView()
+            case .connect: LedgerConnectSheet(ledger: ledger, openBrowser: { switchSheet(to: .browser) })
             case .browser: LedgerBrowserSheet(ledger: ledger)
             case .importReports: LedgerImportSheet(ledger: ledger)
             }

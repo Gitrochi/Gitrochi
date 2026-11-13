@@ -345,7 +345,7 @@ private struct StatusDot: View {
 
 struct StartAgentSheet: View {
     @Environment(RepoStore.self) private var store
-    @Environment(\.closeSheet) private var closeSheet
+    @Environment(\.dismiss) private var dismiss
     let presetPath: String?
     private let tools = ToolStore.shared
 
@@ -360,7 +360,7 @@ struct StartAgentSheet: View {
     var body: some View {
         SharedSheet(title: String(localized: "Start agent session"), context: store.name, width: 580,
                     primary: SheetPrimary(title: String(localized: "Start"), disabledReason: blocked) { start() },
-                    cancel: { closeSheet() }) {
+                    cancel: { dismiss() }) {
             Form {
                 Picker("Agents", selection: $kind) {
                     ForEach(AgentKind.allCases) { k in
@@ -428,7 +428,7 @@ struct StartAgentSheet: View {
 
     private func start() {
         let path = target, branch = newBranch.trimmed, t = task, m = mode.isEmpty ? nil : mode, k = kind
-        closeSheet()
+        dismiss()
         if path.isEmpty {
             let wtPath = store.defaultWorktreePath(for: branch)
             Task {
