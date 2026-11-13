@@ -21905,12 +21905,12 @@ gitch pr list [--state open|closed|merged|all] [--limit 1..100] [--json]'
 gitch pr status' ;;
     ci) H_GROUP='pr'; H_TIER='main'
       H_USAGE='gitch ci
-gitch ci status|logs|report|trigger|browse ...'
-      H_DESC='인자가 없으면 지금 브랜치의 PR 검사 · CI 실행 결과를 보고, 인자가 있으면 연결한 원격 CI 를 흐름 엔진으로 다룬다.'
-      H_FLAGS='  status · logs · report   연결한 원격 CI 조회 (연결: gitch flow connect …)
-  trigger                  원격 CI 실행 (원격을 바꾼다)
-  browse --connection NAME [JOB_PATH] [RUN_ID]   Jenkins 작업 · 실행 · 로그 조회 (읽기 전용)'
-      H_WRITES='trigger 만 원격 CI 를 실행 · 나머지는 읽기 전용'; H_NET='GitHub (gh) 또는 연결한 CI 서버 사용'
+gitch ci status|logs|report|browse ...'
+      H_DESC='인자가 없으면 지금 브랜치의 PR 검사 · CI 실행 결과를 보고, 인자가 있으면 연결한 원격 CI 를 흐름 엔진으로 조회한다.'
+      H_FLAGS='  status [--connection NAME] [--ref R] [--json]   연결한 원격 CI 의 상태 (연결: gitch flow connect …)
+  logs <작업 ID> · report [파이프라인]            작업 로그 · 테스트 보고서
+  browse --connection NAME [JOB_PATH] [RUN_ID]    Jenkins 작업 · 실행 · 로그 조회'
+      H_NET='GitHub (gh) 또는 연결한 CI 서버 사용'
       H_EX='gitch ci
 gitch ci status --json'
       H_OWN='help_engine' ;;

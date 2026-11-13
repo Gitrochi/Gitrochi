@@ -68,7 +68,7 @@ test_help_topics_name_options_the_old_help_left_out() {
   run gitch help wt; assert_ok; assert_out 'prune'
   run gitch help ai; assert_ok; assert_out '--skill'
   run gitch help pr; assert_ok; assert_out 'gitch pr [create]'; assert_out 'gitch pr list'
-  run gitch help ci; assert_ok; assert_out 'trigger'; assert_out 'browse'
+  run gitch help ci; assert_ok; assert_out 'logs'; assert_out 'browse'
   run gitch help flow; assert_ok; assert_out 'design'
   run gitch help rescue; assert_ok; assert_out '--branch'; assert_out '--restore'
 }
