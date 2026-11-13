@@ -19,11 +19,6 @@ struct SettingsView: View {
                 .tabItem { Label("Appearance", symbol: "paintpalette") }
             UpdateSettings()
                 .tabItem { Label("Update", symbol: "arrow.down.circle") }
-            // Added after the others, and only while the Ledger is shown
-            if LedgerSettings.isShown {
-                LedgerSettings()
-                    .tabItem { Label("Ledger", symbol: WorkspaceDestination.ledger.symbol) }
-            }
         }
         .frame(width: 600, height: 560)
     }

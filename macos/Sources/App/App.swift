@@ -24,12 +24,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             MainActor.assumeIsolated { if !Workspace.shared.launchedByEvent { Splash.shared.show() } }
         }
         MainActor.assumeIsolated { UpdateCenter.shared.start() }
-        // With Track agents I start on: tells auto-continue's hooks that a person can answer here (does nothing otherwise)
-        MainActor.assumeIsolated { LedgerHeartbeat.shared.refresh() }
-        // Notifications and the Dock badge, when a person turned them on (does nothing otherwise)
-        MainActor.assumeIsolated { LedgerNotifier.shared.refresh() }
-        // Settings › Ledger › Team hub: shares this computer's sessions only while a person turned it on
-        MainActor.assumeIsolated { LedgerHubSharing.shared.refresh() }
         // Actions runs scheduled for later start while the app is open, whichever repositories are
         MainActor.assumeIsolated { ScheduledRunStore.shared.start() }
         // 시스템이 첫 창을 만들지 않고 넘어가는 때가 있다(백그라운드 실행 등) — 그러면 직접 하나 연다
@@ -210,7 +204,7 @@ struct AppCommands: Commands {
                 .keyboardShortcut("o", modifiers: [.command, .shift])
             Button("Create new repository…") { store?.presentInitPanel() }
         }
-        // the pages grouped as in the sidebar, ⌘1–⌘9 in its order and Home ⇧⌘H (docs/design.md › App shell, Sidebar)
+        // the pages grouped as in the sidebar, ⌘1–⌘8 in its order and Home ⇧⌘H (docs/design.md › App shell, Sidebar)
         CommandMenu("Go") {
             goButtons([.home])
             Divider()
@@ -218,7 +212,7 @@ struct AppCommands: Commands {
             Divider()
             goButtons([.pullRequests, .issues, .actions, .releases, .projects])
             Divider()
-            goButtons([.flows, .ledger])
+            goButtons([.flows])
         }
         CommandMenu("Repository") {
             Button(store?.undoStack.last.map { String(localized: "Undo: \($0.title)") } ?? String(localized: "Undo")) { store?.confirmUndo() }
@@ -240,7 +234,7 @@ struct AppCommands: Commands {
                 .disabled(store?.destination != .repository)
             Button("Quick navigation…") { store?.showCommandPalette = true }
                 .keyboardShortcut("k")
-            // the pages moved to the Go menu with ⌘1–⌘9; these two switch the repository screen's area
+            // the pages moved to the Go menu with ⌘1–⌘8; these two switch the repository screen's area
             Button("Show uncommitted changes") { store?.navigate(.repository); store?.showArea(.changes) }
             Button("Show history") { store?.navigate(.repository); store?.showArea(.history) }
             Divider()

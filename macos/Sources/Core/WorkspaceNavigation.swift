@@ -50,10 +50,10 @@ struct PageListFold: Equatable {
 enum WorkspaceDestination: String, CaseIterable, Identifiable {
     case home, repository, compare, rebase, code
     case pullRequests, issues, actions, releases, projects, account
-    case flows, ledger
+    case flows
     var id: String { rawValue }
 
-    /// Restore known pages, including the Ledger without a preview environment.
+    /// Restore known pages only.
     init?(rawValue: String) {
         guard let page = Self.allCases.first(where: { $0.rawValue == rawValue }), page.isShown else { return nil }
         self = page
@@ -65,7 +65,7 @@ enum WorkspaceDestination: String, CaseIterable, Identifiable {
     /// they offer the way back
     var returnsToRepository: Bool { [.pullRequests, .issues, .actions, .releases].contains(self) }
     var needsRepository: Bool { [.repository, .compare, .rebase, .code, .pullRequests, .actions, .flows].contains(self) }
-    /// The Go menu's shortcut, ⌘1–⌘9 in the sidebar's order (docs/design.md › App shell, Sidebar). Home is ⇧⌘H;
+    /// The Go menu's shortcut, ⌘1–⌘8 in the sidebar's order (docs/design.md › App shell, Sidebar). Home is ⇧⌘H;
     /// Releases, Projects and Account have none. (Windows: destinationShortcut)
     var shortcutDigit: Int? {
         switch self {
@@ -77,7 +77,6 @@ enum WorkspaceDestination: String, CaseIterable, Identifiable {
         case .issues: return 6
         case .actions: return 7
         case .flows: return 8
-        case .ledger: return 9
         default: return nil
         }
     }
@@ -97,7 +96,6 @@ enum WorkspaceDestination: String, CaseIterable, Identifiable {
         case .projects: return String(localized: "Projects")
         case .account: return String(localized: "Account")
         case .flows: return String(localized: "Flows")
-        case .ledger: return String(localized: "Ledger")
         }
     }
     func title(gitlab: Bool) -> String {
@@ -124,7 +122,6 @@ enum WorkspaceDestination: String, CaseIterable, Identifiable {
         case .projects: return "rectangle.3.group"
         case .account: return "person.crop.circle"
         case .flows: return "flowchart"
-        case .ledger: return "checklist"
         }
     }
 }
