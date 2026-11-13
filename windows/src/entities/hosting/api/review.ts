@@ -15,7 +15,7 @@ export interface ReviewDraftComment {
   id: string; repositoryKey: string; number: number; anchor: ReviewLineAnchor; body: string;
 }
 export interface ReviewComment {
-  id: string; author: string; body: string; date: number | null;
+  id: string; author: string; authorAvatarURL?: string | null; body: string; date: number | null;
   path?: string; line?: number; side?: ReviewLineSide;
   threadID?: string; replyID?: number; resolvable?: boolean; resolved?: boolean;
   kind: "comment" | "approved" | "changesRequested" | "system";
@@ -36,14 +36,14 @@ const staleMessage = () => t("This request changed. Refresh the diff and recreat
 export class ReviewSubmissionError extends Error {
   constructor(message: string, readonly completedIDs: string[] = []) { super(message); }
 }
-interface GHUser { login: string }
+interface GHUser { login: string; avatar_url?: string | null }
 interface GHComment { id: number; user?: GHUser | null; body?: string | null; created_at?: string }
 interface GHLineComment extends GHComment { path?: string; line?: number | null; original_line?: number | null; side?: ReviewLineSide; in_reply_to_id?: number }
 interface GHReview { id: number; user?: GHUser | null; body?: string | null; state: string; submitted_at?: string }
 interface GHFile { filename: string; previous_filename?: string; status: string; additions: number; deletions: number; patch?: string }
 interface GHRefs { head: { sha: string }; base: { sha: string } }
 interface GLNote {
-  id: number; author?: { username: string }; body: string; created_at?: string; system?: boolean; resolvable?: boolean; resolved?: boolean;
+  id: number; author?: { username: string; avatar_url?: string | null }; body: string; created_at?: string; system?: boolean; resolvable?: boolean; resolved?: boolean;
   position?: { new_path?: string; new_line?: number; old_path?: string; old_line?: number } | null;
 }
 interface GLDiscussion { id: string; individual_note?: boolean; notes: GLNote[] }
@@ -101,8 +101,8 @@ export const ReviewAPI = {
         pages<GHComment>(c, `${repo(c)}/issues/${n}/comments`), pages<GHLineComment>(c, `${repo(c)}/pulls/${n}/comments`),
         pages<GHReview>(c, `${repo(c)}/pulls/${n}/reviews`), pages<GHFile>(c, `${repo(c)}/pulls/${n}/files`, 30),
       ]);
-      review.comments.push(...comments.map((x): ReviewComment => ({ id: `c${x.id}`, author: x.user?.login ?? "", body: cleanReviewBody(x.body ?? ""), date: Hosting.date(x.created_at), kind: "comment" })));
-      review.comments.push(...lines.map((x): ReviewComment => ({ id: `l${x.id}`, author: x.user?.login ?? "", body: cleanReviewBody(x.body ?? ""), date: Hosting.date(x.created_at), path: x.path, line: x.line ?? x.original_line ?? undefined, side: x.side, threadID: String(x.in_reply_to_id ?? x.id), replyID: x.in_reply_to_id ?? x.id, kind: "comment" })));
+      review.comments.push(...comments.map((x): ReviewComment => ({ id: `c${x.id}`, author: x.user?.login ?? "", authorAvatarURL: Hosting.avatarURL(c, x.user?.avatar_url), body: cleanReviewBody(x.body ?? ""), date: Hosting.date(x.created_at), kind: "comment" })));
+      review.comments.push(...lines.map((x): ReviewComment => ({ id: `l${x.id}`, author: x.user?.login ?? "", authorAvatarURL: Hosting.avatarURL(c, x.user?.avatar_url), body: cleanReviewBody(x.body ?? ""), date: Hosting.date(x.created_at), path: x.path, line: x.line ?? x.original_line ?? undefined, side: x.side, threadID: String(x.in_reply_to_id ?? x.id), replyID: x.in_reply_to_id ?? x.id, kind: "comment" })));
       try {
         const threads = await githubReviewThreads(c, n);
         for (const comment of review.comments) {
@@ -117,7 +117,7 @@ export const ReviewAPI = {
         const kind = r.state === "APPROVED" ? "approved" : r.state === "CHANGES_REQUESTED" ? "changesRequested" : "comment";
         const body = cleanReviewBody(r.body ?? "");
         if (kind === "comment" && !body) continue;
-        review.comments.push({ id: `r${r.id}`, author: who, body, date: Hosting.date(r.submitted_at), kind });
+        review.comments.push({ id: `r${r.id}`, author: who, authorAvatarURL: Hosting.avatarURL(c, r.user?.avatar_url), body, date: Hosting.date(r.submitted_at), kind });
       }
       review.state.approvedBy = [...latest].filter(([, s]) => s === "APPROVED").map(([w]) => w).sort();
       review.state.changesRequestedBy = [...latest].filter(([, s]) => s === "CHANGES_REQUESTED").map(([w]) => w).sort();
@@ -130,7 +130,7 @@ export const ReviewAPI = {
         Hosting.send<GLApprovals>("gitlab", `${project(c)}/merge_requests/${n}/approvals`, c.token).catch(() => null),
         pages<GLChange>(c, `${project(c)}/merge_requests/${n}/diffs`),
       ]);
-      review.comments = discussions.flatMap((d) => d.notes.map((x): ReviewComment => ({ id: `n${x.id}`, author: x.author?.username ?? "", body: cleanReviewBody(x.body), date: Hosting.date(x.created_at), path: x.position?.new_path ?? x.position?.old_path, line: x.position?.new_line ?? x.position?.old_line, side: x.position?.new_line != null ? "RIGHT" : "LEFT", threadID: d.individual_note ? undefined : d.id, resolvable: x.resolvable, resolved: x.resolved, kind: x.system ? "system" : "comment" })));
+      review.comments = discussions.flatMap((d) => d.notes.map((x): ReviewComment => ({ id: `n${x.id}`, author: x.author?.username ?? "", authorAvatarURL: Hosting.avatarURL(c, x.author?.avatar_url), body: cleanReviewBody(x.body), date: Hosting.date(x.created_at), path: x.position?.new_path ?? x.position?.old_path, line: x.position?.new_line ?? x.position?.old_line, side: x.position?.new_line != null ? "RIGHT" : "LEFT", threadID: d.individual_note ? undefined : d.id, resolvable: x.resolvable, resolved: x.resolved, kind: x.system ? "system" : "comment" })));
       review.state.approvedBy = (approvals?.approved_by ?? []).map((a) => a.user.username);
       review.state.approvalsLeft = approvals?.approvals_left ?? null;
       review.state.approvedByMe = review.state.approvedBy.includes(c.me);

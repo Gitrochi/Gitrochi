@@ -202,7 +202,7 @@ struct PullRequestDetailView: View {
 
     @ViewBuilder private func meta(_ pr: PullRequest) -> some View {
         HStack(spacing: 6) {
-            RequestAuthorAvatar(author: pr.author, size: 20)
+            RequestAuthorAvatar(author: pr.author, avatarURL: pr.authorAvatarURL, size: 20)
             Text(verbatim: "@\(pr.author)").font(.system(size: 13, weight: .semibold))
         }
         HStack(spacing: 5) {

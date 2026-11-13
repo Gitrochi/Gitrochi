@@ -106,14 +106,16 @@ struct PullRequest { var number: Int; var source = "feature"; var target = "main
             let ids = page == "1" ? Array(1...100) : [101]
             if path.hasSuffix("/files") { return try json(ids.map { ["filename": "file-\($0)", "status": "modified", "additions": 1, "deletions": 0] as [String: Any] }) }
             if path.hasSuffix("/diffs") { return try json(ids.map { ["old_path": "file-\($0)", "new_path": "file-\($0)", "diff": "@@ -1 +1 @@\n-old\n+new", "too_large": $0 == 101] as [String: Any] }) }
-            if path.hasSuffix("/discussions") { return try json(ids.map { ["id": "thread-\($0)", "notes": [["id": $0, "body": "note", "resolvable": true]]] as [String: Any] }) }
-            if path.hasSuffix("/reviews") { return try json(ids.map { ["id": $0, "body": "review", "state": "COMMENTED"] as [String: Any] }) }
-            return try json(ids.map { ["id": $0, "body": "comment", "path": "source.swift", "line": 3, "side": "RIGHT"] as [String: Any] })
+            if path.hasSuffix("/discussions") { return try json(ids.map { ["id": "thread-\($0)", "notes": [["id": $0, "body": "note", "resolvable": true, "author": ["username": "reviewer", "avatar_url": "/uploads/reviewer.png"]]]] as [String: Any] }) }
+            if path.hasSuffix("/reviews") { return try json(ids.map { ["id": $0, "body": "review", "state": "COMMENTED", "user": ["login": "reviewer", "avatar_url": "https://avatars.githubusercontent.com/u/9"]] as [String: Any] }) }
+            return try json(ids.map { ["id": $0, "body": "comment", "path": "source.swift", "line": 3, "side": "RIGHT", "user": ["login": "reviewer", "avatar_url": "https://avatars.githubusercontent.com/u/9"]] as [String: Any] })
         }
         let ghReview = try await ReviewAPI.load(gh, token: "fixture", apiBase: "https://fixture", number: 1, me: "reviewer")
         precondition(ghReview.comments.count == 303 && ghReview.files.count == 101)
+        precondition(ghReview.comments.allSatisfy { $0.authorAvatarURL == "https://avatars.githubusercontent.com/u/9" }, "Issue comments, line comments and reviews preserve their author photos")
         let glReview = try await ReviewAPI.load(gl, token: "fixture", apiBase: "https://fixture", number: 1, me: "reviewer")
         precondition(glReview.comments.count == 101 && glReview.files.count == 101)
+        precondition(glReview.comments.allSatisfy { $0.authorAvatarURL == "/uploads/reviewer.png" }, "GitLab discussion authors preserve their profile photos")
         precondition(glReview.files.last?.patch == nil && glReview.warnings.count == 1)
 
         var acceptedGH: [[String: Any]] = [], posts = 0, complete: [String] = []

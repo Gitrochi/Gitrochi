@@ -1,5 +1,6 @@
+import type { Provider } from "@/entities/git";
 import type { ReviewAccess } from "./review";
-import { send, sendRaw } from "./hosting";
+import { avatarURL, send, sendRaw } from "./hosting";
 import { t } from "@/shared/i18n";
 export type AccountWorkKind =
   | "inbox"
@@ -13,10 +14,12 @@ export interface AccountWorkItem {
   title: string;
   repository: string;
   host: string;
+  provider?: Provider;
   url: string;
   number: number;
   state: string;
   author: string;
+  authorAvatarURL?: string | null;
   unread: boolean;
   readID?: string;
   origin: string;
@@ -26,6 +29,8 @@ export interface AccountWorkItem {
   reason: string;
   /** Who caused the notification, when the server names them */
   actor: string;
+  actorUsername?: string;
+  actorAvatarURL?: string | null;
   /** Seconds since 1970, or null when the list carries no time */
   updated: number | null;
   /** open, draft, merged or closed; empty when the list does not say */
@@ -35,8 +40,11 @@ export interface AccountWorkItem {
   source: string;
   target: string;
 }
+interface WorkUser { login?: string; username?: string; name?: string; avatar_url?: string | null }
 /** What a list says about its subject; a GitLab to-do carries it in `target` */
 interface Subject {
+  user?: WorkUser;
+  author?: WorkUser;
   iid?: number;
   title?: string;
   state?: string;
@@ -56,8 +64,6 @@ interface RecordItem extends Subject {
   repository_url?: string;
   repository?: { full_name: string };
   subject?: { title: string; url?: string; type: string };
-  user?: { login?: string };
-  author?: { username?: string; name?: string };
   unread?: boolean;
   project?: { path_with_namespace: string };
   target?: Subject;
@@ -151,6 +157,7 @@ function item(
   const type = r.subject?.type ?? r.target_type ?? "";
   const details: Subject = kind === "inbox" ? (r.target ?? {}) : r;
   const state = details.state ?? "";
+  const author = details.user ?? details.author ?? r.user ?? r.author;
   const time = Date.parse(r.updated_at || r.created_at || "");
   return {
     kind:
@@ -165,6 +172,8 @@ function item(
           : "request",
     reason: kind === "inbox" ? r.reason || r.action_name || "" : "",
     actor: kind === "inbox" ? r.author?.name || r.author?.username || "" : "",
+    actorUsername: kind === "inbox" ? r.author?.username ?? r.author?.login ?? "" : "",
+    actorAvatarURL: kind === "inbox" ? avatarURL(c, r.author?.avatar_url) : null,
     updated: Number.isFinite(time) ? time / 1000 : null,
     status:
       state === "open" || state === "opened"
@@ -182,10 +191,12 @@ function item(
     title: r.title ?? r.subject?.title ?? r.target?.title ?? "",
     repository,
     host,
+    provider: c.target.provider,
     url: parsed.href,
     number: Number.isFinite(number) ? number : 0,
     state: r.state ?? r.target_type ?? r.subject?.type ?? "",
-    author: r.user?.login ?? r.author?.username ?? "",
+    author: author?.login ?? author?.username ?? "",
+    authorAvatarURL: avatarURL(c, author?.avatar_url),
     unread: kind === "inbox" && (c.target.provider === "gitlab" || !!r.unread),
     readID: kind === "inbox" && r.id !== undefined ? String(r.id) : undefined,
   };

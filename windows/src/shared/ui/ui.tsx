@@ -1,6 +1,6 @@
 import { Check, ChevronRight } from "@/shared/icons";
 import { type ReactNode, type RefObject, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { keyLabel } from "@/shared/config";
+import { keyLabel, settings } from "@/shared/config";
 import { laneColor, Observable, stableHash, useObserve } from "@/shared/lib";
 import "./styles.css";
 // MARK: 기본 컨트롤
@@ -80,13 +80,15 @@ export function Card({ children, gap, className = "" }: { children: ReactNode; g
   );
 }
 
-/** 작성자 이니셜 원형 아바타(네트워크 없이 이메일로 색을 고정) */
+/** A profile photo with a deterministic initials fallback. */
 export function Avatar({ name, email, size = 28, url }: { name: string; email: string; size?: number; url?: string | null }) {
-  const [broken, setBroken] = useState(false);
+  useObserve(settings);
+  const [brokenURL, setBrokenURL] = useState<string | null>(null);
+  const source = settings.get("avatarFetch", true) && url && brokenURL !== url ? url : null;
   const letter = (Array.from(name.trim())[0] ?? "?").toUpperCase();
   return (
     <span className="avatar" style={{ width: size, height: size, background: laneColor(stableHash(email.toLowerCase())), fontSize: size * 0.45 }}>
-      {url && !broken ? <img src={url} width={size} height={size} onError={() => setBroken(true)} alt="" /> : letter}
+      {source ? <img src={source} width={size} height={size} onError={() => setBrokenURL(source)} alt="" /> : letter}
     </span>
   );
 }

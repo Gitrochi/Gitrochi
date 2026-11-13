@@ -18,20 +18,20 @@ export interface RequestLifecycle {
 export interface IssueLabel { name: string; color?: string | null }
 export interface InboxItem {
   id: string; kind: "issue" | "review" | "mention"; number: number; title: string; url: string; body: string;
-  state: string; updated: number | null; created?: number | null; author: string; unread: boolean; readID?: string; readProvider?: "github" | "gitlab"; isRequest?: boolean;
+  state: string; updated: number | null; created?: number | null; author: string; authorAvatarURL?: string | null; unread: boolean; readID?: string; readProvider?: "github" | "gitlab"; isRequest?: boolean;
   /** What an issue's own list or detail response says about it; missing when the server did not say */
   comments?: number | null; assignees?: string[]; labels?: IssueLabel[];
 }
-export interface InboxDetail { item: InboxItem; comments: { id: string; author: string; body: string; date: number | null; editable?: boolean }[]; more: boolean; page: number }
+export interface InboxDetail { item: InboxItem; comments: { id: string; author: string; authorAvatarURL?: string | null; body: string; date: number | null; editable?: boolean }[]; more: boolean; page: number }
 export const collaborationRepoURL = (c: ReviewAccess) => c.target.provider === "github" ? `${c.apiBase}/repos/${c.target.path}` : `${c.apiBase}/projects/${H.projectID(c.target.path)}`;
 const reqURL = (c: ReviewAccess, n: number) => `${collaborationRepoURL(c)}/${c.target.provider === "github" ? "pulls" : "merge_requests"}/${n}`;
-interface User { login?: string; username?: string; id?: number }
+interface User { login?: string; username?: string; id?: number; avatar_url?: string | null }
 interface GHPull { number: number; title: string; body?: string; user: User; head: { ref: string; sha: string; repo?: { full_name: string } }; base: { ref: string }; html_url: string; draft?: boolean; updated_at?: string; merged?: boolean; merged_at?: string | null; state: string; requested_reviewers?: User[]; mergeable?: boolean | null; mergeable_state?: string; maintainer_can_modify?: boolean }
 interface GLMerge { iid: number; title: string; description?: string; author: User; source_branch: string; target_branch: string; web_url: string; sha: string; draft?: boolean; updated_at?: string; state: string; reviewers?: User[]; has_conflicts?: boolean; detailed_merge_status?: string; merge_status?: string; head_pipeline?: { status: string }; user?: { can_merge?: boolean }; source_project_id?: number; target_project_id?: number; user_notes_count?: number }
 // The comment count and the review request come with the list response the page already loads. macOS: CollaborationAPI.pull.
 const isMe = (c: ReviewAccess, name?: string) => !!name && name.toLowerCase() === c.me.toLowerCase();
-const ghPull = (c: ReviewAccess, p: GHPull): PullRequest => ({ number: p.number, title: p.title, body: p.body ?? "", author: p.user.login ?? "", source: p.head.ref, target: p.base.ref, headSHA: p.head.sha, isDraft: !!p.draft, updated: H.date(p.updated_at), url: p.html_url, fromFork: p.head.repo?.full_name.toLowerCase() !== c.target.path.toLowerCase(), reviewRequested: (p.requested_reviewers ?? []).some((u) => isMe(c, u.login)) });
-const glPull = (c: ReviewAccess, p: GLMerge): PullRequest => ({ number: p.iid, title: p.title, body: p.description ?? "", author: p.author.username ?? "", source: p.source_branch, target: p.target_branch, headSHA: p.sha, isDraft: !!p.draft, updated: H.date(p.updated_at), url: p.web_url, fromFork: p.source_project_id !== p.target_project_id, comments: p.user_notes_count, reviewRequested: (p.reviewers ?? []).some((u) => isMe(c, u.username)) });
+const ghPull = (c: ReviewAccess, p: GHPull): PullRequest => ({ number: p.number, title: p.title, body: p.body ?? "", author: p.user.login ?? "", authorAvatarURL: H.avatarURL(c, p.user.avatar_url), source: p.head.ref, target: p.base.ref, headSHA: p.head.sha, isDraft: !!p.draft, updated: H.date(p.updated_at), url: p.html_url, fromFork: p.head.repo?.full_name.toLowerCase() !== c.target.path.toLowerCase(), reviewRequested: (p.requested_reviewers ?? []).some((u) => isMe(c, u.login)) });
+const glPull = (c: ReviewAccess, p: GLMerge): PullRequest => ({ number: p.iid, title: p.title, body: p.description ?? "", author: p.author.username ?? "", authorAvatarURL: H.avatarURL(c, p.author.avatar_url), source: p.source_branch, target: p.target_branch, headSHA: p.sha, isDraft: !!p.draft, updated: H.date(p.updated_at), url: p.web_url, fromFork: p.source_project_id !== p.target_project_id, comments: p.user_notes_count, reviewRequested: (p.reviewers ?? []).some((u) => isMe(c, u.username)) });
 const ensureCurrent = (c: ReviewAccess) => { if (c.stillCurrent?.() === false) throw new Error(t("The repository or account changed. Reopen this action.")); };
 const send = <T>(c: ReviewAccess, url: string, method = "GET", body?: unknown) => { ensureCurrent(c); return H.send<T>(c.target.provider, url, c.token, method, body); };
 const raw = (c: ReviewAccess, url: string, method: string, body?: unknown) => { ensureCurrent(c); return H.sendRaw(c.target.provider, url, c.token, method, body); };
@@ -149,17 +149,17 @@ export function issueFacts(i: IssueFactsRecord): Pick<InboxItem, "created" | "co
     labels: (i.labels ?? []).map((label) => typeof label === "string" ? { name: label } : { name: label.name ?? "", color: label.color ?? null }).filter((label) => label.name),
   };
 }
-const issue = (i: Issue): InboxItem => ({ id: `issue-${i.number ?? i.iid}`, kind: "issue", number: i.number ?? i.iid ?? 0, title: i.title, url: i.html_url ?? i.web_url ?? "", body: i.body ?? i.description ?? "", state: i.state, updated: H.date(i.updated_at), author: i.user?.login ?? i.author?.username ?? "", unread: false, ...issueFacts(i) });
+const issue = (c: ReviewAccess, i: Issue): InboxItem => ({ id: `issue-${i.number ?? i.iid}`, kind: "issue", number: i.number ?? i.iid ?? 0, title: i.title, url: i.html_url ?? i.web_url ?? "", body: i.body ?? i.description ?? "", state: i.state, updated: H.date(i.updated_at), author: i.user?.login ?? i.author?.username ?? "", authorAvatarURL: H.avatarURL(c, i.user?.avatar_url ?? i.author?.avatar_url), unread: false, ...issueFacts(i) });
 /** 현재 저장소·연결된 계정 범위의 할 일. GitLab 멘션은 서버 To-do를 사용한다. */
 export async function inboxPage(c: ReviewAccess, kind: InboxItem["kind"], page = 1): Promise<{ items: InboxItem[]; more: boolean }> {
   if (kind === "review") {
     const p = await requestPage(c, { scope: "reviewRequested", search: "", page });
-    return { items: p.items.map((p) => ({ id: `review-${p.number}`, kind, number: p.number, title: p.title, url: p.url, body: p.body, author: p.author, updated: p.updated, state: "open", unread: false, isRequest: true })), more: p.more };
+    return { items: p.items.map((p) => ({ id: `review-${p.number}`, kind, number: p.number, title: p.title, url: p.url, body: p.body, author: p.author, authorAvatarURL: p.authorAvatarURL, updated: p.updated, state: "open", unread: false, isRequest: true })), more: p.more };
   }
   if (kind === "issue") {
     const url = c.target.provider === "github" ? `${collaborationRepoURL(c)}/issues?state=open&assignee=${encodeURIComponent(c.me)}&per_page=30&page=${page}` : `${collaborationRepoURL(c)}/issues?state=opened&assignee_username=${encodeURIComponent(c.me)}&per_page=30&page=${page}`;
     const list = await send<Issue[]>(c, url);
-    return { items: list.filter((i) => !i.pull_request).map(issue), more: list.length === 30 };
+    return { items: list.filter((i) => !i.pull_request).map((i) => issue(c, i)), more: list.length === 30 };
   }
   if (c.target.provider === "github") {
     const list = await send<{ id: string; reason: string; unread: boolean; updated_at?: string; subject: { title: string; url?: string; type: string }; repository: { full_name: string } }[]>(c, `${collaborationRepoURL(c)}/notifications?all=true&per_page=30&page=${page}`);
@@ -169,14 +169,14 @@ export async function inboxPage(c: ReviewAccess, kind: InboxItem["kind"], page =
     }), more: list.length === 30 };
   }
   const list = await send<{ id: number; action_name: string; state: string; target_type: string; target_url: string; body: string; updated_at?: string; author: User; project: { path_with_namespace: string }; target: { iid: number; title: string; description?: string; state: string } }[]>(c, `${c.apiBase}/todos?state=pending&per_page=30&page=${page}`);
-  return { items: list.filter((x) => x.project?.path_with_namespace?.toLowerCase() === c.target.path.toLowerCase() && ["Issue", "MergeRequest"].includes(x.target_type) && ["mentioned", "directly_addressed", "review_requested"].includes(x.action_name)).map((x) => ({ id: `mention-${x.id}`, kind, number: x.target.iid, title: x.target.title, body: x.body, url: x.target_url, state: x.target_type, updated: H.date(x.updated_at), author: x.author.username ?? "", unread: true, readID: String(x.id), readProvider: "gitlab", isRequest: x.target_type === "MergeRequest" })), more: list.length === 30 };
+  return { items: list.filter((x) => x.project?.path_with_namespace?.toLowerCase() === c.target.path.toLowerCase() && ["Issue", "MergeRequest"].includes(x.target_type) && ["mentioned", "directly_addressed", "review_requested"].includes(x.action_name)).map((x) => ({ id: `mention-${x.id}`, kind, number: x.target.iid, title: x.target.title, body: x.body, url: x.target_url, state: x.target_type, updated: H.date(x.updated_at), author: x.author.username ?? "", authorAvatarURL: H.avatarURL(c, x.author.avatar_url), unread: true, readID: String(x.id), readProvider: "gitlab", isRequest: x.target_type === "MergeRequest" })), more: list.length === 30 };
 }
 export async function inboxDetail(c: ReviewAccess, item: InboxItem, page = 1): Promise<InboxDetail> {
   const isRequest = !!item.isRequest || item.kind === "review" || /PullRequest|MergeRequest/.test(item.state);
   const base = `${collaborationRepoURL(c)}/${c.target.provider === "github" ? "issues" : isRequest ? "merge_requests" : "issues"}/${item.number}`;
   const detail = await send<Issue>(c, isRequest && c.target.provider === "github" ? reqURL(c, item.number) : base);
   const list = await send<{ id: number; body: string; user?: User; author?: User; created_at?: string; system?: boolean }[]>(c, `${base}/${c.target.provider === "github" ? "comments" : "notes"}?per_page=30&page=${page}`);
-  return { item: { ...item, ...(isRequest ? {} : issueFacts(detail)), title: detail.title, body: detail.body ?? detail.description ?? "", state: detail.state, created: H.date(detail.created_at), updated: H.date(detail.updated_at) ?? item.updated }, page, more: list.length === 30, comments: list.map((n) => ({ id: String(n.id), body: n.body, author: n.user?.login ?? n.author?.username ?? "", date: H.date(n.created_at), editable: !n.system && (n.user?.login ?? n.author?.username ?? "").toLowerCase() === c.me.toLowerCase() })) };
+  return { item: { ...item, ...(isRequest ? {} : issueFacts(detail)), author: detail.user?.login ?? detail.author?.username ?? item.author, authorAvatarURL: H.avatarURL(c, detail.user?.avatar_url ?? detail.author?.avatar_url), title: detail.title, body: detail.body ?? detail.description ?? "", state: detail.state, created: H.date(detail.created_at), updated: H.date(detail.updated_at) ?? item.updated }, page, more: list.length === 30, comments: list.map((n) => ({ id: String(n.id), body: n.body, author: n.user?.login ?? n.author?.username ?? "", authorAvatarURL: H.avatarURL(c, n.user?.avatar_url ?? n.author?.avatar_url), date: H.date(n.created_at), editable: !n.system && (n.user?.login ?? n.author?.username ?? "").toLowerCase() === c.me.toLowerCase() })) };
 }
 export async function postInboxComment(c: ReviewAccess, item: InboxItem, body: string) {
   if (!body.trim()) return;

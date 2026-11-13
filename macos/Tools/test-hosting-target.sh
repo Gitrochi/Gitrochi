@@ -8,7 +8,7 @@ import Foundation
 
 enum Provider: String { case github, gitlab }
 struct RepoTarget { var provider: Provider; var remote: String; var host: String; var path: String }
-struct PullRequest { var number: Int; var title: String; var author: String; var source: String; var target: String; var url: String; var isDraft: Bool; var updated: Date?; var body: String; var headSHA: String?; var fromFork: Bool; var comments: Int? = nil; var reviewRequested = false }
+struct PullRequest { var number: Int; var title: String; var author: String; var source: String; var target: String; var url: String; var isDraft: Bool; var updated: Date?; var body: String; var headSHA: String?; var fromFork: Bool; var comments: Int? = nil; var reviewRequested = false; var authorAvatarURL: String? = nil }
 struct RemoteRepo { var fullName: String; var cloneURL: String; var isPrivate: Bool; var summary: String? }
 @main struct TargetTests {
     static func main() {

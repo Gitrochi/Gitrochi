@@ -64,7 +64,7 @@ export function PullRequestList({ store, target, openSettings, onHide }: { store
         {pr.reviewRequested && scope !== "reviewRequested" && <StatusPill tone="info" icon={<Eye />} className="pr-row-shrink"><span className="ellipsis">{t("Review requested")}</span></StatusPill>}
         <span className="spacer" />
         {!!comments && <span className="pr-row-comments" role="img" aria-label={comments === 1 ? t("1 comment") : t("{0} comments", comments)}><MessageSquare size={11} />{comments}</span>}
-        <span role="img" aria-label={`@${pr.author}`} title={`@${pr.author}`}><Avatar name={pr.author} email={pr.author} size={16} url={ownAvatarURL(store, pr.author)} /></span>
+        <span role="img" aria-label={`@${pr.author}`} title={`@${pr.author}`}><Avatar name={pr.author} email={pr.author} size={16} url={ownAvatarURL(store, pr.author, pr.authorAvatarURL)} /></span>
       </span>
     </button>;
   };

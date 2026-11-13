@@ -194,7 +194,7 @@ struct PullRequestList: View {
                         .accessibilityElement(children: .ignore)
                         .accessibilityLabel(comments == 1 ? String(localized: "1 comment") : String(localized: "\(comments) comments"))
                     }
-                    RequestAuthorAvatar(author: pr.author, size: 16).help(Text(verbatim: "@\(pr.author)")).accessibilityLabel(Text(verbatim: "@\(pr.author)"))
+                    RequestAuthorAvatar(author: pr.author, avatarURL: pr.authorAvatarURL, size: 16).help(Text(verbatim: "@\(pr.author)")).accessibilityLabel(Text(verbatim: "@\(pr.author)"))
                 }
             }
             .padding(.horizontal, 10).padding(.vertical, 8)

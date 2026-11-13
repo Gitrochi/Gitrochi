@@ -8,7 +8,7 @@ import Foundation
 extension String { var trimmed: String { trimmingCharacters(in: .whitespacesAndNewlines) } }
 enum Provider { case github, gitlab }
 struct RepoTarget { let provider: Provider; let host: String; let path: String }
-struct PullRequest { let number: Int; let title: String; let author: String; let source: String; let target: String; let url: String; let isDraft: Bool; let updated: Date?; let body: String; let headSHA: String?; let fromFork: Bool; var comments: Int? = nil; var reviewRequested = false }
+struct PullRequest { let number: Int; let title: String; let author: String; let source: String; let target: String; let url: String; let isDraft: Bool; let updated: Date?; let body: String; let headSHA: String?; let fromFork: Bool; var comments: Int? = nil; var reviewRequested = false; var authorAvatarURL: String? = nil }
 enum Hosting {
     static var handler: (URLRequest) throws -> Data = { _ in fatalError("Unexpected request") }
     static func request(_ p: Provider, _ url: String, token: String, method: String = "GET", body: [String: Any]? = nil) throws -> URLRequest {
@@ -106,14 +106,16 @@ struct RemoteRepo { let fullName:String;let cloneURL:String;let isPrivate:Bool;l
         let reasons=try await AccountWorkAPI.page(gh,kind:"inbox",page:1).0
         precondition(reasons[0].kind == .request&&reasons[0].reason=="review_requested"&&reasons[0].updated==ISO8601DateFormatter().date(from:"2026-11-05T08:57:00Z")&&reasons[0].status.isEmpty, "A GitHub notification keeps its reason and time")
         precondition(reasons[1].kind == .other&&AccountInbox.reason(reasons[1]) == .ciFailed, "A failed run is told from its title")
-        Hosting.handler={r in calls.append(r);return try json(["items":[["id":1,"number":7,"title":"Draft work","body":"What it changes","draft":true,"pull_request":[String:Any](),"user":["login":"sam"],"updated_at":"2026-11-01T00:00:00Z","html_url":"https://github.com/org/other/pull/7","repository_url":"https://api.github.com/repos/org/other","state":"open"]],"total_count":1])}
+        Hosting.handler={r in calls.append(r);return try json(["items":[["id":1,"number":7,"title":"Draft work","body":"What it changes","draft":true,"pull_request":[String:Any](),"user":["login":"sam","avatar_url":"https://avatars.githubusercontent.com/u/103"],"updated_at":"2026-11-01T00:00:00Z","html_url":"https://github.com/org/other/pull/7","repository_url":"https://api.github.com/repos/org/other","state":"open"]],"total_count":1])}
         let draft=try await AccountWorkAPI.page(gh,kind:"review",page:1).0[0]
         precondition(draft.kind == .request&&draft.reason.isEmpty&&draft.status=="draft"&&draft.body=="What it changes"&&draft.author=="sam", "My work keeps a draft's state, text and author")
+        precondition(draft.provider == .github && draft.authorAvatarURL == "https://avatars.githubusercontent.com/u/103", "My work retains the subject author photo")
         let assignedWork=try await AccountWorkAPI.page(gh,kind:"issues",page:1).0[0]
         precondition(assignedWork.kind == .issue)
-        Hosting.handler={r in calls.append(r);return try json([["id":21,"action_name":"mentioned","created_at":"2026-11-03T12:00:00.000Z","author":["username":"sam","name":"Sam"],"target_type":"MergeRequest","target_url":"https://gitlab.example/group/other/-/merge_requests/4","target":["iid":4,"title":"Review","state":"merged","description":"Notes","source_branch":"feature/a","target_branch":"main"],"project":["path_with_namespace":"group/other"]]])}
+        Hosting.handler={r in calls.append(r);return try json([["id":21,"action_name":"mentioned","created_at":"2026-11-03T12:00:00.000Z","author":["username":"sam","name":"Sam","avatar_url":"/uploads/sam.png"],"target_type":"MergeRequest","target_url":"https://gitlab.example/group/other/-/merge_requests/4","target":["iid":4,"title":"Review","state":"merged","description":"Notes","source_branch":"feature/a","target_branch":"main","author":["username":"subject-author","avatar_url":"/uploads/subject-author.png"]],"project":["path_with_namespace":"group/other"]]])}
         let todo=try await AccountWorkAPI.page(gl,kind:"inbox",page:1).0[0]
         precondition(todo.kind == .request&&todo.reason=="mentioned"&&todo.actor=="Sam"&&todo.status=="merged"&&todo.body=="Notes"&&todo.source=="feature/a"&&todo.target=="main"&&todo.updated != nil, "A GitLab to-do describes its request in target")
+        precondition(todo.provider == .gitlab && todo.actorUsername == "sam" && todo.actorAvatarURL == "/uploads/sam.png" && todo.author == "subject-author" && todo.authorAvatarURL == "/uploads/subject-author.png", "Inbox display names keep the actor's matching username and profile photo")
         // ... and what the page says about it
         func row(_ id:String,number:Int=1,kind:AccountWorkItem.Kind = .request,repository:String="sample-studio/desktop",host:String="github.com",unread:Bool=false,reason:String="",actor:String="",title:String?=nil,updated:Date?=nil)->AccountWorkItem{
             var item=AccountWorkItem(id:id,title:title ?? id,repository:repository,host:host,url:"https://github.com/sample-studio/desktop/pull/1",number:number,state:"",author:"",unread:unread,readID:nil,origin:"")

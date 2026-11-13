@@ -69,7 +69,7 @@ struct IssueDetailView: View {
             }
             HStack(spacing: 16) {
                 HStack(spacing: 6) {
-                    Avatar(name: item.author, email: item.author, size: 20)
+                    RequestAuthorAvatar(author: item.author, avatarURL: item.authorAvatarURL, size: 20)
                     Text(verbatim: "@\(item.author)").font(.system(size: 13, weight: .semibold)).lineLimit(1)
                 }
                 // the list row owns the updated date; the detail says when the issue was opened
@@ -131,7 +131,7 @@ struct IssueDetailView: View {
 
     private func comment(_ comment: CollaborationInboxComment) -> some View {
         HStack(alignment: .top, spacing: 10) {
-            Avatar(name: comment.author, email: comment.author, size: 24)
+            RequestAuthorAvatar(author: comment.author, avatarURL: comment.authorAvatarURL, size: 24)
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 8) {
                     Text(verbatim: "@\(comment.author)").font(.system(size: 13, weight: .semibold)).lineLimit(1)
@@ -183,7 +183,7 @@ struct IssueDetailView: View {
                             VStack(alignment: .leading, spacing: 6) {
                                 ForEach(item.assignees, id: \.self) { name in
                                     HStack(spacing: 6) {
-                                        Avatar(name: name, email: name, size: 20)
+                                        RequestAuthorAvatar(author: name, size: 20)
                                         Text(verbatim: "@\(name)").lineLimit(1).truncationMode(.middle)
                                     }
                                 }

@@ -128,12 +128,7 @@ const memberRole = (level?: number): string => {
   }
 };
 export function organizationAvatarURL(c: HubAccess, value: unknown): string | null {
-  if (typeof value !== "string" || !value.trim()) return null;
-  try {
-    const avatar = value.startsWith("/") && !value.startsWith("//") ? new URL(value, c.apiBase) : new URL(value);
-    const allowed = new Set([c.target.host.toLowerCase(), "gravatar.com", "www.gravatar.com", "secure.gravatar.com", ...(c.target.provider === "github" ? ["avatars.githubusercontent.com", "github.com"] : [])]);
-    return avatar.protocol === "https:" && !avatar.username && !avatar.password && allowed.has(avatar.hostname.toLowerCase()) ? avatar.href : null;
-  } catch { return null; }
+  return H.avatarURL(c, value);
 }
 export function hubMember(c: HubAccess, value: J): HubMember {
   const username = value.login ?? value.username ?? String(value.id);

@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { CircleDot, CircleX, Globe } from "@/shared/icons";
 import { ChevronLeft, GitBranch, GitPullRequest, MessageSquare, PanelRight, Plus, RefreshCw, Search } from "@/shared/icons";
-import { IssueDetail } from "@/widgets/inspector";
+import { IssueDetail, ownAvatarURL } from "@/widgets/inspector";
 import type { RepoStore } from "@/entities/repo";
 import {
   accounts, assignedIssueCount, type InboxItem, issueNext, type IssueScope, type IssueSort, issueSummary, issueSummaryCounts, issueSummaryLines,
@@ -216,7 +216,7 @@ function IssueRow({ store, issue, selected, request }: { store: RepoStore; issue
       {request != null && <HostedListChip icon={<GitPullRequest size={11} />}>#{request}</HostedListChip>}
       <span className="spacer" />
       {comments > 0 && <span className="issue-row-comments" role="img" aria-label={comments === 1 ? t("1 comment") : t("{0} comments", comments)}><MessageSquare size={11} />{comments}</span>}
-      {issue.author && <span className="issue-row-author" role="img" aria-label={`@${issue.author}`} data-tip={`@${issue.author}`}><Avatar name={issue.author} email={issue.author} size={16} /></span>}
+      {issue.author && <span className="issue-row-author" role="img" aria-label={`@${issue.author}`} data-tip={`@${issue.author}`}><Avatar name={issue.author} email={issue.author} size={16} url={ownAvatarURL(store, issue.author, issue.authorAvatarURL)} /></span>}
     </HostedListRow>
   );
 }

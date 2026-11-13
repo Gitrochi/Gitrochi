@@ -119,17 +119,28 @@ struct PullRequestCaption: View {
     }
 }
 
-/// A person on a request; the signed-in account carries its photo
+/// Hosting conversations use the server's profile photo, with connected-account and public GitHub fallbacks.
 struct RequestAuthorAvatar: View {
     @Environment(RepoStore.self) private var store
     let author: String
+    var avatarURL: String? = nil
     let size: CGFloat
 
-    var body: some View {
-        if let account = store.hostingAccount, account.username.caseInsensitiveCompare(author) == .orderedSame {
-            HostingAvatar(name: account.name ?? author, username: author, avatarURL: account.avatarURL.flatMap(URL.init(string:)), size: size)
-        } else {
-            Avatar(name: author, email: author, size: size)
+    private var account: HostAccount? {
+        guard let account = store.hostingAccount, account.username.caseInsensitiveCompare(author) == .orderedSame else { return nil }
+        return account
+    }
+
+    private var photoURL: URL? {
+        guard let target = store.target else { return nil }
+        for value in [avatarURL, account?.avatarURL].compactMap({ $0 }) {
+            let resolved = value.hasPrefix("/") ? "https://" + target.host + value : value
+            if let url = HostingHubAPI.safeAvatarURL(provider: target.provider, host: target.host, resolved) { return url }
         }
+        return target.provider == .github ? GitAccountPresentation.avatarURL(host: target.host, username: author) : nil
+    }
+
+    var body: some View {
+        HostingAvatar(name: account?.name ?? author, username: author, avatarURL: photoURL, size: size)
     }
 }

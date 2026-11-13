@@ -398,6 +398,17 @@ private struct AccountWorkPanel: View {
         }
     }
 
+    private func profileAvatarURL(_ item: AccountWorkItem) -> URL? {
+        let username = item.actor.isEmpty ? item.author : item.actorUsername
+        let raw = item.actor.isEmpty ? item.authorAvatarURL : item.actorAvatarURL
+        let own = account.provider == item.provider && account.host == item.host && account.username.caseInsensitiveCompare(username) == .orderedSame
+        for value in [raw, own ? account.avatarURL : nil].compactMap({ $0 }) {
+            let resolved = value.hasPrefix("/") ? "https://" + item.host + value : value
+            if let url = HostingHubAPI.safeAvatarURL(provider: item.provider, host: item.host, resolved) { return url }
+        }
+        return item.provider == .github ? GitAccountPresentation.avatarURL(host: item.host, username: username) : nil
+    }
+
     // MARK: Detail
 
     @ViewBuilder private func detail(_ item: AccountWorkItem?) -> some View {
@@ -416,7 +427,7 @@ private struct AccountWorkPanel: View {
                         let name = item.actor.isEmpty ? item.author : item.actor
                         if !name.isEmpty {
                             HStack(spacing: 6) {
-                                HostingAvatar(name: name, username: item.author.isEmpty ? name : item.author, size: 20)
+                                HostingAvatar(name: name, username: item.actor.isEmpty ? item.author : item.actorUsername, avatarURL: profileAvatarURL(item), size: 20)
                                 // a colour, not the hierarchical style, which would follow the grey of the line
                                 Text(verbatim: item.actor.isEmpty ? "@" + name : name).fontWeight(.semibold).foregroundStyle(Color.primary)
                             }

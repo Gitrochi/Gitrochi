@@ -377,7 +377,7 @@ private struct IssueListColumn: View {
                     .accessibilityLabel(comments == 1 ? String(localized: "1 comment") : String(localized: "\(comments) comments"))
                 }
                 if !item.author.isEmpty {
-                    Avatar(name: item.author, email: item.author, size: 16)
+                    RequestAuthorAvatar(author: item.author, avatarURL: item.authorAvatarURL, size: 16)
                         .help("@" + item.author)
                         .accessibilityLabel("@" + item.author)
                 }

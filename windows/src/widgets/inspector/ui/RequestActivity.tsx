@@ -7,6 +7,7 @@ import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
 import { listWhen, longDate } from "@/shared/lib";
 import { Avatar, Markdown, StatusPill } from "@/shared/ui";
+import { ownAvatarURL } from "../lib/own-avatar";
 import { ReviewThreadActions } from "./ReviewPanels";
 
 type MarkdownLinks = Omit<Parameters<typeof Markdown>[0], "text">;
@@ -31,7 +32,7 @@ function activityItems(comments: ReviewComment[]): ReviewComment[][] {
 export function RequestActivity({ store, review, author, onOpenFile, ...markdown }: { store: RepoStore; review: PullRequestReview; /** the request's author, who gets the Author pill */ author: string; onOpenFile: (path: string) => void } & MarkdownLinks) {
   const when = (comment: ReviewComment) => comment.date != null && <time className="pr-cap" dateTime={new Date(comment.date * 1000).toISOString()} title={longDate(comment.date)}>{listWhen(comment.date)}</time>;
   const article = (comment: ReviewComment) => <article className="pr-comment" key={comment.id}>
-    <span aria-hidden="true"><Avatar name={comment.author} email={comment.author} size={24}/></span>
+    <span aria-hidden="true"><Avatar name={comment.author} email={comment.author} size={24} url={ownAvatarURL(store, comment.author, comment.authorAvatarURL)}/></span>
     <div className="pr-comment-body">
       <header><strong>@{comment.author}</strong>{when(comment)}{comment.author === author && <StatusPill tone="neutral">{t("Author")}</StatusPill>}</header>
       {comment.body && <Markdown text={comment.body} {...markdown}/>}

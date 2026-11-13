@@ -161,14 +161,14 @@ enum Hosting {
     private static func pull(_ p: GHPull, repoPath: String) -> PullRequest {
         PullRequest(number: p.number, title: p.title, author: p.user.login, source: p.head.ref, target: p.base.ref,
                     url: p.htmlUrl, isDraft: p.draft ?? false, updated: date(p.updatedAt), body: p.body ?? "",
-                    headSHA: p.head.sha, fromFork: p.head.repo.map { $0.fullName.lowercased() != repoPath.lowercased() } ?? true)
+                    headSHA: p.head.sha, fromFork: p.head.repo.map { $0.fullName.lowercased() != repoPath.lowercased() } ?? true, authorAvatarURL: p.user.avatarUrl)
     }
 
     private static func merge(_ m: GLMergeRequest) -> PullRequest {
         PullRequest(number: m.iid, title: m.title, author: m.author.username, source: m.sourceBranch, target: m.targetBranch,
                     url: m.webUrl, isDraft: m.draft ?? m.workInProgress ?? false, updated: date(m.updatedAt),
                     body: m.description ?? "", headSHA: m.sha,
-                    fromFork: m.sourceProjectId != nil && m.sourceProjectId != m.targetProjectId)
+                    fromFork: m.sourceProjectId != nil && m.sourceProjectId != m.targetProjectId, authorAvatarURL: m.author.avatarUrl)
     }
 
     // MARK: API

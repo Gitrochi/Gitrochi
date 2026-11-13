@@ -8,7 +8,7 @@ import Foundation
 extension String { var trimmed: String { trimmingCharacters(in: .whitespacesAndNewlines) } }
 enum Provider { case github, gitlab }
 struct RepoTarget { let provider: Provider; let host: String; let path: String }
-struct PullRequest { let number: Int; let title: String; let author: String; let source: String; let target: String; let url: String; let isDraft: Bool; let updated: Date?; let body: String; let headSHA: String?; let fromFork: Bool; var comments: Int? = nil; var reviewRequested = false }
+struct PullRequest { let number: Int; let title: String; let author: String; let source: String; let target: String; let url: String; let isDraft: Bool; let updated: Date?; let body: String; let headSHA: String?; let fromFork: Bool; var comments: Int? = nil; var reviewRequested = false; var authorAvatarURL: String? = nil }
 enum Hosting {
     static var handler: (URLRequest) throws -> Data = { _ in fatalError("Unexpected request") }
     static func request(_ p: Provider, _ url: String, token: String, method: String = "GET", body: [String: Any]? = nil) throws -> URLRequest {
@@ -24,7 +24,7 @@ enum Hosting {
         func json(_ value: Any) throws -> Data { try JSONSerialization.data(withJSONObject: value) }
         let gh = ReviewAccess(target: RepoTarget(provider: .github, host: "github.example", path: "team/repo"), token: "fixture", apiBase: "https://github.example/api", me: "reviewer")
         let gl = ReviewAccess(target: RepoTarget(provider: .gitlab, host: "gitlab.example", path: "team/repo"), token: "fixture", apiBase: "https://gitlab.example/api", me: "reviewer")
-        func pull(_ head: String) -> [String: Any] { ["number": 1, "title": "Request", "body": "Body", "user": ["login": "reviewer"], "head": ["ref": "work", "sha": head, "repo": ["full_name": "team/repo"]], "base": ["ref": "main"], "html_url": "https://github.example/x", "state": "open", "mergeable": true, "mergeable_state": "clean"] }
+        func pull(_ head: String) -> [String: Any] { ["number": 1, "title": "Request", "body": "Body", "user": ["login": "reviewer", "avatar_url": "https://avatars.githubusercontent.com/u/7"], "head": ["ref": "work", "sha": head, "repo": ["full_name": "team/repo"]], "base": ["ref": "main"], "html_url": "https://github.example/x", "state": "open", "mergeable": true, "mergeable_state": "clean"] }
         let repo: [String: Any] = ["state": "success", "total_count": 0, "check_runs": [], "allow_merge_commit": true, "allow_squash_merge": true, "permissions": ["push": true]]
         var head = "head-a", writes = 0
         var requests = 0
@@ -44,8 +44,10 @@ enum Hosting {
         let page = try await CollaborationAPI.requests(gh, RequestQuery(scope: "reviewRequested", search: "fix", page: 2))
         precondition(page.0.map(\.number) == [1] && !page.1 && page.2 != nil && requests == 1, "The list page was not narrowed on the client in one request")
         // The list row's review-requested pill and comment count come from the list response itself.
+        precondition(page.0.first?.authorAvatarURL == "https://avatars.githubusercontent.com/u/7", "The request list preserves another user's profile photo")
         precondition(page.0.first?.reviewRequested == true && page.0.first?.comments == nil, "GitHub's list has the requested reviewers and no comment count")
-        let noted = try CollaborationAPI.pull(gl, ["iid": 7, "title": "T", "author": ["username": "a"], "source_branch": "s", "target_branch": "main", "web_url": "u", "sha": "h", "user_notes_count": 4, "reviewers": [["username": "Reviewer"]]])
+        let noted = try CollaborationAPI.pull(gl, ["iid": 7, "title": "T", "author": ["username": "a", "avatar_url": "/uploads/a.png"], "source_branch": "s", "target_branch": "main", "web_url": "u", "sha": "h", "user_notes_count": 4, "reviewers": [["username": "Reviewer"]]])
+        precondition(noted.authorAvatarURL == "/uploads/a.png", "GitLab profile photos survive request parsing")
         precondition(noted.comments == 4 && noted.reviewRequested, "GitLab's list carries the comment count and the reviewers")
         Hosting.handler = { r in
             let q = URLComponents(url: r.url!, resolvingAgainstBaseURL: false)!.queryItems!
@@ -72,14 +74,20 @@ enum Hosting {
         Hosting.handler = { r in
             if r.url!.path.hasSuffix("/todos") { return try json([["id": 9, "action_name": "mentioned", "target_type": "MergeRequest", "target_url": "https://gitlab.example/x", "body": "Mention", "project": ["path_with_namespace": "team/repo"], "target": ["iid": 7, "title": "Review"], "author": ["username": "other"]]]) }
             if r.httpMethod == "POST" { precondition(r.url!.path.hasSuffix("/merge_requests/7/notes")); return try json([:]) }
-            if r.url!.path.hasSuffix("/notes") { return try json([["id": 3, "body": "note", "author": ["username": "other"], "created_at": "2026-10-02T13:00:00Z"]]) }
-            return try json(["title": "Review", "state": "opened", "description": "Body"])
+            if r.url!.path.hasSuffix("/notes") { return try json([["id": 3, "body": "note", "author": ["username": "other", "avatar_url": "/uploads/other.png"], "created_at": "2026-10-02T13:00:00Z"]]) }
+            return try json(["title": "Review", "state": "opened", "description": "Body", "author": ["username": "request-author", "avatar_url": "/uploads/request-author.png"]])
         }
         let inbox = try await CollaborationAPI.inbox(gl, kind: "mention", page: 1); precondition(inbox.0.count == 1 && inbox.0[0].isRequest)
         let detail = try await CollaborationAPI.detail(gl, item: inbox.0[0], page: 1); precondition(detail.item.isRequest && detail.comments.count == 1 && detail.comments[0].createdAt == "2026-10-02T13:00:00Z")
+        precondition(detail.item.author == "request-author" && detail.item.authorAvatarURL == "/uploads/request-author.png" && detail.comments[0].authorAvatarURL == "/uploads/other.png", "The detail response replaces the notification actor with the actual author and keeps comment photos")
         try await CollaborationAPI.inboxAction(gl, item: detail.item, action: "comment", body: "Reply")
         let state = CollaborationState(); state.inbox = inbox.0; let context = state.contextID; state.reset(); precondition(state.inbox.isEmpty && context != state.contextID)
         let issue = CollaborationInboxItem(id: "issue-7", kind: "issue", number: 7, title: "Search", url: "https://github.example/team/repo/issues/7", body: "", state: "open", author: "reviewer")
+        var refreshed = issue
+        CollaborationAPI.issueFacts(["user": ["login": "actual-author", "avatar_url": "https://avatars.githubusercontent.com/u/8"]], into: &refreshed)
+        precondition(refreshed.author == "actual-author" && refreshed.authorAvatarURL == "https://avatars.githubusercontent.com/u/8", "Issue details restore the author missing from notifications")
+        CollaborationAPI.issueFacts(["user": ["login": "no-photo"]], into: &refreshed)
+        precondition(refreshed.author == "no-photo" && refreshed.authorAvatarURL == nil, "A different author never inherits the previous photo")
         let own = CollaborationInboxComment(id: "12", author: "reviewer", body: "Original", editable: true)
         var editedBody = "Original", commentWrites = 0
         Hosting.handler = { request in

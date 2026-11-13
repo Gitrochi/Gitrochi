@@ -436,6 +436,7 @@ export interface PullRequest {
   number: number;
   title: string;
   author: string;
+  authorAvatarURL?: string | null;
   source: string;
   target: string;
   url: string;

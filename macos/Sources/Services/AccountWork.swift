@@ -27,6 +27,10 @@ struct AccountWorkItem: Identifiable {
     /// A request's branches, when the list carries them
     var source = ""
     var target = ""
+    var provider = Provider.github
+    var authorAvatarURL: String? = nil
+    var actorUsername = ""
+    var actorAvatarURL: String? = nil
 }
 @MainActor enum AccountWorkAPI {
     static func origin(_ c: ReviewAccess, accountID: String = "") -> String {
@@ -161,9 +165,10 @@ struct AccountWorkItem: Identifiable {
             text(record, "state").isEmpty
             ? (text(record, "target_type").isEmpty
                 ? text(subject, "type") : text(record, "target_type")) : text(record, "state")
-        let author =
-            text(obj(record, "user"), "login").isEmpty
-            ? text(obj(record, "author"), "username") : text(obj(record, "user"), "login")
+        let details = kind == "inbox" ? target : record
+        let authorProfile = (details["user"] as? [String: Any]) ?? (details["author"] as? [String: Any])
+            ?? (record["user"] as? [String: Any]) ?? (record["author"] as? [String: Any]) ?? [:]
+        let author = text(authorProfile, "login").isEmpty ? text(authorProfile, "username") : text(authorProfile, "login")
         var item = AccountWorkItem(
             id: "\(kind)-\(id)-\(repository)", title: title, repository: repository,
             host: c.target.host, url: url.absoluteString, number: number, state: state,
@@ -171,6 +176,8 @@ struct AccountWorkItem: Identifiable {
             unread: kind == "inbox"
                 && (c.target.provider == .gitlab || CollaborationAPI.bool(record, "unread")),
             readID: kind == "inbox" ? id : nil, origin: origin(c, accountID: accountID))
+        item.provider = c.target.provider
+        item.authorAvatarURL = authorProfile["avatar_url"] as? String
         // What the list already carries about the subject; nothing more is requested for a row
         let type = text(subject, "type").isEmpty ? text(record, "target_type") : text(subject, "type")
         if kind == "inbox" {
@@ -178,11 +185,12 @@ struct AccountWorkItem: Identifiable {
             item.reason = text(record, "reason").isEmpty ? text(record, "action_name") : text(record, "reason")
             let who = obj(record, "author")
             item.actor = text(who, "name").isEmpty ? text(who, "username") : text(who, "name")
+            item.actorUsername = text(who, "username").isEmpty ? text(who, "login") : text(who, "username")
+            item.actorAvatarURL = who["avatar_url"] as? String
         } else {
             item.kind = ["issues", "myIssues"].contains(kind) ? .issue : .request
         }
         // a GitLab to-do describes its request or issue in `target`; everywhere else the record is the subject
-        let details = kind == "inbox" ? target : record
         item.updated = date(text(record, "updated_at").isEmpty ? text(record, "created_at") : text(record, "updated_at"))
         let draft = CollaborationAPI.bool(details, "draft") || CollaborationAPI.bool(details, "work_in_progress")
         let subjectState = text(details, "state")

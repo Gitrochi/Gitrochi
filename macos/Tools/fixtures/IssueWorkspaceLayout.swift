@@ -5,6 +5,28 @@ import Vision
 
 typealias ViewState<Value> = SwiftUI.State<Value>
 struct Avatar: View { let name: String; let email: String; var size: CGFloat = 28; var body: some View { Text(String(name.prefix(1)).uppercased()).font(.caption.weight(.semibold)).foregroundStyle(Color.accentColor).frame(width: size, height: size).background(Color.accentColor.opacity(0.15), in: Circle()) } }
+/// Keep avatar loading deterministic while exercising the production profile and initials branches.
+@MainActor @Observable final class AvatarStore { static let shared = AvatarStore(); var enabled = true }
+@MainActor var issueFixtureLoadedAvatars = Set<URL>()
+@MainActor let issueFixturePhoto = NSImage(size: NSSize(width: 64, height: 64), flipped: false) { bounds in
+    NSColor(calibratedRed: 0.76, green: 0.84, blue: 0.98, alpha: 1).setFill(); bounds.fill()
+    NSColor(calibratedRed: 0.22, green: 0.32, blue: 0.53, alpha: 1).setFill()
+    NSBezierPath(ovalIn: NSRect(x: 12, y: -12, width: 40, height: 44)).fill()
+    NSColor(calibratedRed: 0.91, green: 0.68, blue: 0.53, alpha: 1).setFill()
+    NSBezierPath(ovalIn: NSRect(x: 20, y: 28, width: 24, height: 28)).fill()
+    return true
+}
+struct IssueFixtureAvatarImage<Content: View>: View {
+    let url: URL?
+    let content: (AsyncImagePhase) -> Content
+    init(url: URL?, @ViewBuilder content: @escaping (AsyncImagePhase) -> Content) { self.url = url; self.content = content }
+    var body: some View {
+        if let url {
+            let _ = issueFixtureLoadedAvatars.insert(url)
+            content(.success(Image(nsImage: issueFixturePhoto)))
+        } else { content(.empty) }
+    }
+}
 @MainActor final class AccountStore { static let shared = AccountStore(); var revision = 0 }
 @MainActor enum CollaborationAPI {
     static func issueLinkedRequests(_ access: ReviewAccess, item: CollaborationInboxItem, page: Int) async throws -> ([IssueLinkedRequest], Bool) { (fixtureLinkedRequests, false) }
@@ -45,8 +67,8 @@ let fixtureLinkedRequests = [IssueLinkedRequest(number: 58, title: "Preserve sea
         for width in [400.0, 660.0] {
             for dark in [false, true] {
                 let store = RepoStore()
-                let item = CollaborationInboxItem(id: "issue-42", kind: "issue", number: 42, title: "Make workspace search easier to use", url: "https://github.com/sample-studio/desktop/issues/42", body: "## A faster path to your project\n\nKeep search results clear and make keyboard navigation predictable.\n\n- [x] Group results by repository\n- [ ] Keep the current selection", state: "open", author: "demo-maintainer", createdAt: "2026-10-27T09:00:00Z")
-                let detail = CollaborationInboxDetail(item: item, comments: [CollaborationInboxComment(id: "12", author: "demo-reviewer", body: "The **keyboard shortcuts** feel much clearer now. Could we keep the search query when switching repositories?", createdAt: "2026-10-28T09:00:00Z"), CollaborationInboxComment(id: "13", author: "demo-maintainer", body: "Yes, that is covered by the linked pull request.\n\n> Keep the query and the active selection together.", createdAt: "2026-10-28T10:00:00Z", editable: true)])
+                let item = CollaborationInboxItem(id: "issue-42", kind: "issue", number: 42, title: "Make workspace search easier to use", url: "https://github.com/sample-studio/desktop/issues/42", body: "## A faster path to your project\n\nKeep search results clear and make keyboard navigation predictable.\n\n- [x] Group results by repository\n- [ ] Keep the current selection", state: "open", author: "demo-maintainer", createdAt: "2026-10-27T09:00:00Z", authorAvatarURL: "https://avatars.githubusercontent.com/u/101")
+                let detail = CollaborationInboxDetail(item: item, comments: [CollaborationInboxComment(id: "12", author: "demo-reviewer", body: "The **keyboard shortcuts** feel much clearer now. Could we keep the search query when switching repositories?", createdAt: "2026-10-28T09:00:00Z", authorAvatarURL: "https://avatars.githubusercontent.com/u/102"), CollaborationInboxComment(id: "13", author: "demo-maintainer", body: "Yes, that is covered by the linked pull request.\n\n> Keep the query and the active selection together.", createdAt: "2026-10-28T10:00:00Z", editable: true, authorAvatarURL: "https://avatars.githubusercontent.com/u/101")])
                 store.collaboration.inboxDetail = detail
                 let bounds = NSRect(x: 0, y: 0, width: width, height: 1100)
                 let host = NSHostingView(rootView: IssueDetailView(detail: detail).environment(store).frame(width: width, height: 1100).background(Color(nsColor: .windowBackgroundColor)).environment(\.locale, Locale(identifier: "en_US")).preferredColorScheme(dark ? .dark : .light))
@@ -59,6 +81,7 @@ let fixtureLinkedRequests = [IssueLinkedRequest(number: 58, title: "Preserve sea
                 let request = VNRecognizeTextRequest(); request.recognitionLevel = .accurate; try VNImageRequestHandler(data: image).perform([request])
                 let text = (request.results ?? []).compactMap { $0.topCandidates(1).first?.string }.joined(separator: "\n")
                 precondition(text.contains("Make workspace search") && text.contains("Development") && text.contains("Create branch"), "Issue workflow missing: \(name)\n\(text)")
+                precondition(issueFixtureLoadedAvatars.contains(URL(string: "https://avatars.githubusercontent.com/u/101")!) && issueFixtureLoadedAvatars.contains(URL(string: "https://avatars.githubusercontent.com/u/102")!), "Issue author and commenter photos must reach the production avatar view")
                 window.orderOut(nil)
             }
         }
