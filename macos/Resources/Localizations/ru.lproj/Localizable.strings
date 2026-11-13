@@ -2107,6 +2107,14 @@
 "No open issues are assigned to you" = "Вам не назначено открытых задач";
 "No runs match this filter." = "Нет запусков, подходящих под фильтр.";
 "No runs on this branch yet" = "В этой ветке пока нет запусков";
+"Loading pull requests…" = "Загрузка pull requests…";
+"Loading merge requests…" = "Загрузка merge requests…";
+"Connect a GitHub account to see pull requests" = "Подключите учётную запись GitHub, чтобы видеть pull requests";
+"Connect a GitLab account to see merge requests" = "Подключите учётную запись GitLab, чтобы видеть merge requests";
+"%@ is on %@. Commits and branches work without an account." = "%1$@ размещён на %2$@. Коммиты и ветки работают без учётной записи.";
+"No pull request to open from here" = "Отсюда нечего открывать как pull request";
+"No merge request to open from here" = "Отсюда нечего открывать как merge request";
+"%@ is the base branch. Switch to another branch to open one." = "%1$@ — базовая ветка. Переключитесь на другую ветку, чтобы открыть его.";
 "Not on the server yet" = "Ещё нет на сервере";
 "Not started" = "Не начато";
 "Nothing is open in %@. Closed issues are under Closed." = "В %@ нет открытых задач. Закрытые задачи находятся в разделе «Закрытые».";

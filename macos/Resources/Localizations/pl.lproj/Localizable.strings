@@ -2091,6 +2091,14 @@
 "No open issues are assigned to you" = "Nie masz przypisanych otwartych zgłoszeń";
 "No runs match this filter." = "Żadne uruchomienie nie pasuje do tego filtra.";
 "No runs on this branch yet" = "Brak uruchomień na tej gałęzi";
+"Loading pull requests…" = "Wczytywanie pull requestów…";
+"Loading merge requests…" = "Wczytywanie merge requestów…";
+"Connect a GitHub account to see pull requests" = "Połącz konto GitHub, aby zobaczyć pull requesty";
+"Connect a GitLab account to see merge requests" = "Połącz konto GitLab, aby zobaczyć merge requesty";
+"%@ is on %@. Commits and branches work without an account." = "%1$@ jest na %2$@. Commity i gałęzie działają bez konta.";
+"No pull request to open from here" = "Stąd nie ma pull requesta do otwarcia";
+"No merge request to open from here" = "Stąd nie ma merge requesta do otwarcia";
+"%@ is the base branch. Switch to another branch to open one." = "%1$@ to gałąź bazowa. Przełącz się na inną gałąź, aby go otworzyć.";
 "Not on the server yet" = "Jeszcze nie na serwerze";
 "Not started" = "Nierozpoczęte";
 "Nothing is open in %@. Closed issues are under Closed." = "W %@ nic nie jest otwarte. Zamknięte zgłoszenia są w zakładce Zamknięte.";

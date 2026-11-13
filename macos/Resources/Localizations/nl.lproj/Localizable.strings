@@ -2058,6 +2058,14 @@
 "No open issues are assigned to you" = "Er zijn geen open issues aan jou toegewezen";
 "No runs match this filter." = "Geen runs voldoen aan dit filter.";
 "No runs on this branch yet" = "Nog geen runs op deze branch";
+"Loading pull requests…" = "Pull requests laden…";
+"Loading merge requests…" = "Merge requests laden…";
+"Connect a GitHub account to see pull requests" = "Koppel een GitHub-account om pull requests te zien";
+"Connect a GitLab account to see merge requests" = "Koppel een GitLab-account om merge requests te zien";
+"%@ is on %@. Commits and branches work without an account." = "%1$@ staat op %2$@. Commits en branches werken zonder account.";
+"No pull request to open from here" = "Geen pull request om vanaf hier te openen";
+"No merge request to open from here" = "Geen merge request om vanaf hier te openen";
+"%@ is the base branch. Switch to another branch to open one." = "%1$@ is de basisbranch. Schakel over naar een andere branch om er een te openen.";
 "Not on the server yet" = "Nog niet op de server";
 "Not started" = "Niet gestart";
 "Nothing is open in %@. Closed issues are under Closed." = "Er staat niets open in %@. Gesloten issues staan onder Gesloten.";

@@ -2093,6 +2093,14 @@
 "No open issues are assigned to you" = "Nincs hozzád rendelt nyitott issue";
 "No runs match this filter." = "Egy futtatás sem felel meg a szűrőnek.";
 "No runs on this branch yet" = "Ezen az ágon még nincs futtatás";
+"Loading pull requests…" = "Pull requestek betöltése…";
+"Loading merge requests…" = "Merge requestek betöltése…";
+"Connect a GitHub account to see pull requests" = "Csatlakoztass egy GitHub-fiókot a pull requestek megtekintéséhez";
+"Connect a GitLab account to see merge requests" = "Csatlakoztass egy GitLab-fiókot a merge requestek megtekintéséhez";
+"%@ is on %@. Commits and branches work without an account." = "A(z) %1$@ itt található: %2$@. A commitok és az ágak fiók nélkül is működnek.";
+"No pull request to open from here" = "Innen nincs megnyitható pull request";
+"No merge request to open from here" = "Innen nincs megnyitható merge request";
+"%@ is the base branch. Switch to another branch to open one." = "A(z) %1$@ az alapág. Válts másik ágra, hogy megnyithass egyet.";
 "Not on the server yet" = "Még nincs a kiszolgálón";
 "Not started" = "Nincs elkezdve";
 "Nothing is open in %@. Closed issues are under Closed." = "Itt semmi sincs nyitva: %@. A lezárt issue-k a Lezárt alatt vannak.";

@@ -2084,6 +2084,14 @@
 "No open issues are assigned to you" = "Nessuna issue aperta è assegnata a te";
 "No runs match this filter." = "Nessuna esecuzione corrisponde a questo filtro.";
 "No runs on this branch yet" = "Ancora nessuna esecuzione su questo branch";
+"Loading pull requests…" = "Caricamento pull request…";
+"Loading merge requests…" = "Caricamento merge request…";
+"Connect a GitHub account to see pull requests" = "Collega un account GitHub per vedere le pull request";
+"Connect a GitLab account to see merge requests" = "Collega un account GitLab per vedere le merge request";
+"%@ is on %@. Commits and branches work without an account." = "%1$@ è su %2$@. Commit e branch funzionano senza account.";
+"No pull request to open from here" = "Nessuna pull request da aprire da qui";
+"No merge request to open from here" = "Nessuna merge request da aprire da qui";
+"%@ is the base branch. Switch to another branch to open one." = "%1$@ è il branch di base. Passa a un altro branch per aprirne una.";
 "Not on the server yet" = "Non ancora sul server";
 "Not started" = "Non iniziate";
 "Nothing is open in %@. Closed issues are under Closed." = "Niente di aperto in %@. Le issue chiuse sono sotto Chiuse.";

@@ -2069,6 +2069,14 @@
 "No open issues are assigned to you" = "Không có issue đang mở nào được giao cho bạn";
 "No runs match this filter." = "Không có lượt chạy nào khớp bộ lọc này.";
 "No runs on this branch yet" = "Nhánh này chưa có lượt chạy nào";
+"Loading pull requests…" = "Đang tải pull request…";
+"Loading merge requests…" = "Đang tải merge request…";
+"Connect a GitHub account to see pull requests" = "Kết nối tài khoản GitHub để xem pull request";
+"Connect a GitLab account to see merge requests" = "Kết nối tài khoản GitLab để xem merge request";
+"%@ is on %@. Commits and branches work without an account." = "%1$@ nằm trên %2$@. Commit và nhánh vẫn dùng được khi không có tài khoản.";
+"No pull request to open from here" = "Không có pull request nào để mở từ đây";
+"No merge request to open from here" = "Không có merge request nào để mở từ đây";
+"%@ is the base branch. Switch to another branch to open one." = "%1$@ là nhánh gốc. Chuyển sang nhánh khác để mở.";
 "Not on the server yet" = "Chưa có trên máy chủ";
 "Not started" = "Chưa bắt đầu";
 "Nothing is open in %@. Closed issues are under Closed." = "Không có gì đang mở trong %@. Issue đã đóng nằm trong mục Đã đóng.";

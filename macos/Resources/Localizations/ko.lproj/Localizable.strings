@@ -3871,6 +3871,14 @@
 "No open issues are assigned to you" = "내가 담당한 열린 이슈가 없습니다";
 "No runs match this filter." = "이 조건에 맞는 실행이 없습니다.";
 "No runs on this branch yet" = "이 브랜치에는 아직 실행이 없습니다";
+"Loading pull requests…" = "풀 리퀘스트 불러오는 중…";
+"Loading merge requests…" = "머지 리퀘스트 불러오는 중…";
+"Connect a GitHub account to see pull requests" = "GitHub 계정을 연결하면 풀 리퀘스트를 볼 수 있습니다";
+"Connect a GitLab account to see merge requests" = "GitLab 계정을 연결하면 머지 리퀘스트를 볼 수 있습니다";
+"%@ is on %@. Commits and branches work without an account." = "%1$@ 저장소는 %2$@에 있습니다. 커밋과 브랜치는 계정 없이도 쓸 수 있습니다.";
+"No pull request to open from here" = "여기서 열 풀 리퀘스트가 없습니다";
+"No merge request to open from here" = "여기서 열 머지 리퀘스트가 없습니다";
+"%@ is the base branch. Switch to another branch to open one." = "%1$@은(는) 기준 브랜치입니다. 다른 브랜치로 전환하면 열 수 있습니다.";
 "Not on the server yet" = "아직 서버에 없음";
 "Not started" = "시작 전";
 "Nothing is open in %@. Closed issues are under Closed." = "%@에 열린 이슈가 없습니다. 닫힌 이슈는 닫힘에 있습니다.";

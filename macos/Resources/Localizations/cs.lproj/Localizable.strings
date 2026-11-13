@@ -2089,6 +2089,14 @@
 "No open issues are assigned to you" = "Nemáte přiřazené žádné otevřené issues";
 "No runs match this filter." = "Tomuto filtru neodpovídá žádný běh.";
 "No runs on this branch yet" = "Na této větvi zatím nejsou žádné běhy";
+"Loading pull requests…" = "Načítání pull requestů…";
+"Loading merge requests…" = "Načítání merge requestů…";
+"Connect a GitHub account to see pull requests" = "Připojte účet GitHub, abyste viděli pull requesty";
+"Connect a GitLab account to see merge requests" = "Připojte účet GitLab, abyste viděli merge requesty";
+"%@ is on %@. Commits and branches work without an account." = "%1$@ je na %2$@. Commity a větve fungují i bez účtu.";
+"No pull request to open from here" = "Odsud není žádný pull request k otevření";
+"No merge request to open from here" = "Odsud není žádný merge request k otevření";
+"%@ is the base branch. Switch to another branch to open one." = "%1$@ je základní větev. Chcete-li nějaký otevřít, přepněte na jinou větev.";
 "Not on the server yet" = "Zatím není na serveru";
 "Not started" = "Nezahájeno";
 "Nothing is open in %@. Closed issues are under Closed." = "V %@ není nic otevřeného. Uzavřené issues jsou pod Uzavřené.";

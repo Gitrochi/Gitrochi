@@ -2095,6 +2095,14 @@
 "No open issues are assigned to you" = "Size atanmış açık issue yok";
 "No runs match this filter." = "Bu filtreyle eşleşen çalıştırma yok.";
 "No runs on this branch yet" = "Bu dalda henüz çalıştırma yok";
+"Loading pull requests…" = "Pull request'ler yükleniyor…";
+"Loading merge requests…" = "Merge request'ler yükleniyor…";
+"Connect a GitHub account to see pull requests" = "Pull request'leri görmek için bir GitHub hesabı bağlayın";
+"Connect a GitLab account to see merge requests" = "Merge request'leri görmek için bir GitLab hesabı bağlayın";
+"%@ is on %@. Commits and branches work without an account." = "%1$@, %2$@ üzerinde. Commit'ler ve dallar hesap olmadan da çalışır.";
+"No pull request to open from here" = "Buradan açılacak pull request yok";
+"No merge request to open from here" = "Buradan açılacak merge request yok";
+"%@ is the base branch. Switch to another branch to open one." = "%1$@ temel daldır. Açmak için başka bir dala geçin.";
 "Not on the server yet" = "Henüz sunucuda değil";
 "Not started" = "Başlanmadı";
 "Nothing is open in %@. Closed issues are under Closed." = "%@ içinde açık bir şey yok. Kapalı issue'lar Kapalı altında.";
