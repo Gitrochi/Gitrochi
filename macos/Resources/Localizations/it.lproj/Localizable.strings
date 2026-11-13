@@ -77,6 +77,9 @@
 "Merges %@ into this branch" = "Unisce %@ in questo ramo";
 "More file actions" = "Altre azioni del file";
 "More job actions" = "Altre azioni del job";
+"1 test failed:" = "1 test non riuscito:";
+"%lld tests failed:" = "%lld test non riusciti:";
+"More step actions" = "Altre azioni del passaggio";
 "More merge request actions" = "Altre azioni della merge request";
 "More pull request actions" = "Altre azioni della pull request";
 "More release actions" = "Altre azioni sulla release";

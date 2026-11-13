@@ -77,6 +77,9 @@
 "Merges %@ into this branch" = "Scala %@ z tą gałęzią";
 "More file actions" = "Więcej działań pliku";
 "More job actions" = "Więcej działań zadania";
+"1 test failed:" = "1 test nie powiódł się:";
+"%lld tests failed:" = "Testy zakończone niepowodzeniem (%lld):";
+"More step actions" = "Więcej działań kroku";
 "More merge request actions" = "Więcej działań merge requesta";
 "More pull request actions" = "Więcej działań pull requesta";
 "More release actions" = "Więcej działań na wydaniu";

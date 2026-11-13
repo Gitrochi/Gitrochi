@@ -77,6 +77,9 @@
 "Merges %@ into this branch" = "Сольёт %@ в эту ветку";
 "More file actions" = "Другие действия с файлом";
 "More job actions" = "Другие действия с заданием";
+"1 test failed:" = "1 тест не пройден:";
+"%lld tests failed:" = "Тестов не пройдено (%lld):";
+"More step actions" = "Другие действия с шагом";
 "More merge request actions" = "Другие действия с merge request";
 "More pull request actions" = "Другие действия с pull request";
 "More release actions" = "Другие действия с релизом";

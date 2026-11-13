@@ -77,6 +77,9 @@
 "Merges %@ into this branch" = "Menggabungkan %@ ke cabang ini";
 "More file actions" = "Tindakan file lainnya";
 "More job actions" = "Tindakan job lainnya";
+"1 test failed:" = "1 pengujian gagal:";
+"%lld tests failed:" = "%lld pengujian gagal:";
+"More step actions" = "Tindakan langkah lainnya";
 "More merge request actions" = "Tindakan merge request lainnya";
 "More pull request actions" = "Tindakan pull request lainnya";
 "More release actions" = "Tindakan rilis lainnya";

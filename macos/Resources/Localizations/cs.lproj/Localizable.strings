@@ -77,6 +77,9 @@
 "Merges %@ into this branch" = "Sloučí %@ do této větve";
 "More file actions" = "Další akce souboru";
 "More job actions" = "Další akce úlohy";
+"1 test failed:" = "1 test selhal:";
+"%lld tests failed:" = "Neúspěšné testy (%lld):";
+"More step actions" = "Další akce kroku";
 "More merge request actions" = "Další akce merge requestu";
 "More pull request actions" = "Další akce pull requestu";
 "More release actions" = "Další akce vydání";

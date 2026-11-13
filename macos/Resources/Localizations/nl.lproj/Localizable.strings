@@ -77,6 +77,9 @@
 "Merges %@ into this branch" = "Voegt %@ samen in deze branch";
 "More file actions" = "Meer bestandsacties";
 "More job actions" = "Meer jobacties";
+"1 test failed:" = "1 test mislukt:";
+"%lld tests failed:" = "%lld tests mislukt:";
+"More step actions" = "Meer stapacties";
 "More merge request actions" = "Meer acties voor merge request";
 "More pull request actions" = "Meer acties voor pull request";
 "More release actions" = "Meer release-acties";

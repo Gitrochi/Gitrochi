@@ -76,6 +76,9 @@
 "Merges %@ into this branch" = "%@ をこのブランチにマージします";
 "More file actions" = "ファイルのその他の操作";
 "More job actions" = "ジョブのその他の操作";
+"1 test failed:" = "1 件のテストが失敗:";
+"%lld tests failed:" = "%lld 件のテストが失敗:";
+"More step actions" = "ステップのその他の操作";
 "More merge request actions" = "マージリクエストのその他の操作";
 "More pull request actions" = "プルリクエストのその他の操作";
 "More release actions" = "その他のリリース操作";

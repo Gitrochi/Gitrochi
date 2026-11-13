@@ -77,6 +77,9 @@
 "Merges %@ into this branch" = "Об'єднає %@ у цю гілку";
 "More file actions" = "Інші дії з файлом";
 "More job actions" = "Інші дії із завданням";
+"1 test failed:" = "1 тест не пройдено:";
+"%lld tests failed:" = "Тестів не пройдено (%lld):";
+"More step actions" = "Інші дії з кроком";
 "More merge request actions" = "Інші дії з merge request";
 "More pull request actions" = "Інші дії з pull request";
 "More release actions" = "Інші дії з релізом";

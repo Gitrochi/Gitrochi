@@ -77,6 +77,9 @@
 "Merges %@ into this branch" = "รวม %@ เข้าสาขานี้";
 "More file actions" = "การทำงานอื่นของไฟล์";
 "More job actions" = "การทำงานอื่นของจ็อบ";
+"1 test failed:" = "ทดสอบไม่ผ่าน 1 รายการ:";
+"%lld tests failed:" = "ทดสอบไม่ผ่าน %lld รายการ:";
+"More step actions" = "การทำงานอื่นของขั้นตอน";
 "More merge request actions" = "การทำงานอื่นของเมิร์จรีเควสต์";
 "More pull request actions" = "การทำงานอื่นของพูลรีเควสต์";
 "More release actions" = "การทำงานอื่นของรีลีส";

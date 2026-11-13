@@ -77,6 +77,9 @@
 "Merges %@ into this branch" = "将 %@ 合并到此分支";
 "More file actions" = "更多文件操作";
 "More job actions" = "更多作业操作";
+"1 test failed:" = "1 个测试失败:";
+"%lld tests failed:" = "%lld 个测试失败:";
+"More step actions" = "更多步骤操作";
 "More merge request actions" = "更多合并请求操作";
 "More pull request actions" = "更多拉取请求操作";
 "More release actions" = "更多发布操作";

@@ -77,6 +77,9 @@
 "Merges %@ into this branch" = "%@ egyesítése ebbe az ágba";
 "More file actions" = "További fájlműveletek";
 "More job actions" = "További jobműveletek";
+"1 test failed:" = "1 teszt sikertelen:";
+"%lld tests failed:" = "%lld teszt sikertelen:";
+"More step actions" = "További lépésműveletek";
 "More merge request actions" = "További merge request-műveletek";
 "More pull request actions" = "További pull request-műveletek";
 "More release actions" = "További kiadásműveletek";
