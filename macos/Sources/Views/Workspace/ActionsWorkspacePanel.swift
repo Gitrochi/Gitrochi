@@ -119,22 +119,20 @@ private struct RunSummaryCard: View {
     let compact: Bool
 
     private var provider: Provider { store.target?.provider ?? .github }
-    private var loading: Bool { store.ciPipelines.isEmpty && (store.ciState == .loading || store.ciState == .idle) }
 
     var body: some View {
         let ref = store.ciCurrentRef
         let history = ActionsPage.history(store.ciPipelines, ref: ref)
         let streak = ActionsPage.streak(history)
         let name = ref ?? store.headBranch ?? String(localized: "Detached HEAD")
+        let card = ActionsPage.summaryCard(history: history.count, runs: store.ciPipelines.count,
+                                           loading: store.ciState == .loading || store.ciState == .idle, loaded: store.ciState == .loaded)
         HostedListSummary(compact: compact) {
             HostedListSummaryCaption(text: String(localized: "This branch"))
             // a branch name is cut from the front, where it says least
             Text(verbatim: name).font(.system(size: 15, weight: .semibold)).lineLimit(1).truncationMode(.head)
-            if loading {
-                HStack(spacing: 6) {
-                    ProgressView().controlSize(.mini)
-                    HostedListSummaryCaption(text: String(localized: "Loading runs…"))
-                }
+            if card == .loading {
+                HostedListSummaryLoadingLine(caption: String(localized: "Loading runs…"))
             } else if let base = baseRun(ref) {
                 HStack(spacing: 6) {
                     CIStatusIcon(status: base.status, size: 11)
@@ -144,12 +142,11 @@ private struct RunSummaryCard: View {
                 }
             }
         } middle: {
-            if history.isEmpty {
-                // said only once the runs arrived: a list that could not be read has not shown there are none
-                if store.ciState == .loaded {
-                    HostedListSummaryCaption(text: String(localized: "No runs on this branch yet")).frame(maxWidth: .infinity, alignment: .leading)
-                }
-            } else {
+            switch card {
+            case .loading: HostedListSummaryBars()
+            case .empty: HostedListSummaryMessage(title: String(localized: "No runs on this branch yet"))
+            case .unknown: Color.clear
+            case .runs:
                 VStack(spacing: 8) {
                     if let label = label(streak) {
                         Text(verbatim: label.0).font(.system(size: 12, weight: .semibold)).foregroundStyle(label.1.text).lineLimit(1)
@@ -163,14 +160,16 @@ private struct RunSummaryCard: View {
                 .accessibilityLabel(label(streak)?.0 ?? "")
             }
         } trail: {
-            trail(streak, history: history)
+            if card == .loading { HostedListSummaryBar() } else { trail(streak, history: history) }
         } strip: {
-            if let latest = history.last { CIStatusIcon(status: latest.status, size: 13) }
+            if card == .loading { ProgressView().controlSize(.mini) } else if let latest = history.last { CIStatusIcon(status: latest.status, size: 13) }
             Text(verbatim: name).font(.system(size: 12, weight: .semibold)).lineLimit(1).truncationMode(.head)
             if let label = label(streak) {
                 Text(verbatim: label.0).font(.system(size: 12, weight: .semibold)).foregroundStyle(label.1.text).lineLimit(1).layoutPriority(1)
-            } else if loading {
+            } else if card == .loading {
                 HostedListSummaryCaption(text: String(localized: "Loading runs…"))
+            } else if card == .empty {
+                HostedListSummaryCaption(text: String(localized: "No runs on this branch yet"))
             }
             Spacer(minLength: 8)
             if case .failed(let run) = streak { showRun(run) }

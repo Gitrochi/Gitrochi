@@ -50,6 +50,16 @@ export function runHistory(runs: CIPipeline[], ref: string | null, limit = 3): C
   return branch.filter((run) => run.name === branch[0]?.name).slice(0, limit).reverse();
 }
 
+/** Which state the summary card is in (macOS: ActionsPage.SummaryCard) */
+export type RunSummaryCard = "loading" | "empty" | "unknown" | "runs";
+
+/** "No runs on this branch" is said only by a list that was read: one that could not be has not shown there are none */
+export function runSummaryCard(history: number, runs: number, loading: boolean, loaded: boolean): RunSummaryCard {
+  if (history > 0) return "runs";
+  if (runs > 0 || loaded) return "empty";
+  return loading ? "loading" : "unknown";
+}
+
 export type RunStreak =
   | { kind: "none" }
   /** The latest runs all passed */

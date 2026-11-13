@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  ciDuration, commonWorkflow, jobGroups, runBaseRef, runCount, runHistory, runSegments, runStreak, runTook, visibleRuns,
+  ciDuration, commonWorkflow, jobGroups, runBaseRef, runCount, runHistory, runSegments, runStreak, runSummaryCard, runTook, visibleRuns,
 } from "@/entities/ci/model/actions-page";
 import type { CIJob, CIPipeline, CIStatus } from "@/entities/ci/model/types";
 
@@ -69,5 +69,16 @@ describe("Actions page", () => {
   it("writes how long a job took in minutes and seconds", () => {
     expect(ciDuration(192)).toBe("3m 12s");
     expect(ciDuration(41.4)).toBe("41s");
+  });
+
+  it("gives the summary card a state from the first frame and says there are no runs only after a read", () => {
+    expect(runSummaryCard(0, 0, true, false)).toBe("loading");
+    expect(runSummaryCard(0, 0, false, true)).toBe("empty");
+    // a list that could not be read has not shown there are none
+    expect(runSummaryCard(0, 0, false, false)).toBe("unknown");
+    // a refresh keeps what the last read said: runs, but none on this branch
+    expect(runSummaryCard(0, 4, true, false)).toBe("empty");
+    expect(runSummaryCard(3, 4, true, false)).toBe("runs");
+    expect(runSummaryCard(3, 4, false, true)).toBe("runs");
   });
 });
