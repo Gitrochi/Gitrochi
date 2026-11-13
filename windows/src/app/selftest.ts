@@ -1045,7 +1045,7 @@ export async function runSelfTest(): Promise<boolean> {
 
   await step("설정 화면", async () => {
     window.dispatchEvent(new KeyboardEvent("keydown", { key: ",", ctrlKey: !isMacLike(), metaKey: isMacLike(), bubbles: true }));
-    const ok = await until(() => !!document.querySelector(".modal") && document.body.innerText.includes("사내 GitLab"), 3000);
+    const ok = await until(() => !!document.querySelector(".modal") && document.body.innerText.includes(t("Hosting accounts")), 3000);
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
     await sleep(200);
     return [ok, ""];

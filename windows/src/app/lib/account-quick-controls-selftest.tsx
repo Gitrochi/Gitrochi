@@ -9,13 +9,28 @@ import { t } from "@/shared/i18n";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const until = async (check: () => boolean) => { for (let attempt = 0; attempt < 125; attempt++) { if (check()) return true; await sleep(20); } return false; };
+/**
+ * A step closes what it opened. A dialog, sheet, popover or menu left in the document takes the keys from every step
+ * after it (the app's shortcuts stand down while a `.modal-backdrop` exists), so a leftover fails the step that left it.
+ */
+export async function leavingNothingBehind(run: () => Promise<[boolean, string]>): Promise<[boolean, string]> {
+  const open = () => [...document.querySelectorAll(".modal-backdrop, .account-quick-popover, .menu")];
+  const before = new Set(open());
+  const result = await run();
+  await until(() => open().every((element) => before.has(element)));
+  const left = open().filter((element) => !before.has(element));
+  return left.length ? [false, `The step left open: ${left.map((element) => element.className).join(", ")}${result[0] ? "" : ` (${result[1]})`}`] : result;
+}
+
 const popover = () => document.querySelector<HTMLElement>(".account-quick-popover");
 const inPopover = (label: string) => Array.from(popover()?.querySelectorAll<HTMLButtonElement>("button") ?? []).find((item) => item.textContent?.trim() === t(label));
 const menuItem = (label: string) => [...document.querySelectorAll<HTMLElement>(".menu .menu-item")].find((item) => item.querySelector(".label")?.textContent === label);
 const drawing = (root: ParentNode, status: string) => root.querySelector(`[data-status="${status}"] svg`)?.innerHTML ?? "";
 
 /** The account button and its popover, without touching real accounts or sign-in: photo and badge, the reason, Change…, the three state drawings. */
-export async function accountQuickControlsSelfTest(): Promise<[boolean, string]> {
+export const accountQuickControlsSelfTest = () => leavingNothingBehind(accountButtonStep);
+
+async function accountButtonStep(): Promise<[boolean, string]> {
   const original = { accounts: accounts.accounts, accountFor: accounts.accountFor, preferredID: accounts.preferredID, status: accounts.status, start: gitch.startBrowserLogin, state: gitch.browserLoginStatus, cancel: gitch.cancelBrowserLogin };
   const host = document.createElement("div"); document.body.append(host);
   const root = createRoot(host), store = new RepoStore();
@@ -111,7 +126,9 @@ export async function accountQuickControlsSelfTest(): Promise<[boolean, string]>
 }
 
 /** Without a repository the popover lists the accounts and never badges the button; without an account it offers the one Add account sheet. */
-export async function accountQuickControlsWithoutRepositorySelfTest(): Promise<[boolean, string]> {
+export const accountQuickControlsWithoutRepositorySelfTest = () => leavingNothingBehind(accountsWithoutRepositoryStep);
+
+async function accountsWithoutRepositoryStep(): Promise<[boolean, string]> {
   const original = { accounts: accounts.accounts, status: accounts.status };
   const host = document.createElement("div"); document.body.append(host);
   const root = createRoot(host);
@@ -119,9 +136,17 @@ export async function accountQuickControlsWithoutRepositorySelfTest(): Promise<[
   const carol: HostAccount = { id: "bare-carol", provider: "gitlab", server: "https://gitlab.example.com", username: "carol", name: "Carol", avatarURL: null };
   const trigger = () => host.querySelector<HTMLButtonElement>(".account-quick-trigger");
   const opened: unknown[] = [];
-  const onSettings = (event: Event) => { event.stopImmediatePropagation(); opened.push((event as CustomEvent).detail); };
-  // the step listens first, so the app's own listener does not open Settings over the next steps
-  window.addEventListener("gitrochi-open-settings", onSettings, true);
+  const onSettings = (event: Event) => { opened.push((event as CustomEvent).detail); };
+  window.addEventListener("gitrochi-open-settings", onSettings);
+  // In the app the event really opens Settings (a listener here can't stop the app's own). Close it again, or its
+  // backdrop stays over every step after this one.
+  const settingsDialog = () => document.querySelector<HTMLElement>(".modal-backdrop > .modal");
+  const closeSettings = async () => {
+    await until(() => !!settingsDialog() || opened.length > 0);
+    for (let turn = 0; turn < 15 && !settingsDialog(); turn++) await sleep(20);
+    Array.from(settingsDialog()?.querySelectorAll<HTMLButtonElement>(".modal-footer button") ?? []).find((item) => item.textContent?.trim() === t("Close"))?.click();
+    return until(() => !settingsDialog());
+  };
   try {
     accounts.accounts = [alice, carol]; accounts.status = (account) => (account.id === alice.id ? "expired" : "signedIn");
     const store = new RepoStore();
@@ -138,6 +163,7 @@ export async function accountQuickControlsWithoutRepositorySelfTest(): Promise<[
     inPopover("Manage accounts…")!.click();
     if (!await until(() => opened.length === 1 && !popover())) return [false, "Manage accounts… did not ask for Settings"];
     if (opened[0] !== "accounts") return [false, `Manage accounts… must open Settings › Accounts: ${String(opened[0])}`];
+    if (!await closeSettings()) return [false, "The Settings window Manage accounts… opened could not be closed"];
     trigger()!.click();
     if (!await until(() => !!inPopover("Inbox"))) return [false, "The popover did not reopen"];
     inPopover("Inbox")!.click();
@@ -166,7 +192,8 @@ export async function accountQuickControlsWithoutRepositorySelfTest(): Promise<[
     if (!await until(() => !document.querySelector(".add-account-sheet"))) return [false, "The Add account sheet did not close"];
     return [true, "The accounts are listed with their states and no badge; Manage accounts… and Inbox lead to Settings › Accounts and the Account page; without an account the one filled button opens the Add account sheet"];
   } finally {
-    window.removeEventListener("gitrochi-open-settings", onSettings, true);
+    window.removeEventListener("gitrochi-open-settings", onSettings);
+    await closeSettings();
     root.unmount(); await sleep(25); host.remove(); popover()?.remove();
     accounts.accounts = original.accounts; accounts.status = original.status;
   }

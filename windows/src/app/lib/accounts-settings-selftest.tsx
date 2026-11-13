@@ -5,6 +5,7 @@ import { gitch } from "@/entities/gitch";
 import { accounts } from "@/entities/hosting";
 import { t } from "@/shared/i18n";
 import { AccountsSettings } from "@/widgets/settings";
+import { leavingNothingBehind } from "./account-quick-controls-selftest";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const until = async (check: () => boolean) => { for (let attempt = 0; attempt < 125; attempt++) { if (check()) return true; await sleep(20); } return false; };
@@ -12,7 +13,9 @@ const menuItems = () => [...document.querySelectorAll<HTMLElement>(".menu .menu-
 const menuItem = (label: string) => [...document.querySelectorAll<HTMLElement>(".menu .menu-item")].find((item) => item.querySelector(".label")?.textContent === t(label));
 
 /** Settings › Accounts lists hosting accounts and Git identities, opens the one Add account sheet, and is where an account is removed, after asking. */
-export async function accountsSettingsSelfTest(): Promise<[boolean, string]> {
+export const accountsSettingsSelfTest = () => leavingNothingBehind(accountsSettingsStep);
+
+async function accountsSettingsStep(): Promise<[boolean, string]> {
   const original = { accounts: accounts.accounts, status: accounts.status, disconnect: accounts.disconnect, identities: gitch.accounts };
   const host = document.createElement("div"); host.style.width = "600px"; document.body.append(host);
   const root = createRoot(host);
