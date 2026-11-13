@@ -2740,5 +2740,13 @@
   "Agent executable not found": "Виконуваний файл агента не знайдено",
   "Enter a new branch name": "Введіть назву нової гілки",
   "Confirm the risk first": "Спочатку підтвердьте ризик",
-  "New flow…": "Новий потік…"
+  "New flow…": "Новий потік…",
+  "Running {0}": "Виконується {0}",
+  "{0} of {1} steps done": "Виконано кроків: {0} з {1}",
+  "Open run…": "Відкрити запуск…",
+  "Latest run passed": "Останній запуск пройшов успішно",
+  "Latest run failed at {0}": "Останній запуск завершився збоєм на кроці {0}",
+  "Latest run: {0}": "Останній запуск: {0}",
+  "Skipped: {0}": "Пропущено: {0}",
+  "Run flow starts each step on this computer once the steps it needs have passed.": "«Запустити потік» виконує кожен крок на цьому комп’ютері, щойно успішно завершено кроки, від яких він залежить."
 }

@@ -2737,5 +2737,13 @@
   "Agent executable not found": "Agent-Programm nicht gefunden",
   "Enter a new branch name": "Namen des neuen Branches eingeben",
   "Confirm the risk first": "Zuerst das Risiko bestätigen",
-  "New flow…": "Neuer Ablauf…"
+  "New flow…": "Neuer Ablauf…",
+  "Running {0}": "{0} läuft",
+  "{0} of {1} steps done": "{0} von {1} Schritten erledigt",
+  "Open run…": "Ausführung öffnen…",
+  "Latest run passed": "Letzte Ausführung erfolgreich",
+  "Latest run failed at {0}": "Letzte Ausführung bei {0} fehlgeschlagen",
+  "Latest run: {0}": "Letzte Ausführung: {0}",
+  "Skipped: {0}": "Übersprungen: {0}",
+  "Run flow starts each step on this computer once the steps it needs have passed.": "„Ablauf ausführen“ startet jeden Schritt auf diesem Computer, sobald die benötigten Schritte erfolgreich waren."
 }

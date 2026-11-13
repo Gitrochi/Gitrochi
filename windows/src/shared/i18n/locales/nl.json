@@ -2695,5 +2695,13 @@
   "Agent executable not found": "Uitvoerbaar bestand van agent niet gevonden",
   "Enter a new branch name": "Voer een nieuwe branchnaam in",
   "Confirm the risk first": "Bevestig eerst het risico",
-  "New flow…": "Nieuwe flow…"
+  "New flow…": "Nieuwe flow…",
+  "Running {0}": "{0} wordt uitgevoerd",
+  "{0} of {1} steps done": "{0} van {1} stappen klaar",
+  "Open run…": "Run openen…",
+  "Latest run passed": "Laatste run geslaagd",
+  "Latest run failed at {0}": "Laatste run mislukt bij {0}",
+  "Latest run: {0}": "Laatste run: {0}",
+  "Skipped: {0}": "Overgeslagen: {0}",
+  "Run flow starts each step on this computer once the steps it needs have passed.": "Flow uitvoeren start elke stap op deze computer zodra de vereiste stappen zijn geslaagd."
 }

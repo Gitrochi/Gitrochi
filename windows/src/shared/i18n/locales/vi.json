@@ -2697,5 +2697,13 @@
   "Agent executable not found": "Không tìm thấy tệp thực thi của agent",
   "Enter a new branch name": "Nhập tên nhánh mới",
   "Confirm the risk first": "Hãy xác nhận rủi ro trước",
-  "New flow…": "Luồng mới…"
+  "New flow…": "Luồng mới…",
+  "Running {0}": "Đang chạy {0}",
+  "{0} of {1} steps done": "Đã xong {0}/{1} bước",
+  "Open run…": "Mở lượt chạy…",
+  "Latest run passed": "Lượt chạy mới nhất đã đạt",
+  "Latest run failed at {0}": "Lượt chạy mới nhất thất bại tại {0}",
+  "Latest run: {0}": "Lượt chạy mới nhất: {0}",
+  "Skipped: {0}": "Đã bỏ qua: {0}",
+  "Run flow starts each step on this computer once the steps it needs have passed.": "Chạy luồng sẽ bắt đầu từng bước trên máy tính này khi các bước nó cần đã đạt."
 }

@@ -2724,5 +2724,13 @@
   "Agent executable not found": "Nie znaleziono pliku wykonywalnego agenta",
   "Enter a new branch name": "Wpisz nazwę nowej gałęzi",
   "Confirm the risk first": "Najpierw potwierdź ryzyko",
-  "New flow…": "Nowy przepływ…"
+  "New flow…": "Nowy przepływ…",
+  "Running {0}": "Trwa {0}",
+  "{0} of {1} steps done": "Ukończono {0} z {1} kroków",
+  "Open run…": "Otwórz uruchomienie…",
+  "Latest run passed": "Ostatnie uruchomienie zakończyło się powodzeniem",
+  "Latest run failed at {0}": "Ostatnie uruchomienie nie powiodło się w kroku {0}",
+  "Latest run: {0}": "Ostatnie uruchomienie: {0}",
+  "Skipped: {0}": "Pominięto: {0}",
+  "Run flow starts each step on this computer once the steps it needs have passed.": "Uruchomienie przepływu startuje każdy krok na tym komputerze, gdy wymagane przez niego kroki zakończą się powodzeniem."
 }

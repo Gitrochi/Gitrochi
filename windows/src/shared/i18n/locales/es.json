@@ -2777,5 +2777,13 @@
   "Agent executable not found": "No se encontró el ejecutable del agente",
   "Enter a new branch name": "Introduce el nombre de la nueva rama",
   "Confirm the risk first": "Confirma primero el riesgo",
-  "New flow…": "Nuevo flujo…"
+  "New flow…": "Nuevo flujo…",
+  "Running {0}": "Ejecutando {0}",
+  "{0} of {1} steps done": "{0} de {1} pasos completados",
+  "Open run…": "Abrir ejecución…",
+  "Latest run passed": "La última ejecución pasó",
+  "Latest run failed at {0}": "La última ejecución falló en {0}",
+  "Latest run: {0}": "Última ejecución: {0}",
+  "Skipped: {0}": "Omitido: {0}",
+  "Run flow starts each step on this computer once the steps it needs have passed.": "Ejecutar flujo inicia cada paso en este equipo cuando los pasos que necesita han pasado."
 }

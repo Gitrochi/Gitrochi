@@ -2695,5 +2695,13 @@
   "Agent executable not found": "File eksekusi agen tidak ditemukan",
   "Enter a new branch name": "Masukkan nama branch baru",
   "Confirm the risk first": "Konfirmasi risikonya terlebih dahulu",
-  "New flow…": "Alur baru…"
+  "New flow…": "Alur baru…",
+  "Running {0}": "Menjalankan {0}",
+  "{0} of {1} steps done": "{0} dari {1} langkah selesai",
+  "Open run…": "Buka run…",
+  "Latest run passed": "Run terbaru lulus",
+  "Latest run failed at {0}": "Run terbaru gagal di {0}",
+  "Latest run: {0}": "Run terbaru: {0}",
+  "Skipped: {0}": "Dilewati: {0}",
+  "Run flow starts each step on this computer once the steps it needs have passed.": "Jalankan alur memulai setiap langkah di komputer ini setelah langkah yang dibutuhkannya lulus."
 }

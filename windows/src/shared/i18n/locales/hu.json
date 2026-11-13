@@ -2725,5 +2725,13 @@
   "Agent executable not found": "Az ügynök futtatható fájlja nem található",
   "Enter a new branch name": "Adja meg az új ág nevét",
   "Confirm the risk first": "Előbb erősítse meg a kockázatot",
-  "New flow…": "Új folyamat…"
+  "New flow…": "Új folyamat…",
+  "Running {0}": "Fut: {0}",
+  "{0} of {1} steps done": "{1} lépésből {0} kész",
+  "Open run…": "Futtatás megnyitása…",
+  "Latest run passed": "A legutóbbi futtatás sikeres volt",
+  "Latest run failed at {0}": "A legutóbbi futtatás itt hibázott: {0}",
+  "Latest run: {0}": "Legutóbbi futtatás: {0}",
+  "Skipped: {0}": "Kihagyva: {0}",
+  "Run flow starts each step on this computer once the steps it needs have passed.": "A folyamat futtatása minden lépést ezen a számítógépen indít el, amint az előfeltétel-lépések sikeresek."
 }

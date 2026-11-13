@@ -2875,5 +2875,13 @@
   "Agent executable not found": "找不到代理的可执行文件",
   "Enter a new branch name": "请输入新分支名称",
   "Confirm the risk first": "请先确认风险",
-  "New flow…": "新建流程…"
+  "New flow…": "新建流程…",
+  "Running {0}": "正在运行 {0}",
+  "{0} of {1} steps done": "已完成 {0}/{1} 个步骤",
+  "Open run…": "打开运行…",
+  "Latest run passed": "最近一次运行已通过",
+  "Latest run failed at {0}": "最近一次运行在 {0} 失败",
+  "Latest run: {0}": "最近一次运行：{0}",
+  "Skipped: {0}": "已跳过：{0}",
+  "Run flow starts each step on this computer once the steps it needs have passed.": "“运行流程”会在所依赖的步骤通过后，在这台电脑上依次启动每个步骤。"
 }

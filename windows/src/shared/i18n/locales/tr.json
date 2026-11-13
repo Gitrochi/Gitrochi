@@ -2728,5 +2728,13 @@
   "Agent executable not found": "Ajanın çalıştırılabilir dosyası bulunamadı",
   "Enter a new branch name": "Yeni dal adını girin",
   "Confirm the risk first": "Önce riski onaylayın",
-  "New flow…": "Yeni akış…"
+  "New flow…": "Yeni akış…",
+  "Running {0}": "{0} çalışıyor",
+  "{0} of {1} steps done": "{1} adımdan {0} tanesi tamamlandı",
+  "Open run…": "Çalıştırmayı aç…",
+  "Latest run passed": "Son çalıştırma başarılı",
+  "Latest run failed at {0}": "Son çalıştırma {0} adımında başarısız oldu",
+  "Latest run: {0}": "Son çalıştırma: {0}",
+  "Skipped: {0}": "Atlandı: {0}",
+  "Run flow starts each step on this computer once the steps it needs have passed.": "Akışı çalıştır, her adımı gerektirdiği adımlar başarılı olunca bu bilgisayarda başlatır."
 }

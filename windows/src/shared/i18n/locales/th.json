@@ -2735,5 +2735,13 @@
   "Agent executable not found": "ไม่พบไฟล์โปรแกรมของเอเจนต์",
   "Enter a new branch name": "ป้อนชื่อแบรนช์ใหม่",
   "Confirm the risk first": "ยืนยันความเสี่ยงก่อน",
-  "New flow…": "โฟลว์ใหม่…"
+  "New flow…": "โฟลว์ใหม่…",
+  "Running {0}": "กำลังรัน {0}",
+  "{0} of {1} steps done": "เสร็จแล้ว {0} จาก {1} ขั้นตอน",
+  "Open run…": "เปิดการรัน…",
+  "Latest run passed": "การรันล่าสุดผ่านแล้ว",
+  "Latest run failed at {0}": "การรันล่าสุดล้มเหลวที่ {0}",
+  "Latest run: {0}": "การรันล่าสุด: {0}",
+  "Skipped: {0}": "ข้ามแล้ว: {0}",
+  "Run flow starts each step on this computer once the steps it needs have passed.": "รันโฟลว์จะเริ่มแต่ละขั้นตอนบนคอมพิวเตอร์เครื่องนี้เมื่อขั้นตอนที่ต้องรอผ่านแล้ว"
 }

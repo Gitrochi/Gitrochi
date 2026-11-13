@@ -4694,5 +4694,13 @@
   "Agent executable not found": "에이전트 실행 파일을 찾을 수 없습니다",
   "Enter a new branch name": "새 브랜치 이름을 입력하세요",
   "Confirm the risk first": "먼저 위험을 확인하세요",
-  "New flow…": "새 흐름…"
+  "New flow…": "새 흐름…",
+  "Running {0}": "{0} 실행 중",
+  "{0} of {1} steps done": "{1}단계 중 {0}단계 완료",
+  "Open run…": "실행 열기…",
+  "Latest run passed": "최근 실행이 통과했습니다",
+  "Latest run failed at {0}": "최근 실행이 {0}에서 실패했습니다",
+  "Latest run: {0}": "최근 실행: {0}",
+  "Skipped: {0}": "건너뜀: {0}",
+  "Run flow starts each step on this computer once the steps it needs have passed.": "흐름 실행을 누르면 각 단계가 선행 단계를 통과한 뒤 이 컴퓨터에서 차례로 실행됩니다."
 }

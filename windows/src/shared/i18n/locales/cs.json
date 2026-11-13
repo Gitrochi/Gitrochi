@@ -2723,5 +2723,13 @@
   "Agent executable not found": "Spustitelný soubor agenta nenalezen",
   "Enter a new branch name": "Zadejte název nové větve",
   "Confirm the risk first": "Nejprve potvrďte riziko",
-  "New flow…": "Nový tok…"
+  "New flow…": "Nový tok…",
+  "Running {0}": "Běží {0}",
+  "{0} of {1} steps done": "Hotovo {0} z {1} kroků",
+  "Open run…": "Otevřít běh…",
+  "Latest run passed": "Poslední běh prošel",
+  "Latest run failed at {0}": "Poslední běh selhal v kroku {0}",
+  "Latest run: {0}": "Poslední běh: {0}",
+  "Skipped: {0}": "Přeskočeno: {0}",
+  "Run flow starts each step on this computer once the steps it needs have passed.": "Spustit tok spustí každý krok na tomto počítači, jakmile projdou kroky, které vyžaduje."
 }

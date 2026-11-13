@@ -2745,5 +2745,13 @@
   "Agent executable not found": "找不到代理程式的執行檔",
   "Enter a new branch name": "請輸入新分支名稱",
   "Confirm the risk first": "請先確認風險",
-  "New flow…": "新增流程…"
+  "New flow…": "新增流程…",
+  "Running {0}": "正在執行 {0}",
+  "{0} of {1} steps done": "已完成 {0}/{1} 個步驟",
+  "Open run…": "開啟執行…",
+  "Latest run passed": "最近一次執行已通過",
+  "Latest run failed at {0}": "最近一次執行在 {0} 失敗",
+  "Latest run: {0}": "最近一次執行：{0}",
+  "Skipped: {0}": "已略過：{0}",
+  "Run flow starts each step on this computer once the steps it needs have passed.": "「執行流程」會在所相依的步驟通過後，在這台電腦上依序啟動每個步驟。"
 }

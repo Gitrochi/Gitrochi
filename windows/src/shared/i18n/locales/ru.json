@@ -2740,5 +2740,13 @@
   "Agent executable not found": "Исполняемый файл агента не найден",
   "Enter a new branch name": "Введите имя новой ветки",
   "Confirm the risk first": "Сначала подтвердите риск",
-  "New flow…": "Новый поток…"
+  "New flow…": "Новый поток…",
+  "Running {0}": "Выполняется {0}",
+  "{0} of {1} steps done": "Выполнено шагов: {0} из {1}",
+  "Open run…": "Открыть запуск…",
+  "Latest run passed": "Последний запуск прошёл успешно",
+  "Latest run failed at {0}": "Последний запуск завершился сбоем на шаге {0}",
+  "Latest run: {0}": "Последний запуск: {0}",
+  "Skipped: {0}": "Пропущено: {0}",
+  "Run flow starts each step on this computer once the steps it needs have passed.": "«Запустить поток» выполняет каждый шаг на этом компьютере, как только успешно завершены шаги, от которых он зависит."
 }
