@@ -1,45 +1,51 @@
 import SwiftUI
 
-/// A selectable dependency canvas shared by flow previews and live or saved runs.
+/// A scrollable dependency canvas shared by plans, live runs and saved runs. Each card reads top to bottom: how the
+/// step did, its name, what it is for, and the command it runs. A connector means "needs": the step on the right
+/// starts only after the step on the left has passed. (Windows: FlowGraph.tsx)
 struct FlowGraphView: View {
     struct Node: Identifiable {
         let id: String
-        let title: String
+        /// The step's own words, when the flow file gives any
+        let title: String?
         let block: String
         let needs: [String]
+        /// nil before any run: the card shows a hollow circle
         let state: String?
-        let subtitle: String
+        /// The step's script; the card shows its first real line
+        let command: String?
+        var durationMs: Int? = nil
 
-        init(id: String, title: String, block: String, needs: [String], state: String?, subtitle: String) {
-            self.id = id; self.title = title; self.block = block; self.needs = needs; self.state = state; self.subtitle = subtitle
+        init(id: String, title: String?, block: String, needs: [String], state: String?, command: String?, durationMs: Int? = nil) {
+            self.id = id; self.title = title; self.block = block; self.needs = needs
+            self.state = state; self.command = command; self.durationMs = durationMs
         }
 
-        init(_ node: FlowPlan.Node) {
-            id = node.id
-            title = node.title ?? node.id
-            block = node.block
-            needs = node.needs
-            state = node.decision == "skip" ? "SKIPPED" : node.decision == "rejected" ? "REJECTED" : nil
-            subtitle = node.run?.split(separator: "\n").first.map(String.init) ?? node.executor ?? node.block
+        /// A planned step with the latest run laid over it
+        init(_ step: FlowWorkspaceSummary.Step) {
+            self.init(id: step.id, title: step.node.title, block: step.node.block, needs: step.node.needs,
+                      state: step.state, command: step.node.run, durationMs: step.durationMs)
         }
 
+        /// A step of a run; the run's events carry no script
         init(_ node: FlowRunView.Node) {
-            id = node.id
-            title = node.title
-            block = node.block
-            needs = node.needs
-            state = node.state.rawValue
-            subtitle = node.durationMs.map(FlowFormat.duration) ?? FlowFormat.stateTitle(node.state.rawValue)
+            self.init(id: node.id, title: node.title, block: node.block, needs: node.needs,
+                      state: node.state.rawValue, command: nil, durationMs: node.durationMs)
         }
     }
 
+    /// The zoom control and the gap under it, which the canvas does not get
+    private static let controlsHeight: CGFloat = 36
+    private static let warningHeight: CGFloat = 24
+
     let nodes: [Node]
     @Binding var selected: String?
+    /// nil follows the size of the canvas ("Fit") until the person zooms
     @ViewState private var zoom: CGFloat? = 1
+    /// Where the person dragged each card, from its laid-out place
     @ViewState private var offsets: [String: CGSize] = [:]
     @ViewState private var dragStarts: [String: CGSize] = [:]
     @FocusState private var graphFocused: Bool
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     init(nodes: [Node], selected: Binding<String?>, initialFit: Bool = false) {
         self.nodes = nodes
@@ -49,57 +55,17 @@ struct FlowGraphView: View {
 
     var body: some View {
         let layout = positionedLayout()
-        let warningHeight: CGFloat = (layout.missingDependencies.isEmpty ? 0 : 26) + (layout.unresolved.isEmpty ? 0 : 26)
+        let unarranged = layout.missingDependencies + layout.unresolved
         GeometryReader { geometry in
-            let fit = FlowGraphLayout.fit(layout, viewport: CGSize(width: geometry.size.width, height: geometry.size.height - warningHeight))
-            let scale = zoom ?? fit
-            VStack(spacing: 0) {
-                controls(scale: scale)
-                if !layout.missingDependencies.isEmpty {
-                    dependencyWarning("Some dependencies refer to missing modules.", details: layout.missingDependencies)
-                }
-                if !layout.unresolved.isEmpty {
-                    dependencyWarning("Some dependencies cannot be resolved. Check for cycles.", details: layout.unresolved)
-                }
-                ScrollView([.horizontal, .vertical]) {
-                    ZStack(alignment: .topLeading) {
-                        FlowCanvasInteraction(onZoom: { factor in
-                            if factor < 1, scale <= 0.1 { return }
-                            zoom = min(2.5, max(0.1, scale * factor))
-                        })
-                        connections(layout)
-                        ForEach(layout.items, id: \.id) { item in
-                            if let node = nodes.first(where: { $0.id == item.id }) {
-                                card(node)
-                                    .frame(width: FlowGraphLayout.cardWidth, height: FlowGraphLayout.cardHeight)
-                                    .offset(x: item.x, y: item.y)
-                                    .simultaneousGesture(DragGesture(minimumDistance: 5).onChanged { value in
-                                        selected = item.id
-                                        graphFocused = true
-                                        if dragStarts[item.id] == nil { dragStarts[item.id] = offsets[item.id] ?? .zero }
-                                        let start = dragStarts[item.id] ?? .zero
-                                        offsets[item.id] = boundedOffset(id: item.id, x: start.width + value.translation.width / scale, y: start.height + value.translation.height / scale)
-                                    }.onEnded { _ in dragStarts[item.id] = nil })
-                            }
-                        }
-                    }
-                    .frame(width: layout.width, height: layout.height, alignment: .topLeading)
-                    .scaleEffect(scale, anchor: .topLeading)
-                    .frame(width: layout.width * scale, height: layout.height * scale, alignment: .topLeading)
-                    .frame(minWidth: max(0, geometry.size.width - 2), minHeight: max(0, geometry.size.height - 44 - warningHeight), alignment: .center)
-                }
-                .background {
-                    Canvas { context, size in
-                        for x in stride(from: CGFloat(12), to: size.width, by: 24) {
-                            for y in stride(from: CGFloat(12), to: size.height, by: 24) {
-                                context.fill(Path(ellipseIn: CGRect(x: x, y: y, width: 1.5, height: 1.5)), with: .color(.secondary.opacity(0.14)))
-                            }
-                        }
-                    }
-                }
+            let viewport = CGSize(width: geometry.size.width,
+                                  height: max(0, geometry.size.height - Self.controlsHeight - (unarranged.isEmpty ? 0 : Self.warningHeight)))
+            let scale = zoom ?? FlowGraphLayout.fit(layout, viewport: viewport)
+            VStack(alignment: .trailing, spacing: 0) {
+                controls(scale: scale).padding(.bottom, Self.controlsHeight - 28)
+                canvas(layout, scale: scale, viewport: viewport)
+                if !unarranged.isEmpty { warning(unarranged) }
             }
         }
-        .background(Color(nsColor: .windowBackgroundColor))
         .focusable()
         .focused($graphFocused)
         .focusEffectDisabled()
@@ -123,55 +89,131 @@ struct FlowGraphView: View {
         .accessibilityIdentifier("flow-dependency-graph")
     }
 
-    private func controls(scale: CGFloat) -> some View {
-        ViewThatFits(in: .horizontal) {
-            HStack(spacing: 8) {
-                Label("Dependency graph", symbol: "point.3.connected.trianglepath.dotted")
-                    .font(.caption.weight(.medium)).foregroundStyle(.secondary).fixedSize()
-                Spacer(minLength: 0)
-                zoomControls(scale: scale)
+    // MARK: Canvas
+
+    private func canvas(_ layout: FlowGraphLayout.Layout, scale: CGFloat, viewport: CGSize) -> some View {
+        let byID = Dictionary(nodes.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        return ScrollView([.horizontal, .vertical]) {
+            ZStack(alignment: .topLeading) {
+                FlowCanvasInteraction(onZoom: { factor in
+                    if factor < 1, scale <= 0.1 { return }
+                    zoom = min(2.5, max(0.1, scale * factor))
+                })
+                connections(layout)
+                ForEach(layout.items, id: \.id) { item in
+                    if let node = byID[item.id] {
+                        FlowStepCard(node: node, selected: selected == node.id) { pick(node.id) }
+                            .frame(width: FlowGraphLayout.cardWidth, height: FlowGraphLayout.cardHeight)
+                            .offset(x: item.x, y: item.y)
+                            .simultaneousGesture(DragGesture(minimumDistance: 5).onChanged { value in
+                                pick(item.id)
+                                if dragStarts[item.id] == nil { dragStarts[item.id] = offsets[item.id] ?? .zero }
+                                let start = dragStarts[item.id] ?? .zero
+                                offsets[item.id] = boundedOffset(id: item.id, x: start.width + value.translation.width / scale, y: start.height + value.translation.height / scale)
+                            }.onEnded { _ in dragStarts[item.id] = nil })
+                    }
+                }
+                if nodes.isEmpty {
+                    Text("This flow has no steps.").font(.system(size: 12)).foregroundStyle(HostedList.caption)
+                        .padding(FlowGraphLayout.margin)
+                }
             }
-            HStack(spacing: 0) { Spacer(minLength: 0); zoomControls(scale: scale) }
+            .frame(width: layout.width, height: layout.height, alignment: .topLeading)
+            .scaleEffect(scale, anchor: .topLeading)
+            .frame(width: layout.width * scale, height: layout.height * scale, alignment: .topLeading)
+            // the background stays draggable where the graph is smaller than the canvas
+            .frame(minWidth: max(0, viewport.width - 2), minHeight: max(0, viewport.height - 2), alignment: .topLeading)
         }
-        .buttonStyle(.borderless)
-        .padding(.horizontal, 14).padding(.vertical, 8)
-        .background(Color(nsColor: .windowBackgroundColor).opacity(0.96))
     }
 
-    private func zoomControls(scale: CGFloat) -> some View {
-        HStack(spacing: 8) {
-            Button { zoom = max(0.1, scale - 0.15) } label: { SymbolIcon("minus.magnifyingglass") }
+    /// Connectors under the cards: neutral, red only on the failed path, dashed into a skipped step, with a dot
+    /// where each one arrives
+    private func connections(_ layout: FlowGraphLayout.Layout) -> some View {
+        Canvas { context, _ in
+            let positions = Dictionary(layout.items.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+            let states = Dictionary(nodes.map { ($0.id, $0.state) }, uniquingKeysWith: { first, _ in first })
+            var edges: [(path: Path, end: CGPoint, look: FlowWorkspaceSummary.EdgeLook)] = []
+            for node in nodes {
+                guard let target = positions[node.id] else { continue }
+                for dependency in Set(node.needs) {
+                    guard let source = positions[dependency] else { continue }
+                    let start = CGPoint(x: source.x + FlowGraphLayout.cardWidth, y: source.y + FlowGraphLayout.cardHeight / 2)
+                    let end = CGPoint(x: target.x, y: target.y + FlowGraphLayout.cardHeight / 2)
+                    let middle = (start.x + end.x) / 2
+                    var path = Path()
+                    path.move(to: start)
+                    path.addCurve(to: end, control1: CGPoint(x: middle, y: start.y), control2: CGPoint(x: middle, y: end.y))
+                    edges.append((path, end, FlowWorkspaceSummary.edgeLook(from: states[dependency] ?? nil, to: node.state)))
+                }
+            }
+            // the failed path is drawn last, so a neutral connector never crosses over it
+            for edge in edges.filter({ !$0.look.failed }) + edges.filter({ $0.look.failed }) {
+                let color = edge.look.failed ? Color.red : HostedList.edge
+                context.stroke(edge.path, with: .color(color), style: StrokeStyle(lineWidth: 2, lineCap: .round, dash: edge.look.dashed ? [4, 4] : []))
+                context.fill(Path(ellipseIn: CGRect(x: edge.end.x - 3, y: edge.end.y - 3, width: 6, height: 6)), with: .color(color))
+            }
+        }
+        .accessibilityHidden(true)
+        .allowsHitTesting(false)
+    }
+
+    private func warning(_ details: [String]) -> some View {
+        Text("Some dependencies could not be arranged. Check the flow configuration.")
+            .font(.system(size: 12)).foregroundStyle(StudioStyle.Tone.waiting.text).lineLimit(1)
+            .frame(maxWidth: .infinity, minHeight: Self.warningHeight, alignment: .leading)
+            .help(details.joined(separator: "\n"))
+    }
+
+    // MARK: Zoom control
+
+    private func controls(scale: CGFloat) -> some View {
+        HStack(spacing: 2) {
+            Button { zoom = max(0.1, scale / 1.2) } label: { DesignIconImage(icon: .minus, size: 13) }
                 .help("Zoom out").accessibilityLabel("Zoom out").disabled(scale <= 0.1)
-            Text(scale, format: .percent.precision(.fractionLength(0))).font(.caption.monospacedDigit()).foregroundStyle(.secondary).frame(width: 34)
-            Button { zoom = min(2.5, scale + 0.15) } label: { SymbolIcon("plus.magnifyingglass") }
+            Text(scale, format: .percent.precision(.fractionLength(0)))
+                .font(.system(size: 11, design: .monospaced)).frame(minWidth: 40)
+            Button { zoom = min(2.5, scale * 1.2) } label: { DesignIconImage(icon: .plus, size: 13) }
                 .help("Zoom in").accessibilityLabel("Zoom in").disabled(scale >= 2.5)
-            Divider().frame(height: 12)
-            Button("Fit") { zoom = nil }.help("Fit graph to view")
-            Button { offsets = [:]; zoom = 1 } label: { SymbolIcon("arrow.counterclockwise") }
-                .help("Reset layout").accessibilityLabel("Reset layout")
+            Rectangle().fill(StudioStyle.border).frame(width: 1, height: 16)
+            Button { zoom = nil } label: {
+                Text("Fit").font(.system(size: 12, weight: .medium)).padding(.horizontal, 8).frame(height: 24).contentShape(Rectangle())
+            }
+            .buttonStyle(.plain).help("Fit graph to view")
+            // only once a card was moved: there is nothing to reset before that
+            if !offsets.isEmpty {
+                Button { offsets = [:]; zoom = 1 } label: { SymbolIcon("arrow.counterclockwise") }
+                    .help("Reset layout").accessibilityLabel("Reset layout")
+            }
         }
-        .fixedSize().accessibilityElement(children: .contain).accessibilityLabel("Dependency graph")
-        .padding(.horizontal, 9).padding(.vertical, 5)
-        .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 7))
-        .overlay(RoundedRectangle(cornerRadius: 7).stroke(Color.primary.opacity(0.06)))
+        .buttonStyle(PullRequestIconButtonStyle())
+        .padding(.horizontal, 2).frame(height: 28)
+        .background(RoundedRectangle(cornerRadius: 6).fill(StudioStyle.surface))
+        .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(HostedList.edge))
+        .fixedSize()
+        .accessibilityElement(children: .contain).accessibilityLabel("Dependency graph")
     }
 
+    // MARK: Moving cards
+
+    private func pick(_ id: String) {
+        if selected != id { selected = id }
+        graphFocused = true
+    }
+
+    private var inputs: [FlowGraphLayout.Input] { nodes.map { .init(id: $0.id, needs: $0.needs) } }
+
+    /// The layout with each dragged card at its own place, and the canvas grown to hold it
     private func positionedLayout() -> FlowGraphLayout.Layout {
-        let original = FlowGraphLayout.make(nodes.map { .init(id: $0.id, needs: $0.needs) })
+        let original = FlowGraphLayout.make(inputs)
+        let margin = FlowGraphLayout.margin
         let items = original.items.map { item in
             let offset = offsets[item.id] ?? .zero
-            return FlowGraphLayout.Item(id: item.id, x: max(12, item.x + offset.width), y: max(12, item.y + offset.height))
+            return FlowGraphLayout.Item(id: item.id, x: max(margin, item.x + offset.width), y: max(margin, item.y + offset.height))
         }
-        return .init(items: items, width: max(original.width, (items.map(\.x).max() ?? 0) + FlowGraphLayout.cardWidth + 28),
-                     height: max(original.height, (items.map(\.y).max() ?? 0) + FlowGraphLayout.cardHeight + 28),
+        return .init(items: items,
+                     width: max(original.width, (items.map(\.x).max() ?? 0) + FlowGraphLayout.cardWidth + margin),
+                     height: max(original.height, (items.map(\.y).max() ?? 0) + FlowGraphLayout.cardHeight + margin),
                      missingDependencies: original.missingDependencies, unresolved: original.unresolved)
-    }
-
-    private func dependencyWarning(_ title: LocalizedStringKey, details: [String]) -> some View {
-        Label(title, symbol: "exclamationmark.triangle")
-            .font(.caption).foregroundStyle(.orange).lineLimit(1)
-            .padding(.horizontal, 12).frame(maxWidth: .infinity, minHeight: 26, alignment: .leading)
-            .background(Color.orange.opacity(0.05)).help(details.joined(separator: "\n"))
     }
 
     private func moveSelected(x: CGFloat, y: CGFloat) {
@@ -180,105 +222,56 @@ struct FlowGraphView: View {
         offsets[selected] = boundedOffset(id: selected, x: current.width + x, y: current.height + y)
     }
 
+    /// A card never leaves the canvas at the top or the left
     private func boundedOffset(id: String, x: CGFloat, y: CGFloat) -> CGSize {
-        let base = FlowGraphLayout.make(nodes.map { .init(id: $0.id, needs: $0.needs) }).items.first { $0.id == id }
-        return CGSize(width: max(12 - (base?.x ?? 28), x), height: max(12 - (base?.y ?? 28), y))
+        let margin = FlowGraphLayout.margin
+        let base = FlowGraphLayout.make(inputs).items.first { $0.id == id }
+        return CGSize(width: max(margin - (base?.x ?? margin), x), height: max(margin - (base?.y ?? margin), y))
     }
+}
 
-    private func connections(_ layout: FlowGraphLayout.Layout) -> some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 24, paused: reduceMotion || !nodes.contains { $0.state == "RUNNING" })) { timeline in
-            Canvas { context, _ in
-                let positions = Dictionary(uniqueKeysWithValues: layout.items.map { ($0.id, $0) })
-                for node in nodes {
-                    guard let target = positions[node.id] else { continue }
-                    for dependency in Set(node.needs) {
-                        guard let source = positions[dependency] else { continue }
-                        let start = CGPoint(x: source.x + FlowGraphLayout.cardWidth, y: source.y + FlowGraphLayout.cardHeight / 2)
-                        let end = CGPoint(x: target.x, y: target.y + FlowGraphLayout.cardHeight / 2)
-                        let bend = max(28, abs(end.x - start.x) / 2)
-                        var path = Path()
-                        path.move(to: start)
-                        path.addCurve(to: end, control1: CGPoint(x: start.x + bend, y: start.y), control2: CGPoint(x: end.x - bend, y: end.y))
-                        let color = connectionColor(node, source: dependency)
-                        context.stroke(path, with: .color(color.opacity(0.5)), style: StrokeStyle(lineWidth: 1.6, lineCap: .round))
-                        if node.state == "RUNNING" {
-                            let phase = reduceMotion ? 0 : -CGFloat(timeline.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 60) * 15)
-                            context.stroke(path, with: .color(color), style: StrokeStyle(lineWidth: 2, lineCap: .round, dash: [4, 7], dashPhase: phase))
-                        }
-                        var arrow = Path()
-                        arrow.move(to: CGPoint(x: end.x - 7, y: end.y - 3.5))
-                        arrow.addLine(to: end)
-                        arrow.addLine(to: CGPoint(x: end.x - 7, y: end.y + 3.5))
-                        context.stroke(arrow, with: .color(color.opacity(0.8)), style: StrokeStyle(lineWidth: 1.5, lineCap: .round, lineJoin: .round))
+/// One step: its state (a hollow circle before any run), its id and how long it took; then what it is for, in its own
+/// words or as its kind; then the first line it runs. Selection is the tint alone; a skipped step has a dashed edge.
+private struct FlowStepCard: View {
+    let node: FlowGraphView.Node
+    let selected: Bool
+    let pick: () -> Void
+    @ViewState private var hovered = false
+
+    var body: some View {
+        let skipped = node.state == "SKIPPED"
+        let failed = FlowWorkspaceSummary.tone(node.state) == .failed
+        let duration = node.durationMs.map(FlowFormat.duration)
+        let shape = RoundedRectangle(cornerRadius: 10)
+        Button(action: pick) {
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 6) {
+                    FlowStateIcon(state: node.state, size: 14, spins: true)
+                    Text(verbatim: node.id).font(.system(size: 13, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(skipped ? HostedList.caption : Color.primary)
+                        .lineLimit(1).truncationMode(.tail).frame(maxWidth: .infinity, alignment: .leading)
+                    if let duration {
+                        Text(verbatim: duration).font(.system(size: 11, design: .monospaced))
+                            .foregroundStyle(failed ? StudioStyle.Tone.failed.text : HostedList.caption).fixedSize()
                     }
                 }
-            }
-        }
-        .accessibilityHidden(true)
-        .allowsHitTesting(false)
-    }
-
-    private func connectionColor(_ node: Node, source: String) -> Color {
-        if let state = node.state, !["PENDING", "SKIPPED"].contains(state) { return FlowStateIcon.look(state).1 }
-        if let state = nodes.first(where: { $0.id == source })?.state, ["PASSED", "SUCCEEDED", "CACHED"].contains(state) { return .green }
-        return selected == node.id || selected == source ? .accentColor : .secondary.opacity(0.6)
-    }
-
-    private func card(_ node: Node) -> some View {
-        let active = selected == node.id
-        let category = FlowBlockStyle.look(node.block)
-        let stateColor = node.state.map { FlowStateIcon.look($0).1 } ?? category.color
-        return Button { selected = node.id; graphFocused = true } label: {
-            VStack(alignment: .leading, spacing: 10) {
-                HStack(spacing: 8) {
-                    SymbolIcon(category.icon)
-                        .font(.system(size: 13, weight: .medium)).foregroundStyle(category.color)
-                        .frame(width: 28, height: 28).background(category.color.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(node.id).font(.system(size: 12, weight: .semibold)).lineLimit(1)
-                        Text(category.title).font(.system(size: 9, weight: .medium)).foregroundStyle(.secondary).lineLimit(1)
-                    }
-                    Spacer(minLength: 0)
-                    FlowStatusBadge(state: node.state, compact: true)
+                Text(verbatim: FlowWorkspaceSummary.stepSummary(id: node.id, title: node.title) ?? FlowBlockStyle.look(node.block).title)
+                    .font(.system(size: 12)).foregroundStyle(HostedList.caption).lineLimit(1)
+                if let command = FlowWorkspaceSummary.stepCommand(node.command) {
+                    Text(verbatim: command).font(.system(size: 11, design: .monospaced)).foregroundStyle(HostedList.caption).lineLimit(1)
                 }
-                Text(node.subtitle).font(.system(size: 10, design: .monospaced)).foregroundStyle(.secondary).lineLimit(1)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                HStack(spacing: 5) {
-                    Text(node.title != "Command" && node.title != node.id ? node.title : node.block)
-                        .font(.system(size: 9)).foregroundStyle(.secondary).lineLimit(1)
-                    Spacer(minLength: 0)
-                    if !node.needs.isEmpty {
-                        DesignIconImage(icon: .branch, size: 8)
-                        Text("\(node.needs.count)").font(.system(size: 9, design: .monospaced))
-                    }
-                }.foregroundStyle(.tertiary)
             }
-            .padding(12)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            .background {
-                RoundedRectangle(cornerRadius: 12).fill(Color(nsColor: .controlBackgroundColor))
-                RoundedRectangle(cornerRadius: 12).fill(Color.primary.opacity(0.025))
-                RoundedRectangle(cornerRadius: 12).fill(LinearGradient(colors: [category.color.opacity(0.04), .clear], startPoint: .topLeading, endPoint: .bottomTrailing))
-            }
-            .overlay(alignment: .leading) { Capsule().fill(category.color.opacity(0.8)).frame(width: 3).padding(.vertical, 15) }
-            .overlay(RoundedRectangle(cornerRadius: 12).stroke(active ? Color.accentColor : Color.primary.opacity(0.13), lineWidth: active ? 1.8 : 1))
-            .overlay(alignment: .leading) {
-                if !node.needs.isEmpty { port(stateColor).offset(x: -3) }
-            }
-            .overlay(alignment: .trailing) {
-                if nodes.contains(where: { $0.needs.contains(node.id) }) { port(stateColor).offset(x: 3) }
-            }
-            .shadow(color: active ? Color.accentColor.opacity(0.1) : .primary.opacity(0.05), radius: active ? 8 : 5, y: 3)
+            .padding(.horizontal, 10).padding(.vertical, 8)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+            .background(shape.fill(selected ? Color.accentColor.opacity(0.16) : hovered ? StudioStyle.hover : Color.clear))
+            .background(shape.fill(StudioStyle.surface))
+            .overlay(shape.strokeBorder(skipped ? HostedList.edge : StudioStyle.border, style: StrokeStyle(lineWidth: 1, dash: skipped ? [4, 3] : [])))
+            .contentShape(shape)
         }
         .buttonStyle(.plain)
-        .help(node.id + " · " + node.title + " · " + FlowFormat.stateTitle(node.state))
-        .accessibilityLabel(node.id + ", " + node.title + ", " + FlowFormat.stateTitle(node.state))
-        .accessibilityAddTraits(active ? [.isSelected] : [])
-    }
-
-    private func port(_ color: Color) -> some View {
-        Circle().fill(Color(nsColor: .controlBackgroundColor))
-            .overlay(Circle().stroke(color.opacity(0.75), lineWidth: 1.5))
-            .frame(width: 6, height: 6).allowsHitTesting(false).accessibilityHidden(true)
+        .onHover { hovered = $0 }
+        .help([node.id, FlowFormat.stateTitle(node.state), duration].compactMap { $0 }.joined(separator: " · "))
+        .accessibilityLabel([node.id, FlowFormat.stateTitle(node.state), duration].compactMap { $0 }.joined(separator: ", "))
+        .accessibilityAddTraits(selected ? [.isSelected] : [])
     }
 }

@@ -1,12 +1,16 @@
 import SwiftUI
 import AppKit
 
-/// One run: live node states, the end of the chosen node's log, failure locations and rollback. Verdicts are shown exactly as the engine made them.
+/// One run: the step graph with its states, the steps grouped by how they ended, and the chosen step's result and
+/// output. Verdicts are shown exactly as the engine made them. (Windows: FlowRunDialog.tsx)
 struct FlowRunSheet: View {
     let flows: FlowStore
     let runId: String
     @Environment(\.dismiss) private var dismiss
+    /// The step the person chose; until then the sheet follows the run (see FlowWorkspaceSummary.runFocus)
     @ViewState private var selected: String?
+    /// The person's own choice for the passed group; nil follows the run
+    @ViewState private var showPassed: Bool?
     @ViewState private var copied = false
     @ViewState private var cancelling = false
     @ViewState private var error: String?
@@ -14,87 +18,110 @@ struct FlowRunSheet: View {
     private var view: FlowRunView? { flows.view(runId) }
     private var record: FlowJSON? { flows.record(runId) }
     private var running: Bool { view.map { !$0.done } ?? false }
+    private var nodes: [FlowRunView.Node] { view?.nodes ?? [] }
+    private var shown: FlowRunView.Node? {
+        nodes.first { $0.id == selected } ?? FlowWorkspaceSummary.runFocus(nodes).flatMap { id in nodes.first { $0.id == id } }
+    }
 
     var body: some View {
+        let steps = nodes.map(FlowWorkspaceSummary.step)
         VStack(spacing: 0) {
             header
             Divider()
-            FlowSplitView(initialFraction: 0.55, minimumLeading: 380, minimumTrailing: 340) {
-                FlowVerticalSplitView {
-                    FlowGraphView(nodes: nodes.map(FlowGraphView.Node.init), selected: $selected)
-                } trailing: { nodeList }
-            } trailing: { detail }
+            FlowSplitView(initialFraction: 0.5, minimumLeading: 380, minimumTrailing: 340) {
+                overview(steps)
+            } trailing: {
+                if let shown {
+                    FlowRunStepDetail(node: shown, steps: steps, record: record, repo: flows.repo)
+                } else {
+                    waiting
+                }
+            }
             Divider()
             footer
         }
         .frame(minWidth: 900, idealWidth: 1120, minHeight: 620, idealHeight: 780)
-        .task {
-            await flows.open(runId)
-            if selected == nil {
-                selected = nodes.first { $0.state == .running }?.id ?? nodes.first { $0.state.isBad }?.id ?? nodes.first?.id
-            }
-        }
+        .task { await flows.open(runId) }
     }
 
+    /// The flow and how the run ended, then one line of context: the run, the engine's code and the step counts
     private var header: some View {
         let state = view.map(FlowRunHistory.presentationState) ?? record?["state"].string
-        return HStack(spacing: 10) {
-            FlowStateIcon(state: state, size: 18)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(view?.flow.isEmpty == false ? view!.flow : (record?["flow"].string ?? "")).font(.title3.weight(.semibold))
-                HStack(spacing: 6) {
-                    Text(FlowFormat.stateTitle(state))
-                    if let c = view?.code ?? record?["code"].string { Text(c).font(.caption.monospaced()) }
-                    Text(runId).font(.caption.monospaced()).foregroundStyle(.tertiary).textSelection(.enabled)
-                }
-                .font(.caption)
-                .foregroundStyle(.secondary)
+        return VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 8) {
+                Text(verbatim: view?.flow.isEmpty == false ? view?.flow ?? "" : record?["flow"].string ?? "")
+                    .font(.system(size: 15, weight: .semibold)).lineLimit(1)
+                StatusPill(flowState: state)
             }
-            Spacer()
-            if let v = view {
-                let c = v.counts
-                Text("\(c.passed) passed · \(c.failed) failed · \(c.total) steps")
-                    .font(.caption).foregroundStyle(.secondary).monospacedDigit()
+            HStack(spacing: 8) {
+                Text(verbatim: runId).font(.system(size: 11, design: .monospaced)).textSelection(.enabled)
+                if let code = view?.code ?? record?["code"].string { Text(verbatim: code).font(.system(size: 11, design: .monospaced)) }
+                if let counts = view?.counts { Text("\(counts.passed) passed · \(counts.failed) failed · \(counts.total) steps").monospacedDigit() }
             }
-            if running { ProgressView().controlSize(.small) }
+            .font(.system(size: 12)).foregroundStyle(HostedList.caption).lineLimit(1)
         }
-        .padding(14)
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private var nodes: [FlowRunView.Node] { view?.nodes ?? [] }
+    // MARK: Overview
 
-    private var nodeList: some View {
-        List(selection: $selected) {
-            Section("Steps") {
-                ForEach(nodes) { n in
-                    HStack(spacing: 6) {
-                        FlowStateIcon(state: n.state.rawValue)
-                        Text(n.branchOf == nil ? n.id : "↳ " + n.id).lineLimit(1).truncationMode(.middle)
-                        Spacer(minLength: 0)
-                        if let t = n.testsExecuted { Text("\(n.testsPassed ?? 0)/\(t)").font(.caption).foregroundStyle(.secondary).monospacedDigit() }
-                        if let d = n.durationMs { Text(FlowFormat.duration(d)).font(.caption).foregroundStyle(.secondary).monospacedDigit() }
-                    }
-                    .tag(n.id)
-                }
+    /// The graph fitted to its panel, then the steps grouped by how they ended
+    private func overview(_ steps: [FlowWorkspaceSummary.Step]) -> some View {
+        VStack(spacing: 0) {
+            if !nodes.isEmpty {
+                FlowGraphView(nodes: nodes.map(FlowGraphView.Node.init), selected: Binding(get: { shown?.id }, set: { selected = $0 }), initialFit: true)
+                    .padding(12).frame(height: 232)
+                Divider()
             }
-            if let steps = view?.steps, !steps.isEmpty {
-                Section("Services and rollback") {
-                    ForEach(steps) { s in
-                        HStack(spacing: 6) {
-                            SymbolIcon(stepIcon(s.state)).foregroundStyle(.secondary)
-                            Text(s.node.map { "\($0): \(s.text)" } ?? s.text).lineLimit(1).truncationMode(.middle)
-                            Spacer(minLength: 0)
-                            Text(s.state).font(.caption2.monospaced()).foregroundStyle(.secondary)
-                        }
+            ScrollView {
+                VStack(alignment: .leading, spacing: 8) {
+                    ForEach(FlowWorkspaceSummary.runGroups(nodes)) { group in stepGroup(group, steps: steps) }
+                    if let extras = view?.steps, !extras.isEmpty { services(extras) }
+                }
+                .padding(12).frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .accessibilityElement(children: .contain).accessibilityLabel("Steps")
+        }
+    }
+
+    private func stepGroup(_ group: FlowWorkspaceSummary.RunGroup, steps: [FlowWorkspaceSummary.Step]) -> some View {
+        let open = !group.folds || (showPassed ?? FlowWorkspaceSummary.passedOpenByDefault(nodes))
+        let title = FlowFormat.stateTitle(group.state) + " \(group.nodes.count)"
+        return VStack(alignment: .leading, spacing: 2) {
+            if group.folds {
+                Button { showPassed = !open } label: {
+                    HStack(spacing: 6) {
+                        DesignIconImage(icon: open ? .chevronDown : .chevronRight, size: 10)
+                        Text(verbatim: title)
                     }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain).modifier(FlowRunGroupTitle())
+            } else {
+                Text(verbatim: title).modifier(FlowRunGroupTitle())
+            }
+            if open {
+                ForEach(group.nodes) { node in
+                    FlowRunStepRow(node: node, skipCause: steps.first { $0.id == node.id }.flatMap { FlowWorkspaceSummary.skipCause($0, in: steps) },
+                                   selected: shown?.id == node.id) { selected = node.id }
                 }
             }
         }
-        .listStyle(.sidebar)
-        .onChange(of: nodes.map(\.state)) { _, _ in
-            // Without a choice, show the node that is running (or else the first that failed).
-            if selected == nil {
-                selected = nodes.first { $0.state == .running }?.id ?? nodes.first { $0.state.isBad }?.id ?? nodes.first?.id
+    }
+
+    /// Things that happen outside steps: services starting and stopping, and each change undone by a rollback
+    private func services(_ steps: [FlowRunView.Step]) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text("Services and rollback").modifier(FlowRunGroupTitle())
+            ForEach(steps) { step in
+                HStack(spacing: 8) {
+                    SymbolIcon(stepIcon(step.state)).font(.system(size: 12)).foregroundStyle(HostedList.caption)
+                    Text(verbatim: step.node.map { "\($0): \(step.text)" } ?? step.text).font(.system(size: 12)).lineLimit(1).truncationMode(.middle)
+                    Spacer(minLength: 0)
+                    Text(verbatim: step.state).font(.system(size: 11, design: .monospaced)).foregroundStyle(HostedList.caption)
+                }
+                .padding(.horizontal, 8).frame(minHeight: 24)
             }
         }
     }
@@ -108,85 +135,14 @@ struct FlowRunSheet: View {
         }
     }
 
-    /// That node in the record (run.json)
-    private func recordNode(_ id: String) -> FlowJSON? {
-        record?["nodes"].array.first { $0["id"].string == id }
-    }
-
-    @ViewBuilder
-    private var detail: some View {
-        if let id = selected, let n = nodes.first(where: { $0.id == id }) {
-            let rec = recordNode(id)
-            VStack(alignment: .leading, spacing: 10) {
-                HStack(spacing: 8) {
-                    FlowStateIcon(state: n.state.rawValue, size: 14)
-                    Text(n.id).font(.headline).textSelection(.enabled)
-                    Text(n.block).font(.caption.monospaced()).foregroundStyle(.secondary)
-                    Spacer()
-                    if let log = n.log, let dir = record?["runDir"].string {
-                        Button { NSWorkspace.shared.open(URL(fileURLWithPath: dir).appendingPathComponent(log)) } label: { SymbolIcon("doc.text.magnifyingglass") }
-                            .buttonStyle(.borderless)
-                            .help("Open the full log")
-                    }
-                }
-                if let f = rec?["failure"], f != .null {
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(f["description"].string ?? "").font(.callout.weight(.medium))
-                        if let a = f["action"].string { Text(a).font(.caption).foregroundStyle(.secondary) }
-                        if let d = f["detail"].string, !d.isEmpty { Text(d).font(.caption.monospaced()).foregroundStyle(.secondary).textSelection(.enabled).lineLimit(8) }
-                    }
-                    .padding(8)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.red.opacity(0.08), in: RoundedRectangle(cornerRadius: 6))
-                } else if let r = n.reason {
-                    Text(r).font(.caption).foregroundStyle(.secondary)
-                }
-                let failures = rec?["failures"].array ?? []
-                if !failures.isEmpty {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Failed tests").font(.subheadline.weight(.semibold))
-                        ForEach(Array(failures.enumerated()), id: \.offset) { _, f in
-                            VStack(alignment: .leading, spacing: 1) {
-                                Text(f["name"].string ?? "").font(.callout).lineLimit(2)
-                                if let file = f["file"].string {
-                                    let line = f["line"].int.map { ":\($0)" } ?? ""
-                                    Button(file + line) { openFile(file, line: f["line"].int) }
-                                        .buttonStyle(.link)
-                                        .font(.caption.monospaced())
-                                }
-                                if let m = f["message"].string { Text(m).font(.caption).foregroundStyle(.secondary).lineLimit(3) }
-                            }
-                        }
-                    }
-                }
-                let verdicts = rec?["verdicts"].array ?? []
-                if !verdicts.isEmpty {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Verdicts").font(.subheadline.weight(.semibold))
-                        ForEach(Array(verdicts.enumerated()), id: \.offset) { _, v in
-                            HStack(spacing: 6) {
-                                FlowStateIcon(state: v["result"].string == "PASS" ? "PASSED" : "FAILED", size: 10)
-                                Text(v["rule"].string ?? "").font(.caption.monospaced())
-                                Text(v["title"].string ?? "").font(.caption).lineLimit(1)
-                                Spacer(minLength: 0)
-                                Text(v["observed"].string ?? "").font(.caption).foregroundStyle(.secondary).lineLimit(1)
-                            }
-                        }
-                    }
-                }
-                Text("Output").font(.subheadline.weight(.semibold))
-                logView(n.tail)
-            }
-            .padding(14)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        } else {
-            VStack(spacing: 8) {
-                rollbackNote
-                Text(nodes.isEmpty ? String(localized: "Waiting for the engine…") : String(localized: "Choose a step to see its output."))
-                    .font(.callout).foregroundStyle(.secondary)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+    /// Before any step can be shown: what the rollback did, if there was one, and what the sheet is waiting for
+    private var waiting: some View {
+        VStack(spacing: 8) {
+            rollbackNote
+            Text(nodes.isEmpty ? String(localized: "Waiting for the engine…") : String(localized: "Choose a step to see its output."))
+                .font(.callout).foregroundStyle(.secondary)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     @ViewBuilder
@@ -209,35 +165,11 @@ struct FlowRunSheet: View {
         }
     }
 
-    private func logView(_ lines: [String]) -> some View {
-        ScrollViewReader { proxy in
-            ScrollView([.vertical, .horizontal]) {
-                LazyVStack(alignment: .leading, spacing: 0) {
-                    ForEach(Array(lines.enumerated()), id: \.offset) { i, l in
-                        Text(l).font(.system(size: 11, design: .monospaced)).textSelection(.enabled).id(i)
-                    }
-                }
-                .padding(6)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .background(Color(nsColor: .textBackgroundColor), in: RoundedRectangle(cornerRadius: 6))
-            .overlay(RoundedRectangle(cornerRadius: 6).stroke(.quaternary))
-            .onChange(of: lines.count) { _, n in if n > 0 { proxy.scrollTo(n - 1, anchor: .bottom) } }
-        }
-    }
+    // MARK: Footer
 
+    /// Copy summary on the left, Cancel run only while the run is going, and Done as the one filled button
     private var footer: some View {
         HStack(spacing: 10) {
-            if running {
-                Button(role: .destructive) {
-                    cancelling = true
-                    Task {
-                        do { try await flows.cancel(runId) } catch { self.error = error.localizedDescription }
-                    }
-                } label: { Label("Cancel run", symbol: "stop.fill") }
-                .disabled(cancelling)
-                .help("Stops every step and its child processes, then undoes what was changed")
-            }
             Button(copied ? String(localized: "Copied") : String(localized: "Copy summary")) {
                 Task {
                     if let md = try? await FlowEngine.markdown(runId, in: flows.repo) {
@@ -249,16 +181,149 @@ struct FlowRunSheet: View {
             }
             .disabled(running)
             .help("Copy a Markdown summary (failures with file and line) to paste into a PR or an AI chat")
+            if running {
+                Button(role: .destructive) {
+                    cancelling = true
+                    Task {
+                        do { try await flows.cancel(runId) } catch { cancelling = false; self.error = error.localizedDescription }
+                    }
+                } label: { Label("Cancel run", symbol: "stop.fill") }
+                .disabled(cancelling)
+                .help("Stops every step and its child processes, then undoes what was changed")
+                ProgressView().controlSize(.small)
+            }
             if let e = error { Text(e).font(.caption).foregroundStyle(.red).lineLimit(2) }
             Spacer()
             Button("Done") { dismiss() }.keyboardShortcut(.defaultAction)
         }
         .padding(12)
     }
+}
+
+/// The title of a group in a run's step list: "Failed 1", "Passed 4"
+private struct FlowRunGroupTitle: ViewModifier {
+    func body(content: Content) -> some View {
+        content.font(.system(size: 12, weight: .semibold)).foregroundStyle(HostedList.caption)
+            .padding(.horizontal, 8).frame(minHeight: 24)
+    }
+}
+
+/// One step of a run: its state, its id, the step a skipped one was waiting for, then its tests and how long it took
+private struct FlowRunStepRow: View {
+    let node: FlowRunView.Node
+    /// The step this one needed that did not pass, when that is why it was skipped
+    let skipCause: String?
+    let selected: Bool
+    let choose: () -> Void
+    @ViewState private var hovered = false
+
+    var body: some View {
+        Button(action: choose) {
+            HStack(spacing: 8) {
+                FlowStateIcon(state: node.state.rawValue, size: 14, spins: true)
+                Text(verbatim: node.branchOf == nil ? node.id : "↳ " + node.id)
+                    .font(.system(size: 13, weight: selected ? .semibold : .regular, design: .monospaced)).lineLimit(1).truncationMode(.middle)
+                if let skipCause {
+                    HStack(spacing: 4) {
+                        Text("Needs").font(.system(size: 12))
+                        Text(verbatim: skipCause).font(.system(size: 11, design: .monospaced))
+                    }
+                    .foregroundStyle(HostedList.secondary(selected: selected)).lineLimit(1).fixedSize()
+                }
+                Spacer(minLength: 0)
+                Group {
+                    if let executed = node.testsExecuted { Text(verbatim: "\(node.testsPassed ?? 0)/\(executed)") }
+                    if let took = node.durationMs { Text(verbatim: FlowFormat.duration(took)) }
+                }
+                .font(.system(size: 11, design: .monospaced)).foregroundStyle(HostedList.secondary(selected: selected)).fixedSize()
+            }
+            .padding(.horizontal, 8)
+            .frame(maxWidth: .infinity, minHeight: 28, alignment: .leading)
+            .background(RoundedRectangle(cornerRadius: 6).fill(selected ? Color.accentColor.opacity(0.16) : hovered ? StudioStyle.hover : Color.clear))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { hovered = $0 }
+        .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+}
+
+/// The chosen step of a run: the same header, outcome and verdicts as the workspace's step details, then the failed
+/// tests with their files and the output, which keeps following a live run
+private struct FlowRunStepDetail: View {
+    let node: FlowRunView.Node
+    let steps: [FlowWorkspaceSummary.Step]
+    let record: FlowJSON?
+    let repo: URL
+
+    var body: some View {
+        let recorded = FlowStepRecord(record, step: node.id)
+        VStack(spacing: 0) {
+            FlowStepHeader(id: node.id, block: node.block) {
+                if let log = node.log, let dir = record?["runDir"].string {
+                    Button { NSWorkspace.shared.open(URL(fileURLWithPath: dir).appendingPathComponent(log)) } label: { SymbolIcon("doc.text.magnifyingglass") }
+                        .buttonStyle(PullRequestIconButtonStyle())
+                        .help("Open the full log").accessibilityLabel("Open the full log")
+                }
+            }
+            VStack(alignment: .leading, spacing: 16) {
+                FlowStepOutcome(step: FlowWorkspaceSummary.step(node), steps: steps, reason: recorded.reason ?? node.reason, action: recorded.action)
+                if let detail = recorded.node["failure"]["detail"].string, !detail.isEmpty {
+                    Text(verbatim: detail).font(.system(size: 11, design: .monospaced)).foregroundStyle(HostedList.caption)
+                        .textSelection(.enabled).lineLimit(8)
+                }
+                if !recorded.failedTests.isEmpty { failedTests(recorded.failedTests) }
+                FlowStepVerdicts(verdicts: recorded.verdicts)
+                FlowStepSection(title: "Output") { output(node.tail).id(node.id) }
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        }
+        .background(StudioStyle.surface)
+    }
+
+    private func failedTests(_ failures: [FlowJSON]) -> some View {
+        FlowStepSection(title: "Failed tests") {
+            ForEach(Array(failures.enumerated()), id: \.offset) { _, failure in
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(verbatim: failure["name"].string ?? "").font(.system(size: 13)).lineLimit(2)
+                    if let file = failure["file"].string {
+                        Button(file + (failure["line"].int.map { ":\($0)" } ?? "")) { openFile(file) }
+                            .buttonStyle(.link).font(.system(size: 11, design: .monospaced))
+                    }
+                    if let message = failure["message"].string {
+                        Text(verbatim: message).font(.system(size: 11)).foregroundStyle(HostedList.caption).lineLimit(3)
+                    }
+                }
+            }
+        }
+    }
+
+    /// The step's output so far; it stays at the end while lines keep arriving
+    private func output(_ lines: [String]) -> some View {
+        ScrollViewReader { proxy in
+            ScrollView([.vertical, .horizontal]) {
+                LazyVStack(alignment: .leading, spacing: 0) {
+                    ForEach(Array(lines.enumerated()), id: \.offset) { index, line in
+                        Text(verbatim: line.isEmpty ? " " : line).font(.system(size: 12, design: .monospaced))
+                            .fixedSize().textSelection(.enabled).id(index)
+                    }
+                }
+                .padding(.horizontal, 10).padding(.vertical, 6)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            // short output starts at the leading edge instead of the middle of the box
+            .defaultScrollAnchor(.topLeading)
+            .frame(minHeight: 120)
+            .flowCodeBox()
+            .onAppear { if !lines.isEmpty { proxy.scrollTo(lines.count - 1, anchor: .bottom) } }
+            .onChange(of: lines.count) { _, count in if count > 0 { proxy.scrollTo(count - 1, anchor: .bottom) } }
+        }
+    }
 
     /// Opens a failure location: the file in the repository, in the default editor (the file only, since editors take line numbers differently)
-    private func openFile(_ rel: String, line: Int?) {
-        let url = flows.repo.appendingPathComponent(rel)
+    private func openFile(_ relative: String) {
+        let url = repo.appendingPathComponent(relative)
         if FileManager.default.fileExists(atPath: url.path) { NSWorkspace.shared.open(url) }
     }
 }

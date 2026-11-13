@@ -19,12 +19,19 @@ enum FlowGraphLayout {
         var unresolved: [String] = []
     }
 
-    static let cardWidth: CGFloat = 220
-    static let cardHeight: CGFloat = 112
+    /// One step card and the gaps between cards, shared by the layout and the canvas that draws it. (Windows: FLOW_CARD)
+    static let cardWidth: CGFloat = 192
+    static let cardHeight: CGFloat = 80
+    static let columnGap: CGFloat = 40
+    static let rowGap: CGFloat = 14
+    static let margin: CGFloat = 24
+    static let columnPitch = cardWidth + columnGap
+    static let rowPitch = cardHeight + rowGap
 
-    /// Fit includes the canvas toolbar and margins, even for diagrams wider than the default zoom range.
+    /// Overview fitting has no manual-zoom floor, so wide and tall pipelines remain complete. The viewport is the
+    /// canvas alone; 24 pt keeps the cards off its edges.
     static func fit(_ layout: Layout, viewport: CGSize) -> CGFloat {
-        max(0.001, min(1, min((viewport.width - 12) / layout.width, (viewport.height - 48) / layout.height)))
+        max(0.001, min(1, min((viewport.width - 24) / max(1, layout.width), (viewport.height - 24) / max(1, layout.height))))
     }
 
     static func make(_ input: [Input]) -> Layout {
@@ -60,11 +67,11 @@ enum FlowGraphLayout {
             let level = levels[node.id] ?? 0
             let row = rows[level, default: 0]
             rows[level] = row + 1
-            return Item(id: node.id, x: 28 + CGFloat(level) * 284, y: 28 + CGFloat(row) * 148)
+            return Item(id: node.id, x: margin + CGFloat(level) * columnPitch, y: margin + CGFloat(row) * rowPitch)
         }
         return Layout(items: items,
-                      width: max(276, (items.map(\.x).max() ?? 28) + cardWidth + 28),
-                      height: max(168, (items.map(\.y).max() ?? 28) + cardHeight + 28),
+                      width: (items.map(\.x).max() ?? margin) + cardWidth + margin,
+                      height: (items.map(\.y).max() ?? margin) + cardHeight + margin,
                       missingDependencies: Array(Set(missing)).sorted(), unresolved: nodes.filter { remaining[$0.id, default: 0] > 0 }.map(\.id))
     }
 }

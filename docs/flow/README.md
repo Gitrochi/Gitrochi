@@ -23,11 +23,22 @@ gitch flow gate on         # check the pre-push flow before every push (no rerun
 gitch flow export github   # propose a workflow that runs the same flow in CI
 ```
 
-In the app it is **Flows** under Workspace tools in the sidebar (⌘K / Ctrl+K finds it too): the flows, ▶ to run, live progress, failure locations (file:line), rollback, copying a summary and turning on the pre-push check. Without a flow file, **Set up flows…** shows the proposal and creates the file.
+In the app it is **Flows** under Tools in the sidebar (⌘K / Ctrl+K finds it too). Without a flow file the page says what a flow file is for; **Set up flows…** shows the proposal and creates the file, and **New flow…** builds one from commands you type.
+
+### Reading the Flows page
+
+The page reads left to right: the flows, the selected flow, the selected step.
+
+- **The list** shows every flow with how its latest run ended and when ("25m ago", or "Not run yet").
+- **The selected flow** keeps its name, description and actions above three tabs. **Run flow** is the only filled button and becomes **Stop** while the flow is running. **Edit flow file…** opens the editor. **More flow actions** (⋯) holds everything else by name: Review commands…, Check a flow before every push, Run only affected tests, Set up flows… and Refresh.
+- **The Flow tab** starts with one banner that says where the flow stands, in this order: a run is going ("Running lint"), the commands must be reviewed because the flow file is new or changed, how the latest run ended ("Latest run failed at ui-tests"), or, when nothing has run, what Run flow will do. Below it each step is a card: the latest result, the step's name and duration, what the step is for, and the first line of its command. A connector means *needs*: the step on the right starts only after the step on the left has passed. Only the failed path is red, and a connector into a skipped step is dashed. After the flow file changes, the cards show no results until the flow runs again.
+- **Step details** (the right column) read top to bottom: how the step did and why, the engine's verdicts, the end of its output, the command, then what it needs, where it runs and where it is written. **Edit step…** opens the editor on that step. A flow opens on the step that needs attention: the one that failed, or the one that is running.
+- **The History tab** lists the selected flow's runs, one line each. A row opens the run: its steps grouped as failed, running, waiting, skipped and passed, with the chosen step's result and output beside them, **Copy summary** for a pull request or an AI chat, and **Cancel run** while it is going.
+- **Connected CI** shows the repository's remote CI runs and saved connections.
 
 ### Visual workspace and scripts
 
-The macOS screenshots below come from the actual built app, using an isolated demo repository and real flow runs. Both appearances were checked with four completed steps and two JUnit tests. YAML import preserved the original bytes in a new flow file and invalidated trust; adding a CI module exposed its connection, job and dependency controls without running it. The connected CI browser uses an isolated local Jenkins fixture with synthetic builds and logs.
+The screenshots below show the editor, imports and CI history; the ones of the dependency graph, the run history and a completed run were taken before the page was laid out as described above. The macOS screenshots come from the actual built app, using an isolated demo repository and real flow runs. Both appearances were checked with four completed steps and two JUnit tests. YAML import preserved the original bytes in a new flow file and invalidated trust; adding a CI module exposed its connection, job and dependency controls without running it. The connected CI browser uses an isolated local Jenkins fixture with synthetic builds and logs.
 
 | Screen | Light | Dark |
 | --- | --- | --- |
@@ -40,7 +51,7 @@ The macOS screenshots below come from the actual built app, using an isolated de
 
 Windows production components were also inspected at 1280 × 720 with the real design CLI and synthetic repository/service data: visual editor [light](../screenshots/flow-authoring/windows-designer-light.jpg) / [dark](../screenshots/flow-authoring/windows-designer-dark.jpg), interpreted import [light](../screenshots/flow-authoring/windows-import-light.jpg) / [dark](../screenshots/flow-authoring/windows-import-dark.jpg), and [connection settings](../screenshots/flow-authoring/windows-connections-dark.jpg). These are component verification captures, not a running Windows desktop session.
 
-Select a flow to preview its dependency diagram. Each card is a step; connections follow `needs`, so independent steps can run in parallel and a joining step waits for all its dependencies. Select a card to inspect its command, undo command, executor and source. The diagram is also available when inspecting a live or saved run, with the engine's actual step states and durations.
+Select a flow to see its dependency diagram. Each card is a step; connections follow `needs`, so independent steps can run in parallel and a joining step waits for all its dependencies. Select a card to see its result, command, undo command, what it needs, where it runs and its source. The diagram is also available when inspecting a live or saved run, with the engine's actual step states and durations.
 
 The configuration editor opens in **Code**. Write commands and `needs` in YAML; the dependency diagram follows the source automatically. No connection drawing is required. A step without `needs` can run in parallel; `needs: [prepare]` waits for `prepare`, and `needs: [lint, test]` waits for both checks. Invalid source shows diagnostics and marks or hides the previous diagram instead of presenting it as the current configuration.
 

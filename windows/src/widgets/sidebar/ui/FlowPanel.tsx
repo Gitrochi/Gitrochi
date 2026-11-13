@@ -1,14 +1,13 @@
-import { Crosshair, Hand, Shield, ShieldCheck, TriangleAlert, Wand2, Workflow } from "lucide-react";
-import { CircleCheck, Code2 } from "@/shared/icons";
-import { RefreshCw } from "@/shared/icons";
-import { type ReactNode, useEffect, useState } from "react";
-import { type FlowPlan, type FlowPlanNode, type FlowStore, flowEngine, flowStoreFor, type FlowInitProposal, type FlowImportSource, needsConfirmation, readFlowImport, readWebFlowImport } from "@/entities/flow";
+import { TriangleAlert } from "lucide-react";
+import { CircleCheck, CircleX, designIcon } from "@/shared/icons";
+import { useEffect, useState } from "react";
+import { type FlowItem, type FlowPlan, type FlowPlanNode, type FlowStore, flowEngine, flowStoreFor, type FlowInitProposal, type FlowImportSource, needsConfirmation, readFlowImport, readWebFlowImport } from "@/entities/flow";
 import type { RepoStore } from "@/entities/repo";
 import { ipc } from "@/shared/api";
 import { settings } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
-import { Button, IconButton, Modal, SharedSheet, showMenuBelow, Spinner } from "@/shared/ui";
+import { Button, type MenuItem, Modal, NoticeBlock, SharedSheet, Spinner } from "@/shared/ui";
 import { FlowRunDialog } from "./FlowRunDialog";
 import { FlowWorkspace } from "./FlowWorkspace";
 import { FlowConfigDialog } from "./FlowConfigDialog";
@@ -98,6 +97,21 @@ function FlowPanelBody({ flows, repo }: { flows: FlowStore; repo: RepoStore }) {
 
   const list = flows.list;
   const gateOn = !!flows.gate && flows.gate.gate !== "OFF";
+  /** Everything about a flow that is not Edit or Run, each with its name: what used to be five unlabeled icons. */
+  const moreActions = (flow: FlowItem): MenuItem[] => {
+    const names = list?.flows.map((item) => item.name) ?? [];
+    const gateFlow = flows.gate?.flow ?? (names.includes("pre-push") ? "pre-push" : flow.name);
+    return [
+      { label: t("Review commands…"), onClick: () => void flowEngine.plan(flow.name, flows.repo, affected).then((plan) => setDialog({ kind: "trust", flow: flow.name, plan, thenRun: false }), fail) },
+      "divider",
+      { label: t("Check a flow before every push"), checked: gateOn, tip: gateOn ? t("Pushes check a flow first") : t("Pushes don't check a flow"), onClick: () => void flows.setGate(!gateOn, gateFlow).catch(fail) },
+      ...(gateOn ? names.map((name) => ({ label: name, checked: flows.gate?.flow === name, onClick: () => void flows.setGate(true, name).catch(fail) })) : []),
+      { label: t("Run only affected tests"), checked: affected, tip: t("Run only tests affected by your changes"), onClick: () => settings.set("flowAffectedOnly", !affected) },
+      "divider",
+      { label: t("Set up flows…"), tip: t("Detect tests and propose a flow file"), disabled: !flows.engine, onClick: () => setDialog({ kind: "setup" }) },
+      { label: t("Refresh"), onClick: () => void flows.refresh() },
+    ];
+  };
   return (
     <div className="col flow-drop-surface" style={{ flex: 1, minHeight: 0 }} onDragOver={(event) => { if (event.dataTransfer.types.includes("Files")) event.preventDefault(); }} onDrop={(event) => {
       event.preventDefault();
@@ -107,46 +121,16 @@ function FlowPanelBody({ flows, repo }: { flows: FlowStore; repo: RepoStore }) {
       if (dropped.size > 2 * 1024 * 1024) { fail(new Error(t("Choose a UTF-8 workflow file smaller than 2 MB."))); return; }
       void readWebFlowImport(dropped).then((source) => setDialog({ kind: "config", source })).catch(fail);
     }}>
-      <div className="row" style={{ padding: "4px 12px 6px", gap: 4, borderBottom: "1px solid var(--border)" }}>
-        <span style={{ fontWeight: 600 }}>{t("Flows")}</span>
-        {flows.loading && <Spinner size={11} />}
-        <span className="spacer" />
-        {list && list.flows.length > 0 && (
-          <IconButton
-            small
-            className={gateOn ? "on" : ""}
-            icon={gateOn ? <ShieldCheck size={13} /> : <Shield size={13} />}
-            tip={gateOn ? t("Pushes check a flow first") : t("Pushes don't check a flow")}
-            aria-label={t("Pre-push check")}
-            onClick={(e) => {
-              const fallback = (list.flows.find((f) => f.name === "pre-push") ?? list.flows[0]).name;
-              showMenuBelow(e.currentTarget, [
-                {
-                  label: t("Check a flow before every push"),
-                  checked: gateOn,
-                  onClick: () => void flows.setGate(!gateOn, flows.gate?.flow ?? fallback).catch(fail),
-                },
-                ...(gateOn
-                  ? list.flows.map((f) => ({ label: f.name, checked: flows.gate?.flow === f.name, onClick: () => void flows.setGate(true, f.name).catch(fail) }))
-                  : []),
-              ]);
-            }}
-          />
-        )}
-        <IconButton
-          small
-          className={affected ? "on" : ""}
-          icon={<Crosshair size={13} />}
-          tip={affected ? t("Running only tests affected by your changes") : t("Run only tests affected by your changes")}
-          aria-label={t("Run only affected tests")}
-          onClick={() => settings.set("flowAffectedOnly", !affected)}
-        />
-        <IconButton small icon={<RefreshCw size={12} />} tip={t("Refresh")} onClick={() => void flows.refresh()} />
-        <IconButton small icon={<Code2 size={13} />} tip={t("Configure scripts")} disabled={!flows.engine} onClick={() => setDialog({ kind: "config" })} />
-        <IconButton small icon={<Wand2 size={13} />} tip={t("Detect tests and propose a flow file")} disabled={!flows.engine} onClick={() => setDialog({ kind: "setup" })} />
-      </div>
-      {list && !list.trusted && <div className="row" style={{ gap: 6, padding: "6px 10px", color: "var(--orange)", fontSize: 11.5 }}><Hand size={13} style={{ flex: "none" }} /><span>{t("This flow file is new or changed. Review the commands before running it.")}</span></div>}
-      <FlowWorkspace flows={flows} affected={affected} busy={starting} requestedFlow={requestedFlow} onCreate={flows.engine ? () => setDialog({ kind: "create" }) : undefined} onRun={(flow) => void prepare(flow)} onOpen={(id) => setDialog({ kind: "run", runId: id })} onEdit={(flow, node) => setDialog({ kind: "config", flow, node })} onReview={(flow) => void flowEngine.plan(flow, flows.repo, affected).then((plan) => setDialog({ kind: "trust", flow, plan, thenRun: false }), fail)} connectedCI={<FlowConnectedCI store={repo} />} emptyState={<FlowEmptyContent flows={flows} onCreate={() => setDialog({ kind: "create" })} onSetup={() => setDialog({ kind: "setup" })} onEdit={() => setDialog({ kind: "config" })} />} />
+      <FlowWorkspace flows={flows} affected={affected} busy={starting} requestedFlow={requestedFlow}
+        onCreate={flows.engine ? () => setDialog({ kind: "create" }) : undefined}
+        onRun={(flow) => void prepare(flow)}
+        onStop={(runId) => void flows.cancel(runId).catch(fail)}
+        onOpen={(id) => setDialog({ kind: "run", runId: id })}
+        onEdit={(flow, node) => setDialog({ kind: "config", flow, node })}
+        onReview={(flow) => void flowEngine.plan(flow, flows.repo, affected).then((plan) => setDialog({ kind: "trust", flow, plan, thenRun: false }), fail)}
+        moreActions={moreActions}
+        connectedCI={<FlowConnectedCI store={repo} />}
+        emptyState={<FlowEmptyContent flows={flows} onCreate={() => setDialog({ kind: "create" })} onSetup={() => setDialog({ kind: "setup" })} onEdit={() => setDialog({ kind: "config" })} />} />
       {dialog?.kind === "create" && <FlowCreateDialog flows={flows} onClose={() => setDialog(null)} onCreated={(name) => { setRequestedFlow(name); setDialog(null); }} />}
       {dialog?.kind === "run" && <FlowRunDialog flows={flows} runId={dialog.runId} onClose={() => setDialog(null)} />}
       {dialog?.kind === "trust" && (
@@ -201,11 +185,34 @@ function FlowPanelBody({ flows, repo }: { flows: FlowStore; repo: RepoStore }) {
   );
 }
 
+const FlowsIcon = designIcon("flows");
+
+/** Why there is no flow to show, each in the shared empty form: an icon, one line, one caption and the next action. */
 function FlowEmptyContent({ flows, onCreate, onSetup, onEdit }: { flows: FlowStore; onCreate: () => void; onSetup: () => void; onEdit: () => void }) {
-  if (flows.engine === null) return <EmptyNote icon={<TriangleAlert size={26} />} text={t("The flow engine (gitch-flow) isn't in this Gitrochi. Update Gitrochi to run flows.")} />;
-  if (!flows.hasFlowFile) return <div className="flow-empty"><Workflow size={30} /><strong>{t("Build a flow from your commands.")}</strong><span>{t("Commands run from the repository folder.")}</span><div className="row" style={{ gap: 8 }}><Button kind="primary" onClick={onCreate}>{t("Create flow")}</Button><Button onClick={onSetup}>{t("Set up flows…")}</Button></div><small>{t("Creating a flow saves it without running commands.")}</small></div>;
-  if (flows.error) return <div className="flow-empty"><span className="error-text">{flows.error.message}</span>{flows.error.action && <span>{flows.error.action}</span>}<Button onClick={onEdit}>{t("Configure scripts")}</Button><Button onClick={() => void flows.refresh()}>{t("Try again")}</Button></div>;
-  if (flows.list && !flows.list.flows.length) return <div className="flow-empty"><Workflow size={30} /><p>{t("Build a flow from your commands.")}</p><Button kind="primary" onClick={onCreate}>{t("Create flow")}</Button></div>;
+  if (flows.engine === null) {
+    return <div className="flow-empty"><TriangleAlert size={24} /><strong>{t("The flow engine (gitch-flow) isn't in this Gitrochi. Update Gitrochi to run flows.")}</strong></div>;
+  }
+  if (flows.error) {
+    return (
+      <div className="flow-empty">
+        <NoticeBlock tone="failed" alert icon={<CircleX size={14} />} title={flows.error.message} caption={flows.error.action}
+          actions={[{ label: t("Edit flow file…"), onClick: onEdit }, { label: t("Try again"), onClick: () => void flows.refresh() }]} />
+      </div>
+    );
+  }
+  if (!flows.hasFlowFile || (flows.list && !flows.list.flows.length)) {
+    return (
+      <div className="flow-empty" data-flow-empty>
+        <FlowsIcon size={24} />
+        <strong>{t("No flows in this repository")}</strong>
+        <span>{t("Describe your build and test steps once in .gitch/flow.yml, then run them here and in CI.")}</span>
+        <div className="flow-empty-actions">
+          <Button kind="primary" onClick={onSetup}>{t("Set up flows…")}</Button>
+          <Button onClick={onCreate}>{t("New flow…")}</Button>
+        </div>
+      </div>
+    );
+  }
   return <div className="flow-empty"><Spinner /></div>;
 }
 
@@ -218,16 +225,6 @@ function confirmText(p: FlowPlan) {
   parts.push(t("Environment: {0}", p.env));
   return parts.join("\n");
 }
-
-function EmptyNote({ icon, text }: { icon: ReactNode; text: string }) {
-  return (
-    <div className="col" style={{ alignItems: "center", gap: 8, padding: 20, textAlign: "center" }}>
-      <span style={{ opacity: 0.35 }}>{icon}</span>
-      <span className="muted">{text}</span>
-    </div>
-  );
-}
-
 
 /** Trusting a flow file: it is code, so it runs unattended only after a person has seen what will run and approved it. */
 function FlowTrustDialog({ plan, action, onApprove, onClose }: { plan: FlowPlan; action: string; onApprove: () => void; onClose: () => void }) {

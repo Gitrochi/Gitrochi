@@ -152,7 +152,7 @@ private struct FlowConnectionsSheet: View {
                 Button { loadBuilds(job, number: item.id) } label: {
                     HStack {
                         Text(item.title).fontWeight(.medium)
-                        FlowStatusBadge(state: item.status == "success" ? "SUCCEEDED" : item.status == "canceled" ? "CANCELLED" : item.status.uppercased())
+                        StatusPill(flowState: item.status == "success" ? "SUCCEEDED" : item.status == "canceled" ? "CANCELLED" : item.status.uppercased(), short: true)
                         Spacer()
                         if item.startedAt > 0 { Text(Date(timeIntervalSince1970: item.startedAt / 1000), style: .relative).foregroundStyle(.secondary) }
                         Text("View logs").foregroundStyle(Color.accentColor)

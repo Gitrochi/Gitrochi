@@ -41,21 +41,6 @@ export function stateTitle(s: string | null | undefined): string {
   }
 }
 
-/** Semantic colors are shared by cards, connectors and history badges. */
-export function flowStateTone(state: string | null | undefined): string {
-  if (["SUCCEEDED", "PASSED", "CACHED"].includes(state ?? "")) return "success";
-  if (["FAILED", "INDETERMINATE", "ROLLBACK_FAILED"].includes(state ?? "")) return "failure";
-  if (["RUNNING", "PREFLIGHT"].includes(state ?? "")) return "active";
-  if (["ROLLED_BACK", "ROLLING_BACK", "REJECTED", "INTERRUPTED"].includes(state ?? "")) return "warning";
-  return "neutral";
-}
-
-/** Compact status text retains the full verdict on hover. */
-export function FlowStatePill({ state, compact = false }: { state: string | null; compact?: boolean }) {
-  const label = compact && state === "CACHED" ? stateTitle("PASSED") : compact && state === "INDETERMINATE" ? stateTitle("FAILED") : stateTitle(state);
-  return <span className={`flow-state-pill ${flowStateTone(state)}`} data-tip={stateTitle(state)}><FlowStateIcon state={state} size={11} /><span>{label}</span></span>;
-}
-
 export function flowBlockKind(block: string): string {
   if (block.startsWith("test.") || block.startsWith("check.")) return "test";
   if (block.startsWith("ci.")) return "ci";
@@ -66,6 +51,21 @@ export function flowBlockKind(block: string): string {
   if (block.startsWith("setup.")) return "setup";
   if (block.startsWith("fixture.") || block.startsWith("mock.")) return "fixture";
   return "script";
+}
+
+/** What kind of work a step is, for a step that gives no description of its own */
+export function flowStepKindTitle(block: string): string {
+  switch (flowBlockKind(block)) {
+    case "test": return t("Tests");
+    case "ci": return t("CI/CD");
+    case "container": return t("Container");
+    case "deploy": return t("Deploy");
+    case "gate": return t("Approval");
+    case "notify": return t("Notification");
+    case "setup": return t("Setup");
+    case "fixture": return t("Services");
+    default: return t("Script");
+  }
 }
 
 /** The engine's block identifier determines its icon without inferring a verdict. */

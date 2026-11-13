@@ -1,3 +1,6 @@
+/** One step card and the gaps between cards, shared by the layout and the canvas that draws it. (macOS: FlowGraphLayout) */
+export const FLOW_CARD = { width: 192, height: 80, columnGap: 40, rowGap: 14, margin: 24 } as const;
+
 /** Bounded dependency layout, mirrored by macOS FlowGraphLayout.swift. */
 export function layoutFlowGraph(nodes: readonly { id: string; needs: readonly string[] }[]) {
   const seen = new Set<string>();
@@ -33,14 +36,15 @@ export function layoutFlowGraph(nodes: readonly { id: string; needs: readonly st
   const remaining = unique.filter((node) => !levels.has(node.id));
   for (const node of remaining) levels.set(node.id, maxLevel + 1);
   const columns = new Map<number, number>();
-  let width = 500, height = 260;
+  const { width: card, height: tall, columnGap, rowGap, margin } = FLOW_CARD;
+  let width = margin * 2 + card, height = margin * 2 + tall;
   const positioned = unique.map((node) => {
     const column = levels.get(node.id) ?? 0;
     const row = columns.get(column) ?? 0;
     columns.set(column, row + 1);
-    const x = 32 + column * 284, y = 32 + row * 148;
-    width = Math.max(width, x + 260);
-    height = Math.max(height, y + 142);
+    const x = margin + column * (card + columnGap), y = margin + row * (tall + rowGap);
+    width = Math.max(width, x + card + margin);
+    height = Math.max(height, y + tall + margin);
     return { id: node.id, column, row, x, y };
   });
   return {
