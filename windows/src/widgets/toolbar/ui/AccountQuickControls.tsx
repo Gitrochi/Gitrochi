@@ -101,7 +101,7 @@ export function AccountQuickControls({ store }: { store: RepoStore }) {
         <Button onClick={() => present({ kind: "connections" })}>{t("Add or remove connected accounts…")}</Button>
       </div>
     </div>, document.body)}
-    {sheet && createPortal(<SharedSheet title={sheet.kind === "connections" ? t("Connected accounts") : sheet.capability === "projects" ? t("Connect GitHub project access") : t("Sign in to GitHub")} context={sheet.kind === "login" && sheet.expectedLogin ? `@${sheet.expectedLogin} · github.com` : null} width={620} onClose={() => setSheet(null)} cancelLabel={t("Done")}>
+    {sheet && createPortal(<SharedSheet title={sheet.kind === "connections" ? t("Connected accounts") : sheet.capability === "projects" ? t("Connect GitHub project access") : t("Sign in to GitHub")} context={sheet.kind === "login" && sheet.expectedLogin ? `@${sheet.expectedLogin} · github.com` : null} width={620} onClose={() => setSheet(null)} cancelLabel={sheet.kind === "connections" ? t("Done") : undefined}>
       {sheet.kind === "connections" ? <AccountConnections /> : <GitchBrowserLogin capability={sheet.capability} expectedLogin={sheet.expectedLogin} onConnected={connected} />}
     </SharedSheet>, document.body)}
   </>;
