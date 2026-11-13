@@ -68,6 +68,21 @@ export function flowBlockKind(block: string): string {
   return "script";
 }
 
+/** What kind of work a step is, for a step that gives no description of its own */
+export function flowStepKindTitle(block: string): string {
+  switch (flowBlockKind(block)) {
+    case "test": return t("Tests");
+    case "ci": return t("CI/CD");
+    case "container": return t("Container");
+    case "deploy": return t("Deploy");
+    case "gate": return t("Approval");
+    case "notify": return t("Notification");
+    case "setup": return t("Setup");
+    case "fixture": return t("Services");
+    default: return t("Script");
+  }
+}
+
 /** The engine's block identifier determines its icon without inferring a verdict. */
 export function FlowBlockIcon({ block, size = 16 }: { block: string; size?: number }) {
   switch (flowBlockKind(block)) {

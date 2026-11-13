@@ -71,68 +71,18 @@
 .flow-plan-actions .flow-review-button { min-height: 30px; font-size: 11px; }
 .flow-plan-actions .needs-review { color: var(--text-2); border-color: var(--border); background: var(--surface); }
 .flow-plan-body { display: flex; flex: 1; min-height: 0; padding: 0 22px 22px; gap: 16px; }
-.flow-graph { display: flex; flex-direction: column; flex: 1; min-width: 0; min-height: 240px; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--surface); box-shadow: 0 2px 8px color-mix(in srgb, var(--text) 3%, transparent); }
-.flow-canvas-toolbar { display: flex; align-items: center; min-height: 45px; padding: 8px 12px; gap: 6px; border-bottom: 1px solid var(--border); background: var(--surface); }
-.flow-canvas-title { display: flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 500; color: var(--text-2); }
-.flow-canvas-title > svg { color: var(--text-3); }
-.flow-canvas-title .flow-count { height: 16px; font-size: 9px; min-width: 16px; padding: 0 5px; }
-.flow-canvas-zoom-controls { display: inline-flex; align-items: center; border: 1px solid var(--border); border-radius: 6px; background: var(--sidebar); padding: 1px; }
-.flow-canvas-zoom-controls .icon-btn.small { width: 22px; height: 21px; border-radius: 4px; }
-.flow-zoom { color: var(--text-2); font-size: 9px; min-width: 34px; text-align: center; }
-.flow-canvas-scroll { flex: 1; min-height: 0; overflow: auto; background-color: color-mix(in srgb, var(--sidebar) 62%, var(--bg)); background-image: radial-gradient(color-mix(in srgb, var(--text-3) 26%, transparent) 0.75px, transparent 0.75px); background-size: 18px 18px; }
-.flow-canvas { position: relative; transform-origin: 0 0; }
-.flow-edges { position: absolute; overflow: visible; pointer-events: none; }
-.flow-edges > path { fill: none; stroke: color-mix(in srgb, var(--text-3) 68%, var(--surface)); stroke-width: 1.6; transition: stroke 160ms, opacity 160ms; }
-.flow-edge-marker path { fill: color-mix(in srgb, var(--text-3) 68%, var(--surface)); }
-.flow-edges > path.success { stroke: color-mix(in srgb, var(--green) 70%, var(--surface)); }
-.flow-edges > path.failure { stroke: color-mix(in srgb, var(--red) 72%, var(--surface)); }
-.flow-edges > path.active { stroke: var(--accent); }
-.flow-edges > path.warning { stroke: color-mix(in srgb, var(--orange) 75%, var(--surface)); }
-.flow-edge-marker.success path { fill: color-mix(in srgb, var(--green) 70%, var(--surface)); }
-.flow-edge-marker.failure path { fill: color-mix(in srgb, var(--red) 72%, var(--surface)); }
-.flow-edge-marker.active path { fill: var(--accent); }
-.flow-edge-marker.warning path { fill: color-mix(in srgb, var(--orange) 75%, var(--surface)); }
-.flow-edges > path.connected { stroke-width: 2; }
-.flow-edges > path.neutral.connected { stroke: color-mix(in srgb, var(--accent) 62%, var(--border)); }
-.flow-edges > path.running { stroke-dasharray: 5 5; animation: flow-edge-motion 1.6s linear infinite; }
-@keyframes flow-edge-motion { to { stroke-dashoffset: -20; } }
-.flow-node { --flow-type-color: var(--text-2); position: absolute; width: 220px; height: 112px; text-align: left; display: flex; flex-direction: column; gap: 7px; padding: 11px 12px 10px; border: 1px solid var(--border-strong); border-radius: 11px; color: var(--text); background: var(--card); box-shadow: 0 3px 9px color-mix(in srgb, var(--text) 5%, transparent); cursor: pointer; transition: border-color 140ms, box-shadow 140ms; }
 .kind-test { --flow-type-color: var(--green); }
 .kind-ci { --flow-type-color: color-mix(in srgb, var(--accent) 70%, var(--red)); }
 .kind-container, .kind-fixture { --flow-type-color: color-mix(in srgb, var(--accent) 55%, var(--green)); }
 .kind-deploy, .kind-gate, .kind-notify { --flow-type-color: var(--orange); }
 .kind-setup, .kind-script { --flow-type-color: var(--accent); }
-.flow-node:hover { border-color: color-mix(in srgb, var(--accent) 62%, var(--border)); box-shadow: 0 4px 12px color-mix(in srgb, var(--text) 8%, transparent); }
-.flow-node.selected { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 12%, transparent), 0 4px 12px color-mix(in srgb, var(--accent) 7%, transparent); }
-.flow-node.running { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 12%, transparent); }
-.flow-node.passed, .flow-node.cached { border-color: color-mix(in srgb, var(--green) 48%, var(--border)); }
-.flow-node.failed, .flow-node.indeterminate { border-color: color-mix(in srgb, var(--red) 65%, var(--border)); }
-.flow-node.passed .flow-node-type, .flow-node.cached .flow-node-type { color: var(--green); background: color-mix(in srgb, var(--green) 9%, transparent); }
-.flow-node.failed .flow-node-type, .flow-node.indeterminate .flow-node-type { color: var(--red); background: color-mix(in srgb, var(--red) 9%, transparent); }
-.flow-node.running .flow-node-type, .flow-node.selected .flow-node-type { color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); }
-.flow-node.skipped { opacity: 0.7; }
-.flow-node-heading { display: flex; align-items: center; gap: 8px; min-height: 28px; }
-.flow-node-heading strong { font-size: 12px; font-weight: 600; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: -0.1px; }
 .flow-node-type { color: var(--flow-type-color, var(--accent)); background: color-mix(in srgb, var(--flow-type-color, var(--accent)) 9%, transparent); border: 1px solid color-mix(in srgb, var(--flow-type-color, var(--accent)) 12%, transparent); border-radius: 7px; width: 28px; height: 28px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; }
-.flow-node-order { color: var(--text-3); font-size: 9px; font-weight: 500; }
-.flow-node-command { display: block; font-size: 11px; line-height: 16px; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.flow-node-footer { display: flex; align-items: center; justify-content: space-between; gap: 7px; min-height: 18px; margin-top: auto; }
-.flow-node-category { display: inline-flex; align-items: center; max-width: 116px; border: 1px solid var(--border); border-radius: 5px; color: var(--text-2); background: var(--sidebar); font-size: 9px; line-height: 16px; padding: 0 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.flow-node-duration { display: inline-flex; align-items: center; gap: 4px; color: var(--text-2); font-size: 10px; min-width: 0; }
-.flow-node-caption { color: var(--text-2); font-size: 10px; max-width: 80px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.flow-node-port { position: absolute; top: 56px; width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid var(--border-strong); background: var(--surface); transform: translateY(-50%); }
-.flow-node-port.input { left: -4px; }
-.flow-node-port.output { right: -4px; }
-.flow-node.selected .flow-node-port, .flow-node.running .flow-node-port { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--surface)); }
-.flow-node.passed .flow-node-port, .flow-node.cached .flow-node-port { border-color: var(--green); }
-.flow-node.failed .flow-node-port, .flow-node.indeterminate .flow-node-port { border-color: var(--red); }
 .flow-state-pill { display: inline-flex; align-items: center; justify-content: flex-start; gap: 5px; min-width: 0; max-width: 100%; min-height: 20px; padding: 2px 6px; border: 1px solid var(--border); border-radius: 6px; color: var(--text-2); background: var(--sidebar); font-size: 10px; font-weight: 500; line-height: 1.3; }
 .flow-state-pill > span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .flow-state-pill.success { color: color-mix(in srgb, var(--green) 82%, var(--text)); border-color: color-mix(in srgb, var(--green) 16%, transparent); background: color-mix(in srgb, var(--green) 7%, var(--surface)); }
 .flow-state-pill.failure { color: color-mix(in srgb, var(--red) 85%, var(--text)); border-color: color-mix(in srgb, var(--red) 16%, transparent); background: color-mix(in srgb, var(--red) 7%, var(--surface)); }
 .flow-state-pill.active { color: color-mix(in srgb, var(--accent) 87%, var(--text)); border-color: color-mix(in srgb, var(--accent) 18%, transparent); background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
 .flow-state-pill.warning { color: color-mix(in srgb, var(--orange) 72%, var(--text)); border-color: color-mix(in srgb, var(--orange) 19%, transparent); background: color-mix(in srgb, var(--orange) 7%, var(--surface)); }
-.flow-node .flow-state-pill { max-width: 127px; min-height: 19px; font-size: 10px; padding: 1px 5px; }
 .flow-inspector { width: 260px; flex-shrink: 0; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); padding: 16px; overflow: auto; }
 .flow-inspector-caption { display: flex; justify-content: space-between; align-items: center; color: var(--text-3); margin-bottom: 17px; }
 .flow-inspector-heading { display: flex; align-items: center; gap: 10px; }
@@ -241,6 +191,5 @@
   .flow-history-list { padding: 0 14px 14px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .flow-edges > path.running { animation: none; }
   .flow-workspace *, .flow-graph * { transition: none !important; }
 }

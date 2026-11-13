@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fitFlowGraph, flowZoomAnchor, layoutFlowGraph } from "../src/entities/flow/model/graph";
+import { FLOW_CARD, fitFlowGraph, flowZoomAnchor, layoutFlowGraph } from "../src/entities/flow/model/graph";
 
 describe("flow dependency layout", () => {
   it("keeps the pointer anchored while zooming and clamps the supported scale", () => {
@@ -11,7 +11,7 @@ describe("flow dependency layout", () => {
   });
 
   it("fits every column of a wide pipeline and every row of a tall pipeline below manual zoom limits", () => {
-    const wide = layoutFlowGraph(Array.from({ length: 8 }, (_, index) => ({ id: String(index), needs: index ? [String(index - 1)] : [] })));
+    const wide = layoutFlowGraph(Array.from({ length: 12 }, (_, index) => ({ id: String(index), needs: index ? [String(index - 1)] : [] })));
     const tall = layoutFlowGraph(Array.from({ length: 80 }, (_, index) => ({ id: String(index), needs: [] })));
     for (const graph of [wide, tall]) {
       const scale = fitFlowGraph(graph.width, graph.height, 500, 400);
@@ -33,7 +33,7 @@ describe("flow dependency layout", () => {
     const nodes = Array.from({ length: 25 }, (_, index) => ({ id: String(index), needs: [] }));
     const graph = layoutFlowGraph(nodes);
     expect(graph.nodes.map((node) => node.row)).toEqual(nodes.map((_, index) => index));
-    expect(graph.height).toBeGreaterThan(graph.nodes.at(-1)!.y + 112);
+    expect(graph.height).toBeGreaterThan(graph.nodes.at(-1)!.y + FLOW_CARD.height);
     expect(layoutFlowGraph(nodes)).toEqual(graph);
   });
 

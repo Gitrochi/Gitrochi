@@ -1,10 +1,11 @@
-import { Clock3, Hand, Maximize, RotateCcw, Workflow } from "lucide-react";
+import { RotateCcw } from "lucide-react";
 import { Minus, Plus } from "@/shared/icons";
-import { type PointerEvent, useEffect, useId, useMemo, useRef, useState } from "react";
-import { fitFlowGraph, flowZoomAnchor, formatDuration, layoutFlowGraph } from "@/entities/flow";
+import { type PointerEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FLOW_CARD, fitFlowGraph, flowEdgeLook, flowStepCommand, flowStepSummary, flowZoomAnchor, formatDuration, layoutFlowGraph } from "@/entities/flow";
 import { t } from "@/shared/i18n";
 import { IconButton } from "@/shared/ui";
-import { FlowBlockIcon, FlowStatePill, flowBlockKind, flowStateTone } from "./FlowState";
+import { FlowStateIcon, flowStepKindTitle, stateTitle } from "./FlowState";
+import "./flow-graph.css";
 
 interface GraphNode {
   id: string;
@@ -12,12 +13,19 @@ interface GraphNode {
   block: string;
   needs: string[];
   run?: string | null;
-  state?: string;
+  state?: string | null;
   decision?: string;
   durationMs?: number | null;
 }
 
-/** A scrollable dependency canvas shared by plans, live runs and saved runs. */
+/** What a step shows before the engine has a result for it: only what the plan already decided */
+const shownState = (node: GraphNode) => node.state ?? (node.decision === "skip" ? "SKIPPED" : node.decision === "rejected" ? "REJECTED" : null);
+
+/**
+ * A scrollable dependency canvas shared by plans, live runs and saved runs. Each card reads top to bottom: how the
+ * step did, its name, what it is for, and the command it runs. A connector means "needs": the step on the right
+ * starts only after the step on the left has passed.
+ */
 export function FlowGraph({ nodes, selected, onSelect, fitOnMount = false }: { nodes: GraphNode[]; selected: string | null; onSelect: (id: string) => void; fitOnMount?: boolean }) {
   const graph = useMemo(() => layoutFlowGraph(nodes), [nodes]);
   const [zoom, setZoom] = useState(1);
@@ -30,13 +38,12 @@ export function FlowGraph({ nodes, selected, onSelect, fitOnMount = false }: { n
   const gesture = useRef<{ kind: "node" | "pan"; id?: string; x: number; y: number; startX: number; startY: number; moved: boolean } | null>(null);
   const suppressClick = useRef(false);
   const viewport = useRef<HTMLDivElement>(null);
-  const marker = useId().replace(/:/g, "");
   const byID = new Map(nodes.map((node) => [node.id, node]));
   const arranged = graph.nodes.map((node) => ({ ...node, ...(moved[node.id] ?? {}) }));
   const positions = new Map(arranged.map((node) => [node.id, node]));
-  const width = arranged.reduce((max, node) => Math.max(max, node.x + 260), graph.width);
-  const height = arranged.reduce((max, node) => Math.max(max, node.y + 142), graph.height);
-  const outputs = new Set(graph.edges.map((edge) => edge.from));
+  const width = arranged.reduce((max, node) => Math.max(max, node.x + FLOW_CARD.width + FLOW_CARD.margin), graph.width);
+  const height = arranged.reduce((max, node) => Math.max(max, node.y + FLOW_CARD.height + FLOW_CARD.margin), graph.height);
+  const rearranged = Object.keys(moved).length > 0;
   const zoomTo = (value: number, pointer?: { x: number; y: number }) => {
     const element = viewport.current;
     if (!element) return;
@@ -105,7 +112,7 @@ export function FlowGraph({ nodes, selected, onSelect, fitOnMount = false }: { n
     if (Math.abs(dx) + Math.abs(dy) < 3 && !current.moved) return;
     autoFit.current = false;
     current.moved = true;
-    setMoved((previous) => ({ ...previous, [current.id!]: { x: Math.max(24, current.startX + dx / zoomRef.current), y: Math.max(24, current.startY + dy / zoomRef.current) } }));
+    setMoved((previous) => ({ ...previous, [current.id!]: { x: Math.max(FLOW_CARD.margin, current.startX + dx / zoomRef.current), y: Math.max(FLOW_CARD.margin, current.startY + dy / zoomRef.current) } }));
   };
   const endNode = () => { suppressClick.current = gesture.current?.moved ?? false; gesture.current = null; };
   const startPan = (event: PointerEvent<HTMLDivElement>) => {
@@ -125,48 +132,50 @@ export function FlowGraph({ nodes, selected, onSelect, fitOnMount = false }: { n
   const endPan = () => { if (gesture.current?.kind === "pan") gesture.current = null; setPanning(false); };
   return (
     <div className="flow-graph" data-flow-graph>
-      <div className="flow-canvas-toolbar">
-        <span className="flow-canvas-title"><Workflow size={14} />{t("Dependency graph")}<span className="flow-count">{nodes.length}</span></span>
-        <span className="spacer" />
-        <span className="flow-canvas-help" data-tip={t("Drag empty space to pan. Pinch or Ctrl+scroll to zoom. Drag modules to arrange them.")}><Hand size={13} /></span>
-        <span className="flow-canvas-zoom-controls">
+      <div className="flow-canvas-controls" role="group" aria-label={t("Dependency graph")}>
         <IconButton small icon={<Minus size={13} />} tip={t("Zoom out")} aria-label={t("Zoom out")} onClick={() => zoomTo(zoomRef.current / 1.2)} />
         <button className="flow-zoom mono" aria-label={t("Reset zoom")} data-tip={t("Reset zoom")} onClick={() => zoomTo(1)}>{Math.round(zoom * 100)}%</button>
         <IconButton small icon={<Plus size={13} />} tip={t("Zoom in")} aria-label={t("Zoom in")} onClick={() => zoomTo(zoomRef.current * 1.2)} />
-        </span>
-        <IconButton small icon={<Maximize size={13} />} tip={t("Fit graph")} aria-label={t("Fit graph")} onClick={fit} />
-      <IconButton small icon={<RotateCcw size={13} />} tip={t("Reset layout")} aria-label={t("Reset layout")} onClick={reset} />
+        <span className="flow-canvas-divider" aria-hidden="true" />
+        <button className="flow-fit" aria-label={t("Fit graph")} data-tip={t("Drag empty space to pan. Pinch or Ctrl+scroll to zoom. Drag modules to arrange them.")} onClick={fit}>{t("Fit")}</button>
+        {rearranged && <IconButton small icon={<RotateCcw size={13} />} tip={t("Reset layout")} aria-label={t("Reset layout")} onClick={reset} />}
       </div>
       <div className={`flow-canvas-scroll ${panning ? "panning" : ""}`} ref={viewport} onPointerDown={startPan} onPointerMove={movePan} onPointerUp={endPan} onPointerCancel={endPan}>
         <div style={{ width: width * zoom, height: height * zoom, minWidth: "100%" }}>
           <div className="flow-canvas" style={{ width, height, transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` }}>
             <svg width={width} height={height} aria-hidden="true" className="flow-edges">
-              <defs>{["neutral", "success", "failure", "active", "warning"].map((tone) => <marker key={tone} id={`${marker}-${tone}`} className={`flow-edge-marker ${tone}`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" /></marker>)}</defs>
               {graph.edges.map((edge) => {
                 const from = positions.get(edge.from)!;
                 const to = positions.get(edge.to)!;
-                const x1 = from.x + 220, y1 = from.y + 56, x2 = to.x, y2 = to.y + 56;
+                const x1 = from.x + FLOW_CARD.width, y1 = from.y + FLOW_CARD.height / 2, x2 = to.x, y2 = to.y + FLOW_CARD.height / 2;
                 const middle = (x1 + x2) / 2;
-                const state = byID.get(edge.to)?.state;
-                const tone = flowStateTone(state);
-                const connected = selected === edge.from || selected === edge.to;
-                return <path key={`${edge.from}:${edge.to}`} className={`${tone} ${state === "RUNNING" ? "running" : ""} ${connected ? "connected" : ""}`} d={`M ${x1} ${y1} C ${middle} ${y1}, ${middle} ${y2}, ${x2} ${y2}`} markerEnd={`url(#${marker}-${tone})`} />;
+                const look = flowEdgeLook(shownState(byID.get(edge.from)!), shownState(byID.get(edge.to)!));
+                return <path key={`${edge.from}:${edge.to}`} className={`${look.tone} ${look.dashed ? "dashed" : ""}`} d={`M ${x1} ${y1} C ${middle} ${y1}, ${middle} ${y2}, ${x2} ${y2}`} />;
+              })}
+              {graph.edges.map((edge) => {
+                const to = positions.get(edge.to)!;
+                const look = flowEdgeLook(shownState(byID.get(edge.from)!), shownState(byID.get(edge.to)!));
+                return <circle key={`${edge.from}:${edge.to}`} className={look.tone} cx={to.x} cy={to.y + FLOW_CARD.height / 2} r={3} />;
               })}
             </svg>
             {arranged.map((position) => {
               const node = byID.get(position.id)!;
-              const state = node.state ?? (node.decision === "skip" ? "SKIPPED" : node.decision === "rejected" ? "REJECTED" : null);
-              return <button key={node.id} type="button" className={`flow-node kind-${flowBlockKind(node.block)} ${selected === node.id ? "selected" : ""} ${state?.toLowerCase() ?? ""}`} style={{ left: position.x, top: position.y }} aria-pressed={selected === node.id} data-flow-node={node.id} onPointerDown={(event) => startNode(event, node.id)} onPointerMove={moveNode} onPointerUp={endNode} onPointerCancel={endNode} onKeyDown={(event) => {
+              const state = shownState(node);
+              const command = flowStepCommand(node);
+              const duration = node.durationMs != null ? formatDuration(node.durationMs) : null;
+              return <button key={node.id} type="button" className={`flow-node ${selected === node.id ? "selected" : ""} ${state?.toLowerCase() ?? ""}`} style={{ left: position.x, top: position.y, width: FLOW_CARD.width, height: FLOW_CARD.height }} aria-pressed={selected === node.id} aria-label={[node.id, stateTitle(state), duration].filter(Boolean).join(", ")} data-flow-node={node.id} onPointerDown={(event) => startNode(event, node.id)} onPointerMove={moveNode} onPointerUp={endNode} onPointerCancel={endNode} onKeyDown={(event) => {
                 if (!event.altKey || !["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key)) return;
                 event.preventDefault();
                 autoFit.current = false;
-                setMoved((previous) => ({ ...previous, [node.id]: { x: Math.max(24, position.x + (event.key === "ArrowRight" ? 16 : event.key === "ArrowLeft" ? -16 : 0)), y: Math.max(24, position.y + (event.key === "ArrowDown" ? 16 : event.key === "ArrowUp" ? -16 : 0)) } }));
+                setMoved((previous) => ({ ...previous, [node.id]: { x: Math.max(FLOW_CARD.margin, position.x + (event.key === "ArrowRight" ? 16 : event.key === "ArrowLeft" ? -16 : 0)), y: Math.max(FLOW_CARD.margin, position.y + (event.key === "ArrowDown" ? 16 : event.key === "ArrowUp" ? -16 : 0)) } }));
               }} onClick={() => { if (suppressClick.current) { suppressClick.current = false; return; } onSelect(node.id); }}>
-                {node.needs.length > 0 && <span className="flow-node-port input" aria-hidden="true" />}
-                {outputs.has(node.id) && <span className="flow-node-port output" aria-hidden="true" />}
-                <span className="flow-node-heading"><span className="flow-node-type"><FlowBlockIcon block={node.block} size={15} /></span><strong>{node.id}</strong><span className="flow-node-order mono" aria-hidden="true">{String(position.column + 1).padStart(2, "0")}</span></span>
-                <span className="flow-node-command mono">{node.run?.split("\n").find((line) => line.trim()) || node.block}</span>
-                <span className="flow-node-footer">{state ? <FlowStatePill state={state} compact /> : <span className="flow-node-category mono">{node.block}</span>}<span className="flow-node-duration">{node.durationMs != null ? <><Clock3 size={10} />{formatDuration(node.durationMs)}</> : <span className="flow-node-caption">{node.title || t("Script")}</span>}</span></span>
+                <span className="flow-node-heading">
+                  <FlowStateIcon state={state} size={14} />
+                  <strong className="mono">{node.id}</strong>
+                  {duration && <span className="flow-node-duration mono">{duration}</span>}
+                </span>
+                <span className="flow-node-summary">{flowStepSummary(node) ?? flowStepKindTitle(node.block)}</span>
+                {command && <span className="flow-node-command mono">{command}</span>}
               </button>;
             })}
             {nodes.length === 0 && <div className="flow-empty">{t("This flow has no steps.")}</div>}
