@@ -2703,5 +2703,11 @@
   "Latest run failed at {0}": "Laatste run mislukt bij {0}",
   "Latest run: {0}": "Laatste run: {0}",
   "Skipped: {0}": "Overgeslagen: {0}",
-  "Run flow starts each step on this computer once the steps it needs have passed.": "Flow uitvoeren start elke stap op deze computer zodra de vereiste stappen zijn geslaagd."
+  "Run flow starts each step on this computer once the steps it needs have passed.": "Flow uitvoeren start elke stap op deze computer zodra de vereiste stappen zijn geslaagd.",
+  "Edit step…": "Stap bewerken…",
+  "Passed in {0}": "Geslaagd in {0}",
+  "Skipped because {0} did not pass": "Overgeslagen omdat {0} niet is geslaagd",
+  "Needs": "Vereist",
+  "Runs on": "Draait op",
+  "This computer": "Deze computer"
 }

@@ -4702,5 +4702,11 @@
   "Latest run failed at {0}": "최근 실행이 {0}에서 실패했습니다",
   "Latest run: {0}": "최근 실행: {0}",
   "Skipped: {0}": "건너뜀: {0}",
-  "Run flow starts each step on this computer once the steps it needs have passed.": "흐름 실행을 누르면 각 단계가 선행 단계를 통과한 뒤 이 컴퓨터에서 차례로 실행됩니다."
+  "Run flow starts each step on this computer once the steps it needs have passed.": "흐름 실행을 누르면 각 단계가 선행 단계를 통과한 뒤 이 컴퓨터에서 차례로 실행됩니다.",
+  "Edit step…": "단계 편집…",
+  "Passed in {0}": "{0} 만에 통과",
+  "Skipped because {0} did not pass": "{0} 단계가 통과하지 못해 건너뜀",
+  "Needs": "선행 단계",
+  "Runs on": "실행 위치",
+  "This computer": "이 컴퓨터"
 }

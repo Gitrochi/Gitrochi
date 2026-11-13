@@ -2748,5 +2748,11 @@
   "Latest run failed at {0}": "Последний запуск завершился сбоем на шаге {0}",
   "Latest run: {0}": "Последний запуск: {0}",
   "Skipped: {0}": "Пропущено: {0}",
-  "Run flow starts each step on this computer once the steps it needs have passed.": "«Запустить поток» выполняет каждый шаг на этом компьютере, как только успешно завершены шаги, от которых он зависит."
+  "Run flow starts each step on this computer once the steps it needs have passed.": "«Запустить поток» выполняет каждый шаг на этом компьютере, как только успешно завершены шаги, от которых он зависит.",
+  "Edit step…": "Изменить шаг…",
+  "Passed in {0}": "Успешно за {0}",
+  "Skipped because {0} did not pass": "Пропущено, так как шаг {0} не прошёл",
+  "Needs": "Требует",
+  "Runs on": "Выполняется на",
+  "This computer": "Этот компьютер"
 }

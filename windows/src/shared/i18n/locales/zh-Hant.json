@@ -2753,5 +2753,11 @@
   "Latest run failed at {0}": "最近一次執行在 {0} 失敗",
   "Latest run: {0}": "最近一次執行：{0}",
   "Skipped: {0}": "已略過：{0}",
-  "Run flow starts each step on this computer once the steps it needs have passed.": "「執行流程」會在所相依的步驟通過後，在這台電腦上依序啟動每個步驟。"
+  "Run flow starts each step on this computer once the steps it needs have passed.": "「執行流程」會在所相依的步驟通過後，在這台電腦上依序啟動每個步驟。",
+  "Edit step…": "編輯步驟…",
+  "Passed in {0}": "{0}內通過",
+  "Skipped because {0} did not pass": "因 {0} 未通過而略過",
+  "Needs": "相依",
+  "Runs on": "執行位置",
+  "This computer": "這台電腦"
 }

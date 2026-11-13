@@ -2748,5 +2748,11 @@
   "Latest run failed at {0}": "Останній запуск завершився збоєм на кроці {0}",
   "Latest run: {0}": "Останній запуск: {0}",
   "Skipped: {0}": "Пропущено: {0}",
-  "Run flow starts each step on this computer once the steps it needs have passed.": "«Запустити потік» виконує кожен крок на цьому комп’ютері, щойно успішно завершено кроки, від яких він залежить."
+  "Run flow starts each step on this computer once the steps it needs have passed.": "«Запустити потік» виконує кожен крок на цьому комп’ютері, щойно успішно завершено кроки, від яких він залежить.",
+  "Edit step…": "Редагувати крок…",
+  "Passed in {0}": "Успішно за {0}",
+  "Skipped because {0} did not pass": "Пропущено, бо крок {0} не пройшов",
+  "Needs": "Потребує",
+  "Runs on": "Виконується на",
+  "This computer": "Цей комп’ютер"
 }

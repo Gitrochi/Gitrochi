@@ -2736,5 +2736,11 @@
   "Latest run failed at {0}": "Son çalıştırma {0} adımında başarısız oldu",
   "Latest run: {0}": "Son çalıştırma: {0}",
   "Skipped: {0}": "Atlandı: {0}",
-  "Run flow starts each step on this computer once the steps it needs have passed.": "Akışı çalıştır, her adımı gerektirdiği adımlar başarılı olunca bu bilgisayarda başlatır."
+  "Run flow starts each step on this computer once the steps it needs have passed.": "Akışı çalıştır, her adımı gerektirdiği adımlar başarılı olunca bu bilgisayarda başlatır.",
+  "Edit step…": "Adımı düzenle…",
+  "Passed in {0}": "{0} içinde başarılı",
+  "Skipped because {0} did not pass": "{0} başarılı olmadığı için atlandı",
+  "Needs": "Gerektirir",
+  "Runs on": "Çalıştığı yer",
+  "This computer": "Bu bilgisayar"
 }

@@ -2732,5 +2732,11 @@
   "Latest run failed at {0}": "Ostatnie uruchomienie nie powiodło się w kroku {0}",
   "Latest run: {0}": "Ostatnie uruchomienie: {0}",
   "Skipped: {0}": "Pominięto: {0}",
-  "Run flow starts each step on this computer once the steps it needs have passed.": "Uruchomienie przepływu startuje każdy krok na tym komputerze, gdy wymagane przez niego kroki zakończą się powodzeniem."
+  "Run flow starts each step on this computer once the steps it needs have passed.": "Uruchomienie przepływu startuje każdy krok na tym komputerze, gdy wymagane przez niego kroki zakończą się powodzeniem.",
+  "Edit step…": "Edytuj krok…",
+  "Passed in {0}": "Zakończono powodzeniem w {0}",
+  "Skipped because {0} did not pass": "Pominięto, ponieważ {0} nie zakończył się powodzeniem",
+  "Needs": "Wymaga",
+  "Runs on": "Uruchamiane na",
+  "This computer": "Ten komputer"
 }

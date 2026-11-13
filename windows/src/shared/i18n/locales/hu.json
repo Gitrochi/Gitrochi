@@ -2733,5 +2733,11 @@
   "Latest run failed at {0}": "A legutóbbi futtatás itt hibázott: {0}",
   "Latest run: {0}": "Legutóbbi futtatás: {0}",
   "Skipped: {0}": "Kihagyva: {0}",
-  "Run flow starts each step on this computer once the steps it needs have passed.": "A folyamat futtatása minden lépést ezen a számítógépen indít el, amint az előfeltétel-lépések sikeresek."
+  "Run flow starts each step on this computer once the steps it needs have passed.": "A folyamat futtatása minden lépést ezen a számítógépen indít el, amint az előfeltétel-lépések sikeresek.",
+  "Edit step…": "Lépés szerkesztése…",
+  "Passed in {0}": "Sikeres {0} alatt",
+  "Skipped because {0} did not pass": "Kihagyva, mert a(z) {0} nem volt sikeres",
+  "Needs": "Előfeltétel",
+  "Runs on": "Futtatási hely",
+  "This computer": "Ez a számítógép"
 }

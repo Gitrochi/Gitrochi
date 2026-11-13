@@ -2786,5 +2786,11 @@
   "Latest run failed at {0}": "La dernière exécution a échoué à {0}",
   "Latest run: {0}": "Dernière exécution : {0}",
   "Skipped: {0}": "Ignoré : {0}",
-  "Run flow starts each step on this computer once the steps it needs have passed.": "Lancer le flux démarre chaque étape sur cet ordinateur dès que les étapes dont elle dépend ont réussi."
+  "Run flow starts each step on this computer once the steps it needs have passed.": "Lancer le flux démarre chaque étape sur cet ordinateur dès que les étapes dont elle dépend ont réussi.",
+  "Edit step…": "Modifier l’étape…",
+  "Passed in {0}": "Réussi en {0}",
+  "Skipped because {0} did not pass": "Ignoré car {0} n’a pas réussi",
+  "Needs": "Nécessite",
+  "Runs on": "S’exécute sur",
+  "This computer": "Cet ordinateur"
 }

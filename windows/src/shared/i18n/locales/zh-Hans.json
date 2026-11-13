@@ -2883,5 +2883,11 @@
   "Latest run failed at {0}": "最近一次运行在 {0} 失败",
   "Latest run: {0}": "最近一次运行：{0}",
   "Skipped: {0}": "已跳过：{0}",
-  "Run flow starts each step on this computer once the steps it needs have passed.": "“运行流程”会在所依赖的步骤通过后，在这台电脑上依次启动每个步骤。"
+  "Run flow starts each step on this computer once the steps it needs have passed.": "“运行流程”会在所依赖的步骤通过后，在这台电脑上依次启动每个步骤。",
+  "Edit step…": "编辑步骤…",
+  "Passed in {0}": "{0}内通过",
+  "Skipped because {0} did not pass": "因 {0} 未通过而跳过",
+  "Needs": "依赖",
+  "Runs on": "运行位置",
+  "This computer": "这台电脑"
 }

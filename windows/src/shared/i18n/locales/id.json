@@ -2703,5 +2703,11 @@
   "Latest run failed at {0}": "Run terbaru gagal di {0}",
   "Latest run: {0}": "Run terbaru: {0}",
   "Skipped: {0}": "Dilewati: {0}",
-  "Run flow starts each step on this computer once the steps it needs have passed.": "Jalankan alur memulai setiap langkah di komputer ini setelah langkah yang dibutuhkannya lulus."
+  "Run flow starts each step on this computer once the steps it needs have passed.": "Jalankan alur memulai setiap langkah di komputer ini setelah langkah yang dibutuhkannya lulus.",
+  "Edit step…": "Edit langkah…",
+  "Passed in {0}": "Lulus dalam {0}",
+  "Skipped because {0} did not pass": "Dilewati karena {0} tidak lulus",
+  "Needs": "Membutuhkan",
+  "Runs on": "Berjalan di",
+  "This computer": "Komputer ini"
 }

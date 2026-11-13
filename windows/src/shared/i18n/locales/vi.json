@@ -2705,5 +2705,11 @@
   "Latest run failed at {0}": "Lượt chạy mới nhất thất bại tại {0}",
   "Latest run: {0}": "Lượt chạy mới nhất: {0}",
   "Skipped: {0}": "Đã bỏ qua: {0}",
-  "Run flow starts each step on this computer once the steps it needs have passed.": "Chạy luồng sẽ bắt đầu từng bước trên máy tính này khi các bước nó cần đã đạt."
+  "Run flow starts each step on this computer once the steps it needs have passed.": "Chạy luồng sẽ bắt đầu từng bước trên máy tính này khi các bước nó cần đã đạt.",
+  "Edit step…": "Chỉnh sửa bước…",
+  "Passed in {0}": "Đạt sau {0}",
+  "Skipped because {0} did not pass": "Bỏ qua vì {0} không đạt",
+  "Needs": "Cần",
+  "Runs on": "Chạy trên",
+  "This computer": "Máy tính này"
 }

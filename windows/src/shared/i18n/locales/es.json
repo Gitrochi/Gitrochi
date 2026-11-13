@@ -2785,5 +2785,11 @@
   "Latest run failed at {0}": "La última ejecución falló en {0}",
   "Latest run: {0}": "Última ejecución: {0}",
   "Skipped: {0}": "Omitido: {0}",
-  "Run flow starts each step on this computer once the steps it needs have passed.": "Ejecutar flujo inicia cada paso en este equipo cuando los pasos que necesita han pasado."
+  "Run flow starts each step on this computer once the steps it needs have passed.": "Ejecutar flujo inicia cada paso en este equipo cuando los pasos que necesita han pasado.",
+  "Edit step…": "Editar paso…",
+  "Passed in {0}": "Pasó en {0}",
+  "Skipped because {0} did not pass": "Omitido porque {0} no pasó",
+  "Needs": "Necesita",
+  "Runs on": "Se ejecuta en",
+  "This computer": "Este equipo"
 }

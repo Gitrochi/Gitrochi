@@ -2743,5 +2743,11 @@
   "Latest run failed at {0}": "การรันล่าสุดล้มเหลวที่ {0}",
   "Latest run: {0}": "การรันล่าสุด: {0}",
   "Skipped: {0}": "ข้ามแล้ว: {0}",
-  "Run flow starts each step on this computer once the steps it needs have passed.": "รันโฟลว์จะเริ่มแต่ละขั้นตอนบนคอมพิวเตอร์เครื่องนี้เมื่อขั้นตอนที่ต้องรอผ่านแล้ว"
+  "Run flow starts each step on this computer once the steps it needs have passed.": "รันโฟลว์จะเริ่มแต่ละขั้นตอนบนคอมพิวเตอร์เครื่องนี้เมื่อขั้นตอนที่ต้องรอผ่านแล้ว",
+  "Edit step…": "แก้ไขขั้นตอน…",
+  "Passed in {0}": "ผ่านใน {0}",
+  "Skipped because {0} did not pass": "ข้ามเพราะ {0} ไม่ผ่าน",
+  "Needs": "ต้องรอ",
+  "Runs on": "รันบน",
+  "This computer": "คอมพิวเตอร์เครื่องนี้"
 }

@@ -3541,5 +3541,11 @@
   "Latest run failed at {0}": "最新の実行は {0} で失敗しました",
   "Latest run: {0}": "最新の実行: {0}",
   "Skipped: {0}": "スキップ: {0}",
-  "Run flow starts each step on this computer once the steps it needs have passed.": "「フローを実行」は、必要なステップが成功すると、各ステップをこのコンピュータで順に実行します。"
+  "Run flow starts each step on this computer once the steps it needs have passed.": "「フローを実行」は、必要なステップが成功すると、各ステップをこのコンピュータで順に実行します。",
+  "Edit step…": "ステップを編集…",
+  "Passed in {0}": "{0}で成功",
+  "Skipped because {0} did not pass": "{0} が成功しなかったためスキップ",
+  "Needs": "必要なステップ",
+  "Runs on": "実行場所",
+  "This computer": "このコンピュータ"
 }

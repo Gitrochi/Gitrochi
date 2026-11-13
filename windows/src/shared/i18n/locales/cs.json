@@ -2731,5 +2731,11 @@
   "Latest run failed at {0}": "Poslední běh selhal v kroku {0}",
   "Latest run: {0}": "Poslední běh: {0}",
   "Skipped: {0}": "Přeskočeno: {0}",
-  "Run flow starts each step on this computer once the steps it needs have passed.": "Spustit tok spustí každý krok na tomto počítači, jakmile projdou kroky, které vyžaduje."
+  "Run flow starts each step on this computer once the steps it needs have passed.": "Spustit tok spustí každý krok na tomto počítači, jakmile projdou kroky, které vyžaduje.",
+  "Edit step…": "Upravit krok…",
+  "Passed in {0}": "Prošlo za {0}",
+  "Skipped because {0} did not pass": "Přeskočeno, protože {0} neprošel",
+  "Needs": "Vyžaduje",
+  "Runs on": "Běží na",
+  "This computer": "Tento počítač"
 }
