@@ -21930,6 +21930,7 @@ gitch rescue 1 --branch before-rebase' ;;
       H_DESC='Gitrochi 데스크톱 앱을 연다 (macOS · Windows).'
       H_SUM='Gitrochi 데스크톱 앱 열기 (macOS · Windows)'
       H_OWN='app_cmd'
+      H_WRITES='없음 (Gitrochi 앱을 실행)'
       H_EX='gitch app
 gitch app --file src/login.ts --line 42' ;;
 
@@ -21989,7 +21990,7 @@ gitch pr list [--state open|closed|merged|all] [--limit 1..100] [--json]'
       H_DESC='GitHub PR / GitLab MR 을 만들고, 지금 브랜치의 PR 상태와 PR 목록을 본다.'
       H_SHORT='gitch pr --title 제목 [--body 내용]'
       H_SUM='PR/MR 만들기 (상태: gitch pr status, 목록: gitch pr list)'
-      H_FLAGS='  -t, --title 제목        PR 제목 (없으면 마지막 커밋 제목)
+      H_FLAGS='  -t, --title 제목        PR 제목 (없으면 커밋 내용으로 채움)
   -b, --body 내용         본문
   -F, --body-file 파일    본문을 파일에서 읽기
   -B, --base 브랜치       합칠 대상 브랜치 (기본: 기본 브랜치)
@@ -22180,7 +22181,7 @@ gitch report --days 7 --json' ;;
       H_SHORT='gitch graph [files|modules|changes|...]'
       H_SUM='구조 그래프: import / 모듈 의존 / 같이 바뀌는 파일 / 폴더 (짧게 g)'
       H_OWN='graph_cmd'
-      H_WRITES='--out 파일만 (저장소는 읽기 전용)'
+      H_WRITES='결과 파일(--out)과 check --init 의 규칙 파일만 (저장소는 읽기 전용)'
       H_EX='gitch g
 gitch graph diff main --format json' ;;
     schema) H_GROUP='inspect'
