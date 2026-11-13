@@ -2141,7 +2141,6 @@
 "Retry above" = "Thử lại ở trên";
 "Couldn't check the push destination" = "Không thể kiểm tra đích push";
 "Needs approval" = "Cần phê duyệt";
-"Local agents report their work to this app's Ledger." = "Các agent cục bộ báo cáo công việc vào Ledger của ứng dụng này.";
 "Agent executable not found" = "Không tìm thấy tệp thực thi của agent";
 "Enter a new branch name" = "Nhập tên nhánh mới";
 "Confirm the risk first" = "Hãy xác nhận rủi ro trước";

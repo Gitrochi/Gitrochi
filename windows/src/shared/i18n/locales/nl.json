@@ -2170,7 +2170,6 @@
   "Couldn't check the push destination": "Pushbestemming kan niet worden gecontroleerd",
   "Couldn't read the saved account credentials": "Opgeslagen accountgegevens kunnen niet worden gelezen",
   "Unlock your credentials, then retry.": "Ontgrendel je inloggegevens en probeer het opnieuw.",
-  "Local agents report their work to this app's Ledger.": "Lokale agents melden hun werk aan de Ledger van deze app.",
   "Agent executable not found": "Uitvoerbaar bestand van agent niet gevonden",
   "Enter a new branch name": "Voer een nieuwe branchnaam in",
   "Confirm the risk first": "Bevestig eerst het risico",

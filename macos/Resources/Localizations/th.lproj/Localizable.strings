@@ -2174,7 +2174,6 @@
 "Retry above" = "ลองอีกครั้งด้านบน";
 "Couldn't check the push destination" = "ตรวจปลายทาง push ไม่ได้";
 "Needs approval" = "ต้องอนุมัติ";
-"Local agents report their work to this app's Ledger." = "เอเจนต์ในเครื่องรายงานงานไปยัง Ledger ของแอปนี้";
 "Agent executable not found" = "ไม่พบไฟล์โปรแกรมของเอเจนต์";
 "Enter a new branch name" = "ป้อนชื่อแบรนช์ใหม่";
 "Confirm the risk first" = "ยืนยันความเสี่ยงก่อน";

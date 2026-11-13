@@ -2215,7 +2215,6 @@
   "Couldn't check the push destination": "Не удалось проверить назначение push",
   "Couldn't read the saved account credentials": "Не удалось прочитать сохранённые учётные данные",
   "Unlock your credentials, then retry.": "Разблокируйте учётные данные и повторите попытку.",
-  "Local agents report their work to this app's Ledger.": "Локальные агенты сообщают о своей работе в Ledger этого приложения.",
   "Agent executable not found": "Исполняемый файл агента не найден",
   "Enter a new branch name": "Введите имя новой ветки",
   "Confirm the risk first": "Сначала подтвердите риск",

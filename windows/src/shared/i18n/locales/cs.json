@@ -2198,7 +2198,6 @@
   "Couldn't check the push destination": "Cíl odeslání se nepodařilo zkontrolovat",
   "Couldn't read the saved account credentials": "Uložené přihlašovací údaje účtu se nepodařilo přečíst",
   "Unlock your credentials, then retry.": "Odemkněte přihlašovací údaje a zkuste to znovu.",
-  "Local agents report their work to this app's Ledger.": "Místní agenti hlásí svou práci do Ledgeru této aplikace.",
   "Agent executable not found": "Spustitelný soubor agenta nenalezen",
   "Enter a new branch name": "Zadejte název nové větve",
   "Confirm the risk first": "Nejprve potvrďte riziko",

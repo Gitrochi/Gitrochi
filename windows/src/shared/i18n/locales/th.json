@@ -2210,7 +2210,6 @@
   "Couldn't check the push destination": "ตรวจปลายทาง push ไม่ได้",
   "Couldn't read the saved account credentials": "อ่านข้อมูลรับรองของบัญชีที่บันทึกไว้ไม่ได้",
   "Unlock your credentials, then retry.": "ปลดล็อกข้อมูลรับรอง แล้วลองอีกครั้ง",
-  "Local agents report their work to this app's Ledger.": "เอเจนต์ในเครื่องรายงานงานไปยัง Ledger ของแอปนี้",
   "Agent executable not found": "ไม่พบไฟล์โปรแกรมของเอเจนต์",
   "Enter a new branch name": "ป้อนชื่อแบรนช์ใหม่",
   "Confirm the risk first": "ยืนยันความเสี่ยงก่อน",

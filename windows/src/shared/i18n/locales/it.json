@@ -2194,7 +2194,6 @@
   "Couldn't check the push destination": "Impossibile verificare la destinazione del push",
   "Couldn't read the saved account credentials": "Impossibile leggere le credenziali dell'account salvato",
   "Unlock your credentials, then retry.": "Sblocca le credenziali, quindi riprova.",
-  "Local agents report their work to this app's Ledger.": "Gli agenti locali segnalano il loro lavoro al Ledger di questa app.",
   "Agent executable not found": "Eseguibile dell'agente non trovato",
   "Enter a new branch name": "Inserisci il nome del nuovo branch",
   "Confirm the risk first": "Conferma prima il rischio",
