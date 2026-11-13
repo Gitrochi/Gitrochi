@@ -1,13 +1,17 @@
 import SwiftUI
 
 /// "This branch compared with the server", as the Summary card states board draws it: the branch, how far it is from
-/// its base and from the server, and the one next step. Read from local refs; a branch that is its own base has none.
+/// its base and from the server, and the one next step. Read from local refs. The card is there from the first frame,
+/// loading until the list and the counts are read, and says so when the branch has no request to open.
 /// (Windows: pages/repo/ui/PullRequestSummary.tsx)
 struct PullRequestSummary: View {
     @Environment(RepoStore.self) private var store
+    @Environment(\.openSettings) private var openSettings
     let target: RepoTarget
     let compact: Bool
-    @ViewState private var counts: (incoming: Int, commits: Int)?
+    @ViewState private var counts: (key: String, value: PullRequestPage.BranchCounts)?
+    /// The list this view saw read: a refresh, or a failed one, keeps the card as that read left it
+    @ViewState private var readKey: String?
 
     private var gitlab: Bool { target.provider == .gitlab }
     private var head: String? { store.headBranch }
@@ -17,48 +21,116 @@ struct PullRequestSummary: View {
     }
     private var remoteBase: String? { base.map { target.remote + "/" + $0 } }
     private var server: String { gitlab ? String(localized: "on GitLab") : String(localized: "on GitHub") }
+    private var listKey: String { "\(store.url?.path ?? "")|\(target.host)/\(target.path)|\(store.hostingAccount?.id ?? "")" }
+    private var countsKey: String { "\(store.url?.path ?? "")|\(head ?? "")|\(remoteBase ?? "")" }
+    private var list: PullRequestPage.ListRead {
+        switch store.prState {
+        case .loaded: return .read
+        case .needsAccount: return .noAccount
+        case .failed: return readKey == listKey ? .read : .failed
+        case .idle, .loading, .authorizationRequired: return readKey == listKey ? .read : .pending
+        }
+    }
+    private var card: PullRequestPage.SummaryCard {
+        PullRequestPage.summaryCard(list: list, head: head, base: base, hasRequest: request != nil, ahead: store.status.ahead,
+                                    counts: counts?.key == countsKey ? counts?.value ?? .pending : .pending)
+    }
+    private var loadingCaption: String { gitlab ? String(localized: "Loading merge requests…") : String(localized: "Loading pull requests…") }
+    private var nothingToOpen: String { gitlab ? String(localized: "No merge request to open from here") : String(localized: "No pull request to open from here") }
+    private var connect: String {
+        gitlab ? String(localized: "Connect a GitLab account to see merge requests") : String(localized: "Connect a GitHub account to see pull requests")
+    }
 
     var body: some View {
-        // not a Group: with no card yet it would be no view at all, and its task would never read the counts
-        VStack(spacing: 0) {
-            Color.clear.frame(height: 0)
-            // before the list is read, "no request yet" would be a guess
-            if let head, let base, head != base, let counts, store.prState == .loaded {
-                let state = PullRequestPage.branchSummary(hasRequest: request != nil, ahead: store.status.ahead, incoming: counts.incoming, commits: counts.commits)
-                HostedListSummary(compact: compact) {
-                    HostedListSummaryCaption(text: String(localized: "This branch"))
-                    // a branch name is cut from the front, where it says least
-                    Text(verbatim: head).font(.system(size: 15, weight: .semibold)).lineLimit(1).truncationMode(.head)
-                    HostedListSummaryCaption(text: headline(state, base: base))
-                } middle: {
-                    track(state, base: base).accessibilityElement(children: .ignore).accessibilityLabel(headline(state, base: base))
-                } trail: {
-                    trail(state, base: base)
-                } strip: {
-                    Text(verbatim: head).font(.system(size: 12, weight: .semibold)).lineLimit(1).truncationMode(.head)
-                    HostedListSummaryCaption(text: headline(state, base: base))
-                    Spacer(minLength: 8)
-                    action(state, base: base)
-                }
-                .padding(.top, compact ? 0 : 4)
-                .accessibilityLabel("This branch compared with the server")
+        let card = card
+        HostedListSummary(compact: compact) {
+            HostedListSummaryCaption(text: String(localized: "This branch"))
+            // a branch name is cut from the front, where it says least
+            Text(verbatim: head ?? String(localized: "Detached HEAD")).font(.system(size: 15, weight: .semibold)).lineLimit(1).truncationMode(.head)
+            if card == .loading {
+                HostedListSummaryLoadingLine(caption: loadingCaption)
+            } else if let line = line(card) {
+                HostedListSummaryCaption(text: line)
             }
+        } middle: {
+            switch card {
+            case .loading: HostedListSummaryBars()
+            case .noAccount:
+                HostedListSummaryMessage(title: connect, caption: String(localized: "\(target.path) is on \(target.host). Commits and branches work without an account."))
+            case .detached: HostedListSummaryMessage(title: nothingToOpen)
+            case .base:
+                HostedListSummaryMessage(title: nothingToOpen, caption: String(localized: "\(base ?? "") is the base branch. Switch to another branch to open one."))
+            case .failed, .uncounted: Color.clear
+            case .branch(let state):
+                track(state, base: base ?? "").accessibilityElement(children: .ignore).accessibilityLabel(headline(state, base: base ?? ""))
+            }
+        } trail: {
+            switch card {
+            case .loading: HostedListSummaryBar()
+            case .branch(let state): trail(state, base: base ?? "")
+            default: action(card)
+            }
+        } strip: {
+            if card == .loading { ProgressView().controlSize(.mini) }
+            Text(verbatim: head ?? String(localized: "Detached HEAD")).font(.system(size: 12, weight: .semibold)).lineLimit(1).truncationMode(.head)
+            HostedListSummaryCaption(text: stripLine(card))
+            Spacer(minLength: 8)
+            action(card)
         }
+        .padding(.top, compact ? 0 : 4)
+        .accessibilityLabel("This branch compared with the server")
+        // on the card itself, which is always drawn: a task on a view that waits for its data never reads it
         .task(id: "\(head ?? "")|\(store.headHash ?? "")|\(remoteBase ?? "")") { await load() }
+        .onChange(of: store.prState, initial: true) { _, state in if state == .loaded { readKey = listKey } }
     }
 
-    /// Both counts come from one local read; a base that was never fetched leaves the card out
+    /// Both counts come from one local read; a base that was never fetched leaves the card without its track
     private func load() async {
-        guard let url = store.url, let remoteBase, head != base,
-              let output = try? await Git.run(["rev-list", "--left-right", "--count", remoteBase + "...HEAD"], in: url).output else { counts = nil; return }
-        let parts = output.split(whereSeparator: \.isWhitespace).compactMap { Int($0) }
-        counts = parts.count == 2 ? (parts[0], parts[1]) : nil
+        let key = countsKey
+        var value = PullRequestPage.BranchCounts.unavailable
+        if let url = store.url, let remoteBase, head != nil, head != base,
+           let output = try? await Git.run(["rev-list", "--left-right", "--count", remoteBase + "...HEAD"], in: url).output {
+            let parts = output.split(whereSeparator: \.isWhitespace).compactMap { Int($0) }
+            if parts.count == 2 { value = .read(incoming: parts[0], commits: parts[1]) }
+        }
+        guard !Task.isCancelled, key == countsKey else { return }
+        counts = (key, value)
     }
+
+    /// What this clone knows of the branch without the server
+    private var local: String? {
+        guard head != nil else { return nil }
+        if store.status.upstream == nil { return String(localized: "Not on the server yet") }
+        return base.flatMap { $0 == head ? nil : String(localized: "Based on \($0)") }
+    }
+
+    /// The line under the branch name
+    private func line(_ card: PullRequestPage.SummaryCard) -> String? {
+        switch card {
+        case .loading, .detached, .base: return nil
+        case .noAccount: return local
+        case .failed: return String(localized: "Couldn't reach \(target.host)")
+        case .uncounted(let hasRequest): return hasRequest ? requestOpen : local
+        case .branch(let state): return headline(state, base: base ?? "")
+        }
+    }
+
+    /// The strip says in one line what the card says in its lead and its middle
+    private func stripLine(_ card: PullRequestPage.SummaryCard) -> String {
+        switch card {
+        case .loading: return loadingCaption
+        case .noAccount: return connect
+        case .detached, .base: return nothingToOpen
+        default: return line(card) ?? ""
+        }
+    }
+
+    private var requestOpen: String { gitlab ? String(localized: "Merge request open") : String(localized: "Pull request open") }
 
     private func headline(_ state: PullRequestPage.BranchSummary, base: String) -> String {
         switch state {
         case .noRequest: return store.status.upstream == nil ? String(localized: "Not on the server yet") : String(localized: "Based on \(base)")
-        case .moved, .upToDate, .notPushed: return gitlab ? String(localized: "Merge request open") : String(localized: "Pull request open")
+        case .moved, .upToDate, .notPushed: return requestOpen
         }
     }
 
@@ -71,8 +143,8 @@ struct PullRequestSummary: View {
         HStack(alignment: .top, spacing: 0) {
             switch state {
             case .noRequest(let commits):
-                if let counts, counts.incoming > 0 {
-                    node(remoteBase ?? base, String(localized: "\(counts.incoming) new commits"), tone: .waiting)
+                if case .read(let incoming, _)? = counts?.value, incoming > 0 {
+                    node(remoteBase ?? base, String(localized: "\(incoming) new commits"), tone: .waiting)
                 } else {
                     node(base, String(localized: "base"))
                 }
@@ -141,10 +213,25 @@ struct PullRequestSummary: View {
         }
     }
 
+    /// The one next step, in the trail and at the end of the strip
+    @ViewBuilder private func action(_ card: PullRequestPage.SummaryCard) -> some View {
+        switch card {
+        // the state blocks the page, so its action is the filled one
+        case .noAccount: Button("Connect account…") { openSettings() }.hostedListFilledButton()
+        case .uncounted(hasRequest: false): create
+        case .branch(let state): action(state, base: base ?? "")
+        default: EmptyView()
+        }
+    }
+
+    private var create: some View {
+        Button(gitlab ? "Create merge request…" : "Create pull request…") { store.sheet = .createPullRequest }.buttonStyle(HostedListButtonStyle())
+    }
+
     @ViewBuilder private func action(_ state: PullRequestPage.BranchSummary, base: String) -> some View {
         switch state {
         case .noRequest:
-            Button(gitlab ? "Create merge request…" : "Create pull request…") { store.sheet = .createPullRequest }.buttonStyle(HostedListButtonStyle())
+            create
         case .moved:
             Button("Update branch") { if let remoteBase { Task { await store.merge(remoteBase) } } }.buttonStyle(HostedListButtonStyle())
         case .upToDate:

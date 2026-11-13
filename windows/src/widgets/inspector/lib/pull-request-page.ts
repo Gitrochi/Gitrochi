@@ -104,6 +104,36 @@ export function branchSummary(hasRequest: boolean, ahead: number, incoming: numb
   return incoming > 0 ? { kind: "moved", incoming, commits } : { kind: "upToDate", commits };
 }
 
+/** Whether the request list was read for this repository; a refresh keeps what the last read said */
+export type RequestListRead = "pending" | "read" | "failed" | "noAccount";
+
+/** The branch's distance from its base: still being counted, not countable (no base in this clone), or counted */
+export type BranchCounts = "pending" | "unavailable" | { incoming: number; commits: number };
+
+/**
+ * Which state the summary card is in. It always has one, so the card keeps its place from the first frame.
+ * (macOS: PullRequestPage.SummaryCard)
+ */
+export type RequestSummaryCard =
+  | { kind: "loading" | "noAccount" | "detached" | "failed" }
+  /** On the base branch with no request from it: nothing to open */
+  | { kind: "base" }
+  /** The base is not in this clone, so there is no distance to draw */
+  | { kind: "uncounted"; hasRequest: boolean }
+  | { kind: "branch"; state: BranchSummary };
+
+/** Nothing is said about a request before the list is read: "no request yet" would be a guess */
+export function requestSummaryCard(list: RequestListRead, head: string | null, base: string | null, hasRequest: boolean, ahead: number, counts: BranchCounts): RequestSummaryCard {
+  if (list === "noAccount") return { kind: "noAccount" };
+  if (!head) return { kind: "detached" };
+  if (list === "pending") return { kind: "loading" };
+  if (list === "failed") return { kind: "failed" };
+  if (head === base) return { kind: "base" };
+  if (counts === "pending") return { kind: "loading" };
+  if (counts === "unavailable") return { kind: "uncounted", hasRequest };
+  return { kind: "branch", state: branchSummary(hasRequest, ahead, counts.incoming, counts.commits) };
+}
+
 /** The issues a description closes ("Closes #42", "fixes #7"), in order and once each */
 export function linkedIssues(body: string): number[] {
   const found: number[] = [];
