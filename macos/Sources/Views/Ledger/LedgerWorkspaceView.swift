@@ -62,14 +62,18 @@ struct LedgerWorkspaceView: View {
                 // the sheet reads the linked request and Flow runs through the window's repository, as the column does
                 .environment(store)
         }
-        .sheet(item: $sheet, onDismiss: {
+        // Connect agents is on the shared layout and hangs under the toolbar; the others are still the system's
+        .attachedSheet(item: Binding(get: { sheet == .connect ? sheet : nil }, set: { if $0 == nil, sheet == .connect { sheet = nil } })) { _ in
+            LedgerConnectSheet(ledger: ledger, openBrowser: { switchSheet(to: .browser) })
+        }
+        .sheet(item: Binding(get: { sheet == .connect ? nil : sheet }, set: { if $0 == nil, sheet != .connect { sheet = nil } }), onDismiss: {
             if let id = sessionAfterSheet {
                 sessionAfterSheet = nil
                 open(id)
             }
         }) { sheet in
             switch sheet {
-            case .connect: LedgerConnectSheet(ledger: ledger, openBrowser: { switchSheet(to: .browser) })
+            case .connect: EmptyView()
             case .browser: LedgerBrowserSheet(ledger: ledger)
             case .importReports: LedgerImportSheet(ledger: ledger)
             case .importLegacy: if let legacyPath { LedgerLegacyImportSheet(ledger: ledger, path: legacyPath) }
