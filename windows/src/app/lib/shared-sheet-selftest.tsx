@@ -20,15 +20,18 @@ export async function sharedSheetSelfTest(): Promise<[boolean, string]> {
   const root = createRoot(host);
   let closed = 0, confirmed = 0, tested = 0;
   let block = (_reason: string | null) => {};
+  let hold = (_working: boolean) => {};
   let reopen = () => {};
   function Fixture() {
     const [reason, setReason] = useState<string | null>("Enter a name first");
     const [open, setOpen] = useState(true);
+    const [working, setWorking] = useState(false);
     block = setReason;
+    hold = setWorking;
     reopen = () => setOpen(true);
     if (!open) return null;
     return (
-      <SharedSheet className="fixture-sheet" title="Fixture sheet" context="desktop · feature/shared-sheet" width={480} onClose={() => { closed++; setOpen(false); }}
+      <SharedSheet className="fixture-sheet" title="Fixture sheet" context="desktop · feature/shared-sheet" width={480} cancelDisabled={working} onClose={() => { closed++; setOpen(false); }}
         secondary={<Button className="fixture-secondary" onClick={() => tested++}>Test</Button>}
         primary={{ label: "Confirm", onClick: () => confirmed++, disabledReason: reason }}>
         <span className="fixture-content">Content</span>
@@ -77,6 +80,17 @@ export async function sharedSheetSelfTest(): Promise<[boolean, string]> {
     $<HTMLButtonElement>(".shared-sheet-primary")!.click();
     if (!await until(() => confirmed === 1 && tested === 1)) return [false, "The footer's actions did not run"];
     details.push("footer");
+
+    // while its work is under way the sheet can't be left: not by Cancel, Escape or a click outside
+    hold(true);
+    if (!await until(() => $<HTMLButtonElement>(".shared-sheet-cancel")?.disabled === true)) return [false, "Cancel must be disabled while the sheet works"];
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
+    $(".fixture-sheet")!.parentElement!.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+    for (let turn = 0; turn < 5; turn++) await pause();
+    if (closed !== 0 || !$(".fixture-sheet")) return [false, "Escape or a click outside closed a sheet whose work was under way"];
+    hold(false);
+    if (!await until(() => $<HTMLButtonElement>(".shared-sheet-cancel")?.disabled === false)) return [false, "Cancel must come back once the work is done"];
+    details.push("held while working");
 
     // Cancel, Escape and a click outside close it
     $<HTMLButtonElement>(".shared-sheet-cancel")!.click();

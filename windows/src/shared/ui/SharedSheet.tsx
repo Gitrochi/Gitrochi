@@ -31,6 +31,7 @@ export function SharedSheet({ title, context, width = 560, onClose, secondary, c
   secondary?: ReactNode;
   /** "Cancel", or "Close" on a sheet with nothing to confirm */
   cancelLabel?: string;
+  /** While the sheet's work is under way it can't be left: not by Cancel, Escape or a click outside */
   cancelDisabled?: boolean;
   primary?: SheetPrimary;
   className?: string;
@@ -39,7 +40,8 @@ export function SharedSheet({ title, context, width = 560, onClose, secondary, c
   const backdrop = useRef<HTMLDivElement>(null);
   const titleID = useId(), contextID = useId();
   const [top, setTop] = useState(0);
-  useDialogEscape(backdrop, onClose);
+  const dismiss = () => { if (!cancelDisabled) onClose(); };
+  useDialogEscape(backdrop, dismiss);
   // the window's toolbar marks where sheets hang from; a window without one hangs them from its top edge
   useLayoutEffect(() => {
     const measure = () => setTop(Math.max(0, Math.round(document.querySelector("[data-sheet-anchor]")?.getBoundingClientRect().bottom ?? 0)));
@@ -49,7 +51,7 @@ export function SharedSheet({ title, context, width = 560, onClose, secondary, c
   }, []);
   return (
     // `.modal-backdrop` keeps the keyboard handlers aware of an open dialog; here it only catches clicks
-    <div ref={backdrop} className="modal-backdrop shared-sheet-backdrop" style={{ paddingTop: top }} onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div ref={backdrop} className="modal-backdrop shared-sheet-backdrop" style={{ paddingTop: top }} onMouseDown={(e) => e.target === e.currentTarget && dismiss()}>
       <div className={`shared-sheet ${className}`} style={{ width, maxHeight: `calc(100vh - ${top + 24}px)` }} role="dialog" aria-modal="true" aria-labelledby={titleID} aria-describedby={context ? contextID : undefined}>
         <div className="shared-sheet-header">
           <div className="shared-sheet-heading">
