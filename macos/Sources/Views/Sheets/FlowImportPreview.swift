@@ -95,9 +95,9 @@ struct FlowImportPreview: View {
             let needs: [String]
             if draft.inspection.format == "compose" { needs = value["depends_on"].object.isEmpty ? value["depends_on"].dependencyIDs : value["depends_on"].object.keys.sorted() }
             else { needs = value["needs"].array.compactMap { $0.string ?? $0["job"].string } + (value["needs"].string.map { [$0] } ?? []) }
-            return .init(id: id, title: value["description"].string ?? value["name"].string ?? id,
-                         block: previewBlock(value), needs: needs, state: nil,
-                         subtitle: value["image"].string ?? value["run"].string ?? value.string ?? value["script"].fieldText)
+            let command = value["image"].string ?? value["run"].string ?? value.string ?? value["script"].fieldText
+            return .init(id: id, title: value["description"].string ?? value["name"].string,
+                         block: previewBlock(value), needs: needs, state: nil, command: command.isEmpty ? nil : command)
         }
     }
 

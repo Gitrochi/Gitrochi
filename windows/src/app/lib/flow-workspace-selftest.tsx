@@ -39,16 +39,18 @@ export async function flowWorkspaceSelfTest(repo: string, runId: string): Promis
     const graphTab = host.querySelector<HTMLButtonElement>('.flow-tabs [role="tab"][aria-selected="true"]')!;
     graphTab.focus(); key(graphTab, "ArrowRight"); await pause();
     const historyTab = host.querySelector<HTMLButtonElement>('.flow-tabs [role="tab"][aria-selected="true"]')!;
-    check(historyTab.textContent?.includes(t("Run history")) && document.activeElement === historyTab && graphTab.tabIndex === -1, "Arrow navigation did not select and focus the history tab");
+    check(historyTab.textContent?.includes(t("History")) && document.activeElement === historyTab && graphTab.tabIndex === -1, "Arrow navigation did not select and focus the history tab");
     const panel = host.querySelector<HTMLElement>('[role="tabpanel"]');
     check(panel && historyTab.getAttribute("aria-controls") === panel.id && panel.getAttribute("aria-labelledby") === historyTab.id, "Workspace tab is not linked to its panel");
     key(historyTab, "Home"); await pause();
     check(graphTab.getAttribute("aria-selected") === "true" && document.activeElement === graphTab, "Home did not return to the graph tab");
     host.querySelector<HTMLButtonElement>('[data-flow-node="after"]')!.click(); await pause();
     check(host.querySelector(".flow-inspector")?.textContent?.includes("echo done"), "Selected node script was not shown");
+    check(host.querySelector(".flow-inspector .flow-step-facts")?.textContent?.includes("hello"), "Step details did not name the step this one needs");
+    check(host.querySelectorAll(".flow-banner").length === 1, "The Flow tab must show exactly one banner about the flow's state");
     host.querySelector<HTMLButtonElement>('.flow-choice[aria-pressed="true"]')!.click(); await pause();
     check(host.querySelector('[data-flow-node="after"][aria-pressed="true"]'), "Reopening the selected flow cleared its selected step");
-    await click("Run history");
+    await click("History");
     check(host.querySelector(`[data-flow-run="${runId}"]`), "Saved run missing from history");
     input(host.querySelector<HTMLInputElement>(`input[aria-label="${t("Filter runs")}"]`)!, "no-matching-run-selftest");
     check(await until(() => !host.querySelector("[data-flow-run]") && !!host.querySelector("[data-flow-history]")?.textContent?.includes(t("No matching runs"))), "History search confused an empty result with missing history");
@@ -56,7 +58,7 @@ export async function flowWorkspaceSelfTest(repo: string, runId: string): Promis
     check(host.querySelector(`[data-flow-run="${runId}"]`), "Clearing history filters did not restore the saved run");
     host.querySelector<HTMLButtonElement>(`[data-flow-run="${runId}"]`)!.click();
     check(await until(() => !!host.querySelector(".flow-run-graph [data-flow-node]")), "Saved run dependency graph missing");
-    await click("Done"); await click("Flow graph"); await click("Edit step");
+    await click("Done"); await click("Flow"); await click("Edit step…");
     check(await until(() => !!host.querySelector("[data-flow-code-workspace]") && !!code()), "Code editor did not load by default");
     check(await until(() => !!host.querySelector('.flow-code-preview [data-flow-node="after"][aria-pressed="true"]') && code().value.slice(code().selectionStart, code().selectionEnd).includes("after:")), "Edit step did not preserve the selected node or reveal its source");
     const path = joinPath(repo, ".gitch/flow.yml"), original = await ipc.readText(path);
@@ -101,7 +103,7 @@ export async function flowWorkspaceSelfTest(repo: string, runId: string): Promis
     await click("Cancel"); await click("Discard changes");
     check(await until(() => !host.querySelector(".flow-config")), "Flow draft did not close after explicit discard");
     check(await ipc.readText(linked) === "echo external-change\n" && await ipc.readText(path) === original, "Canceling flow draft reverted an independent file save");
-    await click("Configure scripts"); check(await until(() => !!code()), "Code editor did not reopen");
+    await click("Edit flow file…"); check(await until(() => !!code()), "Code editor did not reopen");
     input(code(), "flows: [\n"); await pause();
     check(await until(() => !!host.querySelector('[data-flow-source-current="false"]') && !!host.querySelector(".flow-design-diagnostic.error")), "Invalid source did not mark the diagram stale");
     check(code().getBoundingClientRect().width > 200 && code().getBoundingClientRect().height > 80, "Invalid source collapsed the code editor");
@@ -119,7 +121,7 @@ export async function flowWorkspaceSelfTest(repo: string, runId: string): Promis
     const creationField = <T extends HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement,>(label: string, container: ParentNode = creation()) => [...container.querySelectorAll<T>("input, textarea, select")].find((element) => [...(element.labels ?? [])].some((entry) => entry.firstChild?.textContent?.trim() === t(label)))!;
     const creationStepButton = (step: HTMLElement, label: string) => [...step.querySelectorAll<HTMLButtonElement>("button")].find((button) => button.getAttribute("aria-label") === t(label))!;
     const creationError = (label: string) => creation().querySelector('[role="alert"]')?.textContent?.includes(t(label));
-    await click("Create flow");
+    await click("New flow…");
     check(await until(() => !!creation()), "Guided flow creation did not open");
     await click("Create flow");
     check(creationError("Enter a flow name."), "Guided creation accepted a blank name");
@@ -158,7 +160,7 @@ export async function flowWorkspaceSelfTest(repo: string, runId: string): Promis
     const guidedModules = designModules(guidedInspection.document!, "guided-check");
     check(guidedModules.length === 2 && guidedModules[0].run === "echo guided-second" && guidedModules[0].title === "Second check" && guidedModules[0].needs.length === 0 && guidedModules[1].run === "echo guided-first" && guidedModules[1].title === "First check" && guidedModules[1].needs.length === 1 && guidedModules[1].needs[0] === guidedModules[0].id, "Guided creation did not preserve reordered commands, titles and sequential dependencies");
     check(await ipc.readText(path) === baseBeforeCreation && await runIDs() === runsBeforeCreation, "Creating a flow changed the existing source or started a run");
-    await click("Create flow");
+    await click("New flow…");
     input(creationField<HTMLInputElement>("Flow name"), "guided-discard");
     input(creationField<HTMLTextAreaElement>("Command", creationSteps()[0]), "echo discarded-draft"); await pause();
     await click("Cancel"); await click("Discard changes");
