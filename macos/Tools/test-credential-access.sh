@@ -7,7 +7,10 @@ trap 'rm -rf "$TASK_TMP"' EXIT
 python3 - "$ROOT/Sources/Services/Accounts.swift" "$TASK_TMP/Keychain.swift" <<'PY'
 import pathlib,sys
 source=pathlib.Path(sys.argv[1]).read_text().split('/// GitHub·사내 GitLab 계정')[0]
-for original,replacement in {'SecKeychainGetUserInteractionAllowed':'FixtureSecurity.getInteraction','SecKeychainSetUserInteractionAllowed':'FixtureSecurity.setInteraction','SecItemCopyMatching':'FixtureSecurity.copy','SecItemUpdate':'FixtureSecurity.update','SecItemAdd':'FixtureSecurity.add','SecItemDelete':'FixtureSecurity.delete','SecKeychainItemCopyAccess':'FixtureSecurity.copyAccess','SecKeychainItemSetAccess':'FixtureSecurity.setAccess','SecKeychainItem':'FixtureKeychainItem'}.items():
+# An approval may only read: reading or changing the item's access list needs its own authorization, so macOS asks for the password again.
+for api in ('SecKeychainItemSetAccess','SecKeychainItemCopyAccess','SecACLSetContents'):
+ assert api not in source, api+' adds a second Keychain password prompt to an approval'
+for original,replacement in {'SecKeychainGetUserInteractionAllowed':'FixtureSecurity.getInteraction','SecKeychainSetUserInteractionAllowed':'FixtureSecurity.setInteraction','SecItemCopyMatching':'FixtureSecurity.copy','SecItemUpdate':'FixtureSecurity.update','SecItemAdd':'FixtureSecurity.add','SecItemDelete':'FixtureSecurity.delete'}.items():
  source=source.replace(original,replacement)
 pathlib.Path(sys.argv[2]).write_text(source)
 PY
@@ -17,11 +20,9 @@ import Security
 
 enum LegacyData { static let keychainService = "fixture.legacy" }
 
-final class FixtureKeychainItem: NSObject {
-    var access: SecAccess?
-}
-
 final class FixtureSecurity: @unchecked Sendable {
+    /// The system dialog's answers to an allowed read of an item that does not trust this build
+    enum Choice { case allowOnce, alwaysAllow }
     static let shared = FixtureSecurity()
     private let lock = NSLock()
     private var interaction = true
@@ -30,24 +31,20 @@ final class FixtureSecurity: @unchecked Sendable {
     private var entered = false
     private var readResult: OSStatus = errSecSuccess
     private var approvalRequired = false
-    private var persistResult: OSStatus = errSecSuccess
+    private var choice = Choice.allowOnce
+    private var prompted = 0
     private var legacyOnly = false
-    private let item = FixtureKeychainItem()
-    private var originalSelector = SecKeychainPromptSelector(rawValue: 0)
     let release = DispatchSemaphore(value: 0)
-    func configure(hold: Bool, status: OSStatus = errSecSuccess) { lock.lock(); holdRead = hold; entered = false; readResult = status; operations = []; lock.unlock() }
-    func requireApproval(persistStatus: OSStatus = errSecSuccess, legacy: Bool = false) {
-        configure(hold: false)
-        var application: SecTrustedApplication?, access: SecAccess?
-        precondition(SecTrustedApplicationCreateFromPath("/bin/ls", &application) == errSecSuccess)
-        precondition(SecAccessCreate("Fixture credential" as CFString, [application!] as CFArray, &access) == errSecSuccess)
-        let entries = SecAccessCopyMatchingACLList(access!, kSecACLAuthorizationDecrypt) as! [SecACL]
-        var applications: CFArray?, description: CFString?, selector = SecKeychainPromptSelector(rawValue: 0)
-        precondition(SecACLCopyContents(entries[0], &applications, &description, &selector) == errSecSuccess)
-        lock.lock(); originalSelector = selector; item.access = access; approvalRequired = true; persistResult = persistStatus; legacyOnly = legacy; lock.unlock()
+    func configure(hold: Bool, status: OSStatus = errSecSuccess) { lock.lock(); holdRead = hold; entered = false; readResult = status; operations = []; prompted = 0; lock.unlock() }
+    /// The item does not trust this build yet: a silent read fails, an allowed read shows the system dialog.
+    func requireApproval(_ answer: Choice = .allowOnce, legacy: Bool = false, status: OSStatus = errSecSuccess) {
+        configure(hold: false, status: status)
+        lock.lock(); approvalRequired = true; choice = answer; legacyOnly = legacy; lock.unlock()
     }
     var didEnter: Bool { lock.lock(); defer { lock.unlock() }; return entered }
     var events: [String] { lock.lock(); defer { lock.unlock() }; return operations }
+    /// System dialogs shown since the last configuration
+    var prompts: Int { lock.lock(); defer { lock.unlock() }; return prompted }
     static func getInteraction(_ output: UnsafeMutablePointer<DarwinBoolean>) -> OSStatus {
         precondition(!Thread.isMainThread)
         let s = shared; s.lock.lock(); defer { s.lock.unlock() }; output.pointee = DarwinBoolean(s.interaction); return errSecSuccess
@@ -62,33 +59,15 @@ final class FixtureSecurity: @unchecked Sendable {
         let query = query as NSDictionary
         let missing = s.legacyOnly && query[kSecAttrService] as? String != LegacyData.keychainService
         let status = missing ? errSecItemNotFound : s.approvalRequired && !s.interaction ? errSecInteractionNotAllowed : s.readResult
+        if !missing && s.approvalRequired && s.interaction {
+            s.prompted += 1
+            // Always Allow is the system's own way to keep an approval; Allow and Deny leave the item as it was.
+            if status == errSecSuccess && s.choice == .alwaysAllow { s.approvalRequired = false }
+        }
         s.entered = true; s.operations.append("read:\(s.interaction)"); s.lock.unlock()
         if hold { s.release.wait() }
-        if status == errSecSuccess {
-            if query[kSecReturnRef] as? Bool == true {
-                output?.pointee = [kSecValueData as String: Data("fixture-only".utf8), kSecValueRef as String: s.item] as CFDictionary
-            } else { output?.pointee = Data("fixture-only".utf8) as CFData }
-        }
+        if status == errSecSuccess { output?.pointee = Data("fixture-only".utf8) as CFData }
         return status
-    }
-    static func copyAccess(_ item: FixtureKeychainItem, _ output: UnsafeMutablePointer<SecAccess?>) -> OSStatus {
-        record("access"); output.pointee = item.access; return errSecSuccess
-    }
-    static func setAccess(_ item: FixtureKeychainItem, _ access: SecAccess) -> OSStatus {
-        record("remember")
-        let s = shared; s.lock.lock(); defer { s.lock.unlock() }
-        guard s.persistResult == errSecSuccess else { return s.persistResult }
-        precondition(s.interaction, "Trust changed without explicit approval")
-        item.access = access; s.approvalRequired = false; return errSecSuccess
-    }
-    var trustedApplications: [SecTrustedApplication] {
-        lock.lock(); defer { lock.unlock() }
-        let entries = SecAccessCopyMatchingACLList(item.access!, kSecACLAuthorizationDecrypt) as! [SecACL]
-        var applications: CFArray?, description: CFString?, selector = SecKeychainPromptSelector(rawValue: 0)
-        precondition(SecACLCopyContents(entries[0], &applications, &description, &selector) == errSecSuccess)
-        precondition(description as String? == "Fixture credential", "Approval replaced the credential's description")
-        precondition(selector == originalSelector, "Approval changed the credential's prompt restrictions")
-        return applications as! [SecTrustedApplication]
     }
     static func update(_ query: CFDictionary, _ attributes: CFDictionary) -> OSStatus { record("write"); return errSecSuccess }
     static func add(_ query: CFDictionary, _ output: UnsafeMutablePointer<CFTypeRef?>?) -> OSStatus { record("add"); return errSecSuccess }
@@ -142,40 +121,30 @@ actor CacheFixture {
         let security = FixtureSecurity.shared
         security.requireApproval()
         let firstLaunch = await Keychain.read("fixture")
-        precondition(firstLaunch.requiresAuthorization && !security.events.contains("remember:true"))
-        let oneTime = await Keychain.read("fixture", allowInteraction: true)
-        precondition(oneTime.value == "fixture-only" && !security.events.contains("remember:true"), "An ordinary read changed saved permissions")
-        let invalidPolicy = await Keychain.read("fixture", rememberAccess: true)
-        precondition(invalidPolicy.status == errSecParam, "Silent access was allowed to change permissions")
-        let approved = await Keychain.read("fixture", allowInteraction: true, rememberAccess: true)
-        precondition(approved.value == "fixture-only" && security.events.contains("remember:true"))
-        let trusted = security.trustedApplications
-        precondition(trusted.count == 2, "Approval removed an existing trusted app or allowed every application")
-        var priorPath: CFData?, currentPath: CFData?, expectedPath: CFData?, currentApp: SecTrustedApplication?
-        precondition(SecTrustedApplicationCreateFromPath(nil, &currentApp) == errSecSuccess)
-        precondition(SecTrustedApplicationCopyData(trusted[0], &priorPath) == errSecSuccess)
-        precondition(SecTrustedApplicationCopyData(trusted[1], &currentPath) == errSecSuccess)
-        precondition(SecTrustedApplicationCopyData(currentApp!, &expectedPath) == errSecSuccess)
-        precondition(!CFEqual(priorPath!, currentPath!) && CFEqual(currentPath!, expectedPath!), "Approval trusted a different app")
+        precondition(firstLaunch.requiresAuthorization && security.prompts == 0, "A silent read asked for approval")
+        let once = await Keychain.read("fixture", allowInteraction: true)
+        precondition(once.value == "fixture-only" && security.prompts == 1, "Approving a saved credential must ask only once")
+        precondition(security.events.filter { !$0.hasPrefix("UI:") && $0.hasSuffix(":true") } == ["read:true"], "An approval did more than the one approved read")
+        let afterOnce = CredentialCache { await Keychain.read($0) }
+        let notKept = await afterOnce.awaitValue("fixture")
+        precondition(notKept == nil && afterOnce.state("fixture") == .authorizationRequired && security.prompts == 1, "After a one-time Allow, the next launch must wait for the user without a dialog")
+
+        security.requireApproval(.alwaysAllow)
+        let always = await Keychain.read("fixture", allowInteraction: true)
+        precondition(always.value == "fixture-only" && security.prompts == 1, "Approving a saved credential must ask only once")
         let relaunched = CredentialCache { await Keychain.read($0) }
         let restored = await relaunched.awaitValue("fixture")
-        precondition(restored == "fixture-only" && relaunched.state("fixture") == .ready, "A new app session lost saved approval")
+        precondition(restored == "fixture-only" && relaunched.state("fixture") == .ready && security.prompts == 1, "Always Allow in the one system dialog must restore the next launch silently")
 
-        security.requireApproval(persistStatus: errSecUserCanceled)
-        let notSaved = await Keychain.read("fixture", allowInteraction: true, rememberAccess: true)
-        precondition(notSaved.value == nil && notSaved.status == errSecUserCanceled, "Failed persistence was reported as saved approval")
-        let stillDenied = await Keychain.read("fixture")
-        precondition(stillDenied.requiresAuthorization, "Failed persistence changed saved trust")
-        security.requireApproval()
-        security.configure(hold: false, status: errSecUserCanceled)
-        let canceled = await Keychain.read("fixture", allowInteraction: true, rememberAccess: true)
-        precondition(canceled.requiresAuthorization && !security.events.contains("access:true") && !security.events.contains("remember:true"), "A denied read changed saved permissions")
-        security.requireApproval(persistStatus: errSecUserCanceled, legacy: true)
-        let failedMigration = await Keychain.read("fixture", allowInteraction: true, rememberAccess: true)
-        precondition(failedMigration.value == nil && failedMigration.status == errSecUserCanceled && !security.events.contains("write:true") && !security.events.contains("delete:true"), "Failed legacy approval migrated or deleted the credential")
+        security.requireApproval(status: errSecUserCanceled)
+        let canceled = await Keychain.read("fixture", allowInteraction: true)
+        precondition(canceled.requiresAuthorization && security.prompts == 1 && !security.events.contains("write:true") && !security.events.contains("delete:true"), "A denied read changed the saved credential")
+        security.requireApproval(legacy: true, status: errSecUserCanceled)
+        let failedMigration = await Keychain.read("fixture", allowInteraction: true)
+        precondition(failedMigration.value == nil && failedMigration.status == errSecUserCanceled && security.prompts == 1 && !security.events.contains("write:true") && !security.events.contains("delete:true"), "A denied legacy read migrated or deleted the credential")
         security.requireApproval(legacy: true)
-        let migrated = await Keychain.read("fixture", allowInteraction: true, rememberAccess: true)
-        precondition(migrated.value == "fixture-only" && security.events.contains("remember:true") && security.events.contains("write:true") && security.events.contains("delete:true"), "Legacy approval was not saved before migration")
+        let migrated = await Keychain.read("fixture", allowInteraction: true)
+        precondition(migrated.value == "fixture-only" && security.prompts == 1 && security.events.contains("write:true") && security.events.contains("delete:true"), "An approved legacy credential was not moved with one dialog")
 
         let source = CacheFixture(), cache = CredentialCache { _ in await source.read() }
         precondition(cache.value("approved") == nil)
@@ -264,7 +233,7 @@ actor CacheFixture {
         await source.finish("awaited-value")
         let awaited = await waited.value
         precondition(awaited == "awaited-value" && cache.value("awaited") == "awaited-value", "awaitValue did not wait for the read in flight")
-        print("Credential policy, persistent approval across sessions, legacy approval, failed/denied persistence, transient-session retention, guarded retries, awaited reads and stale-result guards passed (fake Keychain storage; in-memory Security ACLs)")
+        print("Credential policy, one system dialog per approval (Always Allow restores the next session, Allow once does not), legacy approval, denied approval, transient-session retention, guarded retries, awaited reads and stale-result guards passed (fake Keychain storage and system dialog)")
     }
 }
 SWIFT
