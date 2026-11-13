@@ -10,3 +10,4 @@ export { browseFlowConnection, connectionProblem, listFlowConnections, saveFlowC
 export { addCodeModule, addParallelFlowExample, checkedFlowSource, flowModuleSourceLine, portableSourcePath, relatedFlowFiles } from "./model/source-authoring";
 export { type FlowDetached, type FlowEvent, type FlowGate, type FlowInitProposal, type FlowItem, type FlowList, type FlowPlan, type FlowPlanNode, type FlowRunRow, needsConfirmation, parseEngineError } from "./model/types";
 export { type FlowCreationDraft, type FlowCreationProblem, flowCreationDocument, flowCreationFile, flowCreationProblem } from "./model/creation";
+export { type FlowBanner, type FlowStepView, type FlowTone, flowBanner, flowEdgeLook, flowLogTail, flowSkipCause, flowStepCommand, flowStepSummary, flowStepViews, flowTone } from "./model/workspace";
