@@ -788,7 +788,6 @@
 "Off" = "Uit";
 "On" = "Aan";
 "One side deleted the file, or it's a binary file. Choose whether to keep or delete it." = "Eén kant heeft het bestand verwijderd, of het is een binair bestand. Kies of je het wilt behouden of verwijderen.";
-"Only GitLab servers run by your organization can be connected (gitlab.com isn't supported yet). You can connect several accounts per server." = "Alleen GitLab-servers van je eigen organisatie kunnen worden gekoppeld (gitlab.com wordt nog niet ondersteund). Je kunt per server meerdere accounts koppelen.";
 "Only if needed" = "Alleen indien nodig";
 "Only permissions changed" = "Alleen rechten gewijzigd";
 "Only permissions or the name may have changed, without content changes." = "Mogelijk zijn alleen de rechten of de naam gewijzigd, zonder inhoudelijke wijzigingen.";
@@ -1054,7 +1053,6 @@
 "Title" = "Titel";
 "To a new commit" = "Naar een nieuwe commit";
 "To commit %lld" = "Naar commit %1$lld";
-"Tokens are stored per account in the macOS Keychain and used to view and create PRs/MRs, list repositories, and authenticate HTTPS push and pull." = "Tokens worden per account opgeslagen in de macOS-sleutelhanger en gebruikt om PR's/MR's te bekijken en te maken, repository's op te halen en HTTPS-push en -pull te authenticeren.";
 "Try again" = "Opnieuw proberen";
 "Try with the connected account (@%@ · %@)" = "Proberen met het gekoppelde account (@%1$@ · %2$@)";
 "Type changed" = "Type gewijzigd";

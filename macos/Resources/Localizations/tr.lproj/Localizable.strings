@@ -805,7 +805,6 @@
 "Off" = "Kapalı";
 "On" = "Açık";
 "One side deleted the file, or it's a binary file. Choose whether to keep or delete it." = "Taraflardan biri dosyayı silmiş ya da dosya ikili. Dosyayı tutmayı veya silmeyi seçin.";
-"Only GitLab servers run by your organization can be connected (gitlab.com isn't supported yet). You can connect several accounts per server." = "Yalnızca kuruluşunuzun çalıştırdığı GitLab sunucuları bağlanabilir (gitlab.com henüz desteklenmiyor). Her sunucu için birden fazla hesap bağlayabilirsiniz.";
 "Only if needed" = "Yalnızca gerekirse";
 "Only permissions changed" = "Yalnızca izinler değişti";
 "Only permissions or the name may have changed, without content changes." = "İçerik değişmeden yalnızca izinler veya ad değişmiş olabilir.";
@@ -1084,7 +1083,6 @@
 "Title" = "Başlık";
 "To a new commit" = "Yeni bir commit'e";
 "To commit %lld" = "%1$lld. commit'e";
-"Tokens are stored per account in the macOS Keychain and used to view and create PRs/MRs, list repositories, and authenticate HTTPS push and pull." = "Token'lar her hesap için macOS Anahtar Zinciri'nde saklanır; PR/MR'ları görüntülemek ve oluşturmak, depoları listelemek ve HTTPS üzerinden gönderme ile çekmede kimlik doğrulamak için kullanılır.";
 "Tools" = "Araçlar";
 "Trigger" = "Tetikleyici";
 "Try again" = "Tekrar dene";

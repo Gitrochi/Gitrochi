@@ -817,7 +817,6 @@
 "Off" = "關閉";
 "On" = "開啟";
 "One side deleted the file, or it's a binary file. Choose whether to keep or delete it." = "其中一方刪除了檔案，或這是二進位檔案。請選擇保留或刪除。";
-"Only GitLab servers run by your organization can be connected (gitlab.com isn't supported yet). You can connect several accounts per server." = "僅能連結由你的組織架設的 GitLab 伺服器（尚不支援 gitlab.com）。每部伺服器可連結多個帳號。";
 "Only if needed" = "僅在需要時";
 "Only permissions changed" = "僅權限有變更";
 "Only permissions or the name may have changed, without content changes." = "可能只有權限或名稱變更，內容沒有變更。";
@@ -1100,7 +1099,6 @@
 "Title" = "標題";
 "To a new commit" = "到新的提交";
 "To commit %lld" = "到提交 %1$lld";
-"Tokens are stored per account in the macOS Keychain and used to view and create PRs/MRs, list repositories, and authenticate HTTPS push and pull." = "權杖會依帳號儲存在 macOS 鑰匙圈中，用於檢視與建立 PR/MR、列出存放庫，以及 HTTPS 推送與提取的驗證。";
 "Tools" = "工具";
 "Trigger" = "觸發方式";
 "Try again" = "再試一次";

@@ -815,7 +815,6 @@
 "Off" = "Выкл.";
 "On" = "Вкл.";
 "One side deleted the file, or it's a binary file. Choose whether to keep or delete it." = "Одна из сторон удалила файл, или это двоичный файл. Выберите, оставить его или удалить.";
-"Only GitLab servers run by your organization can be connected (gitlab.com isn't supported yet). You can connect several accounts per server." = "Можно подключить только серверы GitLab вашей организации (gitlab.com пока не поддерживается). К одному серверу можно подключить несколько учётных записей.";
 "Only if needed" = "Только при необходимости";
 "Only permissions changed" = "Изменены только права";
 "Only permissions or the name may have changed, without content changes." = "Возможно, изменились только права или имя, без изменения содержимого.";
@@ -1098,7 +1097,6 @@
 "Title" = "Заголовок";
 "To a new commit" = "В новый коммит";
 "To commit %lld" = "В коммит %1$lld";
-"Tokens are stored per account in the macOS Keychain and used to view and create PRs/MRs, list repositories, and authenticate HTTPS push and pull." = "Токены хранятся в связке ключей macOS отдельно для каждой учётной записи и используются для просмотра и создания PR/MR, получения списка репозиториев и аутентификации при push и pull по HTTPS.";
 "Tools" = "Инструменты";
 "Trigger" = "Триггер";
 "Try again" = "Повторить";

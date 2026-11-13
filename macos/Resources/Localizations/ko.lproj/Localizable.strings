@@ -999,7 +999,6 @@
 "Off" = "꺼짐";
 "On" = "켜짐";
 "One side deleted the file, or it's a binary file. Choose whether to keep or delete it." = "한쪽에서 파일을 지웠거나 바이너리 파일입니다. 파일을 남길지 지울지 고르세요.";
-"Only GitLab servers run by your organization can be connected (gitlab.com isn't supported yet). You can connect several accounts per server." = "회사에서 운영하는 GitLab 서버만 연결합니다(gitlab.com 은 아직 지원하지 않음). 서버마다 여러 계정을 연결할 수 있습니다.";
 "Only if needed" = "필요할 때만";
 "Only permissions changed" = "권한만 바뀌었습니다";
 "Only permissions or the name may have changed, without content changes." = "내용 변경 없이 권한·이름만 바뀌었을 수 있습니다.";
@@ -1278,7 +1277,6 @@
 "Title" = "제목";
 "To a new commit" = "새 커밋으로";
 "To commit %lld" = "%1$lld번 커밋으로";
-"Tokens are stored per account in the macOS Keychain and used to view and create PRs/MRs, list repositories, and authenticate HTTPS push and pull." = "토큰은 macOS 키체인에 계정별로 저장되고 PR·MR 조회와 생성, 저장소 목록, HTTPS push·pull 인증에 쓰입니다.";
 "Tools" = "도구";
 "Trigger" = "트리거";
 "Try again" = "다시 시도";
@@ -2064,7 +2062,6 @@
 "Git: {0}" = "Git: {0}";
 "Connect an account on %@ to use repository services." = "저장소 서비스를 이용하려면 %@의 계정을 연결하세요.";
 "Connect an account on {0} to use repository services." = "저장소 서비스를 이용하려면 {0}의 계정을 연결하세요.";
-"Locked" = "잠김";
 "Renew browser connection…" = "브라우저 연결 갱신…";
 "Choose a valid base branch to preview its commits." = "올바른 대상 브랜치를 선택하면 커밋을 미리 볼 수 있습니다.";
 "The branch summary could not be read. Refresh and try again." = "브랜치 요약을 읽지 못했습니다. 대상을 확인하고 다시 시도하세요.";

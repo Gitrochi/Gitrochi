@@ -836,7 +836,6 @@
 "Off" = "オフ";
 "On" = "オン";
 "One side deleted the file, or it's a binary file. Choose whether to keep or delete it." = "一方でファイルが削除されたか、バイナリファイルです。ファイルを残すか削除するかを選んでください。";
-"Only GitLab servers run by your organization can be connected (gitlab.com isn't supported yet). You can connect several accounts per server." = "接続できるのは組織で運用している GitLab サーバーだけです (gitlab.com にはまだ対応していません)。サーバーごとに複数のアカウントを接続できます。";
 "Only if needed" = "必要な場合のみ";
 "Only permissions changed" = "権限のみ変更されました";
 "Only permissions or the name may have changed, without content changes." = "内容は変わらず、権限または名前だけが変更された可能性があります。";
@@ -1119,7 +1118,6 @@
 "Title" = "タイトル";
 "To a new commit" = "新しいコミットへ";
 "To commit %lld" = "コミット %1$lld へ";
-"Tokens are stored per account in the macOS Keychain and used to view and create PRs/MRs, list repositories, and authenticate HTTPS push and pull." = "トークンはアカウントごとに macOS のキーチェーンに保存され、PR/MR の表示と作成、リポジトリ一覧の取得、HTTPS での push・pull の認証に使われます。";
 "Tools" = "ツール";
 "Trigger" = "トリガー";
 "Try again" = "再試行";

@@ -786,7 +786,6 @@
 "Off" = "Mati";
 "On" = "Aktif";
 "One side deleted the file, or it's a binary file. Choose whether to keep or delete it." = "Salah satu pihak menghapus file ini, atau ini file biner. Pilih apakah file dipertahankan atau dihapus.";
-"Only GitLab servers run by your organization can be connected (gitlab.com isn't supported yet). You can connect several accounts per server." = "Hanya server GitLab yang dikelola organisasi Anda yang dapat dihubungkan (gitlab.com belum didukung). Anda dapat menghubungkan beberapa akun per server.";
 "Only if needed" = "Hanya jika perlu";
 "Only permissions changed" = "Hanya izin yang berubah";
 "Only permissions or the name may have changed, without content changes." = "Mungkin hanya izin atau nama yang berubah, tanpa perubahan isi.";
@@ -1054,7 +1053,6 @@
 "Title" = "Judul";
 "To a new commit" = "Ke commit baru";
 "To commit %lld" = "Ke commit %1$lld";
-"Tokens are stored per account in the macOS Keychain and used to view and create PRs/MRs, list repositories, and authenticate HTTPS push and pull." = "Token disimpan per akun di Rantai Kunci macOS dan dipakai untuk melihat dan membuat PR/MR, menampilkan daftar repositori, serta autentikasi push dan pull HTTPS.";
 "Tools" = "Alat";
 "Trigger" = "Pemicu";
 "Try again" = "Coba lagi";

@@ -792,7 +792,6 @@
 "Off" = "Tắt";
 "On" = "Bật";
 "One side deleted the file, or it's a binary file. Choose whether to keep or delete it." = "Một bên đã xóa tệp, hoặc đây là tệp nhị phân. Hãy chọn giữ hoặc xóa tệp.";
-"Only GitLab servers run by your organization can be connected (gitlab.com isn't supported yet). You can connect several accounts per server." = "Chỉ có thể kết nối máy chủ GitLab do tổ chức của bạn vận hành (chưa hỗ trợ gitlab.com). Bạn có thể kết nối nhiều tài khoản cho mỗi máy chủ.";
 "Only if needed" = "Chỉ khi cần";
 "Only permissions changed" = "Chỉ thay đổi quyền";
 "Only permissions or the name may have changed, without content changes." = "Có thể chỉ quyền hoặc tên đã thay đổi, nội dung không đổi.";
@@ -1061,7 +1060,6 @@
 "Title" = "Tiêu đề";
 "To a new commit" = "Vào commit mới";
 "To commit %lld" = "Vào commit %1$lld";
-"Tokens are stored per account in the macOS Keychain and used to view and create PRs/MRs, list repositories, and authenticate HTTPS push and pull." = "Token được lưu cho từng tài khoản trong Chuỗi khóa macOS và được dùng để xem và tạo PR/MR, liệt kê kho lưu trữ, và xác thực push và pull qua HTTPS.";
 "Tools" = "Công cụ";
 "Trigger" = "Kích hoạt";
 "Try again" = "Thử lại";

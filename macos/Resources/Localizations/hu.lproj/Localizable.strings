@@ -806,7 +806,6 @@
 "Off" = "Ki";
 "On" = "Be";
 "One side deleted the file, or it's a binary file. Choose whether to keep or delete it." = "Az egyik oldal törölte a fájlt, vagy bináris fájlról van szó. Válassza ki, hogy megtartja vagy törli.";
-"Only GitLab servers run by your organization can be connected (gitlab.com isn't supported yet). You can connect several accounts per server." = "Csak a szervezete által üzemeltetett GitLab-szerverek csatlakoztathatók (a gitlab.com még nem támogatott). Szerverenként több fiók is csatlakoztatható.";
 "Only if needed" = "Csak ha szükséges";
 "Only permissions changed" = "Csak a jogosultságok változtak";
 "Only permissions or the name may have changed, without content changes." = "Lehet, hogy csak a jogosultságok vagy a név változott, a tartalom nem.";
@@ -1084,7 +1083,6 @@
 "Title" = "Cím";
 "To a new commit" = "Új commitba";
 "To commit %lld" = "%1$lld. commitba";
-"Tokens are stored per account in the macOS Keychain and used to view and create PRs/MRs, list repositories, and authenticate HTTPS push and pull." = "A tokenek fiókonként a macOS kulcskarikájában tárolódnak; ezekkel jelennek meg és jönnek létre a PR-ek/MR-ek, listázhatók a tárolók, és ezek hitelesítik a HTTPS-alapú push és pull műveleteket.";
 "Tools" = "Eszközök";
 "Trigger" = "Eseményindító";
 "Try again" = "Újrapróbálás";

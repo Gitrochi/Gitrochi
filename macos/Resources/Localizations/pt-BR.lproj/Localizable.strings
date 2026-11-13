@@ -797,7 +797,6 @@
 "Off" = "Desativado";
 "On" = "Ativado";
 "One side deleted the file, or it's a binary file. Choose whether to keep or delete it." = "Um dos lados excluiu o arquivo, ou ele é binário. Decida se quer mantê-lo ou excluí-lo.";
-"Only GitLab servers run by your organization can be connected (gitlab.com isn't supported yet). You can connect several accounts per server." = "Só é possível conectar servidores GitLab mantidos pela sua organização (o gitlab.com ainda não é suportado). Você pode conectar várias contas por servidor.";
 "Only if needed" = "Só se necessário";
 "Only permissions changed" = "Só as permissões mudaram";
 "Only permissions or the name may have changed, without content changes." = "Talvez só as permissões ou o nome tenham mudado, sem alteração no conteúdo.";
@@ -1069,7 +1068,6 @@
 "Title" = "Título";
 "To a new commit" = "Para um novo commit";
 "To commit %lld" = "Para o commit %1$lld";
-"Tokens are stored per account in the macOS Keychain and used to view and create PRs/MRs, list repositories, and authenticate HTTPS push and pull." = "Os tokens de cada conta são armazenados nas Chaves do macOS e usados para ver e criar PRs/MRs, listar repositórios e autenticar push e pull via HTTPS.";
 "Tools" = "Ferramentas";
 "Trigger" = "Gatilho";
 "Try again" = "Tentar novamente";

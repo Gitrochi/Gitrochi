@@ -801,7 +801,6 @@
 "Off" = "Vypnuto";
 "On" = "Zapnuto";
 "One side deleted the file, or it's a binary file. Choose whether to keep or delete it." = "Jedna strana soubor smazala, nebo jde o binární soubor. Zvolte, zda ho ponechat, nebo smazat.";
-"Only GitLab servers run by your organization can be connected (gitlab.com isn't supported yet). You can connect several accounts per server." = "Připojit lze jen servery GitLab provozované vaší organizací (gitlab.com zatím není podporován). Ke každému serveru můžete připojit více účtů.";
 "Only if needed" = "Jen v případě potřeby";
 "Only permissions changed" = "Změnila se jen oprávnění";
 "Only permissions or the name may have changed, without content changes." = "Mohla se změnit jen oprávnění nebo název, obsah zůstal stejný.";
@@ -1078,7 +1077,6 @@
 "Title" = "Název";
 "To a new commit" = "Do nového commitu";
 "To commit %lld" = "Do commitu %1$lld";
-"Tokens are stored per account in the macOS Keychain and used to view and create PRs/MRs, list repositories, and authenticate HTTPS push and pull." = "Tokeny se ukládají pro každý účet zvlášť do Klíčenky macOS a slouží k zobrazení a vytváření PR/MR, výpisu repozitářů a ověřování při push a pull přes HTTPS.";
 "Tools" = "Nástroje";
 "Trigger" = "Spouštěč";
 "Try again" = "Zkusit znovu";
