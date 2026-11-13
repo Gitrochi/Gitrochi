@@ -25,6 +25,11 @@ enum FlowSheet: Identifiable, Equatable {
     case edit
     case create
 
+    var isTrust: Bool {
+        if case .trust = self { return true }
+        return false
+    }
+
     var id: String {
         switch self {
         case .run(let id): return "run:" + id
@@ -54,10 +59,9 @@ private struct FlowPanelBody: View {
             content
         }
         .task(id: flows.repo) { await poll() }
-        .sheet(item: $sheet) { s in
-            switch s {
-            case .run(let id): FlowRunSheet(flows: flows, runId: id)
-            case .trust(let flow, let plan, let thenRun):
+        // the trust review is on the shared layout and hangs under the toolbar; the others are still the system's
+        .attachedSheet(item: Binding(get: { sheet.flatMap { $0.isTrust ? $0 : nil } }, set: { if $0 == nil, sheet?.isTrust == true { sheet = nil } })) { s in
+            if case .trust(let flow, let plan, let thenRun) = s {
                 FlowTrustSheet(plan: plan, actionTitle: thenRun ? String(localized: "Trust and run") : String(localized: "Trust")) {
                     Task {
                         do {
@@ -66,6 +70,12 @@ private struct FlowPanelBody: View {
                         } catch { self.error = error.localizedDescription }
                     }
                 }
+            }
+        }
+        .sheet(item: Binding(get: { sheet.flatMap { $0.isTrust ? nil : $0 } }, set: { if $0 == nil, sheet?.isTrust == false { sheet = nil } })) { s in
+            switch s {
+            case .run(let id): FlowRunSheet(flows: flows, runId: id)
+            case .trust: EmptyView()
             case .setup: FlowSetupSheet(flows: flows)
             case .edit: FlowEditorSheet(flows: flows, initialFlow: editorFlow, initialNode: editorNode)
             case .create: FlowCreateSheet(flows: flows) { name in requestedFlow = name }

@@ -8,7 +8,7 @@ import { ipc } from "@/shared/api";
 import { settings } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
-import { Button, IconButton, Modal, showMenuBelow, Spinner } from "@/shared/ui";
+import { Button, IconButton, Modal, SharedSheet, showMenuBelow, Spinner } from "@/shared/ui";
 import { FlowRunDialog } from "./FlowRunDialog";
 import { FlowWorkspace } from "./FlowWorkspace";
 import { FlowConfigDialog } from "./FlowConfigDialog";
@@ -232,19 +232,7 @@ function EmptyNote({ icon, text }: { icon: ReactNode; text: string }) {
 /** Trusting a flow file: it is code, so it runs unattended only after a person has seen what will run and approved it. */
 function FlowTrustDialog({ plan, action, onApprove, onClose }: { plan: FlowPlan; action: string; onApprove: () => void; onClose: () => void }) {
   return (
-    <Modal
-      title={t("Review this flow")}
-      width={680}
-      onClose={onClose}
-      footer={
-        <>
-          <Button onClick={onClose}>{t("Cancel")}</Button>
-          <Button kind="primary" onClick={onApprove}>
-            {action}
-          </Button>
-        </>
-      }
-    >
+    <SharedSheet title={t("Review this flow")} context={plan.flow} width={680} onClose={onClose} primary={{ label: action, onClick: onApprove }}>
       <div className="col" style={{ gap: 10 }}>
         <span className="muted">{t("A flow file is code. Approve it only if you would run these commands yourself — changing the file asks again.")}</span>
         {!!plan.trust.changed?.length && (
@@ -268,7 +256,7 @@ function FlowTrustDialog({ plan, action, onApprove, onClose }: { plan: FlowPlan;
           </span>
         ))}
       </div>
-    </Modal>
+    </SharedSheet>
   );
 }
 
