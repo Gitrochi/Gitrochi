@@ -42,7 +42,6 @@ export async function terminalPanelSelfTest(): Promise<[boolean, string]> {
   const store = laneFixture(6);
   store.destination = "repository";
   store.headBranch = "feature/terminal-dock";
-  store.loadGlobalIdentity = async () => {};
   store.refreshWorktreeStats = async () => {};
   const sessions: TerminalSession[] = [];
   /** A terminal that counts as started, so mounting it opens its screen but never a shell */
