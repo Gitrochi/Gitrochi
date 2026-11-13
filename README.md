@@ -44,26 +44,15 @@ Gitrochi 0.3.14 brings Git history, connected project work and AI sessions into 
 - **Work in Git** — follow branch lanes, author photos and CI status; stage by file, hunk or line; compare diffs, resolve conflicts, drag branches, and tidy or undo commits. The repository screen keeps the graph, terminal and changes together.
 - **Review connected work** — review and create GitHub pull requests or self-hosted GitLab merge requests, discuss issues, and inspect Actions or pipelines. **Releases** and **Projects** have their own pages; **Account** brings together Inbox, My work and Organizations or Groups.
 - **See every account** — the toolbar menu lists connected profiles and configured Git accounts with server labels and available photos. Choose the repository's hosting account while keeping its Git author identity clear. If saved credentials cannot be read, restore access and retry; the account stays listed. Photo fetching follows your preferences, with initials as a fallback.
-- **Follow work in the Ledger** — see session baselines, reports, questions and handoffs in Inbox, Board, Graph and Streams. Use the built-in tutorial, Work log, Document tracker and Notebook. **Ledger is visible under Tools without a preview flag.** Connecting reporting clients or importing existing records remains an explicit step. [Ledger guide](docs/ledger/README.md)
 - **Build and run Flows** — edit `.gitch/flow.yml` in Code, preview dependencies, inspect run history and test results, and configure modules or CI connections. Run through the app or `gitch flow`, locally, in Docker or through supported CI services, with configured undo steps on failure. [Flows guide](docs/flow/README.md)
 - **Use AI and your terminal** — draft commit messages and request descriptions with Claude Code, Codex, Gemini CLI or an API provider; run agent sessions in worktree terminals, and preview repository context before sending it. The bundled **gitch** CLI manages Git identities and repository checks. [CLI workflows](docs/cli-workflows.md)
-
-Optional Ledger launch tracking, background notifications and badges each have their own switch in Settings › Ledger; all of them start off, and no environment variable is needed. Opening the Ledger does not import conversations or turn any of them on. See the guide before enabling these integrations.
-
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/images/readme-ledger-dark.jpg">
-    <img src="docs/images/readme-ledger-light.jpg" alt="Ledger Board with example sessions, their baselines and verdicts, and questions for the selected session">
-  </picture><br>
-  <sub>Ledger keeps reports, questions and the next action together.</sub>
-</p>
 
 ## Start here
 
 1. **Open a repository.** Install Git, then use Home or the folder button to open or clone a repository. Local Git work does not require a hosting-account login.
 2. **Connect when you need hosted services.** Use the account menu at the top right or **Settings › Accounts** for GitHub or self-hosted GitLab. **Settings › CLI** guides Git author and SSH setup; these are separate from hosting API access.
 3. **Review and commit.** Select uncommitted changes, inspect the diff, stage files or lines, and write a commit. Push shows the account, destination and outgoing changes before confirmation.
-4. **Choose a workspace.** Use Projects for boards and planning, Flows for repository checks, and Ledger for agent reports and questions. Open **Learn Ledger** for guided practice.
+4. **Choose a workspace.** Use Projects for boards and planning and Flows for repository checks.
 
 The menu is available from the start. Pages that need a repository offer a chooser until one is open. Collapse or expand it with the sidebar button or **⌘B / Ctrl+B**; the transition follows your system's reduced-motion preference and preserves the selected page.
 
@@ -83,7 +72,7 @@ Built-in update checks run at launch and daily when enabled in Settings. You cho
 ## Guides and development
 
 - [Usage, features and shortcuts](docs/features.md)
-- [Ledger setup, tutorial and reporting](docs/ledger/README.md) · [Flows and connected CI](docs/flow/README.md)
+- [Flows and connected CI](docs/flow/README.md)
 - [Building and contributing](CONTRIBUTING.md) · [Code style](docs/code-style.md) · [Git workflow](docs/git-workflow.md)
 - [Architecture](docs/architecture.md) · [Shared Rust core](crates/README.md) · [Repository index](crates/gitrochi-index/README.md)
 - [Agent instructions](AGENTS.md) · [Verification scope and limits](docs/complete-workflows-validation.md)
