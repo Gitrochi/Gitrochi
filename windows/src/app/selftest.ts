@@ -65,6 +65,7 @@ import { graphColumnsSelfTest } from "./lib/graph-columns-selftest";
 import { selfTestProgress, selfTestRecorder } from "./lib/selftest-report";
 import { sharedStackSelfTest } from "./lib/shared-stack-selftest";
 import { noticeBlockSelfTest } from "./lib/notice-block-selftest";
+import { sharedSheetSelfTest } from "./lib/shared-sheet-selftest";
 import { sidebarTreeSelfTest } from "./lib/sidebar-tree-selftest";
 
 /**
@@ -298,6 +299,7 @@ export async function runSelfTest(): Promise<boolean> {
   await step("변경 1000개의 빠른 진입·마지막 파일 선택·트리 접기", changesPerformanceSelfTest);
   await step("Shared pane heights remain stable after content grows and shrinks", sharedStackSelfTest);
   await step("Failure and notice blocks keep their one form, and a disabled button says why", noticeBlockSelfTest);
+  await step("Sheets share one layout, hang from the toolbar and leave the window undimmed", sharedSheetSelfTest);
   await step("비교·리베이스·Code 전체 화면", localWorkbenchSelfTest);
   await step("릴리스·프로젝트·조직 작업 화면", hostingHubSelfTest);
   await step("Repository release overview", releaseOverviewSelfTest);

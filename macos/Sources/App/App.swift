@@ -92,6 +92,7 @@ struct RepoWindow: View {
 
     var body: some View {
         RepoContainer()
+            .sharedSheetHost()
             .environment(store)
             .background(WindowTabbing(onAttach: { store.window = $0 }, onClose: {
                 Workspace.shared.unregister(store)
