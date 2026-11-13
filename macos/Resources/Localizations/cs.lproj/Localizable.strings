@@ -2666,3 +2666,9 @@
 "Retry above" = "Zkuste to znovu výše";
 "Couldn't check the push destination" = "Cíl odeslání se nepodařilo zkontrolovat";
 "Needs approval" = "Vyžaduje schválení";
+"Local agents report their work to this app's Ledger." = "Místní agenti hlásí svou práci do Ledgeru této aplikace.";
+"Agent executable not found" = "Spustitelný soubor agenta nenalezen";
+"Enter a new branch name" = "Zadejte název nové větve";
+"Confirm the risk first" = "Nejprve potvrďte riziko";
+"Speak or type a draft first" = "Nejprve nadiktujte nebo napište koncept";
+"Stop listening first" = "Nejprve zastavte poslech";

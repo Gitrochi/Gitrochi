@@ -3450,3 +3450,9 @@
 "Retry above" = "上で再試行してください";
 "Couldn't check the push destination" = "Push 先を確認できませんでした";
 "Needs approval" = "承認が必要";
+"Local agents report their work to this app's Ledger." = "ローカルのエージェントが作業をこのアプリの Ledger に報告します。";
+"Agent executable not found" = "エージェントの実行ファイルが見つかりません";
+"Enter a new branch name" = "新しいブランチ名を入力してください";
+"Confirm the risk first" = "先にリスクを確認してください";
+"Speak or type a draft first" = "先に下書きを話すか入力してください";
+"Stop listening first" = "先に聞き取りを停止してください";

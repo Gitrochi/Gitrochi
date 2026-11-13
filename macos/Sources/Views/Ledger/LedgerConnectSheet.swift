@@ -18,8 +18,12 @@ struct LedgerConnectSheet: View {
     private let reportingInstruction = "Use ledger_report to send a start report for this conversation and its current work. Include the project and a short title. Send progress, question and done reports as the work changes."
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Connect agents").font(.title3.weight(.semibold))
+        SharedSheet(title: String(localized: "Connect agents"),
+                    context: String(localized: "Local agents report their work to this app's Ledger."), width: 680,
+                    cancelTitle: String(localized: "Close"), cancel: { dismiss() }) {
+            Button("Test Ledger") { test() }.disabled(testing)
+            if testing { ProgressView().controlSize(.small) }
+        } content: {
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Connections").font(.system(size: 13, weight: .semibold))
@@ -68,24 +72,18 @@ struct LedgerConnectSheet: View {
                         .font(.system(size: 11)).foregroundStyle(.secondary)
                     Text("Set up, Repair and Remove change only Gitrochi's own entries in that client's hook settings, after a backup, and ask the client itself to add or remove the gitrochi-ledger MCP server.")
                         .font(.system(size: 11)).foregroundStyle(.secondary)
+                    Text("Checks this app's Ledger, not agent configuration or hook trust.")
+                        .font(.system(size: 11)).foregroundStyle(.secondary)
                     if !notice.isEmpty {
                         Text(notice).font(.system(size: 11)).textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
                     }
                     if let error { Text(error).font(.system(size: 11)).foregroundStyle(StudioStyle.Tone.failed.text).textSelection(.enabled) }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            Text("Checks this app's Ledger, not agent configuration or hook trust.")
-                .font(.system(size: 11)).foregroundStyle(.secondary)
-            HStack {
-                Button("Test Ledger") { test() }.disabled(testing)
-                if testing { ProgressView().controlSize(.small) }
-                Spacer()
-                Button("Close") { dismiss() }.keyboardShortcut(.cancelAction)
+                .padding(.horizontal, 20).padding(.vertical, 16)
             }
         }
-        .padding(20)
-        .frame(width: 680, height: 650)
+        .frame(height: 650)
     }
 
     private func copyBlock(_ text: String, label: String, copyLabel: String) -> some View {
