@@ -2669,3 +2669,6 @@
 "More actions for %@" = "Meer acties voor %@";
 "Copy email" = "E-mailadres kopiëren";
 "This repository" = "Deze repository";
+"Saved sign-in can't be read" = "Opgeslagen aanmelding kan niet worden gelezen";
+"Couldn't use the saved sign-in" = "Opgeslagen aanmelding kon niet worden gebruikt";
+"Refresh account status" = "Accountstatus vernieuwen";

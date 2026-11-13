@@ -3560,5 +3560,7 @@
   "More actions for {0}": "{0} のその他の操作",
   "Copy email": "メールアドレスをコピー",
   "Needs approval": "承認が必要",
-  "Sign in to GitHub": "GitHub にサインイン"
+  "Sign in to GitHub": "GitHub にサインイン",
+  "Saved sign-in can't be read": "保存されたサインイン情報を読み取れません",
+  "Refresh account status": "アカウントの状態を更新"
 }

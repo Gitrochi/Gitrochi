@@ -2714,3 +2714,6 @@
 "More actions for %@" = "การดำเนินการเพิ่มเติมสำหรับ %@";
 "Copy email" = "คัดลอกอีเมล";
 "This repository" = "รีโพสิทอรีนี้";
+"Saved sign-in can't be read" = "อ่านการลงชื่อเข้าใช้ที่บันทึกไว้ไม่ได้";
+"Couldn't use the saved sign-in" = "ใช้การลงชื่อเข้าใช้ที่บันทึกไว้ไม่ได้";
+"Refresh account status" = "รีเฟรชสถานะบัญชี";

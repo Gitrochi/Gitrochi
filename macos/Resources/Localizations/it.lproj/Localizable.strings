@@ -2696,3 +2696,6 @@
 "More actions for %@" = "Altre azioni per %@";
 "Copy email" = "Copia email";
 "This repository" = "Questo repository";
+"Saved sign-in can't be read" = "Impossibile leggere l’accesso salvato";
+"Couldn't use the saved sign-in" = "Impossibile usare l’accesso salvato";
+"Refresh account status" = "Aggiorna stato dell’account";

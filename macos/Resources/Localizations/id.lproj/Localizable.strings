@@ -2676,3 +2676,6 @@
 "More actions for %@" = "Tindakan lain untuk %@";
 "Copy email" = "Salin email";
 "This repository" = "Repositori ini";
+"Saved sign-in can't be read" = "Info masuk tersimpan tidak dapat dibaca";
+"Couldn't use the saved sign-in" = "Tidak dapat memakai info masuk tersimpan";
+"Refresh account status" = "Segarkan status akun";

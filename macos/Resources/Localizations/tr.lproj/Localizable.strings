@@ -2707,3 +2707,6 @@
 "More actions for %@" = "%@ için diğer işlemler";
 "Copy email" = "E-postayı kopyala";
 "This repository" = "Bu depo";
+"Saved sign-in can't be read" = "Kayıtlı oturum okunamıyor";
+"Couldn't use the saved sign-in" = "Kayıtlı oturum kullanılamadı";
+"Refresh account status" = "Hesap durumunu yenile";

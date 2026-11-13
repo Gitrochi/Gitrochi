@@ -4763,3 +4763,6 @@
 "More actions for %@" = "%@의 다른 동작";
 "Copy email" = "이메일 복사";
 "This repository" = "이 리포지터리";
+"Saved sign-in can't be read" = "저장된 로그인을 읽을 수 없음";
+"Couldn't use the saved sign-in" = "저장된 로그인을 쓰지 못했습니다";
+"Refresh account status" = "계정 상태 새로고침";

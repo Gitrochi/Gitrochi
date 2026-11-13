@@ -2755,3 +2755,6 @@
 "More actions for %@" = "Autres actions pour %@";
 "Copy email" = "Copier l’e-mail";
 "This repository" = "Ce dépôt";
+"Saved sign-in can't be read" = "Impossible de lire la connexion enregistrée";
+"Couldn't use the saved sign-in" = "Impossible d’utiliser la connexion enregistrée";
+"Refresh account status" = "Actualiser l’état du compte";

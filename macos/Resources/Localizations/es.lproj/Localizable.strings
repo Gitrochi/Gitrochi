@@ -2753,3 +2753,6 @@
 "More actions for %@" = "Más acciones para %@";
 "Copy email" = "Copiar correo";
 "This repository" = "Este repositorio";
+"Saved sign-in can't be read" = "No se puede leer el inicio de sesión guardado";
+"Couldn't use the saved sign-in" = "No se pudo usar el inicio de sesión guardado";
+"Refresh account status" = "Actualizar estado de la cuenta";

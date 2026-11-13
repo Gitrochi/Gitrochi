@@ -2719,3 +2719,6 @@
 "More actions for %@" = "Інші дії для %@";
 "Copy email" = "Скопіювати email";
 "This repository" = "Цей репозиторій";
+"Saved sign-in can't be read" = "Не вдається прочитати збережений вхід";
+"Couldn't use the saved sign-in" = "Не вдалося використати збережений вхід";
+"Refresh account status" = "Оновити стан облікового запису";

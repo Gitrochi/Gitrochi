@@ -2701,3 +2701,6 @@
 "More actions for %@" = "Další akce pro %@";
 "Copy email" = "Kopírovat e-mail";
 "This repository" = "Tento repozitář";
+"Saved sign-in can't be read" = "Uložené přihlášení nelze přečíst";
+"Couldn't use the saved sign-in" = "Uložené přihlášení se nepodařilo použít";
+"Refresh account status" = "Obnovit stav účtu";

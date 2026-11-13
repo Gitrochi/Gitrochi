@@ -4714,5 +4714,7 @@
   "More actions for {0}": "{0}의 다른 동작",
   "Copy email": "이메일 복사",
   "Needs approval": "승인 필요",
-  "Sign in to GitHub": "GitHub 로그인"
+  "Sign in to GitHub": "GitHub 로그인",
+  "Saved sign-in can't be read": "저장된 로그인을 읽을 수 없음",
+  "Refresh account status": "계정 상태 새로고침"
 }

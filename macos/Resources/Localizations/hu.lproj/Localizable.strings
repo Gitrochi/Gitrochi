@@ -2705,3 +2705,6 @@
 "More actions for %@" = "További műveletek: %@";
 "Copy email" = "E-mail-cím másolása";
 "This repository" = "Ez a tároló";
+"Saved sign-in can't be read" = "A mentett bejelentkezés nem olvasható";
+"Couldn't use the saved sign-in" = "A mentett bejelentkezést nem sikerült használni";
+"Refresh account status" = "Fiókállapot frissítése";

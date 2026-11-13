@@ -2862,3 +2862,6 @@
 "More actions for %@" = "%@ 的更多操作";
 "Copy email" = "复制邮箱";
 "This repository" = "此仓库";
+"Saved sign-in can't be read" = "无法读取已保存的登录信息";
+"Couldn't use the saved sign-in" = "无法使用已保存的登录信息";
+"Refresh account status" = "刷新账户状态";

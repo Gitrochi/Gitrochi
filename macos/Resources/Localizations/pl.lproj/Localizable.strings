@@ -2703,3 +2703,6 @@
 "More actions for %@" = "Więcej działań dla %@";
 "Copy email" = "Kopiuj e-mail";
 "This repository" = "To repozytorium";
+"Saved sign-in can't be read" = "Nie można odczytać zapisanego logowania";
+"Couldn't use the saved sign-in" = "Nie udało się użyć zapisanego logowania";
+"Refresh account status" = "Odśwież stan konta";

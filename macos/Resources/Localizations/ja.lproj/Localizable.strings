@@ -3485,3 +3485,6 @@
 "More actions for %@" = "%@ のその他の操作";
 "Copy email" = "メールアドレスをコピー";
 "This repository" = "このリポジトリ";
+"Saved sign-in can't be read" = "保存されたサインイン情報を読み取れません";
+"Couldn't use the saved sign-in" = "保存されたサインイン情報を使用できませんでした";
+"Refresh account status" = "アカウントの状態を更新";

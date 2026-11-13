@@ -2724,3 +2724,6 @@
 "More actions for %@" = "%@ 的更多操作";
 "Copy email" = "複製電子郵件";
 "This repository" = "此存放庫";
+"Saved sign-in can't be read" = "無法讀取已儲存的登入資訊";
+"Couldn't use the saved sign-in" = "無法使用已儲存的登入資訊";
+"Refresh account status" = "重新整理帳號狀態";

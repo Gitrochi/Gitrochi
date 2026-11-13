@@ -2706,3 +2706,6 @@
 "More actions for %@" = "Weitere Aktionen für %@";
 "Copy email" = "E-Mail kopieren";
 "This repository" = "Dieses Repository";
+"Saved sign-in can't be read" = "Gespeicherte Anmeldung kann nicht gelesen werden";
+"Couldn't use the saved sign-in" = "Gespeicherte Anmeldung konnte nicht verwendet werden";
+"Refresh account status" = "Kontostatus aktualisieren";
