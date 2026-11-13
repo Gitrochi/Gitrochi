@@ -54,39 +54,6 @@ export function decodeTeamSnapshot(repo: string, presenceValue: unknown, overlap
   return { repo, presence, overlaps, observedAt: now.toISOString() };
 }
 
-/** The hub's answer to one presence report: its status, and for a success who the token is and that member's overlaps */
-export interface TeamPresenceAnswer { status: number; text: string; member: string | null; overlaps: TeamOverlap[]; }
-
-/** A successful presence answer, bounded like snapshots */
-export function decodePresenceAnswer(value: unknown): { member: string | null; overlaps: TeamOverlap[] } {
-  const v = object(value), rows = Array.isArray(v.overlaps) ? v.overlaps : [];
-  if (rows.length > 5000) throw new Error("The team hub response is too large.");
-  const overlaps = rows.flatMap(row => {
-    const r = object(row), changed = paths(r.paths);
-    if ((r.kind !== "same-file" && r.kind !== "related-file") || !changed.length) return [];
-    return [{ kind: r.kind as TeamOverlap["kind"], a: participant(r.a), b: participant(r.b), paths: changed }];
-  });
-  return { member: text(object(v.presence).member) || null, overlaps };
-}
-
-/**
- * Reports one presence entry, as Settings › Ledger › Team hub sends a session (`POST /api/v1/presence`). The body is the
- * ledger core's `hub_share` presence, sent as it is. (macOS: Services/TeamHub.swift, publish)
- */
-export async function publishTeamPresence(endpoint: string, body: string, token: string): Promise<TeamPresenceAnswer> {
-  const response = await ipc.hubPublish(`${teamHubEndpoint(endpoint)}/api/v1/presence`, token, body);
-  if (response.status < 200 || response.status >= 300) return { status: response.status, text: response.body, member: null, overlaps: [] };
-  return { status: response.status, text: "", ...decodePresenceAnswer(JSON.parse(response.body) as unknown) };
-}
-
-/** Withdraws one presence entry (`DELETE /api/v1/presence?repo=&client=`). (macOS: Services/TeamHub.swift, withdraw) */
-export async function withdrawTeamPresence(endpoint: string, repo: string, client: string, token: string): Promise<{ status: number; text: string }> {
-  // '+' and '&' must not reach the query as they are: the hub reads '+' as a space
-  const q = (value: string) => encodeURIComponent(value).replace(/%2F/g, "/");
-  const response = await ipc.hubWithdraw(`${teamHubEndpoint(endpoint)}/api/v1/presence?repo=${q(repo)}&client=${q(client)}`, token);
-  return { status: response.status, text: response.body };
-}
-
 /** Read-only snapshots use the same v1 API as the monitor; no presence is published. */
 export async function readTeamSnapshot(endpoint: string, repo: string, token: string): Promise<TeamSnapshot> {
   const base = teamHubEndpoint(endpoint), key = teamRepoKey(repo);

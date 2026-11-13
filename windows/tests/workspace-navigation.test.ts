@@ -27,8 +27,8 @@ beforeEach(() => {
 afterEach(() => { expect(ipc.writeText).not.toHaveBeenCalled(); expect(ipc.run).not.toHaveBeenCalled(); vi.restoreAllMocks(); });
 
 describe("page shortcuts", () => {
-  it("numbers the pages Ctrl+1–Ctrl+9 in the sidebar's order, Home Ctrl+Shift+H (macOS: shortcutDigit)", () => {
-    const numbered = ["repository", "compare", "rebase", "code", "pullRequests", "issues", "actions", "flows", "ledger"] as const;
+  it("numbers the pages Ctrl+1–Ctrl+8 in the sidebar's order, Home Ctrl+Shift+H (macOS: shortcutDigit)", () => {
+    const numbered = ["repository", "compare", "rebase", "code", "pullRequests", "issues", "actions", "flows"] as const;
     numbered.forEach((page, i) => {
       expect(destinationShortcut(page)).toBe(`Ctrl+${i + 1}`);
       expect(destinationForDigit(i + 1)).toBe(page);
@@ -36,7 +36,7 @@ describe("page shortcuts", () => {
     expect(destinationShortcut("home")).toBe("Ctrl+Shift+H");
     for (const page of ["releases", "projects", "account"] as const) expect(destinationShortcut(page)).toBeNull();
     expect(destinationForDigit(0)).toBeNull();
-    expect(destinationForDigit(10)).toBeNull();
+    expect(destinationForDigit(9)).toBeNull();
   });
 });
 
@@ -44,7 +44,6 @@ describe("toolbar by page", () => {
   it("gives the repository screen the Git actions, other pages the short set and no repository only the account", () => {
     expect(toolbarSet("repository", true)).toBe("repository");
     for (const page of workspaceDestinations.filter((page) => page !== "repository")) expect(toolbarSet(page, true)).toBe("page");
-    expect(toolbarSet("ledger", true)).toBe("page");
     for (const page of workspaceDestinations) expect(toolbarSet(page, false)).toBe("noRepository");
   });
   it("draws one sync action prominent only when it is the clear next step", () => {
@@ -60,20 +59,20 @@ describe("workspace navigation", () => {
   it.each([
     ["windows", null], ["windows", "C:/fixture/first"],
     ["macos", null], ["macos", "C:/fixture/first"],
-  ] as const)("opens the Ledger with the numbered shortcut without an environment variable (%s, %s)", (os, path) => {
+  ] as const)("opens Issues with the numbered shortcut, with or without a repository (%s, %s)", (os, path) => {
     const original = { os: env.os };
     const store = fixture(); store.path = path; store.destination = "home";
     vi.spyOn(workspace, "active", "get").mockReturnValue(store);
     vi.stubGlobal("document", { querySelector: () => null });
     const press = (extra: Partial<KeyboardEvent> = {}) => {
-      const event = { key: "9", ctrlKey: os === "windows", metaKey: os === "macos", altKey: false, shiftKey: false, defaultPrevented: false, target: null, preventDefault: vi.fn(), stopPropagation: vi.fn(), ...extra };
+      const event = { key: "6", ctrlKey: os === "windows", metaKey: os === "macos", altKey: false, shiftKey: false, defaultPrevented: false, target: null, preventDefault: vi.fn(), stopPropagation: vi.fn(), ...extra };
       handleShortcut(event as unknown as KeyboardEvent, () => {});
       return event;
     };
     try {
       env.os = os;
       const defaultShortcut = press();
-      expect(store.destination).toBe("ledger");
+      expect(store.destination).toBe("issues");
       expect(defaultShortcut.preventDefault).toHaveBeenCalledOnce();
       expect(defaultShortcut.stopPropagation).toHaveBeenCalledOnce();
       store.destination = "home";
@@ -84,7 +83,7 @@ describe("workspace navigation", () => {
         expect(ignored.stopPropagation).not.toHaveBeenCalled();
       }
       const opened = press();
-      expect(store.destination).toBe("ledger");
+      expect(store.destination).toBe("issues");
       expect(opened.preventDefault).toHaveBeenCalledOnce();
       expect(opened.stopPropagation).toHaveBeenCalledOnce();
       if (path) {

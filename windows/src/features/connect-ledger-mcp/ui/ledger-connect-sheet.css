@@ -1,6 +1,0 @@
-/* features/connect-ledger-mcp — commands and settings to copy */
-.ledger-code { display: flex; align-items: flex-start; gap: 8px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--input); font-family: var(--mono); font-size: 12px; line-height: 1.5; }
-.ledger-code pre { flex: 1; margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; user-select: text; }
-.ledger-code-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; color: var(--text-2); font-size: 11px; font-weight: 600; }
-.ledger-connect-client { display: flex; align-items: center; gap: 12px; }
-.ledger-connect-client .select { width: 200px; }

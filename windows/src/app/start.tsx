@@ -12,8 +12,6 @@ import { theme } from "@/shared/ui";
 import { runSelfTest } from "./selftest";
 import { App } from "./ui/App";
 import { startAppLaunches } from "./lib/app-launch";
-import { startLedgerNotifications } from "./lib/ledger-notifications";
-import { startLedgerHubSharing } from "./lib/ledger-hub-sharing";
 import { startScheduledRuns } from "./lib/scheduled-runs";
 import { selfTestProgress } from "./lib/selftest-report";
 import { SelfTestBoundary } from "./lib/selftest-boundary";
@@ -39,10 +37,6 @@ export async function start() {
   // 숨긴 창에서는 requestAnimationFrame 이 돌지 않으므로 타이머로 부른다.
   setTimeout(() => void ipc.appReady(), 30);
   updater.start();
-  // the Ledger's notifications and badge, once a person turns one of them on
-  void startLedgerNotifications();
-  // the Ledger's team hub sharing, only when a person turned it on
-  void startLedgerHubSharing();
   // Actions runs scheduled for later; the self-test drives the schedule with its own clock instead
   if (!env.selftest) startScheduledRuns();
   // 윈도에서 못 찾은 AI CLI 는 WSL 에서 한 번 찾아 둔다(WSL 을 깨우느라 몇 초 걸릴 수 있어 뒤에서)

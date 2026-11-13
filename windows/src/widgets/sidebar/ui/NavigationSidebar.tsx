@@ -1,42 +1,35 @@
 import { useEffect, useState } from "react";
 import { destinationEnabled, destinationShortcut, repositoryDestinations, type WorkspaceDestination } from "@/entities/git";
-import { openedLedgerStore } from "@/entities/ledger";
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
-import { Observable, useObserve } from "@/shared/lib";
+import { useObserve } from "@/shared/lib";
 import { tip } from "@/shared/ui";
 import { designIcon } from "@/shared/icons";
 import "./navigation-sidebar.css";
 
-const titles: Record<WorkspaceDestination, string> = { home: "Home", repository: "Repository", compare: "Compare", rebase: "Rebase", code: "Code", pullRequests: "Pull requests", issues: "Issues", actions: "Actions", releases: "Releases", projects: "Projects", account: "Account", flows: "Flows", ledger: "Ledger" };
+const titles: Record<WorkspaceDestination, string> = { home: "Home", repository: "Repository", compare: "Compare", rebase: "Rebase", code: "Code", pullRequests: "Pull requests", issues: "Issues", actions: "Actions", releases: "Releases", projects: "Projects", account: "Account", flows: "Flows" };
 /** The page name as shown in the sidebar; GitLab repositories use that server's words. (macOS: WorkspaceDestination.title(gitlab:)) */
 export const destinationTitle = (page: WorkspaceDestination, gitlab = false) => t(gitlab && page === "pullRequests" ? "Merge requests" : gitlab && page === "actions" ? "Pipelines" : titles[page]);
 /** Each page's icon, shared with the page title row */
-export const destinationIcons = { home: designIcon("home"), repository: designIcon("repository"), compare: designIcon("compare"), rebase: designIcon("rebase"), code: designIcon("code"), pullRequests: designIcon("pullRequests"), issues: designIcon("issues"), actions: designIcon("actions"), releases: designIcon("releases"), projects: designIcon("projects"), account: designIcon("account"), flows: designIcon("flows"), ledger: designIcon("ledger") };
+export const destinationIcons = { home: designIcon("home"), repository: designIcon("repository"), compare: designIcon("compare"), rebase: designIcon("rebase"), code: designIcon("code"), pullRequests: designIcon("pullRequests"), issues: designIcon("issues"), actions: designIcon("actions"), releases: designIcon("releases"), projects: designIcon("projects"), account: designIcon("account"), flows: designIcon("flows") };
 const Settings = designIcon("settings");
 // the sections of the rail and the redesign's sidebar: Home, then the repository's own pages
-/** Stands in for the Ledger while nothing has opened it; it never changes */
-const unopened = new Observable();
-
 const groups: { title: string | null; pages: WorkspaceDestination[] }[] = [
   { title: null, pages: ["home"] },
   { title: "Repository", pages: ["repository", "compare", "rebase", "code"] },
   { title: "GitHub", pages: ["pullRequests", "issues", "actions", "releases", "projects", "account"] },
-  { title: "Tools", pages: ["flows", "ledger"] },
+  { title: "Tools", pages: ["flows"] },
 ];
 
 /**
  * The window's pages (docs/design.md › App shell, Sidebar): a source list with section titles, a neutral fill for the
- * current page (never the accent, as in the rail) and only Ledger's count. While no repository is open, a page that
+ * current page (never the accent, as in the rail). While no repository is open, a page that
  * needs one is disabled and its section says why. Once the repository screen opens, this folds into the 52px icon rail
  * (`compact`), where such a page is dimmed but stays enabled so its tip says why. The toolbar's sidebar toggle folds
  * and expands it. (macOS: NavigationSidebar.swift, NavigationSidebarRail.swift)
  */
 export function NavigationSidebar({ store, openSettings, compact = false }: { store: RepoStore; openSettings: () => void; compact?: boolean }) {
   useObserve(store);
-  // only read the Ledger once something has opened it; the page list must not be what opens it
-  const ledger = openedLedgerStore();
-  useObserve(ledger ?? unopened);
   // holding Ctrl shows every row's shortcut; otherwise a row shows its own on hover
   const [shortcutsShown, setShortcutsShown] = useState(false);
   useEffect(() => {
@@ -53,15 +46,12 @@ export function NavigationSidebar({ store, openSettings, compact = false }: { st
     const Icon = destinationIcons[page], selected = store.destination === page;
     const title = destinationTitle(page, gitlab);
     const shortcut = destinationShortcut(page);
-    // only Ledger counts something
-    const count = page === "ledger" ? (ledger?.state?.attention.total ?? 0) : 0;
     const blocked = needsRepository(page);
     return <button type="button" key={page} className={`workspace-nav-item${selected ? " selected" : ""}${blocked ? " blocked" : ""}`} aria-label={title} aria-current={selected ? "page" : undefined}
       disabled={blocked && !compact} onClick={() => store.navigate(page)} data-page={page}
-      data-tip={blocked ? t("Open a repository to use this page.") : tip(count > 0 ? `${title} (${count})` : title, "", shortcut ?? undefined)}>
+      data-tip={blocked ? t("Open a repository to use this page.") : tip(title, "", shortcut ?? undefined)}>
       <Icon size={compact ? 18 : 16} />
       <span className="workspace-nav-copy"><span className="ellipsis">{title}</span></span>
-      {count > 0 && <span className="workspace-nav-badge">{count > 999 ? "999+" : count}</span>}
       {shortcut && <span className="workspace-nav-kbd">{shortcut}</span>}
     </button>;
   };
