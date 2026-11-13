@@ -18,7 +18,6 @@ export async function compactNavigationSelfTest(): Promise<[boolean, string]> {
   document.body.append(host);
   const root = createRoot(host), store = new RepoStore();
   // the Home toolbar's account control reads the global Git author; this fixture runs no processes
-  store.loadGlobalIdentity = async () => {};
   const ensure = (value: unknown, message: string) => { if (!value) throw new Error(message); };
   const nav = () => host.querySelector<HTMLElement>(".workspace-navigation")!;
   const frame = () => host.querySelector<HTMLElement>(".navigation")!;

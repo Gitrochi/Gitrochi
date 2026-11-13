@@ -32,15 +32,6 @@ export abstract class RepoGitch extends RepoTerminal {
   gitchChecking = false;
   private gitchGen = 0;
 
-  /** Home shows configured Git identities alongside hosting connections (macOS: loadGlobalIdentity). */
-  override async loadGlobalIdentity() {
-    if (this.path) return;
-    const [, values] = await Promise.all([super.loadGlobalIdentity(), gitch.accounts().catch(() => [])]);
-    if (this.path || JSON.stringify(this.gitchAccounts) === JSON.stringify(values)) return;
-    this.gitchAccounts = values;
-    this.emit();
-  }
-
   /** 사용자가 누를 때만 분석한다. 분석하는 동안에도 스테이지나 커밋 작업은 막지 않는다. */
   commitImpact: CommitImpactState | null = null;
   commitImpactVerifying = false;

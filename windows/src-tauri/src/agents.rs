@@ -4,7 +4,7 @@
 //! (macOS: Services/ExternalAgents.swift)
 
 use serde::Serialize;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use sysinfo::{Pid, ProcessRefreshKind, ProcessesToUpdate, System, UpdateKind};
 
 /// One process on the way from an agent up to the system: its name and whether it owns a visible app window
@@ -208,9 +208,59 @@ fn bring_forward(_pid: u32) -> Result<(), String> {
     Err("Bringing another app forward is only available on Windows.".into())
 }
 
+/// How many processes run below each of the given ones (children, grandchildren, …), in the same order
+fn descendants(pids: &[u32]) -> Vec<u32> {
+    let mut system = System::new();
+    system.refresh_processes_specifics(ProcessesToUpdate::All, true, ProcessRefreshKind::nothing());
+    let mut children: HashMap<Pid, Vec<Pid>> = HashMap::new();
+    for (pid, process) in system.processes() {
+        if let Some(parent) = process.parent() {
+            children.entry(parent).or_default().push(*pid);
+        }
+    }
+    pids.iter()
+        .map(|root| {
+            let root = Pid::from_u32(*root);
+            let mut seen = HashSet::from([root]);
+            let mut queue = vec![root];
+            let mut count = 0;
+            while let Some(pid) = queue.pop() {
+                for child in children.get(&pid).into_iter().flatten() {
+                    if seen.insert(*child) {
+                        count += 1;
+                        queue.push(*child);
+                    }
+                }
+            }
+            count
+        })
+        .collect()
+}
+
+/// The terminal panel's running mark: a shell that runs a command has more processes below it than at its prompt
+#[tauri::command]
+pub async fn process_descendants(pids: Vec<u32>) -> Result<Vec<u32>, String> {
+    tauri::async_runtime::spawn_blocking(move || descendants(&pids))
+        .await
+        .map_err(|e| e.to_string())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn descendants_are_counted_per_process_in_order() {
+        let mut child = std::process::Command::new(std::env::current_exe().unwrap())
+            .arg("--list")
+            .stdout(std::process::Stdio::null())
+            .spawn()
+            .unwrap();
+        let counts = descendants(&[std::process::id(), u32::MAX - 1]);
+        let _ = child.wait();
+        assert_eq!(counts.len(), 2);
+        assert_eq!(counts[1], 0);
+    }
 
     #[test]
     fn candidates_are_agent_executables_and_script_runtimes() {

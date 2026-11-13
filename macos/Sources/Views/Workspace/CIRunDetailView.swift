@@ -147,8 +147,7 @@ struct CIRunDetailView: View {
             if let jobs {
                 if jobs.isEmpty { Text("No jobs").font(.system(size: 12)).foregroundStyle(HostedList.caption).padding(.horizontal, 8) }
                 ForEach(ActionsPage.groups(jobs), id: \.group) { group, list in
-                    Text(verbatim: "\(Self.title(group)) \(list.count)")
-                        .font(.system(size: 12, weight: .semibold)).foregroundStyle(HostedList.caption)
+                    CheckGroupHead(title: Self.title(group), count: list.count)
                         .padding(.horizontal, 8).padding(.top, group == ActionsPage.groups(jobs).first?.group ? 4 : 10).padding(.bottom, 4)
                     ForEach(list) { j in
                         CIJobRow(job: j, pipeline: pipeline, selected: job == j.id) { job = j.id }
@@ -175,21 +174,20 @@ struct CIRunDetailView: View {
 }
 
 /// The picked job's log, read with the account and masked for secrets; it stays on this Mac.
-/// A running job's log is read again every ten seconds.
+/// A running job's log is read again every ten seconds. The header and the log are the shared failed-check block.
 private struct CIJobLogView: View {
     @Environment(RepoStore.self) private var store
     let job: CIJob
     let pipeline: CIPipeline
     let close: () -> Void
-    @AppStorage("ciLogWrap") private var wrap = false
     @ViewState private var text = ""
+    /// The log as it is drawn, read once per load
+    @ViewState private var reading = JobLog.Reading()
     @ViewState private var loadedJob: Int?
     @ViewState private var error: String?
     @ViewState private var busy = false
     @ViewState private var truncated = false
     @ViewState private var generation = UUID()
-    /// The lines before the part the log opens on are shown on request
-    @ViewState private var showAll = false
     /// Counts presses of "Jump to first error"
     @ViewState private var jump = 0
 
@@ -212,27 +210,27 @@ private struct CIJobLogView: View {
         return job.status == .failed ? String(localized: "Failed after \(ciDuration(duration))") : String(localized: "Took \(ciDuration(duration))")
     }
 
+    private var actions: FailedCheckActions {
+        var actions = FailedCheckActions()
+        if JobLog.firstError(reading.lines) != nil { actions.jump = { jump += 1 } }
+        if canRetry {
+            actions.rerun = (String(localized: "Re-run job"), store.ciBusy.contains("job:\(job.id)"), { Task { await store.retryJob(job, in: pipeline) } })
+        }
+        actions.open = { open(job.url) }
+        actions.menu = true
+        if !text.isEmpty { actions.copy = { store.copy(text) } }
+        actions.more = [
+            CheckMenuItem(title: String(localized: "Refresh log"), disabled: busy) { Task { await load() } },
+            CheckMenuItem(title: String(localized: "Close log"), separated: true, run: close),
+        ]
+        return actions
+    }
+
     var body: some View {
-        let lines = JobLog.lines(text)
-        let hasError = lines.contains(where: JobLog.isError)
-        let first = showAll ? 0 : ActionsPage.firstShown(lines)
-        VStack(spacing: 0) {
-            VStack(alignment: .leading, spacing: 4) {
-                ViewThatFits(in: .horizontal) {
-                    HStack(spacing: 8) { name; Spacer(minLength: 8); buttons(hasError: hasError) }
-                    VStack(alignment: .leading, spacing: 6) {
-                        HStack(spacing: 8) { name }
-                        buttons(hasError: hasError)
-                    }
-                }
-                if truncated {
-                    Text("Log preview is limited to 2 MB. Open the browser for the complete log.")
-                        .font(.system(size: 12)).foregroundStyle(HostedList.caption).padding(.leading, 22)
-                }
-            }
-            .padding(.horizontal, 16).padding(.vertical, 10)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            Divider()
+        let failed = job.status == .failed
+        FailedCheckBlock(form: .pane, name: job.name, outcome: outcome, failed: failed, tests: failed ? reading.tests : [], busy: busy, actions: actions) {
+            CIStatusIcon(status: job.status, size: 14)
+        } content: {
             if let error {
                 Text(error).font(.system(size: 12)).foregroundStyle(StudioStyle.Tone.failed.text).textSelection(.enabled)
                     .padding(16)
@@ -244,22 +242,12 @@ private struct CIJobLogView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                VStack(alignment: .leading, spacing: 0) {
-                    if first > 0 {
-                        Button("Show \(first) earlier lines") { showAll = true }
-                            .buttonStyle(HostedListTextButtonStyle())
-                            .padding(.leading, 12).padding(.top, 2)
-                    }
-                    LogTextView(lines: Array(lines[first...]), first: first, wrap: wrap, jump: jump, follow: !hasError)
-                }
-                .background(RoundedRectangle(cornerRadius: 6).fill(StudioStyle.canvas))
-                .clipShape(RoundedRectangle(cornerRadius: 6))
-                .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(StudioStyle.border))
-                .padding(.horizontal, 16).padding(.vertical, 10)
+                CheckLog(label: job.name + " · " + String(localized: "Job log"), lines: reading.lines, jump: jump, follow: job.status.isActive, truncated: truncated, fill: true, framed: true)
+                    .id(job.id)
+                    .padding(.horizontal, 16).padding(.vertical, 10)
             }
         }
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel("Job log")
+        .onChange(of: text, initial: true) { _, text in reading = JobLog.Reading(log: text) }
         .task(id: key) {
             await load()
             while job.status.isActive, !Task.isCancelled {
@@ -268,46 +256,7 @@ private struct CIJobLogView: View {
                 await load()
             }
         }
-        .onChange(of: job.id) { _, _ in showAll = false }
         .onDisappear { generation = UUID() }
-    }
-
-    @ViewBuilder private var name: some View {
-        CIStatusIcon(status: job.status, size: 13)
-        Text(verbatim: job.name).font(.system(size: 13, weight: .semibold, design: .monospaced)).lineLimit(1)
-        // the failed tone on words that say it failed; the icon says it too
-        Text(verbatim: outcome).font(.system(size: 12)).foregroundStyle(job.status == .failed ? StudioStyle.Tone.failed.text : HostedList.caption)
-            .lineLimit(1).fixedSize()
-        if busy { ProgressView().controlSize(.mini) }
-    }
-
-    private func buttons(hasError: Bool) -> some View {
-        HStack(spacing: 6) {
-            if hasError {
-                Button("Jump to first error") { showAll = false; jump += 1 }.buttonStyle(HostedListButtonStyle())
-            }
-            if canRetry {
-                Button { Task { await store.retryJob(job, in: pipeline) } } label: { Label("Re-run job", symbol: "arrow.clockwise") }
-                    .buttonStyle(HostedListButtonStyle())
-                    .disabled(store.ciBusy.contains("job:\(job.id)"))
-            }
-            Button { open(job.url) } label: { Label("Open in browser", symbol: "arrow.up.right.square") }
-                .buttonStyle(HostedListButtonStyle(iconOnly: true))
-                .help("Open in browser")
-            Menu {
-                Toggle("Wrap long lines", isOn: $wrap)
-                Button("Copy redacted log") { store.copy(text) }.disabled(text.isEmpty)
-                Button("Reload log") { Task { await load() } }.disabled(busy)
-                Divider()
-                Button("Close log", action: close)
-            } label: { DesignIconImage(icon: .more, size: 12) }
-                .menuStyle(.borderlessButton).menuIndicator(.hidden)
-                .frame(width: 28, height: 28)
-                .background(RoundedRectangle(cornerRadius: 6).fill(StudioStyle.surface))
-                .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(HostedList.edge))
-                .help("More job actions").accessibilityLabel("More job actions")
-        }
-        .fixedSize()
     }
 
     private func load() async {
@@ -336,122 +285,6 @@ private struct CIJobLogView: View {
         } catch is CancellationError {
         } catch {
             if generation == id { self.error = error.localizedDescription }
-        }
-    }
-}
-
-/// Read-only monospaced text with line numbers; a SwiftUI Text is slow with a log of thousands of lines.
-/// Lines that name an error are marked in the failed tone. A log without one opens at its end and keeps following
-/// the end while it is there; one with an error opens on it.
-private struct LogTextView: NSViewRepresentable {
-    let lines: [String]
-    /// How many lines of the log come before the first one shown
-    let first: Int
-    let wrap: Bool
-    let jump: Int
-    let follow: Bool
-
-    final class Coordinator {
-        var signature = ""
-        var jump = 0
-        var wrap: Bool?
-        var error: NSRange?
-    }
-
-    func makeCoordinator() -> Coordinator { Coordinator() }
-
-    func makeNSView(context: Context) -> NSScrollView {
-        let scroll = NSTextView.scrollableTextView()
-        scroll.drawsBackground = false
-        if let view = scroll.documentView as? NSTextView {
-            view.textContainer?.replaceLayoutManager(LogLayoutManager())
-            view.isEditable = false
-            view.isSelectable = true
-            view.isRichText = false
-            view.drawsBackground = false
-            view.textContainerInset = NSSize(width: 8, height: 6)
-        }
-        context.coordinator.jump = jump
-        return scroll
-    }
-
-    func updateNSView(_ scroll: NSScrollView, context: Context) {
-        guard let view = scroll.documentView as? NSTextView else { return }
-        let state = context.coordinator
-        if state.wrap != wrap {
-            // a new text view wraps already; only a change, or no wrapping, needs setting up
-            let changed = state.wrap != nil
-            state.wrap = wrap
-            if !wrap {
-                // unwrapped lines scroll sideways
-                scroll.hasHorizontalScroller = true
-                view.isHorizontallyResizable = true
-                view.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
-                view.textContainer?.widthTracksTextView = false
-                view.textContainer?.containerSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
-            } else if changed {
-                scroll.hasHorizontalScroller = false
-                view.isHorizontallyResizable = false
-                view.frame.size.width = scroll.contentSize.width
-                view.textContainer?.containerSize = NSSize(width: scroll.contentSize.width, height: CGFloat.greatestFiniteMagnitude)
-                view.textContainer?.widthTracksTextView = true
-            }
-        }
-        let signature = "\(first)|\(lines.count)|\(lines.last?.hashValue ?? 0)|\(lines.first?.hashValue ?? 0)"
-        if state.signature != signature {
-            let following = follow && (view.string.isEmpty || scroll.documentVisibleRect.maxY >= view.bounds.height - 8)
-            let (text, error) = Self.attributed(lines, first: first)
-            state.signature = signature
-            state.error = error
-            view.textStorage?.setAttributedString(text)
-            if following { view.scrollToEndOfDocument(nil) }
-        }
-        if state.jump != jump {
-            state.jump = jump
-            if let error = state.error { view.scrollRangeToVisible(error) }
-        }
-    }
-
-    /// The numbered lines, with the range of the first one that names an error
-    private static func attributed(_ lines: [String], first: Int) -> (NSAttributedString, NSRange?) {
-        let font = NSFont.monospacedSystemFont(ofSize: 12, weight: .regular)
-        let style = NSMutableParagraphStyle()
-        style.minimumLineHeight = 20
-        style.maximumLineHeight = 20
-        let digits = String(first + lines.count).count
-        let plain: [NSAttributedString.Key: Any] = [.font: font, .foregroundColor: NSColor.labelColor, .paragraphStyle: style]
-        let number: [NSAttributedString.Key: Any] = [.font: font, .foregroundColor: NSColor.secondaryLabelColor, .paragraphStyle: style]
-        var marked = plain
-        marked[.foregroundColor] = NSColor(StudioStyle.Tone.failed.text)
-        marked[.logErrorLine] = true
-        let out = NSMutableAttributedString()
-        var error: NSRange?
-        for (index, line) in lines.enumerated() {
-            let label = String(first + index + 1)
-            let isError = JobLog.isError(line)
-            let start = out.length
-            out.append(NSAttributedString(string: String(repeating: " ", count: max(0, digits - label.count)) + label + "  ", attributes: isError ? marked.merging([.foregroundColor: NSColor.secondaryLabelColor]) { $1 } : number))
-            out.append(NSAttributedString(string: line + (index == lines.count - 1 ? "" : "\n"), attributes: isError ? marked : plain))
-            if isError, error == nil { error = NSRange(location: start, length: out.length - start) }
-        }
-        return (out, error)
-    }
-}
-
-private extension NSAttributedString.Key {
-    static let logErrorLine = NSAttributedString.Key("logErrorLine")
-}
-
-/// Draws the failed tone across a whole line, not only behind its text
-private final class LogLayoutManager: NSLayoutManager {
-    override func drawBackground(forGlyphRange range: NSRange, at origin: NSPoint) {
-        super.drawBackground(forGlyphRange: range, at: origin)
-        guard let storage = textStorage else { return }
-        NSColor(StudioStyle.Tone.failed.fill).setFill()
-        enumerateLineFragments(forGlyphRange: range) { rect, _, _, glyphs, _ in
-            let location = self.characterRange(forGlyphRange: glyphs, actualGlyphRange: nil).location
-            guard location < storage.length, storage.attribute(.logErrorLine, at: location, effectiveRange: nil) != nil else { return }
-            NSRect(x: 0, y: rect.minY + origin.y, width: 100_000, height: rect.height).fill()
         }
     }
 }

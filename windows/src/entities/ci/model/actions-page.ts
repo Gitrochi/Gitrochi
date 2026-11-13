@@ -1,10 +1,10 @@
-import { isLogError, logLines } from "@/shared/lib";
+import { t } from "@/shared/i18n";
 import { type CIJob, type CIPipeline, type CIStatus, isFinishedCI } from "./types";
 
 /**
  * What the Actions page shows of the runs it already has (the redesign's Actions board): the segments and their
- * counts, the list's search and order, this branch's recent runs, a run's jobs by result and the part of a log to
- * open on. Nothing here asks the server. (macOS: Core/ActionsPage.swift)
+ * counts, the list's search and order, this branch's recent runs and a run's jobs by result.
+ * Nothing here asks the server. (macOS: Core/ActionsPage.swift)
  */
 
 /** The list's filter; all but `all` are states that need attention or are live, so only they carry a count */
@@ -91,10 +91,8 @@ export function jobGroups(jobs: CIJob[]): { group: JobGroup; jobs: CIJob[] }[] {
   return jobGroupOrder.map((group) => ({ group, jobs: jobs.filter((job) => jobGroup(job.status) === group) })).filter((entry) => entry.jobs.length > 0);
 }
 
-/** The first line a log opens on: a few lines before its first error, or its last two hundred lines */
-export function firstLogLine(lines: string[]): number {
-  const error = lines.findIndex(isLogError);
-  return error >= 0 ? Math.max(0, error - 3) : Math.max(0, lines.length - 200);
+/** "5m 48s" (macOS: ciDuration) */
+export function ciDuration(seconds: number): string {
+  const secs = Math.round(seconds);
+  return secs >= 60 ? t("{0}m {1}s", Math.floor(secs / 60), secs % 60) : t("{0}s", secs);
 }
-
-export { isLogError, logLines };

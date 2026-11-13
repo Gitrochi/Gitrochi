@@ -52,6 +52,8 @@ enum DesignIcon: String {
     case cloud
     case minus
     case more
+    case identity
+    case people
 
     fileprivate var drawing: String {
         switch self {
@@ -102,6 +104,8 @@ enum DesignIcon: String {
         case .whitespace: return #"<path d="M7.5 13V3h5M10.5 3v10M7.5 3H6a2.5 2.5 0 0 0 0 5h1.5"/>"#
         case .cloud: return #"<path d="M4.6 12.5h7a2.9 2.9 0 0 0 .4-5.8 4 4 0 0 0-7.7.9 2.5 2.5 0 0 0 .3 4.9z"/>"#
         case .minus: return #"<path d="M3.5 8h9"/>"#
+        case .identity: return #"<rect x="1.8" y="3.2" width="12.4" height="9.6" rx="1.6"/><circle cx="5.6" cy="7.2" r="1.4"/><path d="M3.6 10.6c.4-1 1.1-1.5 2-1.5s1.6.5 2 1.5M9.4 6.6h3M9.4 9h2.2"/>"#
+        case .people: return #"<circle cx="6" cy="5.5" r="2.2"/><path d="M2 13c.4-2.3 1.9-3.6 4-3.6s3.6 1.3 4 3.6"/><circle cx="11.2" cy="6.2" r="1.7"/><path d="M11.2 9.6c1.6 0 2.6 1 2.9 2.8"/>"#
         case .more: return #"<circle cx="3.5" cy="8" r="1.3" fill="black" stroke="none"/><circle cx="8" cy="8" r="1.3" fill="black" stroke="none"/><circle cx="12.5" cy="8" r="1.3" fill="black" stroke="none"/>"#
         }
     }

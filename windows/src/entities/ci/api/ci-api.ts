@@ -24,6 +24,11 @@ export interface CIAccess {
 const project = (c: CIAccess) => `${c.apiBase}/projects/${Hosting.projectID(c.target.path)}`;
 const repoBase = (c: CIAccess) => `${c.apiBase}/repos/${c.target.path}`;
 const q = encodeURIComponent;
+/** Seconds between two server times, when both are known */
+const took = (start?: string | null, end?: string | null): number | null => {
+  const s = Hosting.date(start), e = Hosting.date(end);
+  return s != null && e != null && e >= s ? e - s : null;
+};
 const glPipeline = (p: GLPipeline): CIPipeline => ({ id: p.id, projectID: p.project_id, number: p.iid ?? p.id, name: p.name ?? "", title: "", ref: p.ref, sha: p.sha, status: gitlabStatus(p.status), url: p.web_url, created: Hosting.date(p.created_at), event: p.source ?? "", actor: p.user?.username ?? null, started: Hosting.date(p.created_at), updated: Hosting.date(p.updated_at) });
 
 /** base64(줄바꿈 포함) → UTF-8 글 */
@@ -72,14 +77,14 @@ export const CIAPI = {
   /** Include third-party checks and commit statuses, independently of Actions runs. */
   async requestChecks(c: CIAccess, sha: string): Promise<{ checks: CIRequestCheck[]; truncated: boolean }> {
     if (c.target.provider === "gitlab") {
-      const statuses = await Hosting.send<{ id: number; name: string; status: string; target_url?: string; description?: string }[]>("gitlab", `${project(c)}/repository/commits/${q(sha)}/statuses?per_page=100`, c.token);
-      return { checks: statuses.map(s => ({ id: `status:${s.id}`, name: s.name, status: gitlabStatus(s.status), url: s.target_url ?? "", summary: s.description ?? "" })), truncated: statuses.length === 100 };
+      const statuses = await Hosting.send<{ id: number; name: string; status: string; target_url?: string; description?: string; started_at?: string | null; finished_at?: string | null }[]>("gitlab", `${project(c)}/repository/commits/${q(sha)}/statuses?per_page=100`, c.token);
+      return { checks: statuses.map(s => ({ id: `status:${s.id}`, name: s.name, status: gitlabStatus(s.status), url: s.target_url ?? "", summary: s.description ?? "", duration: took(s.started_at, s.finished_at) })), truncated: statuses.length === 100 };
     }
     const [runs, statuses] = await Promise.all([
-      Hosting.send<{ total_count: number; check_runs: { id: number; name: string; status: string; conclusion?: string | null; html_url?: string; details_url?: string; output?: { title?: string; summary?: string } }[] }>("github", `${repoBase(c)}/commits/${q(sha)}/check-runs?filter=latest&per_page=100`, c.token),
+      Hosting.send<{ total_count: number; check_runs: { id: number; name: string; status: string; conclusion?: string | null; html_url?: string; details_url?: string; started_at?: string | null; completed_at?: string | null; output?: { title?: string; summary?: string } }[] }>("github", `${repoBase(c)}/commits/${q(sha)}/check-runs?filter=latest&per_page=100`, c.token),
       Hosting.send<{ total_count: number; statuses: { id: number; context: string; state: string; target_url?: string; description?: string }[] }>("github", `${repoBase(c)}/commits/${q(sha)}/status?per_page=100`, c.token),
     ]);
-    const checks: CIRequestCheck[] = runs.check_runs.map(r => ({ id: `check:${r.id}`, name: r.name, status: githubStatus(r.status, r.conclusion), url: r.details_url || r.html_url || "", summary: r.output?.title ?? "" }));
+    const checks: CIRequestCheck[] = runs.check_runs.map(r => ({ id: `check:${r.id}`, name: r.name, status: githubStatus(r.status, r.conclusion), url: r.details_url || r.html_url || "", summary: r.output?.title ?? "", duration: took(r.started_at, r.completed_at) }));
     checks.push(...statuses.statuses.map(s => ({ id: `status:${s.id}`, name: s.context, status: s.state === "success" ? "success" as const : s.state === "pending" ? "pending" as const : s.state === "failure" || s.state === "error" ? "failed" as const : "unknown" as const, url: s.target_url ?? "", summary: s.description ?? "" })));
     return { checks, truncated: runs.total_count > runs.check_runs.length || statuses.total_count > statuses.statuses.length };
   },

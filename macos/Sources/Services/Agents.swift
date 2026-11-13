@@ -279,6 +279,12 @@ final class AgentCenter {
 
     func runsInApp(_ s: AgentSession) -> Bool { inApp[s.id]?.session != nil }
 
+    /// The status of the session started here that runs in this terminal tab (Windows: AgentCenter.statusIn)
+    func status(in terminal: TerminalSession) -> AgentStatus? {
+        guard let id = inApp.first(where: { $0.value.session === terminal })?.key else { return nil }
+        return sessions.first { $0.id == id }?.status
+    }
+
     /// 폴더에서 에이전트를 띄운다 — host 저장소 탭 아래 터미널의 새 탭(기본) 또는 새 Terminal 창. task 가 있으면 첫 요청으로 보낸다.
     func start(_ kind: AgentKind, in path: String, task: String, permissionMode: String? = nil, host: RepoStore? = nil, place: Place? = nil) throws {
         if place == .app, host == nil {

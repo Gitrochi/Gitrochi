@@ -1,13 +1,13 @@
 import { CircleCheck } from "@/shared/icons";
-import { ChevronDown, ChevronRight, Ellipsis, ExternalLink, RefreshCw, RotateCw } from "@/shared/icons";
+import { ExternalLink, RefreshCw } from "@/shared/icons";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CIAPI, CIStatusIcon, isActiveCI, statusInfo, type CIJob, type CIPipeline, type CIRequestCheck } from "@/entities/ci";
+import { CIAPI, ciDuration, CIStatusIcon, isActiveCI, statusInfo, type CIJob, type CIPipeline, type CIRequestCheck } from "@/entities/ci";
 import { accounts, hubError, workspaceJobLog } from "@/entities/hosting";
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
-import { Button, IconButton, showMenuBelow, Spinner } from "@/shared/ui";
-import { useObserve } from "@/shared/lib";
-import { checkGroups, checkJob, checksBadge, firstError, logLines, logWindow } from "../lib/pull-request-page";
+import { Button, CheckGroupHead, CheckLog, checkLogMenu, FailedCheckBlock, IconButton, Spinner } from "@/shared/ui";
+import { checkLogLines, failedTests, firstError, useObserve } from "@/shared/lib";
+import { checkGroups, checkJob, checksBadge } from "../lib/pull-request-page";
 
 type Badge = ReturnType<typeof checksBadge>;
 interface Log { body: string; truncated: boolean }
@@ -144,7 +144,8 @@ export function RequestChecksPanel({ store, number, sha, url, draft = false, act
     {!sha && <p className="pr-cap">{t("Checks are unavailable until the request's commit is known.")}</p>}
     {!loading && sha && !checks.length && !runs.length && !error && <p className="pr-cap">{t("No checks reported")}</p>}
     {groups.failed.length > 0 && <section className="pr-check-group" aria-label={t("Failed")}>
-      <button type="button" className="pr-group" aria-expanded={failedOpen} onClick={() => setFailedOpen(!failedOpen)}>{failedOpen ? <ChevronDown size={12}/> : <ChevronRight size={12}/>}{t("Failed")}</button>
+      {/* the Checks tab already counts the failures */}
+      <CheckGroupHead title={t("Failed")} open={failedOpen} onToggle={() => setFailedOpen(!failedOpen)}/>
       {failedOpen && groups.failed.map(check => {
         const job = checkJob(check.url), log = job ? logs.get(job.job) : undefined, run = job ? runOf(job) : undefined;
         return <FailedCheck key={check.id} check={check} log={log} loading={!!job && logLoading === job.job}
@@ -155,14 +156,14 @@ export function RequestChecksPanel({ store, number, sha, url, draft = false, act
       })}
     </section>}
     {groups.running.length > 0 && <section className="pr-check-group" aria-label={t("Running")}>
-      <button type="button" className="pr-group" aria-expanded={runningOpen} onClick={() => setRunningOpen(!runningOpen)}>{runningOpen ? <ChevronDown size={12}/> : <ChevronRight size={12}/>}<span>{t("Running")}</span></button>
+      {/* the tab counts what still runs only while nothing failed */}
+      <CheckGroupHead title={t("Running")} count={badge?.kind === "running" ? null : groups.running.length} open={runningOpen} onToggle={() => setRunningOpen(!runningOpen)}/>
       {runningOpen && <div className="pr-check-list">{groups.running.map(checkRow)}</div>}
     </section>}
     {groups.passed.length > 0 && <section className="pr-check-group" aria-label={t("Passed")}>
-      <button type="button" className="pr-group" aria-expanded={passedOpen} onClick={() => setPassedOpen(!passedOpen)}>
-        {passedOpen ? <ChevronDown size={12}/> : <ChevronRight size={12}/>}<span>{t("Passed")} {groups.passed.length}</span>
+      <CheckGroupHead title={t("Passed")} count={groups.passed.length} open={passedOpen} onToggle={() => setPassedOpen(!passedOpen)}>
         {!passedOpen && <><CircleCheck size={12} className="pr-passed-icon" aria-hidden="true"/><span className="pr-group-names mono ellipsis">{groups.passed.map(check => check.name).join(" · ")}</span></>}
-      </button>
+      </CheckGroupHead>
       {passedOpen && <div className="pr-check-list">{groups.passed.map(checkRow)}</div>}
     </section>}
     {(truncated || runs.length === 30) && <p className="pr-cap">{t("More results are available in the browser.")}</p>}
@@ -190,63 +191,27 @@ export function RequestChecksPanel({ store, number, sha, url, draft = false, act
 
 /** A failed check: what failed and why, the ways to act on it, and its log right below */
 function FailedCheck({ check, log, loading, onOpen, onLoad, onRerun, onCopy }: { check: CIRequestCheck; log?: Log; loading: boolean; onOpen?: () => void; onLoad?: () => void; onRerun?: () => void; onCopy?: () => void }) {
-  const lines = useMemo(() => (log ? logLines(log.body) : []), [log]);
+  const lines = useMemo(() => (log ? checkLogLines(log.body) : []), [log]);
+  const tests = useMemo(() => failedTests(lines.map(line => line.text)), [lines]);
   const [jump, setJump] = useState(0);
-  const error = firstError(lines);
-  return <div className="pr-check-card">
-    <div className="pr-check-top">
-      <div className="pr-check-line">
-        <CIStatusIcon status={check.status} size={14}/>
-        <span className="pr-check-name mono">{check.name}</span>
-        <span className="pr-check-status status-tone" data-tone="failed">{statusInfo[check.status].title}</span>
-        <span className="spacer"/>
-        <span className="pr-check-actions">
-          {loading && <Spinner size={12}/>}
-          {log && error != null && <Button onClick={() => setJump(value => value + 1)}>{t("Jump to first error")}</Button>}
-          {!log && onLoad && <Button disabled={loading} onClick={onLoad}>{t("Load log")}</Button>}
-          {onRerun && <Button onClick={onRerun}><RotateCw size={14}/>{t("Re-run job")}</Button>}
-          {onOpen && <Button className="pr-button-icon" tip={t("Open result")} aria-label={t("Open result")} onClick={onOpen}><ExternalLink size={13}/></Button>}
-          {onLoad && <Button className="pr-button-icon" tip={t("More job actions")} aria-label={t("More job actions")} aria-haspopup="menu" onClick={(event) => showMenuBelow(event.currentTarget, [
-            { label: t("Copy log"), disabled: !onCopy, onClick: onCopy },
-            { label: t("Refresh log"), disabled: loading, onClick: onLoad },
-          ])}><Ellipsis size={14}/></Button>}
-        </span>
-      </div>
-      {check.summary && <span className="pr-cap pr-check-summary">{check.summary}</span>}
-    </div>
-    {log && <LogRegion name={check.name} lines={lines} truncated={log.truncated} jump={jump} target={error}/>}
-  </div>;
+  // "Failed after 3m 12s" where the server says how long the check ran, else its state
+  const outcome = check.duration != null && check.duration > 0 ? t("Failed after {0}", ciDuration(check.duration)) : statusInfo[check.status].title;
+  return <FailedCheckBlock form="card" icon={<CIStatusIcon status={check.status} size={14}/>} name={check.name} outcome={outcome}
+    tests={tests} caption={check.summary} busy={loading}
+    onJump={log && firstError(lines) != null ? () => setJump(value => value + 1) : undefined}
+    actions={!log && onLoad ? <Button disabled={loading} onClick={onLoad}>{t("Load log")}</Button> : null}
+    rerun={onRerun && { label: t("Re-run job"), onClick: onRerun }}
+    onOpen={onOpen}
+    menu={onLoad && (() => checkLogMenu(onCopy, [{ label: t("Refresh log"), disabled: loading, onClick: onLoad }]))}>
+    {log && <CheckLog label={`${check.name} · ${t("Job log")}`} lines={lines} truncated={log.truncated} jump={jump}/>}
+  </FailedCheckBlock>;
 }
 
 /** Any other job's log, with the two things to do with it */
 function JobLog({ name, log, onCopy, onClose }: { name: string; log: Log; onCopy: () => void; onClose: () => void }) {
-  const lines = useMemo(() => logLines(log.body), [log]);
+  const lines = useMemo(() => checkLogLines(log.body), [log]);
   return <div className="pr-job-log">
     <div className="pr-text-actions"><button type="button" className="pr-text-button" onClick={onCopy}>{t("Copy log")}</button><button type="button" className="pr-text-button" onClick={onClose}>{t("Close")}</button></div>
-    <LogRegion name={name} lines={lines} truncated={log.truncated}/>
-  </div>;
-}
-
-/** Numbered log lines; the ones that report a failure wrap and stand out, and a long log starts at its tail */
-function LogRegion({ name, lines, truncated, jump = 0, target = null }: { name: string; lines: ReturnType<typeof logLines>; truncated: boolean; jump?: number; target?: number | null }) {
-  const [all, setAll] = useState(false);
-  const region = useRef<HTMLDivElement>(null);
-  const { shown, earlier } = logWindow(lines, all);
-  useEffect(() => {
-    if (!jump || target == null) return;
-    // the first error may sit in the folded earlier lines
-    if (!all && earlier > 0 && target <= earlier) { setAll(true); return; }
-    region.current?.querySelector(`[data-line="${target}"]`)?.scrollIntoView({ block: "center" });
-  }, [jump, all]);
-  // a failed job's log opens on its first error; only the log scrolls, never the page around it
-  useEffect(() => {
-    const box = region.current, line = target == null ? null : box?.querySelector<HTMLElement>(`[data-line="${target}"]`);
-    if (box && line) box.scrollTop = Math.max(0, line.offsetTop - box.offsetTop - box.clientHeight / 2);
-  }, [lines]);
-  return <div className="pr-log request-job-log selectable" role="region" aria-label={`${name} · ${t("Job log")}`} tabIndex={0} ref={region}>
-    {truncated && <p className="pr-cap pr-log-note">{t("Log preview is limited to 2 MB. Open the browser for the complete log.")}</p>}
-    {earlier > 0 && <button type="button" className="pr-text-button pr-log-earlier" onClick={() => setAll(true)}>{t("Show {0} earlier lines", earlier)}</button>}
-    {lines.length === 1 && !lines[0].text ? <p className="pr-cap pr-log-note">{t("No content to show.")}</p>
-      : shown.map(line => <div className={`pr-log-line mono ${line.isError ? "error status-tone" : ""}`} data-tone={line.isError ? "failed" : undefined} data-line={line.n} key={line.n}><span className="pr-log-n">{line.n}</span><span className="pr-log-text">{line.text}</span></div>)}
+    <CheckLog label={`${name} · ${t("Job log")}`} lines={lines} truncated={log.truncated}/>
   </div>;
 }

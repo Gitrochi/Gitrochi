@@ -5,6 +5,7 @@ import { t } from "@/shared/i18n";
 import { Observable } from "@/shared/lib";
 import { tools } from "@/shared/platform";
 import * as Hosting from "../api/hosting";
+import type { AccountStatus } from "../lib/account-presentation";
 import { AccountConnectionFailure } from "./connection-failure";
 
 /** GitHub·사내 GitLab 계정(여러 개). 앱 전체에서 하나만 쓴다. (맥 버전 AccountStore) */
@@ -55,6 +56,20 @@ class AccountStore extends Observable {
     const list = this.candidates(target);
     const id = repoPath ? this.preferred[repoPath] : undefined;
     return list.find((a) => a.id === id) ?? list[0] ?? null;
+  }
+
+  /** The account the user chose for this repository, or null while the host's first account is used */
+  preferredID(repoPath: string | null): string | null {
+    return (repoPath && this.preferred[repoPath]) || null;
+  }
+
+  /**
+   * What the account needs from the user. Windows reads the Credential Manager without asking, and nothing reports
+   * an expired or unapproved sign-in for an account as a whole yet, so a connected account is signed in.
+   * (macOS: AccountStore.status)
+   */
+  status(_account: HostAccount): AccountStatus {
+    return "signedIn";
   }
 
   setPreferred(a: HostAccount, repoPath: string) {

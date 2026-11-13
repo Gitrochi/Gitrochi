@@ -64,7 +64,7 @@ for source in (root / 'Sources').rglob('*.swift'):
         text = text.replace('draft = ""; tab = "conversation"; await store.loadReview(number)', 'draft = ""; tab = requestFixtureDetailTab; await store.loadReview(number)')
         text = text.replace('.task(id: reviewContext) { await store.loadReview(number) }', '.task(id: reviewContext) { tab = requestFixtureDetailTab; await store.loadReview(number) }')
     elif relative == 'Views/Inspector/RequestChecksPanel.swift':
-        text = replace_body(text, '    @MainActor private func load() async', '        results = requestFixtureChecks\n        logs = ["build": WorkspaceCILog.Result(body: "Building Gitrochi\\nTESTS PASSED\\nAll checks completed", truncated: false)]\n        loading = false; error = nil')
+        text = replace_body(text, '    @MainActor private func load() async', '        results = requestFixtureChecks\n        logs = ["build": WorkspaceCILog.Result(body: "Building Gitrochi\\nTESTS PASSED\\nAll checks completed", truncated: false), "security": WorkspaceCILog.Result(body: requestFixtureFailedLog, truncated: false)]\n        loading = false; error = nil')
         # Passed checks fold into one line; open the group so the loaded job log is rendered.
         original = '@ViewState private var passedOpen = false'
         assert original in text, 'RequestChecksPanel passed group changed; update the fixture.'

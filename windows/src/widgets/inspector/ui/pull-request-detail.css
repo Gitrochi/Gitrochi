@@ -164,33 +164,15 @@
 .pr-checks-title h3 { margin: 0; font-size: 15px; font-weight: 600; }
 .pr-checks-title code { font-size: 11px; }
 .pr-check-group { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-.pr-group { display: flex; align-items: center; gap: 6px; width: 100%; min-height: 24px; border: 0; background: transparent; padding: 2px 0; font: inherit; font-size: 12px; font-weight: 600; color: var(--text-2); text-align: left; box-sizing: border-box; min-width: 0; }
-button.pr-group { cursor: pointer; }
-.pr-group > svg, .pr-group > span:first-of-type { flex: none; }
 .pr-passed-icon { color: var(--green); }
 .pr-group-names { flex: 1 1 auto; font-size: 11px; font-weight: 400; }
-.pr-check-card { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
-.pr-check-top { padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
-.pr-check-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; min-width: 0; }
 .pr-check-name { flex: 0 1 auto; min-width: 0; font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
-.pr-check-status { flex: none; font-size: 12px; color: var(--status-text); }
-.pr-check-actions { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-.pr-check-summary { padding-left: 22px; overflow-wrap: anywhere; }
 .pr-check-list { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
 .pr-check-item + .pr-check-item { border-top: 1px solid var(--border); }
 .pr-check-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-height: 36px; padding: 4px 12px; min-width: 0; }
 .pr-check-row > svg { flex: none; }
 .pr-job-log { border-top: 1px solid var(--border); }
 .pr-job-log > .pr-text-actions { padding: 2px 16px; justify-content: flex-end; }
-.pr-log { border-top: 1px solid var(--border); background: var(--sidebar); padding: 8px 0; max-height: 320px; overflow: auto; }
-.pr-log-note { margin: 0 16px 4px; }
-.pr-log-earlier { display: flex; margin: 0 16px 4px 56px; }
-.pr-log-line { display: flex; gap: 14px; width: max-content; min-width: 100%; box-sizing: border-box; font-size: 12px; line-height: 20px; padding: 0 16px; white-space: pre; }
-.pr-log-n { flex: none; min-width: 26px; text-align: right; color: var(--text-2); user-select: none; }
-.pr-log-text { flex: 1 1 auto; min-width: 0; }
-/* an error line wraps inside the visible box so it is never cut; the others scroll sideways */
-.pr-log-line.error { width: 100%; white-space: pre-wrap; position: sticky; left: 0; background: var(--status-fill); color: var(--status-text); }
-.pr-log-line.error .pr-log-text { overflow-wrap: anywhere; }
 .pr-run { border-top: 1px solid var(--border); padding-top: 10px; }
 .pr-run > summary { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 12px; list-style: none; }
 .pr-run > summary::-webkit-details-marker { display: none; }

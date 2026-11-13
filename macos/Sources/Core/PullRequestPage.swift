@@ -10,8 +10,6 @@ enum PullRequestPage {
     static let splitMinimumWidth: CGFloat = 1000
     /// The one-row Changed files header needs this much; a narrower column keeps the tall header
     static let oneRowMinimumWidth: CGFloat = 720
-    /// A longer job log shows its end first; the rest waits behind "Show N earlier lines"
-    static let logTail = 200
 
     enum Sort: String, CaseIterable { case updated, newest, comments }
 
@@ -99,27 +97,6 @@ enum PullRequestPage {
         if !groups.running.isEmpty { return .running(groups.running.count) }
         return nil
     }
-
-    struct LogLine: Identifiable, Equatable {
-        let number: Int
-        let text: String
-        let isError: Bool
-        var id: Int { number }
-    }
-
-    private static let exitCode = try? NSRegularExpression(pattern: #"exit code [1-9]"#)
-
-    static func logLines(_ body: String) -> [LogLine] {
-        // the same reading as the Actions page, so a log says the same thing on both
-        var lines = JobLog.lines(body)
-        if lines.last?.isEmpty == true { lines.removeLast() }
-        return lines.enumerated().map { index, text in
-            let failed = exitCode?.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)) != nil
-            return LogLine(number: index + 1, text: text, isError: JobLog.isError(text) || failed)
-        }
-    }
-
-    static func firstError(_ lines: [LogLine]) -> LogLine? { lines.first(where: \.isError) }
 
     /// The one reason beside a disabled Merge…: what to do first, in the order someone would do it. `blockers` are the
     /// server's own words, for what the page cannot say better.

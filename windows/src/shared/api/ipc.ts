@@ -137,6 +137,8 @@ export const ipc = {
   externalAgents: () => invoke<AgentScan>("external_agents"),
   /** Brings a process's app window to the front (Windows) */
   bringAppForward: (pid: number) => invoke<void>("bring_app_forward", { pid }),
+  /** How many processes run below each of these (children, grandchildren …), in the same order */
+  processDescendants: (pids: number[]) => invoke<number[]>("process_descendants", { pids }),
   externalEditors: () => invoke<ExternalEditor[]>("external_editors"),
   openExternalEditor: (repo: string, editorID: ExternalEditorID, file?: string) =>
     invoke<void>("open_external_editor", { repo, editorId: editorID, file: file ?? null }),

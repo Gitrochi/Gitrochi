@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  commonWorkflow, firstLogLine, isLogError, logLines, jobGroups, runBaseRef, runCount, runHistory, runSegments, runStreak, runTook, visibleRuns,
+  ciDuration, commonWorkflow, jobGroups, runBaseRef, runCount, runHistory, runSegments, runStreak, runTook, visibleRuns,
 } from "@/entities/ci/model/actions-page";
 import type { CIJob, CIPipeline, CIStatus } from "@/entities/ci/model/types";
 
@@ -66,19 +66,8 @@ describe("Actions page", () => {
     expect(groups.map((entry) => entry.jobs.map((value) => value.id))).toEqual([[2], [5], [4], [1, 6], [3]]);
   });
 
-  it("marks the lines that name an error, not words that only contain one", () => {
-    for (const line of ["TerminalFocusTests.swift:58: error: XCTAssertTrue failed", "Error: Process completed with exit code 1.", "FAIL: Update the dependency lockfile", "##[error]boom", "fatal: not a git repository"])
-      expect(isLogError(line), line).toBe(true);
-    for (const line of ["Test Suite 'TerminalFocusTests' started.", "Checked 12 terrors, errorless", "Executed 231 tests, with 1 failure"])
-      expect(isLogError(line), line).toBe(false);
-  });
-
-  it("opens a log a few lines before its first error, or on its last two hundred lines", () => {
-    expect(firstLogLine(Array.from({ length: 46 }, (_, index) => (index === 40 ? "x.swift:58: error: failed" : `line ${index + 1}`)))).toBe(37);
-    expect(firstLogLine(Array.from({ length: 500 }, (_, index) => `line ${index + 1}`))).toBe(300);
-    expect(firstLogLine(["one"])).toBe(0);
-    expect(isLogError("curl --retry 10 --show-error --fail https://example.test")).toBe(false);
-    expect(isLogError("CACHE_ON_FAILURE: false")).toBe(false);
-    expect(logLines("2026-11-06T00:45:22.6820373Z ##[group]Run tests\r\n2026-11-06T00:45:22.68Z \u001b[36;1mmake\u001b[0m\n##[endgroup]\n##[error]Process completed\n##[start-action id=1]")).toEqual(["Run tests", "make", "Error: Process completed"]);
+  it("writes how long a job took in minutes and seconds", () => {
+    expect(ciDuration(192)).toBe("3m 12s");
+    expect(ciDuration(41.4)).toBe("41s");
   });
 });

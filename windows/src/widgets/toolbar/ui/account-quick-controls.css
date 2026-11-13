@@ -1,66 +1,85 @@
+/* The account button and its popover, with the Accounts board's measures (docs/design.md, App shell).
+   macOS: AccountQuickControls, AccountPopover. */
 .account-quick-trigger {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  flex: 0 1 184px;
-  min-width: 95px;
-  max-width: 190px;
+  justify-content: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
   margin-left: auto;
-  padding: 5px 8px;
+  padding: 0;
   border: 1px solid var(--border);
-  border-radius: 9px;
+  border-radius: 18px;
   background: var(--surface);
-  color: var(--text);
+  color: var(--text-2);
   cursor: pointer;
 }
-.account-quick-trigger:hover { background: var(--hover); }
-.account-quick-trigger > svg, .account-quick-trigger > .avatar { flex: none; }
-.account-quick-summary { display: flex; flex-direction: column; gap: 2px; min-width: 0; text-align: left; }
-.account-quick-summary strong { font-size: 11.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.account-quick-summary small { display: flex; align-items: center; gap: 3px; color: var(--text-2); font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.account-quick-trigger:hover, .account-quick-trigger.open { background: var(--hover); }
+.account-quick-photo { position: relative; display: inline-flex; flex: none; }
+/* the warning badge: this repository's own account needs attention */
+.account-quick-badge {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--status-text);
+  color: var(--card);
+  box-shadow: 0 0 0 1.5px var(--card);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 360 wide, 12px corners, 6px above and below the rows; the arrow points at the photo */
 .account-quick-popover {
   position: fixed;
   z-index: 150;
   top: 89px;
   right: 12px;
-  width: min(378px, calc(100vw - 24px));
-  max-height: calc(100dvh - 105px);
-  overflow: auto;
-  padding: 18px;
+  width: min(360px, calc(100vw - 24px));
   box-sizing: border-box;
-  border: 1px solid var(--border);
-  border-radius: 13px;
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
   background: var(--surface);
   color: var(--text);
-  box-shadow: 0 12px 40px #0002;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.16);
 }
-.account-quick-heading { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 16px; }
-.account-quick-heading > svg { flex: none; }
-.account-quick-profile { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; overflow-wrap: anywhere; }
-.account-quick-profile strong { font-size: 14px; }
-.account-quick-profile small { color: var(--text-2); }
-.account-quick-selector { display: flex; flex-direction: column; gap: 6px; font-size: 11.5px; color: var(--text-2); }
-.account-quick-selector select { width: 100%; min-width: 0; }
-.account-quick-identity { border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 15px 0; margin: 15px 0; }
-.account-quick-identity dl { display: grid; grid-template-columns: 86px minmax(0, 1fr); gap: 7px 10px; margin: 12px 0; }
-.account-quick-identity dt { color: var(--text-2); font-size: 11.5px; }
-.account-quick-identity dd { margin: 0; overflow-wrap: anywhere; user-select: text; }
-.account-quick-identity p { margin: 10px 0; }
-.account-quick-actions { display: flex; flex-direction: column; align-items: stretch; gap: 8px; }
-.account-quick-actions button { text-align: left; justify-content: flex-start; white-space: normal; }
-@media (max-width: 1050px) {
-  .account-quick-trigger { min-width: 0; flex-basis: 145px; padding: 5px; }
-  .account-quick-trigger > .avatar { display: none; }
-}
-/* Keep all connections visible even when a repository has a preferred account. */
-.account-quick-connections { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
-.account-quick-list { list-style: none; margin: 0 0 4px; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-.account-quick-list li { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.account-quick-list li > .avatar { flex: none; }
-.account-quick-list li > span { min-width: 0; overflow-wrap: anywhere; }
-.account-quick-list li > button { display: flex; align-items: center; gap: 8px; width: 100%; border: 0; border-radius: 6px; padding: 6px; background: transparent; color: var(--text); text-align: left; cursor: pointer; }
-.account-quick-list li > button:hover { background: var(--hover); }
-.account-quick-list li > button[aria-pressed="true"] { background: var(--select); }
-.account-quick-list li > button > span { min-width: 0; overflow-wrap: anywhere; }
-.account-quick-git-list li > span { display: flex; flex-direction: column; gap: 2px; }
-.account-quick-git-list small { color: var(--text-2); }
+.account-popover-nub { position: absolute; top: -7px; right: 12px; width: 12px; height: 12px; box-sizing: border-box; background: var(--surface); border-left: 1px solid var(--border-strong); border-top: 1px solid var(--border-strong); transform: rotate(45deg); }
+.account-popover-scroll { position: relative; display: flex; flex-direction: column; max-height: inherit; overflow: auto; padding: 6px 0; box-sizing: border-box; border-radius: 12px; }
+.account-popover-notice { margin: 4px 8px 6px; }
+.account-popover-heading { flex: none; min-height: 26px; box-sizing: border-box; padding: 6px 14px 4px; display: flex; align-items: flex-end; font-size: 11px; line-height: 16px; font-weight: 600; color: var(--text-2); }
+.account-popover-hint { flex: none; padding: 0 14px 6px; font-size: 12px; line-height: 16px; color: var(--text-2); }
+.account-popover-divider { flex: none; height: 1px; background: var(--border); margin: 6px 14px; }
+
+/* rows are 44px (52px for this repository's account, 48px for its Git identity) and grow when their words wrap:
+   nothing is cut short, and the photo and the button keep their width */
+.account-popover-row { flex: none; display: flex; align-items: center; gap: 10px; min-width: 0; min-height: 44px; box-sizing: border-box; padding: 3px 14px; }
+.account-popover-row.own { min-height: 52px; }
+.account-popover-row.identity { min-height: 48px; }
+.account-popover-row > .avatar, .account-popover-row > .btn { flex: none; }
+.account-popover-glyph { flex: none; width: 32px; height: 32px; border-radius: 50%; background: var(--bar); color: var(--text-2); display: inline-flex; align-items: center; justify-content: center; }
+.account-popover-text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.account-popover-title { display: flex; flex-wrap: wrap; align-items: center; gap: 0 6px; min-width: 0; font-size: 13px; line-height: 18px; overflow-wrap: anywhere; }
+.account-popover-row.own .account-popover-name { font-weight: 600; }
+.account-popover-host { color: var(--text-2); }
+.account-popover-email { color: color-mix(in srgb, var(--text) 82%, var(--surface)); }
+.account-popover-lock { flex: none; color: color-mix(in srgb, var(--text) 82%, var(--surface)); }
+.account-popover-caption { min-width: 0; font-size: 12px; line-height: 16px; color: var(--text-2); overflow-wrap: anywhere; }
+.account-popover-caption.locked { display: flex; align-items: flex-start; gap: 4px; }
+.account-popover-caption.locked > svg { flex: none; margin-top: 2px; }
+.account-popover-row .btn { font-weight: 500; }
+
+.account-popover-action { flex: none; height: 28px; margin: 0 6px; padding: 0 8px; border: 0; border-radius: 6px; background: transparent; font: inherit; font-size: 13px; color: var(--text); display: flex; align-items: center; gap: 8px; cursor: pointer; text-align: left; white-space: nowrap; }
+.account-popover-action > svg { flex: none; color: var(--text-2); }
+.account-popover-action:hover { background: var(--hover); }
+.account-popover-action:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* the blocked state: a 24px grey icon, one 15px semibold line, one 12px caption and the one filled action */
+.account-popover-empty { padding: 20px 16px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+.account-popover-empty > svg { color: var(--text-3); }
+.account-popover-empty > strong { margin-top: 8px; font-size: 15px; line-height: 20px; font-weight: 600; }
+.account-popover-empty > span { margin-top: 4px; font-size: 12px; line-height: 16px; color: var(--text-2); }
+.account-popover-empty > .btn { margin-top: 12px; }

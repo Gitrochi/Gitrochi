@@ -17,10 +17,15 @@ final class TerminalSession: Identifiable {
     /// 보고 있지 않을 때 새 출력이 있었는지(탭에 점 표시)
     var unseenOutput = false
     var isVisible = false
+    /// A command or program runs in it (the tab's ring): the shell is not the terminal's foreground process, or the tab
+    /// runs a program in place of the shell
+    private(set) var busy = false
 
     @ObservationIgnored private var relay: Relay?
     @ObservationIgnored private var shellTitle: String?
     @ObservationIgnored private var refreshScheduled = false
+    /// Output came while a refresh was already scheduled; a command started in that window is seen by one more refresh
+    @ObservationIgnored private var outputWhileScheduled = false
 
     /// A program run instead of the login shell (agent sessions)
     struct Command {
@@ -84,6 +89,7 @@ final class TerminalSession: Identifiable {
             if pid > 0 { Self.reap(pid) }
         }
         running = false
+        busy = false
     }
 
     /// SwiftTerm 은 직접 끝낸 셸을 거두지 않아 좀비로 남으므로 여기서 거둔다(2초 안에 안 끝나면 SIGKILL).
@@ -152,18 +158,30 @@ final class TerminalSession: Identifiable {
 
     fileprivate func processEnded(_ code: Int32?) {
         running = false
+        busy = false
         exitCode = code
     }
 
     /// 출력이 쏟아질 때마다 확인하지 않도록 0.4초에 한 번만
     private func noteOutput() {
         if !isVisible, !unseenOutput { unseenOutput = true }
-        guard !refreshScheduled else { return }
+        guard !refreshScheduled else {
+            outputWhileScheduled = true
+            return
+        }
+        scheduleRefresh()
+    }
+
+    private func scheduleRefresh() {
         refreshScheduled = true
+        outputWhileScheduled = false
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
             MainActor.assumeIsolated {
-                self?.refreshScheduled = false
-                self?.refreshInfo()
+                guard let self else { return }
+                self.refreshScheduled = false
+                self.refreshInfo()
+                // the echo of Return can land just before the command starts; look once more after it has
+                if self.outputWhileScheduled { self.scheduleRefresh() }
             }
         }
     }
@@ -173,6 +191,8 @@ final class TerminalSession: Identifiable {
         if let cwd = Self.currentDirectory(p.shellPid), cwd != directory { directory = cwd }
         let name = shellTitle ?? foregroundProgram ?? command?.title ?? URL(fileURLWithPath: directory).lastPathComponent
         if name != title { title = name }
+        let nowBusy = running && (command != nil || foregroundProgram != nil)
+        if nowBusy != busy { busy = nowBusy }
     }
 
     // MARK: 셸·환경

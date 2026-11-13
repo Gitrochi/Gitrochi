@@ -1,0 +1,49 @@
+/* One form for a failed check, its log and the group heads. macOS: Views/Shared/FailedCheckBlock.swift. */
+.failed-check { display: flex; flex-direction: column; min-width: 0; text-align: left; }
+.failed-check-head { flex: none; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.failed-check-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; min-width: 0; }
+/* the words keep their width: the actions drop below them, and the outcome below a long name, in a narrow column */
+.failed-check-title { flex: 1 1 auto; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; }
+.failed-check-icon { flex: none; display: inline-flex; }
+.failed-check-name { flex: 0 1 auto; min-width: 0; font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
+.failed-check-outcome { flex: none; font-size: 12px; color: var(--text-2); white-space: nowrap; }
+.failed-check-outcome.status-tone { color: var(--status-text); }
+.failed-check-actions { flex: none; max-width: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.failed-check-actions .btn { font-size: 13px; }
+.btn.failed-check-icon-button { width: 28px; padding: 0; flex: none; }
+.failed-check-caption { padding-left: 22px; font-size: 12px; line-height: 16px; color: var(--text-2); overflow-wrap: anywhere; }
+.failed-check-caption .mono { font-size: 11px; }
+
+.failed-check-card { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.failed-check-card > .failed-check-head { padding: 10px 12px; }
+.failed-check-card > .check-log { border-top: 1px solid var(--border); }
+.failed-check-pane { flex: 1; min-height: 0; }
+.failed-check-pane > .failed-check-head { padding: 10px 16px; border-bottom: 1px solid var(--border); }
+.failed-check-plain { gap: 8px; }
+
+/* the log */
+.check-log { --check-log-fill: var(--sidebar); position: relative; min-width: 0; min-height: 0; display: flex; flex-direction: column; background: var(--check-log-fill); }
+.check-log.framed { border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+.check-log.fill { flex: 1; }
+.check-log-scroll { flex: 1 1 auto; min-height: 0; max-height: 320px; overflow: auto; padding: 8px 0; font-size: 12px; line-height: 20px; tab-size: 4; }
+.check-log.fill > .check-log-scroll { max-height: none; }
+.check-log-scroll:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.check-log-note { position: sticky; left: 0; width: 100%; box-sizing: border-box; margin: 0; padding: 0 16px 4px; font-family: var(--font); font-size: 12px; color: var(--text-2); white-space: normal; }
+.check-log-earlier { position: sticky; left: 0; width: 100%; box-sizing: border-box; padding: 0 16px 4px 56px; }
+.check-log-earlier > button { font-family: var(--font); font-size: 12px; font-weight: 500; min-height: 24px; padding: 0; border: 0; background: transparent; color: var(--text-2); cursor: pointer; }
+.check-log-earlier > button:hover { color: var(--text); }
+.check-log-earlier > button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.check-log-line { display: flex; gap: 14px; width: max-content; min-width: 100%; box-sizing: border-box; padding: 0 16px; white-space: pre; }
+.check-log-n { flex: none; min-width: 26px; text-align: right; color: var(--text-2); user-select: none; }
+.check-log-text { flex: 1 1 auto; min-width: 0; }
+/* a line that reports a failure wraps inside the visible box, so it is never cut; "Wrap long lines" wraps the rest */
+.check-log-line.error, .check-log.wrap .check-log-line { width: 100%; white-space: pre-wrap; position: sticky; left: 0; }
+.check-log-line.error .check-log-text, .check-log.wrap .check-log-text { overflow-wrap: anywhere; }
+.check-log-line.error { background: var(--status-fill); color: var(--status-text); }
+.check-log-fade { position: absolute; top: 0; bottom: 0; width: 12px; pointer-events: none; background: linear-gradient(to right, transparent, var(--check-log-fill)); }
+
+/* group heads */
+.check-group { display: flex; align-items: center; gap: 6px; width: 100%; min-height: 24px; min-width: 0; box-sizing: border-box; border: 0; background: transparent; padding: 2px 0; font: inherit; font-size: 12px; font-weight: 600; color: var(--text-2); text-align: left; }
+button.check-group { cursor: pointer; }
+button.check-group:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.check-group > svg, .check-group-title { flex: none; }

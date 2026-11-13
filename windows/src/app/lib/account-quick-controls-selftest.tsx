@@ -3,100 +3,198 @@ import { createRoot } from "react-dom/client";
 import { AccountQuickControls } from "@/widgets/toolbar";
 import { type HostAccount } from "@/entities/git";
 import { gitch, type GitchBrowserLogin, type GitHubLoginCapability } from "@/entities/gitch";
-import { accounts } from "@/entities/hosting";
+import { type AccountStatus, accounts } from "@/entities/hosting";
 import { RepoStore } from "@/entities/repo";
-import { ipc } from "@/shared/api";
 import { t } from "@/shared/i18n";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-const until = async (check: () => boolean) => { for (let attempt = 0; attempt < 100; attempt++) { if (check()) return true; await sleep(20); } return false; };
+const until = async (check: () => boolean) => { for (let attempt = 0; attempt < 125; attempt++) { if (check()) return true; await sleep(20); } return false; };
+/**
+ * A step closes what it opened. A dialog, sheet, popover or menu left in the document takes the keys from every step
+ * after it (the app's shortcuts stand down while a `.modal-backdrop` exists), so a leftover fails the step that left it.
+ */
+export async function leavingNothingBehind(run: () => Promise<[boolean, string]>): Promise<[boolean, string]> {
+  const open = () => [...document.querySelectorAll(".modal-backdrop, .account-quick-popover, .menu")];
+  const before = new Set(open());
+  const result = await run();
+  await until(() => open().every((element) => before.has(element)));
+  const left = open().filter((element) => !before.has(element));
+  return left.length ? [false, `The step left open: ${left.map((element) => element.className).join(", ")}${result[0] ? "" : ` (${result[1]})`}`] : result;
+}
 
-/** 실제 계정·인증을 바꾸지 않고 우측 선택·Git 잠금 표시·명시적 승인 경계를 검사한다. */
-export async function accountQuickControlsSelfTest(): Promise<[boolean, string]> {
-  const original = { accounts: accounts.accounts, accountFor: accounts.accountFor, start: gitch.startBrowserLogin, status: gitch.browserLoginStatus, cancel: gitch.cancelBrowserLogin };
-  const host = document.createElement("div"); host.hidden = true; document.body.append(host);
+const popover = () => document.querySelector<HTMLElement>(".account-quick-popover");
+const inPopover = (label: string) => Array.from(popover()?.querySelectorAll<HTMLButtonElement>("button") ?? []).find((item) => item.textContent?.trim() === t(label));
+const menuItem = (label: string) => [...document.querySelectorAll<HTMLElement>(".menu .menu-item")].find((item) => item.querySelector(".label")?.textContent === label);
+const drawing = (root: ParentNode, status: string) => root.querySelector(`[data-status="${status}"] svg`)?.innerHTML ?? "";
+
+/** The account button and its popover, without touching real accounts or sign-in: photo and badge, the reason, Change…, the three state drawings. */
+export const accountQuickControlsSelfTest = () => leavingNothingBehind(accountButtonStep);
+
+async function accountButtonStep(): Promise<[boolean, string]> {
+  const original = { accounts: accounts.accounts, accountFor: accounts.accountFor, preferredID: accounts.preferredID, status: accounts.status, start: gitch.startBrowserLogin, state: gitch.browserLoginStatus, cancel: gitch.cancelBrowserLogin };
+  const host = document.createElement("div"); document.body.append(host);
   const root = createRoot(host), store = new RepoStore();
   const alice: HostAccount = { id: "quick-alice", provider: "github", server: "https://github.com", username: "alice", name: "Alice", avatarURL: null };
-  const bob: HostAccount = { ...alice, id: "quick-bob", username: "bob", name: "Bob" };
-  let active = alice, selections = 0, starts = 0;
+  const bob: HostAccount = { ...alice, id: "quick-bob", username: "bob-with-a-long-account-name-for-narrow-rows", name: "Bob" };
+  let active = alice, chosen: string | null = null, selections = 0, starts = 0, refreshes = 0;
+  let states: Record<string, AccountStatus> = {};
   let requested: { capability?: GitHubLoginCapability; login?: string } | null = null;
   const flow: GitchBrowserLogin = { schemaVersion: 1, session: "github-quickQA123", state: "pending", phase: "queued", deviceCode: null, verificationURL: "https://github.com/login/device", login: null, email: null, message: "Fake sign-in only" };
-  const button = (label: string) => Array.from(document.querySelectorAll<HTMLButtonElement>("button")).find((item) => item.textContent?.trim() === t(label));
+  const trigger = () => host.querySelector<HTMLButtonElement>(".account-quick-trigger");
   try {
-    accounts.accounts = [alice, bob]; accounts.accountFor = () => active;
+    accounts.accounts = [alice, bob]; accounts.accountFor = () => active; accounts.preferredID = () => chosen; accounts.status = (account) => states[account.id] ?? "signedIn";
     store.path = "/fixture/quick-accounts"; store.target = { provider: "github", host: "github.com", path: "owner/repository", remote: "origin" };
     store.me = { name: "Git Author", email: "author@example.invalid" };
     store.gitchStatus = { inRepo: true, lockedAccount: "locked-git-user", account: "locked-git-user", accountSource: "lock", pushAccount: "locked-git-user", ignored: false };
-    store.useAccount = (account) => { active = account; selections++; store.changed(); };
+    store.useAccount = (account) => { active = account; chosen = account.id; selections++; store.changed(); };
+    store.refreshGitch = async () => { refreshes++; };
     gitch.startBrowserLogin = async (capability, login) => { starts++; requested = { capability, login }; return flow; };
     gitch.browserLoginStatus = async () => flow; gitch.cancelBrowserLogin = async () => ({ ...flow, state: "cancelled" });
     root.render(createElement(AccountQuickControls, { store }));
-    if (!await until(() => !!host.querySelector("button"))) return [false, "Quick account control missing"];
-    if (!host.textContent?.includes("@alice") || !host.textContent.includes("locked-git-user")) return [false, "Current service and locked Git accounts are not visible"];
-    host.querySelector<HTMLButtonElement>("button")!.click();
-    if (!await until(() => !!document.querySelector(".account-quick-popover select"))) return [false, "Quick account popover did not open"];
-    const panel = document.querySelector(".account-quick-popover")!;
-    if (!panel.textContent?.includes("author@example.invalid") || !panel.textContent.includes(t("Locked"))) return [false, "Git author and lock metadata are missing"];
-    const select = panel.querySelector<HTMLSelectElement>("select")!; select.value = bob.id; select.dispatchEvent(new Event("change", { bubbles: true }));
-    if (!await until(() => host.textContent?.includes("@bob") === true)) return [false, "Repository account selection did not update the right control"];
-    if (store.gitchStatus.lockedAccount !== "locked-git-user" || store.me.name !== "Git Author" || starts !== 0) return [false, "Repository service selection changed Git identity or started sign-in"];
-    button("Connect GitHub project access")!.click();
-    if (!await until(() => !!button("Continue to approve project access"))) return [false, "Project permission reconnect did not open from the right control"];
-    if (starts !== 0 || !document.body.textContent?.includes(t("Approve access with the selected account: @{0}", "bob"))) return [false, "Project access did not wait for the selected account's explicit approval"];
-    button("Continue to approve project access")!.click();
-    if (!await until(() => starts === 1)) return [false, "Explicit project permission click did not start sign-in"];
+    if (!await until(() => !!trigger())) return [false, "The account button is missing"];
+
+    // the button is the 24px photo alone (an initial without one), with no badge while the account is signed in
+    const photo = trigger()!.querySelector<HTMLElement>(".avatar");
+    if (!photo || photo.textContent !== "A" || Math.round(photo.getBoundingClientRect().width) !== 24 || trigger()!.textContent !== "A") return [false, `The button must show only the 24px photo: ${trigger()!.textContent}`];
+    if (trigger()!.querySelector(".account-quick-badge")) return [false, "A signed-in repository account must not show the warning badge"];
+
+    trigger()!.click();
+    if (!await until(() => !!inPopover("Change…"))) return [false, "The account popover did not open"];
+    const text = () => popover()!.textContent ?? "";
+    if (!text().includes(t("This repository")) || !text().includes("@alice") || !text().includes(t("First account on {0}", "github.com"))) return [false, `This repository's account or the reason it was chosen is missing: ${text()}`];
+    if (!text().includes("Git Author") || !text().includes("author@example.invalid") || !text().includes(t("Locked by this repository's rules")) || !popover()!.querySelector('[data-status="locked"]')) return [false, "The Git identity or its lock is missing"];
+    if (!text().includes(t("Other accounts")) || !text().includes(`${t("Signed in")} · GitHub`) || !inPopover("Inbox") || !inPopover("Add account…") || !inPopover("Manage accounts…")) return [false, "The other accounts or the popover's actions are missing"];
+    if (text().includes(t("Remove account…")) || text().includes(t("Disconnect"))) return [false, "Accounts are removed only in Settings"];
+
+    // the Git account and its rules can be read again from where they are shown
+    inPopover("Change…")!.click();
+    if (!await until(() => !!menuItem(t("Refresh account status")))) return [false, "Refresh account status is missing from the Change… menu"];
+    menuItem(t("Refresh account status"))!.click();
+    if (!await until(() => refreshes === 1 && !menuItem(t("Refresh account status")))) return [false, "Refresh account status did not read the Git account again"];
+
+    // the board's measures: 360 wide, a 32px photo and a semibold name for this repository, 24px and regular for the others
+    const measure = (selector: string) => popover()!.querySelector<HTMLElement>(selector)!;
+    const own = measure(`[data-account="${alice.id}"]`), other = measure(`[data-account="${bob.id}"]`);
+    if (Math.round(popover()!.getBoundingClientRect().width) !== 360 || !popover()!.querySelector(".account-popover-nub")) return [false, "The popover is 360px wide with its arrow"];
+    if (Math.round(own.getBoundingClientRect().height) !== 52 || Math.round(own.querySelector(".avatar")!.getBoundingClientRect().width) !== 32 || getComputedStyle(own.querySelector(".account-popover-name")!).fontWeight !== "600") return [false, "This repository's row is 52px with a 32px photo and a semibold name"];
+    if (Math.round(other.querySelector(".avatar")!.getBoundingClientRect().width) !== 24 || getComputedStyle(other.querySelector(".account-popover-name")!).fontWeight === "600") return [false, "Another account's row has a 24px photo and a regular name"];
+    if (Math.round(measure(".account-popover-row.identity").getBoundingClientRect().height) !== 48 || Math.round(measure(".account-popover-action").getBoundingClientRect().height) !== 28) return [false, "The identity row is 48px and the actions are 28px"];
+
+    // nothing in the 360px popover is squeezed or clipped, even with a long account name
+    const panel = popover()!, box = panel.getBoundingClientRect();
+    if (panel.scrollWidth > panel.clientWidth) return [false, `The popover scrolls sideways: ${panel.scrollWidth} > ${panel.clientWidth}`];
+    for (const button of panel.querySelectorAll<HTMLElement>("button")) {
+      const bounds = button.getBoundingClientRect();
+      if (bounds.left < box.left || bounds.right > box.right || button.scrollWidth > button.clientWidth) return [false, `A popover button is clipped: ${button.textContent}`];
+    }
+    for (const line of panel.querySelectorAll<HTMLElement>(".account-popover-text")) if (line.getBoundingClientRect().width < 120) return [false, `A row's words are squeezed to ${Math.round(line.getBoundingClientRect().width)}px`];
+    for (const line of panel.querySelectorAll<HTMLElement>(".account-popover-title, .account-popover-caption")) if (line.scrollWidth > line.clientWidth) return [false, `A row's words are clipped: ${line.textContent}`];
+
+    // Change… picks another account for this repository, and the reason follows
+    inPopover("Change…")!.click();
+    if (!await until(() => !!menuItem(`@${bob.username} · github.com`))) return [false, "Change… did not list the accounts for this repository"];
+    menuItem(`@${bob.username} · github.com`)!.click();
+    if (!await until(() => selections === 1 && trigger()?.textContent === "B" && text().includes(t("Chosen for this repository")))) return [false, "Choosing another account did not update the button and the reason"];
+    if (store.gitchStatus.lockedAccount !== "locked-git-user" || store.me.name !== "Git Author" || starts !== 0) return [false, "Choosing the hosting account changed the Git identity or started a sign-in"];
+
+    // the badge is for this repository's own account only; each state has its own drawing
+    states = { [alice.id]: "needsYourApproval" }; store.changed();
+    if (!await until(() => !!popover()?.querySelector(`[data-account="${alice.id}"] [data-status="needsYourApproval"]`))) return [false, "Another account's state is not shown in the popover"];
+    if (trigger()!.querySelector(".account-quick-badge")) return [false, "Another account's state must not badge the button"];
+    states = { [alice.id]: "needsYourApproval", [bob.id]: "needsApproval" }; store.changed();
+    if (!await until(() => !!trigger()?.querySelector(".account-quick-badge"))) return [false, "The repository account's state did not badge the button"];
+    const drawings = [drawing(panel, "needsApproval"), drawing(panel, "needsYourApproval"), drawing(panel, "locked")];
+    if (drawings.some((value) => !value) || new Set(drawings).size !== 3) return [false, "Needs approval, Needs your approval and Locked must each have their own icon"];
+    if (!inPopover("Renew…") || !inPopover("Approve…") || !panel.querySelector(".account-popover-notice")) return [false, "A state must come with the one action that settles it, and the repository's own in the notice above it"];
+    for (const line of panel.querySelectorAll<HTMLElement>(".account-popover-text, .notice-block-text")) if (line.getBoundingClientRect().width < 120) return [false, `With states shown, a row's words are squeezed to ${Math.round(line.getBoundingClientRect().width)}px`];
+    if (panel.scrollWidth > panel.clientWidth) return [false, "With states shown the popover scrolls sideways"];
+
+    // Renew… opens the browser sign-in for that account and waits for the user
+    inPopover("Renew…")!.click();
+    const signIn = () => Array.from(document.querySelectorAll<HTMLButtonElement>(".github-sign-in-sheet button")).find((item) => item.textContent?.trim() === t("Sign in to GitHub in browser"));
+    if (!await until(() => !!signIn())) return [false, "Renew… did not open the sign-in sheet"];
+    if (starts !== 0 || !document.querySelector(".github-sign-in-sheet .shared-sheet-context")?.textContent?.includes(`@${bob.username}`)) return [false, "The sign-in sheet must name the account and wait for the user"];
+    signIn()!.click();
+    if (!await until(() => starts === 1)) return [false, "The explicit click did not start the sign-in"];
     const captured = requested as { capability?: GitHubLoginCapability; login?: string } | null;
-    return [captured?.capability === "projects" && captured.login === "bob" && selections === 1 && store.gitchStatus.lockedAccount === "locked-git-user", JSON.stringify({ selections, starts, requested })];
+    return [captured?.capability === "standard" && captured.login === bob.username && selections === 1, JSON.stringify({ selections, starts, requested })];
   } finally {
     root.unmount(); await sleep(25); host.remove();
-    accounts.accounts = original.accounts; accounts.accountFor = original.accountFor;
-    gitch.startBrowserLogin = original.start; gitch.browserLoginStatus = original.status; gitch.cancelBrowserLogin = original.cancel;
+    accounts.accounts = original.accounts; accounts.accountFor = original.accountFor; accounts.preferredID = original.preferredID; accounts.status = original.status;
+    gitch.startBrowserLogin = original.start; gitch.browserLoginStatus = original.state; gitch.cancelBrowserLogin = original.cancel;
   }
 }
 
-/** Initial accounts include Git identities and hosting connections without implying a failed sign-in. */
-export async function accountQuickControlsWithoutRepositorySelfTest(): Promise<[boolean, string]> {
-  const original = { accounts: accounts.accounts, run: ipc.run, gitAccounts: gitch.accounts };
-  const host = document.createElement("div"); host.hidden = true; document.body.append(host);
+/** Without a repository the popover lists the accounts and never badges the button; without an account it offers the one Add account sheet. */
+export const accountQuickControlsWithoutRepositorySelfTest = () => leavingNothingBehind(accountsWithoutRepositoryStep);
+
+async function accountsWithoutRepositoryStep(): Promise<[boolean, string]> {
+  const original = { accounts: accounts.accounts, status: accounts.status };
+  const host = document.createElement("div"); document.body.append(host);
   const root = createRoot(host);
   const alice: HostAccount = { id: "bare-alice", provider: "github", server: "https://github.com", username: "alice", name: "Alice", avatarURL: null };
   const carol: HostAccount = { id: "bare-carol", provider: "gitlab", server: "https://gitlab.example.com", username: "carol", name: "Carol", avatarURL: null };
-  const commands: string[][] = [];
-  const button = (label: string) => Array.from(document.querySelectorAll<HTMLButtonElement>(".account-quick-popover button")).find((item) => item.textContent?.trim() === t(label));
+  const trigger = () => host.querySelector<HTMLButtonElement>(".account-quick-trigger");
+  const opened: unknown[] = [];
+  const onSettings = (event: Event) => { opened.push((event as CustomEvent).detail); };
+  window.addEventListener("gitrochi-open-settings", onSettings);
+  // In the app the event really opens Settings (a listener here can't stop the app's own). Close it again, or its
+  // backdrop stays over every step after this one.
+  const settingsDialog = () => document.querySelector<HTMLElement>(".modal-backdrop > .modal");
+  const closeSettings = async () => {
+    await until(() => !!settingsDialog() || opened.length > 0);
+    for (let turn = 0; turn < 15 && !settingsDialog(); turn++) await sleep(20);
+    Array.from(settingsDialog()?.querySelectorAll<HTMLButtonElement>(".modal-footer button") ?? []).find((item) => item.textContent?.trim() === t("Close"))?.click();
+    return until(() => !settingsDialog());
+  };
   try {
-    accounts.accounts = [alice, carol];
-    gitch.accounts = async () => [{ id: "alice", hosts: "github.com", email: "alice@example.invalid" }, { id: "bob", hosts: "github.com", email: "bob@example.invalid" }, { id: "carol", hosts: "gitlab.example.com(port 2222)", email: "carol@example.invalid" }].map((value) => ({ ...value, rules: "", sshKey: true }));
-    // Folder-based Git rules may intentionally leave the global author unset.
-    ipc.run = async (_program, args) => {
-      commands.push(args);
-      if (args.includes("--global")) return { status: 1, stdout: "", stderr: "" };
-      throw new Error("Unexpected process in the account fixture");
-    };
+    accounts.accounts = [alice, carol]; accounts.status = (account) => (account.id === alice.id ? "expired" : "signedIn");
     const store = new RepoStore();
     root.render(createElement(AccountQuickControls, { store }));
-    if (!await until(() => host.textContent?.includes("@alice +2") === true && host.textContent.includes(t("Open repository…")))) return [false, `Multiple accounts or the repository action are missing: ${host.textContent}`];
-    host.querySelector<HTMLButtonElement>("button")!.click();
-    if (!await until(() => !!document.querySelector(".account-quick-popover .account-quick-list"))) return [false, "The popover does not list connected accounts"];
-    const panel = document.querySelector(".account-quick-popover")!;
-    const listed = Array.from(panel.querySelectorAll(".account-quick-list li > button > span:not(.avatar)")).map((item) => item.textContent);
-    if (listed.join("|") !== "@alice · github.com|@carol · gitlab.example.com" || !panel.textContent?.includes(t("Connected accounts"))) return [false, `Connected account list: ${listed.join("|")}`];
-    if (panel.querySelector("select") || !button("Add or remove connected accounts…")) return [false, "Without a remote there must be no repository picker, but the account manager must stay"];
-    if (!panel.textContent?.includes("bob") || !panel.textContent.includes(t("Git accounts")) || !panel.textContent.includes(t("Open a repository to see its Git identity.")) || panel.textContent.includes(t("Not configured"))) return [false, "Registered Git identities or the repository guidance are missing"];
-    if (!commands.length || !commands.every((args) => args.includes("config") && args.includes("--global"))) return [false, `Unexpected commands: ${JSON.stringify(commands)}`];
-    const choices = panel.querySelectorAll<HTMLButtonElement>(".account-quick-list li > button");
-    choices[1].click();
-    if (!await until(() => store.hostingHub.selectedAccountID === carol.id && store.destination === "account")) return [false, "Choosing another server did not open that account's workspace"];
-    if (store.path || store.me || store.gitchStatus) return [false, "Account selection changed repository Git identity"];
-    // a GitHub/GitLab remote without an account on its host still asks to connect one
+    if (!await until(() => trigger()?.textContent === "A")) return [false, `The button must show the first account's photo: ${host.textContent}`];
+    if (trigger()!.querySelector(".account-quick-badge")) return [false, "With no repository open there is no badge"];
+    trigger()!.click();
+    if (!await until(() => !!inPopover("Manage accounts…"))) return [false, "The popover did not open"];
+    const panel = popover()!;
+    const listed = Array.from(panel.querySelectorAll(".account-popover-row .account-popover-title")).map((item) => item.textContent);
+    if (listed.join("|") !== "@alice· github.com|@carol· gitlab.example.com") return [false, `Listed accounts: ${listed.join("|")}`];
+    if (!panel.textContent?.includes(t("Open a repository to see which account it uses.")) || panel.textContent.includes(t("This repository")) || inPopover("Change…")) return [false, "Without a repository there is no repository section, only the accounts"];
+    if (!panel.textContent.includes(`${t("Signed in")} · ${t("Self-hosted GitLab")}`) || !panel.querySelector(`[data-account="${alice.id}"] [data-status="expired"]`) || !inPopover("Sign in again…")) return [false, "Each account must show its state"];
+    inPopover("Manage accounts…")!.click();
+    if (!await until(() => opened.length === 1 && !popover())) return [false, "Manage accounts… did not ask for Settings"];
+    if (opened[0] !== "accounts") return [false, `Manage accounts… must open Settings › Accounts: ${String(opened[0])}`];
+    if (!await closeSettings()) return [false, "The Settings window Manage accounts… opened could not be closed"];
+    trigger()!.click();
+    if (!await until(() => !!inPopover("Inbox"))) return [false, "The popover did not reopen"];
+    inPopover("Inbox")!.click();
+    if (!await until(() => store.destination === "account" && !popover())) return [false, "Inbox did not open the Account page"];
+    if (store.path || store.me || store.gitchStatus) return [false, "The popover changed the repository's Git identity"];
+
+    // a GitHub/GitLab remote without an account on its host says so
     const remote = new RepoStore(); remote.path = "/fixture/bare"; remote.target = { provider: "github", host: "github.example.com", path: "team/repo", remote: "origin" };
     root.render(createElement(AccountQuickControls, { store: remote }));
-    if (!await until(() => host.textContent?.includes(t("Connect account")) === true)) return [false, "A remote without an account must still offer Connect account"];
+    if (!await until(() => !!trigger() && !trigger()!.querySelector(".avatar"))) return [false, "A remote without an account must show the signed-out button"];
+    trigger()!.click();
+    if (!await until(() => popover()?.textContent?.includes(t("Connect an account on {0} to use repository services.", "github.example.com")) === true)) return [false, "A remote without an account must say which server needs one"];
+    trigger()!.click();
+
+    // no account at all: the blocked state, whose one filled button opens the Add account sheet
     accounts.accounts = [];
     root.render(createElement(AccountQuickControls, { store: new RepoStore() }));
-    if (!await until(() => host.textContent?.includes(t("Git accounts")) === true)) return [false, "Configured Git identities must remain visible without a hosting connection"];
-    return [true, "All registered Git identities and hosting connections are visible; selecting another server opens its account workspace without changing Git identity; initial Git actions lead to a repository chooser"];
+    if (!await until(() => !!trigger() && !trigger()!.querySelector(".avatar") && !popover())) return [false, "Without an account the button must show the signed-out drawing"];
+    trigger()!.click();
+    if (!await until(() => !!popover()?.querySelector(".account-popover-empty .btn.primary"))) return [false, "Without an account the popover must offer Add account… as its one filled button"];
+    if (!popover()!.textContent?.includes(t("No account")) || popover()!.querySelectorAll(".btn.primary").length !== 1) return [false, "The blocked state must be one line, one caption and one filled action"];
+    popover()!.querySelector<HTMLButtonElement>(".account-popover-empty .btn.primary")!.click();
+    if (!await until(() => !!document.querySelector(".add-account-sheet") && !popover())) return [false, "Add account… did not open the Add account sheet"];
+    if (document.querySelector(".add-account-sheet .shared-sheet-title")?.textContent !== t("Add account")) return [false, "The Add account sheet has the wrong title"];
+    document.querySelector<HTMLButtonElement>(".add-account-sheet .shared-sheet-cancel")!.click();
+    if (!await until(() => !document.querySelector(".add-account-sheet"))) return [false, "The Add account sheet did not close"];
+    return [true, "The accounts are listed with their states and no badge; Manage accounts… and Inbox lead to Settings › Accounts and the Account page; without an account the one filled button opens the Add account sheet"];
   } finally {
-    root.unmount(); await sleep(25); host.remove(); document.querySelector(".account-quick-popover")?.remove();
-    accounts.accounts = original.accounts; ipc.run = original.run; gitch.accounts = original.gitAccounts;
+    window.removeEventListener("gitrochi-open-settings", onSettings);
+    await closeSettings();
+    root.unmount(); await sleep(25); host.remove(); popover()?.remove();
+    accounts.accounts = original.accounts; accounts.status = original.status;
   }
 }

@@ -36,6 +36,7 @@ import { navigationSelfTest } from "./lib/navigation-selftest";
 import { compactNavigationSelfTest } from "./lib/compact-navigation-selftest";
 import { inspectorLayoutSelfTest } from "./lib/inspector-layout-selftest";
 import { inspectorVisibilitySelfTest } from "./lib/inspector-visibility-selftest";
+import { terminalPanelSelfTest } from "./lib/terminal-panel-selftest";
 import { changesPerformanceSelfTest } from "./lib/changes-performance-selftest";
 import { localWorkbenchSelfTest } from "./lib/local-workbench-selftest";
 import { localPlannerSelfTest } from "./lib/local-planner-selftest";
@@ -49,6 +50,7 @@ import { scheduledRunsSelfTest } from "./lib/scheduled-runs-selftest";
 import { toolbarSelfTest } from "./lib/toolbar-selftest";
 import { browserLoginGuidanceSelfTest, browserProjectAccessSelfTest } from "./lib/browser-login-selftest";
 import { accountQuickControlsSelfTest, accountQuickControlsWithoutRepositorySelfTest } from "./lib/account-quick-controls-selftest";
+import { accountsSettingsSelfTest } from "./lib/accounts-settings-selftest";
 import { prConversationSelfTest } from "./lib/pr-conversation-selftest";
 import { listSectionsSelfTest } from "./lib/list-sections-selftest";
 import { externalAgentsSelfTest } from "./lib/external-agents-selftest";
@@ -57,6 +59,7 @@ import { graphColumnsSelfTest } from "./lib/graph-columns-selftest";
 import { selfTestProgress, selfTestRecorder } from "./lib/selftest-report";
 import { sharedStackSelfTest } from "./lib/shared-stack-selftest";
 import { noticeBlockSelfTest } from "./lib/notice-block-selftest";
+import { failedCheckSelfTest } from "./lib/failed-check-selftest";
 import { sharedSheetSelfTest } from "./lib/shared-sheet-selftest";
 import { sidebarTreeSelfTest } from "./lib/sidebar-tree-selftest";
 
@@ -257,8 +260,9 @@ export async function runSelfTest(): Promise<boolean> {
   await step("GitHub 로그인 대소문자 차이 → 같은 서버의 기존 계정 설정 재개", browserLoginResumesExistingIdentity);
   await step("로그인 코드 준비·클립보드 코드 표시·조회 오류 중단과 재시작", browserLoginGuidanceSelfTest);
   await step("프로젝트 추가 권한은 사용자 클릭·선택 계정만 연결하고 취소·다른 계정 차단", browserProjectAccessSelfTest);
-  await step("우측 계정 선택·Git 잠금 표시·명시적 프로젝트 추가 승인", accountQuickControlsSelfTest);
-  await step("저장소·원격 없이도 연결된 계정과 전역 Git 작성자 표시", accountQuickControlsWithoutRepositorySelfTest);
+  await step("Account button: the 24px photo, the badge for this repository's account only, the popover's reason, Change… and the three state icons", accountQuickControlsSelfTest);
+  await step("Account popover without a repository or an account: the accounts, Inbox, Manage accounts… and the Add account sheet", accountQuickControlsWithoutRepositorySelfTest);
+  await step("Settings › Accounts: hosting accounts and Git identities, the Add account sheet, Remove account… last and confirmed", accountsSettingsSelfTest);
   await step("Push 검토·PR 줄 리뷰·변경 AI 질문의 실제 React 화면", reviewWorkflowsSelfTest);
   await step("Pull requests page: list controls and the Hide list choice kept across tabs, one-line composer, Split reason, timeline, keyboard tabs and retained drafts", prConversationSelfTest);
   await step("PR·이슈 목록의 검색 줄·필터·페이지 이동", listSectionsSelfTest);
@@ -280,9 +284,11 @@ export async function runSelfTest(): Promise<boolean> {
   await step("저장소 화면에서 접히는 페이지 목록과 세 열 배치·전체 너비 페이지", compactNavigationSelfTest);
   await step("좁은 커밋 상세의 긴 브랜치·작성자·부모 커밋 배치", inspectorLayoutSelfTest);
   await step("Close and reopen the right panel with retained width and view state", inspectorVisibilitySelfTest);
+  await step("Terminal panel docked under the centre column: status marks by shape, narrow folding and terminals kept through layout changes", terminalPanelSelfTest);
   await step("변경 1000개의 빠른 진입·마지막 파일 선택·트리 접기", changesPerformanceSelfTest);
   await step("Shared pane heights remain stable after content grows and shrinks", sharedStackSelfTest);
   await step("Failure and notice blocks keep their one form, and a disabled button says why", noticeBlockSelfTest);
+  await step("The failed-check block, its log and the group heads keep their one form", failedCheckSelfTest);
   await step("Sheets share one layout, hang from the toolbar and leave the window undimmed", sharedSheetSelfTest);
   await step("비교·리베이스·Code 전체 화면", localWorkbenchSelfTest);
   await step("릴리스·프로젝트·조직 작업 화면", hostingHubSelfTest);
@@ -1039,7 +1045,7 @@ export async function runSelfTest(): Promise<boolean> {
 
   await step("설정 화면", async () => {
     window.dispatchEvent(new KeyboardEvent("keydown", { key: ",", ctrlKey: !isMacLike(), metaKey: isMacLike(), bubbles: true }));
-    const ok = await until(() => !!document.querySelector(".modal") && document.body.innerText.includes("사내 GitLab"), 3000);
+    const ok = await until(() => !!document.querySelector(".modal") && document.body.innerText.includes(t("Hosting accounts")), 3000);
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
     await sleep(200);
     return [ok, ""];

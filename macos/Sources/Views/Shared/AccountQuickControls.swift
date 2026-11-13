@@ -1,224 +1,131 @@
 import SwiftUI
 
-/// 서비스 인증 계정과 Git 작성자·잠금을 한 자리에서 확인하고 사용자 동작으로만 연결한다.
+/// The toolbar's last item (docs/design.md, App shell): the 24 pt profile photo of the account this repository uses,
+/// with a warning badge only while that account needs attention, opening the one account popover.
+/// (Windows: widgets/toolbar/ui/AccountQuickControls.tsx)
 struct AccountQuickControls: View {
     @Environment(RepoStore.self) private var store
+    @Environment(\.openSettings) private var openSettings
     @ViewState private var showing = false
     @ViewState private var sheet: AccountQuickSheet?
-    private var gitAccounts: [Gitch.Account] { store.gitchAccounts }
+    @ViewState private var hovered = false
     private let accounts = AccountStore.shared
 
     private var account: HostAccount? { store.hostingAccount }
-    /// Without a GitHub/GitLab remote there is no repository account; the control then shows the connected accounts
-    private var noTarget: Bool { store.target == nil }
     /// In the order Settings lists them: GitHub first, then GitLab servers
     private var connected: [HostAccount] { accounts.accounts(for: .github) + accounts.accounts(for: .gitlab) }
-    private var shown: HostAccount? { noTarget ? connected.first { $0.id == store.hostingHub.selectedAccountID } ?? connected.first : account }
-    private var accountCount: Int {
-        let hosting = connected.map { GitAccountPresentation.key(host: $0.host, username: $0.username) }
-        let git = gitAccounts.map { GitAccountPresentation.key(host: $0.hosts, username: $0.id) }
-        return Set(hosting + git).count
+    /// Without a repository account the photo is the account the Account page shows
+    private var shown: HostAccount? {
+        account ?? (store.target == nil ? connected.first { $0.id == store.hostingHub.selectedAccountID } ?? connected.first : nil)
     }
-    private var title: String {
-        guard let shown else { return noTarget && !gitAccounts.isEmpty ? String(localized: "Git accounts") + " (\(accountCount))" : String(localized: "Connect account") }
-        return "@" + shown.username + (accountCount > 1 ? " +\(accountCount - 1)" : "")
-    }
+    private var badge: Bool { AccountPresentation.toolbarBadge(account.map { accounts.status(for: $0) }) }
     private var candidates: [HostAccount] { store.target.map { accounts.candidates(for: $0) } ?? [] }
-    private var gitAccount: String { store.gitchStatus?.lockedAccount ?? store.gitchStatus?.account ?? store.me?.name ?? String(localized: "Not configured") }
+    private var summary: String {
+        let name = shown.map { "@\($0.username) · \($0.host)" } ?? String(localized: "No account")
+        return badge ? name + "\n" + String(localized: "This repository's account needs attention") : name
+    }
 
     var body: some View {
+        // a credential that becomes readable, or stops being so, redraws the badge
+        let _ = accounts.revision
         Button { showing.toggle() } label: {
-            HStack(spacing: 7) {
-                profile(shown, size: 26)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(verbatim: title)
-                        .font(.system(size: 12, weight: .semibold)).lineLimit(1).truncationMode(.middle)
-                    HStack(spacing: 3) {
-                        if store.gitchStatus?.lockedAccount != nil { DesignIconImage(icon: .lock, size: 8) }
-                        Group {
-                            if store.url == nil { Text("Open repository…") }
-                            else { Text("Git: \(gitAccount)") }
-                        }.font(.system(size: 10)).lineLimit(1).truncationMode(.middle)
-                    }.foregroundStyle(.secondary)
-                }
-                DesignIconImage(icon: .chevronDown, size: 9).foregroundStyle(.secondary)
-            }
-            .frame(maxWidth: 190, alignment: .leading)
-            .padding(.leading, 4).padding(.trailing, 8)
-            .frame(height: 30)
-            // the whole capsule answers a click, not only the avatar and the text
-            .contentShape(Rectangle())
+            AccountButtonPhoto(account: shown, badge: badge)
+                .frame(width: 36, height: 36)
+                .background(Capsule().fill(Color.primary.opacity(showing || hovered ? 0.06 : 0)))
+                .contentShape(Capsule())
         }
         .buttonStyle(.plain)
+        .onHover { hovered = $0 }
         .accessibilityLabel("Accounts")
-        .help("View and manage the repository account and Git identity")
+        .accessibilityValue(Text(verbatim: summary))
+        .help(summary)
         .popover(isPresented: $showing, arrowEdge: .bottom) { popover }
         .onChange(of: store.url) { _, _ in showing = false; sheet = nil }
-        .task(id: store.url) {
-            if store.url == nil { await store.loadGlobalIdentity() }
-        }
         .sheet(item: $sheet) { request in
             switch request {
-            case .connections:
-                SharedSheet(title: String(localized: "Connected accounts"), width: 710, cancelTitle: String(localized: "Done"),
-                            cancel: { sheet = nil }) {
-                    AccountsSettings()
-                }.frame(height: 650)
-            case .gitAccounts: GitchGuideSheet(repo: store)
+            case .add(let provider, let server):
+                AddAccountSheet(provider: provider, server: server, signInWithBrowser: { sheet = .login(nil, .standard) }, onConnected: adopt)
             case .login(let expected, let capability):
-                GitHubBrowserLoginSheet(expectedLogin: expected, capability: capability) { _, connected in
-                    if candidates.contains(where: { $0.id == connected.id }), account == nil || account?.id == connected.id {
-                        store.useAccount(connected)
-                    }
-                }
+                GitHubBrowserLoginSheet(expectedLogin: expected, capability: capability) { _, connected in adopt(connected) }
             }
         }
     }
 
     private var popover: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                if noTarget {
-                    connectedList
-                } else {
-                HStack(spacing: 11) {
-                    profile(account, size: 40)
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(account?.name ?? account?.username ?? String(localized: "Repository account")).font(.headline).lineLimit(2)
-                        if let account {
-                            Text("@\(account.username) · \(account.provider.title)").font(.callout)
-                            Text(verbatim: account.host).font(.caption).foregroundStyle(.secondary)
-                        } else {
-                            Text("Connect an account for repository services.").font(.callout).foregroundStyle(.secondary)
-                        }
-                    }.frame(maxWidth: .infinity, alignment: .leading)
-                }
-                if !candidates.isEmpty {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Account for this repository").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
-                        Picker("Account for this repository", selection: Binding(get: { account?.id ?? "" }, set: { id in
-                            if let next = candidates.first(where: { $0.id == id }) { store.useAccount(next) }
-                        })) {
-                            ForEach(candidates) { next in Text(verbatim: "@\(next.username) · \(next.host)").tag(next.id) }
-                        }.labelsHidden()
-                    }
-                } else if let target = store.target {
-                    Text("Connect an account on \(target.host) to use repository services.").font(.caption).foregroundStyle(.secondary)
-                }
-                if let account, accounts.credentialState(for: account) != .ready { SavedAccountAccessNotice(account: account) }
-                Divider()
-                connectedList
-                }
-                Divider()
-                if !gitAccounts.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Git accounts").font(.callout.weight(.semibold))
-                        ForEach(gitAccounts) { a in
-                            HStack(spacing: 9) {
-                                GitAccountAvatar(account: a)
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(verbatim: a.id).font(.callout.weight(.medium))
-                                    Text(verbatim: a.hosts).font(.caption).foregroundStyle(.secondary)
-                                }
-                                Spacer()
-                                if a.id == store.gitchStatus?.lockedAccount { Label("Locked", symbol: "lock.fill").font(.caption) }
-                            }
-                        }
-                        Button("Manage Git accounts…") { present(.gitAccounts) }
-                    }
-                    Divider()
-                }
-                if store.url == nil {
-                    Text("Open a repository to see its Git identity.").font(.caption).foregroundStyle(.secondary)
-                    Button("Open repository…") { showing = false; store.presentOpenPanel() }
-                } else {
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Text("Git identity").font(.callout.weight(.semibold))
-                        Spacer()
-                        if store.gitchStatus?.lockedAccount != nil { Label("Locked", symbol: "lock.fill").font(.caption).foregroundStyle(.secondary) }
-                    }
-                    accountLine("Git account", value: gitAccount)
-                    accountLine("Author", value: store.me?.name ?? String(localized: "Not configured"))
-                    accountLine("Email", value: store.me?.email ?? String(localized: "Not configured"))
-                    Text("Git author and SSH identity follow this repository's Git account rules.")
-                        .font(.caption).foregroundStyle(.secondary)
-                    Button("Refresh account status") { Task { await store.refreshGitch() } }
-                        .controlSize(.small).disabled(store.gitchChecking)
-                }
-                }
-                Divider()
-                if let account, account.provider == .github, account.host == "github.com" {
-                    Button("Renew browser connection…") { present(.login(account.username, .standard)) }
-                    Button("Connect GitHub project access") { present(.login(account.username, .projects)) }
-                }
-                Button("Connect another GitHub account…") { present(.login(nil, .standard)) }
-                Button("Add or remove connected accounts…") { present(.connections) }
-            }.padding(18).frame(width: 370, alignment: .leading)
-        }.frame(maxHeight: 600)
+            AccountPopover(repository: store.url == nil ? nil : AccountPopoverRepository(
+                               target: store.target, account: account, candidates: candidates,
+                               preferredID: accounts.preferredID(for: store.url?.path), identity: store.me,
+                               managed: store.gitchStatus != nil, locked: store.gitchStatus?.lockedAccount != nil,
+                               refreshing: store.gitchChecking),
+                           accounts: connected, status: { accounts.status(for: $0) }, busy: { accounts.isBusy($0) },
+                           failure: { accounts.accessError(for: $0) },
+                           actions: AccountPopoverActions(
+                               choose: { store.useAccount($0) },
+                               resolve: resolve,
+                               refreshIdentity: { Task { await store.refreshGitch() } },
+                               inbox: { showing = false; store.navigate(.account) },
+                               addAccount: { present(.add(store.target?.provider == .gitlab ? .gitlab : .github, nil)) },
+                               manageAccounts: { showing = false; SettingsRoute.shared.tab = .accounts; openSettings() }))
+        }
+        .frame(maxHeight: 600)
     }
 
-    /// Every connection stays visible, including accounts for another server.
-    private var connectedList: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Connected accounts").font(.headline)
-            if connected.isEmpty {
-                Text("Connect an account for repository services.").font(.callout).foregroundStyle(.secondary)
-            }
-            ForEach(connected) { a in
-                Button { choose(a) } label: { HStack(spacing: 9) {
-                    profile(a, size: 28)
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text(a.name ?? a.username).font(.callout.weight(.medium)).lineLimit(1)
-                        Text(verbatim: "@\(a.username) · \(a.host)").font(.caption).foregroundStyle(.secondary).lineLimit(1)
-                    }
-                    Spacer()
-                    if a.id == shown?.id { DesignIconImage(icon: .check).foregroundStyle(.secondary) }
-                }.contentShape(Rectangle()) }.buttonStyle(.plain)
-                if accounts.credentialState(for: a) != .ready { SavedAccountAccessNotice(account: a) }
-            }
-            Text("Open a repository with a GitHub or GitLab remote to choose the account it uses.")
-                .font(.caption).foregroundStyle(.secondary)
+    /// A new or renewed account becomes this repository's when the repository has none, or it is the one in use
+    private func adopt(_ connected: HostAccount) {
+        if candidates.contains(where: { $0.id == connected.id }), account == nil || account?.id == connected.id {
+            store.useAccount(connected)
         }
     }
 
-    private func choose(_ value: HostAccount) {
-        if store.url != nil, candidates.contains(where: { $0.id == value.id }) {
-            store.useAccount(value)
+    /// The system's approval and a second read happen in place, and the popover says what went wrong; github.com
+    /// accounts renew in the browser; a GitLab server takes a new token in the Add account sheet
+    private func resolve(_ account: HostAccount, _ status: AccountStatus) {
+        if status == .needsYourApproval || status == .unreadable {
+            Task { await accounts.restoreAccess(for: account) }
+        } else if account.provider == .github, account.host == "github.com" {
+            present(.login(account.username, .standard))
         } else {
-            store.hostingHub.selectedAccountID = value.id
-            store.navigate(.account)
+            present(.add(account.provider, account.server))
         }
-        showing = false
     }
 
     private func present(_ request: AccountQuickSheet) { showing = false; sheet = request }
+}
 
-    private func accountLine(_ key: LocalizedStringKey, value: String) -> some View {
-        HStack(alignment: .top, spacing: 12) {
-            Text(key).font(.caption).foregroundStyle(.secondary).frame(width: 78, alignment: .leading)
-            Text(verbatim: value).font(.callout).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading)
+/// The button's picture: the profile photo, or the signed-out drawing, with the warning badge at its lower right
+struct AccountButtonPhoto: View {
+    let account: HostAccount?
+    var badge = false
+
+    var body: some View {
+        Group {
+            if let account {
+                AccountAvatar(account: account, size: 24)
+            } else {
+                DesignIconImage(icon: .account, size: 22).foregroundStyle(HostedList.caption).frame(width: 24, height: 24)
+            }
         }
-    }
-
-    private func profile(_ value: HostAccount?, size: CGFloat) -> some View {
-        AsyncImage(url: value?.avatarURL.flatMap(URL.init(string:))) { image in
-            image.resizable().scaledToFill()
-        } placeholder: {
-            if let value { Avatar(name: value.name ?? value.username, email: value.username, size: size) }
-            else { DesignSymbols.labelImage("person.crop.circle").resizable().scaledToFit().foregroundStyle(.secondary) }
-        }.frame(width: size, height: size).clipShape(Circle())
+        .overlay(alignment: .bottomTrailing) {
+            if badge {
+                Circle().fill(StudioStyle.Tone.waiting.text).frame(width: 12, height: 12)
+                    // the board's mark: a 1.3 pt stroke with its dot, not a letter
+                    .overlay(VStack(spacing: 1.2) { Capsule().frame(width: 1.3, height: 4); Circle().frame(width: 1.3, height: 1.3) }
+                        .foregroundStyle(Color(nsColor: .controlBackgroundColor)))
+                    .overlay(Circle().stroke(Color(nsColor: .controlBackgroundColor), lineWidth: 1.5).padding(-0.75))
+                    .offset(x: 3, y: 3)
+                    .accessibilityHidden(true)
+            }
+        }
     }
 }
 
 private enum AccountQuickSheet: Identifiable {
-    case connections
-    case gitAccounts
+    case add(Provider, String?)
     case login(String?, Gitch.GitHubLoginCapability)
     var id: String {
         switch self {
-        case .connections: "connections"
-        case .gitAccounts: "gitAccounts"
+        case .add(let provider, let server): "add:\(provider.rawValue):\(server ?? "")"
         case .login(let expected, let capability): "login:\(expected ?? "new"):\(capability.rawValue)"
         }
     }
