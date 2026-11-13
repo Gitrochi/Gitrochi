@@ -10,7 +10,7 @@ export { createWorkContext, sameWorkContext, workContextPath, workFingerprint, p
 export { workPrompts, renderWorkPrompt, workPromptTemplate, type WorkPrompt } from "./work-prompts";
 export { screenCodeMap, screenCodeFor, type ScreenCodeEntry } from "./screen-code-map";
 export { flowEvidence, safeWorkPath, decodeAgentAssignments, decodeValidationBindings, taskBoundaryOverlaps, handoffReport, type ValidationBinding, type FlowEvidence, type AgentAssignment } from "./work-validation";
-export { teamHubEndpoint, teamRepoKey, decodeTeamSnapshot, readTeamSnapshot, type TeamSnapshot, type TeamOverlap, type TeamPresence, decodePresenceAnswer, publishTeamPresence, withdrawTeamPresence, type TeamPresenceAnswer } from "./team-hub";
+export { teamHubEndpoint, teamRepoKey, decodeTeamSnapshot, readTeamSnapshot, type TeamSnapshot, type TeamOverlap, type TeamPresence } from "./team-hub";
 export { sourceLanguage, sourceTokens, sourceMatches, sourceLineCount, sourceMatchLimit, syntaxCharacterLimit, syntaxTokenLimit, wrappingLineLimit, type SourceMatch, type SourceToken } from "./source-reader";
 export { applyEditorText, editorLineRange, editorText, indentEditorText } from "./source-editing";
 export { checkLogLines, failedTests, firstError, firstLogLine, isLogError, type LogLine, logLines, numberedLog, testNames } from "./job-log";

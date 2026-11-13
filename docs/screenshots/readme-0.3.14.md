@@ -2,8 +2,7 @@
 
 Captured on 2026-11-02 from the production Windows React components at commit `6193d881`, rendered by Vite in a browser. These are browser renders of the Windows interface, not captures of the native macOS app or a running Tauri window.
 
-- `../images/workspace-light.jpg` and `../images/workspace-dark.jpg`: `RepoPage`, the expanded `NavigationSidebar`, the repository graph using `layoutGraph`, and the commit inspector. The branch sidebar is collapsed to its icon rail. The navigation is scrolled to include Ledger.
-- `../images/readme-ledger-light.jpg` and `../images/readme-ledger-dark.jpg`: the same window shell and the production `LedgerWorkspace` Board with the built-in `DemoLedgerBackend`. A session is selected so its questions appear alongside the board.
+- `../images/workspace-light.jpg` and `../images/workspace-dark.jpg`: `RepoPage`, the expanded `NavigationSidebar`, the repository graph using `layoutGraph`, and the commit inspector. The branch sidebar is collapsed to its icon rail. The navigation is scrolled to the end of the page list.
 
 All captures use the normal 1280 × 720 browser viewport and the application's light/dark theme setting, without altered styles or image retouching. Files are JPEG captures under 2 MB each.
 

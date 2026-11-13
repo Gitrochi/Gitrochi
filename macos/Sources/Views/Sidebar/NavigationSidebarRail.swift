@@ -17,7 +17,7 @@ struct NavigationSidebarRail: View {
                     separator
                     rows([.pullRequests, .issues, .actions, .releases, .projects, .account])
                     separator
-                    rows([.flows, .ledger].filter(\.isShown))
+                    rows([.flows].filter(\.isShown))
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
@@ -47,8 +47,6 @@ struct NavigationSidebarRail: View {
     private func rows(_ pages: [WorkspaceDestination]) -> some View {
         ForEach(pages) { page in
             let active = store.destination == page
-            // only Ledger counts something (docs/design.md › App shell, Sidebar)
-            let count = page == .ledger ? LedgerStore.shared.attentionTotal : 0
             let blocked = store.url == nil && page.needsRepository
             let title = page.title(gitlab: store.target?.provider == .gitlab)
             Button { store.navigate(page) } label: {
@@ -57,9 +55,6 @@ struct NavigationSidebarRail: View {
                     .foregroundStyle(blocked ? StudioStyle.Rail.blocked : StudioStyle.Rail.icon)
                     .background(active ? StudioStyle.Rail.selected : hovered == page ? StudioStyle.Rail.hover : Color.clear,
                                 in: RoundedRectangle(cornerRadius: 8))
-                    .overlay(alignment: .topTrailing) {
-                        if count > 0 { badge(count).offset(x: 5, y: -3) }
-                    }
                     .contentShape(RoundedRectangle(cornerRadius: 8))
             }
             .buttonStyle(.plain)
@@ -69,16 +64,5 @@ struct NavigationSidebarRail: View {
             .accessibilityValue(active ? String(localized: "Current page") : "")
             .accessibilityIdentifier("navigation-rail-" + page.rawValue)
         }
-    }
-
-    private func badge(_ count: Int) -> some View {
-        Text(count > 99 ? "99+" : String(count))
-            .font(.system(size: 11, weight: .semibold)).monospacedDigit()
-            .foregroundStyle(StudioStyle.Rail.badgeText)
-            .padding(.horizontal, 5)
-            .frame(minWidth: 18, minHeight: 18)
-            .background(StudioStyle.Rail.badge, in: Capsule())
-            .overlay(Capsule().strokeBorder(StudioStyle.Rail.separator))
-            .fixedSize()
     }
 }

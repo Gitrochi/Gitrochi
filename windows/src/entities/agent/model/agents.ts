@@ -1,4 +1,3 @@
-import type { LedgerTracking } from "@/entities/ledger";
 import type { TerminalSession } from "@/entities/terminal";
 import { ipc } from "@/shared/api";
 import { env, isWindows, joinPath, samePath, settings, slash, toWslPath, wslDistroOf } from "@/shared/config";
@@ -8,7 +7,6 @@ import { tempFile, type ToolId, tools, withWslEnv, wslArgs } from "@/shared/plat
 import { agentArguments } from "../lib/arguments";
 import { containingRoot, type ExternalAgent, resolveExternalAgents } from "../lib/external-agents";
 import { agentHooksJson } from "../lib/hooks";
-import { launchArguments, launchEnv } from "../lib/launch";
 
 /** 세션 상태: Claude Code 는 훅 이벤트로 자세히, 다른 에이전트는 실행 중/종료만 */
 export type AgentStatus = "starting" | "working" | "permission" | "waiting" | "running" | "ended";
@@ -100,11 +98,6 @@ export interface TerminalAgent {
   host: AgentHost;
 }
 
-/** Track agents I start, read without loading the Ledger (LedgerTracking.on reads the same setting) */
-const trackingChosen = () => settings.get<boolean>("ledgerTrackAgents", false);
-/** The Ledger's Track agents I start, imported only while its switch is on, so with it off nothing of the Ledger runs here */
-const ledgerTracking = (): Promise<LedgerTracking | null> => (trackingChosen() ? import("@/entities/ledger").then((m) => m.ledgerTracking) : Promise.resolve(null));
-
 /**
  * Gitrochi 가 띄운 에이전트(Claude Code·Codex·Gemini CLI) 세션 추적. (맥 버전 AgentCenter)
  *
@@ -117,9 +110,6 @@ class AgentCenter extends Observable {
   private hooksFile = "";
   private terminals = new Map<string, { term: TerminalSession; host: AgentHost }>();
   private timer: ReturnType<typeof setInterval> | null = null;
-  /** Whether the hooks files hold the ledger CLI's entries (Track agents I start) */
-  private ledgerHooks = false;
-  private unsubscribeLedger: (() => void) | null = null;
 
   async init() {
     this.dir = joinPath(env.dataDir, "agents");
@@ -129,16 +119,6 @@ class AgentCenter extends Observable {
     for (const name of await ipc.list(this.dir)) if (/\.(meta|state|tmp|mcp\.json)$/.test(name)) await ipc.remove(joinPath(this.dir, name));
     await this.installHooks();
     this.timer = setInterval(() => void this.load(), 2000);
-    // the Ledger's Track agents I start adds its entries to the hooks files, and takes them out again; only the switch
-    // changes the files, a launch error or the tools switch leaves them as they are
-    let on = trackingChosen();
-    this.unsubscribeLedger ??= settings.subscribe(() => {
-      if (trackingChosen() === on) return;
-      on = trackingChosen();
-      void this.installHooks();
-    });
-    // the heartbeat follows the switch from here on (LedgerTracking.setChosen)
-    if (on) void (await ledgerTracking())?.syncHeartbeat();
   }
 
   /** WSL 안의 Claude Code 가 읽는 훅 설정(윈도 실행 파일을 /mnt/c/… 경로로 부른다) */
@@ -149,16 +129,11 @@ class AgentCenter extends Observable {
   private async installHooks() {
     // Windows 경로도 / 로 쓰면 cmd·Git Bash 어느 셸로 실행돼도 그대로 통한다
     const exe = isWindows() ? slash(env.exe) : env.exe;
-    // the ledger CLI's entries only while Track agents I start is on; without them the files are as they always were
-    const ledger = (await (await ledgerTracking())?.hooksCli()) ?? null;
-    const ledgerExe = ledger && (isWindows() ? slash(ledger) : ledger);
-    await ipc.writeText(this.hooksFile, agentHooksJson((e) => `"${exe}" --agent-hook ${e}`, 5, ledgerExe ? (e) => `"${ledgerExe}" hook ${e}` : null));
+    await ipc.writeText(this.hooksFile, agentHooksJson((e) => `"${exe}" --agent-hook ${e}`, 5));
     if (isWindows()) {
       const wslExe = toWslPath(env.exe).replace(/'/g, "'\\''");
-      const wslLedger = ledger && toWslPath(ledger).replace(/'/g, "'\\''");
-      await ipc.writeText(this.hooksWslFile, agentHooksJson((e) => `'${wslExe}' --agent-hook ${e}`, 10, wslLedger ? (e) => `'${wslLedger}' hook ${e}` : null));
+      await ipc.writeText(this.hooksWslFile, agentHooksJson((e) => `'${wslExe}' --agent-hook ${e}`, 10));
     }
-    this.ledgerHooks = !!ledger;
   }
 
   sessionsIn(path: string) {
@@ -252,11 +227,8 @@ class AgentCenter extends Observable {
     const text = task.trim();
     const meta = { id, kind, path, task: text, mode: mode ?? "", created: Date.now() / 1000 };
     await ipc.writeText(joinPath(this.dir, id + ".meta"), JSON.stringify(meta));
-    // Track agents I start (the Ledger): a ledger session first, its ID for the agent's hooks and tools
-    const ledger = kind === "claude" ? ((await (await ledgerTracking())?.launch({ agentId: id, folder: path, claude: cmd, dir: this.dir })) ?? null) : null;
-    if (ledger && !this.ledgerHooks) await this.installHooks();
-    const args = launchArguments(agentArguments(kind, inWsl ? toWslPath(this.hooksWslFile) : this.hooksFile, text, mode), ledger?.mcpConfig ?? null);
-    const vars = launchEnv(id, ledger?.sessionId ?? null);
+    const args = agentArguments(kind, inWsl ? toWslPath(this.hooksWslFile) : this.hooksFile, text, mode);
+    const vars = { GITROCHI_AGENT_ID: id };
     const title = info.title.split(" (")[0];
     let term: TerminalSession;
     if (cmd.kind === "native") {
@@ -314,8 +286,6 @@ class AgentCenter extends Observable {
 
   dispose() {
     if (this.timer) clearInterval(this.timer);
-    this.unsubscribeLedger?.();
-    this.unsubscribeLedger = null;
   }
 
   /** Agents running in other apps (Windows Terminal, VS Code …), from the last scan (macOS: AgentCenter.external) */

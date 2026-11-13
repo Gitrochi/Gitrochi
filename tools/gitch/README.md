@@ -150,7 +150,20 @@ gitch module audit --strict # npm 선언에 없는 정적 import가 있으면 �
 gitch report --today       # 오늘 누가(사람/claude/codex) 어디에 무엇을 커밋/push 했나
 ```
 
-`gitch help` 에 전체 명령이 있다. `--json` 은 status / ck / preflight / scan / doctor / list / audit / overlap / move / module audit / report / graph / logo 에 있다.
+`gitch help` 는 자주 쓰는 명령을 묶음별로 한 줄씩 보여 준다(나머지는 이름만). `--json` 은 status / ck / preflight / scan / doctor / list / audit / overlap / move / module audit / report / graph / logo 에 있다.
+
+```bash
+gitch help                 # 묶음별 개요
+gitch help push            # 명령 하나: 사용법 · 옵션 · 별칭 · 저장소/네트워크에 주는 영향 · 예시 (별칭도 된다)
+gitch amend --help         # 같은 도움말 — 명령은 실행하지 않는다 (-h 도 같다)
+gitch help graph diff      # 하위 명령의 도움말 (graph · module · flow)
+gitch help --all           # 모든 명령의 도움말을 한 번에
+```
+
+- `--help` · `-h` 는 어느 명령(별칭 포함)의 어느 자리에 있어도 그 명령을 **실행하지 않고** 도움말만 보여 주며 종료 코드는 0 이다: 저장소 · 설정 · 원격을 바꾸지 않고 네트워크도 쓰지 않는다. `gitch flow` · `gitch test` · `gitch ci` 는 흐름 엔진의 도움말까지 보여 준다. `--` 뒤의 인자와 옵션의 값은 플래그로 보지 않는다 — `gitch c -m "--help"` 는 그 메시지로 커밋한다.
+- 모르는 명령과 모르는 도움말 주제는 전체 도움말 대신 오류, 비슷한 이름(`gitch pusj` → `비슷한 명령: push`), `gitch help` 안내만 보여 주고 종료 코드 1 로 끝난다.
+- 확인이 필요한 명령(`unlock` · `ignore` · `fix` · `abort` · `rescue --restore` · `prune` · `publish` · `p --force` · `config` · `org` · `import` · `sign` · `ssh prune` · `uninstall`)은 `--yes` 와 `-y` 를 어느 자리에서나 받는다: `gitch ssh --yes prune`, `gitch config set <키> <값> -y`.
+- 인자를 받지 않는 명령(`pl` · `up` · `undo` · `continue` · `sync` · `o` · `auto` · `install` · `self-update`)과 받는 인자가 정해진 명령(`l` · `b` · `use` · `fix` · `remove` · `export` · `unlock` · `abort` · `uninstall` · `sign` · `ssh`)은 남는 인자를 무시하지 않고 사용법 오류(종료 코드 1)로 알린다. 기계 출력용 `--json` · `--format json` 은 남는 인자로 세지 않는다.
 
 종료코드: 0 정상, 1 문제/실패, 2 사용자 확인 필요(`--yes`), 3 커밋할 것 없음, 4 올릴 파일을 고르지 않음(비대화형).
 
@@ -420,6 +433,8 @@ source <(gitch completion zsh)   # Zsh
 
 Fish는 `gitch completion fish | source`, PowerShell은 `gitch completion powershell | Out-String | Invoke-Expression`으로 현재 세션에 적용한다. 계속 쓰려면 생성한 스크립트를 각 셸의 설정에서 불러온다. 이 명령은 설정 파일을 직접 바꾸지 않는다.
 
+명령 이름은 도움말과 같은 표에서 나온다. `gitch help <TAB>` 은 도움말 주제를, `gitch ci <TAB>` 과 `gitch flow <TAB>` 은 하위 명령(`flow test` · `flow ci` · `flow design` 포함)을, 옵션 자리에서는 그 명령의 옵션(`p` · `rescue` · `prune` · `publish` · `abort` · `unlock` 등)과 모든 명령의 `--help` 를 완성한다.
+
 ```bash
 gitch g languages --json        # 73종 각각의 실제 분석 깊이
 gitch version --json            # 앱과 맞춘 제품 버전과 JSON/그래프 API 버전
@@ -505,6 +520,7 @@ gitch test [suite|tag …] [--affected] [--watch]   # an ad-hoc flow (suites onl
 gitch flow gate on [--flow F]    # check that flow before a push (no rerun when a signed record passed for the same commit). Off: gate off
 gitch flow export github|gitlab|jenkins   # propose CI files that run the same flow
 gitch ci status|logs|report      # this repository's remote CI
+gitch flow run --help            # that subcommand's usage; nothing is planned, run or sent (also gitch help flow run)
 ```
 
 - `gitch preflight` adds a `FLOW=OK|WARN|STOP` line only in repositories where the gate is on (the existing `PREFLIGHT=` line stays as it is). The pre-push hook runs the gate; a person can skip it with `GITSW_SKIP=flow` (recorded).
@@ -615,10 +631,13 @@ AI 의 push 마다 손가락 승인을 받고 싶다면 하드웨어 키(Secreti
 ```bash
 tools/gitch/tests/run.sh             # 전체 (실제 ~/.gitconfig, ~/.ssh, ~/.claude 는 건드리지 않음: 임시 HOME + 가짜 ssh/gh/curl/원격)
 tools/gitch/tests/run.sh -k guard    # 이름에 guard 가 들어간 테스트만
+tools/gitch/tests/run.sh --shard 1/4 # 넷으로 나눈 것 중 첫째 (나눠서 동시에 돌릴 때)
 shellcheck -s bash -S warning tools/gitch/gitch tools/gitch/install.sh
 tools/gitch-swift-index/tests/run.sh # Xcode 인덱스 도우미: 예제를 swift build 해서 쌍 · gitch graph files 확인 (30초쯤)
 (cd tools/gitch-flow && cargo build) # the flow tests (test_flow.sh, the installer's engine tests) need a built engine (skipped without one)
 ```
+
+명령을 더하거나 옵션을 바꾸면 `gitch` 의 `help_topic` 표에 그 명령의 주제(사용법 · 설명 · 옵션 · 별칭 · 영향 · 예시)를 같이 고친다. 개요 · `gitch help <명령>` · `--help` · 모르는 명령 안내 · 자동완성의 명령 이름이 모두 이 표를 읽고, `tests/test_help.sh` 가 명령 분기(dispatcher)의 모든 이름에 주제가 있는지와 `--help` 가 아무것도 실행하지 않는지를 이름마다 확인한다.
 
 GitHub Actions 「macOS」의 gitch 테스트가 `tools/gitch/**` 를 바꾼 PR 마다 macOS 기본 bash 3.2 로, 「Windows」가 Git Bash 로 돈다(Windows 전용은 `tests/test_windows.sh`, 가짜 PowerShell 로 실제 사용자 PATH 는 건드리지 않음).
 

@@ -2,4 +2,3 @@
 export { SettingsDialog, type SettingsTab } from "./ui/SettingsDialog";
 export { GitchAccountSetup } from "./ui/GitchAccountSetup";
 export { AccountsSettings } from "./ui/AccountsSettings";
-export { HubSharingSection } from "./ui/LedgerSettings";

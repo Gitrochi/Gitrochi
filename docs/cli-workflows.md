@@ -91,6 +91,8 @@ The existing repository reader and MCP integration remain available through the 
 
 ```sh
 gitch help
+gitch help work
+gitch help --all
 gitch workspace --help
 gitch work --help
 gitch issue --help
@@ -100,7 +102,9 @@ gitch completion fish
 gitch completion powershell
 ```
 
-Completion commands print a script; choose the one for your shell and follow its instructions. Read-only inspection supports JSON output for automation. An error or a partial failure returns a nonzero exit code, so inspect it before proceeding to a later action.
+`gitch help` prints a grouped overview. `gitch help <command>` and `gitch <command> --help` (or `-h`) print the same text for one command or alias: usage, options, aliases, what it changes, whether it uses the network, and examples. Asking for help never runs the command, wherever the flag is; an unknown command prints the closest names instead of the whole help.
+
+Completion commands print a script; choose the one for your shell and follow its instructions. `gitch help <TAB>` completes command names. Read-only inspection supports JSON output for automation. An error or a partial failure returns a nonzero exit code, so inspect it before proceeding to a later action.
 
 `gitch schema workspace`, `gitch schema work`, `gitch schema hosting`, and `gitch schema worktrees` describe the version 1 JSON contracts. Errors use the existing error schema on standard error; aggregate actions include each repository's output and exit code in their result.
 

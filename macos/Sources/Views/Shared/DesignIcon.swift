@@ -16,7 +16,6 @@ enum DesignIcon: String {
     case releases
     case projects
     case flows
-    case ledger
     case settings
     case chevronDown
     case chevronUp
@@ -70,7 +69,6 @@ enum DesignIcon: String {
         case .releases: return #"<path d="M2.5 2.5h5.2l6 6-5.2 5.2-6-6z"/><circle cx="5.4" cy="5.4" r="0.8"/>"#
         case .projects: return #"<rect x="2" y="3" width="12" height="10" rx="1.5"/><path d="M6 3v10M10 3v10"/>"#
         case .flows: return #"<rect x="2" y="2.5" width="4.5" height="3.5" rx="1"/><rect x="9.5" y="10" width="4.5" height="3.5" rx="1"/><path d="M4.2 6v4.2a1.5 1.5 0 0 0 1.5 1.5h3.8"/>"#
-        case .ledger: return #"<path d="M2.5 4.4l1.3 1.3L6.2 3.2M2.5 10.4l1.3 1.3 2.4-2.5M8.5 4.6h5M8.5 10.6h5"/>"#
         case .settings: return #"<circle cx="8" cy="8" r="2.2"/><path d="M8 1.8v1.6M8 12.6v1.6M1.8 8h1.6M12.6 8h1.6M3.6 3.6l1.1 1.1M11.3 11.3l1.1 1.1M3.6 12.4l1.1-1.1M11.3 4.7l1.1-1.1"/>"#
         case .chevronDown: return #"<path d="M4 6l4 4 4-4"/>"#
         case .chevronUp: return #"<path d="M4 10l4-4 4 4"/>"#

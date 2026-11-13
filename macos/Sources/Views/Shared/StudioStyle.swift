@@ -64,8 +64,6 @@ enum StudioStyle {
         static let blocked = dynamic(light: 0xc7c7cc, dark: 0x58585d)
         static let settings = dynamic(light: 0x3a3a3c, dark: 0xd1d1d6)
         static let separator = dynamic(light: 0xdcdce0, dark: 0x3a3a3e)
-        static let badge = dynamic(light: 0xffffff, dark: 0x2c2c2e)
-        static let badgeText = dynamic(light: 0x3a3a3c, dark: 0xd1d1d6)
     }
 
     private enum Tones {

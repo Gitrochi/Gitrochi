@@ -33,14 +33,6 @@ import { projectDependenciesSelfTest } from "./lib/project-dependencies-selftest
 import { workValidationSelfTest } from "./lib/work-validation-selftest";
 import { environmentPathsSelfTest } from "./lib/environment-paths-selftest";
 import { navigationSelfTest } from "./lib/navigation-selftest";
-import { ledgerSelfTest } from "./lib/ledger-selftest";
-import { ledgerBrowserSelfTest } from "./lib/ledger-browser-selftest";
-import { ledgerConnectionsSelfTest } from "./lib/ledger-connections-selftest";
-import { ledgerChatGPTDraftSelfTest } from "./lib/ledger-chatgpt-draft-selftest";
-import { ledgerParitySelfTest } from "./lib/ledger-parity-selftest";
-import { ledgerRequestSelfTest } from "./lib/ledger-request-selftest";
-import { ledgerFlowSelfTest } from "./lib/ledger-flow-selftest";
-import { ledgerHubSelfTest } from "./lib/ledger-hub-selftest";
 import { compactNavigationSelfTest } from "./lib/compact-navigation-selftest";
 import { inspectorLayoutSelfTest } from "./lib/inspector-layout-selftest";
 import { inspectorVisibilitySelfTest } from "./lib/inspector-visibility-selftest";
@@ -290,14 +282,6 @@ export async function runSelfTest(): Promise<boolean> {
 
   await step("왼쪽 페이지 목록·빈 저장소·GitLab 이름·아이콘 레일", navigationSelfTest);
   await step("저장소 화면에서 접히는 페이지 목록과 세 열 배치·전체 너비 페이지", compactNavigationSelfTest);
-  await step("Ledger page on the demo backend: preview switch, Inbox triage, prompts, Board, Graph, inspector, search, narrow sheet and onboarding", ledgerSelfTest);
-  await step("Browser host setup confirmation, revocation and editable accepted-Tab draft provenance", ledgerBrowserSelfTest);
-  await step("Ledger connections: Claude Code, Codex and the browser extension with read-only status, repair, removal and the toolbar entry", ledgerConnectionsSelfTest);
-  await step("ChatGPT copied drafts: exact local text, explicit question preview and save, ignored source targets and closed destinations", ledgerChatGPTDraftSelfTest);
-  await step("Ledger notebook, work reports and document tracker", ledgerParitySelfTest);
-  await step("Ledger linked requests: state and checks pills, merged suggestion opening the version picker, nothing without a host", ledgerRequestSelfTest);
-  await step("Ledger Checks row: latest Flow result per flow for the branch head, Open in Flows, read-only", ledgerFlowSelfTest);
-  await step("Ledger team hub sharing: off by default, what is shared, unchanged bodies, overlap pill and withdrawal", ledgerHubSelfTest);
   await step("좁은 커밋 상세의 긴 브랜치·작성자·부모 커밋 배치", inspectorLayoutSelfTest);
   await step("Close and reopen the right panel with retained width and view state", inspectorVisibilitySelfTest);
   await step("Terminal panel docked under the centre column: status marks by shape, narrow folding and terminals kept through layout changes", terminalPanelSelfTest);

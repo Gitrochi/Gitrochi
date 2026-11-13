@@ -1,4 +1,3 @@
-import { lazy, Suspense } from "react";
 import { destinationTitle, FlowPanel } from "@/widgets/sidebar";
 import { RepositoryCodePanel, RevisionComparisonPanel, RebaseWorkbenchPanel } from "@/widgets/local-workbench";
 import { HostingHubPanel, projectBranchName } from "@/widgets/hosting-hub";
@@ -6,13 +5,9 @@ import { WorkspaceHomePanel, ActionsWorkspacePanel } from "@/widgets/workspace-p
 import type { RepoStore } from "@/entities/repo";
 import { repositoryDestinations } from "@/entities/git";
 import { useObserve } from "@/shared/lib";
-import { Spinner } from "@/shared/ui";
 import { AccountWorkspacePanel } from "./AccountWorkspacePanel";
 import { PullRequestsWorkspace } from "./PullRequestsWorkspace";
 import { IssuesWorkspace } from "./IssuesWorkspace";
-
-// The Ledger is a preview page: its code loads the first time it opens
-const LedgerWorkspace = lazy(() => import("@/widgets/ledger-workspace").then((module) => ({ default: module.LedgerWorkspace })));
 
 /**
  * The full-width pages; the repository screen is RepositoryScreen. (macOS: WorkspaceDestinationContent.swift)
@@ -43,7 +38,6 @@ function WorkspacePage({ store, openSettings }: { store: RepoStore; openSettings
     case "releases": case "projects": return <HostingHubPanel store={store} section={store.destination} openSettings={openSettings} onClone={(url) => store.openSheet({ kind: "clone", url })} projectActions={{path:store.path,branches:store.localBranches.map(branch=>branch.name),onStartTask: row => {if(store.target)store.requestNewBranch(undefined, undefined, projectBranchName(row), {id:row.id,title:row.title,url:row.url,number:row.number,repository:store.target.path,host:store.target.host});}, onOpenRequest: row => {if (row.number) {store.navigate("pullRequests");store.select({kind:"pullRequest",number:row.number});}}}} />;
     case "account": return <AccountWorkspacePanel {...props} />;
     case "flows": return <FlowPanel store={store} />;
-    case "ledger": return <Suspense fallback={<div className="col grow" style={{ alignItems: "center", justifyContent: "center" }}><Spinner /></div>}><LedgerWorkspace repoPath={store.path} launcher={store} requests={store} flows={store} /></Suspense>;
     default: return null;
   }
 }

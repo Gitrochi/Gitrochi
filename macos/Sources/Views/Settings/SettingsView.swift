@@ -3,7 +3,7 @@ import AppKit
 import Observation
 
 enum SettingsTab: Hashable {
-    case accounts, ai, rules, tools, cli, appearance, update, ledger
+    case accounts, ai, rules, tools, cli, appearance, update
 }
 
 /// Which pane Settings shows, so "Manage accounts…" lands on Accounts whatever was open last
@@ -33,11 +33,6 @@ struct SettingsView: View {
                 .tabItem { Label("Appearance", symbol: "paintpalette") }.tag(SettingsTab.appearance)
             UpdateSettings()
                 .tabItem { Label("Update", symbol: "arrow.down.circle") }.tag(SettingsTab.update)
-            // Added after the others, and only while the Ledger is shown
-            if LedgerSettings.isShown {
-                LedgerSettings()
-                    .tabItem { Label("Ledger", symbol: WorkspaceDestination.ledger.symbol) }.tag(SettingsTab.ledger)
-            }
         }
         .frame(width: 600, height: 560)
     }

@@ -30,7 +30,6 @@ struct WorkspaceDestinationContent: View {
             case .projects: HostingHubPanel(store: store, section: .projects, onClone: { store.sheet = .cloneURL($0) })
             case .account: AccountWorkspacePanel()
             case .flows: FlowPanel()
-            case .ledger: LedgerWorkspaceView(repositoryPath: store.url?.path)
             }
             }
         }

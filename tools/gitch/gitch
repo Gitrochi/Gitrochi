@@ -389,6 +389,18 @@ confirm() {   # $1 질문  $2 yes(1이면 통과)  $3 비대화형일 때 안내
   exit 2
 }
 
+arity() {   # $1 usage, $2 how many arguments the command takes, then the arguments it got: an extra one is a usage error, not something to drop
+  # --json and --format json ask for machine-readable errors on every command, so they are not counted.
+  local usage=$1 allowed=$2 a n=0 format=''
+  shift 2
+  for a in "$@"; do
+    if [ -n "$format" ]; then format=''; [ "$a" != json ] || continue; fi
+    case "$a" in --json|--format=json) continue ;; --format) format=1; continue ;; esac
+    n=$((n + 1))
+    [ "$n" -le "$allowed" ] || die "사용법: $usage  (받지 않는 인자: $a)"
+  done
+}
+
 # ----- 문자열/경로 도우미 -----
 lower() { case "$1" in *[A-Z]*) printf '%s' "$1" | tr '[:upper:]' '[:lower:]' ;; *) printf '%s' "$1" ;; esac; }
 expand_path() {
@@ -1170,8 +1182,10 @@ use_cmd() {
 }
 
 unlock_cmd() {
+  local yes="" a rest=()
+  for a in "$@"; do case "$a" in --yes|-y) yes=1 ;; *) rest+=("$a") ;; esac; done
+  arity 'gitch unlock [--yes]' 0 "${rest[@]}"
   require_repo
-  local yes=""; [ "$1" = --yes ] && yes=1
   confirm "이 저장소의 계정 잠금을 풉니다. 계속할까요?" "$yes" "gitch unlock --yes"
   git config --unset gitswitch.account 2>/dev/null
   git config --unset gitswitch.email 2>/dev/null
@@ -1183,7 +1197,7 @@ unlock_cmd() {
 ignore_cmd() {   # gitch 관리에서 이 저장소 빼기/되돌리기
   require_repo
   local off="" yes="" a
-  for a in "$@"; do case "$a" in --off) off=1 ;; --yes) yes=1 ;; *) die "사용법: gitch ignore [--off]" ;; esac; done
+  for a in "$@"; do case "$a" in --off) off=1 ;; --yes|-y) yes=1 ;; *) die "사용법: gitch ignore [--off]" ;; esac; done
   if [ -n "$off" ]; then
     git config --unset gitswitch.ignore 2>/dev/null
     ok "이 저장소를 다시 gitch 가 관리합니다."
@@ -1366,10 +1380,11 @@ sync_cmd() {   # 포크를 원본 최신으로
 # ================= fix: 잘못된 작성자 고치기 =================
 
 fix_cmd() {
+  local yes="" commits c bad=0 total first a rest=()
+  for a in "$@"; do case "$a" in --yes|-y) yes=1 ;; *) rest+=("$a") ;; esac; done
+  arity 'gitch fix [--yes]' 0 "${rest[@]}"
   require_repo
   need_config
-  local yes="" commits c bad=0 total first
-  [ "$1" = --yes ] && yes=1
   resolve_repo .
   [ -z "$R_ACC" ] && die "이 저장소의 계정을 알 수 없습니다. 먼저 'gitch use <계정>' 을 하세요."
   set_account "$R_ACC" || exit 1
@@ -2737,9 +2752,11 @@ amend_cmd() {   # [-m 메시지 | 메시지...]
 }
 
 abort_cmd() {
+  local yes="" a rest=()
+  for a in "$@"; do case "$a" in --yes|-y) yes=1 ;; *) rest+=("$a") ;; esac; done
+  arity 'gitch abort [--yes]' 0 "${rest[@]}"
   require_repo
   repo_state
-  local yes=""; [ "$1" = --yes ] && yes=1
   [ -z "$RS_OP" ] && { say "진행 중인 작업이 없습니다."; return 0; }
   confirm "진행 중인 $(op_word "$RS_OP") 를 취소합니다 (고치던 충돌 내용은 사라짐). 계속할까요?" "$yes" "gitch abort --yes"
   case "$RS_OP" in
@@ -2801,7 +2818,7 @@ rescue_cmd() {   # [번호] [--branch 이름 | --restore [--yes]]
   while IFS= read -r r; do [ -n "$r" ] && refs+=("$r"); done < <(git for-each-ref --sort=-refname --format='%(refname)' refs/gitsw/backup/ 2>/dev/null | grep -v -- '-wip$')
   while [ $# -gt 0 ]; do
     case "$1" in
-      --restore) restore=1 ;; --yes) yes=1 ;;
+      --restore) restore=1 ;; --yes|-y) yes=1 ;;
       --branch) shift; branch="$1"; [ -n "$branch" ] || die "--branch 뒤에 이름이 필요합니다." ;;
       *) is_number "$1" || die "사용법: gitch rescue [번호] [--branch 이름 | --restore]"; pick=$1 ;;
     esac
@@ -2844,7 +2861,7 @@ rescue_cmd() {   # [번호] [--branch 이름 | --restore [--yes]]
 prune_cmd() {   # 합쳐진 브랜치 정리 [--gone] [--yes]
   require_repo
   local yes="" gone="" a def cur b track base merged=() goneb=()
-  for a in "$@"; do case "$a" in --yes) yes=1 ;; --gone) gone=1 ;; *) die "사용법: gitch prune [--gone] [--yes]" ;; esac; done
+  for a in "$@"; do case "$a" in --yes|-y) yes=1 ;; --gone) gone=1 ;; *) die "사용법: gitch prune [--gone] [--yes]" ;; esac; done
   net_env
   git fetch -q --prune origin 2>/dev/null || warn "원격 정보를 새로 받지 못했습니다 (마지막 정보 기준)"
   def=$(default_branch origin); cur=$(cur_branch)
@@ -3900,7 +3917,7 @@ find_repos() {
 scan_cmd() {   # [폴더] [--fix] [--json]
   local root="" fix="" json="" a d rel state sug note n=0 okc=0 prob=0 fixable=0 hk gh_ok="" wt email want first=1 jl="" icon line
   for a in "$@"; do
-    case "$a" in --fix) fix=1 ;; --json) json=1 ;; --yes) ;; -*) die "사용법: gitch scan [폴더] [--fix] [--json]" ;; *) root="$a" ;; esac
+    case "$a" in --fix) fix=1 ;; --json) json=1 ;; --yes|-y) ;; -*) die "사용법: gitch scan [폴더] [--fix] [--json]" ;; *) root="$a" ;; esac
   done
   need_config
   root=$(expand_path "${root:-$CFG_SCAN_ROOT}")
@@ -4413,9 +4430,9 @@ logo_cmd() {
 }
 
 config_cmd() {   # path | show | get <키> | check | set|add|unset|unset-all <키> [값] [--yes] | edit
-  local sub="${1:-show}" yes="" args=() a
-  [ $# -gt 0 ] && shift
-  for a in "$@"; do if [ "$a" = --yes ]; then yes=1; else args+=("$a"); fi; done
+  local sub yes="" args=() a
+  for a in "$@"; do case "$a" in --yes|-y) yes=1 ;; *) args+=("$a") ;; esac; done
+  sub=${args[0]:-show}; args=("${args[@]:1}")
   case "$sub" in
     path) say "$CFG" ;;
     show|cat) [ -f "$CFG" ] || die "설정 파일이 없습니다: $(tilde "$CFG") → gitch migrate 또는 gitch add"; cat "$CFG" ;;
@@ -4451,9 +4468,9 @@ org_key_norm() {   # 입력 → "서버/조직"
 }
 
 org_cmd() {   # list | add <서버/조직> <계정> | rm <서버/조직>
-  local sub="${1:-list}" yes="" args=() a key acc i
-  [ $# -gt 0 ] && shift
-  for a in "$@"; do if [ "$a" = --yes ]; then yes=1; else args+=("$a"); fi; done
+  local sub yes="" args=() a key acc i
+  for a in "$@"; do case "$a" in --yes|-y) yes=1 ;; *) args+=("$a") ;; esac; done
+  sub=${args[0]:-list}; args=("${args[@]:1}")
   case "$sub" in
     list|ls)
       need_config
@@ -4846,7 +4863,7 @@ add_machine_cmd() (
       --id|--email|--host|--port|--folder|--via)
         shift; [ -n "${1:-}" ] || die "$option 뒤에 값이 필요합니다."
         case "$option" in --id) id=$1 ;; --email) email=$1 ;; --host) host=$1 ;; --port) port=$1 ;; --folder) folder=$1; folder_set=1 ;; --via) via=$1 ;; esac ;;
-      --no-folder) no_folder=1 ;; --no-setup|--json) ;; --yes) yes=1 ;;
+      --no-folder) no_folder=1 ;; --no-setup|--json) ;; --yes|-y) yes=1 ;;
       *) die "알 수 없는 계정 추가 옵션: $option" ;;
     esac
     shift
@@ -4890,7 +4907,7 @@ setup_machine_cmd() (
     option=$1
     case "$option" in
       --inspect|--generate|--check) [ -z "$mode" ] || die "SSH 작업은 하나만 지정하세요."; mode=${option#--} ;;
-      --json) ;; --yes) yes=1 ;;
+      --json) ;; --yes|-y) yes=1 ;;
       -*) die "알 수 없는 SSH 설정 옵션: $option" ;;
       *) [ -z "$id" ] || die "계정은 하나만 지정하세요."; id=$option ;;
     esac
@@ -5083,11 +5100,14 @@ EOF2
   ok "SSH 설정 완료"
 }
 
-sign_cmd() {   # on | off | (상태)
-  local d acc id y
+sign_cmd() {   # on | off | (상태)  [--yes]
+  local d acc id y a yes="" rest=()
+  for a in "$@"; do case "$a" in --yes|-y) yes=1 ;; *) rest+=("$a") ;; esac; done
+  arity 'gitch sign [on|off] [--yes]' 1 "${rest[@]}"
+  set -- "${rest[0]:-}"
   case "$1" in
     on|off)
-      can_prompt || [ "$2" = --yes ] || die "서명 설정은 사용자가 터미널에서 직접 'gitch sign $1' 을 실행해야 합니다."
+      can_prompt || [ -n "$yes" ] || die "서명 설정은 사용자가 터미널에서 직접 'gitch sign $1' 을 실행해야 합니다."
       need_config
       if [ "$1" = on ]; then git config --global gitswitch.sign true; else git config --global --unset gitswitch.sign 2>/dev/null; fi
       for id in "${ACC_IDS[@]}"; do sync_include_file "$id"; done
@@ -5118,8 +5138,10 @@ sign_cmd() {   # on | off | (상태)
 }
 
 ssh_cmd() {   # prune [--yes]
-  local sub="$1" yes="" orphans h tmp
-  [ "$2" = --yes ] && yes=1
+  local sub yes="" orphans h tmp a rest=()
+  for a in "$@"; do case "$a" in --yes|-y) yes=1 ;; *) rest+=("$a") ;; esac; done
+  arity 'gitch ssh prune [--yes]' 1 "${rest[@]}"
+  sub=${rest[0]:-}
   case "$sub" in
     prune)
       need_config
@@ -5904,12 +5926,12 @@ guard_gitsw() {
       else g_push_check "gitch $sub" origin "$(g_cur_branch)"; fi ;;
     pr|mr) case "${rest[0]:-}" in status|view|list) ;; *) g_pr_check "gitch $sub" ;; esac ;;
     work|w) guard_gitsw_work "${rest[@]}" ;;
-    fix) g_in_list --yes "${rest[@]}" && g_decide ask "push 안 한 커밋의 작성자를 고칩니다 (기록 다시 쓰기)." ;;
+    fix) { g_in_list --yes "${rest[@]}" || g_in_list -y "${rest[@]}"; } && g_decide ask "push 안 한 커밋의 작성자를 고칩니다 (기록 다시 쓰기)." ;;
     undo) g_decide ask "마지막 커밋을 취소합니다. 사용자가 요청한 경우에만 하세요." ;;
     amend) g_decide ask "마지막 커밋을 고칩니다. 사용자가 요청한 경우에만 하세요." ;;
     abort) g_decide ask "진행 중인 rebase/merge 를 취소합니다 (고치던 충돌 내용이 사라짐)." ;;
     rescue) g_in_list --restore "${rest[@]}" && g_decide ask "백업 시점으로 브랜치를 되돌립니다." ;;
-    prune) g_in_list --yes "${rest[@]}" && g_decide ask "로컬 브랜치를 지웁니다." ;;
+    prune) { g_in_list --yes "${rest[@]}" || g_in_list -y "${rest[@]}"; } && g_decide ask "로컬 브랜치를 지웁니다." ;;
     scan) g_in_list --fix "${rest[@]}" && g_decide ask "여러 저장소의 계정 설정을 한 번에 고칩니다." ;;
     wt|worktree) [ "${rest[0]:-}" = rm ] && g_in_list --force "${rest[@]}" && g_decide ask "수정 중인 워크트리를 강제로 지웁니다." ;;
     add|remove|rm|setup|import) g_decide deny "'gitch $sub' 는 사용자가 터미널에서 직접 실행해야 합니다." ;;
@@ -5928,7 +5950,10 @@ guard_gitsw() {
           { g_in_list --yes "${rest[@]}" || g_in_list -y "${rest[@]}"; } && g_decide ask "흐름의 사람 확인 단계를 --yes 로 건너뜁니다. 사용자가 확인했을 때만 쓰세요." ;;
       esac ;;
     ci) case "${rest[0]:-}" in ""|status|logs|report) ;; *) g_decide ask "원격 CI 를 실행하거나 취소합니다." ;; esac ;;
-    sign) case "${rest[0]:-}" in on|off) g_decide deny "'gitch sign ${rest[0]}' 은 사용자가 터미널에서 직접 실행해야 합니다." ;; esac ;;
+    sign)   # on or off may follow --yes now
+      for o in "${rest[@]}"; do
+        case "$o" in on|off) g_decide deny "'gitch sign $o' 은 사용자가 터미널에서 직접 실행해야 합니다." ;; esac
+      done ;;
     org) case "${rest[0]:-list}" in list|ls) ;; *) g_decide ask "gitch 조직 규칙을 바꿉니다." ;; esac ;;
     config) case "${rest[0]:-show}" in path|show|cat|get|check) ;; *) g_decide ask "gitch 설정을 바꿉니다." ;; esac ;;
     protect) [ ${#rest[@]} -gt 0 ] && [ "${rest[0]}" != --list ] && g_decide ask "보호 브랜치 설정을 바꿉니다." ;;
@@ -6300,8 +6325,9 @@ install_cmd() {
 }
 
 uninstall_cmd() {
-  local yes="" ev d
-  [ "${1:-}" = --yes ] && yes=1
+  local yes="" ev d a rest=()
+  for a in "$@"; do case "$a" in --yes|-y) yes=1 ;; *) rest+=("$a") ;; esac; done
+  arity 'gitch uninstall [--yes]' 0 "${rest[@]}"
   confirm "gitch 전역 설정(자동 규칙, 검사 훅, AI 연동, 터미널 연동)을 지웁니다. 계정 설정 파일/SSH 키/저장소 잠금은 남깁니다. 계속할까요?" "$yes" "gitch uninstall --yes"
   load_config >/dev/null 2>&1
   backup_global
@@ -6370,7 +6396,7 @@ export_cmd() {   # [파일] — 설정만 (SSH 키 제외)
 
 import_cmd() {   # <파일> [--yes]
   local f="" yes="" a
-  for a in "$@"; do case "$a" in --yes) yes=1 ;; *) f="$a" ;; esac; done
+  for a in "$@"; do case "$a" in --yes|-y) yes=1 ;; *) f="$a" ;; esac; done
   [ -n "$f" ] && [ -f "$f" ] || die "사용법: gitch import <설정 파일>"
   can_prompt || [ -n "$yes" ] || die "설정 가져오기는 사용자가 터미널에서 직접 실행해야 합니다."
   GITSW_CONFIG="$f" "$(self_path)" config check >/dev/null 2>&1 || { GITSW_CONFIG="$f" "$(self_path)" config check 2>&1 | sed 's/^/  /' >&2; die "가져올 설정에 문제가 있습니다."; }
@@ -20699,8 +20725,13 @@ completion_repositories() {
     i=$((i + 1))
   done
 }
-completion_commands() {
-  printf '%s\n' preflight ck c p cp pl up l d b undo amend continue abort rescue o app pr ci flow test publish status use unlock ignore protect clone fork sync fix scan audit prune wt workspace work issue git overlap move module report g graph list add remove org config setup login auto sign ai ssh install uninstall migrate export import doctor version logo self-update completion schema help
+completion_commands() {   # the names in the help table, so a new command is completed without a second list (g: the short graph)
+  local name
+  for name in $HELP_COMMANDS; do
+    help_topic "$name"
+    [ "$H_GROUP" = internal ] || printf '%s\n' "$name"
+  done
+  printf '%s\n' g
 }
 completion_candidates() {   # _complete -- 이후: 실행 파일 이름을 뺀 낱말들(마지막은 입력 중인 낱말)
   local empty_current=""
@@ -20745,6 +20776,17 @@ completion_candidates() {   # _complete -- 이후: 실행 파일 이름을 뺀 �
         status|st) printf '%s\n' --json --strict --ssh ;;
         preflight|pf) printf '%s\n' --json --no-fetch ;;
         c|commit|cp) printf '%s\n' -a -m -F --trailer ;;
+        amend) printf '%s\n' -m ;;
+        help) printf '%s\n' --all ;;
+        p|push) printf '%s\n' --force --dry-run --tags --yes ;;
+        rescue) printf '%s\n' --branch --restore --yes ;;
+        prune) printf '%s\n' --gone --yes ;;
+        publish) printf '%s\n' --public --private --description --yes ;;
+        abort|unlock|fix|uninstall|import|config|org|sign|ssh) printf '%s\n' --yes ;;
+        ignore) printf '%s\n' --off --yes ;;
+        protect) printf '%s\n' --rm --list ;;
+        migrate) printf '%s\n' --force ;;
+        ai) printf '%s\n' --print --skill --remove ;;
         pr|mr) printf '%s\n' --title --body --body-file --base --draft --web --json; [ "${words[1]:-}" != list ] || printf '%s\n' --state --limit ;;
         issue) printf '%s\n' --help --json --state --limit --label --assignee ;;
         workspace|ws) printf '%s\n' --help --json --dry-run ;;
@@ -20760,8 +20802,11 @@ completion_candidates() {   # _complete -- 이후: 실행 파일 이름을 뺀 �
         add) printf '%s\n' --id --email --host --port --folder --no-folder --via --no-setup --json --yes ;;
         setup) printf '%s\n' --inspect --generate --check --json --yes ;;
         login) printf '%s\n' --start --status --cancel --json --yes ;;
+        ci) printf '%s\n' --json --connection --ref ;;
         flow|test) printf '%s\n' --json --affected --env --only --jobs --fail-fast --no-fail-fast --no-cache --keep-services --detach --events --summary --ci --yes --dry-run --follow --since --format --out --idempotency-key --watch --lang ;;
       esac
+      # Every command with a help topic answers --help (the internal protocol commands have none).
+      ! help_resolve "$cmd" || printf '%s\n' --help
     else
       case "$cmd" in
         use|remove|rm|setup|clone|fork) load_config >/dev/null 2>&1; for i in "${ACC_IDS[@]}"; do printf '%s\n' "$i"; done ;;
@@ -20774,7 +20819,7 @@ completion_candidates() {   # _complete -- 이후: 실행 파일 이름을 뺀 �
         module) if [ "$n" -eq 2 ]; then printf '%s\n' audit; elif [ "${words[1]:-}" = audit ]; then compgen -d -- "$cur"; fi ;;
         completion) printf '%s\n' bash zsh fish powershell ;;
         flow)
-          if [ "$n" -eq 2 ]; then printf '%s\n' init doctor validate list plan run status events logs report rerun cancel trust hold watch blocks block explain gc export import connect gate schema version help
+          if [ "$n" -eq 2 ]; then printf '%s\n' init doctor validate list plan run test status events logs report rerun cancel trust hold watch blocks block explain gc export import design connect ci gate schema version help
           elif [ "$n" -eq 3 ]; then
             case "${words[1]:-}" in
               plan|run|watch) e=$(flow_engine) && "$e" _names flows 2>/dev/null ;;
@@ -20782,10 +20827,20 @@ completion_candidates() {   # _complete -- 이후: 실행 파일 이름을 뺀 �
               connect) printf '%s\n' list add test remove ;;
               hold) printf '%s\n' list release ;;
               gate) printf '%s\n' status prepush ;;
+              design) printf '%s\n' inspect render source ;;
+              ci) printf '%s\n' status logs report browse ;;
+              test) e=$(flow_engine) && "$e" _names suites 2>/dev/null ;;
               status|events|logs|report|rerun|cancel) printf '%s\n' last ;;
             esac
           fi ;;
         test) e=$(flow_engine) && "$e" _names suites 2>/dev/null ;;
+        ci) [ "$n" -ne 2 ] || printf '%s\n' status logs report browse ;;
+        help)   # topics, then the subcommands that have help of their own
+          if [ "$n" -eq 2 ]; then completion_commands
+          elif [ "$n" -eq 3 ] && help_resolve "${words[1]:-}"; then
+            help_topic "$HELP_NAME"
+            for candidate in $H_SUBS; do printf '%s\n' "$candidate"; done
+          fi ;;
         schema) printf '%s\n' public graph error languages status ck preflight rules version list doctor scan audit report pr view watch index account login review overlap move module logo workspace work hosting worktrees ;;
         logo) printf '%s\n' on off status ;;
         login) [ "$n" -ne 2 ] || printf '%s\n' github ;;
@@ -21346,7 +21401,7 @@ work_cmd() (
           --base) if [ "$sub" = pr ]; then args+=(--base "$1"); else [ -z "$base" ] || work_fail "Specify --base once."; base=$1; fi ;;
         esac; shift ;;
       --delete-branch) delete=1 ;;
-      --yes) if [ "$sub" = push ]; then args+=(--yes); else yes=1; fi ;;
+      --yes|-y) if [ "$sub" = push ]; then args+=(--yes); else yes=1; fi ;;
       --ai|--ai=*) work_fail "AI messages are not supported by work. Supply commit -m or pr --title and --body-file. gitch ai manages agent rules." ;;
       *)
         case "$sub" in
@@ -21708,108 +21763,750 @@ git_cmd() {
 
 # ================= 도움말 =================
 
-help_cmd() {
+# One table for every command. gitch help, gitch help <command>, gitch <command> --help, the unknown-command hints and
+# shell completion all read it, so they cannot drift apart. A command added to the dispatcher needs a topic here
+# (tests/test_help.sh compares the two lists). Text stays in the language each command already speaks.
+#   H_GROUP   section of the overview     H_TIER   main (one line in the overview) | more (name only)
+#   H_USAGE   usage lines                 H_SHORT  usage in the overview (default: the first usage line)
+#   H_DESC    one sentence                H_SUM    summary in the overview (default: H_DESC)
+#   H_FLAGS   "  flag   meaning" lines
+#   H_WRITES  what it changes             H_NET    whether it talks to a remote
+#   H_EX      example lines               H_OWN    function that prints the command's own, richer help (*_cmd: called with --help)
+#   H_SUBS    subcommands with their own --help (the second word is passed to H_OWN)
+HELP_GROUPS='daily multi pr flow get repo inspect account internal'
+HELP_COMMANDS='preflight ck c p cp pl up l d b undo amend continue abort rescue o app
+workspace work issue git wt
+pr ci publish
+flow test
+clone fork sync
+status use unlock ignore protect fix scan audit prune
+overlap move module report graph schema completion
+list add remove org config setup login auto sign ai ssh install uninstall migrate export import doctor version self-update logo help
+guard'
+
+help_group_title() {   # $1 group → HELP_TITLE
+  case "$1" in
+    daily) HELP_TITLE='매일 쓰는 것' ;; multi) HELP_TITLE='Multi-repository workflows' ;; pr) HELP_TITLE='PR / MR' ;;
+    flow) HELP_TITLE='테스트 · 흐름 (gitch-flow, .gitch/flow.yml)' ;; get) HELP_TITLE='받기' ;; repo) HELP_TITLE='저장소' ;;
+    inspect) HELP_TITLE='분석 · 도구' ;; account) HELP_TITLE='계정/설정' ;; *) HELP_TITLE='내부 (도구가 부르는 명령)' ;;
+  esac
+}
+
+help_topic() {   # $1 canonical command name → H_* (false when there is no such command)
+  H_GROUP=''; H_TIER='more'; H_ALIAS=''; H_USAGE=''; H_SHORT=''; H_DESC=''; H_SUM=''; H_FLAGS=''; H_WRITES='없음 (읽기 전용)'; H_NET='안 씀'; H_EX=''; H_OWN=''; H_SUBS=''; H_LANG='ko'
+  case "$1" in
+    preflight) H_GROUP='daily'; H_TIER='main'; H_ALIAS='pf'
+      H_USAGE='gitch preflight [--json] [--no-fetch]'
+      H_DESC='커밋/push 전에 계정 · 작성자 · push 주소 · 진행 중 작업을 한 번에 점검한다 (PREFLIGHT=OK|WARN|STOP, STOP 이면 종료 코드 1).'
+      H_SUM='커밋/push 전 한 번에 점검 (PREFLIGHT=OK|WARN|STOP)'
+      H_FLAGS='  --json       기계용 JSON (gitch schema preflight)
+  --no-fetch   원격을 새로 받지 않고 지금 아는 정보로 점검'
+      H_NET='origin 을 fetch (--no-fetch 로 끔)'
+      H_EX='gitch preflight
+gitch preflight --json --no-fetch' ;;
+    ck) H_GROUP='daily'; H_TIER='main'; H_ALIAS='check'
+      H_USAGE='gitch ck [--json] [--fetch|--no-fetch]'
+      H_DESC='수정한 파일 · push 안 한 커밋 · 받을 커밋 · 진행 중 작업(rebase/merge)을 보여 준다.'
+      H_SUM='수정한 파일 / push 안 한 커밋 / 받을 커밋 / 진행 중 작업'
+      H_FLAGS='  --json       기계용 JSON (gitch schema ck)
+  --fetch      지금 원격을 새로 받고 본다
+  --no-fetch   원격을 받지 않는다 (기본: 마지막 fetch 가 오래됐을 때만 받음)'
+      H_NET='필요할 때 origin 을 fetch'
+      H_EX='gitch ck
+gitch ck --json --no-fetch' ;;
+    c) H_GROUP='daily'; H_TIER='main'; H_ALIAS='commit'
+      H_USAGE='gitch c [-a] -m 제목 [-m 본문]... [-F 파일] [--trailer "키: 값"]...
+gitch c [-a] 메시지 글자...'
+      H_DESC='준비된(staged) 파일을 커밋한다 (터미널에서 준비된 파일이 없으면 변경사항 전체).'
+      H_SHORT='gitch c [-a] -m 제목 [-m 본문]'
+      H_SUM='커밋 (준비된 파일만, 터미널에서는 없으면 전체)'
+      H_FLAGS='  -a, --all             변경사항을 전부 준비해서 커밋
+  -m, --message 글      제목, 한 번 더 쓰면 본문 (-am 은 -a -m)
+  -F, --file 파일       메시지를 파일에서 읽기
+  --trailer "키: 값"    트레일러 줄 추가
+  --                    뒤에 오는 글자는 모두 메시지
+  종료 코드: 커밋할 변경이 없어도 0, 비대화형에서 올릴 파일을 고르지 않았으면 4. --no-verify 는 쓸 수 없다.'
+      H_WRITES='저장소 (커밋 추가)'
+      H_EX='git add src/login.ts && gitch c -m "Fix login" -m "- why"
+gitch c -a -m "Update docs"' ;;
+    p) H_GROUP='daily'; H_TIER='main'; H_ALIAS='push'
+      H_USAGE='gitch p [--force] [--dry-run] [--tags] [--yes]'
+      H_DESC='지금 브랜치를 origin 에 push 한다 (첫 push 면 원격 브랜치를 연결).'
+      H_SHORT='gitch p [--force] [--dry-run] [--tags]'
+      H_SUM='push (첫 push 면 원격 브랜치 연결, --force 는 확인 후)'
+      H_FLAGS='  -f, --force, --force-with-lease   확인을 받은 뒤 --force-with-lease 로 강제 push
+  -n, --dry-run                     보내지 않고 무엇을 보낼지만 확인
+  --tags, --follow-tags             커밋에 붙은 태그도 함께
+  -y, --yes                         강제 push 확인 질문 건너뛰기 (사용자 동의를 받은 뒤)
+  보호 브랜치(gitch protect) · 다른 계정 주소 · 비밀값은 push 검사가 막는다. --no-verify 는 쓸 수 없다.'
+      H_WRITES='원격 저장소 (push)'; H_NET='origin 으로 push'
+      H_EX='gitch p
+gitch p --dry-run' ;;
+    cp) H_GROUP='daily'; H_TIER='main'
+      H_USAGE='gitch cp [-a] -m 메시지 [gitch c 의 옵션...]'
+      H_DESC='커밋한 뒤 바로 push 한다 (옵션은 gitch c 와 같고, push 는 옵션 없이 한다).'
+      H_SHORT='gitch cp [-a] -m 메시지'
+      H_SUM='커밋 + push'
+      H_WRITES='저장소 (커밋 추가) · 원격 저장소 (push)'; H_NET='origin 으로 push'
+      H_EX='gitch cp -a -m "Fix typo"' ;;
+    pl) H_GROUP='daily'; H_TIER='main'; H_ALIAS='pull'
+      H_USAGE='gitch pl'
+      H_DESC='원격의 새 커밋을 받는다 (pull --rebase --autostash: 내 커밋은 위로, 수정 중인 파일은 보존).'
+      H_SUM='pull (내 커밋은 위로, 수정 중인 파일 보존)'
+      H_WRITES='저장소 (지금 브랜치 · 백업 남김: gitch rescue)'; H_NET='origin 에서 pull'
+      H_EX='gitch pl' ;;
+    up) H_GROUP='daily'; H_TIER='main'
+      H_USAGE='gitch up'
+      H_DESC='기본 브랜치(main 등)의 최신 내용을 지금 브랜치에 반영한다 (push 전이면 rebase, push 한 브랜치면 merge).'
+      H_SUM='기본 브랜치(main 등) 최신을 지금 브랜치에 반영'
+      H_WRITES='저장소 (지금 브랜치 · 백업 남김: gitch rescue)'; H_NET='origin 을 fetch'
+      H_EX='gitch up' ;;
+    l) H_GROUP='daily'; H_TIER='main'; H_ALIAS='log'
+      H_USAGE='gitch l [개수]'
+      H_DESC='최근 커밋을 그래프로 보여 준다 (기본 15개).'
+      H_SUM='최근 커밋 그래프'
+      H_EX='gitch l
+gitch l 40' ;;
+    d) H_GROUP='daily'; H_TIER='main'; H_ALIAS='diff'
+      H_USAGE='gitch d [git diff 옵션 | 경로...]'
+      H_DESC='마지막 커밋 이후 바뀐 내용을 보여 주고, diff 에 안 나오는 새 파일도 목록으로 알려 준다.'
+      H_SUM='바뀐 내용'
+      H_EX='gitch d
+gitch d --stat' ;;
+    b) H_GROUP='daily'; H_TIER='main'; H_ALIAS='branch'
+      H_USAGE='gitch b [이름]'
+      H_DESC='이름이 없으면 브랜치 목록, 있으면 그 브랜치로 이동한다 (로컬 → 원격 순으로 찾고 없으면 새로 만든다).'
+      H_SUM='브랜치 목록 / 이동 / 새로 만들기'
+      H_WRITES='이름을 주면 저장소 (브랜치 이동 · 생성)'
+      H_EX='gitch b
+gitch b feature/login' ;;
+    undo) H_GROUP='daily'; H_TIER='main'
+      H_USAGE='gitch undo'
+      H_DESC='마지막 커밋을 취소하고 변경 내용은 커밋 준비됨 상태로 남긴다 (push 전 커밋만).'
+      H_SUM='마지막 커밋 취소 (push 전만)'
+      H_WRITES='저장소 (마지막 커밋 제거 · 백업 남김: gitch rescue)'
+      H_EX='gitch undo' ;;
+    amend) H_GROUP='daily'; H_TIER='main'
+      H_USAGE='gitch amend [-m 메시지 | 메시지 글자...]'
+      H_DESC='마지막 커밋을 고친다: 준비된 파일을 더하고, 메시지를 주면 메시지도 바꾼다 (push 전 커밋만).'
+      H_SHORT='gitch amend [-m 메시지]'
+      H_SUM='마지막 커밋 고치기 (push 전만)'
+      H_FLAGS='  -m, --message 글   새 커밋 메시지 (없으면 메시지는 그대로)'
+      H_WRITES='저장소 (마지막 커밋 다시 씀 · 백업 남김: gitch rescue)'
+      H_EX='git add src/login.ts && gitch amend
+gitch amend -m "Fix login redirect"' ;;
+    continue) H_GROUP='daily'; H_TIER='main'
+      H_USAGE='gitch continue'
+      H_DESC='충돌을 고친 뒤 멈춰 있던 rebase · merge · cherry-pick · revert 를 이어간다.'
+      H_SUM='충돌난 rebase/merge 이어가기'
+      H_WRITES='저장소 (진행 중 작업을 계속)'
+      H_EX='git add src/login.ts && gitch continue' ;;
+    abort) H_GROUP='daily'; H_TIER='main'
+      H_USAGE='gitch abort [--yes]'
+      H_DESC='진행 중인 rebase · merge · cherry-pick · revert 를 취소한다 (고치던 충돌 내용은 사라진다).'
+      H_SUM='충돌난 rebase/merge 취소'
+      H_FLAGS='  -y, --yes   확인 질문 건너뛰기 (사용자 동의를 받은 뒤)'
+      H_WRITES='저장소 (진행 중 작업 취소)'
+      H_EX='gitch abort' ;;
+    rescue) H_GROUP='daily'; H_TIER='main'
+      H_USAGE='gitch rescue [번호] [--branch 이름 | --restore [--yes]]'
+      H_DESC='pl · up · sync · fix · undo · amend 전에 자동으로 남긴 백업을 보고, 새 브랜치로 꺼내거나 그 시점으로 되돌린다.'
+      H_SHORT='gitch rescue [번호] [--branch 이름|--restore]'
+      H_SUM='자동 백업 목록 / 복구'
+      H_FLAGS='  번호            그 백업의 커밋과 지금과의 차이 (없으면 목록)
+  --branch 이름   백업을 새 브랜치로 꺼내기 (지금 브랜치는 그대로)
+  --restore       지금 브랜치를 백업 시점으로 되돌리기 (지금 상태도 먼저 백업)
+  -y, --yes       --restore 확인 질문 건너뛰기 (사용자 동의를 받은 뒤)'
+      H_WRITES='--branch · --restore 일 때만 저장소'
+      H_EX='gitch rescue
+gitch rescue 1 --branch before-rebase' ;;
+    o) H_GROUP='daily'; H_TIER='main'; H_ALIAS='open'
+      H_USAGE='gitch o'
+      H_DESC='이 저장소의 웹 주소를 출력하고, 터미널이면 브라우저로 연다.'
+      H_SUM='저장소 웹페이지'
+      H_EX='gitch o' ;;
+    app) H_GROUP='daily'; H_TIER='main'
+      H_USAGE='gitch app [--path 앱경로]'
+      H_DESC='Gitrochi 데스크톱 앱을 연다 (macOS · Windows).'
+      H_SUM='Gitrochi 데스크톱 앱 열기 (macOS · Windows)'
+      H_OWN='app_cmd'
+      H_WRITES='없음 (Gitrochi 앱을 실행)'
+      H_EX='gitch app
+gitch app --file src/login.ts --line 42' ;;
+
+    workspace) H_GROUP='multi'; H_TIER='main'; H_ALIAS='ws'; H_LANG='en'
+      H_USAGE='gitch workspace create NAME [REPO...]'
+      H_DESC='Create and inspect local repository groups.'
+      H_SHORT='gitch workspace create|list|status ...'
+      H_SUM='Local repository groups (alias: ws)'
+      H_OWN='workspace_help'
+      H_WRITES='gitch state only (group records); repositories are never changed'
+      H_NET='not used'
+      H_EX='gitch workspace create product ../api ../web
+gitch workspace status product --json' ;;
+    work) H_GROUP='multi'; H_TIER='main'; H_ALIAS='w'; H_LANG='en'
+      H_USAGE='gitch work start NAME [--workspace NAME | --repo PATH]'
+      H_DESC='Run one task across several repositories: start, commit, push, pr, end.'
+      H_SHORT='gitch work start|commit|push|pr|end ...'
+      H_SUM='One task across repositories (alias: w)'
+      H_OWN='work_help'
+      H_WRITES='repositories (branches, commits) for start, add, commit and end; list, info and status only read'
+      H_NET='push and pr use the remote'
+      H_EX='gitch work start login-fix --workspace product
+gitch work commit -m "Fix login"' ;;
+    issue) H_GROUP='multi'; H_TIER='main'; H_LANG='en'
+      H_USAGE='gitch issue list|show [NUMBER] [--json]'
+      H_DESC='Read issues with the account this repository already uses.'
+      H_SUM='Read issues with the existing account'
+      H_OWN='hosting_read_help'
+      H_WRITES='nothing (read-only)'; H_NET='reads from GitHub (gh) or GitLab (glab)'
+      H_EX='gitch issue list --state open --limit 10
+gitch issue show 42 --json' ;;
+    git) H_GROUP='multi'; H_TIER='main'; H_LANG='en'
+      H_USAGE='gitch git COMMAND [ARGS]'
+      H_DESC='Read-only access to the system git.'
+      H_SUM='Read-only system Git access'
+      H_OWN='git_read_help'
+      H_WRITES='nothing (read-only)'; H_NET='not used'
+      H_EX='gitch git log --oneline -5
+gitch git diff --stat' ;;
+    wt) H_GROUP='multi'; H_TIER='main'; H_ALIAS='worktree'; H_LANG='en'
+      H_USAGE='gitch wt [list [--json] | new BRANCH [PATH] | rm PATH [--force] | prune]'
+      H_DESC='List, add and remove worktrees; the account lock carries over to each worktree.'
+      H_SHORT='gitch wt [list|new BRANCH|rm PATH]'
+      H_SUM='Worktrees'
+      H_FLAGS='  list, ls [--json]    List worktrees (default)
+  new, add BRANCH [PATH]   Add a worktree (default path: ../<repo>.worktrees/<branch>)
+  rm, remove PATH [--force]   Remove a worktree; --force also drops uncommitted changes
+  prune                Forget worktrees whose folders are gone'
+      H_WRITES='the repository for new, rm and prune; list only reads'; H_NET='not used'
+      H_EX='gitch wt new feature/login
+gitch wt list --json' ;;
+
+    pr) H_GROUP='pr'; H_TIER='main'; H_ALIAS='mr'
+      H_USAGE='gitch pr [create] --title 제목 [--body 내용 | --body-file 파일] [--base 브랜치] [--draft] [--web]
+gitch pr status [--json]
+gitch pr list [--state open|closed|merged|all] [--limit 1..100] [--json]'
+      H_DESC='GitHub PR / GitLab MR 을 만들고, 지금 브랜치의 PR 상태와 PR 목록을 본다.'
+      H_SHORT='gitch pr --title 제목 [--body 내용]'
+      H_SUM='PR/MR 만들기 (상태: gitch pr status, 목록: gitch pr list)'
+      H_FLAGS='  -t, --title 제목        PR 제목 (없으면 커밋 내용으로 채움)
+  -b, --body 내용         본문
+  -F, --body-file 파일    본문을 파일에서 읽기
+  -B, --base 브랜치       합칠 대상 브랜치 (기본: 기본 브랜치)
+  -d, --draft             초안으로 만들기
+  -w, --web               브라우저에서 만들기
+  status, view [--json]   지금 브랜치의 PR 상태 · 리뷰
+  list                    PR 목록 (읽기 전용)'
+      H_WRITES='create 는 원격에 PR/MR 생성 (필요하면 먼저 push) · status/list 는 읽기 전용'; H_NET='GitHub (gh) · GitLab 사용'
+      H_EX='gitch pr --title "Fix login" --body "Closes #12"
+gitch pr status' ;;
+    ci) H_GROUP='pr'; H_TIER='main'
+      H_USAGE='gitch ci
+gitch ci status|logs|report|browse ...'
+      H_DESC='인자가 없으면 지금 브랜치의 PR 검사 · CI 실행 결과를 보고, 인자가 있으면 연결한 원격 CI 를 흐름 엔진으로 조회한다.'
+      H_SHORT='gitch ci [status|logs|report ...]'
+      H_SUM='PR 검사 · CI 결과 (인자를 주면 연결한 원격 CI)'
+      H_FLAGS='  status [--connection NAME] [--ref R] [--json]   연결한 원격 CI 의 상태 (연결: gitch flow connect …)
+  logs <작업 ID> · report [파이프라인]            작업 로그 · 테스트 보고서
+  browse --connection NAME [JOB_PATH] [RUN_ID]    Jenkins 작업 · 실행 · 로그 조회'
+      H_NET='GitHub (gh) 또는 연결한 CI 서버 사용'
+      H_EX='gitch ci
+gitch ci status --json'
+      H_OWN='help_engine' ;;
+    publish) H_GROUP='pr'; H_TIER='main'
+      H_USAGE='gitch publish [이름] [--public] [--description 설명] [--yes]'
+      H_DESC='원격이 없는 저장소를 GitHub/GitLab 에 새로 만들고 첫 push 를 한다 (기본 비공개).'
+      H_SHORT='gitch publish [이름] [--public]'
+      H_SUM='원격 저장소 새로 만들기 + 첫 push (기본 비공개)'
+      H_FLAGS='  --public, --private       공개 범위 (기본 --private)
+  -d, --description 설명    저장소 설명
+  -y, --yes                 확인 질문 건너뛰기 (사용자 동의를 받은 뒤)'
+      H_WRITES='원격 저장소 생성 · origin 추가 · push'; H_NET='GitHub (gh) · GitLab 사용'
+      H_EX='gitch publish
+gitch publish my-app --public' ;;
+
+    flow) H_GROUP='flow'; H_TIER='main'
+      H_USAGE='gitch flow init|plan|run|status|report|trust ...'
+      H_DESC='조립형 테스트 · CI 흐름(.gitch/flow.yml)을 흐름 엔진(gitch-flow)으로 계획 · 실행한다.'
+      H_SHORT='gitch flow init|plan|run|status ...'
+      H_SUM='흐름 계획 · 실행 · 결과 (전체: gitch help flow)'
+      H_FLAGS='  init [--dry-run]            프로젝트를 읽고 흐름 파일 제안 · 만들기 (프로젝트 코드는 실행하지 않음)
+  plan|run <흐름> [--affected]   계획 보기 / 실행 (영향받은 테스트만 · 병렬 · 캐시 · 서명된 결과)
+  status|report|events [last]  결과 · 보고서 · 이벤트(NDJSON)
+  trust                       흐름 파일 신뢰 (사람이 확인)
+  design inspect|render|source --json   흐름 YAML 확인 · 시각 편집 (JSON 표준입력)
+  connect list|add|test|remove   원격 CI 연결'
+      H_WRITES='run 은 프로젝트 명령을 실행 · init/export 는 파일을 만듦 · plan/status/report 는 읽기 전용'
+      H_NET='run 과 원격 CI 명령만 사용'
+      H_EX='gitch flow plan ci --affected
+gitch flow run ci --summary'
+      H_OWN='help_engine' ;;
+    test) H_GROUP='flow'; H_TIER='main'
+      H_USAGE='gitch test [스위트|태그...] [--affected] [--watch] [--json|--summary]'
+      H_DESC='흐름 파일의 테스트 스위트를 바로 실행한다 (--summary: AI 용 짧은 요약).'
+      H_SHORT='gitch test [스위트|태그] [--affected]'
+      H_SUM='테스트 스위트 바로 실행 (--summary: AI 용 짧은 요약)'
+      H_WRITES='프로젝트의 테스트 명령을 실행 (결과 기록은 .git/gitch/flow)'; H_NET='스위트가 쓰는 만큼'
+      H_EX='gitch test --affected --summary
+gitch test unit'
+      H_OWN='help_engine' ;;
+
+    clone) H_GROUP='get'; H_TIER='main'
+      H_USAGE='gitch clone [계정] <저장소|주소> [폴더]'
+      H_DESC='계정을 정해 clone 하고 저장소를 그 계정으로 잠근다 (계정은 폴더/조직/주소 규칙으로 자동, 계정 폴더에 받음).'
+      H_SUM='계정으로 clone + 잠금 (규칙으로 계정 자동, 계정 폴더에 받음)'
+      H_WRITES='새 폴더에 저장소를 만듦'; H_NET='원격에서 clone'
+      H_EX='gitch clone myorg/app
+gitch clone alice https://github.com/myorg/app.git work/app' ;;
+    fork) H_GROUP='get'; H_TIER='main'
+      H_USAGE='gitch fork [계정] <원본 owner/repo|주소> [폴더]'
+      H_DESC='GitHub 저장소를 포크하고 clone 한 뒤 원본을 upstream 으로 연결한다.'
+      H_SHORT='gitch fork [계정] <원본> [폴더]'
+      H_SUM='포크 + clone + upstream 연결'
+      H_WRITES='GitHub 에 포크 생성 · 새 폴더에 저장소를 만듦'; H_NET='GitHub (gh) 사용 · clone'
+      H_EX='gitch fork myorg/app' ;;
+    sync) H_GROUP='get'; H_TIER='main'
+      H_USAGE='gitch sync'
+      H_DESC='포크한 저장소의 지금 브랜치를 원본(upstream) 최신으로 맞춘다.'
+      H_SUM='포크를 원본 최신으로'
+      H_WRITES='저장소 (지금 브랜치 · 백업 남김: gitch rescue)'; H_NET='upstream 을 fetch'
+      H_EX='gitch sync' ;;
+
+    status) H_GROUP='repo'; H_TIER='main'; H_ALIAS='st'
+      H_USAGE='gitch status [--json] [--strict] [--ssh]'
+      H_DESC='이 저장소의 계정 · 잠금 · 작성자 · push 주소 상태를 보여 준다.'
+      H_SHORT='gitch status [--json] [--strict]'
+      H_SUM='이 저장소의 계정/잠금 상태'
+      H_FLAGS='  --json     기계용 JSON (gitch schema status)
+  --strict   문제가 있으면 종료 코드 1
+  --ssh      SSH 로 실제 접속 계정도 확인'
+      H_NET='--ssh 일 때만 SSH 접속'
+      H_EX='gitch status
+gitch status --json --strict' ;;
+    use) H_GROUP='repo'; H_TIER='main'
+      H_USAGE='gitch use [계정]'
+      H_DESC='이 저장소를 계정으로 전환하고 잠근다 (계정을 생략하면 잠금 계정이나 자동 규칙으로 정한다).'
+      H_SUM='이 저장소를 계정으로 전환 + 잠금'
+      H_WRITES='저장소 설정 (작성자 · origin 주소 · 잠금)'
+      H_EX='gitch use
+gitch use alice' ;;
+    unlock) H_GROUP='repo'; H_TIER='main'
+      H_USAGE='gitch unlock [--yes]'
+      H_DESC='이 저장소의 계정 잠금을 푼다 (작성자 설정은 그대로).'
+      H_SUM='잠금 해제'
+      H_FLAGS='  -y, --yes   확인 질문 건너뛰기 (사용자 동의를 받은 뒤)'
+      H_WRITES='저장소 설정 (잠금 해제)'
+      H_EX='gitch unlock' ;;
+    ignore) H_GROUP='repo'
+      H_USAGE='gitch ignore [--off] [--yes]'
+      H_DESC='이 저장소를 gitch 검사(작성자 · 비밀값 · push)에서 빼거나, --off 로 다시 넣는다.'
+      H_FLAGS='  --off       다시 gitch 가 관리
+  -y, --yes   확인 질문 건너뛰기 (사용자 동의를 받은 뒤)'
+      H_WRITES='저장소 설정 (gitswitch.ignore)'
+      H_EX='gitch ignore
+gitch ignore --off' ;;
+    protect) H_GROUP='repo'; H_TIER='main'
+      H_USAGE='gitch protect [브랜치...]
+gitch protect --rm 브랜치...
+gitch protect --list'
+      H_DESC='직접 push 를 막을 보호 브랜치를 보고, 더하고, 뺀다 (인자가 없으면 목록).'
+      H_SHORT='gitch protect [브랜치...|--rm 브랜치]'
+      H_SUM='직접 push 금지 브랜치'
+      H_FLAGS='  --list   보호 브랜치 목록 (인자가 없을 때와 같음)
+  --rm     뒤에 오는 브랜치의 보호를 해제'
+      H_WRITES='브랜치를 주면 저장소 설정 (gitswitch.protect)'
+      H_EX='gitch protect main release
+gitch protect --rm release' ;;
+    fix) H_GROUP='repo'; H_TIER='main'
+      H_USAGE='gitch fix [--yes]'
+      H_DESC='push 안 한 커밋 중 작성자가 이 저장소 계정과 다른 것을 찾아 고친다.'
+      H_SUM='push 안 한 커밋 중 작성자가 잘못된 것 고치기'
+      H_FLAGS='  -y, --yes   확인 질문 건너뛰기 (사용자 동의를 받은 뒤)'
+      H_WRITES='저장소 (push 안 한 커밋을 다시 씀 · 백업 남김: gitch rescue)'
+      H_EX='gitch fix' ;;
+    scan) H_GROUP='repo'
+      H_USAGE='gitch scan [폴더] [--fix] [--json]'
+      H_DESC='폴더 아래 모든 저장소의 계정 · 잠금 · 훅 상태를 점검한다 (기본 폴더: 설정의 scanRoot).'
+      H_FLAGS='  --fix    고칠 수 있는 저장소의 계정 설정을 고침
+  --json   기계용 JSON (gitch schema scan)'
+      H_WRITES='--fix 일 때만 여러 저장소의 설정'
+      H_EX='gitch scan
+gitch scan ~/Develop/alice --json' ;;
+    audit) H_GROUP='repo'
+      H_USAGE='gitch audit [폴더|.] [--since 날짜] [--json]'
+      H_DESC='이미 push 된 커밋 중 다른 내 계정 이메일로 된 것을 보고한다 (고치지 않는다).'
+      H_FLAGS="  --since 날짜   이 날짜 이후 커밋만 (기본 '90 days ago')
+  --json         기계용 JSON (gitch schema audit)"
+      H_EX='gitch audit .
+gitch audit --since "30 days ago" --json' ;;
+    prune) H_GROUP='repo'
+      H_USAGE='gitch prune [--gone] [--yes]'
+      H_DESC='기본 브랜치에 합쳐진 로컬 브랜치를 정리한다 (원격은 그대로, 보호 브랜치와 지금 브랜치는 남김).'
+      H_FLAGS='  --gone      원격에서 지워진 브랜치도 포함 (squash 머지 등)
+  -y, --yes   확인 질문 건너뛰기 — 비대화형에서는 --yes 가 없으면 목록만 보여 준다'
+      H_WRITES='저장소 (로컬 브랜치 삭제)'; H_NET='origin 을 fetch --prune'
+      H_EX='gitch prune
+gitch prune --gone --yes' ;;
+
+    overlap) H_GROUP='inspect'; H_TIER='main'
+      H_USAGE='gitch overlap [--watch] [--json]'
+      H_DESC='워크트리 사이 같은 파일 · 연결된 코드의 충돌 위험을 예보한다.'
+      H_SUM='워크트리 사이 같은 파일 · 연결된 코드의 충돌 위험 예보'
+      H_OWN='overlap_cmd'
+      H_EX='gitch overlap --current
+gitch overlap --watch --interval 5' ;;
+    move) H_GROUP='inspect'
+      H_USAGE='gitch move <원본> <대상> --plan [--json]'
+      H_DESC='파일 · 폴더를 옮기기 전에 참조 · 영향 파일 · 테스트 후보를 계획으로 보여 준다 (옮기지는 않는다).'
+      H_OWN='move_cmd'
+      H_EX='gitch move src/api src/network --plan' ;;
+    module) H_GROUP='inspect'; H_SUBS='audit'
+      H_USAGE='gitch module audit [폴더] [--json] [--strict]'
+      H_DESC='npm 선언(package.json)과 정적 import 를 맞춰 본다.'
+      H_OWN='module_cmd'
+      H_EX='gitch module audit --strict' ;;
+    report) H_GROUP='inspect'
+      H_USAGE='gitch report [--today | --days N | --since YYYY-MM-DD] [--json]'
+      H_DESC='gitch 가 남긴 작업 기록(누가 · 사람/AI · 어디에 무엇을 커밋/push 했나)을 보여 준다.'
+      H_FLAGS='  --today              오늘 (기본)
+  --days N             최근 N일
+  --since YYYY-MM-DD   이 날짜부터
+  --json               기계용 JSON (gitch schema report)'
+      H_EX='gitch report --today
+gitch report --days 7 --json' ;;
+    graph) H_GROUP='inspect'; H_TIER='main'; H_ALIAS='g'; H_SUBS='diff review check languages index affected watch'
+      H_USAGE='gitch graph [files|modules|changes|tree] [--format html|json|svg|png] [폴더|저장소]'
+      H_DESC='구조 그래프: import · 모듈 의존 · 같이 바뀌는 파일 · 폴더 (짧게 g, 하위 명령마다 --help).'
+      H_SHORT='gitch graph [files|modules|changes|...]'
+      H_SUM='구조 그래프: import / 모듈 의존 / 같이 바뀌는 파일 / 폴더 (짧게 g)'
+      H_OWN='graph_cmd'
+      H_WRITES='결과 파일(--out)과 check --init 의 규칙 파일만 (저장소는 읽기 전용)'
+      H_EX='gitch g
+gitch graph diff main --format json' ;;
+    schema) H_GROUP='inspect'
+      H_USAGE='gitch schema [public|graph|error|status|ck|preflight|...]'
+      H_DESC='gitch 의 공개 JSON 출력 계약(JSON Schema v1)을 출력한다 (기본: 전체, flow-* 는 흐름 엔진의 것).'
+      H_EX='gitch schema
+gitch schema preflight' ;;
+    completion) H_GROUP='inspect'
+      H_USAGE='gitch completion bash|zsh|fish|powershell'
+      H_DESC='명령 · 옵션 · 계정 · 브랜치 · 언어 · 저장소 자동완성 스크립트를 표준출력에 만든다 (설정 파일은 직접 바꾸지 않는다).'
+      H_EX='source <(gitch completion zsh)
+gitch completion fish | source' ;;
+
+    list) H_GROUP='account'; H_TIER='main'; H_ALIAS='ls'
+      H_USAGE='gitch list [--check] [--json]'
+      H_DESC='등록된 계정과 서버 · 폴더 규칙을 보여 준다.'
+      H_SUM='등록된 계정'
+      H_FLAGS='  --check   SSH 접속도 확인
+  --json    기계용 JSON (gitch schema list)'
+      H_NET='--check 일 때만 SSH 접속'
+      H_EX='gitch list
+gitch list --check' ;;
+    add) H_GROUP='account'; H_TIER='main'
+      H_USAGE='gitch add
+gitch add --id ID --email 메일 [--host 서버] [--port 포트] [--folder 경로|--no-folder] [--via 계정] --no-setup --json --yes'
+      H_DESC='계정을 추가한다: 인자가 없으면 터미널에서 묻고(사용자만), 옵션을 주면 앱 계정 설정용으로 등록만 한다 (SSH 키 생성은 gitch setup).'
+      H_SUM='계정 추가 (사용자만)'
+      H_FLAGS='  --id · --email · --host · --port   계정 아이디 · 이메일 · 서버(기본 github.com) · SSH 포트(기본 22)
+  --folder 경로 | --no-folder        계정 기본 폴더 규칙 (기본 ~/Develop/<id>)
+  --via 계정                         다른 계정의 로그인을 빌려 씀
+  -y, --yes                          확인 건너뛰기 (앱에서 사용자가 확인한 뒤)'
+      H_WRITES='gitch 설정 · 전역 git 설정 (자동 규칙)'
+      H_EX='gitch add' ;;
+    remove) H_GROUP='account'; H_ALIAS='rm'
+      H_USAGE='gitch remove <아이디>'
+      H_DESC='계정을 목록에서 지운다 (사용자가 터미널에서만, SSH 키 파일과 잠긴 저장소는 그대로).'
+      H_WRITES='gitch 설정 · 전역 git 설정 (자동 규칙)'
+      H_EX='gitch remove alice' ;;
+    org) H_GROUP='account'; H_TIER='main'
+      H_USAGE='gitch org [list]
+gitch org add <서버/조직> <계정> [--yes]
+gitch org rm <서버/조직> [--yes]'
+      H_DESC='조직 → 계정 규칙을 보고, 더하고, 뺀다 (그 조직의 저장소는 그 계정으로).'
+      H_SHORT='gitch org [add <서버/조직> <계정>|rm]'
+      H_SUM='조직 → 계정 규칙'
+      H_FLAGS='  -y, --yes   확인 질문 건너뛰기 (사용자 동의를 받은 뒤)'
+      H_WRITES='add · rm 은 gitch 설정 · 전역 git 설정 (자동 규칙)'
+      H_EX='gitch org
+gitch org add github.com/myorg alice' ;;
+    config) H_GROUP='account'; H_TIER='main'
+      H_USAGE='gitch config [show | path | get <키> | check]
+gitch config set|add <키> <값> [--yes]
+gitch config unset|unset-all <키> [--yes]
+gitch config edit'
+      H_DESC='gitch 설정 파일을 보고, 검사하고, 바꾼다 (인자가 없으면 show).'
+      H_SHORT='gitch config [show|get|set|check ...]'
+      H_SUM='설정 파일 보기 · 검사 · 바꾸기'
+      H_FLAGS='  show · path · get · check   읽기 전용: 내용 · 파일 위치 · 값 하나 · 문법/계정 검사
+  set · add · unset · unset-all   값 바꾸기 (확인 필요)
+  edit                        편집기로 열기 (사용자가 터미널에서만)
+  -y, --yes                   확인 질문 건너뛰기 (사용자 동의를 받은 뒤)'
+      H_WRITES='set · add · unset · edit 는 gitch 설정 (계정/폴더/조직 키는 전역 git 설정도)'
+      H_EX='gitch config check
+gitch config get gitsw.scanRoot' ;;
+    setup) H_GROUP='account'; H_TIER='main'
+      H_USAGE='gitch setup [계정]
+gitch setup ID --inspect|--generate|--check --json [--yes]'
+      H_DESC='SSH 키를 만들고 등록을 안내한다: 계정만 주면 터미널에서 묻고(사용자만), 옵션을 주면 앱 계정 설정용으로 한 단계만 한다.'
+      H_SUM='SSH 키 생성·등록 (사용자만)'
+      H_FLAGS='  --inspect    계정 · SSH 별칭 · 공개키 상태만 읽기
+  --generate   암호 없는 전용 Ed25519 키 생성 (확인 필요, 기존 키는 덮어쓰지 않음)
+  --check      SSH 연결 확인
+  -y, --yes    --generate 확인 건너뛰기 (앱에서 사용자가 확인한 뒤)'
+      H_WRITES='~/.ssh (키 · config) — --inspect · --check 는 읽기 전용'; H_NET='--check 와 대화형 확인은 SSH 접속'
+      H_EX='gitch setup
+gitch setup alice --inspect --json' ;;
+    login) H_GROUP='account'
+      H_USAGE='gitch login github --start --json --yes [--capability projects --expected-login 계정]
+gitch login github --status SESSION --json
+gitch login github --cancel SESSION --json'
+      H_DESC='앱의 GitHub 브라우저 로그인(GitHub CLI 웹 인증)을 시작하고, 상태를 읽고, 취소한다.'
+      H_FLAGS='  --start            로그인 세션 시작 (-y, --yes 확인 필요)
+  --status SESSION   일회용 코드와 결과 읽기
+  --cancel SESSION   세션 취소
+  --capability projects --expected-login 계정   프로젝트 접근 권한을 추가로 요청'
+      H_WRITES='GitHub CLI(gh) 의 로그인 상태'; H_NET='GitHub 사용'
+      H_EX='gitch login github --start --json --yes' ;;
+    auto) H_GROUP='account'
+      H_USAGE='gitch auto'
+      H_DESC='주소 · 폴더 · 조직 자동 규칙을 지금 설정으로 다시 만든다.'
+      H_WRITES='전역 git 설정 (자동 규칙)'
+      H_EX='gitch auto' ;;
+    sign) H_GROUP='account'
+      H_USAGE='gitch sign [on|off] [--yes]'
+      H_DESC='커밋 서명(Verified)을 켜고 끈다 (인자가 없으면 지금 상태, 켜고 끄기는 사용자가 터미널에서).'
+      H_FLAGS='  -y, --yes   터미널이 아닐 때도 진행 (사용자 동의를 받은 뒤)'
+      H_WRITES='on · off 는 전역 git 설정과 잠긴 저장소들의 서명 설정'
+      H_EX='gitch sign
+gitch sign on' ;;
+    ai) H_GROUP='account'; H_TIER='main'
+      H_USAGE='gitch ai [--print | --skill | --remove]'
+      H_DESC='AI 도구(Claude Code · Codex 등)에 gitch 규칙 · 스킬 · 명령 검사 훅을 깔거나 지운다.'
+      H_SUM='AI 도구(Claude, Codex) 규칙·스킬·검사 훅'
+      H_FLAGS='  --print    규칙 블록만 출력 (아무것도 바꾸지 않음)
+  --skill    스킬 문서만 출력 (아무것도 바꾸지 않음)
+  --remove   AI 도구 연동을 지움'
+      H_WRITES='옵션이 없거나 --remove 면 ~/.claude · ~/.codex 등의 규칙 · 스킬 · 훅'
+      H_EX='gitch ai --print
+gitch ai' ;;
+    ssh) H_GROUP='account'
+      H_USAGE='gitch ssh prune [--yes]'
+      H_DESC='지금 계정 설정에서 쓰지 않는 SSH Host 를 ~/.ssh/config 에서 정리한다 (키 파일은 그대로, 백업 남김).'
+      H_FLAGS='  -y, --yes   확인 질문 건너뛰기 (사용자 동의를 받은 뒤)'
+      H_WRITES='~/.ssh/config'
+      H_EX='gitch ssh prune' ;;
+    install) H_GROUP='account'; H_TIER='main'
+      H_USAGE='gitch install'
+      H_DESC='전체 설치 · 갱신: ~/bin/gitch 연결, 터미널 연동, 자동 규칙, 검사 훅, AI 도구 연동.'
+      H_SUM='전체 설치·갱신'
+      H_WRITES='~/bin · 셸 설정 파일 · 전역 git 설정 · ~/.claude · ~/.codex (바꾸기 전 파일은 백업)'
+      H_EX='gitch install' ;;
+    uninstall) H_GROUP='account'
+      H_USAGE='gitch uninstall [--yes]'
+      H_DESC='gitch 전역 설정(자동 규칙 · 검사 훅 · AI 연동 · 터미널 연동)을 지운다 (계정 설정 파일 · SSH 키 · 저장소 잠금은 남김).'
+      H_FLAGS='  -y, --yes   확인 질문 건너뛰기 (사용자 동의를 받은 뒤)'
+      H_WRITES='전역 git 설정 · 셸 설정 파일 · AI 도구 설정 · 저장소 보조 훅'
+      H_EX='gitch uninstall' ;;
+    migrate) H_GROUP='account'
+      H_USAGE='gitch migrate [기존 gitch(v1) 경로] [--force]'
+      H_DESC='v1 gitch 스크립트 안의 계정 · 폴더 설정을 지금 설정 파일로 옮긴다.'
+      H_FLAGS='  --force   이미 있는 설정 파일을 덮어씀 (백업 남김)'
+      H_WRITES='gitch 설정 파일'
+      H_EX='gitch migrate' ;;
+    export) H_GROUP='account'
+      H_USAGE='gitch export [파일]'
+      H_DESC='설정을 파일로 내보낸다 (파일이 없으면 표준출력, SSH 키는 포함하지 않는다).'
+      H_WRITES='파일을 주면 그 파일만'
+      H_EX='gitch export gitch-config.txt' ;;
+    import) H_GROUP='account'
+      H_USAGE='gitch import <파일> [--yes]'
+      H_DESC='내보낸 설정을 가져와 지금 설정을 바꾼다 (백업 남김, 사용자가 터미널에서).'
+      H_FLAGS='  -y, --yes   확인 질문 건너뛰기 (사용자 동의를 받은 뒤)'
+      H_WRITES='gitch 설정 · 전역 git 설정 (자동 규칙)'
+      H_EX='gitch import gitch-config.txt' ;;
+    doctor) H_GROUP='account'; H_TIER='main'
+      H_USAGE='gitch doctor [--json] [--no-net]'
+      H_DESC='git · 설정 · SSH · 훅 · AI 연동의 문제를 진단하고 고치는 방법을 알려 준다.'
+      H_SUM='문제 진단'
+      H_FLAGS='  --json              기계용 JSON (gitch schema doctor)
+  --no-net, --offline   SSH · 원격 확인을 건너뜀'
+      H_NET='SSH 접속 확인 (--no-net 으로 끔)'
+      H_EX='gitch doctor
+gitch doctor --json --no-net' ;;
+    version) H_GROUP='account'; H_ALIAS='-v --version'
+      H_USAGE='gitch version [--json]'
+      H_DESC='gitch 버전과 실행 파일 위치를 보여 준다.'
+      H_FLAGS='  --json   기계용 JSON (gitch schema version)'
+      H_EX='gitch version' ;;
+    self-update) H_GROUP='account'
+      H_USAGE='gitch self-update'
+      H_DESC='따로 받은 gitch 를 최신 릴리스로 바꾼다 (앱에 든 gitch 는 앱과 함께, 저장소의 gitch 는 그 저장소와 함께 바뀐다).'
+      H_WRITES='따로 받은 gitch 실행 파일과 도우미'; H_NET='릴리스를 내려받음'
+      H_EX='gitch self-update' ;;
+    logo) H_GROUP='account'
+      H_USAGE='gitch logo [on|off|status] [--json]'
+      H_DESC='CLI 의 작은 눈 로고 표시 설정을 보고 바꾼다 (앱 설정 > CLI 에서도 변경).'
+      H_OWN='logo_cmd'
+      H_WRITES='on · off 는 gitch 설정 (ui.logo)'
+      H_EX='gitch logo off' ;;
+    help) H_GROUP='account'; H_ALIAS='-h --help'
+      H_USAGE='gitch help [명령 [하위 명령] | --all]'
+      H_DESC='명령 개요를 보여 주고, 명령 이름(별칭도 됨)을 주면 그 명령의 도움말을 보여 준다 — gitch <명령> --help 와 같다.'
+      H_FLAGS='  --all   모든 명령의 도움말을 한 번에'
+      H_EX='gitch help push
+gitch help --all' ;;
+    guard) H_GROUP='internal'
+      H_USAGE='gitch guard --claude'
+      H_DESC='Claude Code 의 PreToolUse 훅 전용: 표준입력의 JSON 을 보고 위험한 git 명령을 막거나 확인을 요청한다 (gitch ai 가 등록한다).'
+      H_EX='gitch guard --claude < hook-input.json' ;;
+    *) return 1 ;;
+  esac
+}
+
+help_resolve() {   # $1 command name or alias → HELP_NAME (the canonical name); false when unknown
+  local name
+  HELP_NAME=''
+  [ -n "${1:-}" ] || return 1
+  for name in $HELP_COMMANDS; do
+    [ "$name" != "$1" ] || { HELP_NAME=$name; return 0; }
+  done
+  for name in $HELP_COMMANDS; do
+    help_topic "$name"
+    case " $H_ALIAS " in *" $1 "*) HELP_NAME=$name; return 0 ;; esac
+  done
+  return 1
+}
+
+edit_distance() {   # $1 $2 → ED: inserted, deleted, replaced and swapped neighbouring letters (plain bash; only an unknown command pays for it)
+  local one=$1 two=$2 i j v
+  local -a before=() last=() row=()
+  for ((j = 0; j <= ${#two}; j++)); do last[j]=$j; done
+  for ((i = 1; i <= ${#one}; i++)); do
+    row=("$i")
+    for ((j = 1; j <= ${#two}; j++)); do
+      v=$((last[j - 1] + 1)); [ "${one:i-1:1}" != "${two:j-1:1}" ] || v=${last[j - 1]}
+      [ $((last[j] + 1)) -ge "$v" ] || v=$((last[j] + 1))
+      [ $((row[j - 1] + 1)) -ge "$v" ] || v=$((row[j - 1] + 1))
+      if [ "$i" -gt 1 ] && [ "$j" -gt 1 ] && [ "${one:i-1:1}" = "${two:j-2:1}" ] && [ "${one:i-2:1}" = "${two:j-1:1}" ] && [ $((before[j - 2] + 1)) -lt "$v" ]; then
+        v=$((before[j - 2] + 1))
+      fi
+      row[j]=$v
+    done
+    before=("${last[@]}"); last=("${row[@]}")
+  done
+  ED=${last[${#two}]}
+}
+
+help_suggest() {   # $1 what was typed → HELP_SUGGEST: up to three close command names, the closest first ("" when none is close)
+  local typed name alias candidate limit=2 near='' far='' count=0
+  typed=$(lower "$1")
+  HELP_SUGGEST=''
+  # One slip in a short word, two in a longer one; a single letter is too little to guess from.
+  [ ${#typed} -ge 2 ] || return 0
+  [ ${#typed} -ge 5 ] || limit=1
+  for name in $HELP_COMMANDS; do
+    help_topic "$name"
+    [ "$H_GROUP" != internal ] || continue
+    for candidate in "$name" $H_ALIAS; do
+      case "$candidate" in -*) continue ;; esac
+      edit_distance "$typed" "$candidate"
+      if [ "$ED" -le 1 ] || [[ "$candidate" == "$typed"* ]]; then near="$near $candidate"
+      elif [ "$ED" -le "$limit" ]; then far="$far $candidate"; fi
+    done
+  done
+  for candidate in $near $far; do
+    [ "$count" -lt 3 ] || break
+    HELP_SUGGEST="$HELP_SUGGEST${HELP_SUGGEST:+, }$candidate"; count=$((count + 1))
+  done
+}
+
+help_unknown() {   # $1 message, $2 what was typed: the error, the closest names and where the list is, without the whole help (exit 1)
+  [ -z "$MACHINE_JSON" ] || die "$1: $2"
+  err "$1: $2"
+  help_suggest "$2"
+  [ -z "$HELP_SUGGEST" ] || say "비슷한 명령: $HELP_SUGGEST" >&2
+  say '명령 목록: gitch help' >&2
+  exit 1
+}
+
+help_engine() {   # $1 flow|test|ci, $2 optional flow subcommand: the flow engine's own help, when the engine is installed
+  local engine topic
+  case "$1" in flow) topic=${2:-} ;; *) topic=$1 ;; esac
+  case "$topic" in -*) topic='' ;; esac
+  say ''
+  if engine=$(flow_engine); then
+    # "help <topic>" never runs anything, whatever version of the engine is installed.
+    if [ -n "$topic" ]; then "$engine" help "$topic"; else "$engine" help; fi
+  else
+    say '흐름 엔진(gitch-flow)을 찾지 못해 자세한 옵션을 보여 줄 수 없습니다. 앱을 업데이트하거나 gitch self-update 를 실행하세요.'
+  fi
+  return 0
+}
+
+help_show() {   # $1 command or alias, $2 optional subcommand → that command's help; false when the command is unknown
+  local sub='' word nl=$'\n' l_usage='사용법: ' l_alias='별칭' l_writes='변경' l_net='네트워크' l_ex='예시' l_flags='옵션'
+  help_resolve "${1:-}" || return 1
+  help_topic "$HELP_NAME"
+  for word in $H_SUBS; do [ "$word" != "${2:-}" ] || sub=$word; done
+  [ "$H_LANG" != en ] || { l_usage='Usage: '; l_alias='Aliases'; l_writes='Changes'; l_net='Network'; l_ex='Examples'; l_flags='Options'; }
+  case "$H_OWN" in
+    ''|help_engine)
+      say "$l_usage${H_USAGE//$nl/$nl        }"
+      say "  $H_DESC"
+      [ -z "$H_FLAGS" ] || { say ''; say "$l_flags"; say "$H_FLAGS"; } ;;
+    *_cmd) if [ -n "$sub" ]; then "$H_OWN" "$sub" --help; else "$H_OWN" --help; fi ;;
+    *) "$H_OWN" ;;
+  esac
+  say ''
+  [ -z "$H_ALIAS" ] || say "$l_alias: ${H_ALIAS// /, }"
+  say "$l_writes: $H_WRITES"
+  say "$l_net: $H_NET"
+  say "$l_ex"
+  say "  ${H_EX//$nl/$nl  }"
+  case "$H_OWN" in help_engine) help_engine "$HELP_NAME" "${2:-}" ;; esac
+  return 0
+}
+
+help_cmd() {   # the overview: one line for the commands people use most, names for the rest (all from the table above)
+  local group name nl=$'\n' usage pad more
   load_config >/dev/null 2>&1
-  cat <<EOF
-gitch $GITSW_VERSION — 여러 Git 계정 관리 (계정: $(account_names))
+  say "gitch $GITSW_VERSION — 여러 Git 계정 관리 (계정: $(account_names))"
+  for group in $HELP_GROUPS; do
+    [ "$group" != internal ] || continue
+    help_group_title "$group"
+    say ''; say "$HELP_TITLE"
+    more=''
+    for name in $HELP_COMMANDS; do
+      help_topic "$name"
+      [ "$H_GROUP" = "$group" ] || continue
+      if [ "$H_TIER" != main ]; then more="$more${more:+ · }$name"; continue; fi
+      usage=${H_SHORT:-${H_USAGE%%"$nl"*}}
+      ui_width "$usage"; pad=$((41 - UI_WIDTH)); [ "$pad" -ge 2 ] || pad=2
+      printf '  %s%*s%s\n' "$usage" "$pad" '' "${H_SUM:-$H_DESC}"
+    done
+    [ -z "$more" ] || say "  그 밖에: $more"
+  done
+  say ''
+  say '명령 하나 자세히: gitch help <명령>  (gitch <명령> --help 와 같고, 실행하지 않고 설명만 보여 줍니다)'
+  say '모든 명령 한 번에: gitch help --all'
+  say '종료코드: 0 정상(커밋할 변경 없음 포함), 1 문제/실패, 2 사용자 확인 필요(--yes), 4 올릴 파일을 고르지 않음'
+}
 
-매일 쓰는 것
-  gitch preflight [--json]                 커밋/push 전 한 번에 점검 (PREFLIGHT=OK|WARN|STOP)
-  gitch ck [--json]                        수정한 파일 / push 안 한 커밋 / 받을 커밋 / 진행 중 작업
-  gitch c -m 제목 [-m 본문]                 커밋 (준비된 파일만, 터미널에서는 없으면 전체)
-  gitch c -a -m 메시지                      변경사항 전부 커밋   (-F 파일, --trailer "키: 값")
-  gitch p [--force]                        push (첫 push 면 원격 브랜치 연결, --force 는 확인 후)
-  gitch cp [-a] -m 메시지                   커밋 + push
-  gitch pl                                 pull (내 커밋은 위로, 수정 중인 파일 보존)
-  gitch up                                 기본 브랜치(main 등) 최신을 지금 브랜치에 반영
-  gitch l [개수] / gitch d                  최근 커밋 그래프 / 바뀐 내용
-  gitch b [이름]                           브랜치 목록 / 이동 / 새로 만들기
-  gitch undo / gitch amend [메시지]         마지막 커밋 취소 / 고치기 (push 전만)
-  gitch continue / gitch abort             충돌난 rebase/merge 이어가기 / 취소
-  gitch rescue [번호] [--branch 이름|--restore]  자동 백업 목록 / 복구
-  gitch o                                  저장소 웹페이지
-  gitch app [--path 앱경로]                Gitrochi 데스크톱 앱 열기 (macOS · Windows)
-
-Multi-repository workflows
-  gitch workspace create NAME [REPO...]    Create a local repository group (alias: ws)
-  gitch workspace list|show|status [NAME] [--json]
-  gitch workspace add|remove NAME REPO... / delete NAME
-  gitch work start NAME [--workspace NAME | --repo PATH] [--branch BRANCH] [--base BASE]
-  gitch work list / info [NAME] [--json]    Inspect work items (alias: w)
-  gitch work set NAME / add [--work NAME] --repo PATH
-  gitch work commit [--work NAME] -m MESSAGE [-a]   Commit staged changes by default
-  gitch work push / pr [--work NAME]       Use existing account and push protections
-  gitch work end [NAME] [--delete-branch --yes]     Return to original branches; preserve branches by default
-  gitch issue list|show [NUMBER] [--json]  Read issues with the existing account
-  gitch pr list [--state open|closed|merged|all] [--json]
-  gitch wt list --json                    Inspect worktrees
-  gitch git COMMAND [ARGS]                Read-only system Git access
-  Workspace/work mutations accept --dry-run; use gitch help work or workspace for details.
-
-PR / MR
-  gitch pr --title 제목 [--body 내용] [--base 브랜치] [--draft] [--web]
-  gitch pr status / gitch ci               PR 상태·리뷰 / CI 결과
-  gitch publish [이름] [--public]          원격 저장소 새로 만들기 + 첫 push (기본 비공개)
-
-테스트 · 흐름 (gitch-flow, .gitch/flow.yml)
-  gitch flow init [--dry-run]              프로젝트를 읽고 흐름 파일 제안 · 만들기 (프로젝트 코드는 실행하지 않음)
-  gitch flow plan|run <흐름> [--affected]  계획 보기 / 실행 (영향받은 테스트만 · 병렬 · 캐시 · 서명된 결과)
-  gitch test [스위트|태그] [--affected]    테스트 스위트 바로 실행 (--summary: AI 용 짧은 요약)
-  gitch flow status|report|events [last]   결과 · 보고서 · 이벤트(NDJSON)
-  gitch flow trust                         흐름 파일 신뢰(사람이 확인) — 전체: gitch flow help
-  gitch ci status|logs|report              원격 CI(연결: gitch flow connect …)
-
-받기
-  gitch clone [계정] <저장소|주소> [폴더]   계정으로 clone + 잠금 (규칙으로 계정 자동, 계정 폴더에 받음)
-  gitch fork  [계정] <원본> [폴더]          포크 + clone + upstream 연결
-  gitch sync                               포크를 원본 최신으로
-
-저장소
-  gitch status [--json] [--strict]         이 저장소의 계정/잠금 상태
-  gitch use [계정]                         이 저장소를 계정으로 전환 + 잠금
-  gitch unlock / gitch ignore [--off]      잠금 해제 / gitch 검사에서 빼기
-  gitch protect [브랜치...|--rm 브랜치]     직접 push 금지 브랜치
-  gitch fix [--yes]                        push 안 한 커밋 중 작성자가 잘못된 것 고치기
-  gitch scan [폴더] [--fix] [--json]       폴더 아래 모든 저장소 점검
-  gitch audit [폴더|.] [--since 날짜]       push 된 커밋 중 다른 내 계정으로 된 것 보고
-  gitch prune [--gone] [--yes]             합쳐진 브랜치 정리
-  gitch wt [ls|new 브랜치|rm 폴더]          워크트리
-  gitch overlap [--watch] [--json]         워크트리 사이 같은 파일 · 연결된 코드의 충돌 위험 예보
-    [--current] [--interval 초] [--no-deps] [--fail-on-overlap]  현재 작업만 · 기본 2초 감시 · 위험 시 선택적으로 종료 코드 1
-  gitch move <원본> <대상> --plan [--json] 파일·폴더 이동 계획: 참조 · 영향 파일 · 테스트 후보
-  gitch module audit [폴더] [--json] [--strict]  npm 선언과 정적 import 점검
-  gitch report [--today|--days N]          gitch/AI 작업 기록
-  gitch graph [files|modules|changes|tree] 구조 그래프: import / 모듈 의존 / 같이 바뀌는 파일 / 폴더 (짧게 g)
-    [--format html|json|svg|png] [--out 파일] [--lang 언어] [폴더|저장소]  터미널은 html, 스크립트·AI 는 json (--help)
-  gitch g <저장소 이름>        어디서든 그 저장소의 그래프 — 계정 폴더에서 찾는다 (예: gitch g my-app)
-  gitch graph diff [기준]      이 브랜치에서 더하거나 뺀 의존 · 새 순환 (기본: 기본 브랜치와 갈라진 곳)
-  gitch graph check            .gitch/graph.rules 의 의존 규칙 검사, 위반이면 종료 코드 1 (--init 으로 예시)
-  gitch g languages --json     언어별 파일 인식 · 정적 import · 추정 · 선택적 정밀 인덱스 지원표
-  gitch schema [graph|error|…] 공개 JSON Schema v1 (기본: 전체 출력 계약)
-  gitch completion bash|zsh|fish|powershell  명령 · 옵션 · 계정 · 브랜치 · 언어 · 저장소 자동완성 스크립트
-
-계정/설정
-  gitch list [--check] [--json]            등록된 계정
-  gitch add / gitch remove <아이디>        계정 추가/삭제 (사용자만)
-  gitch add --id ID --email 메일 --host 서버 --no-setup --json --yes  앱 계정 설정: 등록만, SSH 키 생성 별도
-  gitch setup ID --inspect|--generate|--check --json [--yes]  상태 · 키 생성 · 연결 점검 (생성은 명시적 확인 필요)
-  gitch login github --start --json --yes   앱 브라우저 로그인 시작 (상태/취소: --status|--cancel SESSION --json)
-    추가 프로젝트 접근: --capability projects --expected-login <GitHub계정> (사용자 승인 필요)
-  gitch org [add <서버/조직> <계정>|rm]     조직 → 계정 규칙
-  gitch config [show|path|get|set|add|unset|edit]   설정 파일 ($(tilde "$CFG"))
-  gitch setup [계정]                       SSH 키 생성·등록 (사용자만)
-  gitch auto                               주소/폴더/조직 자동 규칙 다시 만들기
-  gitch sign on|off                        커밋 서명(Verified)
-  gitch ai [--print|--remove]              AI 도구(Claude, Codex) 규칙·스킬·검사 훅
-  gitch ssh prune                          쓰지 않는 SSH Host 정리
-  gitch install / gitch uninstall          전체 설치·갱신 / 전역 설정 제거
-  gitch migrate / export / import          v1 에서 옮기기 / 설정 내보내기 / 가져오기
-  gitch doctor [--json] [--no-net]         문제 진단
-  gitch version [--json] / gitch self-update  버전 / 업데이트
-  gitch logo [on|off|status] [--json]      CLI 작은 눈 로고 표시 설정 (앱 설정 > CLI 에서도 변경)
-
-종료코드: 0 정상(커밋할 변경 없음 포함), 1 문제/실패, 2 사용자 확인 필요(--yes), 4 올릴 파일을 고르지 않음
-EOF
+help_all() {   # gitch help --all: every command's help, in the overview's order
+  local group name
+  load_config >/dev/null 2>&1
+  say "gitch $GITSW_VERSION — 여러 Git 계정 관리 (계정: $(account_names))"
+  for group in $HELP_GROUPS; do
+    help_group_title "$group"
+    say ''; say "━━ $HELP_TITLE ━━"
+    for name in $HELP_COMMANDS; do
+      help_topic "$name"
+      [ "$H_GROUP" = "$group" ] || continue
+      say ''; help_show "$name"
+    done
+  done
 }
 
 menu_cmd() {
@@ -21889,6 +22586,38 @@ flow_preflight_line() {   # The FLOW=… line added to preflight (only where the
   case "$out" in FLOW=*) printf '%s' "${out#FLOW=}" ;; esac
 }
 
+help_flag_in() {   # $1 command, then its arguments: true when one of them is exactly --help or -h
+  # Scanning stops at --, and the value of an option that takes one is a value: gitch c -m "--help" still commits.
+  local command=$1 argument skip=''
+  shift
+  for argument in "$@"; do
+    if [ -n "$skip" ]; then skip=''; continue; fi
+    case "$argument" in
+      --) return 1 ;;
+      -h|--help) return 0 ;;
+      -*) ;;
+      *) continue ;;
+    esac
+    case "$command" in
+      c|commit|cp|amend) case "$argument" in -m|--message|-am|-F|--file|--trailer) skip=1 ;; esac ;;
+      pr|mr) case "$argument" in -t|--title|-b|--body|-F|--body-file|-B|--base|--state|--limit) skip=1 ;; esac ;;
+      work|w) case "$argument" in -m|--message|-am|-F|--file|--trailer|-t|--title|-b|--body|--body-file|-B|--work|--workspace|--repo|--branch|--base) skip=1 ;; esac ;;
+      issue) case "$argument" in --state|--limit|--label|--assignee) skip=1 ;; esac ;;
+      publish) case "$argument" in -d|--description) skip=1 ;; esac ;;
+      rescue) case "$argument" in --branch) skip=1 ;; esac ;;
+      audit|report) case "$argument" in --since|--days) skip=1 ;; esac ;;
+      add) case "$argument" in --id|--email|--host|--port|--folder|--via) skip=1 ;; esac ;;
+      login) case "$argument" in --status|--cancel|--capability|--expected-login) skip=1 ;; esac ;;
+      app) case "$argument" in --path|--repo|--file|--line|--view|--commit) skip=1 ;; esac ;;
+      overlap) case "$argument" in --interval) skip=1 ;; esac ;;
+      g|graph) case "$argument" in --format|-f|--index|--out|-o|--since|--max-commits|-n|--max-files|--min|--depth|--lang|-l|--base|--rules|-r|--language|--project-name|--interval) skip=1 ;; esac ;;
+      flow|test|ci)   # the options the flow engine reads a value for
+        case "$argument" in --env|--only|--jobs|-j|--since|--format|--out|--lang|--root|--idempotency-key|--run-id|--older-than|--trigger|--keep|--flow|--tag|--name|--url|--user|--project|--allow|--secret-from|--connection|--ref|--image|--runs-on) skip=1 ;; esac ;;
+    esac
+  done
+  return 1
+}
+
 # ================= 명령줄 =================
 
 detect_actor
@@ -21896,14 +22625,19 @@ ui_init "$@"
 setup_colors
 ui_start "$@"
 
+# Asking for help never runs the command: gitch <command> ... --help prints that command's help, for every command and alias.
+# (Internal protocol commands, _complete and the hooks, take their arguments as data.)
+case "${1:-}" in
+  ''|help|-h|--help|_*) ;;
+  *) if [ $# -gt 1 ] && help_flag_in "$@" && help_show "$1" "${2:-}"; then exit 0; fi ;;
+esac
+
 case "${1:-}" in
   help|-h|--help)
     case "${2:-}" in
-      workspace|ws) workspace_help ;;
-      work|w) work_help ;;
-      issue) hosting_read_help ;;
-      git) git_read_help ;;
-      *) help_cmd ;;
+      --all|-a) help_all ;;
+      ''|-*) help_cmd ;;
+      *) help_show "$2" "${3:-}" || help_unknown '알 수 없는 도움말 주제' "$2" ;;
     esac
     exit 0 ;;
   version|-v|--version) shift; version_cmd "$@"; exit 0 ;;
@@ -21918,32 +22652,32 @@ case "${1:-}" in
   c|commit) shift; commit_cmd "$@"; rc=$?; [ $rc -eq 3 ] && rc=0; exit $rc ;;
   p|push) shift; push_cmd "$@"; exit $? ;;
   cp) shift; commit_push_cmd "$@"; exit $? ;;
-  pl|pull) pull_cmd; exit $? ;;
-  up) up_cmd; exit $? ;;
+  pl|pull) shift; arity 'gitch pl' 0 "$@"; pull_cmd; exit $? ;;
+  up) shift; arity 'gitch up' 0 "$@"; up_cmd; exit $? ;;
   ck|check) shift; check_cmd "$@"; exit $? ;;
   preflight|pf) shift; preflight_cmd "$@"; exit $? ;;
-  l|log) log_cmd "${2:-}"; exit $? ;;
+  l|log) shift; arity 'gitch l [개수]' 1 "$@"; log_cmd "${1:-}"; exit $? ;;
   d|diff) shift; diff_cmd "$@"; exit 0 ;;
-  b|branch) branch_cmd "${2:-}"; exit $? ;;
-  undo) undo_cmd; exit $? ;;
+  b|branch) shift; arity 'gitch b [이름]' 1 "$@"; branch_cmd "${1:-}"; exit $? ;;
+  undo) shift; arity 'gitch undo' 0 "$@"; undo_cmd; exit $? ;;
   amend) shift; amend_cmd "$@"; exit $? ;;
-  continue) continue_cmd; exit $? ;;
+  continue) shift; arity 'gitch continue' 0 "$@"; continue_cmd; exit $? ;;
   abort) shift; abort_cmd "$@"; exit $? ;;
   rescue) shift; rescue_cmd "$@"; exit $? ;;
-  o|open) open_cmd; exit $? ;;
+  o|open) shift; arity 'gitch o' 0 "$@"; open_cmd; exit $? ;;
   app) shift; app_cmd "$@"; exit $? ;;
   pr|mr) shift; pr_cmd "$@"; exit $? ;;
   ci) shift; if [ $# -gt 0 ]; then flow_cmd ci "$@"; else ci_cmd; fi; exit $? ;;
   publish) shift; publish_cmd "$@"; exit $? ;;
   status|st) shift; status_cmd "$@"; exit $? ;;
-  use) use_cmd "${2:-}"; exit $? ;;
+  use) shift; arity 'gitch use [계정]' 1 "$@"; use_cmd "${1:-}"; exit $? ;;
   unlock) shift; unlock_cmd "$@"; exit $? ;;
   ignore) shift; ignore_cmd "$@"; exit $? ;;
   protect) shift; protect_cmd "$@"; exit $? ;;
   clone) shift; clone_cmd "$@"; exit $? ;;
   fork) shift; fork_cmd "$@"; exit $? ;;
-  sync) sync_cmd; exit $? ;;
-  fix) fix_cmd "${2:-}"; exit $? ;;
+  sync) shift; arity 'gitch sync' 0 "$@"; sync_cmd; exit $? ;;
+  fix) shift; fix_cmd "$@"; exit $? ;;
   scan) shift; scan_cmd "$@"; exit $? ;;
   audit) shift; audit_cmd "$@"; exit $? ;;
   prune) shift; prune_cmd "$@"; exit $? ;;
@@ -21959,23 +22693,23 @@ case "${1:-}" in
   g|graph) shift; graph_cmd "$@"; exit $? ;;
   list|ls) shift; list_cmd "$@"; exit $? ;;
   add) shift; add_cmd "$@"; exit $? ;;
-  remove|rm) remove_cmd "${2:-}"; exit $? ;;
+  remove|rm) shift; arity 'gitch remove <아이디>' 1 "$@"; remove_cmd "${1:-}"; exit $? ;;
   org) shift; org_cmd "$@"; exit $? ;;
   config) shift; config_cmd "$@"; exit $? ;;
   setup) shift; setup_cmd "$@"; exit $? ;;
-  auto) install_auto_rules; exit $? ;;
-  sign) sign_cmd "${2:-}" "${3:-}"; exit $? ;;
+  auto) shift; arity 'gitch auto' 0 "$@"; install_auto_rules; exit $? ;;
+  sign) shift; sign_cmd "$@"; exit $? ;;
   ai) shift; ai_cmd "$@"; exit $? ;;
   ssh) shift; ssh_cmd "$@"; exit $? ;;
-  install) install_cmd; exit $? ;;
+  install) shift; arity 'gitch install' 0 "$@"; install_cmd; exit $? ;;
   uninstall) shift; uninstall_cmd "$@"; exit $? ;;
   migrate) shift; migrate_cmd "$@"; exit $? ;;
-  export) export_cmd "${2:-}"; exit $? ;;
+  export) shift; arity 'gitch export [파일]' 1 "$@"; export_cmd "${1:-}"; exit $? ;;
   import) shift; import_cmd "$@"; exit $? ;;
   doctor) shift; doctor_cmd "$@"; exit $? ;;
-  self-update) self_update_cmd; exit $? ;;
+  self-update) shift; arity 'gitch self-update' 0 "$@"; self_update_cmd; exit $? ;;
   guard) shift; guard_cmd "$@"; exit 0 ;;
   _hook) shift; hook_main "$@"; exit $? ;;
   "") menu_cmd; exit $? ;;
-  *) [ -n "$MACHINE_JSON" ] && die "알 수 없는 명령: $1"; err "알 수 없는 명령: $1"; help_cmd; exit 1 ;;
+  *) help_unknown '알 수 없는 명령' "$1" ;;
 esac

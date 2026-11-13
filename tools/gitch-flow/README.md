@@ -2,6 +2,10 @@
 
 `gitch-flow` runs the repository's `.gitch/flow.yml` and serves the native apps' JSON contracts. The execution format and guards are described in [the flow design](../../docs/flow/DESIGN.md).
 
+## Help
+
+`gitch-flow help` lists every subcommand. `gitch-flow <subcommand> --help`, `-h` and `gitch-flow help <subcommand>` print that subcommand's usage and exit with 0. A help request is answered before anything else: nothing is planned or run, stdin is not read and no remote is reached, wherever the flag is. Scanning stops at `--`, and the value of an option that takes one is a value (`--env --help` names an environment). `gitch flow …`, `gitch test …` and `gitch ci …` hand help requests to the same text.
+
 ## Read-only visual authoring
 
 The apps use one shared YAML implementation. Neither `inspect` nor `render` requires a Git repository, reads a source path, writes files, approves trust, accesses connections, nor executes source code.
