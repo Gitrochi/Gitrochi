@@ -1,70 +1,94 @@
-import { Clock3, History, Layers3, Play, ShieldCheck, TriangleAlert, Workflow } from "lucide-react";
-import { CheckCircle2, Code2, ListFilter } from "@/shared/icons";
-import { ChevronRight, Cloud, GitBranch, Plus, Search, Terminal, X } from "@/shared/icons";
-import { type KeyboardEvent, type ReactNode, useEffect, useId, useMemo, useRef, useState } from "react";
-import { type FlowPlan, type FlowPlanNode, type FlowStore, flowEngine, formatDuration, type RunNode, runRowPresentationState } from "@/entities/flow";
+import { Square } from "lucide-react";
+import { type KeyboardEvent, type ReactNode, useEffect, useId, useRef, useState } from "react";
+import { type FlowItem, type FlowPlan, type FlowStore, flowBanner, flowEngine, flowStepViews, isBadState } from "@/entities/flow";
+import { CircleX, Ellipsis, File, Plus } from "@/shared/icons";
 import { t } from "@/shared/i18n";
-import { failedTests, firstError, numberedLog, useObserve } from "@/shared/lib";
-import { Button, CheckLog, checkLogMenu, FailedCheckBlock, Spinner } from "@/shared/ui";
+import { useObserve } from "@/shared/lib";
+import { Button, IconButton, type MenuItem, NoticeBlock, showMenuBelow, Spinner } from "@/shared/ui";
 import { FlowGraph } from "./FlowGraph";
-import { FlowBlockIcon, FlowStateIcon, FlowStatePill, flowBlockKind, stateTitle } from "./FlowState";
+import { FlowHistory } from "./FlowHistory";
+import { FlowLibrary } from "./FlowLibrary";
+import { FlowRunBanner } from "./FlowRunBanner";
+import { FlowStepDetails } from "./FlowStepDetails";
 
-/** Flow selection, command inspection and execution history on one workspace. */
-export function FlowWorkspace({ flows, affected, busy, requestedFlow, onCreate, onRun, onOpen, onEdit, onReview, connectedCI, emptyState }: { flows: FlowStore; affected: boolean; busy: string | null; requestedFlow?: string; onCreate?: () => void; onRun: (flow: string) => void; onOpen: (run: string) => void; onEdit: (flow?: string, node?: string) => void; onReview: (flow: string) => void; connectedCI?: ReactNode; emptyState?: ReactNode }) {
+type Tab = "graph" | "history" | "ci";
+
+/**
+ * The Flows workspace, left to right: the list of flows, the selected flow (its name and actions, then Flow /
+ * History / Connected CI), and the selected step. The Flow tab shows one banner about the latest run and the steps
+ * as a graph in which a connector means "needs". (macOS: FlowWorkspaceView)
+ */
+export function FlowWorkspace({ flows, affected, busy, requestedFlow, onCreate, onRun, onStop, onOpen, onEdit, onReview, moreActions, connectedCI, emptyState }: {
+  flows: FlowStore;
+  /** Run only the steps the working changes affect */
+  affected: boolean;
+  /** The flow whose run is being prepared, if any */
+  busy: string | null;
+  /** A flow to select from outside, such as the one just created */
+  requestedFlow?: string;
+  onCreate?: () => void;
+  onRun: (flow: string) => void;
+  onStop: (runId: string) => void;
+  onOpen: (runId: string) => void;
+  onEdit: (flow?: string, step?: string) => void;
+  onReview: (flow: string) => void;
+  /** The "More flow actions" menu for the selected flow */
+  moreActions: (flow: FlowItem) => MenuItem[];
+  connectedCI?: ReactNode;
+  /** Shown instead of the workspace while the repository has no flow to select */
+  emptyState: ReactNode;
+}) {
   useObserve(flows);
   const [selectedFlow, setSelectedFlow] = useState<string | null>(null);
+  const [selectedStep, setSelectedStep] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [createdNotice, setCreatedNotice] = useState(false);
-  const [tab, setTab] = useState<"graph" | "history" | "ci">("graph");
-  const [plan, setPlan] = useState<FlowPlan | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [selectedNode, setSelectedNode] = useState<string | null>(null);
-  const loadedFlow = useRef<string | null>(null);
-  const searchInput = useRef<HTMLInputElement>(null);
+  const [tab, setTab] = useState<Tab>("graph");
+  const [justCreated, setJustCreated] = useState<string | null>(null);
   const workspaceID = useId();
+  /** The flow whose step the person chose themselves, so the workspace stops moving the selection for it */
+  const pickedBy = useRef<string | null>(null);
+
   const items = flows.list?.flows ?? [];
   const flow = items.find((item) => item.name === selectedFlow) ?? items[0];
-  const query = search.trim().toLocaleLowerCase();
-  const visibleFlows = items.filter((item) => `${item.name} ${item.description ?? ""}`.toLocaleLowerCase().includes(query));
-  const chooseFlow = (name: string) => { setSelectedFlow(name); if (name !== flow?.name) setSelectedNode(null); setTab("graph"); };
-  const clearSearch = () => { setSearch(""); searchInput.current?.focus(); };
+  const { plan, error, loading } = useFlowPlan(flows, flow?.name, affected, setSelectedStep);
+
+  const chooseFlow = (name: string) => {
+    if (name !== flow?.name) { setSelectedStep(null); pickedBy.current = null; }
+    setSelectedFlow(name);
+    setJustCreated(null);
+    setTab("graph");
+  };
   useEffect(() => {
     if (!requestedFlow) return;
-    setSelectedFlow(requestedFlow); setSelectedNode(null); setSearch(""); setTab("graph"); setCreatedNotice(true);
+    setSelectedFlow(requestedFlow); setSelectedStep(null); setSearch(""); setTab("graph"); setJustCreated(requestedFlow);
   }, [requestedFlow]);
+
+  // The latest run of the selected flow, read once so the graph can show how each step did.
+  const runs = flows.runs.filter((run) => run.flow === flow?.name);
+  const latest = runs.find((run) => run.running) ?? runs[0];
+  const latestID = latest?.runId;
+  useEffect(() => { if (latestID && !flows.views.has(latestID)) void flows.open(latestID); }, [flows, latestID]);
+
+  const trusted = flows.list?.trusted !== false;
+  const banner = flowBanner({ trusted, latest, view: latestID ? flows.views.get(latestID) : undefined });
+  // A changed flow file has no results yet: the old run's states would describe commands that no longer exist.
+  const view = banner.kind === "review" || !latestID ? undefined : flows.views.get(latestID);
+  const steps = plan ? flowStepViews(plan.nodes, view) : [];
+  // Open on the step that needs attention (failed, else running) until the person picks one themselves.
+  const attention = view?.nodes.find((node) => isBadState(node.state))?.id ?? view?.nodes.find((node) => node.state === "RUNNING")?.id;
   useEffect(() => {
-    let stale = false;
-    const changed = loadedFlow.current !== flow?.name;
-    if (changed) { setPlan(null); setSelectedNode(null); }
-    setError(null);
-    if (!flow) { setLoading(false); return; }
-    setLoading(true);
-    void flowEngine.plan(flow.name, flows.repo, affected).then((value) => {
-      if (!stale) {
-        loadedFlow.current = flow.name;
-        setPlan(value);
-        setSelectedNode((previous) => value.nodes.some((node) => node.id === previous) ? previous : value.nodes[0]?.id ?? null);
-      }
-    }, (reason) => { if (!stale) setError(reason instanceof Error ? reason.message : String(reason)); }).finally(() => { if (!stale) setLoading(false); });
-    return () => { stale = true; };
-  }, [flow?.name, flows.repo, flows.list, affected]);
-  const active = flows.runs.find((run) => run.flow === flow?.name && run.running);
-  const latest = active ?? flows.runs.find((run) => run.flow === flow?.name);
-  const latestID = latest?.runId ?? flow?.last?.runId;
-  const latestState = latest ? runRowPresentationState(latest) : flow?.last?.state;
-  const view = active ? flows.views.get(active.runId) : undefined;
-  const liveNodes = view && !view.done && view.nodes.length ? view.nodes : undefined;
-  const shownPlan = plan?.flow === flow?.name ? plan : null;
-  const graphNodes = liveNodes?.map((node) => ({ ...shownPlan?.nodes.find((planned) => planned.id === node.id), id: node.id, title: node.title, block: node.block, needs: node.needs, state: node.state, durationMs: node.durationMs })) ?? shownPlan?.nodes ?? [];
-  const selected = shownPlan?.nodes.find((node) => node.id === selectedNode);
-  const selectedLive = liveNodes?.find((node) => node.id === selectedNode);
-  const title = tab === "ci" ? t("Connected CI") : tab === "history" ? t("Run history") : flow?.name || t("Flows");
-  const description = tab === "ci" ? t("Review connected runs, jobs and logs for this repository.") : tab === "history" ? t("Inspect saved flow runs, their steps and results.") : flow?.description || t("Connect scripts into a repeatable workflow.");
-  const tabs = [
-    { id: "graph" as const, label: t("Flow graph"), icon: <Workflow size={15} /> },
-    { id: "history" as const, label: t("Run history"), icon: <History size={15} /> },
-    ...(connectedCI ? [{ id: "ci" as const, label: t("Connected CI"), icon: <Cloud size={15} /> }] : []),
+    if (attention && plan && pickedBy.current !== flow?.name && plan.nodes.some((node) => node.id === attention)) setSelectedStep(attention);
+  }, [attention, plan, flow?.name]);
+  const chooseStep = (id: string) => { pickedBy.current = flow?.name ?? null; setSelectedStep(id); };
+  const step = steps.find((entry) => entry.id === selectedStep);
+  const runStep = view?.nodes.find((node) => node.id === selectedStep);
+
+  if (!flow) return <div className="flow-workspace" data-flow-workspace>{emptyState}</div>;
+
+  const tabs: { id: Tab; label: string }[] = [
+    { id: "graph", label: t("Flow") },
+    { id: "history", label: t("History") },
+    ...(connectedCI ? [{ id: "ci" as const, label: t("Connected CI") }] : []),
   ];
   const navigateTabs = (event: KeyboardEvent<HTMLDivElement>) => {
     if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
@@ -74,111 +98,83 @@ export function FlowWorkspace({ flows, affected, busy, requestedFlow, onCreate, 
     setTab(tabs[next].id);
     event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]')[next]?.focus();
   };
-  return <div className="flow-workspace" data-flow-workspace>
-    <aside className="flow-library">
-      <div className="flow-library-title"><Workflow size={16} /><strong>{t("Flows")}</strong><span className="flow-count">{items.length}</span></div>
-      <div className="flow-library-search"><Search size={14} aria-hidden="true" /><input ref={searchInput} type="search" aria-label={t("Find flows")} placeholder={t("Find flows")} value={search} onChange={(event) => setSearch(event.target.value)} />{search && <button type="button" aria-label={t("Clear search")} data-tip={t("Clear search")} onClick={clearSearch}><X size={13} /></button>}</div>
-      <div className="flow-library-list">{visibleFlows.map((item) => {
-        const last = flows.runs.find((run) => run.flow === item.name);
-        return <button key={item.name} className={`flow-choice ${flow?.name === item.name ? "selected" : ""}`} aria-pressed={flow?.name === item.name} onClick={() => chooseFlow(item.name)}>
-          <span className="flow-choice-heading"><span className="flow-choice-icon"><Workflow size={14} /></span><strong>{item.name}</strong><FlowStateIcon state={last ? runRowPresentationState(last) : item.last?.state ?? null} /></span>
-          <span className="flow-choice-description">{item.description || t("Script workflow")}</span>
-          <span className="flow-choice-meta"><span>{t("{0} steps", item.nodes)}{item.trigger.length ? ` · ${item.trigger.join(", ")}` : ""}</span><ChevronRight size={12} /></span>
-        </button>;
-      })}{query && !visibleFlows.length && <div className="flow-library-empty" role="status"><Search size={22} /><span>{t("No matching flows")}</span><Button size="small" onClick={clearSearch}>{t("Clear search")}</Button></div>}</div>
-      <div className="flow-library-footer">{onCreate && <Button className="flow-create-action" onClick={onCreate}><Plus size={14} />{t("Create flow")}</Button>}{tab === "graph" && <button className="flow-library-config" onClick={() => onEdit(flow?.name, selectedNode ?? undefined)}><Code2 size={15} />{t("Configure scripts")}</button>}</div>
-    </aside>
-    <main className="flow-main">
-      <div className="flow-compact-selector"><Workflow size={15} /><label>{t("Flow")}<select aria-label={t("Flow")} value={flow?.name ?? ""} disabled={!items.length} onChange={(event) => chooseFlow(event.target.value)}>{items.map((item) => <option key={item.name} value={item.name}>{item.name}</option>)}</select></label>{onCreate && <Button size="small" onClick={onCreate}><Plus size={13} />{t("Create flow")}</Button>}</div>
-      <div className="flow-workspace-heading">
-        <div className="flow-heading-emblem" aria-hidden="true">{tab === "ci" ? <Cloud size={24} /> : tab === "history" ? <History size={24} /> : <Workflow size={24} />}</div>
-        <div className="flow-heading-copy"><span className="flow-eyebrow">{tab === "graph" ? t("Workflow") : t("Repository")}</span><h2>{title}</h2><p>{description}</p></div>
-        {flow && tab === "graph" && <div className="flow-heading-actions"><Button onClick={() => onEdit(flow.name, selectedNode ?? undefined)}><Code2 size={14} />{t("Edit flow")}</Button><Button className="flow-run-button" kind="primary" disabled={busy !== null || !shownPlan || loading || !!error} onClick={() => onRun(flow.name)}>{busy === flow.name ? <Spinner size={13} /> : <Play size={13} fill="currentColor" />}{t("Run flow")}</Button></div>}
-      </div>
-      <div className="flow-tabs" role="tablist" aria-label={t("Flows")} onKeyDown={navigateTabs}>
-        {tabs.map((item) => <button key={item.id} id={`${workspaceID}-${item.id}`} role="tab" aria-label={item.label} aria-selected={tab === item.id} aria-controls={`${workspaceID}-panel`} tabIndex={tab === item.id ? 0 : -1} className={tab === item.id ? "selected" : ""} onClick={() => setTab(item.id)}>{item.icon}{item.label}{item.id === "history" && <span className="flow-count">{flows.runs.length}</span>}</button>)}
-      </div>
-      <div className="flow-tab-panel" role="tabpanel" id={`${workspaceID}-panel`} aria-labelledby={`${workspaceID}-${tab}`} tabIndex={0}>
-      {createdNotice && tab === "graph" && flow?.name === requestedFlow && <div className="flow-created-note" role="status"><CheckCircle2 size={16} /><span>{t("Flow created. Review its commands, then run it.")}</span><button type="button" aria-label={t("Close")} data-tip={t("Close")} onClick={() => setCreatedNotice(false)}><X size={14} /></button></div>}
-      {tab === "ci" ? connectedCI : tab === "history" ? <FlowHistory flows={flows} onOpen={onOpen} /> : !flow && emptyState ? emptyState : <>
-        <div className="flow-plan-meta">
-          <span><Terminal size={12} />{shownPlan?.env || flow?.env || t("Local")}</span>
-          <span><Layers3 size={12} />{t("{0} steps", shownPlan?.nodes.length ?? flow?.nodes ?? 0)}</span>
-          <span><GitBranch size={12} />{t("{0} connections", shownPlan?.nodes.reduce((sum, node) => sum + node.needs.length, 0) ?? 0)}</span>
-          <div className="flow-plan-actions">{latestID && <button className="flow-latest-run" onClick={() => onOpen(latestID)}>{latestState && <FlowStatePill state={latestState} />}<span>{active ? t("View running flow") : t("Show last run")}</span><ChevronRight size={12} /></button>}<Button className={`flow-review-button ${flows.list?.trusted === false ? "needs-review" : ""}`} size="small" disabled={!shownPlan || loading || !!error} onClick={() => flow && onReview(flow.name)}><ShieldCheck size={13} />{flows.list?.trusted === false ? t("Review required") : t("Review commands…")}</Button></div>
+  const editFlow = () => onEdit(flow.name, selectedStep ?? undefined);
+
+  return (
+    <div className="flow-workspace" data-flow-workspace>
+      <FlowLibrary flows={items} runs={flows.runs} selected={flow.name} search={search} onSearch={setSearch} onChoose={chooseFlow} onCreate={onCreate} />
+      <main className="flow-main">
+        <div className="flow-compact-selector">
+          <label>{t("Flow")}
+            <select aria-label={t("Flow")} value={flow.name} onChange={(event) => chooseFlow(event.target.value)}>
+              {items.map((item) => <option key={item.name} value={item.name}>{item.name}</option>)}
+            </select>
+          </label>
+          {onCreate && <Button size="small" onClick={onCreate}><Plus size={13} />{t("New flow…")}</Button>}
         </div>
-        {error ? <div className="flow-empty error-text">{error}<Button onClick={() => onEdit(flow?.name, selectedNode ?? undefined)}>{t("Configure scripts")}</Button></div> : loading && !shownPlan ? <div className="flow-empty"><Spinner /></div> : <div className="flow-plan-body"><FlowGraph key={flow?.name} fitOnMount nodes={graphNodes} selected={selectedNode} onSelect={setSelectedNode} /><FlowInspector node={selected} live={selectedLive} onEdit={() => onEdit(flow?.name, selected?.id)} /></div>}
-        {!!shownPlan?.warnings.length && <div className="flow-graph-warning">{shownPlan.warnings.join("\n")}</div>}
-      </>}
-      </div>
-    </main>
-  </div>;
-}
-
-/** A step that failed in the run being followed: the shared failed-check block over the end of its output */
-function FailedStep({ live }: { live: RunNode }) {
-  const [jump, setJump] = useState(0);
-  // the tail changes in place and stops growing at its limit, so its ends say when to read it again
-  const lines = useMemo(() => numberedLog(live.tail), [live.id, live.tail.length, live.tail[0], live.tail.at(-1)]);
-  const tests = useMemo(() => failedTests(live.tail), [live.id, live.tail.length, live.tail[0], live.tail.at(-1)]);
-  return <FailedCheckBlock className="flow-failed-step" icon={<FlowStateIcon state={live.state} size={14} />}
-    outcome={live.durationMs != null ? t("Failed after {0}", formatDuration(live.durationMs)) : stateTitle(live.state)} tests={tests}
-    onJump={firstError(lines) != null ? () => setJump((value) => value + 1) : undefined}
-    menu={() => checkLogMenu(live.tail.length ? () => void navigator.clipboard.writeText(live.tail.join("\n")) : undefined)} moreLabel={t("More step actions")}>
-    {lines.length > 0 && <CheckLog className="framed" label={`${live.id} · ${t("Output")}`} lines={lines} jump={jump} />}
-  </FailedCheckBlock>;
-}
-
-function FlowInspector({ node, live, onEdit }: { node?: FlowPlanNode; live?: RunNode; onEdit: () => void }) {
-  return <aside className="flow-inspector">
-    <div className="flow-inspector-caption"><span className="flow-eyebrow">{t("Step details")}</span><Code2 size={13} /></div>
-    {node ? <>
-      <div className={`flow-inspector-heading kind-${flowBlockKind(node.block)}`}><span className="flow-node-type"><FlowBlockIcon block={node.block} size={19} /></span><div><h3>{node.id}</h3><span className="flow-step-block mono">{node.block}</span></div></div>
-      {node.title && node.title !== node.id && <p className="flow-step-description">{node.title}</p>}
-      {live?.state === "FAILED" ? <FailedStep live={live} /> : live && <div className="flow-step-live" role="status"><FlowStatePill state={live.state} />{live.durationMs != null && <span className="mono">{formatDuration(live.durationMs)}</span>}</div>}
-      <Button className="flow-edit-step" size="small" block onClick={onEdit}><Code2 size={13} />{t("Edit step")}<ChevronRight size={12} /></Button>
-      <dl className="flow-step-metadata">
-        <div><dt>{t("Step")}</dt><dd className="mono">{node.id}</dd></div>
-        <div><dt>{t("Depends on")}</dt><dd className="flow-dependency-list">{node.needs.length ? node.needs.map((id) => <span key={id} className="flow-dependency-chip mono">{id}</span>) : <span className="muted">{t("None")}</span>}</dd></div>
-        <div><dt>{t("Executor")}</dt><dd><span className="flow-executor-dot" />{node.executor || "local"}</dd></div>
-        {node.src && <div><dt>{t("Source")}</dt><dd className="mono flow-step-source">{node.src}</dd></div>}
-      </dl>
-      {node.run && <ScriptSurface title={t("Script")} script={node.run} />}
-      {node.undo && <ScriptSurface title={t("Undo script")} script={node.undo} />}
-      {node.reason?.message && <p className="flow-step-note">{node.reason.message}</p>}
-      {node.outward && <span className="flow-graph-warning"><TriangleAlert size={12} />{t("Acts outside this computer")}</span>}
-    </> : <div className="flow-inspector-empty"><Workflow size={28} /><p>{t("Choose a step to inspect its script and dependencies.")}</p></div>}
-  </aside>;
-}
-
-function ScriptSurface({ title, script }: { title: string; script: string }) {
-  return <section className="flow-code-surface"><h4><Terminal size={12} />{title}</h4><pre className="flow-script mono"><code>{script}</code></pre></section>;
-}
-
-function FlowHistory({ flows, onOpen }: { flows: FlowStore; onOpen: (run: string) => void }) {
-  const [filter, setFilter] = useState("");
-  const [state, setState] = useState("all");
-  const runs = flows.runs.filter((run) => (!filter || run.flow.toLowerCase().includes(filter.toLowerCase()) || run.runId.toLowerCase().includes(filter.toLowerCase())) && (state === "all" || (state === "RUNNING" ? run.running : runRowPresentationState(run) === state)));
-  const summary = [
-    { label: t("Run history"), count: flows.runs.length, tone: "neutral", icon: <History size={15} /> },
-    { label: t("Succeeded"), count: flows.runs.filter((run) => run.state === "SUCCEEDED").length, tone: "success", icon: <FlowStateIcon state="SUCCEEDED" size={15} /> },
-    { label: t("Failed"), count: flows.runs.filter((run) => run.state === "FAILED").length, tone: "failure", icon: <FlowStateIcon state="FAILED" size={15} /> },
-    { label: t("Running"), count: flows.runs.filter((run) => run.running).length, tone: "active", icon: <Clock3 size={15} /> },
-  ];
-  return <div className="flow-history" data-flow-history>
-    <div className="flow-history-summary">{summary.map((item) => <div className={`flow-history-stat ${item.tone}`} key={item.tone}><span className="flow-history-stat-icon">{item.icon}</span><div><span>{item.label}</span><strong className="mono">{item.count}</strong></div></div>)}</div>
-    <div className="flow-history-filters">
-      <label className="flow-history-search"><Search size={15} /><input aria-label={t("Filter runs")} placeholder={t("Filter runs")} value={filter} onChange={(event) => setFilter(event.target.value)} /></label>
-      <label className="flow-history-status"><ListFilter size={14} /><select aria-label={t("Run status")} value={state} onChange={(event) => setState(event.target.value)}><option value="all">{t("All statuses")}</option>{["RUNNING", "SUCCEEDED", "FAILED", "CANCELLED", "ROLLED_BACK", "ROLLBACK_FAILED", "REJECTED", "INTERRUPTED"].map((value) => <option key={value} value={value}>{stateTitle(value)}</option>)}</select></label>
+        <header className="flow-workspace-heading">
+          <div className="flow-heading-copy">
+            <h2>{flow.name}</h2>
+            {flow.description && <p>{flow.description}</p>}
+          </div>
+          <div className="flow-heading-actions">
+            <Button onClick={editFlow}><File size={14} />{t("Edit flow file…")}</Button>
+            {latest?.running
+              ? <Button tip={t("Stops every step and its child processes, then undoes what was changed")} onClick={() => onStop(latest.runId)}><Square size={10} fill="currentColor" />{t("Stop")}</Button>
+              : <Button className="flow-run-button" kind="primary" disabled={busy !== null || !plan || loading || !!error} onClick={() => onRun(flow.name)}>{busy === flow.name ? <Spinner size={13} /> : <PlayGlyph />}{t("Run flow")}</Button>}
+            <IconButton icon={<Ellipsis size={14} />} tip={t("More flow actions")} aria-label={t("More flow actions")} aria-haspopup="menu" onClick={(event) => showMenuBelow(event.currentTarget, moreActions(flow))} />
+          </div>
+        </header>
+        <div className="flow-tabs" role="tablist" aria-label={t("Flows")} onKeyDown={navigateTabs}>
+          {tabs.map((item) => (
+            <button key={item.id} id={`${workspaceID}-${item.id}`} role="tab" aria-label={item.label} aria-selected={tab === item.id} aria-controls={`${workspaceID}-panel`} tabIndex={tab === item.id ? 0 : -1} className={tab === item.id ? "selected" : ""} onClick={() => setTab(item.id)}>{item.label}</button>
+          ))}
+        </div>
+        <div className="flow-tab-panel" role="tabpanel" id={`${workspaceID}-panel`} aria-labelledby={`${workspaceID}-${tab}`} tabIndex={0}>
+          {tab === "ci" ? connectedCI : tab === "history" ? <FlowHistory runs={runs} onOpen={onOpen} /> : (
+            <div className="flow-plan">
+              <div className="flow-plan-main">
+                {error
+                  ? <NoticeBlock className="flow-banner" tone="failed" alert icon={<CircleX size={14} />} title={t("Couldn't read this flow")} caption={error} actions={[{ label: t("Edit flow file…"), onClick: editFlow }]} />
+                  : <FlowRunBanner banner={banner} created={justCreated === flow.name} steps={{ done: view?.nodes.filter((node) => !["PENDING", "RUNNING"].includes(node.state)).length ?? 0, total: view?.nodes.length ?? 0 }} onOpenRun={onOpen} onReview={() => onReview(flow.name)} />}
+                {plan
+                  ? <FlowGraph key={flow.name} fitOnMount nodes={steps} selected={selectedStep} onSelect={chooseStep} />
+                  : !error && <div className="flow-empty"><Spinner /></div>}
+                {!!plan?.warnings.length && <div className="flow-graph-warning">{plan.warnings.join("\n")}</div>}
+              </div>
+              {plan && <FlowStepDetails step={step} steps={steps} run={runStep} record={view && latestID ? flows.records.get(latestID) : undefined} onEdit={() => onEdit(flow.name, step?.id)} onOpenRun={runStep && latestID ? () => onOpen(latestID) : undefined} />}
+            </div>
+          )}
+        </div>
+      </main>
     </div>
-    {runs.length ? <div className="flow-history-list">
-      <div className="flow-history-labels"><span>{t("Flow")}</span><span>{t("Status")}</span><span>{t("Started")}</span><span>{t("Duration")}</span></div>
-      {runs.map((run) => <button className="flow-history-row" key={run.runId} onClick={() => onOpen(run.runId)} data-flow-run={run.runId}>
-        <span className="flow-history-name"><span className="flow-history-run-icon"><Workflow size={15} /></span><span><strong>{run.flow}</strong><small className="mono">{run.runId}</small></span></span>
-        <span className="flow-history-verdict"><FlowStatePill state={runRowPresentationState(run)} />{run.signed === false && !run.running && <TriangleAlert size={12} color="var(--orange)" data-tip={t("This record isn't signed by the engine, so gates don't trust it")} />}</span>
-        <span className="flow-history-time">{run.startedAt ? <time dateTime={run.startedAt}>{new Date(run.startedAt).toLocaleDateString()}<small>{new Date(run.startedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</small></time> : "—"}</span>
-        <span className="flow-history-duration mono">{run.durationMs != null ? formatDuration(run.durationMs) : "—"}<ChevronRight size={13} /></span>
-      </button>)}
-    </div> : <div className="flow-empty"><History size={30} /><strong>{t(flows.runs.length ? "No matching runs" : "No runs yet")}</strong>{flows.runs.length ? <Button onClick={() => { setFilter(""); setState("all"); }}>{t("Clear filters")}</Button> : <span>{t("Run a flow to see its steps, output and results here.")}</span>}</div>}
-  </div>;
+  );
+}
+
+/** The plan of one flow, re-read when the flow, its file or the affected-only switch changes */
+function useFlowPlan(flows: FlowStore, flow: string | undefined, affected: boolean, selectStep: (update: (previous: string | null) => string | null) => void) {
+  const [plan, setPlan] = useState<FlowPlan | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const loaded = useRef<string | null>(null);
+  useEffect(() => {
+    let stale = false;
+    if (loaded.current !== flow) { setPlan(null); selectStep(() => null); }
+    setError(null);
+    if (!flow) { setLoading(false); return; }
+    setLoading(true);
+    void flowEngine.plan(flow, flows.repo, affected).then((value) => {
+      if (stale) return;
+      loaded.current = flow;
+      setPlan(value);
+      // Keep the chosen step across a refresh; otherwise start on the first one so the details are never empty.
+      selectStep((previous) => value.nodes.some((node) => node.id === previous) ? previous : value.nodes[0]?.id ?? null);
+    }, (reason) => { if (!stale) setError(reason instanceof Error ? reason.message : String(reason)); }).finally(() => { if (!stale) setLoading(false); });
+    return () => { stale = true; };
+  }, [flow, flows.repo, flows.list, affected]);
+  return { plan: plan?.flow === flow ? plan : null, error, loading };
+}
+
+function PlayGlyph() {
+  return <svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 3v10l8.5-5z" fill="currentColor" /></svg>;
 }

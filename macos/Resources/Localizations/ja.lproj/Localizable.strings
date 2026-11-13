@@ -78,7 +78,6 @@
 "More job actions" = "ジョブのその他の操作";
 "1 test failed:" = "1 件のテストが失敗:";
 "%lld tests failed:" = "%lld 件のテストが失敗:";
-"More step actions" = "ステップのその他の操作";
 "More merge request actions" = "マージリクエストのその他の操作";
 "More pull request actions" = "プルリクエストのその他の操作";
 "More release actions" = "その他のリリース操作";
@@ -1282,7 +1281,6 @@
 "Trust" = "信頼";
 "Run this flow?" = "このフローを実行しますか？";
 "Couldn't run the flow" = "フローを実行できませんでした";
-"Running only tests affected by your changes" = "変更の影響を受けるテストだけを実行しています";
 "Run only tests affected by your changes" = "変更の影響を受けるテストだけを実行";
 "Run only affected tests" = "影響を受けるテストだけを実行";
 "Detect tests and propose a flow file" = "テストを検出してフローファイルを提案";
@@ -1291,17 +1289,13 @@
 "This commit hasn't passed yet" = "このコミットはまだ合格していません";
 "Pushes check a flow first" = "プッシュ前にフローを確認します";
 "Pushes don't check a flow" = "プッシュ前にフローを確認しません";
-"Pre-push check" = "プッシュ前の確認";
 "The flow engine (gitch-flow) isn't in this Gitrochi. Update Gitrochi to run flows." = "この Gitrochi にはフローエンジン (gitch-flow) がありません。フローを実行するには Gitrochi をアップデートしてください。";
 "The flow engine (gitch-flow) isn't in this Gitrochi. Update Gitrochi, or build it with tools/gitch-flow/build.sh." = "この Gitrochi にはフローエンジン (gitch-flow) がありません。Gitrochi をアップデートするか、tools/gitch-flow/build.sh でビルドしてください。";
 "Connect this repository's tests, checks and CI into flows you can run here, from gitch, before a push or in CI." = "このリポジトリのテスト・チェック・CI をフローにつなぐと、ここでも gitch でも、プッシュ前にも CI でも同じ方法で実行できます。";
 "Set up flows…" = "フローを設定…";
 "Open flow file" = "フローファイルを開く";
 "This flow file is new or changed. Review the commands before running it." = "このフローファイルは新規または変更されています。実行する前にコマンドを確認してください。";
-"Recent runs" = "最近の実行";
-"%lld steps" = "%lld ステップ";
 "Run %@" = "%@ を実行";
-"Show last run" = "前回の実行を表示";
 "Review commands…" = "コマンドを確認…";
 "This record isn't signed by the engine, so gates don't trust it" = "この記録はエンジンの署名がないため、ゲートは信頼しません";
 "It acts outside this computer: %@." = "このコンピューターの外に影響します: %@。";
@@ -2106,12 +2100,10 @@
 
 // Visual flow workspace
 "Acts outside this computer" = "このコンピュータの外部に作用します";
-"Add a script to create your first flow." = "スクリプトを追加して最初のフローを作成します。";
 "All statuses" = "すべての状態";
 "Changed commands require review before the next run." = "変更したコマンドは次回実行前に確認が必要です。";
 "Choose a flow configuration file." = "フロー設定ファイルを選択してください。";
 "Choose a step to inspect its script and dependencies." = "ステップを選択してスクリプトと依存関係を確認します。";
-"Choose a step to inspect its script." = "ステップを選択してスクリプトを確認します。";
 "Configure scripts" = "スクリプトを設定";
 "Connect script steps with needs. Saving checks the configuration; scripts run only when you start a flow." = "needs でスクリプトのステップを接続します。保存時に設定を検証し、フローを開始したときにのみスクリプトを実行します。";
 "Connect scripts into a repeatable workflow." = "スクリプトを接続して繰り返し実行できるフローを作成します。";
@@ -2121,7 +2113,6 @@
 "Duration" = "所要時間";
 "Edit flow file…" = "フローファイルを編集…";
 "Edit scripts…" = "スクリプトを編集…";
-"Executor" = "実行環境";
 "Failures only" = "失敗のみ";
 "Filter runs" = "実行履歴を絞り込み";
 "Fit" = "全体表示";
@@ -2136,7 +2127,6 @@
 "Review required" = "確認が必要";
 "Run a flow to see its steps, output and results here." = "フローを実行すると、ステップ、出力、結果がここに表示されます。";
 "Run flow" = "フローを実行";
-"Run history" = "実行履歴";
 "Run status" = "実行状態";
 "Script" = "スクリプト";
 "Script workflow" = "スクリプトフロー";
@@ -2150,14 +2140,12 @@
 "This flow has no steps." = "このフローにはステップがありません。";
 "Undo script" = "取り消しスクリプト";
 "Validate and save" = "検証して保存";
-"View" = "表示";
 "View running flow" = "実行中のフローを表示";
 "Your script changes have not been saved." = "スクリプトの変更は保存されていません。";
 "Zoom in" = "拡大";
 "Zoom out" = "縮小";
 "{0} connections" = "{0} 件の接続";
 "Interrupted" = "中断";
-"No flows" = "フローがありません";
 "Dependencies" = "依存関係";
 "Search runs" = "実行履歴を検索";
 "Edit flow file" = "フローファイルを編集";
@@ -2169,9 +2157,6 @@
 "Choose an existing flow file to edit." = "編集する既存のフローファイルを選択してください。";
 "This flow file changed outside Gitrochi. Reopen the editor before saving." = "Gitrochi の外部でフローファイルが変更されました。保存前にエディタを開き直してください。";
 "The flow file changed during validation. Your other editor's changes were kept." = "検証中にフローファイルが変更されました。他のエディタの変更を保持しました。";
-"All flows" = "すべてのフロー";
-"Live run" = "実行中";
-"This graph follows the running flow. Open the run for step output." = "このグラフは実行中の状態を表示します。ステップの出力は実行の詳細で確認できます。";
 
 // Flow workspace presentation
 "Approval" = "承認";
@@ -2185,7 +2170,6 @@
 "Services" = "サービス";
 "Setup" = "セットアップ";
 "Tests" = "テスト";
-"Try another search or filter." = "検索条件やフィルタを変更してください。";
 "CI/CD" = "CI/CD";
 
 // Flow visual authoring
@@ -3008,12 +2992,8 @@
 "Creating source folders requires an explicit new-file save with expected null." = "Creating source folders requires an explicit new-file save with expected null.";
 "The required source folders could not be created safely." = "The required source folders could not be created safely.";
 "The source folder does not exist. Choose New file to create the required folders." = "The source folder does not exist. Choose New file to create the required folders.";
-"Browse your repository's CI runs and saved connections." = "Browse your repository's CI runs and saved connections.";
-"Resize run panes" = "Resize run panes";
-"Search recorded flow runs and inspect their results." = "Search recorded flow runs and inspect their results.";
 "Find flows" = "フローを検索";
 "No matching flows" = "一致するフローがありません";
-"Edit step" = "ステップを編集";
 "Clear filters" = "フィルターをクリア";
 "Create flow" = "フローを作成";
 "Build a flow from your commands." = "コマンドを組み合わせてフローを作成します。";
@@ -3033,6 +3013,26 @@
 "Add at least one step." = "ステップを1つ以上追加してください。";
 "Enter a command for every step." = "すべてのステップにコマンドを入力してください。";
 "Flow created. Review its commands, then run it." = "フローを作成しました。コマンドを確認してから実行してください。";
+"Couldn't read this flow" = "このフローを読み込めませんでした";
+"Describe your build and test steps once in .gitch/flow.yml, then run them here and in CI." = "ビルドとテストの手順を .gitch/flow.yml に一度書けば、ここでも CI でも実行できます。";
+"Edit step…" = "ステップを編集…";
+"Latest run failed at %@" = "最新の実行は %@ で失敗しました";
+"Latest run passed" = "最新の実行は成功しました";
+"Latest run: %@" = "最新の実行: %@";
+"More flow actions" = "フローのその他の操作";
+"Needs" = "必要なステップ";
+"New flow…" = "新規フロー…";
+"No flows in this repository" = "このリポジトリにフローはありません";
+"Open run…" = "実行を開く…";
+"Passed in %@" = "%@で成功";
+"Run flow starts each step on this computer once the steps it needs have passed." = "「フローを実行」は、必要なステップが成功すると、各ステップをこのコンピュータで順に実行します。";
+"Running %@" = "%@ を実行中";
+"Runs on" = "実行場所";
+"Skipped because %@ did not pass" = "%@ が成功しなかったためスキップ";
+"Skipped: %@" = "スキップ: %@";
+"Stop" = "停止";
+"This computer" = "このコンピュータ";
+"%lld of %lld steps done" = "%2$lld ステップ中 %1$lld 完了";
 "Edit flow" = "フローを編集";
 "Inspect saved flow runs, their steps and results." = "保存されたフローの実行、各ステップ、結果を確認します。";
 "Review connected runs, jobs and logs for this repository." = "このリポジトリに接続された実行、ジョブ、ログを確認します。";

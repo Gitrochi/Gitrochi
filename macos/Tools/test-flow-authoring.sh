@@ -10,11 +10,11 @@ import Foundation
 struct FlowGraphView {
     struct Node {
         let id: String
-        let title: String
+        let title: String?
         let block: String
         let needs: [String]
         let state: String?
-        let subtitle: String
+        let command: String?
     }
 }
 @MainActor final class FlowStore {
@@ -73,10 +73,10 @@ struct FlowGraphView {
         precondition(FlowDesignDiagnostic.grouped(warnings + [different]).count == 2)
         let wide = FlowGraphLayout.make((0..<6).map { .init(id: "stage-\($0)", needs: $0 == 0 ? [] : ["stage-\($0 - 1)"]) })
         let fit = FlowGraphLayout.fit(wide, viewport: CGSize(width: 500, height: 300))
-        precondition(fit < 0.35 && wide.width * fit <= 488.001)
+        precondition(fit < 0.35 && wide.width * fit <= 476.001)
         let tall = FlowGraphLayout.make((0..<6).map { .init(id: "parallel-\($0)", needs: []) })
         let verticalFit = FlowGraphLayout.fit(tall, viewport: CGSize(width: 500, height: 220))
-        precondition(tall.height * verticalFit <= 172.001)
+        precondition(tall.height * verticalFit <= 196.001)
         let unresolved = FlowGraphLayout.make([.init(id: "a", needs: ["b"]), .init(id: "b", needs: ["a"]), .init(id: "missing", needs: ["absent"])])
         precondition(Set(unresolved.unresolved) == Set(["a", "b"]))
         precondition(unresolved.missingDependencies == ["missing → absent"])

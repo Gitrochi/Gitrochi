@@ -22,7 +22,8 @@ enum FlowSheet: Identifiable, Equatable {
     case run(String)
     case trust(flow: String, plan: FlowPlan, thenRun: Bool)
     case setup
-    case edit
+    /// The editor, opened on a flow and a step when the person came from one
+    case edit(flow: String?, node: String?)
     case create
 
     var id: String {
@@ -36,23 +37,20 @@ enum FlowSheet: Identifiable, Equatable {
     }
 }
 
+/// The page: why there is no flow to show, or the workspace; and the sheets and questions its actions lead to.
 private struct FlowPanelBody: View {
     let flows: FlowStore
     @ViewState private var sheet: FlowSheet?
     @ViewState private var confirm: (flow: String, plan: FlowPlan)?
     @ViewState private var error: String?
     @ViewState private var starting: String?
-    @ViewState private var editorFlow: String?
-    @ViewState private var editorNode: String?
     @ViewState private var requestedFlow: String?
     @AppStorage("flowAffectedOnly") private var affectedOnly = false
 
     var body: some View {
-        VStack(spacing: 0) {
-            header
-            Divider()
-            content
-        }
+        content
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Flows")
         .task(id: flows.repo) { await poll() }
         .sheet(item: $sheet) { s in
             switch s {
@@ -67,7 +65,7 @@ private struct FlowPanelBody: View {
                     }
                 }
             case .setup: FlowSetupSheet(flows: flows)
-            case .edit: FlowEditorSheet(flows: flows, initialFlow: editorFlow, initialNode: editorNode)
+            case .edit(let flow, let node): FlowEditorSheet(flows: flows, initialFlow: flow, initialNode: node)
             case .create: FlowCreateSheet(flows: flows) { name in requestedFlow = name }
             }
         }
@@ -99,100 +97,57 @@ private struct FlowPanelBody: View {
         }
     }
 
-    private var header: some View {
-        HStack(spacing: 8) {
-            Text("Flows").font(.subheadline.weight(.semibold))
-            if flows.loading { ProgressView().controlSize(.mini) }
-            Spacer()
-            if let list = flows.list, !list.flows.isEmpty { gateMenu(list) }
-            Toggle(isOn: $affectedOnly) { SymbolIcon("scope") }
-                .toggleStyle(.button)
-                .buttonStyle(.borderless)
-                .help(affectedOnly ? "Running only tests affected by your changes" : "Run only tests affected by your changes")
-                .accessibilityLabel("Run only affected tests")
-            Button { Task { await flows.refresh() } } label: { DesignIconImage(icon: .refresh) }
-                .buttonStyle(.borderless)
-                .help("Refresh")
-            Button { sheet = .edit } label: { SymbolIcon("square.and.pencil") }
-                .buttonStyle(.borderless)
-                .help("Edit flow file…")
-                .disabled(!flows.engineAvailable)
-            Button { sheet = .setup } label: { SymbolIcon("wand.and.stars") }
-                .buttonStyle(.borderless)
-                .help("Detect tests and propose a flow file")
-                .disabled(!flows.engineAvailable)
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
-    }
-
-    private func gateMenu(_ list: FlowList) -> some View {
-        let on = flows.gate.map { $0.gate != "OFF" } ?? false
-        return Menu {
-            Toggle("Check a flow before every push", isOn: Binding(get: { on }, set: { v in
-                let flow = flows.gate?.flow ?? (list.flows.first { $0.name == "pre-push" } ?? list.flows[0]).name
-                Task {
-                    do { try await flows.setGate(v, flow: flow) } catch { self.error = error.localizedDescription }
-                }
-            }))
-            if on, let f = flows.gate?.flow {
-                Picker("Flow", selection: Binding(get: { f }, set: { nf in Task { try? await flows.setGate(true, flow: nf) } })) {
-                    ForEach(list.flows) { Text($0.name).tag($0.name) }
-                }
-                Text(flows.gate?.gate == "OK" ? String(localized: "This commit has passed") : String(localized: "This commit hasn't passed yet"))
-            }
-        } label: {
-            SymbolIcon(on ? "checkmark.shield.fill" : "shield")
-        }
-        .menuStyle(.borderlessButton)
-        .menuIndicator(.hidden)
-        .fixedSize()
-        .help(on ? "Pushes check a flow first" : "Pushes don't check a flow")
-        .accessibilityLabel("Pre-push check")
-    }
-
+    /// Why there is no flow to show, each in a shared form, or else the workspace
     @ViewBuilder
     private var content: some View {
         if !flows.engineAvailable {
-            emptyState(icon: "exclamationmark.triangle", text: String(localized: "The flow engine (gitch-flow) isn't in this Gitrochi. Update Gitrochi to run flows."))
+            HostedListEmpty(symbol: "exclamationmark.triangle",
+                            title: String(localized: "The flow engine (gitch-flow) isn't in this Gitrochi. Update Gitrochi to run flows."))
         } else if !flows.hasFlowFile {
-            workspace(FlowList(project: nil, trusted: false, flows: [], suites: []))
-        } else if let e = flows.loadError {
-            VStack(alignment: .leading, spacing: 8) {
-                if let c = e.code { Text(c).font(.caption.monospaced()).foregroundStyle(.secondary) }
-                Text(e.message).font(.caption).foregroundStyle(.red).textSelection(.enabled)
-                if let a = e.action { Text(a).font(.caption).foregroundStyle(.secondary) }
-                HStack {
-                    Button("Edit flow file…") { sheet = .edit }
-                    Button("Try again") { Task { await flows.refresh() } }
-                }
-                .buttonStyle(.link)
-            }
-            .padding(12)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            noFlows
+        } else if let failure = flows.loadError {
+            // the engine's code and what it says to do, when it gave either
+            let advice = [failure.code, failure.action].compactMap { $0 }.joined(separator: " · ")
+            NoticeBlock(symbol: "xmark.circle.fill", tone: .failed, title: failure.message, caption: advice.isEmpty ? nil : advice,
+                        actions: [NoticeAction(title: String(localized: "Edit flow file…")) { sheet = .edit(flow: nil, node: nil) },
+                                  NoticeAction(title: String(localized: "Try again")) { Task { await flows.refresh() } }])
+                .frame(maxWidth: 560).padding(24)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if let list = flows.list {
-            workspace(list)
+            if list.flows.isEmpty { noFlows } else { workspace(list) }
         } else {
             ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
 
-    private func workspace(_ list: FlowList) -> some View {
-        FlowWorkspaceView(flows: flows, list: list, affected: affectedOnly, starting: starting,
-                          onRun: { name in Task { await prepare(name) } },
-                          onReview: { plan in sheet = .trust(flow: plan.flow, plan: plan, thenRun: false) },
-                          onEdit: { sheet = .edit }, onOpenRun: { sheet = .run($0) },
-                          onSelection: { flow, node in editorFlow = flow; editorNode = node },
-                          requestedFlow: requestedFlow, onCreate: { sheet = .create })
+    private var noFlows: some View {
+        FlowEmptyState(onSetUp: { sheet = .setup }, onCreate: { sheet = .create })
     }
 
-    private func emptyState(icon: String, text: String) -> some View {
-        VStack(spacing: 8) {
-            SymbolIcon(icon).font(.largeTitle).foregroundStyle(.tertiary)
-            Text(text).font(.callout).foregroundStyle(.secondary).multilineTextAlignment(.center)
+    private func workspace(_ list: FlowList) -> some View {
+        FlowWorkspaceView(flows: flows, list: list, affected: affectedOnly, starting: starting, requestedFlow: requestedFlow,
+                          onCreate: { sheet = .create },
+                          onRun: { name in Task { await prepare(name) } },
+                          onStop: { id in Task { do { try await flows.cancel(id) } catch { self.error = error.localizedDescription } } },
+                          onOpenRun: { sheet = .run($0) },
+                          onEdit: { flow, node in sheet = .edit(flow: flow, node: node) },
+                          onReview: { name in Task { await review(name) } },
+                          moreActions: { flow in
+                              FlowMoreActionsMenu(flows: flows, list: list, flow: flow,
+                                                  onReview: { Task { await review(flow.name) } },
+                                                  onSetUp: { sheet = .setup },
+                                                  onError: { error = $0 })
+                          })
+    }
+
+    /// Shows the commands a flow would run, to read and approve without running anything
+    private func review(_ flow: String) async {
+        do {
+            let plan = try await FlowEngine.plan(flow, in: flows.repo, affected: affectedOnly)
+            sheet = .trust(flow: flow, plan: plan, thenRun: false)
+        } catch {
+            self.error = error.localizedDescription
         }
-        .padding(20)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     /// Before a run: read the plan to see whether trust or confirmation is needed.
@@ -232,5 +187,82 @@ private struct FlowPanelBody: View {
         if !p.gates.isEmpty { parts.append(String(localized: "Running it approves its manual steps: \(p.gates.joined(separator: ", ")).")) }
         parts.append(String(localized: "Environment: \(p.env)"))
         return parts.joined(separator: "\n")
+    }
+}
+
+/// No flow to show: the shared empty form (a 24 pt grey icon, one line, one caption) and the two ways to start. Set up
+/// is filled because the page is blocked until there is a flow file.
+private struct FlowEmptyState: View {
+    let onSetUp: () -> Void
+    let onCreate: () -> Void
+
+    var body: some View {
+        VStack(spacing: 8) {
+            DesignIconImage(icon: .flows, size: 24).foregroundStyle(HostedList.caption)
+            Text("No flows in this repository").font(.system(size: 15, weight: .semibold)).multilineTextAlignment(.center)
+            Text("Describe your build and test steps once in .gitch/flow.yml, then run them here and in CI.")
+                .font(.system(size: 12)).foregroundStyle(HostedList.caption).multilineTextAlignment(.center)
+                .frame(maxWidth: 400).fixedSize(horizontal: false, vertical: true)
+            HStack(spacing: 8) {
+                Button("Set up flows…", action: onSetUp).hostedListFilledButton()
+                Button("New flow…", action: onCreate).buttonStyle(HostedListButtonStyle())
+            }
+            .padding(.top, 4)
+        }
+        .padding(24)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+/// Everything about a flow that is not Edit or Run, each with its name: what used to be a row of unlabeled icon
+/// buttons above the page. (Windows: moreActions in FlowPanel.tsx)
+struct FlowMoreActionsMenu: View {
+    let flows: FlowStore
+    let list: FlowList
+    let flow: FlowList.Flow
+    let onReview: () -> Void
+    let onSetUp: () -> Void
+    let onError: (String) -> Void
+    @AppStorage("flowAffectedOnly") private var affectedOnly = false
+
+    private var gateOn: Bool { flows.gate.map { $0.gate != "OFF" } ?? false }
+    /// The flow a newly switched-on check runs: the one already set, else pre-push, else this flow
+    private var gateFlow: String {
+        flows.gate?.flow ?? (list.flows.contains { $0.name == "pre-push" } ? "pre-push" : flow.name)
+    }
+
+    var body: some View {
+        Menu {
+            Button("Review commands…", action: onReview)
+            Divider()
+            Toggle("Check a flow before every push", isOn: Binding(get: { gateOn }, set: { setGate($0, flow: gateFlow) }))
+                .help(gateOn ? "Pushes check a flow first" : "Pushes don't check a flow")
+            if gateOn, let checked = flows.gate?.flow {
+                Picker("Flow", selection: Binding(get: { checked }, set: { setGate(true, flow: $0) })) {
+                    ForEach(list.flows) { Text($0.name).tag($0.name) }
+                }
+                Text(flows.gate?.gate == "OK" ? String(localized: "This commit has passed") : String(localized: "This commit hasn't passed yet"))
+            }
+            Toggle("Run only affected tests", isOn: $affectedOnly)
+                .help("Run only tests affected by your changes")
+            Divider()
+            Button("Set up flows…", action: onSetUp)
+                .help("Detect tests and propose a flow file")
+            Button("Refresh") { Task { await flows.refresh() } }
+        } label: {
+            DesignIconImage(icon: .more, size: 14)
+        }
+        .menuStyle(.borderlessButton).menuIndicator(.hidden)
+        .frame(width: 28, height: 28)
+        .background(RoundedRectangle(cornerRadius: 6).fill(StudioStyle.surface))
+        .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(HostedList.edge))
+        .help("More flow actions")
+        .accessibilityLabel("More flow actions")
+    }
+
+    private func setGate(_ on: Bool, flow: String) {
+        Task {
+            do { try await flows.setGate(on, flow: flow) } catch { onError(error.localizedDescription) }
+        }
     }
 }

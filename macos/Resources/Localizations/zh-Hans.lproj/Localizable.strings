@@ -79,7 +79,6 @@
 "More job actions" = "更多作业操作";
 "1 test failed:" = "1 个测试失败:";
 "%lld tests failed:" = "%lld 个测试失败:";
-"More step actions" = "更多步骤操作";
 "More merge request actions" = "更多合并请求操作";
 "More pull request actions" = "更多拉取请求操作";
 "More release actions" = "更多发布操作";
@@ -1273,7 +1272,6 @@
 "Trust" = "信任";
 "Run this flow?" = "运行此流程？";
 "Couldn't run the flow" = "无法运行流程";
-"Running only tests affected by your changes" = "当前仅运行受你的更改影响的测试";
 "Run only tests affected by your changes" = "仅运行受你的更改影响的测试";
 "Run only affected tests" = "仅运行受影响的测试";
 "Detect tests and propose a flow file" = "检测测试并建议流程文件";
@@ -1282,17 +1280,13 @@
 "This commit hasn't passed yet" = "此提交尚未通过";
 "Pushes check a flow first" = "推送前会先检查流程";
 "Pushes don't check a flow" = "推送前不检查流程";
-"Pre-push check" = "推送前检查";
 "The flow engine (gitch-flow) isn't in this Gitrochi. Update Gitrochi to run flows." = "此 Gitrochi 不含流程引擎（gitch-flow）。请更新 Gitrochi 以运行流程。";
 "The flow engine (gitch-flow) isn't in this Gitrochi. Update Gitrochi, or build it with tools/gitch-flow/build.sh." = "此 Gitrochi 不含流程引擎（gitch-flow）。请更新 Gitrochi，或用 tools/gitch-flow/build.sh 构建引擎。";
 "Connect this repository's tests, checks and CI into flows you can run here, from gitch, before a push or in CI." = "将此仓库的测试、检查和 CI 连接成流程，即可在这里、在 gitch 中、推送前或在 CI 中以同样方式运行。";
 "Set up flows…" = "设置流程…";
 "Open flow file" = "打开流程文件";
 "This flow file is new or changed. Review the commands before running it." = "此流程文件是新的或已更改。运行前请检查其中的命令。";
-"Recent runs" = "最近的运行";
-"%lld steps" = "%lld 个步骤";
 "Run %@" = "运行 %@";
-"Show last run" = "显示上次运行";
 "Review commands…" = "检查命令…";
 "This record isn't signed by the engine, so gates don't trust it" = "此记录未经引擎签名，因此门禁不信任它";
 "It acts outside this computer: %@." = "它会影响此计算机之外：%@。";
@@ -1541,12 +1535,10 @@
 
 // Visual flow workspace
 "Acts outside this computer" = "会影响此计算机之外的系统";
-"Add a script to create your first flow." = "添加脚本以创建第一个流程。";
 "All statuses" = "所有状态";
 "Changed commands require review before the next run." = "更改后的命令需要在下次运行前审核。";
 "Choose a flow configuration file." = "请选择流程配置文件。";
 "Choose a step to inspect its script and dependencies." = "选择步骤以查看脚本和依赖关系。";
-"Choose a step to inspect its script." = "选择步骤以查看脚本。";
 "Configure scripts" = "配置脚本";
 "Connect script steps with needs. Saving checks the configuration; scripts run only when you start a flow." = "使用 needs 连接脚本步骤。保存时会检查配置；仅在启动流程时执行脚本。";
 "Connect scripts into a repeatable workflow." = "将脚本连接为可重复执行的工作流。";
@@ -1556,7 +1548,6 @@
 "Duration" = "耗时";
 "Edit flow file…" = "编辑流程文件…";
 "Edit scripts…" = "编辑脚本…";
-"Executor" = "执行环境";
 "Failures only" = "仅失败";
 "Filter runs" = "筛选运行记录";
 "Fit" = "适应窗口";
@@ -1571,7 +1562,6 @@
 "Review required" = "需要审核";
 "Run a flow to see its steps, output and results here." = "运行流程后，可在此查看步骤、输出和结果。";
 "Run flow" = "运行流程";
-"Run history" = "运行历史";
 "Run status" = "运行状态";
 "Script" = "脚本";
 "Script workflow" = "脚本工作流";
@@ -1585,14 +1575,12 @@
 "This flow has no steps." = "此流程没有步骤。";
 "Undo script" = "撤销脚本";
 "Validate and save" = "验证并保存";
-"View" = "查看";
 "View running flow" = "查看正在运行的流程";
 "Your script changes have not been saved." = "脚本更改尚未保存。";
 "Zoom in" = "放大";
 "Zoom out" = "缩小";
 "{0} connections" = "{0} 个连接";
 "Interrupted" = "已中断";
-"No flows" = "暂无流程";
 "Dependencies" = "依赖关系";
 "Search runs" = "搜索运行记录";
 "Edit flow file" = "编辑流程文件";
@@ -1604,9 +1592,6 @@
 "Choose an existing flow file to edit." = "请选择要编辑的现有流程文件。";
 "This flow file changed outside Gitrochi. Reopen the editor before saving." = "流程文件已在 Gitrochi 外部更改。请在保存前重新打开编辑器。";
 "The flow file changed during validation. Your other editor's changes were kept." = "验证期间流程文件发生更改。已保留其他编辑器中的更改。";
-"All flows" = "所有流程";
-"Live run" = "实时运行";
-"This graph follows the running flow. Open the run for step output." = "此关系图跟踪正在运行的流程。打开运行详情可查看步骤输出。";
 
 // Flow workspace presentation
 "Approval" = "审批";
@@ -1620,7 +1605,6 @@
 "Services" = "服务";
 "Setup" = "准备";
 "Tests" = "测试";
-"Try another search or filter." = "请尝试其他搜索或筛选条件。";
 "CI/CD" = "CI/CD";
 
 // Flow visual authoring
@@ -2462,12 +2446,8 @@
 "Creating source folders requires an explicit new-file save with expected null." = "Creating source folders requires an explicit new-file save with expected null.";
 "The required source folders could not be created safely." = "The required source folders could not be created safely.";
 "The source folder does not exist. Choose New file to create the required folders." = "The source folder does not exist. Choose New file to create the required folders.";
-"Browse your repository's CI runs and saved connections." = "Browse your repository's CI runs and saved connections.";
-"Resize run panes" = "Resize run panes";
-"Search recorded flow runs and inspect their results." = "Search recorded flow runs and inspect their results.";
 "Find flows" = "查找流程";
 "No matching flows" = "没有匹配的流程";
-"Edit step" = "编辑步骤";
 "Clear filters" = "清除筛选条件";
 "Create flow" = "创建流程";
 "Build a flow from your commands." = "将命令组合成流程。";
@@ -2487,6 +2467,26 @@
 "Add at least one step." = "请至少添加一个步骤。";
 "Enter a command for every step." = "请为每个步骤输入命令。";
 "Flow created. Review its commands, then run it." = "流程已创建。请先检查命令，再运行。";
+"Couldn't read this flow" = "无法读取此流程";
+"Describe your build and test steps once in .gitch/flow.yml, then run them here and in CI." = "在 .gitch/flow.yml 中写一次构建和测试步骤，即可在这里和 CI 中运行。";
+"Edit step…" = "编辑步骤…";
+"Latest run failed at %@" = "最近一次运行在 %@ 失败";
+"Latest run passed" = "最近一次运行已通过";
+"Latest run: %@" = "最近一次运行：%@";
+"More flow actions" = "更多流程操作";
+"Needs" = "依赖";
+"New flow…" = "新建流程…";
+"No flows in this repository" = "此仓库中没有流程";
+"Open run…" = "打开运行…";
+"Passed in %@" = "%@内通过";
+"Run flow starts each step on this computer once the steps it needs have passed." = "“运行流程”会在所依赖的步骤通过后，在这台电脑上依次启动每个步骤。";
+"Running %@" = "正在运行 %@";
+"Runs on" = "运行位置";
+"Skipped because %@ did not pass" = "因 %@ 未通过而跳过";
+"Skipped: %@" = "已跳过：%@";
+"Stop" = "停止";
+"This computer" = "这台电脑";
+"%lld of %lld steps done" = "已完成 %1$lld/%2$lld 个步骤";
 "Edit flow" = "编辑流程";
 "Inspect saved flow runs, their steps and results." = "查看已保存的流程运行、步骤和结果。";
 "Review connected runs, jobs and logs for this repository." = "查看此仓库关联的运行、任务和日志。";
