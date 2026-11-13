@@ -2754,5 +2754,7 @@
   "Idle": "閒置",
   "Terminals": "終端機",
   "{0} more terminals": "另外 {0} 個終端機",
-  "CI": "CI"
+  "CI": "CI",
+  "Preflight": "預檢",
+  "Pull request": "拉取請求"
 }

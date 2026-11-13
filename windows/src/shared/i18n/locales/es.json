@@ -2786,5 +2786,7 @@
   "Idle": "Inactivo",
   "Terminals": "Terminales",
   "{0} more terminals": "{0} terminales más",
-  "CI": "CI"
+  "CI": "CI",
+  "Preflight": "Comprobación previa",
+  "Pull request": "Pull request"
 }

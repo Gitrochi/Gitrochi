@@ -2731,3 +2731,5 @@
 "Idle" = "Inactivo";
 "Terminals" = "Terminales";
 "%lld more terminals" = "%lld terminales más";
+"Preflight" = "Comprobación previa";
+"Pull request" = "Pull request";

@@ -2664,3 +2664,5 @@
 "Idle" = "Ocioso";
 "Terminals" = "Terminais";
 "%lld more terminals" = "Mais %lld terminais";
+"Preflight" = "Verificação prévia";
+"Pull request" = "Pull request";

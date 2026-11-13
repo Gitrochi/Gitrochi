@@ -2733,5 +2733,7 @@
   "Idle": "Bezczynny",
   "Terminals": "Terminale",
   "{0} more terminals": "Więcej terminali: {0}",
-  "CI": "CI"
+  "CI": "CI",
+  "Preflight": "Kontrola wstępna",
+  "Pull request": "Pull request"
 }

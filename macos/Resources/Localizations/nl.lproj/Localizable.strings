@@ -2645,3 +2645,5 @@
 "Idle" = "Inactief";
 "Terminals" = "Terminals";
 "%lld more terminals" = "Nog %lld terminals";
+"Preflight" = "Voorcontrole";
+"Pull request" = "Pull request";

@@ -2684,3 +2684,5 @@
 "Idle" = "Boşta";
 "Terminals" = "Terminaller";
 "%lld more terminals" = "%lld terminal daha";
+"Preflight" = "Ön kontrol";
+"Pull request" = "Pull request";

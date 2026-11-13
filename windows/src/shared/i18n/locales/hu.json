@@ -2734,5 +2734,7 @@
   "Idle": "Tétlen",
   "Terminals": "Terminálok",
   "{0} more terminals": "További {0} terminál",
-  "CI": "CI"
+  "CI": "CI",
+  "Preflight": "Előzetes ellenőrzés",
+  "Pull request": "Pull request"
 }

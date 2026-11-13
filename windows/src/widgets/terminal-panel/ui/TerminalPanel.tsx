@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { agents } from "@/entities/agent";
 import type { RepoStore } from "@/entities/repo";
 import { commandHintShown, commandsFolded, cornerPane, panes, railShown, statusLine, type TerminalSession, type TermNode, type TermPane, type TermSplit } from "@/entities/terminal";
 import { ipc } from "@/shared/api";
@@ -23,18 +24,23 @@ export function TerminalPanel({ store, columnHeight }: { store: RepoStore; colum
   const max = Math.max(120, columnHeight - 200);
   const height = Math.min(Math.max(settings.get("terminalHeight", 260), 120), max);
   const layout = store.terminalLayout;
+  const panel = useRef<HTMLDivElement>(null);
   // A shell does not say when a command starts or ends, so ask for the processes below it while the panel shows
   useEffect(() => {
-    let stopped = false;
+    let stopped = false, asking = false;
     const check = async () => {
       const shells = store.terminals.filter((x) => x.running && !x.spec.program && x.pid !== null);
-      if (!shells.length || document.hidden) return;
+      // every repository tab stays mounted, so only the one on screen asks, and never twice at once
+      if (!shells.length || asking || document.hidden || !panel.current?.offsetParent) return;
       const pids = shells.map((x) => x.pid!);
+      asking = true;
       try {
         const counts = await ipc.processDescendants(pids);
         if (!stopped) shells.forEach((x, i) => x.running && x.pid === pids[i] && x.noteChildren(counts[i] ?? 0));
       } catch {
         // without the process table the tabs only lose their running mark
+      } finally {
+        asking = false;
       }
     };
     void check();
@@ -63,7 +69,7 @@ export function TerminalPanel({ store, columnHeight }: { store: RepoStore; colum
   return (
     <>
       <div className="hsplitter" onMouseDown={startDrag} />
-      <div className="term-panel" style={{ height }}>
+      <div ref={panel} className="term-panel" style={{ height }}>
         {layout && <TermNodeView node={layout} corner={cornerPane(layout).id} split={panes(layout).length > 1} store={store} height={height} />}
       </div>
     </>
@@ -106,6 +112,8 @@ function TermSplitView({ node, ...p }: NodeProps & { node: TermSplit }) {
 }
 
 function TermPaneView({ pane, corner, split, store, height }: NodeProps & { pane: TermPane }) {
+  // the status line reads an agent session's state, as the tab does
+  useObserve(agents);
   const s = store.shownTerminal(pane.id);
   const focused = !!s && s === store.activeTerminal;
   // the bar, the rail and the status line fold by the pane's own size, so a split pane folds before the panel does

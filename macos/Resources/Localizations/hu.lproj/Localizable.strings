@@ -2682,3 +2682,5 @@
 "Idle" = "Tétlen";
 "Terminals" = "Terminálok";
 "%lld more terminals" = "További %lld terminál";
+"Preflight" = "Előzetes ellenőrzés";
+"Pull request" = "Pull request";

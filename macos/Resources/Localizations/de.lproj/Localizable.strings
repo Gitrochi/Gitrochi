@@ -2684,3 +2684,5 @@
 "Idle" = "Leerlauf";
 "Terminals" = "Terminals";
 "%lld more terminals" = "%lld weitere Terminals";
+"Preflight" = "Vorabprüfung";
+"Pull request" = "Pull Request";

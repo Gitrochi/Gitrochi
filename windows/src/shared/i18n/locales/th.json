@@ -2744,5 +2744,7 @@
   "Idle": "ว่าง",
   "Terminals": "เทอร์มินัล",
   "{0} more terminals": "เทอร์มินัลอีก {0} รายการ",
-  "CI": "CI"
+  "CI": "CI",
+  "Preflight": "ตรวจสอบล่วงหน้า",
+  "Pull request": "Pull request"
 }

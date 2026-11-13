@@ -2679,3 +2679,5 @@
 "Idle" = "Nečinný";
 "Terminals" = "Terminály";
 "%lld more terminals" = "Další terminály: %lld";
+"Preflight" = "Předběžná kontrola";
+"Pull request" = "Pull request";

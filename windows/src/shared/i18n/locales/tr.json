@@ -2737,5 +2737,7 @@
   "Idle": "Boşta",
   "Terminals": "Terminaller",
   "{0} more terminals": "{0} terminal daha",
-  "CI": "CI"
+  "CI": "CI",
+  "Preflight": "Ön kontrol",
+  "Pull request": "Pull request"
 }

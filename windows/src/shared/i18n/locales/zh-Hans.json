@@ -2884,5 +2884,7 @@
   "Idle": "空闲",
   "Terminals": "终端",
   "{0} more terminals": "另外 {0} 个终端",
-  "CI": "CI"
+  "CI": "CI",
+  "Preflight": "预检",
+  "Pull request": "拉取请求"
 }

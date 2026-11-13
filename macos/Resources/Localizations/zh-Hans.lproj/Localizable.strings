@@ -2840,3 +2840,5 @@
 "Idle" = "空闲";
 "Terminals" = "终端";
 "%lld more terminals" = "另外 %lld 个终端";
+"Preflight" = "预检";
+"Pull request" = "拉取请求";

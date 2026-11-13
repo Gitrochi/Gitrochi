@@ -2702,3 +2702,5 @@
 "Idle" = "閒置";
 "Terminals" = "終端機";
 "%lld more terminals" = "另外 %lld 個終端機";
+"Preflight" = "預檢";
+"Pull request" = "拉取請求";

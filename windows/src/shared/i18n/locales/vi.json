@@ -2706,5 +2706,7 @@
   "Idle": "Rảnh",
   "Terminals": "Terminal",
   "{0} more terminals": "Thêm {0} terminal",
-  "CI": "CI"
+  "CI": "CI",
+  "Preflight": "Kiểm tra trước",
+  "Pull request": "Pull request"
 }

@@ -2720,5 +2720,7 @@
   "Idle": "Ocioso",
   "Terminals": "Terminais",
   "{0} more terminals": "Mais {0} terminais",
-  "CI": "CI"
+  "CI": "CI",
+  "Preflight": "Verificação prévia",
+  "Pull request": "Pull request"
 }

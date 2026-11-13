@@ -2692,3 +2692,5 @@
 "Idle" = "ว่าง";
 "Terminals" = "เทอร์มินัล";
 "%lld more terminals" = "เทอร์มินัลอีก %lld รายการ";
+"Preflight" = "ตรวจสอบล่วงหน้า";
+"Pull request" = "Pull request";

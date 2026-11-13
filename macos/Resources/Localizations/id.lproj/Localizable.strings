@@ -2653,3 +2653,5 @@
 "Idle" = "Diam";
 "Terminals" = "Terminal";
 "%lld more terminals" = "%lld terminal lainnya";
+"Preflight" = "Pemeriksaan awal";
+"Pull request" = "Pull request";

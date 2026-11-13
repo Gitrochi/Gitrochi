@@ -2658,3 +2658,5 @@
 "Idle" = "Rảnh";
 "Terminals" = "Terminal";
 "%lld more terminals" = "Thêm %lld terminal";
+"Preflight" = "Kiểm tra trước";
+"Pull request" = "Pull request";

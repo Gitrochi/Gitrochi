@@ -3542,5 +3542,6 @@
   "Idle": "待機中",
   "Terminals": "ターミナル",
   "{0} more terminals": "ほか {0} 個のターミナル",
-  "CI": "CI"
+  "CI": "CI",
+  "Preflight": "事前チェック"
 }

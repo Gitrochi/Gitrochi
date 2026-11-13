@@ -2732,5 +2732,7 @@
   "Idle": "Nečinný",
   "Terminals": "Terminály",
   "{0} more terminals": "Další terminály: {0}",
-  "CI": "CI"
+  "CI": "CI",
+  "Preflight": "Předběžná kontrola",
+  "Pull request": "Pull request"
 }

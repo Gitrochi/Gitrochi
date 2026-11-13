@@ -2697,3 +2697,5 @@
 "Idle" = "Бездіяльний";
 "Terminals" = "Термінали";
 "%lld more terminals" = "Ще терміналів: %lld";
+"Preflight" = "Попередня перевірка";
+"Pull request" = "Пул-реквест";

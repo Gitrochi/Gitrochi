@@ -3463,3 +3463,4 @@
 "Idle" = "待機中";
 "Terminals" = "ターミナル";
 "%lld more terminals" = "ほか %lld 個のターミナル";
+"Preflight" = "事前チェック";
