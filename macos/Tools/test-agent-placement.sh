@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Exercise the production launch branches without real agents, Ledger calls or terminal windows.
+# Exercise the production launch branches without real agents or terminal windows.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 TASK_TMP="$(mktemp -d)"
@@ -27,8 +27,7 @@ def method(marker):
 
 methods = '\n\n'.join(method(marker) for marker in [
     '    func start(_ kind: AgentKind,',
-    '    private func launch(_ kind: AgentKind,',
-    '    private func startTracked(_ kind: AgentKind,'
+    '    private func launch(_ kind: AgentKind,'
 ])
 # The last-agent preference is an inert record in this fixture; placement logic stays unchanged.
 preference = 'UserDefaults.standard.set(kind.rawValue, forKey: "agentKind")'

@@ -38,25 +38,6 @@ flowchart LR
 
 Contract: [crates/gitrochi-index/README.md](../crates/gitrochi-index/README.md) (schema, CLI, C ABI). Rust is the only writer of this database; other readers open it read-only and check `PRAGMA user_version`.
 
-## The session ledger
-
-`crates/gitrochi-ledger` records what agent sessions report — which baseline their work started from, what they produced, the questions they need a person for, and whether their result was merged — and what a person decided about them, in one SQLite database per user (`Gitrochi/ledger/ledger.sqlite3` in the app data folder; `GITROCHI_LEDGER_DB` moves it, `GITROCHI_LEDGER=0` turns the ledger off). Information flows one way, agent → ledger → screen: the screens never call an agent, and what a person writes waits until that session's next report or read picks it up, exactly once.
-
-- **One writer, many processes.** The apps, the CLI, the MCP servers of several agents and the hooks write at the same time, always through this crate: WAL, `BEGIN IMMEDIATE`, a 15-second busy timeout, additive `PRAGMA user_version` migrations, and one write path that bumps `meta.rev`, which the apps poll to reload only after a change. Settings live in the same file, so every writer reads the same rules.
-- **Rules in one place.** Verdicts, the resume rule, the hand-offs between implementation and decision sessions, stream cycles, overlaps and the graph layout are computed here, so both apps draw the same thing; the apps only render the JSON.
-- **The permission boundary is the entry point.** The C ABI and the Tauri command are the app (a person); the CLI and the MCP server are agents and cannot confirm, archive, answer or change settings.
-- **Git is the system `git`.** Tag baselines come from `git for-each-ref refs/tags`, run without a console window on Windows.
-
-```mermaid
-flowchart LR
-    agents["agents (MCP, CLI, pasted blocks)"] -->|report, overview, session| ledger["gitrochi-ledger (Rust + SQLite)"]
-    mac["macOS app"] -->|C ABI| ledger
-    win["Windows app"] -->|Tauri command| ledger
-    ledger -->|for-each-ref refs/tags| git[("system git")]
-```
-
-Contract: [crates/gitrochi-ledger/CONTRACT.md](../crates/gitrochi-ledger/CONTRACT.md) (storage, vocabulary, methods, callers, errors) with JSON Schemas in `crates/gitrochi-ledger/schema/`; the CLI and MCP setup are in its [README](../crates/gitrochi-ledger/README.md).
-
 ## Python: review, analysis, tests, runtimes
 
 `tools/gitrochi-py` (`python3 tools/gitrochi-py/gitrochi-py <command>`) is the layer for work that is mostly orchestration. It reads the index through its CLI, or the SQLite file directly (read-only) for analysis, and owns only its own test-history database.
@@ -74,8 +55,6 @@ See [tools/gitrochi-py/README.md](../tools/gitrochi-py/README.md).
 
 - `serve` (default `127.0.0.1:7420`) — a self-hosted team service: who is working on which branch and files, overlap warnings when teammates touch the same files or files the index says change together, a live event feed over Server-Sent Events with resume, and shared notes. Bearer tokens stored only as SHA-256 hashes; state in memory with a crash-safe journal and snapshots.
 - `monitor` (status on `127.0.0.1:7421`) — runs on a developer's machine: polls repositories with a bounded pool of git processes, detects ref changes including forced updates, keeps the index in sync (`gitrochi-index sync`), asks it for related files (`impact`), and reports presence and events to the hub with backoff.
-
-The apps can also share their Ledger sessions with the hub (Settings › Ledger › Team hub, off by default): the ledger core's `hub_share` builds one presence entry per live session, with an optional `ledger` object, and the apps post it with the hub URL and token they already keep ([docs/ledger/README.md](ledger/README.md#share-sessions-with-the-team-hub)).
 
 See [services/hub/README.md](../services/hub/README.md).
 

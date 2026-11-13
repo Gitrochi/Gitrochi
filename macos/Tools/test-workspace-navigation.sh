@@ -102,17 +102,15 @@ import SwiftUI
             }
         }
         precondition(GraphMetrics.width(lanes: 24) == GraphMetrics.width(lanes: GraphMetrics.maxVisibleLanes), "Lanes past the visible limit do not widen the graph column")
-        precondition(WorkspaceDestination.allCases.count == 13)
-        precondition(WorkspaceDestination.shown.count == 13 && WorkspaceDestination.ledger.isShown, "Ledger navigation must not require a preview environment")
-        precondition(LedgerSettings.isShown, "Settings must include the Ledger")
+        precondition(WorkspaceDestination.allCases.count == 12)
+        precondition(WorkspaceDestination.shown.count == 12)
         precondition(GitAccountPresentation.key(host: "gitlab.example.com(port 2222)", username: "Alex") == "gitlab.example.com/alex")
         precondition(GitAccountPresentation.avatarURL(host: "github.com", username: "octocat")?.absoluteString == "https://github.com/octocat.png?size=64")
         precondition(GitAccountPresentation.avatarURL(host: "github.com", username: "../alice") == nil)
-        // the Ledger only adds: every page main has keeps its order, raw value and title
+        // every page keeps its order, raw value and title
         let mainPages: [WorkspaceDestination] = [.home, .repository, .compare, .rebase, .code, .pullRequests, .issues, .actions, .releases, .projects, .account, .flows]
-        precondition(Array(WorkspaceDestination.shown.prefix(12)) == mainPages && Array(WorkspaceDestination.allCases.prefix(12)) == mainPages)
+        precondition(WorkspaceDestination.shown == mainPages && WorkspaceDestination.allCases == mainPages)
         precondition(mainPages.allSatisfy { WorkspaceDestination(rawValue: $0.rawValue) == $0 && $0.isShown }, "Existing pages restore as before")
-        precondition(!WorkspaceDestination.ledger.needsRepository, "Ledger opens without a repository")
         let nav = RepoStore()
         for page in WorkspaceDestination.allCases {
             let allowed = nav.navigate(page, prepare: false)
@@ -175,9 +173,6 @@ import SwiftUI
         precondition(nav.destination == .code)
         nav.resetNavigationFixture(); nav.fixtureRepository(secondPath); nav.restoreWorkspaceDestination()
         precondition(nav.destination == .issues, "A repository must restore its own page")
-        workspaceNavigationFixtureDefaults.set([secondPath: "ledger"], forKey: "workspaceDestinations")
-        nav.restoreWorkspaceDestination()
-        precondition(nav.destination == .ledger, "A remembered Ledger page must restore without a preview environment")
         for saved in ["missing-page", "settings", "__proto__", "changes", "branches", "worktrees"] {
             workspaceNavigationFixtureDefaults.set([secondPath: saved], forKey: "workspaceDestinations")
             nav.restoreWorkspaceDestination()
@@ -265,8 +260,8 @@ import SwiftUI
         precondition(WorkspaceDestination.allCases.allSatisfy { ToolbarSet(destination: $0, hasRepository: false) == .noRepository }, "Without a repository only the account")
         precondition(RecommendedSync(ahead: 2, behind: 0, hasUpstream: true) == .push && RecommendedSync(ahead: 0, behind: 5, hasUpstream: true) == .pull, "Push or Pull is prominent when it is the clear next step")
         precondition(RecommendedSync(ahead: 2, behind: 5, hasUpstream: true) == .none && RecommendedSync(ahead: 2, behind: 0, hasUpstream: false) == .none, "Nothing is prominent when diverged or without an upstream")
-        let numbered: [WorkspaceDestination] = [.repository, .compare, .rebase, .code, .pullRequests, .issues, .actions, .flows, .ledger]
-        precondition(numbered.map(\.shortcutDigit) == Array(1...9), "Pages take ⌘1–⌘9 in the sidebar's order")
+        let numbered: [WorkspaceDestination] = [.repository, .compare, .rebase, .code, .pullRequests, .issues, .actions, .flows]
+        precondition(numbered.map(\.shortcutDigit) == Array(1...8), "Pages take ⌘1–⌘8 in the sidebar's order")
         precondition(WorkspaceDestination.home.shortcutLabel == "⇧⌘H" && WorkspaceDestination.compare.shortcutLabel == "⌘2", "Home is ⇧⌘H and the rest show ⌘ and their number")
         precondition([WorkspaceDestination.releases, .projects, .account].allSatisfy { $0.shortcutDigit == nil && $0.shortcutLabel == nil }, "Releases, Projects and Account have no shortcut")
         precondition(PageListFold(showing: 240, sliding: false).rail == 0 && PageListFold(showing: 0, sliding: false).rail == 53 && PageListFold(showing: 20, sliding: true).rail == 33, "The rail shows only where the page list has left it")
@@ -285,7 +280,7 @@ import SwiftUI
         precondition(SharedHeights.share([1000, 1000], available: 300, floor: 96) == [150, 150])
         precondition(SharedHeights.share([1000, 1000], available: 100, floor: 96) == [96, 96])
         }
-        print("PASS: independent documents, selection and background reload; initial repository chooser navigation; all 13 pages including Ledger without a preview; account host normalization and profile URLs; isolated per-repository restore")
+        print("PASS: independent documents, selection and background reload; initial repository chooser navigation; all 12 pages; account host normalization and profile URLs; isolated per-repository restore")
     }
 }
 SWIFT

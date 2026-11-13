@@ -1,6 +1,6 @@
 /* widgets/sidebar — the page list, and its icon rail while the repository screen is open (docs/design.md › App shell, Sidebar).
-   The list is a source list: section titles, 28px rows, no hover fill (the row's shortcut shows instead) and only
-   Ledger's count as a plain number. The current page is a neutral fill in the list and in the rail, with or without
+   The list is a source list: section titles, 28px rows, no hover fill (the row's shortcut shows instead).
+   The current page is a neutral fill in the list and in the rail, with or without
    keyboard focus: the accent stays on the page's one primary action. */
 .workspace-navigation { --navigation-motion:220ms cubic-bezier(.2,.8,.2,1); display:flex; flex-direction:column; width:100%; height:100%; min-height:0; background:var(--rail-bg); }
 .workspace-nav-item:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; }
@@ -13,9 +13,7 @@
 .workspace-nav-item:disabled svg { color:var(--rail-blocked); }
 .workspace-nav-copy { display:flex; min-width:0; max-width:260px; flex:1; flex-direction:column; overflow:hidden; opacity:1; transform:translateX(0); transition:max-width var(--navigation-motion),opacity var(--navigation-motion),transform var(--navigation-motion); }
 /* 65% of the text colour keeps 4.5:1 on the sidebar grey and on the selected row's fill */
-.workspace-nav-badge { flex:none; margin-left:auto; font-size:12px; color:color-mix(in srgb, var(--text) 65%, transparent); font-variant-numeric:tabular-nums; }
 .workspace-nav-kbd { display:none; flex:none; margin-left:auto; padding-left:12px; font-size:12px; color:color-mix(in srgb, var(--text) 65%, transparent); white-space:nowrap; }
-.workspace-nav-badge + .workspace-nav-kbd { margin-left:8px; padding-left:0; }
 .workspace-navigation:not(.compact) .workspace-nav-item:hover .workspace-nav-kbd,
 .workspace-navigation.show-shortcuts:not(.compact) .workspace-nav-kbd { display:inline; }
 .workspace-nav-group { display:flex; align-items:center; padding:12px 10px 4px; overflow:hidden; font-size:11px; font-weight:600; line-height:16px; color:var(--text-2); transition:height var(--navigation-motion),padding var(--navigation-motion); }
@@ -24,10 +22,10 @@
 .workspace-nav-why { padding:0 10px 4px; font-size:12px; line-height:16px; color:var(--text-2); }
 .workspace-nav-footer { flex:none; padding:8px 10px; border-top:1px solid var(--border); }
 /* The rail (docs/design.md › App shell): 52px on the sidebar grey, 36×32 buttons, a neutral fill for the current page,
-   separators between the sections and Settings at the bottom. It keeps the same buttons, so the current page, keyboard
-   focus and the count stay in place; the toolbar's sidebar toggle expands it. */
-.workspace-navigation { --rail-bg:#efeff1; --rail-selected:#dcdce0; --rail-hover:#e5e5e8; --rail-icon:#66666b; --rail-blocked:#c7c7cc; --rail-settings:#3a3a3c; --rail-separator:#dcdce0; --rail-badge:#ffffff; --rail-badge-text:#3a3a3c; --rail-disabled-text:#a1a1a6; }
-:root[data-theme="dark"] .workspace-navigation { --rail-bg:#262629; --rail-selected:#3a3a3e; --rail-hover:#303034; --rail-icon:#a1a1a6; --rail-blocked:#58585d; --rail-settings:#d1d1d6; --rail-separator:#3a3a3e; --rail-badge:#2c2c2e; --rail-badge-text:#d1d1d6; --rail-disabled-text:#6e6e73; }
+   separators between the sections and Settings at the bottom. It keeps the same buttons, so the current page and keyboard
+   focus stay in place; the toolbar's sidebar toggle expands it. */
+.workspace-navigation { --rail-bg:#efeff1; --rail-selected:#dcdce0; --rail-hover:#e5e5e8; --rail-icon:#66666b; --rail-blocked:#c7c7cc; --rail-settings:#3a3a3c; --rail-separator:#dcdce0; --rail-disabled-text:#a1a1a6; }
+:root[data-theme="dark"] .workspace-navigation { --rail-bg:#262629; --rail-selected:#3a3a3e; --rail-hover:#303034; --rail-icon:#a1a1a6; --rail-blocked:#58585d; --rail-settings:#d1d1d6; --rail-separator:#3a3a3e; --rail-disabled-text:#6e6e73; }
 .workspace-navigation.compact .workspace-nav-why { display:none; }
 .workspace-navigation.compact .workspace-nav-scroll { padding:8px 0 0; scrollbar-width:none; }
 .workspace-navigation.compact .workspace-nav-scroll::-webkit-scrollbar { width:0; }
@@ -40,7 +38,6 @@
 .workspace-navigation.compact .workspace-nav-item.blocked,
 .workspace-navigation.compact .workspace-nav-item.blocked svg { color:var(--rail-blocked); }
 .workspace-navigation.compact .workspace-nav-copy { max-width:0; opacity:0; transform:translateX(-6px); }
-.workspace-navigation.compact .workspace-nav-badge { position:absolute; top:-3px; right:-5px; min-width:18px; height:18px; box-sizing:border-box; padding:0 5px; border-radius:999px; background:var(--rail-badge); color:var(--rail-badge-text); font-size:11px; font-weight:600; line-height:18px; box-shadow:0 0 0 1px var(--rail-separator); }
 .workspace-navigation.compact .workspace-nav-group { width:24px; height:1px; margin:4px auto; padding:0; background:var(--rail-separator); }
 .workspace-navigation.compact .workspace-nav-group>span { display:none; }
 .workspace-navigation.compact .workspace-nav-footer { display:flex; justify-content:center; padding:4px 0 8px; border-top:0; }

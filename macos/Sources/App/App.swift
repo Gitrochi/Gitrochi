@@ -24,17 +24,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             MainActor.assumeIsolated { if !Workspace.shared.launchedByEvent { Splash.shared.show() } }
         }
         MainActor.assumeIsolated { UpdateCenter.shared.start() }
-        // With Track agents I start on: tells auto-continue's hooks that a person can answer here (does nothing otherwise)
-        MainActor.assumeIsolated { LedgerHeartbeat.shared.refresh() }
-        // Notifications and the Dock badge, when a person turned them on (does nothing otherwise)
-        MainActor.assumeIsolated { LedgerNotifier.shared.refresh() }
-        // Settings › Ledger › Team hub: shares this computer's sessions only while a person turned it on
-        MainActor.assumeIsolated { LedgerHubSharing.shared.refresh() }
+        cleanUpLedger()
         // Actions runs scheduled for later start while the app is open, whichever repositories are
         MainActor.assumeIsolated { ScheduledRunStore.shared.start() }
         // 시스템이 첫 창을 만들지 않고 넘어가는 때가 있다(백그라운드 실행 등) — 그러면 직접 하나 연다
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             MainActor.assumeIsolated { Workspace.shared.ensureWindow() }
+        }
+    }
+
+    /// The Ledger is gone, but Claude Code and Codex may still run its hooks and MCP server: has its command take them
+    /// out, then deletes that command (LedgerCleanup). Does nothing once the command is gone.
+    private func cleanUpLedger() {
+        // the tool store reads the login shell's PATH for a few seconds before it knows where the clients are
+        MainActor.assumeIsolated { _ = ToolStore.shared }
+        Task.detached(priority: .utility) {
+            try? await Task.sleep(for: .seconds(5))
+            let manager = FileManager.default
+            let stable = LedgerCleanup.stableCommand(support: manager.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0])
+            await LedgerCleanup.run(stable: stable, program: { ToolPaths.shared.get($0 == .claude ? .claude : .codex) }) { executable, arguments in
+                // a client installed with npm starts through `env node`, and node lives next to it
+                var environment = ProcessInfo.processInfo.environment
+                environment["PATH"] = URL(fileURLWithPath: executable).deletingLastPathComponent().path + ":" + (environment["PATH"] ?? "/usr/bin:/bin")
+                guard let result = try? await Shell.run(executable, arguments, cwd: manager.homeDirectoryForCurrentUser, env: environment, timeout: 30) else { return nil }
+                return (result.status, result.output)
+            }
         }
     }
 }
@@ -210,7 +224,7 @@ struct AppCommands: Commands {
                 .keyboardShortcut("o", modifiers: [.command, .shift])
             Button("Create new repository…") { store?.presentInitPanel() }
         }
-        // the pages grouped as in the sidebar, ⌘1–⌘9 in its order and Home ⇧⌘H (docs/design.md › App shell, Sidebar)
+        // the pages grouped as in the sidebar, ⌘1–⌘8 in its order and Home ⇧⌘H (docs/design.md › App shell, Sidebar)
         CommandMenu("Go") {
             goButtons([.home])
             Divider()
@@ -218,7 +232,7 @@ struct AppCommands: Commands {
             Divider()
             goButtons([.pullRequests, .issues, .actions, .releases, .projects])
             Divider()
-            goButtons([.flows, .ledger])
+            goButtons([.flows])
         }
         CommandMenu("Repository") {
             Button(store?.undoStack.last.map { String(localized: "Undo: \($0.title)") } ?? String(localized: "Undo")) { store?.confirmUndo() }
@@ -240,7 +254,7 @@ struct AppCommands: Commands {
                 .disabled(store?.destination != .repository)
             Button("Quick navigation…") { store?.showCommandPalette = true }
                 .keyboardShortcut("k")
-            // the pages moved to the Go menu with ⌘1–⌘9; these two switch the repository screen's area
+            // the pages moved to the Go menu with ⌘1–⌘8; these two switch the repository screen's area
             Button("Show uncommitted changes") { store?.navigate(.repository); store?.showArea(.changes) }
             Button("Show history") { store?.navigate(.repository); store?.showArea(.history) }
             Divider()

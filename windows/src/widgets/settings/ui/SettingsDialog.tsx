@@ -1,7 +1,6 @@
-import { lazy, Suspense, useState } from "react";
-import { destinationEnabled } from "@/entities/git";
+import { useState } from "react";
 import { t } from "@/shared/i18n";
-import { Button, Modal, Segmented, Spinner } from "@/shared/ui";
+import { Button, Modal, Segmented } from "@/shared/ui";
 import { AISettings } from "./AISettings";
 import { AboutSettings } from "./AboutSettings";
 import { AccountsSettings } from "./AccountsSettings";
@@ -9,9 +8,6 @@ import { AppearanceSettings } from "./AppearanceSettings";
 import { CLISettings } from "./CLISettings";
 import { RulesSettings } from "./RulesSettings";
 import { ToolsSettings } from "./ToolsSettings";
-
-// Load on demand like the Ledger page, keeping it out of the start-up bundle.
-const LedgerSettings = lazy(() => import("./LedgerSettings").then((module) => ({ default: module.LedgerSettings })));
 
 /** Ctrl+, 설정: 계정(GitHub·GitLab), AI, 규칙, 도구(실행 파일 위치), CLI(gitch), 화면(테마), 업데이트 */
 export function SettingsDialog({ onClose, initialTab = "accounts" }: { onClose: () => void; initialTab?: SettingsTab }) {
@@ -28,7 +24,6 @@ export function SettingsDialog({ onClose, initialTab = "accounts" }: { onClose: 
           { value: "tools", label: t("Tool locations") },
           { value: "cli", label: "CLI" },
           { value: "appearance", label: t("Appearance") },
-          ...(destinationEnabled("ledger") ? [{ value: "ledger" as const, label: t("Ledger") }] : []),
           { value: "about", label: t("Update") },
         ]}
       />
@@ -45,10 +40,6 @@ export function SettingsDialog({ onClose, initialTab = "accounts" }: { onClose: 
           <CLISettings />
         ) : tab === "appearance" ? (
           <AppearanceSettings />
-        ) : tab === "ledger" && destinationEnabled("ledger") ? (
-          <Suspense fallback={<Spinner />}>
-            <LedgerSettings />
-          </Suspense>
         ) : (
           <AboutSettings />
         )}
@@ -57,4 +48,4 @@ export function SettingsDialog({ onClose, initialTab = "accounts" }: { onClose: 
   );
 }
 
-export type SettingsTab = "accounts" | "ai" | "rules" | "tools" | "cli" | "appearance" | "ledger" | "about";
+export type SettingsTab = "accounts" | "ai" | "rules" | "tools" | "cli" | "appearance" | "about";

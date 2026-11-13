@@ -155,15 +155,6 @@ Repositories are named by their normalized remote URL: lower-cased host and the 
 
 The hub stores it as a PresenceEntry: the same fields with `repo` normalized, the paths sorted and deduplicated, plus `member`, `updated` and `expires`. Lists hold at most 5000 repository-relative paths of up to 1024 bytes.
 
-The Gitrochi apps can share their Ledger sessions this way too (Settings › Ledger › Team hub, off by default; [docs/ledger/README.md](../../docs/ledger/README.md#share-sessions-with-the-team-hub)). Each session is its own entry, with `client` set to `ledger/<computer>/<session ID>`, its touches as `changed`, and an optional `ledger` object:
-
-```jsonc
-"ledger": {"session": "S1103-01", "project": "app", "title": "Retry policy", "kind": "research",
-           "role": "research", "verdict": "active", "lastActivity": "2026-11-03T09:00:00Z"}
-```
-
-`session` is 3–48 letters, digits, `.`, `_` or `-`; `project` and `title` up to 200 characters and `kind` up to 64, on one line; `role` is `decision`, `implementation`, `research`, `document` or `other`; `verdict` one of the Ledger's verdicts (`archived`, `needs_human`, `expirable`, `confirm`, `shelved`, `pending_merge`, `stale`, `active`); a `lastActivity` more than 5 minutes in the future becomes the server's time. Questions, answers, reports and notes are never part of it. Entries with `ledger` overlap like any other, and presence listings return it.
-
 An Overlap is `{"kind", "a": Participant, "b": Participant, "paths": […]}` with Participant `{"member","client","branch","head"}`:
 
 - `same-file`: both changed `paths`.

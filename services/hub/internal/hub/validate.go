@@ -23,9 +23,6 @@ const (
 	maxNoteLen    = 10000
 	maxLine       = 10_000_000
 	maxClockSkew  = 5 * time.Minute
-	maxSessionLen = 48  // Ledger session IDs
-	maxLedgerText = 200 // Ledger project and title
-	maxLedgerKind = 64
 )
 
 func invalid(format string, args ...any) error { return fmt.Errorf(format, args...) }
@@ -69,58 +66,7 @@ func (s *Server) presenceEntry(in api.Presence, member string) (api.PresenceEntr
 		return api.PresenceEntry{}, err
 	}
 	now := s.now()
-	if in.Ledger != nil {
-		ledger, err := validateLedger(*in.Ledger, now)
-		if err != nil {
-			return api.PresenceEntry{}, err
-		}
-		in.Ledger = &ledger
-	}
 	return api.PresenceEntry{Presence: in, Member: member, Updated: now, Expires: now.Add(s.cfg.PresenceTTL)}, nil
-}
-
-// validateLedger bounds a shared Ledger session. Times in the future beyond
-// the allowed clock skew become the server's time, as for events.
-func validateLedger(in api.LedgerSession, now time.Time) (api.LedgerSession, error) {
-	if n := utf8.RuneCountInString(in.Session); n < 3 || n > maxSessionLen || !validSessionID(in.Session) {
-		return in, invalid("ledger.session must be 3 to %d letters, digits, '.', '_' or '-'", maxSessionLen)
-	}
-	for _, f := range []struct {
-		name, value string
-		max         int
-	}{
-		{"ledger.project", in.Project, maxLedgerText},
-		{"ledger.title", in.Title, maxLedgerText},
-		{"ledger.kind", in.Kind, maxLedgerKind},
-	} {
-		if err := checkText(f.name, f.value, f.max, false); err != nil {
-			return in, err
-		}
-	}
-	if !slices.Contains(api.LedgerRoles, in.Role) {
-		return in, invalid("ledger.role must be one of %s", strings.Join(api.LedgerRoles, ", "))
-	}
-	if !slices.Contains(api.LedgerVerdicts, in.Verdict) {
-		return in, invalid("ledger.verdict must be one of %s", strings.Join(api.LedgerVerdicts, ", "))
-	}
-	if !in.LastActivity.IsZero() {
-		in.LastActivity = in.LastActivity.UTC().Truncate(time.Second)
-		if in.LastActivity.After(now.Add(maxClockSkew)) {
-			in.LastActivity = now
-		}
-	}
-	return in, nil
-}
-
-// validSessionID accepts the Ledger's session IDs: letters of any script,
-// digits, '.', '_' and '-'.
-func validSessionID(id string) bool {
-	for _, r := range id {
-		if !unicode.IsLetter(r) && !unicode.IsDigit(r) && r != '.' && r != '_' && r != '-' {
-			return false
-		}
-	}
-	return true
 }
 
 // cleanPaths validates repository-relative paths and returns them sorted

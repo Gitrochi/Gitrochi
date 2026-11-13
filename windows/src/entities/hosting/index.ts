@@ -3,7 +3,7 @@ export { createPullRequest, date, defaultBranch, findTarget, HostingError, parse
 export { type PullRequestReview, type ReviewAccess, ReviewAPI, type ReviewComment, type ReviewDraftComment, type ReviewFile, type ReviewLineAnchor, type ReviewLineSide, type ReviewRefs, type ReviewVerdict, ReviewSubmissionError, reviewFileChange, reviewRepositoryKey, reviewDraftMatches } from "./api/review";
 export { accounts, AccountStore } from "./model/accounts";
 export { AccountConnectionFailure, accountConnectionMessage } from "./model/connection-failure";
-export { type RequestScope, type RequestQuery, type RequestLifecycle, type RequestState, requestState, type MergeMethod, type InboxItem, type InboxDetail, type IssueLabel, requestPage, requestLifecycle, mergeRequest, rebaseRequest, setRequestState, updateRequest, setReviewers, inboxPage, inboxDetail, postInboxComment, setIssueState, markInboxRead } from "./api/collaboration";
+export { type RequestScope, type RequestQuery, type RequestLifecycle, type MergeMethod, type InboxItem, type InboxDetail, type IssueLabel, requestPage, requestLifecycle, mergeRequest, rebaseRequest, setRequestState, updateRequest, setReviewers, inboxPage, inboxDetail, postInboxComment, setIssueState, markInboxRead } from "./api/collaboration";
 
 export { issuePage, saveWorkspaceIssue, searchWorkspaceRepositories, workspaceJobLog, redactWorkspaceLog, type IssueScope, type IssueSort } from "./api/workspace-operations";
 export { assignedIssueCount, issueNext, issueNumbers, issueProgress, issueSummary, issueSummaryCounts, issueSummaryLines, issueSummaryTotal, type AssignedIssue, type IssueNext, type IssueProgress, type IssueSummary } from "./model/issue-page";

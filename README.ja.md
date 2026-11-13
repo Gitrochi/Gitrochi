@@ -24,7 +24,6 @@
 <p align="center">
   <a href="https://github.com/Gitrochi/Gitrochi/releases/latest"><b>ダウンロード</b></a>
   &nbsp;·&nbsp; <a href="docs/features.md">使い方と機能</a>
-  &nbsp;·&nbsp; <a href="docs/ledger/README.md">Ledger ガイド</a>
   &nbsp;·&nbsp; <a href="docs/flow/README.md">Flows ガイド</a>
 </p>
 
@@ -37,27 +36,18 @@
 
 <p align="center"><sub>Windows 版の画面部品をブラウザーで表示したプレビューです。リポジトリとプロフィールには架空のデータを使っています。</sub></p>
 
-Gitrochi は macOS と Windows 向けの Git クライアントです。コミットグラフを見ながら、変更の確認・ステージ・コミット・ブランチ操作・レビューを進められます。GitHub / GitLab の PR・Issue・プロジェクト、エージェントの報告と質問をまとめる **Ledger**、チェックと実行手順を組み立てる **Flows** も同じ画面から開けます。Git 操作にはシステムの `git` を使います。
+Gitrochi は macOS と Windows 向けの Git クライアントです。コミットグラフを見ながら、変更の確認・ステージ・コミット・ブランチ操作・レビューを進められます。GitHub / GitLab の PR・Issue・プロジェクト、チェックと実行手順を組み立てる **Flows** も同じ画面から開けます。Git 操作にはシステムの `git` を使います。
 
 **0.3.14 の作業画面**では、起動直後からページを選べます。リポジトリが必要なページには選択画面が表示されます。右上のアカウントメニューには複数のアカウントとサーバーをまとめて表示し、プロフィール画像も確認できます。サイドバーは内容と一緒になめらかに開閉し、OS の「動きを減らす」設定に従います。
 
 ## できること
 
 - **履歴を読み、変更をコミット** — ブランチごとの色、作者画像、CI の状態、ワークツリーの変更をグラフで確認。ファイル・ハンク・行単位のステージ、左右の diff、コンフリクト解決、コミット整理、直前の操作の取り消しに対応します。
-- **ホームから仕事を探す** — 最近のリポジトリ、接続先のリポジトリ検索、プロジェクトの予定を確認。13 の移動先（Home、Repository、Compare、Rebase、Code、PR/MR、Issues、Actions/Pipelines、Releases、Projects、Account、Flows、Ledger）は最初から選択できます。ローカルのツールにはリポジトリを選んでから進みます。
+- **ホームから仕事を探す** — 最近のリポジトリ、接続先のリポジトリ検索、プロジェクトの予定を確認。12 の移動先（Home、Repository、Compare、Rebase、Code、PR/MR、Issues、Actions/Pipelines、Releases、Projects、Account、Flows）は最初から選択できます。ローカルのツールにはリポジトリを選んでから進みます。
 - **複数アカウントを見分ける** — 右上のメニューで接続済みプロフィールと登録済み Git アカウントを、サーバー名と画像で確認。画像の取得をオフにした場合や取得できない場合は、イニシャルなどの代替表示を使います。コミット作者・push に使う Git アカウントと、PR・Issue 用のホスティング接続は別々に確認できます。保存済み認証情報がロックされている場合は、そのアクセスを許可して再試行できます。
 - **GitHub / GitLab の仕事を進める** — PR/MR の会話・行レビュー・承認、Issue のコメントや状態変更、GitHub Actions と GitLab パイプラインを操作。Account ページには **Inbox・My work・Organizations（GitLab は Groups）**、リリースとプロジェクトにはそれぞれ **Releases・Projects** ページがあります。アカウント全体と現在のリポジトリの範囲も選べます。
-- **Ledger で報告と質問を整理** — **Tools › Ledger** からいつでも開き、セッションの開始時点、報告、回答待ち、完了確認と片付けを Inbox・Board・Graph・Streams で追えます。チュートリアルとガイドも内蔵しています。ページを開くだけで会話が自動取り込みされることはありません。任意のエージェント追跡・バックグラウンド通知・バッジは、Settings › Ledger のそれぞれのスイッチで有効にします。どれも初期状態ではオフで、環境変数は不要です。[Ledger ガイド](docs/ledger/README.md)で接続方法を確認できます。
 - **Flows でチェックと実行手順をまとめる** — **Code** で `.gitch/flow.yml` を編集し、依存関係のプレビュー、実行履歴、各ステップの結果を確認。モジュールの設定や GitLab CI・GitHub Actions・Jenkins との接続も扱えます。レビューして信頼した手順を、アプリ・`gitch flow`・push 前のチェックで使います。[Flows ガイド](docs/flow/README.md)。
 - **ターミナルとエージェントを併用** — リポジトリ内のシェルをタブと分割ペインで開き、Claude Code・Codex・Gemini CLI を利用。AI にコミット文・PR 文や選択した変更について質問でき、同梱の **gitch** はリポジトリごとの Git アカウントとチェックを管理します。[CLI の使い方](docs/cli-workflows.md)。
-
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/images/readme-ledger-dark.jpg">
-    <img src="docs/images/readme-ledger-light.jpg" alt="セッションの開始時点と判定、選択したセッションの質問を示す Ledger の Board。架空のデータを使用">
-  </picture><br>
-  <sub>Ledger で報告・質問・次の作業をまとめて確認できます。</sub>
-</p>
 
 ## はじめる
 
@@ -65,7 +55,7 @@ Gitrochi は macOS と Windows 向けの Git クライアントです。コミ�
 2. **必要ならホスティングアカウントを接続する。** 右上のアカウントメニューから GitHub またはセルフホスト GitLab を接続します。PR・Issue などのサーバー機能で使う接続です。
 3. **リポジトリを開く。** Home の **Open repository…** からローカルフォルダを選ぶか、接続先を検索してクローンします。
 4. **変更を確認してコミットする。** グラフで履歴を選び、差分を読んで必要な部分をステージします。push 前にはアカウント・送信先・変更内容を確認します。
-5. **仕事に合わせてページを選ぶ。** Compare・Code・PR・Issues・Projects、または Tools の Ledger・Flows を開きます。使い方は各ページとガイドから確認できます。
+5. **仕事に合わせてページを選ぶ。** Compare・Code・PR・Issues・Projects、または Tools の Flows を開きます。使い方は各ページとガイドから確認できます。
 
 ## ダウンロードとインストール
 
@@ -83,13 +73,12 @@ macOS のビルドはまだ公証されていません。ブロックされた�
 ## ガイドと開発
 
 - [機能・使い方・ショートカット](docs/features.md)
-- [Ledger：接続、質問への回答、報告と完了確認](docs/ledger/README.md)
 - [Flows：YAML、依存関係、実行と CI 接続](docs/flow/README.md)
 - [gitch と CLI の作業手順](docs/cli-workflows.md)
 - [開発環境と貢献](CONTRIBUTING.md) · [アーキテクチャ](docs/architecture.md)
 - [コード規則](docs/code-style.md) · [Git と PR の規則](docs/git-workflow.md) · [AGENTS.md](AGENTS.md) / [CLAUDE.md](CLAUDE.md)
 
-主な開発者向け文書は英語です。保存先・追跡・通知などの Ledger の設定はガイドに記載しています。保存された認証情報は macOS の Keychain / Windows の Credential Manager で管理します。リポジトリ AI・MCP には Node.js 22 以降、LFS 操作には Git LFS が必要です。実サーバーへの書き込み、LFS ロック、Windows 実機へのインストールは利用環境での確認が必要です。[実装と検証範囲](docs/complete-workflows-validation.md)も参照してください。
+主な開発者向け文書は英語です。保存された認証情報は macOS の Keychain / Windows の Credential Manager で管理します。リポジトリ AI・MCP には Node.js 22 以降、LFS 操作には Git LFS が必要です。実サーバーへの書き込み、LFS ロック、Windows 実機へのインストールは利用環境での確認が必要です。[実装と検証範囲](docs/complete-workflows-validation.md)も参照してください。
 
 ## フィードバック
 

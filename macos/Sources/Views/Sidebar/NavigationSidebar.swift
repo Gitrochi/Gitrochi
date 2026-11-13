@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// The window's pages as the native source list (docs/design.md › App shell, Sidebar). The OS lays out the rows, the
-/// sections and Ledger's count; the app draws the current page's fill, so it stays neutral with or without keyboard
+/// sections; the app draws the current page's fill, so it stays neutral with or without keyboard
 /// focus, as in the rail. While no repository is open, a page that needs one is disabled and its section says why.
 /// Once the repository screen opens, this folds into the icon rail.
 struct NavigationSidebar: View {
@@ -19,7 +19,7 @@ struct NavigationSidebar: View {
             row(.home)
             section(String(localized: "Repository"), [.repository, .compare, .rebase, .code])
             section(gitlab ? "GitLab" : "GitHub", [.pullRequests, .issues, .actions, .releases, .projects, .account])
-            section(String(localized: "Tools"), [.flows, .ledger].filter(\.isShown))
+            section(String(localized: "Tools"), [.flows].filter(\.isShown))
         }
         .listStyle(.sidebar)
         .onModifierKeysChanged(mask: .command) { _, keys in commandHeld = keys.contains(.command) }
@@ -65,8 +65,6 @@ struct NavigationSidebar: View {
 
     private func row(_ page: WorkspaceDestination) -> some View {
         let title = page.title(gitlab: gitlab)
-        // only Ledger counts something
-        let count = page == .ledger ? LedgerStore.shared.attentionTotal : 0
         let blocked = store.url == nil && page.needsRepository
         let active = store.destination == page
         return Button { store.navigate(page) } label: {
@@ -87,7 +85,6 @@ struct NavigationSidebar: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .badge(count)
         .disabled(blocked)
         // the rail's fill for the current page: neutral, never the accent
         .listRowBackground(
@@ -115,7 +112,6 @@ extension WorkspaceDestination {
         case .releases: return .releases
         case .projects: return .projects
         case .flows: return .flows
-        case .ledger: return .ledger
         }
     }
 }

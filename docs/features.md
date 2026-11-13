@@ -9,7 +9,7 @@ The long version of the [README](../README.md): how to get started, every featur
   <img src="images/workspace-light.jpg" alt="Gitrochi repository workspace with current navigation, graph and commit details; Windows components with example data">
 </picture>
 
-The current Windows interface is rendered from production components in a browser with example data. This is not a native Windows desktop capture. The [Flows guide](flow/README.md#visual-workspace-and-scripts) and [Ledger guide](ledger/README.md#learn-the-ledger-in-the-app) link additional feature screenshots and their verification scope.
+The current Windows interface is rendered from production components in a browser with example data. This is not a native Windows desktop capture. The [Flows guide](flow/README.md#visual-workspace-and-scripts) links additional feature screenshots and their verification scope.
 
 ## Usage
 
@@ -30,7 +30,6 @@ You can browse the navigation before connecting an account; repository tools off
 5. **Push and pull requests** — review the account, destination and outgoing changes before confirming Push, then create a PR/MR from the requests view. A required Push during PR creation uses the same review. Connect GitHub or self-hosted GitLab from the account controls or Settings (⌘,) › Accounts.
 6. **CI/CD** — open **Actions** for GitHub or **Pipelines** for GitLab. Select a run for its jobs and logs; use the run controls or trigger a new workflow/pipeline.
 7. **Flows** — open **Flows** under **Tools**, set up or import a flow, then edit its YAML in **Code** and inspect its dependency diagram. Review command trust before running; use history and step output to inspect results. Details: [flow/README.md](flow/README.md).
-8. **Ledger** — open **Ledger** under **Tools**, without a preview environment flag. Choose **Learn Ledger** for local practice, then connect a reporting client or import records explicitly. Optional launch tracking and background integrations have separate requirements in the [Ledger guide](ledger/README.md#open-the-ledger).
 
 | Action | macOS | Windows |
 |---|---|---|
@@ -92,7 +91,6 @@ You can browse the navigation before connecting an account; repository tools off
 <details>
 <summary><b>Agents · terminal · tools · more</b></summary>
 
-- **Ledger**: agent reports, questions, baseline history, cleanup, Work log, Document tracker and Notebook on both platforms. The page is visible under Tools without a preview flag. Optional launched-agent tracking and background integrations still require the preview environment and relevant settings; see [Using the Ledger](ledger/README.md).
 - **Agents tab**: worktree cards (new, changed and deleted files, ↑↓ against the remote) with the Claude Code · Codex · Gemini CLI sessions in them and their state (working · asking permission · waiting for input · ended). Start a session (pick a worktree or create one, the task, the permission mode — up to skipping all permission checks). Sessions run in the terminal panel below the graph; their state comes from files written by hooks that Gitrochi adds with `--settings` to the sessions it starts, so your own settings and hooks stay as they are
 - **Terminal**: shells in the repository folder in a panel below the graph (zsh on macOS · PowerShell/WSL on Windows). Several tabs, panes split right or down, adjustable height, keeps running while hidden; a tab whose agent is still running asks before closing. macOS uses [SwiftTerm](https://github.com/migueldeicaza/SwiftTerm), Windows [xterm.js](https://xtermjs.org)
 - **Tools** (Settings › Tools): git · Claude Code · Codex · Gemini CLI · gh · the terminal shell are found automatically; point to one with **Browse** when they are not. Windows finds tools inside WSL too
@@ -124,7 +122,7 @@ These additions are implemented in both clients. Earlier fixture-based checks an
 
 ### Navigation and account access
 
-The page list includes **Home**, **Repository**, **Compare**, **Rebase**, **Code**, **Pull requests**, **Issues**, **Actions**, **Releases**, **Projects**, **Account**, **Flows** and **Ledger**. GitLab uses **Merge requests** and **Pipelines**. All pages are navigable from the start; tools that need a repository show a chooser until one is open. Home opens or clones repositories, lists recent work, searches connected servers and presents project planning.
+The page list includes **Home**, **Repository**, **Compare**, **Rebase**, **Code**, **Pull requests**, **Issues**, **Actions**, **Releases**, **Projects**, **Account** and **Flows**. GitLab uses **Merge requests** and **Pipelines**. All pages are navigable from the start; tools that need a repository show a chooser until one is open. Home opens or clones repositories, lists recent work, searches connected servers and presents project planning.
 
 Repository is the three-column screen: branches, tags, stashes and worktrees on the left; the graph, diff or file history with its terminal in the middle; changes and commit details on the right. Its page list folds into an icon rail. The sidebar control and **⌘B / Ctrl+B** expand or collapse it smoothly, preserve page selection and keyboard focus, and respect the system's reduced-motion setting. Dragging the expanded sidebar edge resizes it directly; reopening restores its saved width. Each repository remembers its last page.
 
