@@ -1,12 +1,12 @@
 import { FileSearch } from "lucide-react";
-import { Circle, CircleX, Undo2 } from "@/shared/icons";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Circle, CircleX, Ellipsis, Undo2 } from "@/shared/icons";
+import { useEffect, useMemo, useState } from "react";
 import { type FlowStore, flowEngine, formatDuration, isBadState, runCounts, runPresentationState, type RunNode } from "@/entities/flow";
 import { ipc } from "@/shared/api";
 import { joinPath } from "@/shared/config";
 import { t } from "@/shared/i18n";
-import { useObserve } from "@/shared/lib";
-import { Button, IconButton, Modal, Spinner } from "@/shared/ui";
+import { failedTests, firstError, numberedLog, useObserve } from "@/shared/lib";
+import { Button, CheckLog, checkLogMenu, FailedCheckBlock, IconButton, Modal, showMenuBelow, Spinner } from "@/shared/ui";
 import { FlowGraph } from "./FlowGraph";
 import { FlowStateIcon, stateTitle } from "./FlowState";
 
@@ -124,21 +124,37 @@ function NodeDetail({ node, record, repo }: { node: RunNode; record: Json | unde
   const failure = rec?.failure as Json | null | undefined;
   const failures = arr(rec?.failures);
   const verdicts = arr(rec?.verdicts);
-  const logRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const el = logRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
-  }, [node.tail.length]);
+  const [jump, setJump] = useState(0);
+  // the tail grows in place, so its length says when to read it again
+  const lines = useMemo(() => numberedLog(node.tail), [node.id, node.tail.length]);
+  const failed = node.state === "FAILED";
+  // the engine's own list of failed tests, else what the output names
+  const tests = useMemo(() => {
+    const named = failures.flatMap((f) => str(f.name) ?? []);
+    return named.length ? named : failedTests(node.tail);
+  }, [failures.length, node.id, node.tail.length]);
   const runDir = str(record?.runDir);
+  const more = t("More step actions");
   return (
     <>
       <div className="row" style={{ gap: 8 }}>
-        <FlowStateIcon state={node.state} size={14} />
+        {/* a failed step says so in the block below */}
+        {!failed && <FlowStateIcon state={node.state} size={14} />}
         <span style={{ fontWeight: 600, userSelect: "text" }}>{node.id}</span>
         <span className="muted mono" style={{ fontSize: 11 }}>{node.block}</span>
         <span className="spacer" />
         {node.log && runDir && <IconButton small icon={<FileSearch size={13} />} tip={t("Show the full log in Explorer")} onClick={() => void ipc.reveal(joinPath(runDir, node.log!))} />}
+        <IconButton small icon={<Ellipsis size={14} />} tip={more} aria-label={more} aria-haspopup="menu" onClick={(event) => showMenuBelow(event.currentTarget, checkLogMenu(node.tail.length ? () => void navigator.clipboard.writeText(node.tail.join("\n")) : undefined))} />
       </div>
+      {failed && (
+        <FailedCheckBlock
+          className="flow-failed-step"
+          icon={<FlowStateIcon state={node.state} size={14} />}
+          outcome={node.durationMs != null ? t("Failed after {0}", formatDuration(node.durationMs)) : stateTitle(node.state)}
+          tests={tests}
+          onJump={firstError(lines) != null ? () => setJump((n) => n + 1) : undefined}
+        />
+      )}
       {failure ? (
         <div className="col" style={{ gap: 3, padding: 8, borderRadius: "var(--radius)", background: "color-mix(in srgb, var(--red) 9%, transparent)" }}>
           <span style={{ fontWeight: 500 }}>{str(failure.description)}</span>
@@ -179,9 +195,7 @@ function NodeDetail({ node, record, repo }: { node: RunNode; record: Json | unde
         </div>
       )}
       <span style={{ fontWeight: 600, fontSize: 12 }}>{t("Output")}</span>
-      <div ref={logRef} className="mono" style={{ flex: 1, minHeight: 0, overflow: "auto", fontSize: 11, padding: 6, whiteSpace: "pre", userSelect: "text", background: "var(--term-bg)", border: "1px solid var(--border)", borderRadius: "var(--radius)" }}>
-        {node.tail.join("\n")}
-      </div>
+      <CheckLog key={node.id} className="framed fill" label={`${node.id} · ${t("Output")}`} lines={lines} jump={jump} follow={node.state === "RUNNING"} />
     </>
   );
 }

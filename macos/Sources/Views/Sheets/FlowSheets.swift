@@ -10,6 +10,8 @@ struct FlowRunSheet: View {
     @ViewState private var copied = false
     @ViewState private var cancelling = false
     @ViewState private var error: String?
+    /// Counts presses of Jump to first error on the chosen step
+    @ViewState private var jump = 0
 
     private var view: FlowRunView? { flows.view(runId) }
     private var record: FlowJSON? { flows.record(runId) }
@@ -119,7 +121,8 @@ struct FlowRunSheet: View {
             let rec = recordNode(id)
             VStack(alignment: .leading, spacing: 10) {
                 HStack(spacing: 8) {
-                    FlowStateIcon(state: n.state.rawValue, size: 14)
+                    // a failed step says so in the block below
+                    if n.state != .failed { FlowStateIcon(state: n.state.rawValue, size: 14) }
                     Text(n.id).font(.headline).textSelection(.enabled)
                     Text(n.block).font(.caption.monospaced()).foregroundStyle(.secondary)
                     Spacer()
@@ -128,6 +131,11 @@ struct FlowRunSheet: View {
                             .buttonStyle(.borderless)
                             .help("Open the full log")
                     }
+                    CheckLogMenu(label: String(localized: "More step actions"), copy: n.tail.isEmpty ? nil : { FlowFailedStep.copy(n.tail) })
+                }
+                if n.state == .failed {
+                    // the engine's own list of failed tests, else what the output names
+                    FlowFailedStep(node: n, tests: (rec?["failures"].array ?? []).compactMap { $0["name"].string }, jump: $jump)
                 }
                 if let f = rec?["failure"], f != .null {
                     VStack(alignment: .leading, spacing: 3) {
@@ -175,7 +183,8 @@ struct FlowRunSheet: View {
                     }
                 }
                 Text("Output").font(.subheadline.weight(.semibold))
-                logView(n.tail)
+                CheckLog(label: n.id + " · " + String(localized: "Output"), lines: JobLog.numbered(n.tail), jump: jump, follow: n.state == .running, fill: true, framed: true)
+                    .id(n.id)
             }
             .padding(14)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -206,23 +215,6 @@ struct FlowRunSheet: View {
             }
             .padding(10)
             .frame(maxWidth: 520, alignment: .leading)
-        }
-    }
-
-    private func logView(_ lines: [String]) -> some View {
-        ScrollViewReader { proxy in
-            ScrollView([.vertical, .horizontal]) {
-                LazyVStack(alignment: .leading, spacing: 0) {
-                    ForEach(Array(lines.enumerated()), id: \.offset) { i, l in
-                        Text(l).font(.system(size: 11, design: .monospaced)).textSelection(.enabled).id(i)
-                    }
-                }
-                .padding(6)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .background(Color(nsColor: .textBackgroundColor), in: RoundedRectangle(cornerRadius: 6))
-            .overlay(RoundedRectangle(cornerRadius: 6).stroke(.quaternary))
-            .onChange(of: lines.count) { _, n in if n > 0 { proxy.scrollTo(n - 1, anchor: .bottom) } }
         }
     }
 

@@ -142,6 +142,8 @@
 .flow-step-block { color: var(--text-3); font-size: 10px; }
 .flow-step-description { font-size: 11px; line-height: 1.55; color: var(--text-2); margin: 13px 0 0; }
 .flow-step-live { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 12px; font-size: 11px; color: var(--text-2); }
+/* a step that failed in the run being followed: the shared failed-check block and the end of its output */
+.flow-inspector .flow-failed-step { margin-top: 12px; }
 .flow-inspector .flow-edit-step { justify-content: flex-start; margin-top: 15px; min-height: 32px; font-size: 12px; }
 .flow-edit-step > svg:last-child { margin-left: auto; color: var(--text-3); }
 .flow-step-metadata { margin: 17px 0 20px; padding: 14px 0 0; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 14px; font-size: 10.5px; }

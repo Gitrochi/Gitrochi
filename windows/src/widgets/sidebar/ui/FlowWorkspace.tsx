@@ -1,11 +1,11 @@
 import { Clock3, History, Layers3, Play, ShieldCheck, TriangleAlert, Workflow } from "lucide-react";
 import { CheckCircle2, Code2, ListFilter } from "@/shared/icons";
 import { ChevronRight, Cloud, GitBranch, Plus, Search, Terminal, X } from "@/shared/icons";
-import { type KeyboardEvent, type ReactNode, useEffect, useId, useRef, useState } from "react";
-import { type FlowPlan, type FlowPlanNode, type FlowStore, flowEngine, formatDuration, runRowPresentationState } from "@/entities/flow";
+import { type KeyboardEvent, type ReactNode, useEffect, useId, useMemo, useRef, useState } from "react";
+import { type FlowPlan, type FlowPlanNode, type FlowStore, flowEngine, formatDuration, type RunNode, runRowPresentationState } from "@/entities/flow";
 import { t } from "@/shared/i18n";
-import { useObserve } from "@/shared/lib";
-import { Button, Spinner } from "@/shared/ui";
+import { failedTests, firstError, numberedLog, useObserve } from "@/shared/lib";
+import { Button, CheckLog, checkLogMenu, FailedCheckBlock, Spinner } from "@/shared/ui";
 import { FlowGraph } from "./FlowGraph";
 import { FlowBlockIcon, FlowStateIcon, FlowStatePill, flowBlockKind, stateTitle } from "./FlowState";
 
@@ -115,13 +115,27 @@ export function FlowWorkspace({ flows, affected, busy, requestedFlow, onCreate, 
   </div>;
 }
 
-function FlowInspector({ node, live, onEdit }: { node?: FlowPlanNode; live?: { state: string; durationMs: number | null }; onEdit: () => void }) {
+/** A step that failed in the run being followed: the shared failed-check block over the end of its output */
+function FailedStep({ live }: { live: RunNode }) {
+  const [jump, setJump] = useState(0);
+  // the tail grows in place, so its length says when to read it again
+  const lines = useMemo(() => numberedLog(live.tail), [live.id, live.tail.length]);
+  const tests = useMemo(() => failedTests(live.tail), [live.id, live.tail.length]);
+  return <FailedCheckBlock className="flow-failed-step" icon={<FlowStateIcon state={live.state} size={14} />}
+    outcome={live.durationMs != null ? t("Failed after {0}", formatDuration(live.durationMs)) : stateTitle(live.state)} tests={tests}
+    onJump={firstError(lines) != null ? () => setJump((value) => value + 1) : undefined}
+    menu={() => checkLogMenu(live.tail.length ? () => void navigator.clipboard.writeText(live.tail.join("\n")) : undefined)} moreLabel={t("More step actions")}>
+    {lines.length > 0 && <CheckLog className="framed" label={`${live.id} · ${t("Output")}`} lines={lines} jump={jump} />}
+  </FailedCheckBlock>;
+}
+
+function FlowInspector({ node, live, onEdit }: { node?: FlowPlanNode; live?: RunNode; onEdit: () => void }) {
   return <aside className="flow-inspector">
     <div className="flow-inspector-caption"><span className="flow-eyebrow">{t("Step details")}</span><Code2 size={13} /></div>
     {node ? <>
       <div className={`flow-inspector-heading kind-${flowBlockKind(node.block)}`}><span className="flow-node-type"><FlowBlockIcon block={node.block} size={19} /></span><div><h3>{node.id}</h3><span className="flow-step-block mono">{node.block}</span></div></div>
       {node.title && node.title !== node.id && <p className="flow-step-description">{node.title}</p>}
-      {live && <div className="flow-step-live" role="status"><FlowStatePill state={live.state} />{live.durationMs != null && <span className="mono">{formatDuration(live.durationMs)}</span>}</div>}
+      {live?.state === "FAILED" ? <FailedStep live={live} /> : live && <div className="flow-step-live" role="status"><FlowStatePill state={live.state} />{live.durationMs != null && <span className="mono">{formatDuration(live.durationMs)}</span>}</div>}
       <Button className="flow-edit-step" size="small" block onClick={onEdit}><Code2 size={13} />{t("Edit step")}<ChevronRight size={12} /></Button>
       <dl className="flow-step-metadata">
         <div><dt>{t("Step")}</dt><dd className="mono">{node.id}</dd></div>

@@ -15,6 +15,8 @@ struct FlowWorkspaceView: View {
     var onCreate: () -> Void = {}
     @ViewState private var selectedFlow: String?
     @ViewState private var selectedNode: String?
+    /// Counts presses of Jump to first error on a failed step of the run being followed
+    @ViewState private var stepJump = 0
     @ViewState private var page = 0
     @ViewState private var plan: FlowPlan?
     @ViewState private var planError: String?
@@ -337,7 +339,9 @@ struct FlowWorkspaceView: View {
                         Text(selectedNode ?? plan.flow).font(.headline).lineLimit(2)
                     }
                 }
-                if let node = view.nodes.first(where: { $0.id == selectedNode }) {
+                if let node = view.nodes.first(where: { $0.id == selectedNode }), node.state == .failed {
+                    FlowFailedStep(node: node, jump: $stepJump, withLog: true).id(node.id)
+                } else if let node = view.nodes.first(where: { $0.id == selectedNode }) {
                     HStack {
                         FlowStatusBadge(state: node.state.rawValue)
                         Spacer()
