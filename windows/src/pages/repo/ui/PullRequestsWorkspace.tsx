@@ -44,7 +44,7 @@ export function PullRequestsWorkspace({ store, openSettings }: { store: RepoStor
       <Button className="pr-page-icon" aria-label={t("Refresh list")} tip={t("Refresh list")} onClick={() => void store.loadPullRequests()}><RefreshCw size={14} /></Button>
       <Button disabled={!store.headBranch} tip={t("New {0} from the current branch", gitlab ? "MR" : "PR")} onClick={() => store.openSheet({ kind: "createPullRequest" })}><Plus size={13} />{t(gitlab ? "New merge request…" : "New pull request…")}</Button>
     </div>
-    <PullRequestSummary store={store} />
+    <PullRequestSummary store={store} openSettings={openSettings} />
     <div className="pr-page-split">
       {hidden
         ? <aside className="pr-list-strip" aria-label={t(gitlab ? "Merge requests" : "Pull requests")}><Button className="pr-page-icon" aria-label={showLabel} aria-expanded={false} tip={t("Show list")} onClick={() => settings.set(listHiddenSetting, false)}><PanelLeftOpen size={14} /></Button></aside>

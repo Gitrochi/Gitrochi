@@ -85,7 +85,15 @@ struct RequestFixtureAvatarImage<Content: View>: View {
         let target = RepoTarget(provider: .github, remote: "origin", host: "github.com", path: "team/Gitrochi")
         let sha = String(repeating: "a", count: 40)
         var results: [[String: Any]] = []
-        let allScenarios = ["conversation", "checks", "files", "organizations", "members", "empty", "activity", "pipeline"]
+        // the summary card before its data arrives and with nothing to report, on each page that has one
+        let summaryPages = ["requests", "issues", "actions", "releases"]
+        let summaryScenarios = summaryPages.map { "loading-" + $0 } + summaryPages.map { "nothing-" + $0 } + ["noaccount-requests"]
+        let summaryText = [
+            "loading-requests": "Loading pull requests", "loading-issues": "Loading issues", "loading-actions": "Loading runs", "loading-releases": "Loading releases",
+            "nothing-requests": "No pull request to open from here", "nothing-issues": "No open issues are assigned to you",
+            "nothing-actions": "No runs on this branch yet", "nothing-releases": "No releases yet", "noaccount-requests": "Connect a GitHub account to see pull",
+        ]
+        let allScenarios = ["conversation", "checks", "files", "organizations", "members", "empty", "activity", "pipeline"] + summaryScenarios
         let requestedScenarios = ProcessInfo.processInfo.environment["GITROCHI_REQUEST_LAYOUT_SCENARIOS"]
             .map { Set($0.split(separator: ",").map { String($0).trimmingCharacters(in: .whitespaces) }) }
         if let requestedScenarios {
@@ -94,7 +102,8 @@ struct RequestFixtureAvatarImage<Content: View>: View {
         let scenarios = allScenarios.filter { requestedScenarios?.contains($0) ?? true }
         for scenario in scenarios {
             requestFixtureDetailTab = scenario == "checks" ? "checks" : scenario == "files" ? "files" : "conversation"
-            let sizes: [(CGFloat, CGFloat)] = scenario == "files" ? [(1440, 900), (1080, 900)] : ["activity", "pipeline"].contains(scenario) ? [(1080, 800), (1440, 1000), (700, 800)] : [(1080, 1200), (700, 1200)]
+            let summary = summaryScenarios.contains(scenario)
+            let sizes: [(CGFloat, CGFloat)] = summary ? [(1080, 420), (640, 420)] : scenario == "files" ? [(1440, 900), (1080, 900)] : ["activity", "pipeline"].contains(scenario) ? [(1080, 800), (1440, 1000), (700, 800)] : ["organizations", "members"].contains(scenario) ? [(1080, 1200), (700, 1200)] : [(1080, 1340), (700, 1340)]
             for (width, height) in sizes {
                 for dark in [false, true] {
                     let store = RepoStore()
@@ -170,6 +179,28 @@ struct RequestFixtureAvatarImage<Content: View>: View {
                         HubRepository(id: "ios", name: "team/Gitrochi-iOS", description: "Companion app for iOS.", cloneURL: "https://github.com/team/Gitrochi-iOS.git", url: "https://github.com/team/Gitrochi-iOS"),
                         HubRepository(id: "design", name: "team/Design", description: "Shared design resources.", cloneURL: "https://github.com/team/Design.git", url: "https://github.com/team/Design"),
                     ] : [])
+                    if summary {
+                        let loading = scenario.hasPrefix("loading-")
+                        store.selection = nil; store.pullRequests = []; store.review = nil
+                        let main = Branch(name: "main", target: sha, upstream: "origin/main", ahead: 0, behind: 0, upstreamGone: false, isCurrent: true, isRemote: false)
+                        store.fixtureBranch(scenario == "noaccount-requests" ? "feature/export-csv" : "main", local: [main])
+                        switch String(scenario.split(separator: "-")[1]) {
+                        case "requests":
+                            store.prState = loading ? .loading : .loaded
+                            if scenario == "noaccount-requests" {
+                                AccountStore.shared.fixtureAccounts([]); store.prState = .needsAccount
+                            }
+                        case "issues":
+                            store.destination = .issues
+                            if !loading { store.issueList.assigned = []; store.issueList.assignedKey = store.issueAccountKey; store.issueList.page = 1 }
+                        case "actions":
+                            store.destination = .actions
+                            store.ciState = loading ? .loading : .loaded
+                        default:
+                            store.destination = .releases
+                            store.hostingHub.section = .releases; store.hostingHub.items = []; store.hostingHub.detail = nil; store.hostingHub.page = loading ? 0 : 1
+                        }
+                    }
                     let view = ["organizations", "members"].contains(scenario) ? AnyView(HostingHubPanel(store: store, section: .organizations)) : AnyView(WorkspaceDestinationContent())
                     let bounds = NSRect(x: 0, y: 0, width: width, height: height)
                     let host = NSHostingView(rootView: view.environment(store).defaultAppStorage(requestFixtureDefaults)
@@ -187,7 +218,8 @@ struct RequestFixtureAvatarImage<Content: View>: View {
                     let recognition = VNRecognizeTextRequest(); recognition.recognitionLevel = .accurate; recognition.recognitionLanguages = ["en-US"]
                     try VNImageRequestHandler(data: data).perform([recognition])
                     let text = (recognition.results ?? []).compactMap { $0.topCandidates(1).first?.string }.joined(separator: "\n")
-                    let expected = scenario == "pipeline" ? ["Improve review and pipeline workspaces", "Open in browser", "Build workspace", "Update the dependency lockfile", "Failed after 1m 32s", "Jump to first error"] : scenario == "activity" ? ["Review workspace refresh", "Marked ready", "Conversation"] : scenario == "organizations" ? ["Gitrochi team", "Studio", "Repositories", "team/Gitrochi", "Desktop Git client", "Copy clone URL"] : scenario == "members" ? ["Alex Kim", "Sam Lee", "Maintainer", "Members"] : scenario == "checks" ? ["Review workspace refresh", "Build macOS", "External security", "TESTS PASSED", "Failed after 3m 12s", "1 test failed", "Jump to first error", "Show 38 earlier lines"] : scenario == "files" ? ["Review workspace refresh", "HostingHubPanel.swift", "MemberProfileCard", "viewed", "Unified", "Split", "One member of an organization"] : scenario == "empty" ? ["No pull requests match this filter", "Select a pull request"] : ["Review workspace refresh", "Implementation notes", "Review preview image", "Looks ready", "Approve"]
+                    if scenario == "noaccount-requests" { AccountStore.shared.fixtureAccounts([account]) }
+                    let expected = summary ? [summaryText[scenario] ?? ""] : scenario == "pipeline" ? ["Improve review and pipeline workspaces", "Open in browser", "Build workspace", "Update the dependency lockfile", "Failed after 1m 32s", "Jump to first error"] : scenario == "activity" ? ["Review workspace refresh", "Marked ready", "Conversation"] : scenario == "organizations" ? ["Gitrochi team", "Studio", "Repositories", "team/Gitrochi", "Desktop Git client", "Copy clone URL"] : scenario == "members" ? ["Alex Kim", "Sam Lee", "Maintainer", "Members"] : scenario == "checks" ? ["Review workspace refresh", "Build macOS", "External security", "TESTS PASSED", "Failed after 3m 12s", "1 test failed", "Jump to first error", "Show 38 earlier lines"] : scenario == "files" ? ["Review workspace refresh", "HostingHubPanel.swift", "MemberProfileCard", "viewed", "Unified", "Split", "One member of an organization"] : scenario == "empty" ? ["No pull requests match this filter", "Select a pull request"] : ["Review workspace refresh", "Implementation notes", "Review preview image", "Looks ready", "Approve"]
                     try text.write(to: output.appendingPathComponent(name + ".txt"), atomically: true, encoding: .utf8)
                     let searchable = text.replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
                     for value in expected { precondition(searchable.localizedCaseInsensitiveContains(value), "Missing \(value): \(name)\n\(text)") }

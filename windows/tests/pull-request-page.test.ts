@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { PullRequest } from "@/entities/git";
 import type { PullRequestReview, ReviewComment } from "@/entities/hosting";
 import {
-  branchLabel, checkGroups, checkJob, checksBadge, commentCount, branchSummary, mergeReason, requestToOpen, folderLabel, headerInOneRow, isCompact, isThisBranch, linkedIssues,
+  branchLabel, checkGroups, checkJob, checksBadge, commentCount, branchSummary, mergeReason, requestSummaryCard, requestToOpen, folderLabel, headerInOneRow, isCompact, isThisBranch, linkedIssues,
   reviewRequestedCount, sorted, splitAllowed, threadCount, treeWidth, viewedKey, withViewed,
 } from "@/widgets/inspector/lib/pull-request-page";
 
@@ -33,6 +33,25 @@ describe("Pull requests page", () => {
     expect(branchSummary(true, 2, 5, 6)).toEqual({ kind: "notPushed", onServer: 4, local: 2 });
     expect(branchSummary(true, 0, 5, 3)).toEqual({ kind: "moved", incoming: 5, commits: 3 });
     expect(branchSummary(true, 0, 0, 3)).toEqual({ kind: "upToDate", commits: 3 });
+  });
+
+  it("gives the summary card a state from the first frame and never guesses about a request", () => {
+    const counts = { incoming: 0, commits: 3 };
+    // the list is not read yet: loading, whatever the local counts say
+    expect(requestSummaryCard("pending", "topic", "main", false, 0, counts)).toEqual({ kind: "loading" });
+    expect(requestSummaryCard("pending", "main", "main", false, 0, "unavailable")).toEqual({ kind: "loading" });
+    // what needs no list is said at once
+    expect(requestSummaryCard("noAccount", "topic", "main", false, 0, "pending")).toEqual({ kind: "noAccount" });
+    expect(requestSummaryCard("noAccount", null, null, false, 0, "pending")).toEqual({ kind: "noAccount" });
+    expect(requestSummaryCard("pending", null, "main", false, 0, "pending")).toEqual({ kind: "detached" });
+    expect(requestSummaryCard("failed", "topic", "main", false, 0, counts)).toEqual({ kind: "failed" });
+    // the list is read
+    expect(requestSummaryCard("read", "main", "main", false, 0, "unavailable")).toEqual({ kind: "base" });
+    expect(requestSummaryCard("read", "topic", "main", false, 0, "pending")).toEqual({ kind: "loading" });
+    expect(requestSummaryCard("read", "topic", null, false, 0, "unavailable")).toEqual({ kind: "uncounted", hasRequest: false });
+    expect(requestSummaryCard("read", "topic", "main", true, 0, "unavailable")).toEqual({ kind: "uncounted", hasRequest: true });
+    expect(requestSummaryCard("read", "topic", "main", false, 0, counts)).toEqual({ kind: "branch", state: { kind: "noRequest", commits: 3 } });
+    expect(requestSummaryCard("read", "topic", "main", true, 2, { incoming: 1, commits: 5 })).toEqual({ kind: "branch", state: { kind: "notPushed", onServer: 3, local: 2 } });
   });
 
   it("allows Split only from a 1000 px diff", () => {

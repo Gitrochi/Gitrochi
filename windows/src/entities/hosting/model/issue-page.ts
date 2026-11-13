@@ -31,6 +31,15 @@ export function issueSummary(items: AssignedIssue[]): IssueSummary {
   return { inReview: numbers("inReview"), inProgress: numbers("inProgress"), notStarted: numbers("notStarted") };
 }
 
+/** Which state the summary card is in (macOS: IssuePage.SummaryCard) */
+export type IssueSummaryCard = "loading" | "unreachable" | "empty" | "assigned";
+
+/** `read` is false until the assigned issues arrived for this repository and account */
+export function issueSummaryCard(read: boolean, failed: boolean, total: number): IssueSummaryCard {
+  if (!read) return failed ? "unreachable" : "loading";
+  return total === 0 ? "empty" : "assigned";
+}
+
 export const issueSummaryTotal = (summary: IssueSummary) => summary.inReview.length + summary.inProgress.length + summary.notStarted.length;
 
 /** "#41", "#41 and #37", then a count: three numbers in a row are not read */

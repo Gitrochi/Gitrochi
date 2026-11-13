@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assignedIssueCount, type AssignedIssue, issueNext, issueNumbers, issueProgress, issueSummary, issueSummaryCounts, issueSummaryLines, issueSummaryTotal } from "@/entities/hosting/model/issue-page";
+import { assignedIssueCount, type AssignedIssue, issueNext, issueNumbers, issueProgress, issueSummary, issueSummaryCard, issueSummaryCounts, issueSummaryLines, issueSummaryTotal } from "@/entities/hosting/model/issue-page";
 import { listDay, listWhen } from "@/shared/lib/list-date";
 
 describe("Issues page", () => {
@@ -53,5 +53,14 @@ describe("list dates", () => {
     expect(listWhen(at(2026, 11, 3, 20), now, "en")).toBe("Nov 3");
     expect(listWhen(at(2025, 12, 30), now, "en")).toBe("Dec 30, 2025");
     expect(listDay(at(2026, 10, 28), now, "en")).toBe("Oct 28");
+  });
+
+  it("gives the summary card a state from the first frame", () => {
+    expect(issueSummaryCard(false, false, 0)).toBe("loading");
+    expect(issueSummaryCard(false, true, 0)).toBe("unreachable");
+    expect(issueSummaryCard(true, false, 0)).toBe("empty");
+    expect(issueSummaryCard(true, false, 3)).toBe("assigned");
+    // a refresh that failed keeps what was read
+    expect(issueSummaryCard(true, true, 3)).toBe("assigned");
   });
 });

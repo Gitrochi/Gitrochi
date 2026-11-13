@@ -343,10 +343,10 @@ export async function hostingHubSelfTest(): Promise<[boolean, string]> {
       !host.querySelector(`select[aria-label="${t("Workspace account")}"]`),
       "Releases still offer their own account picker",
     );
-    // The fixture's only release is a draft: the status filter explains it and no version summary is invented.
+    // The fixture's only release is a draft: the status filter explains it, and the summary keeps its place without inventing a version.
     ensure(
-      !!host.querySelector(`.release-workspace .hosted-chip[data-tip="${t("Saved but not published; only people with write access see it")}"]`) && !host.querySelector(".hosted-summary") && !host.querySelector(".release-package"),
-      "Draft-only releases did not explain the draft without a summary or package menu",
+      !!host.querySelector(`.release-workspace .hosted-chip[data-tip="${t("Saved but not published; only people with write access see it")}"]`) && host.querySelector(".hosted-summary")?.textContent === t("Unreleased") + t("No releases yet") && !host.querySelector(".hosted-summary .release-track") && !host.querySelector(".release-package"),
+      "Draft-only releases did not explain the draft with an empty summary and no package menu",
     );
     // the page opens a release on arrival; the row only has to be there
     ensure(!!host.querySelector(".release-workspace .hosted-row.selected") || await until(() => !!host.querySelector(".release-workspace .hosted-row.selected")), "No release opened on arrival");

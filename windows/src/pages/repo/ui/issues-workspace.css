@@ -1,5 +1,4 @@
 /* The Issues page's own parts: the summary of what is assigned to you and the ends of its rows. macOS: IssuesWorkspacePanel. */
-.issue-summary-none { font-size: 15px; line-height: 20px; font-weight: 600; }
 .issue-summary-middle { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
 .issue-bar { display: flex; gap: 4px; height: 8px; border-radius: 999px; overflow: hidden; background: var(--bar); }
 /* status tones, never the accent: review waits, progress is information, the rest is neutral */

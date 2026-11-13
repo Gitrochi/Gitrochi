@@ -134,6 +134,46 @@ enum PullRequestPage {
         return incoming > 0 ? .moved(incoming: incoming, commits: commits) : .upToDate(commits: commits)
     }
 
+    /// Whether the request list was read for this repository; a refresh keeps what the last read said
+    enum ListRead: Equatable { case pending, read, failed, noAccount }
+
+    /// The branch's distance from its base: still being counted, not countable (no base in this clone), or counted
+    enum BranchCounts: Equatable {
+        case pending, unavailable
+        case read(incoming: Int, commits: Int)
+    }
+
+    /// Which state the summary card is in. It always has one, so the card keeps its place from the first frame.
+    /// (Windows: requestSummaryCard)
+    enum SummaryCard: Equatable {
+        case loading
+        case noAccount
+        case detached
+        /// On the base branch with no request from it: nothing to open
+        case base
+        case failed
+        /// The base is not in this clone, so there is no distance to draw
+        case uncounted(hasRequest: Bool)
+        case branch(BranchSummary)
+    }
+
+    /// Nothing is said about a request before the list is read: "no request yet" would be a guess
+    static func summaryCard(list: ListRead, head: String?, base: String?, hasRequest: Bool, ahead: Int, counts: BranchCounts) -> SummaryCard {
+        if list == .noAccount { return .noAccount }
+        guard let head else { return .detached }
+        switch list {
+        case .pending: return .loading
+        case .failed: return .failed
+        case .read, .noAccount: break
+        }
+        if head == base { return .base }
+        switch counts {
+        case .pending: return .loading
+        case .unavailable: return .uncounted(hasRequest: hasRequest)
+        case .read(let incoming, let commits): return .branch(branchSummary(hasRequest: hasRequest, ahead: ahead, incoming: incoming, commits: commits))
+        }
+    }
+
     private static let closingPattern = try? NSRegularExpression(pattern: #"\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s*:?\s+#(\d+)"#, options: [.caseInsensitive])
 
     /// The issues a description closes ("Closes #42"), in order, once each

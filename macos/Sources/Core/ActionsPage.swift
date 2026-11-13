@@ -51,6 +51,16 @@ enum ActionsPage {
         return Array(branch.filter { $0.name == workflow }.prefix(limit).reversed())
     }
 
+    /// Which state the summary card is in (Windows: runSummaryCard)
+    enum SummaryCard: Equatable { case loading, empty, unknown, runs }
+
+    /// "No runs on this branch" is said only by a list that was read: one that could not be has not shown there are none
+    static func summaryCard(history: Int, runs: Int, loading: Bool, loaded: Bool) -> SummaryCard {
+        if history > 0 { return .runs }
+        if runs > 0 || loaded { return .empty }
+        return loading ? .loading : .unknown
+    }
+
     enum Streak: Equatable {
         case none
         /// The latest runs all passed

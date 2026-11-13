@@ -2772,6 +2772,14 @@
 "No open issues are assigned to you" = "自分が担当のオープンな Issue はありません";
 "No runs match this filter." = "この条件に一致する実行はありません。";
 "No runs on this branch yet" = "このブランチの実行はまだありません";
+"Loading pull requests…" = "プルリクエストを読み込み中…";
+"Loading merge requests…" = "マージリクエストを読み込み中…";
+"Connect a GitHub account to see pull requests" = "GitHub アカウントを接続するとプルリクエストを表示できます";
+"Connect a GitLab account to see merge requests" = "GitLab アカウントを接続するとマージリクエストを表示できます";
+"%@ is on %@. Commits and branches work without an account." = "%1$@ は %2$@ にあります。コミットとブランチはアカウントなしで使えます。";
+"No pull request to open from here" = "ここから開くプルリクエストはありません";
+"No merge request to open from here" = "ここから開くマージリクエストはありません";
+"%@ is the base branch. Switch to another branch to open one." = "%1$@ はベースブランチです。開くには別のブランチに切り替えてください。";
 "Not on the server yet" = "まだサーバーにありません";
 "Not started" = "未着手";
 "Nothing is open in %@. Closed issues are under Closed." = "%@ にオープンな Issue はありません。クローズした Issue は「クローズ」にあります。";

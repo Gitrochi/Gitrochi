@@ -32,12 +32,15 @@ export function HostedListHeader({ host, path, children }: { host: string; path:
 
 /**
  * The summary card every hosted page starts with: what it is about on the left, its picture in the middle and the one
- * next step on the right. In a narrow window it is a 44 px strip with the same words on one line.
+ * next step on the right. In a narrow window it is a 44 px strip with the same words on one line. A page draws it
+ * from its first frame, in a loading or an empty state when it has nothing else to say: its height never changes, so
+ * nothing below it moves when the data arrives. `spread` gives the lead the middle's room too, for an empty state that
+ * is one caption, one line and one caption.
  */
-export function HostedListSummary({ label, lead, middle, trail, strip }: { label: string; lead: ReactNode; middle?: ReactNode; trail?: ReactNode; strip: ReactNode }) {
+export function HostedListSummary({ label, lead, middle, trail, strip, spread = false }: { label: string; lead: ReactNode; middle?: ReactNode; trail?: ReactNode; strip: ReactNode; spread?: boolean }) {
   return (
     <>
-      <section className="hosted-summary" aria-label={label}>
+      <section className={`hosted-summary${spread ? " spread" : ""}`} aria-label={label}>
         <div className="hosted-summary-lead">{lead}</div>
         <div className="hosted-summary-middle">{middle}</div>
         <div className="hosted-summary-trail">{trail}</div>
@@ -45,6 +48,26 @@ export function HostedListSummary({ label, lead, middle, trail, strip }: { label
       <section className="hosted-strip" aria-label={label}>{strip}</section>
     </>
   );
+}
+
+/** "Loading runs…" under the summary's name, or on its strip, while its data is read */
+export function HostedListSummaryLoadingLine({ caption }: { caption: string }) {
+  return <span className="hosted-caption hosted-summary-loading"><Spinner size={11} /><span className="ellipsis">{caption}</span></span>;
+}
+
+/** The summary's middle while its data is read: five grey bars where the picture will be */
+export function HostedListSummaryBars() {
+  return <div className="hosted-summary-bars" aria-hidden>{[0, 1, 2, 3, 4].map((index) => <span key={index} className="hosted-summary-bar" />)}</div>;
+}
+
+/** The one grey bar in the trail of a summary that is loading */
+export function HostedListSummaryBar() {
+  return <span className="hosted-summary-bar" aria-hidden />;
+}
+
+/** The summary's middle with nothing to draw: one 15 px line and the caption that explains it */
+export function HostedListSummaryMessage({ title, caption }: { title: string; caption?: string }) {
+  return <div className="hosted-summary-message"><span className="hosted-summary-value">{title}</span>{caption && <span className="hosted-caption">{caption}</span>}</div>;
 }
 
 /** The list and the detail side by side; `detail` says whether there is one, which a narrow window shows instead of the list */

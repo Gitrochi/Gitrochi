@@ -2102,6 +2102,14 @@
 "No open issues are assigned to you" = "ไม่มีอิชชูที่เปิดอยู่ซึ่งมอบหมายให้คุณ";
 "No runs match this filter." = "ไม่มีการรันที่ตรงกับตัวกรองนี้";
 "No runs on this branch yet" = "แบรนช์นี้ยังไม่มีการรัน";
+"Loading pull requests…" = "กำลังโหลด pull request…";
+"Loading merge requests…" = "กำลังโหลด merge request…";
+"Connect a GitHub account to see pull requests" = "เชื่อมต่อบัญชี GitHub เพื่อดู pull request";
+"Connect a GitLab account to see merge requests" = "เชื่อมต่อบัญชี GitLab เพื่อดู merge request";
+"%@ is on %@. Commits and branches work without an account." = "%1$@ อยู่บน %2$@ คอมมิตและแบรนช์ใช้งานได้โดยไม่ต้องมีบัญชี";
+"No pull request to open from here" = "ไม่มี pull request ให้เปิดจากที่นี่";
+"No merge request to open from here" = "ไม่มี merge request ให้เปิดจากที่นี่";
+"%@ is the base branch. Switch to another branch to open one." = "%1$@ เป็นแบรนช์ฐาน สลับไปยังแบรนช์อื่นเพื่อเปิด";
 "Not on the server yet" = "ยังไม่อยู่บนเซิร์ฟเวอร์";
 "Not started" = "ยังไม่เริ่ม";
 "Nothing is open in %@. Closed issues are under Closed." = "ไม่มีรายการที่เปิดอยู่ใน %@ อิชชูที่ปิดแล้วอยู่ใต้ ปิดแล้ว";

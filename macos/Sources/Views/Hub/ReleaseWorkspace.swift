@@ -23,8 +23,10 @@ struct ReleaseWorkspace: View {
     private static let stateHelp = ["Prerelease": "Published, but marked as not ready for production", "Draft": "Saved but not published; only people with write access see it"]
     private var compact: Bool { width < HostedList.compact }
     private var locked: Bool { store.hostingHub.loading || store.hostingHub.detailLoading || store.hostingHub.busy }
-    /// An account is missing, or its saved sign-in cannot be read yet; the page can show nothing of the server until then
-    private var blocked: Bool { store.hubAccount == nil || store.pendingHubCredentialAccount != nil || store.hubCredentialState == .authorizationRequired }
+    /// An account is missing, or its saved sign-in waits for the user's approval; the page can show nothing of the server
+    /// until then. A sign-in that is still being read is loading, not blocked: the summary and the list are drawn at
+    /// once and nothing appears above them later.
+    private var blocked: Bool { store.hubAccount == nil || store.hubCredentialState == .authorizationRequired }
     // One package at a time: "latest" and the timeline mean nothing across separately versioned products.
     private var families: [String] { Array(Set(store.hostingHub.items.map(ReleaseCatalog.family))).sorted() }
     private var current: String { family ?? ReleaseCatalog.defaultFamily(store.hostingHub.items) }
@@ -109,7 +111,8 @@ struct ReleaseWorkspace: View {
     }
 
     /// What this branch has not released yet and the way there (Windows: ReleaseSummary.tsx). Without the tag in this
-    /// clone the distance is unknown, so the card says what it does know: the newest release.
+    /// clone the distance is unknown, so the card says what it does know: the newest release. Before the list is read
+    /// and in a repository without a release the card is there all the same, loading or saying so.
     @ViewBuilder private var summary: some View {
         let timeline = self.timeline
         if let latest = timeline.stable ?? timeline.prerelease {
@@ -144,7 +147,46 @@ struct ReleaseWorkspace: View {
                 compareBranch(tag, shown: !atLast && value?.ahead != nil)
             }
             .accessibilityLabel("Versions")
+        } else {
+            let hub = store.hostingHub
+            summaryPlaceholder(ReleaseCatalog.summaryCard(read: !(hub.items.isEmpty && (hub.loading || hub.page == 0)),
+                                                          failed: hub.error != nil && hub.items.isEmpty, latest: false))
         }
+    }
+    /// The card without a published release to start from
+    private func summaryPlaceholder(_ card: ReleaseCatalog.SummaryCard) -> some View {
+        let key = String(localized: "Unreleased"), loading = String(localized: "Loading releases…")
+        let line = card == .unreachable ? String(localized: "Couldn't reach \(store.target?.host ?? "")") : String(localized: "No releases yet")
+        // with no release the card is one column of words, as the board draws an empty summary
+        return HostedListSummary(compact: compact, spread: card == .empty) {
+            HostedListSummaryCaption(text: key)
+            switch card {
+            case .loading: HostedListSummaryLoadingLine(caption: loading)
+            case .empty:
+                HostedListSummaryTitle(text: line)
+                // a draft is in the list, so the repository is not without releases
+                if store.hostingHub.items.isEmpty { HostedListSummaryCaption(text: String(localized: "\(store.target?.path ?? "") has no releases.")) }
+            case .unreachable, .release: HostedListSummaryCaption(text: line)
+            }
+        } middle: {
+            if card == .loading { HostedListSummaryBars() } else { Color.clear }
+        } trail: {
+            if card == .loading { HostedListSummaryBar() }
+        } strip: {
+            if card == .loading {
+                ProgressView().controlSize(.mini)
+            } else {
+                DesignIconImage(icon: .releases, size: 13).foregroundStyle(HostedList.caption).accessibilityHidden(true)
+            }
+            HostedListSummaryCaption(text: key).fixedSize()
+            if card == .loading {
+                HostedListSummaryCaption(text: loading)
+            } else {
+                Text(verbatim: line).font(.system(size: 12, weight: .semibold)).lineLimit(1)
+            }
+            Spacer(minLength: 8)
+        }
+        .accessibilityLabel("Versions")
     }
     private func headline(_ value: Distances) -> String {
         let ahead = value.ahead ?? 0

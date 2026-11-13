@@ -1,10 +1,10 @@
 import { useEffect } from "react";
-import { type CIPipeline, CIStatusIcon, isActiveCI, isFinishedCI, runBaseRef, runHistory, runStreak, type RunStreak, runTook } from "@/entities/ci";
+import { type CIPipeline, CIStatusIcon, isActiveCI, isFinishedCI, runBaseRef, runHistory, runStreak, type RunStreak, runSummaryCard, runTook } from "@/entities/ci";
 import { branchShort } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
 import { listWhen, useObserve } from "@/shared/lib";
-import { Button, HostedListSummary, Spinner, type StatusTone } from "@/shared/ui";
+import { Button, HostedListSummary, HostedListSummaryBar, HostedListSummaryBars, HostedListSummaryLoadingLine, HostedListSummaryMessage, Spinner, type StatusTone } from "@/shared/ui";
 import { duration, runName } from "./CIRunDetail";
 
 /** How this branch's latest runs went, oldest to newest, and what the newest one needs (macOS: RunSummaryCard) */
@@ -15,7 +15,7 @@ export function RunSummary({ store }: { store: RepoStore }) {
   const ref = ci.currentRef;
   const history = runHistory(ci.pipelines, ref), streak = runStreak(history), latest = history[history.length - 1];
   const name = ref ?? store.headBranch ?? t("Detached HEAD");
-  const loading = !ci.pipelines.length && (ci.state.kind === "loading" || ci.state.kind === "idle");
+  const card = runSummaryCard(history.length, ci.pipelines.length, ci.state.kind === "loading" || ci.state.kind === "idle", ci.state.kind === "loaded");
   // the newest finished run of the branch runs are compared with, unless this is that branch
   const baseName = runBaseRef([...store.localBranches.map((branch) => branch.name), ...store.remoteBranches.map(branchShort)]);
   const base = baseName && baseName !== ref ? ci.pipelines.find((run) => run.ref === baseName && (run.status === "success" || run.status === "failed")) : undefined;
@@ -40,12 +40,13 @@ export function RunSummary({ store }: { store: RepoStore }) {
           <span className="hosted-summary-key">{t("This branch")}</span>
           {/* a branch name is cut from the front, where it says least */}
           <span className="hosted-summary-value ci-summary-branch"><bdi>{name}</bdi></span>
-          {loading ? <span className="hosted-caption ci-summary-base"><Spinner size={11} />{t("Loading runs…")}</span>
+          {card === "loading" ? <HostedListSummaryLoadingLine caption={t("Loading runs…")} />
             : base ? <span className="hosted-caption ci-summary-base"><CIStatusIcon status={base.status} size={12} /><span className="ellipsis">{t(base.status === "success" ? "{0} passes on {1}" : "{0} fails on {1}", base.ref, runName(provider, base))}</span></span> : null}
         </>
       }
-      // "no runs" is said only once the runs arrived: a list that could not be read has not shown there are none
-      middle={!history.length ? (ci.state.kind === "loaded" ? <span className="hosted-caption">{t("No runs on this branch yet")}</span> : null) : (
+      middle={card === "loading" ? <HostedListSummaryBars />
+        : card === "empty" ? <HostedListSummaryMessage title={t("No runs on this branch yet")} />
+        : card === "unknown" ? null : (
         <div className="ci-track" role="img" aria-label={label?.text ?? ""}>
           {label && <div className="ci-track-label status-tone" data-tone={label.tone}>{label.text}</div>}
           {/* the runs as nodes on a line, each with its status icon and its number; the newest is the dark one */}
@@ -60,16 +61,19 @@ export function RunSummary({ store }: { store: RepoStore }) {
         </div>
       )}
       trail={
-        streak.kind === "failed" ? <>{showRun(streak.run)}{runTook(streak.run) != null && <span className="hosted-caption">{t("Failed after {0}", duration(runTook(streak.run)!))}</span>}</>
+        card === "loading" ? <HostedListSummaryBar />
+          : streak.kind === "failed" ? <>{showRun(streak.run)}{runTook(streak.run) != null && <span className="hosted-caption">{t("Failed after {0}", duration(runTook(streak.run)!))}</span>}</>
           : streak.kind === "waiting" ? showRun(streak.run)
           : streak.kind === "running" ? (start != null ? <span className="hosted-caption">{t("Started {0}", listWhen(start))}</span> : null)
           : latest ? <span className="hosted-caption">{latestFacts()}</span> : null
       }
       strip={
         <>
-          {latest && <CIStatusIcon status={latest.status} size={14} />}
+          {card === "loading" ? <Spinner size={14} /> : latest && <CIStatusIcon status={latest.status} size={14} />}
           <span className="hosted-strip-text ci-summary-branch"><bdi>{name}</bdi></span>
-          {label ? <span className="ci-strip-label status-tone" data-tone={label.tone}>{label.text}</span> : loading ? <span className="hosted-caption">{t("Loading runs…")}</span> : null}
+          {label ? <span className="ci-strip-label status-tone" data-tone={label.tone}>{label.text}</span>
+            : card === "loading" ? <span className="hosted-caption ellipsis">{t("Loading runs…")}</span>
+            : card === "empty" ? <span className="hosted-caption ellipsis">{t("No runs on this branch yet")}</span> : null}
           <span className="spacer" />
           {streak.kind === "failed" ? showRun(streak.run) : latest ? <span className="hosted-caption" style={{ flex: "none" }}>{runName(provider, latest)}</span> : null}
         </>

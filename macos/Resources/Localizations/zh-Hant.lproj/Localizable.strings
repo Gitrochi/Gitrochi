@@ -2112,6 +2112,14 @@
 "No open issues are assigned to you" = "沒有指派給你的開放議題";
 "No runs match this filter." = "沒有符合此篩選條件的執行。";
 "No runs on this branch yet" = "此分支尚無執行";
+"Loading pull requests…" = "正在載入拉取請求…";
+"Loading merge requests…" = "正在載入合併請求…";
+"Connect a GitHub account to see pull requests" = "連結 GitHub 帳號即可查看拉取請求";
+"Connect a GitLab account to see merge requests" = "連結 GitLab 帳號即可查看合併請求";
+"%@ is on %@. Commits and branches work without an account." = "%1$@ 位於 %2$@。提交和分支無需帳號即可使用。";
+"No pull request to open from here" = "此處沒有可發起的拉取請求";
+"No merge request to open from here" = "此處沒有可發起的合併請求";
+"%@ is the base branch. Switch to another branch to open one." = "%1$@ 是基礎分支。切換到其他分支即可發起。";
 "Not on the server yet" = "尚未推送到伺服器";
 "Not started" = "尚未開始";
 "Nothing is open in %@. Closed issues are under Closed." = "%@ 中沒有開放的議題。已關閉的議題在「已關閉」下。";

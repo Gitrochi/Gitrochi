@@ -2064,6 +2064,14 @@
 "No open issues are assigned to you" = "Tidak ada issue terbuka yang ditugaskan ke Anda";
 "No runs match this filter." = "Tidak ada run yang cocok dengan filter ini.";
 "No runs on this branch yet" = "Belum ada run di branch ini";
+"Loading pull requests…" = "Memuat pull request…";
+"Loading merge requests…" = "Memuat merge request…";
+"Connect a GitHub account to see pull requests" = "Hubungkan akun GitHub untuk melihat pull request";
+"Connect a GitLab account to see merge requests" = "Hubungkan akun GitLab untuk melihat merge request";
+"%@ is on %@. Commits and branches work without an account." = "%1$@ ada di %2$@. Commit dan branch berfungsi tanpa akun.";
+"No pull request to open from here" = "Tidak ada pull request untuk dibuka dari sini";
+"No merge request to open from here" = "Tidak ada merge request untuk dibuka dari sini";
+"%@ is the base branch. Switch to another branch to open one." = "%1$@ adalah branch dasar. Beralih ke branch lain untuk membukanya.";
 "Not on the server yet" = "Belum ada di server";
 "Not started" = "Belum dimulai";
 "Nothing is open in %@. Closed issues are under Closed." = "Tidak ada yang terbuka di %@. Issue yang ditutup ada di Ditutup.";

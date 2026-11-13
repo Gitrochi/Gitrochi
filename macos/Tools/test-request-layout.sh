@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Render actual PR and organization screens using isolated, deterministic data and disabled networking.
 # Optional: GITROCHI_REQUEST_LAYOUT_SCENARIOS=organizations,members for a targeted render.
+# The summary card scenarios are loading-<page>, nothing-<page> and noaccount-requests (pages: requests, issues, actions, releases).
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 TASK_TMP="$(mktemp -d /tmp/gitrochi-request-layout-source.XXXXXX)"
@@ -58,6 +59,12 @@ for source in (root / 'Sources').rglob('*.swift'):
         text = replace_body(text, '    func loadRequestLifecycle(_ number: Int)', '        // Fixture state is supplied by the renderer.')
     elif relative == 'Store/RepoStore+Integrations.swift':
         text = replace_body(text, '    func loadPullRequests(append: Bool = false)', '        // Fixture state is supplied by the renderer.')
+    elif relative == 'Store/RepoStore+Issues.swift':
+        text = replace_body(text, '    func prepareIssues() async', '        // Fixture state is supplied by the renderer.')
+        text = replace_body(text, '    func loadAssignedIssues() async', '        // Fixture state is supplied by the renderer.')
+    elif relative == 'Views/Workspace/PullRequestSummary.swift':
+        # Not in this clone: the fixture repository is no folder, and the base-branch scenario needs no counts.
+        text = replace_body(text, '    private func load() async', '        counts = (countsKey, .unavailable)')
     elif relative == 'Store/RepoStore+HostingHub.swift':
         text = replace_body(text, '    func activateHostingHub(_ section: HostingHubSection)', '        // Fixture state is supplied by the renderer.')
     elif relative == 'Views/Inspector/PullRequestDetailView.swift':
@@ -86,6 +93,10 @@ extension RepoStore {
     func fixtureRepository() {
         url = URL(fileURLWithPath: "/fixture/Gitrochi")
         headBranch = "main"
+    }
+    func fixtureBranch(_ name: String, local: [Branch]) {
+        headBranch = name
+        localBranches = local
     }
 }
 ''')

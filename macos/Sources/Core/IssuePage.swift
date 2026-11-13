@@ -45,6 +45,15 @@ enum IssuePage {
         }
     }
 
+    /// Which state the summary card is in (Windows: issueSummaryCard)
+    enum SummaryCard: Equatable { case loading, unreachable, empty, assigned }
+
+    /// `read` is false until the assigned issues arrived for this repository and account
+    static func summaryCard(read: Bool, failed: Bool, total: Int) -> SummaryCard {
+        guard read else { return failed ? .unreachable : .loading }
+        return total == 0 ? .empty : .assigned
+    }
+
     static func summary(_ items: [Assigned]) -> Summary {
         Summary(inReview: items.filter { $0.progress == .inReview }.map(\.number),
                 inProgress: items.filter { $0.progress == .inProgress }.map(\.number),

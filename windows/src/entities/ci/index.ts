@@ -2,7 +2,7 @@
 export { CIAPI } from "./api/ci-api";
 export { CIStore } from "./model/store";
 export { canPlay, type CIDeployment, type CIInput, type CIJob, type CIPipeline, type CIRequestCheck, type CIStatus, type CIWorkflow, eventTitle, gitlabStatus, groupByBranch, isActiveCI, isFinishedCI, statusInfo } from "./model/types";
-export { ciDuration, commonWorkflow, jobGroup, jobGroups, runBaseRef, runCount, runHistory, runSegment, runSegments, runStreak, runTook, visibleRuns, type JobGroup, type RunSegment, type RunStreak } from "./model/actions-page";
+export { ciDuration, commonWorkflow, jobGroup, jobGroups, runBaseRef, runCount, runHistory, runSegment, runSegments, runStreak, runSummaryCard, runTook, visibleRuns, type JobGroup, type RunSegment, type RunStreak } from "./model/actions-page";
 export { CIStatusIcon } from "./ui/CIStatusIcon";
 export { canSchedule, dateTimeInputValue, nextFullHour, parseDateTimeInput, type ScheduledRun, scheduledRunRelative, scheduledRunTime } from "./model/scheduled-runs";
 export { scheduledRuns } from "./model/scheduled-run-store";

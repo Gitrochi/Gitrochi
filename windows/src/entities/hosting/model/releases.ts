@@ -58,6 +58,14 @@ export function releasePackageName(items: HubItem[], family: string): string {
   }
   return family.replace(/[@/\-_]+$/, "");
 }
+/** Which state the summary card is in (macOS: ReleaseCatalog.SummaryCard) */
+export type ReleaseSummaryCard = "loading" | "unreachable" | "empty" | "release";
+/** `read` is false until the release list arrived, `failed` says it could not be read and nothing is shown, and `latest` that it holds a published release */
+export function releaseSummaryCard(read: boolean, failed: boolean, latest: boolean): ReleaseSummaryCard {
+  if (latest) return "release";
+  if (failed) return "unreachable";
+  return read ? "empty" : "loading";
+}
 /** Recent releases of one package, oldest first: older stables, the newest stable, then a newer prerelease. */
 export function releaseTimeline(items: HubItem[], family: string, count = 4) {
   const sorted = orderedReleases(items.filter(item => releaseFamily(item) === family && releaseState(item) !== "Draft"));

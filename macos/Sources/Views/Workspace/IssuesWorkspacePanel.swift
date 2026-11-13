@@ -10,6 +10,12 @@ struct IssuesWorkspacePanel: View {
     @ViewState private var width: CGFloat = 1000
 
     private var compact: Bool { width < HostedList.compact }
+    /// No account, or a saved sign-in the user has to approve. One that is still being read is loading, not blocked:
+    /// the summary and the list are drawn at once and nothing appears above them later.
+    private var blocked: Bool {
+        guard store.collaborationAccess == nil else { return false }
+        return store.hostingAccount.map { AccountStore.shared.credentialState(for: $0) != .loading } ?? true
+    }
     private var detail: CollaborationInboxDetail? {
         guard let detail = store.collaboration.inboxDetail, detail.item.kind == "issue" else { return nil }
         return detail
@@ -28,7 +34,7 @@ struct IssuesWorkspacePanel: View {
                             .buttonStyle(HostedListButtonStyle())
                             .disabled(store.collaborationAccess == nil)
                     }
-                    if store.collaborationAccess == nil {
+                    if blocked {
                         HostedAccountNeeded(target: target) { refresh() }
                     } else {
                         IssueSummaryCard(compact: compact)
@@ -146,19 +152,26 @@ private struct IssueSummaryCard: View {
         let assigned = (items ?? []).map { store.issueProgress($0) }
         let summary = IssuePage.summary(assigned)
         let next = IssuePage.next(assigned, currentBranch: store.headBranch)
-        HostedListSummary(compact: compact) {
+        let card = IssuePage.summaryCard(read: items != nil, failed: store.issueList.assignedFailed, total: summary.total)
+        // with nothing assigned the card is one column of words, as the board draws it
+        HostedListSummary(compact: compact, spread: card == .empty) {
             HostedListSummaryCaption(text: String(localized: "Assigned to you"))
-            if items == nil {
-                HostedListSummaryCaption(text: pending)
-            } else if let first = summary.lines.first {
-                Text(verbatim: first).font(.system(size: 15, weight: .semibold)).lineLimit(1)
+            switch card {
+            case .loading: HostedListSummaryLoadingLine(caption: pending)
+            case .unreachable: HostedListSummaryCaption(text: pending)
+            case .empty:
+                HostedListSummaryTitle(text: String(localized: "No open issues are assigned to you"))
+                if let open = openCount, open > 0 {
+                    HostedListSummaryCaption(text: String(localized: "\(open) issues are open in \(store.target?.path ?? "")."))
+                }
+            case .assigned:
+                HostedListSummaryTitle(text: summary.lines.first ?? "")
                 if summary.lines.count > 1 { HostedListSummaryCaption(text: summary.lines.dropFirst().joined(separator: " · ")) }
-            } else {
-                Text("No open issues are assigned to you").font(.system(size: 15, weight: .semibold)).lineLimit(2)
-                    .fixedSize(horizontal: false, vertical: true)
             }
         } middle: {
-            if summary.total > 0 {
+            if card == .loading {
+                HostedListSummaryBars()
+            } else if summary.total > 0 {
                 VStack(alignment: .leading, spacing: 8) {
                     bar(summary)
                     HStack(spacing: 24) {
@@ -171,13 +184,11 @@ private struct IssueSummaryCard: View {
                     .accessibilityHidden(true)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-            } else if items != nil, let open = openCount {
-                HostedListSummaryCaption(text: String(localized: "\(open) issues are open in \(store.target?.path ?? "")."))
-                    .frame(maxWidth: .infinity, alignment: .leading)
             } else {
                 Color.clear
             }
         } trail: {
+            if card == .loading { HostedListSummaryBar() }
             action(next, items: items ?? [])
             if case .createBranch(let number)? = next, let item = items?.first(where: { $0.number == number }),
                let date = ListDate.parse(item.createdAt) {
@@ -186,10 +197,18 @@ private struct IssueSummaryCard: View {
                 HostedListSummaryCaption(text: branch)
             }
         } strip: {
-            SymbolIcon("smallcircle.filled.circle").font(.system(size: 13)).foregroundStyle(HostedList.caption).accessibilityHidden(true)
+            if card == .loading {
+                ProgressView().controlSize(.mini)
+            } else {
+                SymbolIcon("smallcircle.filled.circle").font(.system(size: 13)).foregroundStyle(HostedList.caption).accessibilityHidden(true)
+            }
             HostedListSummaryCaption(text: String(localized: "Assigned to you")).fixedSize()
-            Text(verbatim: items == nil ? pending : summary.total == 0 ? String(localized: "No open issues are assigned to you") : summary.counts.replacingOccurrences(of: ", ", with: " · "))
-                .font(.system(size: 12, weight: .semibold)).lineLimit(1)
+            if items == nil {
+                HostedListSummaryCaption(text: pending)
+            } else {
+                Text(verbatim: summary.total == 0 ? String(localized: "No open issues are assigned to you") : summary.counts.replacingOccurrences(of: ", ", with: " · "))
+                    .font(.system(size: 12, weight: .semibold)).lineLimit(1)
+            }
             Spacer(minLength: 8)
             action(next, items: items ?? [])
         }
@@ -198,7 +217,7 @@ private struct IssueSummaryCard: View {
 
     /// What stands in for the summary until the assigned issues are read: still on their way, or out of reach
     private var pending: String {
-        store.issueList.assignedFailed ? String(localized: "Couldn't reach \(store.target?.host ?? "")") : String(localized: "Loading…")
+        store.issueList.assignedFailed ? String(localized: "Couldn't reach \(store.target?.host ?? "")") : String(localized: "Loading issues…")
     }
 
     /// The number of open issues, when the list shows all of them
