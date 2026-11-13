@@ -22323,6 +22323,58 @@ help_resolve() {   # $1 command name or alias → HELP_NAME (the canonical name)
   return 1
 }
 
+edit_distance() {   # $1 $2 → ED: inserted, deleted, replaced and swapped neighbouring letters (plain bash; only an unknown command pays for it)
+  local one=$1 two=$2 i j v
+  local -a before=() last=() row=()
+  for ((j = 0; j <= ${#two}; j++)); do last[j]=$j; done
+  for ((i = 1; i <= ${#one}; i++)); do
+    row=("$i")
+    for ((j = 1; j <= ${#two}; j++)); do
+      v=$((last[j - 1] + 1)); [ "${one:i-1:1}" != "${two:j-1:1}" ] || v=${last[j - 1]}
+      [ $((last[j] + 1)) -ge "$v" ] || v=$((last[j] + 1))
+      [ $((row[j - 1] + 1)) -ge "$v" ] || v=$((row[j - 1] + 1))
+      if [ "$i" -gt 1 ] && [ "$j" -gt 1 ] && [ "${one:i-1:1}" = "${two:j-2:1}" ] && [ "${one:i-2:1}" = "${two:j-1:1}" ] && [ $((before[j - 2] + 1)) -lt "$v" ]; then
+        v=$((before[j - 2] + 1))
+      fi
+      row[j]=$v
+    done
+    before=("${last[@]}"); last=("${row[@]}")
+  done
+  ED=${last[${#two}]}
+}
+
+help_suggest() {   # $1 what was typed → HELP_SUGGEST: up to three close command names, the closest first ("" when none is close)
+  local typed name alias candidate limit=2 near='' far='' count=0
+  typed=$(lower "$1")
+  HELP_SUGGEST=''
+  # One slip in a short word, two in a longer one; a single letter is too little to guess from.
+  [ ${#typed} -ge 2 ] || return 0
+  [ ${#typed} -ge 5 ] || limit=1
+  for name in $HELP_COMMANDS; do
+    help_topic "$name"
+    [ "$H_GROUP" != internal ] || continue
+    for candidate in "$name" $H_ALIAS; do
+      case "$candidate" in -*) continue ;; esac
+      edit_distance "$typed" "$candidate"
+      if [ "$ED" -le 1 ] || [[ "$candidate" == "$typed"* ]]; then near="$near $candidate"
+      elif [ "$ED" -le "$limit" ]; then far="$far $candidate"; fi
+    done
+  done
+  for candidate in $near $far; do
+    [ "$count" -lt 3 ] || break
+    HELP_SUGGEST="$HELP_SUGGEST${HELP_SUGGEST:+, }$candidate"; count=$((count + 1))
+  done
+}
+
+help_unknown() {   # $1 message, $2 what was typed: the error, the closest names and where the list is, without the whole help (exit 1)
+  [ -z "$MACHINE_JSON" ] || die "$1: $2"
+  err "$1: $2"
+  help_suggest "$2"
+  [ -z "$HELP_SUGGEST" ] || say "비슷한 명령: $HELP_SUGGEST" >&2
+  say '명령 목록: gitch help' >&2
+  exit 1
+}
+
 help_engine() {   # $1 flow|test|ci, $2 optional flow subcommand: the flow engine's own help, when the engine is installed
   local engine topic
   case "$1" in flow) topic=${2:-} ;; *) topic=$1 ;; esac
@@ -22529,7 +22581,7 @@ case "${1:-}" in
     case "${2:-}" in
       --all|-a) help_all ;;
       ''|-*) help_cmd ;;
-      *) help_show "$2" "${3:-}" || help_cmd ;;
+      *) help_show "$2" "${3:-}" || help_unknown '알 수 없는 도움말 주제' "$2" ;;
     esac
     exit 0 ;;
   version|-v|--version) shift; version_cmd "$@"; exit 0 ;;
@@ -22603,5 +22655,5 @@ case "${1:-}" in
   guard) shift; guard_cmd "$@"; exit 0 ;;
   _hook) shift; hook_main "$@"; exit $? ;;
   "") menu_cmd; exit $? ;;
-  *) [ -n "$MACHINE_JSON" ] && die "알 수 없는 명령: $1"; err "알 수 없는 명령: $1"; help_cmd; exit 1 ;;
+  *) help_unknown '알 수 없는 명령' "$1" ;;
 esac

@@ -308,3 +308,47 @@ test_help_flag_for_flow_commands_never_reaches_a_run() {
   [ ! -e ran.txt ] || fail 'a help request ran the flow'
   [ ! -d "$(git rev-parse --git-common-dir)/gitch" ] || fail 'a help request recorded a run'
 }
+
+# ----- unknown commands -----
+
+test_help_unknown_command_suggests_close_names() {
+  local out err lines
+  mk_config
+  gitch pusj > "$T/stdout" 2> "$T/stderr"; RC=$?
+  out=$(cat "$T/stdout"); err=$(cat "$T/stderr")
+  assert_eq "$RC" 1 'unknown command exit code'
+  assert_eq "$out" '' 'the unknown-command hint belongs on stderr'
+  assert_eq "$err" "알 수 없는 명령: pusj
+비슷한 명령: push
+명령 목록: gitch help"
+  run gitch comit -m x; assert_rc 1; assert_out '비슷한 명령: commit'
+  run gitch stauts; assert_rc 1; assert_out '비슷한 명령: status'
+  run gitch chekc; assert_rc 1; assert_out '비슷한 명령: check'          # swapped letters
+  run gitch pul; assert_rc 1; assert_out '비슷한 명령: pl, pull'         # a prefix and a one-letter slip
+  run gitch PREFLIGTH; assert_rc 1; assert_out '비슷한 명령: preflight'
+  run gitch work-space; assert_rc 1; assert_out '비슷한 명령: workspace'
+  # Nothing close: no guess, only the pointer. Never the whole help.
+  run gitch zzzzzz; assert_rc 1; assert_out '알 수 없는 명령: zzzzzz'; assert_no_out '비슷한 명령'; assert_out '명령 목록: gitch help'
+  lines=$(printf '%s\n' "$OUT" | wc -l | tr -d ' ')
+  assert_eq "$lines" 2 'an unknown command prints the error and one pointer'
+  run gitch x; assert_rc 1; assert_no_out '비슷한 명령'                  # one letter is too little to guess from
+  run gitch gard; assert_rc 1; assert_no_out 'guard'                    # internal commands are not suggested
+}
+
+test_help_unknown_topic_suggests_close_names() {
+  run gitch help pusj; assert_rc 1
+  assert_out '알 수 없는 도움말 주제: pusj'; assert_out '비슷한 명령: push'; assert_out '명령 목록: gitch help'
+  assert_no_out '매일 쓰는 것'
+  run gitch help comit; assert_rc 1; assert_out '비슷한 명령: commit'
+  run gitch help zzzzzz; assert_rc 1; assert_no_out '비슷한 명령'
+  # Options that are not topics still show the overview, as before.
+  run gitch help --json; assert_ok; assert_out '매일 쓰는 것'
+}
+
+test_help_unknown_command_keeps_the_machine_error() {
+  local rc
+  gitch pusj --json > "$T/stdout" 2> "$T/stderr"; rc=$?
+  assert_eq "$rc" 1
+  [ ! -s "$T/stdout" ] || fail 'the unknown command wrote to stdout'
+  assert_eq "$(cat "$T/stderr")" '{"schemaVersion":1,"error":{"code":"GITCH_ERROR","message":"알 수 없는 명령: pusj","exitCode":1}}'
+}
