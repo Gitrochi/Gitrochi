@@ -1,0 +1,8 @@
+/* The Add account sheet's own parts; the layout is the shared sheet's. macOS: AddAccountSheet. */
+.add-account-sheet .segmented { align-self: flex-start; }
+.add-account-toggle { align-self: flex-start; min-height: 24px; }
+.add-account-field { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; }
+.add-account-field > span { font-size: 12px; color: var(--text-2); }
+.add-account-field > .input { align-self: stretch; min-width: 0; }
+.add-account-import { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; min-width: 0; }
+.add-account-import > .hint { flex: 1 1 160px; min-width: 0; }

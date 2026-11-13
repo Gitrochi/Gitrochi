@@ -8,7 +8,7 @@ import { useObserve } from "@/shared/lib";
 import { Avatar } from "@/shared/ui";
 
 /** Reuse connected profiles before public hosting profiles (macOS: GitAccountAvatar). */
-export function GitAccountAvatar({ account }: { account: GitchAccount }) {
+export function GitAccountAvatar({ account, size = 28 }: { account: GitchAccount; size?: number }) {
   useObserve(accounts); useObserve(avatars);
   const [remoteURL, setRemoteURL] = useState<string | null>(null);
   const connected = accounts.accounts.find((value) => gitAccountKey(accountHost(value), value.username) === gitAccountKey(account.hosts, account.id));
@@ -32,5 +32,5 @@ export function GitAccountAvatar({ account }: { account: GitchAccount }) {
     return () => { current = false; };
   }, [account.id, account.hosts, knownURL, avatars.enabled]);
   const url = avatars.enabled ? knownURL ?? remoteURL : null;
-  return <Avatar key={url ?? "initials"} name={connected?.name ?? account.id} email={account.id} url={url} size={28} />;
+  return <Avatar key={url ?? "initials"} name={connected?.name ?? account.id} email={account.id} url={url} size={size} />;
 }

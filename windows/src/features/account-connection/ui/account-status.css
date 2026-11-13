@@ -1,0 +1,5 @@
+/* An account's state on a row's second line. macOS: AccountStatusLabel. */
+.account-status-label { display: inline-flex; align-items: flex-start; gap: 4px; min-width: 0; font-size: 12px; line-height: 16px; font-weight: 500; color: var(--status-text); }
+.account-status-label > svg { flex: none; margin-top: 2px; }
+.account-status-label > span { min-width: 0; overflow-wrap: anywhere; }
+.account-status-label.locked { color: var(--text-2); font-weight: 400; }

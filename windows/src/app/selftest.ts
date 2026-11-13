@@ -265,8 +265,8 @@ export async function runSelfTest(): Promise<boolean> {
   await step("GitHub 로그인 대소문자 차이 → 같은 서버의 기존 계정 설정 재개", browserLoginResumesExistingIdentity);
   await step("로그인 코드 준비·클립보드 코드 표시·조회 오류 중단과 재시작", browserLoginGuidanceSelfTest);
   await step("프로젝트 추가 권한은 사용자 클릭·선택 계정만 연결하고 취소·다른 계정 차단", browserProjectAccessSelfTest);
-  await step("우측 계정 선택·Git 잠금 표시·명시적 프로젝트 추가 승인", accountQuickControlsSelfTest);
-  await step("저장소·원격 없이도 연결된 계정과 전역 Git 작성자 표시", accountQuickControlsWithoutRepositorySelfTest);
+  await step("Account button: the 24px photo, the badge for this repository's account only, the popover's reason, Change… and the three state icons", accountQuickControlsSelfTest);
+  await step("Account popover without a repository or an account: the accounts, Inbox, Manage accounts… and the Add account sheet", accountQuickControlsWithoutRepositorySelfTest);
   await step("Push 검토·PR 줄 리뷰·변경 AI 질문의 실제 React 화면", reviewWorkflowsSelfTest);
   await step("Pull requests page: list controls and the Hide list choice kept across tabs, one-line composer, Split reason, timeline, keyboard tabs and retained drafts", prConversationSelfTest);
   await step("PR·이슈 목록의 검색 줄·필터·페이지 이동", listSectionsSelfTest);

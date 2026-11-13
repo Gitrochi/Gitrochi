@@ -151,16 +151,14 @@
 
 /* the account control sits in the trailing corner in a capsule like the others */
 .toolbar .account-quick-trigger {
-  height: 36px;
   margin-left: 0;
-  padding: 0 12px 0 6px;
   border: 0;
-  border-radius: 18px;
   background: var(--card);
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.07), 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
-.toolbar .account-quick-trigger:hover {
+.toolbar .account-quick-trigger:hover,
+.toolbar .account-quick-trigger.open {
   background: color-mix(in srgb, var(--text) 6%, var(--card));
 }
 

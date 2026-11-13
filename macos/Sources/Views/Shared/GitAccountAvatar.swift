@@ -3,6 +3,7 @@ import SwiftUI
 /// Reuse connected profiles, then public hosting profiles; private servers retain initials until connected.
 struct GitAccountAvatar: View {
     let account: Gitch.Account
+    var size: CGFloat = 28
     @ViewState private var remoteURL: URL?
     private var connected: HostAccount? {
         AccountStore.shared.accounts.first {
@@ -13,7 +14,7 @@ struct GitAccountAvatar: View {
         connected?.avatarURL.flatMap(URL.init(string:)) ?? GitAccountPresentation.avatarURL(host: account.hosts, username: account.id)
     }
     var body: some View {
-        HostingAvatar(name: connected?.name ?? account.id, username: account.id, avatarURL: knownURL ?? remoteURL, size: 28)
+        AccountAvatar(name: connected?.name ?? account.id, username: account.id, avatarURL: knownURL ?? remoteURL, size: size)
             .task(id: account.id + account.hosts + String(AvatarStore.shared.enabled)) {
                 guard AvatarStore.shared.enabled, knownURL == nil,
                       let server = URL(string: "https://" + GitAccountPresentation.host(account.hosts)), server.host != nil else { return }
