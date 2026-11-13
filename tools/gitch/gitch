@@ -22468,12 +22468,51 @@ flow_preflight_line() {   # The FLOW=… line added to preflight (only where the
   case "$out" in FLOW=*) printf '%s' "${out#FLOW=}" ;; esac
 }
 
+help_flag_in() {   # $1 command, then its arguments: true when one of them is exactly --help or -h
+  # Scanning stops at --, and the value of an option that takes one is a value: gitch c -m "--help" still commits.
+  local command=$1 argument skip=''
+  shift
+  for argument in "$@"; do
+    if [ -n "$skip" ]; then skip=''; continue; fi
+    case "$argument" in
+      --) return 1 ;;
+      -h|--help) return 0 ;;
+      -*) ;;
+      *) continue ;;
+    esac
+    case "$command" in
+      c|commit|cp|amend) case "$argument" in -m|--message|-am|-F|--file|--trailer) skip=1 ;; esac ;;
+      pr|mr) case "$argument" in -t|--title|-b|--body|-F|--body-file|-B|--base|--state|--limit) skip=1 ;; esac ;;
+      work|w) case "$argument" in -m|--message|-am|-F|--file|--trailer|-t|--title|-b|--body|--body-file|-B|--work|--workspace|--repo|--branch|--base) skip=1 ;; esac ;;
+      issue) case "$argument" in --state|--limit|--label|--assignee) skip=1 ;; esac ;;
+      publish) case "$argument" in -d|--description) skip=1 ;; esac ;;
+      rescue) case "$argument" in --branch) skip=1 ;; esac ;;
+      audit|report) case "$argument" in --since|--days) skip=1 ;; esac ;;
+      add) case "$argument" in --id|--email|--host|--port|--folder|--via) skip=1 ;; esac ;;
+      login) case "$argument" in --status|--cancel|--capability|--expected-login) skip=1 ;; esac ;;
+      app) case "$argument" in --path|--repo|--file|--line|--view|--commit) skip=1 ;; esac ;;
+      overlap) case "$argument" in --interval) skip=1 ;; esac ;;
+      g|graph) case "$argument" in --format|-f|--index|--out|-o|--since|--max-commits|-n|--max-files|--min|--depth|--lang|-l|--base|--rules|-r|--language|--project-name|--interval) skip=1 ;; esac ;;
+      flow|test|ci)   # the options the flow engine reads a value for
+        case "$argument" in --env|--only|--jobs|-j|--since|--format|--out|--lang|--root|--idempotency-key|--run-id|--older-than|--trigger|--keep|--flow|--tag|--name|--url|--user|--project|--allow|--secret-from|--connection|--ref|--image|--runs-on) skip=1 ;; esac ;;
+    esac
+  done
+  return 1
+}
+
 # ================= 명령줄 =================
 
 detect_actor
 ui_init "$@"
 setup_colors
 ui_start "$@"
+
+# Asking for help never runs the command: gitch <command> ... --help prints that command's help, for every command and alias.
+# (Internal protocol commands, _complete and the hooks, take their arguments as data.)
+case "${1:-}" in
+  ''|help|-h|--help|_*) ;;
+  *) if [ $# -gt 1 ] && help_flag_in "$@" && help_show "$1" "${2:-}"; then exit 0; fi ;;
+esac
 
 case "${1:-}" in
   help|-h|--help)

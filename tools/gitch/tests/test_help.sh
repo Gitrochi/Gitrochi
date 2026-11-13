@@ -97,3 +97,180 @@ test_help_flow_topics_show_the_engine_help() {
   run gitch help ci; assert_ok; assert_out '사용법: gitch ci'; assert_out 'gitch flow ci browse --connection NAME'
   run gitch help flow run; assert_ok; assert_out '사용법: gitch flow'; assert_out 'gitch flow run <flow>'
 }
+
+# ----- --help never runs the command -----
+
+help_fixture() {   # an installed gitch and a locked repository where every command has something to do → cd
+  mk_config; install_quiet
+  mk_remote_seeded github-alice alice/app alice@example.com
+  gitch clone alice alice/app "$HOME/Develop/alice/app" >/dev/null 2>&1 || fail 'clone'
+  cd "$HOME/Develop/alice/app" || fail cd
+  git branch merged-topic || fail 'branch'                      # prune would delete it
+  git config --add gitswitch.protect release                    # protect would change the list
+  echo one > one.txt; git add one.txt
+  gitch c -m 'Local work' >/dev/null 2>&1 || fail 'commit'       # not pushed: undo, amend, fix and p would act on it
+  gitch pl >/dev/null 2>&1 || fail 'pull'                        # leaves a backup for rescue
+  echo two > two.txt; git add two.txt                           # staged: c and cp would commit it
+  echo three > untracked.txt
+  : > "$FAKE_REMOTES/.log"; : > "$FAKE_GH/log"; : > "$FAKE_WEB/log"
+}
+help_state() {   # everything a command could change: commits, refs, index, working tree, configuration, gitch settings, the remote, and what it called
+  git rev-parse HEAD
+  git log -1 --format=%B
+  git for-each-ref --format='%(refname) %(objectname)'
+  git status --porcelain
+  git stash list
+  git config --local --list | sort
+  git --git-dir="$FAKE_REMOTES/github-alice/alice/app.git" for-each-ref --format='%(refname) %(objectname)'
+  git config --global --list | sort
+  # Files outside the repository: gitch settings and state, SSH and shell configuration, AI tool rules, anything newly made.
+  find "$HOME" "$T" -path "$HOME/Develop/alice/app" -prune -o -path "$FAKE_REMOTES" -prune -o -type f -exec cksum {} + 2>/dev/null | LC_ALL=C sort -k 3
+  find "$HOME/Develop" "$T" -maxdepth 2 -type d 2>/dev/null | LC_ALL=C sort
+  cat "$FAKE_REMOTES/.log" "$FAKE_GH/log" "$FAKE_WEB/log" 2>/dev/null   # ssh, gh and curl calls: help uses no network
+  ls "$T/opened" 2>/dev/null
+}
+assert_help_only() {   # $@ a gitch command line with a help flag: exit 0, a usage text, nothing changed
+  run gitch "$@" < /dev/null
+  [ "$RC" -eq 0 ] || fail "gitch $* exited $RC\n$OUT"
+  case "$OUT" in *'사용법'*|*'Usage'*|*'gitch '*) ;; *) fail "gitch $* printed no usage\n$OUT" ;; esac
+  [ "$(help_state)" = "$HELP_BEFORE" ] || fail "gitch $* changed something:\n$(diff <(printf '%s\n' "$HELP_BEFORE") <(help_state))"
+}
+
+test_help_flag_on_every_command_runs_nothing() {
+  local name names
+  names=$(help_dispatch_names)
+  [ -n "$names" ] || fail 'could not read the dispatcher'
+  help_fixture
+  HELP_BEFORE=$(help_state)
+  for name in $names; do
+    assert_help_only "$name" --help
+    assert_help_only "$name" -h
+  done
+  assert_eq "$(git log -1 --format=%s)" 'Local work'
+  assert_eq "$(git config --get-all gitswitch.protect)" release
+  assert_eq "$(git config --get gitswitch.account)" alice
+  git show-ref -q --verify refs/heads/merged-topic || fail 'a branch is gone'
+  git show-ref -q --verify refs/heads/--help && fail 'a branch named --help was made'
+  [ ! -e ./--help ] && [ ! -e ./-h ] || fail 'a file named after the flag was made'
+  return 0
+}
+
+test_help_flag_after_other_arguments_runs_nothing() {
+  help_fixture
+  HELP_BEFORE=$(help_state)
+  # Each of these would change the repository, the settings or a remote without the help flag.
+  assert_help_only amend new message --help
+  assert_help_only amend -m 'New message' -h
+  assert_help_only undo --help
+  assert_help_only c -a --help
+  assert_help_only c fix the bug -h
+  assert_help_only cp -a -m 'Ship it' --help
+  assert_help_only p --force --yes --help
+  assert_help_only p -h --tags
+  assert_help_only pl --help
+  assert_help_only up -h
+  assert_help_only sync --help
+  assert_help_only b new-branch --help
+  assert_help_only b --help
+  assert_help_only protect main --help
+  assert_help_only protect --rm release -h
+  assert_help_only unlock --yes --help
+  assert_help_only use bob --help
+  assert_help_only ignore --yes --help
+  assert_help_only fix --yes --help
+  assert_help_only prune --yes --help
+  assert_help_only rescue 1 --restore --yes --help
+  assert_help_only rescue 1 --branch saved -h
+  assert_help_only abort --yes --help
+  assert_help_only continue --help
+  assert_help_only publish other --public --yes --help
+  assert_help_only pr --title 'A title' --help
+  assert_help_only pr create -h
+  assert_help_only ci --help
+  assert_help_only clone alice alice/other --help
+  assert_help_only clone --help
+  assert_help_only fork alice teamb/tool -h
+  assert_help_only export --help
+  assert_help_only export "$T/exported.cfg" -h
+  assert_help_only import "$HOME/.config/gitsw/config" --yes --help
+  assert_help_only migrate --force --help
+  assert_help_only config set gitsw.scanRoot /tmp --yes --help
+  assert_help_only config unset gitsw.scanRoot --yes -h
+  assert_help_only org add github.com/neworg alice --yes --help
+  assert_help_only org rm github.com/teamb --yes -h
+  assert_help_only add --id dave --email dave@example.com --no-setup --json --yes --help
+  assert_help_only setup alice --generate --json --yes --help
+  assert_help_only login github --start --json --yes --help
+  assert_help_only sign on --yes --help
+  assert_help_only ssh prune --yes --help
+  assert_help_only ai --remove --help
+  assert_help_only ai -h
+  assert_help_only auto --help
+  assert_help_only install --help
+  assert_help_only uninstall --yes --help
+  assert_help_only self-update --help
+  assert_help_only scan --fix --help
+  assert_help_only wt new side --help
+  assert_help_only wt prune -h
+  assert_help_only workspace create product . --help
+  assert_help_only work start task --repo . --help
+  assert_help_only work commit -a -h
+  assert_help_only logo off --help
+  assert_help_only git log --help
+  assert_help_only d --stat -h
+  assert_help_only o --help
+  assert_help_only app --repo . --help
+  assert_help_only g --out "$T/graph.html" --help
+  assert_help_only g check --init -h
+  assert_help_only flow run ok --yes --help
+  assert_help_only flow init --yes --help
+  assert_help_only test --affected --help
+  assert_help_only ci status --help
+  [ ! -e "$T/exported.cfg" ] && [ ! -e "$T/graph.html" ] && [ ! -e .gitch ] || fail 'a help request wrote a file'
+}
+
+test_help_flag_is_not_taken_from_values_or_after_the_separator() {
+  help_fixture
+  # The value of -m is a message, even when it reads like a flag.
+  run gitch c -m '--help'; assert_ok
+  assert_eq "$(git log -1 --format=%s)" '--help' 'c -m "--help" must commit with that message'
+  echo four > four.txt; git add four.txt
+  run gitch commit --message -h; assert_ok
+  assert_eq "$(git log -1 --format=%s)" '-h'
+  run gitch amend -m '--help'; assert_ok
+  assert_eq "$(git log -1 --format=%s)" '--help'
+  # After --, everything is an argument.
+  echo five > five.txt; git add five.txt
+  run gitch c -- --help; assert_ok
+  assert_eq "$(git log -1 --format=%s)" '--help'
+  run gitch audit . --since --help; assert_no_out '사용법: gitch audit' 'the value of --since was taken as a help flag'
+  # A flag that only contains the word is not a help flag.
+  run gitch status --helpful; assert_rc 1; assert_out '사용법: gitch status [--json] [--strict] [--ssh]'
+}
+
+test_help_flag_for_flow_commands_never_reaches_a_run() {
+  local engine
+  help_fixture
+  mkdir -p .gitch
+  printf 'version: 1\nflows:\n  ok:\n    nodes:\n      mark: "echo ran > ran.txt"\n' > .gitch/flow.yml
+  unset GITCH_FLOW
+  HELP_BEFORE=$(help_state)
+  # Without an engine the help still answers.
+  assert_help_only flow run ok --yes --help
+  assert_out '흐름 엔진(gitch-flow)을 찾지 못해'
+  assert_help_only test -h
+  assert_help_only ci status --help
+  engine=$(help_flow_bin) || { echo 'skipped: build gitch-flow first (cd tools/gitch-flow && cargo build)'; return 0; }
+  export GITCH_FLOW="$engine" GITCH_FLOW_NO_KEYSTORE=1
+  assert_help_only flow run ok --yes --help
+  assert_out '사용법: gitch flow'; assert_out 'gitch flow run <flow>'
+  assert_help_only flow --help
+  assert_out 'gitch flow — '
+  assert_help_only flow trust --yes -h
+  assert_help_only test ok --help
+  assert_out 'gitch flow test [suite|tag'
+  assert_help_only ci status --help
+  assert_out 'gitch flow ci status'
+  [ ! -e ran.txt ] || fail 'a help request ran the flow'
+  [ ! -d "$(git rev-parse --git-common-dir)/gitch" ] || fail 'a help request recorded a run'
+}
