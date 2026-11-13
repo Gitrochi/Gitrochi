@@ -2722,5 +2722,6 @@
   "Local agents report their work to this app's Ledger.": "Místní agenti hlásí svou práci do Ledgeru této aplikace.",
   "Agent executable not found": "Spustitelný soubor agenta nenalezen",
   "Enter a new branch name": "Zadejte název nové větve",
-  "Confirm the risk first": "Nejprve potvrďte riziko"
+  "Confirm the risk first": "Nejprve potvrďte riziko",
+  "New flow…": "Nový tok…"
 }

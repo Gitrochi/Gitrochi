@@ -2734,5 +2734,6 @@
   "Local agents report their work to this app's Ledger.": "เอเจนต์ในเครื่องรายงานงานไปยัง Ledger ของแอปนี้",
   "Agent executable not found": "ไม่พบไฟล์โปรแกรมของเอเจนต์",
   "Enter a new branch name": "ป้อนชื่อแบรนช์ใหม่",
-  "Confirm the risk first": "ยืนยันความเสี่ยงก่อน"
+  "Confirm the risk first": "ยืนยันความเสี่ยงก่อน",
+  "New flow…": "โฟลว์ใหม่…"
 }

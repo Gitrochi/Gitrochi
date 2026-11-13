@@ -2694,5 +2694,6 @@
   "Local agents report their work to this app's Ledger.": "Agen lokal melaporkan pekerjaannya ke Ledger aplikasi ini.",
   "Agent executable not found": "File eksekusi agen tidak ditemukan",
   "Enter a new branch name": "Masukkan nama branch baru",
-  "Confirm the risk first": "Konfirmasi risikonya terlebih dahulu"
+  "Confirm the risk first": "Konfirmasi risikonya terlebih dahulu",
+  "New flow…": "Alur baru…"
 }

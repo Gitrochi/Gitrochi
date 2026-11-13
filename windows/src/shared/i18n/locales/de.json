@@ -2736,5 +2736,6 @@
   "Local agents report their work to this app's Ledger.": "Lokale Agenten melden ihre Arbeit an das Ledger dieser App.",
   "Agent executable not found": "Agent-Programm nicht gefunden",
   "Enter a new branch name": "Namen des neuen Branches eingeben",
-  "Confirm the risk first": "Zuerst das Risiko bestätigen"
+  "Confirm the risk first": "Zuerst das Risiko bestätigen",
+  "New flow…": "Neuer Ablauf…"
 }

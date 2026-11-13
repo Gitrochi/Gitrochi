@@ -2739,5 +2739,6 @@
   "Local agents report their work to this app's Ledger.": "Локальные агенты сообщают о своей работе в Ledger этого приложения.",
   "Agent executable not found": "Исполняемый файл агента не найден",
   "Enter a new branch name": "Введите имя новой ветки",
-  "Confirm the risk first": "Сначала подтвердите риск"
+  "Confirm the risk first": "Сначала подтвердите риск",
+  "New flow…": "Новый поток…"
 }

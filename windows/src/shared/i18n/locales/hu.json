@@ -2724,5 +2724,6 @@
   "Local agents report their work to this app's Ledger.": "A helyi ügynökök ennek az alkalmazásnak a Ledgerébe jelentik a munkájukat.",
   "Agent executable not found": "Az ügynök futtatható fájlja nem található",
   "Enter a new branch name": "Adja meg az új ág nevét",
-  "Confirm the risk first": "Előbb erősítse meg a kockázatot"
+  "Confirm the risk first": "Előbb erősítse meg a kockázatot",
+  "New flow…": "Új folyamat…"
 }

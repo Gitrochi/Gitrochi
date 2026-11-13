@@ -2777,5 +2777,6 @@
   "Local agents report their work to this app's Ledger.": "Les agents locaux signalent leur travail au Ledger de cette app.",
   "Agent executable not found": "Exécutable de l'agent introuvable",
   "Enter a new branch name": "Saisissez le nom de la nouvelle branche",
-  "Confirm the risk first": "Confirmez d'abord le risque"
+  "Confirm the risk first": "Confirmez d'abord le risque",
+  "New flow…": "Nouveau flux…"
 }

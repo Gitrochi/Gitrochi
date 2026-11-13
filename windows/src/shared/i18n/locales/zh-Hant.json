@@ -2744,5 +2744,6 @@
   "Local agents report their work to this app's Ledger.": "本機代理程式會將工作回報到此 App 的 Ledger。",
   "Agent executable not found": "找不到代理程式的執行檔",
   "Enter a new branch name": "請輸入新分支名稱",
-  "Confirm the risk first": "請先確認風險"
+  "Confirm the risk first": "請先確認風險",
+  "New flow…": "新增流程…"
 }
