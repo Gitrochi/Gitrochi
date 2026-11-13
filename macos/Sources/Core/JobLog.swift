@@ -79,13 +79,17 @@ enum JobLog {
         #"^FAILED (\S+::\S+)"#,
         // Vitest: FAIL tests/search.test.ts > search > keeps the query
         #"^\s*FAIL\s+(\S+ > .+?)\s*$"#,
-        // Jest and Mocha: ✕ keeps the query (12 ms)
-        #"^\s*[✕×✗]\s+(.+?)(?:\s+\(\d+(?:\.\d+)?\s*m?s\))?\s*$"#,
+        // Jest, Mocha and Vitest: ✕ keeps the query (12 ms), × keeps the query 12ms
+        #"^\s*[✕×✗]\s+(.+?)(?:\s+\(?\d+(?:\.\d+)?\s*m?s\)?)?\s*$"#,
     ].map { try! NSRegularExpression(pattern: $0) }
+    /// Linters and compilers mark their diagnostics with × too, so the last rule needs a test runner's summary in the log
+    private static let runnerSummary = try! NSRegularExpression(pattern: #"^\s*(?:Tests?:|Test Files|Test Suites:|\d+ failing\b)"#)
 
     /// The tests a log says failed, by name, in order and once each (Windows: failedTests)
     static func failedTests(_ lines: [String]) -> [String] {
         for (family, pattern) in testFailures.enumerated() {
+            if family == testFailures.count - 1,
+               !lines.contains(where: { runnerSummary.firstMatch(in: $0, range: NSRange($0.startIndex..., in: $0)) != nil }) { continue }
             var names: [String] = []
             for line in lines {
                 guard var name = first(pattern, in: line) else { continue }

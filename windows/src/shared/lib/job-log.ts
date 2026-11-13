@@ -61,13 +61,16 @@ const testFailures: ((line: string) => string | null)[] = [
   (line) => /^FAILED (\S+::\S+)/.exec(line)?.[1] ?? null,
   // Vitest: FAIL tests/search.test.ts > search > keeps the query
   (line) => /^\s*FAIL\s+(\S+ > .+?)\s*$/.exec(line)?.[1] ?? null,
-  // Jest and Mocha: ✕ keeps the query (12 ms)
-  (line) => /^\s*[✕×✗]\s+(.+?)(?:\s+\(\d+(?:\.\d+)?\s*m?s\))?\s*$/.exec(line)?.[1] ?? null,
+  // Jest, Mocha and Vitest: ✕ keeps the query (12 ms), × keeps the query 12ms
+  (line) => /^\s*[✕×✗]\s+(.+?)(?:\s+\(?\d+(?:\.\d+)?\s*m?s\)?)?\s*$/.exec(line)?.[1] ?? null,
 ];
+// linters and compilers mark their diagnostics with × too, so the last rule needs a test runner's summary in the log
+const runnerSummary = /^\s*(?:Tests?:|Test Files|Test Suites:|\d+ failing\b)/;
 
 /** The tests a log says failed, by name, in order and once each (macOS: JobLog.failedTests) */
 export function failedTests(lines: string[]): string[] {
-  for (const read of testFailures) {
+  for (const [family, read] of testFailures.entries()) {
+    if (family === testFailures.length - 1 && !lines.some((line) => runnerSummary.test(line))) continue;
     const names = [...new Set(lines.flatMap((line) => read(line) ?? []))];
     if (names.length) return names;
   }

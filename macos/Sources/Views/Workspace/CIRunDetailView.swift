@@ -242,7 +242,7 @@ private struct CIJobLogView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                CheckLog(label: job.name + " · " + String(localized: "Job log"), lines: reading.lines, jump: jump, truncated: truncated, fill: true, framed: true)
+                CheckLog(label: job.name + " · " + String(localized: "Job log"), lines: reading.lines, jump: jump, follow: job.status.isActive, truncated: truncated, fill: true, framed: true)
                     .id(job.id)
                     .padding(.horizontal, 16).padding(.vertical, 10)
             }

@@ -125,14 +125,14 @@ function NodeDetail({ node, record, repo }: { node: RunNode; record: Json | unde
   const failures = arr(rec?.failures);
   const verdicts = arr(rec?.verdicts);
   const [jump, setJump] = useState(0);
-  // the tail grows in place, so its length says when to read it again
-  const lines = useMemo(() => numberedLog(node.tail), [node.id, node.tail.length]);
+  // the tail changes in place and stops growing at its limit, so its ends say when to read it again
+  const lines = useMemo(() => numberedLog(node.tail), [node.id, node.tail.length, node.tail[0], node.tail.at(-1)]);
   const failed = node.state === "FAILED";
   // the engine's own list of failed tests, else what the output names
   const tests = useMemo(() => {
     const named = failures.flatMap((f) => str(f.name) ?? []);
     return named.length ? named : failedTests(node.tail);
-  }, [failures.length, node.id, node.tail.length]);
+  }, [failures.length, node.id, node.tail.length, node.tail[0], node.tail.at(-1)]);
   const runDir = str(record?.runDir);
   const more = t("More step actions");
   return (

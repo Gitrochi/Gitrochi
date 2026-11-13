@@ -41,7 +41,10 @@ describe("job log", () => {
     expect(failedTests(["test search::tests::query ... ok", "test search::tests::empty ... FAILED"])).toEqual(["search::tests::empty"]);
     expect(failedTests(["FAILED tests/test_search.py::test_query - AssertionError", "FAILED tests/test_search.py::test_query - AssertionError"])).toEqual(["tests/test_search.py::test_query"]);
     expect(failedTests([" FAIL  tests/search.test.ts > search > keeps the query", "   × keeps the query 12ms"])).toEqual(["tests/search.test.ts > search > keeps the query"]);
-    expect(failedTests(["  ✕ keeps the query (12 ms)", "  ✓ shows results (3 ms)"])).toEqual(["keeps the query"]);
+    expect(failedTests(["  ✕ keeps the query (12 ms)", "  ✓ shows results (3 ms)", "Tests:       1 failed, 1 passed, 2 total"])).toEqual(["keeps the query"]);
+    expect(failedTests(["   × keeps the query 12ms", " Test Files  1 failed (1)"])).toEqual(["keeps the query"]);
+    // a linter marks its diagnostics the same way; without a test runner's summary they are not tests
+    expect(failedTests(["  × eslint(no-unused-vars): 'a' is declared but never used.", "Found 1 error."])).toEqual([]);
     expect(failedTests(["Build failed", "error: linker command failed with exit code 1"])).toEqual([]);
   });
 

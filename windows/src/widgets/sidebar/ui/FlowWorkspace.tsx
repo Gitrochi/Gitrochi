@@ -118,9 +118,9 @@ export function FlowWorkspace({ flows, affected, busy, requestedFlow, onCreate, 
 /** A step that failed in the run being followed: the shared failed-check block over the end of its output */
 function FailedStep({ live }: { live: RunNode }) {
   const [jump, setJump] = useState(0);
-  // the tail grows in place, so its length says when to read it again
-  const lines = useMemo(() => numberedLog(live.tail), [live.id, live.tail.length]);
-  const tests = useMemo(() => failedTests(live.tail), [live.id, live.tail.length]);
+  // the tail changes in place and stops growing at its limit, so its ends say when to read it again
+  const lines = useMemo(() => numberedLog(live.tail), [live.id, live.tail.length, live.tail[0], live.tail.at(-1)]);
+  const tests = useMemo(() => failedTests(live.tail), [live.id, live.tail.length, live.tail[0], live.tail.at(-1)]);
   return <FailedCheckBlock className="flow-failed-step" icon={<FlowStateIcon state={live.state} size={14} />}
     outcome={live.durationMs != null ? t("Failed after {0}", formatDuration(live.durationMs)) : stateTitle(live.state)} tests={tests}
     onJump={firstError(lines) != null ? () => setJump((value) => value + 1) : undefined}

@@ -290,7 +290,7 @@ function JobLog({
       ) : !text ? (
         <div className="ci-log-empty hosted-caption">{busy ? <Spinner size={14} /> : t("No log output yet.")}</div>
       ) : (
-        <CheckLog key={job.id} className="framed fill ci-log-text" label={`${job.name} · ${t("Job log")}`} lines={lines} truncated={truncated} jump={jump} />
+        <CheckLog key={job.id} className="framed fill ci-log-text" label={`${job.name} · ${t("Job log")}`} lines={lines} truncated={truncated} jump={jump} follow={isActiveCI(job.status)} />
       )}
     </FailedCheckBlock>
   );

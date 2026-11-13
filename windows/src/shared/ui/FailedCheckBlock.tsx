@@ -129,8 +129,12 @@ export function CheckLog({ label, lines, jump = 0, follow = false, truncated = f
     observer.observe(box);
     return () => observer.disconnect();
   }, []);
+  // a press counted for another log must not move this one when it mounts
+  const jumped = useRef(jump);
   useEffect(() => {
-    if (jump && target != null) scroll.current?.querySelector(`[data-line="${target}"]`)?.scrollIntoView({ block: "center" });
+    if (jump === jumped.current) return;
+    jumped.current = jump;
+    if (target != null) scroll.current?.querySelector(`[data-line="${target}"]`)?.scrollIntoView({ block: "center" });
   }, [jump]);
   return (
     <div className={`check-log${wrap ? " wrap" : ""} ${className}`}>

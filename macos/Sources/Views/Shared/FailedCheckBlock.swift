@@ -419,6 +419,8 @@ private struct CheckLogText: NSViewRepresentable {
         if state.signature != signature {
             let hasError = lines.contains(where: \.isError)
             let following = (follow || !hasError) && (view.string.isEmpty || scroll.documentVisibleRect.maxY >= view.bounds.height - 8)
+            // an append keeps the reader's sideways position; a log's first fill opens at its line numbers
+            let column = view.string.isEmpty ? 0 : scroll.contentView.bounds.origin.x
             let text = Self.attributed(lines)
             state.signature = signature
             state.errors = text.errors
@@ -426,22 +428,22 @@ private struct CheckLogText: NSViewRepresentable {
             state.limit = -1
             view.textStorage?.setAttributedString(text.string)
             state.fit(scroll)
-            if following { view.scrollToEndOfDocument(nil); Self.showLineStart(scroll) }
+            if following { view.scrollToEndOfDocument(nil); Self.showColumn(column, in: scroll) }
         } else {
             state.fit(scroll)
         }
         if state.jump != jump {
             state.jump = jump
-            if let error = state.errors.first { view.scrollRangeToVisible(error); Self.showLineStart(scroll) }
+            if let error = state.errors.first { view.scrollRangeToVisible(error); Self.showColumn(0, in: scroll) }
         }
         state.measure(scroll)
     }
 
     /// Scrolling to a line also moves sideways to where that line ends; a log is read from its line numbers
-    private static func showLineStart(_ scroll: NSScrollView) {
+    private static func showColumn(_ x: CGFloat, in scroll: NSScrollView) {
         var origin = scroll.contentView.bounds.origin
-        guard origin.x != 0 else { return }
-        origin.x = 0
+        guard origin.x != x else { return }
+        origin.x = x
         scroll.contentView.scroll(to: origin)
         scroll.reflectScrolledClipView(scroll.contentView)
     }
