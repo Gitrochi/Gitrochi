@@ -322,7 +322,7 @@ struct RepoContainer: View {
             if !active { store.terminalVoice.dismiss() }
         }
         .onDisappear { store.terminalVoice.detach() }
-        .sheet(isPresented: Binding(get: { store.terminalVoice.presented }, set: {
+        .attachedSheet(isPresented: Binding(get: { store.terminalVoice.presented }, set: {
             if !$0 && store.terminalVoice.presented { store.terminalVoice.dismiss() }
         }), onDismiss: { store.terminalVoice.sheetDidClose() }) {
             TerminalVoiceSheet().environment(store)
