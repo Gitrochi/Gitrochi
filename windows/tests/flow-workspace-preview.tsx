@@ -64,6 +64,7 @@ const log = [
 ];
 const events = () => {
   const lines: unknown[] = [{ type: "run.planned", data: { flow: "verify", nodes: plan("verify").nodes.map(({ id, title, block, needs }) => ({ id, title, block, needs })) } }];
+  lines.push({ type: "run.state", data: { state: "RUNNING" } });
   for (const [id, [nodeState, durationMs]] of Object.entries(outcome)) {
     if (nodeState === "PENDING") continue;
     lines.push({ type: "node.state", node: id, data: { state: nodeState, durationMs } });
