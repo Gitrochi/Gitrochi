@@ -6,7 +6,7 @@ import { displayPath } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { useObserve, validBranchName } from "@/shared/lib";
 import { tools } from "@/shared/platform";
-import { Checkbox, Frame, Row, Segmented } from "@/shared/ui";
+import { Checkbox, Row, Segmented, SharedSheet } from "@/shared/ui";
 
 export function StartAgentSheet({ store, close, presetPath }: { store: RepoStore; close: () => void; presetPath: string | null }) {
   useObserve(tools);
@@ -27,23 +27,21 @@ export function StartAgentSheet({ store, close, presetPath }: { store: RepoStore
   useEffect(() => setMode(""), [kind]);
   const validBranch = validBranchName(newBranch) && !exists;
   const bypass = skipsPermissions(kind, mode);
+  // the first thing that keeps Start from working, said beside it
+  const blocked = !found ? t("Agent executable not found") : !target && !validBranch ? t("Enter a new branch name") : bypass && !riskAccepted ? t("Confirm the risk first") : null;
+  const start = () => {
+    if (blocked) return;
+    close();
+    void (async () => {
+      const m = mode || null;
+      if (!target) {
+        if (await store.addWorktree(wtPath, newBranch.trim(), true, null, false, "")) await store.startAgent(wtPath, task, m, kind);
+      } else await store.startAgent(target, task, m, kind);
+    })();
+  };
   return (
-    <Frame
-      title={t("Start agent session")}
-      confirm={t("Start")}
-      width={580}
-      canConfirm={found && (!!target || validBranch) && (!bypass || riskAccepted)}
-      close={close}
-      leftFooter={t("Runs in a new tab of the terminal below; its status is shown in the Agents tab.")}
-      onConfirm={() =>
-        void (async () => {
-          const m = mode || null;
-          if (!target) {
-            if (await store.addWorktree(wtPath, newBranch.trim(), true, null, false, "")) await store.startAgent(wtPath, task, m, kind);
-          } else await store.startAgent(target, task, m, kind);
-        })()
-      }
-    >
+    <SharedSheet title={t("Start agent session")} context={store.name} width={580} onClose={close} primary={{ label: t("Start"), onClick: start, disabledReason: blocked }}>
+      <form className="col" style={{ gap: 12 }} onSubmit={(e) => { e.preventDefault(); start(); }}>
       <Row label={t("Agents")}>
         <Segmented
           value={kind}
@@ -107,6 +105,9 @@ export function StartAgentSheet({ store, close, presetPath }: { store: RepoStore
           <Checkbox checked={riskAccepted} onChange={setRiskAccepted} label={t("I understand the risk")} />
         </>
       )}
-    </Frame>
+      <span className="hint">{t("Runs in a new tab of the terminal below; its status is shown in the Agents tab.")}</span>
+      <button type="submit" hidden />
+      </form>
+    </SharedSheet>
   );
 }

@@ -19,8 +19,17 @@ struct GitHubBrowserLoginSheet: View {
     private let tools = ToolStore.shared
 
     var body: some View {
+        SharedSheet(title: capability == .projects ? String(localized: "Connect GitHub project access") : String(localized: "Sign in to GitHub"),
+                    context: expectedLogin.map { "@\($0) · github.com" }, width: 590, cancelDisabled: importing, cancel: { cancel() }) {
+            steps.padding(.horizontal, 20).padding(.vertical, 16)
+        }
+        .frame(height: capability == .projects ? 560 : 480)
+        .interactiveDismissDisabled(working)
+        .onDisappear { invalidate() }
+    }
+
+    private var steps: some View {
         VStack(alignment: .leading, spacing: 18) {
-            Text(capability == .projects ? String(localized: "Connect GitHub project access") : String(localized: "Sign in to GitHub")).font(.title2.weight(.semibold))
             Text("GitHub opens in your default browser. Approve the login there, then return here. Gitrochi imports the approved account without showing its token.")
                 .font(.callout).foregroundStyle(.secondary)
             if capability == .projects {
@@ -76,15 +85,7 @@ struct GitHubBrowserLoginSheet: View {
             }
             if let error { Text(error).foregroundStyle(.red).font(.callout).textSelection(.enabled) }
             Spacer(minLength: 0)
-            HStack {
-                Spacer()
-                Button("Cancel") { cancel() }.keyboardShortcut(.cancelAction)
-                    .disabled(importing)
-            }
         }
-        .padding(24).frame(width: 590, height: capability == .projects ? 560 : 480)
-        .interactiveDismissDisabled(working)
-        .onDisappear { invalidate() }
     }
 
     private func begin() {

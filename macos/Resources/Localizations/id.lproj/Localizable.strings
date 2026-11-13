@@ -2640,6 +2640,12 @@
 "Retry above" = "Coba lagi di atas";
 "Couldn't check the push destination" = "Tidak dapat memeriksa tujuan push";
 "Needs approval" = "Perlu persetujuan";
+"Local agents report their work to this app's Ledger." = "Agen lokal melaporkan pekerjaannya ke Ledger aplikasi ini.";
+"Agent executable not found" = "File eksekusi agen tidak ditemukan";
+"Enter a new branch name" = "Masukkan nama branch baru";
+"Confirm the risk first" = "Konfirmasi risikonya terlebih dahulu";
+"Speak or type a draft first" = "Ucapkan atau ketik draf terlebih dahulu";
+"Stop listening first" = "Hentikan mendengarkan terlebih dahulu";
 "Commands" = "Perintah";
 "Copy current folder" = "Salin folder saat ini";
 "Exited" = "Selesai";

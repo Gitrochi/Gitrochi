@@ -2827,6 +2827,12 @@
 "Retry above" = "请在上方重试";
 "Couldn't check the push destination" = "无法检查推送目标";
 "Needs approval" = "需要批准";
+"Local agents report their work to this app's Ledger." = "本地代理将工作报告到此应用的 Ledger。";
+"Agent executable not found" = "找不到代理的可执行文件";
+"Enter a new branch name" = "请输入新分支名称";
+"Confirm the risk first" = "请先确认风险";
+"Speak or type a draft first" = "请先口述或输入草稿";
+"Stop listening first" = "请先停止聆听";
 "Commands" = "命令";
 "Copy current folder" = "复制当前文件夹";
 "Exited" = "已退出";

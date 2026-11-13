@@ -2720,6 +2720,12 @@
 "Retry above" = "Réessayez ci-dessus";
 "Couldn't check the push destination" = "Impossible de vérifier la destination du push";
 "Needs approval" = "Approbation requise";
+"Local agents report their work to this app's Ledger." = "Les agents locaux signalent leur travail au Ledger de cette app.";
+"Agent executable not found" = "Exécutable de l'agent introuvable";
+"Enter a new branch name" = "Saisissez le nom de la nouvelle branche";
+"Confirm the risk first" = "Confirmez d'abord le risque";
+"Speak or type a draft first" = "Dictez ou saisissez d'abord un brouillon";
+"Stop listening first" = "Arrêtez d'abord l'écoute";
 "Commands" = "Commandes";
 "Copy current folder" = "Copier le dossier actuel";
 "Exited" = "Terminé";

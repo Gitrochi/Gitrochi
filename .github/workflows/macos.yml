@@ -108,6 +108,7 @@ jobs:
           bash macos/Tools/test-terminal-hold.sh || status=$?
           if [ "$status" -ne 0 ] && [ "$status" -ne 77 ]; then exit "$status"; fi
           bash macos/Tools/test-terminal-layout.sh "$RUNNER_TEMP/voice-workflow-layout"
+          bash macos/Tools/test-shared-sheet-layout.sh "$RUNNER_TEMP/shared-sheet-layout"
 
       - name: 비교 · 협업 · 로컬 복구 도구 테스트
         run: |

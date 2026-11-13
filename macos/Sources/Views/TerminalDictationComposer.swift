@@ -30,9 +30,14 @@ struct TerminalDictationComposer: View {
     let dismiss: () -> Void
 
     var body: some View {
-        VStack(spacing: 0) {
-            header.padding(18)
-            Divider()
+        SharedSheet(title: String(localized: "Voice workspace"),
+                    context: repositoryName.isEmpty ? target : repositoryName + " · " + target, width: 500,
+                    primary: SheetPrimary(title: destination == .terminal ? String(localized: "Insert text") : String(localized: "Review before sending"),
+                                          disabledReason: submitReason, disabled: submitDisabled, busy: submitting, isDefault: false,
+                                          identifier: "terminal-dictation-submit", run: submit),
+                    cancel: dismiss) {
+            listenButton
+        } content: {
             ScrollViewReader { scroll in
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
@@ -57,7 +62,7 @@ struct TerminalDictationComposer: View {
                         Label("Speech stays on your Mac. Clean up and AI destinations use your configured provider only when you send.", symbol: "lock.shield")
                             .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                     }
-                    .padding(18)
+                    .padding(.horizontal, 20).padding(.vertical, 16)
                 }
                 .onChange(of: confirmation != nil) { _, ready in
                     if ready { withAnimation { scroll.scrollTo("voice-confirmation", anchor: .bottom) } }
@@ -69,10 +74,7 @@ struct TerminalDictationComposer: View {
                     if error != nil { withAnimation { scroll.scrollTo("voice-errors", anchor: .top) } }
                 }
             }
-            Divider()
-            footer.padding(14)
         }
-        .frame(width: 500)
         .frame(minHeight: 520, idealHeight: 660, maxHeight: 760)
         .onChange(of: dictation.transcript) { _, text in
             cleanup.invalidate(ifSourceChanged: text)
@@ -89,23 +91,6 @@ struct TerminalDictationComposer: View {
             if value.count > 4_000 { customWords = String(value.prefix(4_000)) }
         }
         .onDisappear { actionTask?.cancel(); cleanup.reset(); dictation.cancel() }
-    }
-
-    private var header: some View {
-        HStack(spacing: 10) {
-            TerminalBrand(compact: true)
-                .frame(width: 38, height: 38)
-                .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 10))
-            VStack(alignment: .leading, spacing: 3) {
-                Text("Voice workspace").font(.headline)
-                Text(verbatim: repositoryName.isEmpty ? target : repositoryName + " · " + target)
-                    .font(.caption).foregroundStyle(.secondary).lineLimit(1)
-            }
-            Spacer()
-            Text(verbatim: "macOS").font(.caption2.weight(.medium)).foregroundStyle(.secondary)
-                .padding(.horizontal, 7).padding(.vertical, 4)
-                .background(Color.primary.opacity(0.05), in: Capsule())
-        }
     }
 
     private var recordingSection: some View {
@@ -271,30 +256,31 @@ struct TerminalDictationComposer: View {
         .accessibilityIdentifier("terminal-dictation-destination")
     }
 
-    private var footer: some View {
-        HStack(spacing: 8) {
-            Button("Cancel", action: dismiss).keyboardShortcut(.cancelAction)
-            Spacer(minLength: 0)
-            if dictation.isBusy {
-                Button("Stop listening") { dictation.stop() }
-                    .disabled(dictation.state != .listening)
-            } else {
-                Button(dictation.transcript.isEmpty ? LocalizedStringKey("Start listening") : LocalizedStringKey("Record again")) {
-                    cleanup.reset(); acceptedOriginal = nil; confirmation = nil
-                    if let listen { listen() }
-                    else { dictation.start(localeIdentifier: effectiveLocale, contextualStrings: activeWords) }
-                }.disabled(submitting)
-            }
-            if submitting { ProgressView().controlSize(.small) }
-            Button(destination == .terminal ? LocalizedStringKey("Insert text") : LocalizedStringKey("Review before sending")) {
-                let draft = TerminalVoiceReviewDraft(destination: destination, text: dictation.transcript, agentKind: agentKind)
-                if destination == .terminal { perform(draft) } else { confirmation = draft }
-            }
-            .buttonStyle(.borderedProminent)
-            .disabled(submitDisabled)
-            .accessibilityIdentifier("terminal-dictation-submit")
+    /// The footer's secondary action: recording starts and stops on the left, away from the one primary
+    @ViewBuilder private var listenButton: some View {
+        if dictation.isBusy {
+            Button("Stop listening") { dictation.stop() }
+                .disabled(dictation.state != .listening)
+        } else {
+            Button(dictation.transcript.isEmpty ? LocalizedStringKey("Start listening") : LocalizedStringKey("Record again")) {
+                cleanup.reset(); acceptedOriginal = nil; confirmation = nil
+                if let listen { listen() }
+                else { dictation.start(localeIdentifier: effectiveLocale, contextualStrings: activeWords) }
+            }.disabled(submitting)
         }
-        .controlSize(.small)
+    }
+
+    private func submit() {
+        let draft = TerminalVoiceReviewDraft(destination: destination, text: dictation.transcript, agentKind: agentKind)
+        if destination == .terminal { perform(draft) } else { confirmation = draft }
+    }
+
+    /// Why the primary can't be used, where one line says it; the other waits are short and show their own progress
+    private var submitReason: String? {
+        if dictation.isBusy { return String(localized: "Stop listening first") }
+        if insertionText.isEmpty { return String(localized: "Speak or type a draft first") }
+        if destination == .commitDraft && !commitAvailable { return String(localized: "Stage changes before drafting a commit.") }
+        return nil
     }
 
     private var submitDisabled: Bool {

@@ -1,0 +1,19 @@
+/* One layout for every sheet (docs/design.md, App shell). macOS: Views/Shared/SharedSheet.swift. */
+
+/* the window behind a sheet is not dimmed; the backdrop only catches clicks */
+.modal-backdrop.shared-sheet-backdrop { background: transparent; align-items: flex-start; box-sizing: border-box; animation: none; }
+
+/* hangs from the toolbar: square on top, 12px corners below */
+.shared-sheet { max-width: calc(100vw - 32px); box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; background: var(--surface); color: var(--text); border-radius: 0 0 12px 12px; box-shadow: 0 0 0 1px var(--border), 0 10px 30px rgba(0, 0, 0, 0.18); animation: shared-sheet-drop 0.14s ease-out; }
+@keyframes shared-sheet-drop { from { transform: translateY(-8px); opacity: 0; } }
+
+.shared-sheet-header { flex: none; padding: 20px; border-bottom: 1px solid var(--border); }
+.shared-sheet-heading { min-width: 0; display: flex; flex-direction: column; }
+.shared-sheet-title { margin: 0; font-size: 15px; line-height: 20px; font-weight: 600; }
+.shared-sheet-context { font-size: 12px; line-height: 16px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.shared-sheet-body { flex: 1 1 auto; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 12px; padding: 16px 20px; }
+
+.shared-sheet-footer { flex: none; display: flex; align-items: center; gap: 8px; min-width: 0; min-height: 56px; box-sizing: border-box; padding: 0 20px; border-top: 1px solid var(--border); }
+.shared-sheet-gap { flex: 1 1 auto; }
+.shared-sheet-footer .disabled-reason-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
