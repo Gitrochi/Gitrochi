@@ -389,6 +389,18 @@ confirm() {   # $1 질문  $2 yes(1이면 통과)  $3 비대화형일 때 안내
   exit 2
 }
 
+arity() {   # $1 usage, $2 how many arguments the command takes, then the arguments it got: an extra one is a usage error, not something to drop
+  # --json and --format json ask for machine-readable errors on every command, so they are not counted.
+  local usage=$1 allowed=$2 a n=0 format=''
+  shift 2
+  for a in "$@"; do
+    if [ -n "$format" ]; then format=''; [ "$a" != json ] || continue; fi
+    case "$a" in --json|--format=json) continue ;; --format) format=1; continue ;; esac
+    n=$((n + 1))
+    [ "$n" -le "$allowed" ] || die "사용법: $usage  (받지 않는 인자: $a)"
+  done
+}
+
 # ----- 문자열/경로 도우미 -----
 lower() { case "$1" in *[A-Z]*) printf '%s' "$1" | tr '[:upper:]' '[:lower:]' ;; *) printf '%s' "$1" ;; esac; }
 expand_path() {
@@ -1170,9 +1182,10 @@ use_cmd() {
 }
 
 unlock_cmd() {
+  local yes="" a rest=()
+  for a in "$@"; do case "$a" in --yes|-y) yes=1 ;; *) rest+=("$a") ;; esac; done
+  arity 'gitch unlock [--yes]' 0 "${rest[@]}"
   require_repo
-  local yes="" a
-  for a in "$@"; do case "$a" in --yes|-y) yes=1 ;; esac; done
   confirm "이 저장소의 계정 잠금을 풉니다. 계속할까요?" "$yes" "gitch unlock --yes"
   git config --unset gitswitch.account 2>/dev/null
   git config --unset gitswitch.email 2>/dev/null
@@ -1367,10 +1380,11 @@ sync_cmd() {   # 포크를 원본 최신으로
 # ================= fix: 잘못된 작성자 고치기 =================
 
 fix_cmd() {
+  local yes="" commits c bad=0 total first a rest=()
+  for a in "$@"; do case "$a" in --yes|-y) yes=1 ;; *) rest+=("$a") ;; esac; done
+  arity 'gitch fix [--yes]' 0 "${rest[@]}"
   require_repo
   need_config
-  local yes="" commits c bad=0 total first a
-  for a in "$@"; do case "$a" in --yes|-y) yes=1 ;; esac; done
   resolve_repo .
   [ -z "$R_ACC" ] && die "이 저장소의 계정을 알 수 없습니다. 먼저 'gitch use <계정>' 을 하세요."
   set_account "$R_ACC" || exit 1
@@ -2738,10 +2752,11 @@ amend_cmd() {   # [-m 메시지 | 메시지...]
 }
 
 abort_cmd() {
+  local yes="" a rest=()
+  for a in "$@"; do case "$a" in --yes|-y) yes=1 ;; *) rest+=("$a") ;; esac; done
+  arity 'gitch abort [--yes]' 0 "${rest[@]}"
   require_repo
   repo_state
-  local yes="" a
-  for a in "$@"; do case "$a" in --yes|-y) yes=1 ;; esac; done
   [ -z "$RS_OP" ] && { say "진행 중인 작업이 없습니다."; return 0; }
   confirm "진행 중인 $(op_word "$RS_OP") 를 취소합니다 (고치던 충돌 내용은 사라짐). 계속할까요?" "$yes" "gitch abort --yes"
   case "$RS_OP" in
@@ -5086,11 +5101,10 @@ EOF2
 }
 
 sign_cmd() {   # on | off | (상태)  [--yes]
-  local d acc id y a mode="" yes="" seen=""
-  for a in "$@"; do
-    case "$a" in --yes|-y) yes=1 ;; *) [ -n "$seen" ] || { mode=$a; seen=1; } ;; esac
-  done
-  set -- "$mode"
+  local d acc id y a yes="" rest=()
+  for a in "$@"; do case "$a" in --yes|-y) yes=1 ;; *) rest+=("$a") ;; esac; done
+  arity 'gitch sign [on|off] [--yes]' 1 "${rest[@]}"
+  set -- "${rest[0]:-}"
   case "$1" in
     on|off)
       can_prompt || [ -n "$yes" ] || die "서명 설정은 사용자가 터미널에서 직접 'gitch sign $1' 을 실행해야 합니다."
@@ -5124,10 +5138,10 @@ sign_cmd() {   # on | off | (상태)  [--yes]
 }
 
 ssh_cmd() {   # prune [--yes]
-  local sub="" yes="" orphans h tmp a seen=""
-  for a in "$@"; do
-    case "$a" in --yes|-y) yes=1 ;; *) [ -n "$seen" ] || { sub=$a; seen=1; } ;; esac
-  done
+  local sub yes="" orphans h tmp a rest=()
+  for a in "$@"; do case "$a" in --yes|-y) yes=1 ;; *) rest+=("$a") ;; esac; done
+  arity 'gitch ssh prune [--yes]' 1 "${rest[@]}"
+  sub=${rest[0]:-}
   case "$sub" in
     prune)
       need_config
@@ -6311,8 +6325,9 @@ install_cmd() {
 }
 
 uninstall_cmd() {
-  local yes="" ev d a
-  for a in "$@"; do case "$a" in --yes|-y) yes=1 ;; esac; done
+  local yes="" ev d a rest=()
+  for a in "$@"; do case "$a" in --yes|-y) yes=1 ;; *) rest+=("$a") ;; esac; done
+  arity 'gitch uninstall [--yes]' 0 "${rest[@]}"
   confirm "gitch 전역 설정(자동 규칙, 검사 훅, AI 연동, 터미널 연동)을 지웁니다. 계정 설정 파일/SSH 키/저장소 잠금은 남깁니다. 계속할까요?" "$yes" "gitch uninstall --yes"
   load_config >/dev/null 2>&1
   backup_global
@@ -22607,31 +22622,31 @@ case "${1:-}" in
   c|commit) shift; commit_cmd "$@"; rc=$?; [ $rc -eq 3 ] && rc=0; exit $rc ;;
   p|push) shift; push_cmd "$@"; exit $? ;;
   cp) shift; commit_push_cmd "$@"; exit $? ;;
-  pl|pull) pull_cmd; exit $? ;;
-  up) up_cmd; exit $? ;;
+  pl|pull) shift; arity 'gitch pl' 0 "$@"; pull_cmd; exit $? ;;
+  up) shift; arity 'gitch up' 0 "$@"; up_cmd; exit $? ;;
   ck|check) shift; check_cmd "$@"; exit $? ;;
   preflight|pf) shift; preflight_cmd "$@"; exit $? ;;
-  l|log) log_cmd "${2:-}"; exit $? ;;
+  l|log) shift; arity 'gitch l [개수]' 1 "$@"; log_cmd "${1:-}"; exit $? ;;
   d|diff) shift; diff_cmd "$@"; exit 0 ;;
-  b|branch) branch_cmd "${2:-}"; exit $? ;;
-  undo) undo_cmd; exit $? ;;
+  b|branch) shift; arity 'gitch b [이름]' 1 "$@"; branch_cmd "${1:-}"; exit $? ;;
+  undo) shift; arity 'gitch undo' 0 "$@"; undo_cmd; exit $? ;;
   amend) shift; amend_cmd "$@"; exit $? ;;
-  continue) continue_cmd; exit $? ;;
+  continue) shift; arity 'gitch continue' 0 "$@"; continue_cmd; exit $? ;;
   abort) shift; abort_cmd "$@"; exit $? ;;
   rescue) shift; rescue_cmd "$@"; exit $? ;;
-  o|open) open_cmd; exit $? ;;
+  o|open) shift; arity 'gitch o' 0 "$@"; open_cmd; exit $? ;;
   app) shift; app_cmd "$@"; exit $? ;;
   pr|mr) shift; pr_cmd "$@"; exit $? ;;
   ci) shift; if [ $# -gt 0 ]; then flow_cmd ci "$@"; else ci_cmd; fi; exit $? ;;
   publish) shift; publish_cmd "$@"; exit $? ;;
   status|st) shift; status_cmd "$@"; exit $? ;;
-  use) use_cmd "${2:-}"; exit $? ;;
+  use) shift; arity 'gitch use [계정]' 1 "$@"; use_cmd "${1:-}"; exit $? ;;
   unlock) shift; unlock_cmd "$@"; exit $? ;;
   ignore) shift; ignore_cmd "$@"; exit $? ;;
   protect) shift; protect_cmd "$@"; exit $? ;;
   clone) shift; clone_cmd "$@"; exit $? ;;
   fork) shift; fork_cmd "$@"; exit $? ;;
-  sync) sync_cmd; exit $? ;;
+  sync) shift; arity 'gitch sync' 0 "$@"; sync_cmd; exit $? ;;
   fix) shift; fix_cmd "$@"; exit $? ;;
   scan) shift; scan_cmd "$@"; exit $? ;;
   audit) shift; audit_cmd "$@"; exit $? ;;
@@ -22648,21 +22663,21 @@ case "${1:-}" in
   g|graph) shift; graph_cmd "$@"; exit $? ;;
   list|ls) shift; list_cmd "$@"; exit $? ;;
   add) shift; add_cmd "$@"; exit $? ;;
-  remove|rm) remove_cmd "${2:-}"; exit $? ;;
+  remove|rm) shift; arity 'gitch remove <아이디>' 1 "$@"; remove_cmd "${1:-}"; exit $? ;;
   org) shift; org_cmd "$@"; exit $? ;;
   config) shift; config_cmd "$@"; exit $? ;;
   setup) shift; setup_cmd "$@"; exit $? ;;
-  auto) install_auto_rules; exit $? ;;
+  auto) shift; arity 'gitch auto' 0 "$@"; install_auto_rules; exit $? ;;
   sign) shift; sign_cmd "$@"; exit $? ;;
   ai) shift; ai_cmd "$@"; exit $? ;;
   ssh) shift; ssh_cmd "$@"; exit $? ;;
-  install) install_cmd; exit $? ;;
+  install) shift; arity 'gitch install' 0 "$@"; install_cmd; exit $? ;;
   uninstall) shift; uninstall_cmd "$@"; exit $? ;;
   migrate) shift; migrate_cmd "$@"; exit $? ;;
-  export) export_cmd "${2:-}"; exit $? ;;
+  export) shift; arity 'gitch export [파일]' 1 "$@"; export_cmd "${1:-}"; exit $? ;;
   import) shift; import_cmd "$@"; exit $? ;;
   doctor) shift; doctor_cmd "$@"; exit $? ;;
-  self-update) self_update_cmd; exit $? ;;
+  self-update) shift; arity 'gitch self-update' 0 "$@"; self_update_cmd; exit $? ;;
   guard) shift; guard_cmd "$@"; exit 0 ;;
   _hook) shift; hook_main "$@"; exit $? ;;
   "") menu_cmd; exit $? ;;

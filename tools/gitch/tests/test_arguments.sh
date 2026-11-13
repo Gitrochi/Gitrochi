@@ -104,3 +104,65 @@ test_args_guard_still_asks_for_the_short_flag() {
   expect ask 'gitch org -y add github.com/x alice'
   expect ask 'gitch unlock -y' "$r"
 }
+
+test_args_commands_without_arguments_refuse_extra_ones() {
+  local name before
+  args_repo
+  before=$(git rev-parse HEAD; git for-each-ref; git status --porcelain; git config --local --list | sort; git config --global --list | sort)
+  : > "$FAKE_REMOTES/.log"
+  for name in pl pull up undo continue o open sync auto install self-update; do
+    run gitch "$name" extra
+    assert_rc 1 "gitch $name extra"
+    assert_out "사용법: gitch " "gitch $name extra"; assert_out '(받지 않는 인자: extra)'
+  done
+  run gitch unlock extra; assert_rc 1; assert_out '사용법: gitch unlock [--yes]'
+  run gitch unlock --yes extra; assert_rc 1; assert_out '(받지 않는 인자: extra)'
+  run gitch abort extra --yes; assert_rc 1; assert_out '사용법: gitch abort [--yes]'
+  run gitch fix --yes extra; assert_rc 1; assert_out '사용법: gitch fix [--yes]'
+  run gitch uninstall --yes extra; assert_rc 1; assert_out '사용법: gitch uninstall [--yes]'
+  run gitch l 3 extra; assert_rc 1; assert_out '사용법: gitch l [개수]'
+  run gitch b one two; assert_rc 1; assert_out '사용법: gitch b [이름]'
+  run gitch use alice extra; assert_rc 1; assert_out '사용법: gitch use [계정]'
+  run gitch remove alice extra; assert_rc 1; assert_out '사용법: gitch remove <아이디>'
+  run gitch export "$T/a.cfg" "$T/b.cfg"; assert_rc 1; assert_out '사용법: gitch export [파일]'
+  run gitch sign on off --yes; assert_rc 1; assert_out '사용법: gitch sign [on|off] [--yes]'
+  run gitch ssh prune extra --yes; assert_rc 1; assert_out '사용법: gitch ssh prune [--yes]'
+  # None of them ran.
+  assert_eq "$(git rev-parse HEAD; git for-each-ref; git status --porcelain; git config --local --list | sort; git config --global --list | sort)" "$before" 'a refused command changed something'
+  [ ! -s "$FAKE_REMOTES/.log" ] || fail "a refused command reached the remote:\n$(cat "$FAKE_REMOTES/.log")"
+  [ ! -e "$T/a.cfg" ] || fail 'export wrote a file although it was refused'
+  git show-ref -q --verify refs/heads/one && fail 'b one two made a branch'
+  grep -q 'account "alice"' "$HOME/.config/gitsw/config" || fail 'remove ran although it was refused'
+  return 0
+}
+
+test_args_valid_invocations_still_work() {
+  local rc
+  args_repo
+  run gitch l 1; assert_ok; assert_out 'Local work'
+  run gitch log; assert_ok
+  run gitch b topic; assert_ok; assert_eq "$(git branch --show-current)" topic
+  run gitch branch main; assert_ok; assert_eq "$(git branch --show-current)" main
+  run gitch b; assert_ok; assert_out topic
+  run gitch use alice; assert_ok
+  run gitch use; assert_ok
+  run gitch export "$T/a.cfg"; assert_ok; [ -f "$T/a.cfg" ] || fail 'export wrote no file'
+  run gitch export; assert_ok; assert_out 'account "alice"'
+  run gitch pl; assert_ok
+  run gitch up; assert_ok
+  run gitch o; assert_ok; assert_out 'https://github.com/alice/app'
+  run gitch continue; assert_ok; assert_out '진행 중인 작업이 없습니다'
+  run gitch abort; assert_ok; assert_out '진행 중인 작업이 없습니다'
+  run gitch auto; assert_ok
+  run gitch sign; assert_ok; assert_out '커밋 서명: 꺼짐'
+  run gitch undo; assert_ok
+  # --json only asks for machine-readable errors; it is not an extra argument.
+  gitch unlock --json > "$T/stdout" 2> "$T/stderr"; rc=$?
+  assert_eq "$rc" 2 'confirmation exit code'
+  assert_eq "$(jq -r '.error.code' "$T/stderr")" GITCH_CONFIRMATION_REQUIRED
+  run gitch use alice --json; assert_ok
+  run gitch up --format json; assert_ok
+  gitch up extra --json > "$T/stdout" 2> "$T/stderr"; rc=$?
+  assert_eq "$rc" 1
+  assert_eq "$(jq -r '.error.code' "$T/stderr")" GITCH_ERROR
+}
