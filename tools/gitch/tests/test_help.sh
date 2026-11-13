@@ -92,6 +92,8 @@ test_help_flow_topics_show_the_engine_help() {
   engine=$(help_flow_bin) || { echo 'skipped: build gitch-flow first (cd tools/gitch-flow && cargo build)'; return 0; }
   export GITCH_FLOW="$engine" GITCH_FLOW_NO_KEYSTORE=1
   run gitch help flow; assert_ok; assert_out '사용법: gitch flow'; assert_out 'gitch flow — '; assert_out 'validate [--json]'
-  run gitch help test; assert_ok; assert_out '사용법: gitch test'; assert_out 'gitch flow — '
-  run gitch help ci; assert_ok; assert_out '사용법: gitch ci'; assert_out 'gitch flow — '
+  # The engine answers "help <subcommand>" with that subcommand's usage.
+  run gitch help test; assert_ok; assert_out '사용법: gitch test'; assert_out 'gitch flow test [suite|tag'
+  run gitch help ci; assert_ok; assert_out '사용법: gitch ci'; assert_out 'gitch flow ci browse --connection NAME'
+  run gitch help flow run; assert_ok; assert_out '사용법: gitch flow'; assert_out 'gitch flow run <flow>'
 }
