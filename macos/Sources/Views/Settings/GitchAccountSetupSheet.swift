@@ -50,7 +50,7 @@ struct GitchAccountSetupSheet: View {
             accounts = await Gitch.accounts()
             if let accountID { await perform { setup = try await Gitch.setupAccount(accountID, action: .inspect) } }
         }
-        .sheet(isPresented: $showBrowserLogin) { GitHubBrowserLoginSheet(expectedLogin: setup?.id ?? accountID, onConnected: connectedGitHub) }
+        .attachedSheet(isPresented: $showBrowserLogin) { GitHubBrowserLoginSheet(expectedLogin: setup?.id ?? accountID, onConnected: connectedGitHub) }
         .alert("Save this Git account?", isPresented: $confirmAdd) {
             Button("Cancel", role: .cancel) {}
             Button("Save account") { Task { await save() } }

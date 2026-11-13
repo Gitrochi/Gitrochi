@@ -57,7 +57,17 @@ struct AccountQuickControls: View {
         .task(id: store.url) {
             if store.url == nil { await store.loadGlobalIdentity() }
         }
-        .sheet(item: $sheet) { request in
+        // signing in is on the shared layout and hangs under the toolbar; the others are still the system's
+        .attachedSheet(item: Binding(get: { sheet.flatMap { $0.isLogin ? $0 : nil } }, set: { if $0 == nil, sheet?.isLogin == true { sheet = nil } })) { request in
+            if case .login(let expected, let capability) = request {
+                GitHubBrowserLoginSheet(expectedLogin: expected, capability: capability) { _, connected in
+                    if candidates.contains(where: { $0.id == connected.id }), account == nil || account?.id == connected.id {
+                        store.useAccount(connected)
+                    }
+                }
+            }
+        }
+        .sheet(item: Binding(get: { sheet.flatMap { $0.isLogin ? nil : $0 } }, set: { if $0 == nil, sheet?.isLogin == false { sheet = nil } })) { request in
             switch request {
             case .connections:
                 VStack(spacing: 0) {
@@ -70,12 +80,7 @@ struct AccountQuickControls: View {
                     AccountsSettings()
                 }.frame(width: 710, height: 650)
             case .gitAccounts: GitchGuideSheet(repo: store)
-            case .login(let expected, let capability):
-                GitHubBrowserLoginSheet(expectedLogin: expected, capability: capability) { _, connected in
-                    if candidates.contains(where: { $0.id == connected.id }), account == nil || account?.id == connected.id {
-                        store.useAccount(connected)
-                    }
-                }
+            case .login: EmptyView()
             }
         }
     }
@@ -220,6 +225,10 @@ private enum AccountQuickSheet: Identifiable {
     case connections
     case gitAccounts
     case login(String?, Gitch.GitHubLoginCapability)
+    var isLogin: Bool {
+        if case .login = self { return true }
+        return false
+    }
     var id: String {
         switch self {
         case .connections: "connections"
