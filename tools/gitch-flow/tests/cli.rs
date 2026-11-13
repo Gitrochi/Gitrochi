@@ -404,3 +404,128 @@ fn the_pre_push_gate_is_switched_by_people_only() {
     let (_, st) = fx.json("script", &["gate", "status", "--json"]);
     assert_eq!(st["gate"], "OFF");
 }
+
+/// Whether any run was recorded for the fixture's repository.
+fn has_runs(fx: &Fx) -> bool {
+    let runs = fx.repo().join(".git/gitch/flow/runs");
+    std::fs::read_dir(runs)
+        .map(|d| d.flatten().next().is_some())
+        .unwrap_or(false)
+}
+
+#[test]
+fn help_flags_print_help_and_start_nothing() {
+    let fx = fixture();
+    fx.trust();
+    // Every one of these would plan, run, write or reach a remote without the help flag.
+    let asks: &[&[&str]] = &[
+        &["run", "quote", "--help"],
+        &["run", "--help", "quote"],
+        &["run", "quote", "-h"],
+        &["run", "quote", "--yes", "--json", "--help"],
+        &["test", "--help"],
+        &["test", "unit", "-h"],
+        &["plan", "ok", "--help"],
+        &["watch", "ok", "--help"],
+        &["rerun", "last", "--help"],
+        &["ci", "--help"],
+        &["ci", "status", "--help"],
+        &["ci", "browse", "--connection", "ci", "-h"],
+        &["trust", "--revoke", "--help"],
+        &["gate", "on", "--flow", "ok", "--help"],
+        &["gc", "--help"],
+        &["init", "--yes", "--force", "--help"],
+        &["export", "github", "--yes", "--help"],
+        &["import", "--yes", "--help"],
+        &[
+            "connect",
+            "add",
+            "jenkins",
+            "--name",
+            "ci",
+            "--url",
+            "https://ci.example.invalid",
+            "--help",
+        ],
+        &["cancel", "last", "-h"],
+        &["--help"],
+        &["-h"],
+        &["help"],
+        &["help", "run"],
+        &["unknown-command", "--help"],
+    ];
+    let before = std::fs::read_to_string(fx.repo().join(".gitch/flow.yml")).unwrap();
+    for ask in asks {
+        let (code, out, err) = fx.run("script", ask);
+        assert_eq!(code, 0, "{ask:?}: {out}{err}");
+        assert!(out.contains("gitch flow"), "{ask:?} printed no help: {out}");
+        assert!(err.is_empty(), "{ask:?} wrote to stderr: {err}");
+    }
+    assert!(!has_runs(&fx), "a help request recorded a run");
+    assert!(
+        !fx.repo().join("quoted.txt").exists(),
+        "a help request ran a node"
+    );
+    assert!(
+        !fx.repo().join(".github").exists(),
+        "a help request exported a workflow"
+    );
+    assert_eq!(
+        std::fs::read_to_string(fx.repo().join(".gitch/flow.yml")).unwrap(),
+        before
+    );
+    // Trust and the gate are as they were: the flow still runs, and the gate is still off.
+    let (_, gate) = fx.json("script", &["gate", "status", "--json"]);
+    assert_eq!(gate["gate"], "OFF");
+    let (_, list) = fx.json("script", &["connect", "list", "--json"]);
+    assert_eq!(
+        list["connections"].as_array().map(Vec::len),
+        Some(0),
+        "{list}"
+    );
+    let (code, run) = fx.json("script", &["run", "quote", "--json"]);
+    assert_eq!(code, 0, "{run}");
+    // The same probes do see a real run.
+    assert!(has_runs(&fx) && fx.repo().join("quoted.txt").exists());
+}
+
+#[test]
+fn help_names_the_subcommand_that_was_asked_about() {
+    let fx = fixture();
+    let (_, general, _) = fx.run("script", &["help", "--lang", "en"]);
+    assert!(general.contains("Exit codes:"), "{general}");
+    let (_, out, _) = fx.run("script", &["run", "ok", "--help", "--lang", "en"]);
+    assert!(out.starts_with("gitch flow run <flow>"), "{out}");
+    assert!(out.contains("All commands: gitch flow help"), "{out}");
+    let (_, same, _) = fx.run("script", &["help", "run", "--lang", "en"]);
+    assert_eq!(same, out);
+    let (_, out, _) = fx.run("script", &["test", "-h", "--lang", "en"]);
+    assert!(out.starts_with("gitch flow test [suite|tag"), "{out}");
+    let (_, out, _) = fx.run("script", &["ci", "status", "--help", "--lang", "en"]);
+    assert!(out.starts_with("gitch flow ci status"), "{out}");
+    assert!(
+        out.contains("gitch flow ci browse --connection NAME"),
+        "{out}"
+    );
+    let (_, out, _) = fx.run("script", &["ls", "--help", "--lang", "en"]);
+    assert!(out.starts_with("gitch flow list [--json]"), "{out}");
+    // The design command keeps its own help, and an unknown subcommand gets the general one.
+    let (code, out, _) = fx.run("script", &["design", "inspect", "--help"]);
+    assert_eq!(code, 0);
+    assert!(out.starts_with("design inspect --json"), "{out}");
+    let (_, out, _) = fx.run("script", &["unknown-command", "-h", "--lang", "en"]);
+    assert_eq!(out, general);
+}
+
+#[test]
+fn an_option_value_or_an_argument_after_the_separator_is_not_a_help_flag() {
+    let fx = fixture();
+    fx.trust();
+    // "--env --help" names an environment, and "-- --help" a suite: neither asks for help.
+    let (code, out, _) = fx.run("script", &["plan", "ok", "--env", "--help", "--json"]);
+    assert!(!out.contains("gitch flow plan"), "{out}");
+    assert_ne!(code, 0, "{out}");
+    let (code, out, _) = fx.run("script", &["test", "--json", "--", "--help"]);
+    assert!(!out.contains("gitch flow test"), "{out}");
+    assert_ne!(code, 0, "{out}");
+}
