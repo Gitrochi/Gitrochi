@@ -40,8 +40,8 @@ export interface Capture {
   runs: { program: string; args: string[]; cwd?: string }[];
 }
 
-/** Fakes the native side; `run` answers processes (git, claude mcp get) and `ledger` the ledger core */
-export function fakeNative(o: { run?: (program: string, args: string[]) => ProcOutput; ledger?: (method: string, args: Record<string, unknown>) => unknown; exists?: (path: string) => boolean } = {}): Capture {
+/** Fakes the native side; `run` answers processes */
+export function fakeNative(o: { run?: (program: string, args: string[]) => ProcOutput; exists?: (path: string) => boolean } = {}): Capture {
   const capture: Capture = { files: {}, terminals: [], runs: [] };
   vi.spyOn(ipc, "mkdirs").mockResolvedValue();
   vi.spyOn(ipc, "list").mockResolvedValue([]);
@@ -55,7 +55,6 @@ export function fakeNative(o: { run?: (program: string, args: string[]) => ProcO
     capture.runs.push({ program, args, ...(opts?.cwd ? { cwd: opts.cwd } : {}) });
     return o.run?.(program, args) ?? { status: 1, stdout: "", stderr: "not faked" };
   });
-  if (o.ledger) vi.spyOn(ipc, "ledgerCall").mockImplementation(async (method, args) => o.ledger!(method, args));
   vi.spyOn(crypto, "randomUUID").mockReturnValue(AGENT_ID);
   return capture;
 }
