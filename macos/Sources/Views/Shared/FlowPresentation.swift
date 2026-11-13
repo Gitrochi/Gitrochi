@@ -1,13 +1,14 @@
 import SwiftUI
 
-/// Semantic block colors and symbols are shared by the canvas and inspector.
+/// What kind of work a step is: the card's and the step details' words for a step that gives none of its own, and the
+/// module editor's icon and colour. (Windows: flowStepKindTitle in FlowState.tsx)
 enum FlowBlockStyle {
     static func look(_ block: String) -> (icon: String, title: String, color: Color) {
         if block.hasPrefix("test") || block.hasPrefix("check") { return ("checkmark.seal", String(localized: "Tests"), .green) }
         if block.hasPrefix("ci.") { return ("arrow.triangle.branch", String(localized: "CI/CD"), .purple) }
         if block.hasPrefix("deploy") { return ("shippingbox", String(localized: "Deploy"), .orange) }
         if block.hasPrefix("gate") { return ("hand.raised", String(localized: "Approval"), .orange) }
-        if block.hasPrefix("service") || block.hasPrefix("mock") { return ("server.rack", String(localized: "Services"), .teal) }
+        if block.hasPrefix("service") || block.hasPrefix("fixture") || block.hasPrefix("mock") { return ("server.rack", String(localized: "Services"), .teal) }
         if block.hasPrefix("docker") || block.hasPrefix("compose") { return ("shippingbox", String(localized: "Container"), .indigo) }
         if block.hasPrefix("setup") { return ("wrench.and.screwdriver", String(localized: "Setup"), .teal) }
         if block.hasPrefix("notify") { return ("bell", String(localized: "Notification"), .purple) }
@@ -15,31 +16,23 @@ enum FlowBlockStyle {
     }
 }
 
-/// A readable status capsule; color supplements the state label.
-struct FlowStatusBadge: View {
-    let state: String?
-    var compact = false
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    var body: some View {
-        let style = FlowStateIcon.look(state)
-        let color = state == nil ? Color.secondary : style.1
-        HStack(spacing: compact ? 3 : 5) {
-            if compact {
-                Circle().fill(color).frame(width: 4, height: 4).accessibilityHidden(true)
-            } else {
-                if state == "RUNNING", !reduceMotion { ProgressView().controlSize(.mini).scaleEffect(0.7).frame(width: 10, height: 10) }
-                else { SymbolIcon(style.0).font(.system(size: 9, weight: .semibold)).foregroundStyle(color) }
-            }
-            Text(FlowFormat.shortStateTitle(state)).lineLimit(1)
+extension FlowWorkspaceSummary.Tone {
+    /// The shared status tone this is drawn in (docs/design.md, Badges)
+    var style: StudioStyle.Tone {
+        switch self {
+        case .passed: return .passed
+        case .failed: return .failed
+        case .waiting: return .waiting
+        case .neutral: return .neutral
         }
-        .font(.system(size: 10, weight: .semibold))
-        .foregroundStyle(.primary)
-        .padding(.horizontal, compact ? 6 : 8).padding(.vertical, compact ? 3 : 4)
-        .background(color.opacity(0.1), in: Capsule())
-        .overlay(Capsule().stroke(color.opacity(0.15), lineWidth: 0.5))
-        .help(FlowFormat.stateTitle(state))
-        .accessibilityLabel(FlowFormat.stateTitle(state))
+    }
+}
+
+extension StatusPill {
+    /// A run's state as the shared badge: its icon first, then its name (the short one in a dense row), in its tone
+    init(flowState state: String?, short: Bool = false) {
+        self.init(title: short ? FlowFormat.shortStateTitle(state) : FlowFormat.stateTitle(state),
+                  symbol: FlowStateIcon.look(state).0, tone: FlowWorkspaceSummary.tone(state).style)
     }
 }
 
@@ -47,14 +40,21 @@ struct FlowStatusBadge: View {
 struct FlowStateIcon: View {
     let state: String?
     var size: CGFloat = 12
+    /// A step that is running spins where the screen follows a run live; elsewhere it keeps the still icon
+    var spins = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         let (name, color) = FlowStateIcon.look(state)
-        SymbolIcon(name)
-            .font(.system(size: size))
-            .foregroundStyle(color)
-            .help(FlowFormat.stateTitle(state))
-            .accessibilityLabel(FlowFormat.stateTitle(state))
+        Group {
+            if spins, !reduceMotion, state == "RUNNING" || state == "PREFLIGHT" {
+                ProgressView().controlSize(.mini).frame(width: size, height: size)
+            } else {
+                SymbolIcon(name).font(.system(size: size)).foregroundStyle(color)
+            }
+        }
+        .help(FlowFormat.stateTitle(state))
+        .accessibilityLabel(FlowFormat.stateTitle(state))
     }
 
     static func look(_ s: String?) -> (String, Color) {

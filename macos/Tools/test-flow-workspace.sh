@@ -144,13 +144,25 @@ func expect(_ condition: @autoclosure () -> Bool, _ message: String, line: Int =
         expect(Summary.historyRuns(history, search: "interr", failuresOnly: false, title: title).map(\.runId) == ["r1"], "searches the state as the screen words it")
         expect(Summary.historyRuns(history, search: "R3", failuresOnly: false, title: title).map(\.runId) == ["r3"], "searches run IDs")
 
+        // Card layout: the same coordinates as FLOW_CARD in windows/src/entities/flow/model/graph.ts
+        expect(FlowGraphLayout.cardWidth == 192 && FlowGraphLayout.cardHeight == 80 && FlowGraphLayout.columnGap == 40
+               && FlowGraphLayout.rowGap == 14 && FlowGraphLayout.margin == 24, "card constants")
+        expect(FlowGraphLayout.columnPitch == 232 && FlowGraphLayout.rowPitch == 94, "pitches")
+        let layout = FlowGraphLayout.make(plan.map { .init(id: $0.id, needs: $0.needs) })
+        expect(layout.items.map { [$0.x, $0.y] } == [[24, 24], [256, 24], [256, 118], [488, 24]], "lays the plan out on the card grid")
+        expect(layout.width == 704 && layout.height == 222, "sizes the canvas around the cards")
+        let empty = FlowGraphLayout.make([])
+        expect(empty.width == 240 && empty.height == 128, "keeps room for one card when there is none")
+        expect(FlowGraphLayout.fit(layout, viewport: CGSize(width: 728, height: 246)) == 1, "fits at full size when there is room")
+        expect(abs(FlowGraphLayout.fit(layout, viewport: CGSize(width: 376, height: 400)) - 0.5) < 0.0001, "keeps 24 pt around a fitted graph")
+
         // Columns by the width of the workspace
         let wide = Summary.Columns(width: 1440), medium = Summary.Columns(width: 1000), narrow = Summary.Columns(width: 860), compact = Summary.Columns(width: 700)
         expect(wide.library == 312 && wide.details == 340 && !wide.detailsBelow && wide.inset == 24, "wide window")
         expect(medium.library == 240 && medium.details == 296 && !medium.detailsBelow && medium.inset == 16, "narrower window")
         expect(narrow.library == 240 && narrow.detailsBelow, "the step details go below the graph")
         expect(compact.library == nil && compact.detailsBelow, "the list becomes a picker")
-        print("Flow workspace passed: banner, steps over the plan, outcomes, connectors, step text, run groups, lists and columns")
+        print("Flow workspace passed: banner, steps over the plan, outcomes, connectors, step text, run groups, lists, card layout and columns")
     }
 }
 SWIFT

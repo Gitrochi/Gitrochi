@@ -50,8 +50,8 @@ final class FlowAuthoringStore {
             let suite = node["suite"].string.map { document["suites"][$0] } ?? .null
             let block = suite["use"].string ?? blockID(node)
             let command = node["run"].string ?? node["with"]["run"].string ?? suite["with"]["run"].string
-            return .init(id: id, title: node["description"].string ?? id, block: block, needs: node["needs"].dependencyIDs,
-                         state: nil, subtitle: command?.split(separator: "\n").first.map(String.init) ?? block)
+            return .init(id: id, title: node["description"].string, block: block, needs: node["needs"].dependencyIDs,
+                         state: nil, command: command)
         }
     }
 
