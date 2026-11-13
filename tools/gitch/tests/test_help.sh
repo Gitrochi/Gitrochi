@@ -98,6 +98,40 @@ test_help_flow_topics_show_the_engine_help() {
   run gitch help flow run; assert_ok; assert_out '사용법: gitch flow'; assert_out 'gitch flow run <flow>'
 }
 
+test_help_overview_is_grouped_and_points_to_topics() {
+  local name lines overview
+  mk_config
+  run gitch help; assert_ok; overview=$OUT
+  assert_out '매일 쓰는 것'; assert_out 'PR / MR'; assert_out '계정/설정'
+  assert_out '(계정: alice, bob, carol)'
+  assert_out 'gitch preflight [--json] [--no-fetch]    커밋/push 전 한 번에 점검'
+  assert_out '명령 하나 자세히: gitch help <명령>'
+  assert_out '모든 명령 한 번에: gitch help --all'
+  assert_out '종료코드: 0 정상'
+  lines=$(printf '%s\n' "$OUT" | wc -l | tr -d ' ')
+  [ "$lines" -le 75 ] || fail "the overview grew to $lines lines"
+  # Every command is in the overview, with its usage or at least by name; setup is no longer listed twice.
+  for name in $(help_table_names); do
+    [ "$name" != guard ] || continue
+    printf '%s\n' "$overview" | grep -qE -- "(^  gitch | · |: )$name( |\$)" || fail "not in the overview: $name"
+  done
+  assert_eq "$(printf '%s\n' "$overview" | grep -c '^  gitch setup')" 1
+  run gitch -h; assert_ok; assert_eq "$OUT" "$overview"
+  run gitch --help; assert_ok; assert_eq "$OUT" "$overview"
+}
+
+test_help_all_prints_every_topic() {
+  local name all first
+  run gitch help --all; assert_ok; all=$OUT
+  assert_out '━━ 매일 쓰는 것 ━━'
+  for name in $(help_table_names); do
+    run gitch help "$name"; assert_ok
+    first=$(printf '%s\n' "$OUT" | sed -n 1p)
+    case "$all" in *"$first"*) ;; *) fail "help --all has no topic for $name" ;; esac
+  done
+  [ "$(printf '%s\n' "$all" | grep -cE '^(예시|Examples)$')" -eq "$(help_table_names | grep -c .)" ] || fail 'help --all does not have one example block per command'
+}
+
 # ----- --help never runs the command -----
 
 help_fixture() {   # an installed gitch and a locked repository where every command has something to do → cd
