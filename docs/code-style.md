@@ -115,6 +115,7 @@ Run the matching macOS feature checks when those areas change (commands below st
 | Issue development and comments | `bash macos/Tools/test-collaboration.sh`, `bash macos/Tools/test-issue-layout.sh`; Windows: `tests/issue-workflow.test.ts` and the issue workflow self-test |
 | Release versions and layout | `bash macos/Tools/test-releases.sh`, `bash macos/Tools/test-release-layout.sh`; Windows: `tests/releases.test.ts` and the release/overview app self-tests |
 | Accounts, hosting hub and operations | `bash macos/Tools/test-hosting-target.sh`, `bash macos/Tools/test-hosting-hub.sh`, `bash macos/Tools/test-workspace-operations.sh`, `bash macos/Tools/test-confirmation-guard.sh` |
+| Account button, popover and Settings › Accounts | `bash macos/Tools/test-account-layout.sh`; Windows: `tests/account-presentation.test.ts` and the account self-tests |
 | Large lists and responsive layout | `bash macos/Tools/test-inspector-layout.sh`, `bash macos/Tools/test-large-changes.sh`, `bash macos/Tools/test-adaptive-workbench-identity.sh` |
 | Sidebar tree and titlebar safe areas | `bash macos/Tools/test-sidebar-tree-layout.sh`, `bash macos/Tools/test-sidebar-visibility.sh`, `bash macos/Tools/test-window-content-layout.sh`; on an interactive Mac, add `--fullscreen` to the latter for a real transition |
 | Browser login | `bash tools/gitch/tests/run.sh test_login.sh test_cli_contract.sh`, `bash macos/Tools/test-github-login-identity.sh`, `bash macos/Tools/test-browser-login-progress.sh` |

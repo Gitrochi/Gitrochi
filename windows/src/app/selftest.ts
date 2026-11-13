@@ -57,6 +57,7 @@ import { scheduledRunsSelfTest } from "./lib/scheduled-runs-selftest";
 import { toolbarSelfTest } from "./lib/toolbar-selftest";
 import { browserLoginGuidanceSelfTest, browserProjectAccessSelfTest } from "./lib/browser-login-selftest";
 import { accountQuickControlsSelfTest, accountQuickControlsWithoutRepositorySelfTest } from "./lib/account-quick-controls-selftest";
+import { accountsSettingsSelfTest } from "./lib/accounts-settings-selftest";
 import { prConversationSelfTest } from "./lib/pr-conversation-selftest";
 import { listSectionsSelfTest } from "./lib/list-sections-selftest";
 import { externalAgentsSelfTest } from "./lib/external-agents-selftest";
@@ -267,6 +268,7 @@ export async function runSelfTest(): Promise<boolean> {
   await step("프로젝트 추가 권한은 사용자 클릭·선택 계정만 연결하고 취소·다른 계정 차단", browserProjectAccessSelfTest);
   await step("Account button: the 24px photo, the badge for this repository's account only, the popover's reason, Change… and the three state icons", accountQuickControlsSelfTest);
   await step("Account popover without a repository or an account: the accounts, Inbox, Manage accounts… and the Add account sheet", accountQuickControlsWithoutRepositorySelfTest);
+  await step("Settings › Accounts: hosting accounts and Git identities, the Add account sheet, Remove account… last and confirmed", accountsSettingsSelfTest);
   await step("Push 검토·PR 줄 리뷰·변경 AI 질문의 실제 React 화면", reviewWorkflowsSelfTest);
   await step("Pull requests page: list controls and the Hide list choice kept across tabs, one-line composer, Split reason, timeline, keyboard tabs and retained drafts", prConversationSelfTest);
   await step("PR·이슈 목록의 검색 줄·필터·페이지 이동", listSectionsSelfTest);

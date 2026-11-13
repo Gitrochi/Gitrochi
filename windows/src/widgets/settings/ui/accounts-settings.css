@@ -1,0 +1,8 @@
+/* Settings › Accounts rows. macOS: AccountsSettings. */
+.accounts-settings-row { display: flex; align-items: center; gap: 10px; min-width: 0; min-height: 44px; }
+.accounts-settings-row > .avatar, .accounts-settings-row > .btn, .accounts-settings-row > .status-pill, .accounts-settings-row > .icon-btn { flex: none; }
+.accounts-settings-text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.accounts-settings-title { font-size: 13px; line-height: 18px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.accounts-settings-email { margin-left: 4px; font-weight: 400; color: var(--text-2); }
+.accounts-settings-caption { font-size: 12px; line-height: 16px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.accounts-settings .form-section > .row > .btn { flex: none; }

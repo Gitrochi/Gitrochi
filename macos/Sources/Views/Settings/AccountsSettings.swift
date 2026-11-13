@@ -1,66 +1,47 @@
 import SwiftUI
 import AppKit
 
+/// Settings › Accounts (docs/design.md, App shell): the hosting accounts and the Git identities, each listed once.
+/// Accounts are added here or from the account popover, with the same sheet, and removed only here.
+/// (Windows: widgets/settings/ui/AccountsSettings.tsx)
 struct AccountsSettings: View {
     private let accounts = AccountStore.shared
-    @ViewState private var githubToken = ""
-    @ViewState private var gitlabServer = ""
-    @ViewState private var gitlabToken = ""
-    @ViewState private var working: Provider?
-    @ViewState private var error: String?
-    @ViewState private var showBrowserLogin = false
+    @ViewState private var sheet: AccountsSettingsSheet?
+    @ViewState private var removing: HostAccount?
+    @ViewState private var identities: [Gitch.Account] = []
+
+    /// GitHub first, then GitLab servers
+    private var hosting: [HostAccount] { accounts.accounts(for: .github) + accounts.accounts(for: .gitlab) }
 
     var body: some View {
+        // a credential that becomes readable, or stops being so, redraws the rows' states
+        let _ = accounts.revision
         Form {
             Section {
-                Button("Sign in to GitHub in browser…") { showBrowserLogin = true }.disabled(working != nil)
-                ForEach(accounts.accounts(for: .github)) { a in
-                    ConnectedRow(account: a) { accounts.disconnect(a) }
+                if hosting.isEmpty {
+                    Text("Add a GitHub or GitLab account for pull requests, issues and CI. Commits work without one.")
+                        .font(.caption).foregroundStyle(.secondary)
                 }
-                SecureField("Personal access token", text: $githubToken, prompt: Text(accounts.accounts(for: .github).isEmpty ? "ghp_… token" : "Another account's token"))
-                HStack {
-                    Button(accounts.accounts(for: .github).isEmpty ? "Connect" : "Add account") { connectGitHub() }
-                        .disabled(githubToken.trimmed.isEmpty || working != nil)
-                    if accounts.ghPath != nil {
-                        Button("Import gh CLI login") { importGH() }
-                            .disabled(working != nil)
-                    }
-                    if working == .github { ProgressView().controlSize(.small) }
-                    Spacer()
-                    Link("Create token", destination: URL(string: "https://github.com/settings/tokens/new?scopes=repo,read:org,workflow&description=Gitrochi")!)
+                ForEach(hosting) { account in
+                    HostingAccountRow(account: account, status: accounts.status(for: account), resolve: { resolve(account) }, present: { sheet = $0 },
+                                      remove: { removing = account })
                 }
             } header: {
-                Text("GitHub \(countText(.github))")
-            } footer: {
-                Text("If you connect several accounts, choose the one a repository uses from the account button at the right end of the toolbar.")
-                    .font(.caption).foregroundStyle(.secondary)
+                header("Hosting accounts", action: "Add account…", identifier: "accounts-settings-add") { sheet = .add(.github, nil) }
             }
 
             Section {
-                ForEach(accounts.accounts(for: .gitlab)) { a in
-                    ConnectedRow(account: a, showServer: true) { accounts.disconnect(a) }
+                if identities.isEmpty {
+                    Text("A Git identity is the author name, email and SSH key commits and pushes use.").font(.caption).foregroundStyle(.secondary)
                 }
-                TextField("Server address", text: $gitlabServer, prompt: Text("https://gitlab.example.com"))
-                SecureField("Personal access token (api scope)", text: $gitlabToken)
-                HStack {
-                    Button(accounts.accounts(for: .gitlab).isEmpty ? "Connect" : "Add account") { connectGitLab() }
-                        .disabled(gitlabServer.trimmed.isEmpty || gitlabToken.trimmed.isEmpty || working != nil)
-                    if working == .gitlab { ProgressView().controlSize(.small) }
-                    Spacer()
-                    if !gitlabServer.trimmed.isEmpty,
-                       let u = URL(string: AccountStore.normalizeServer(gitlabServer) + "/-/user_settings/personal_access_tokens?name=Gitrochi&scopes=api") {
-                        Link("Create token", destination: u)
-                    }
+                ForEach(identities) { identity in
+                    GitIdentityRow(identity: identity) { sheet = .identity(identity.id) }
                 }
             } header: {
-                Text("Self-hosted GitLab \(countText(.gitlab))")
+                header("Git identities", action: "Add identity…", identifier: "accounts-settings-add-identity") { sheet = .identity(nil) }
             } footer: {
-                Text("Only GitLab servers run by your organization can be connected (gitlab.com isn't supported yet). You can connect several accounts per server.")
+                Text("An account used under several host labels (HTTPS, SSH on port 443) is listed once.")
                     .font(.caption).foregroundStyle(.secondary)
-            }
-
-            if let error {
-                Text(error).foregroundStyle(.red).font(.callout)
             }
 
             Section("Commit graph") {
@@ -80,70 +61,128 @@ struct AccountsSettings: View {
             }
         }
         .formStyle(.grouped)
-        .sheet(isPresented: $showBrowserLogin) { GitHubBrowserLoginSheet { _, _ in } }
-        .onAppear {
-            if gitlabServer.isEmpty { gitlabServer = accounts.suggestedGitLabServer }
-        }
-    }
-
-    private func countText(_ p: Provider) -> String {
-        let n = accounts.accounts(for: p).count
-        return n == 0 ? "" : String(localized: "· \(n)")
-    }
-
-    private func connectGitHub() {
-        run(.github) {
-            try await accounts.connectGitHub(token: githubToken)
-            githubToken = ""
-        }
-    }
-
-    private func connectGitLab() {
-        run(.gitlab) {
-            try await accounts.connectGitLab(server: gitlabServer, token: gitlabToken)
-            gitlabToken = ""
-        }
-    }
-
-    private func importGH() {
-        run(.github) { try await accounts.importGitHubCLI() }
-    }
-
-    private func run(_ p: Provider, _ work: @escaping @MainActor () async throws -> Void) {
-        working = p
-        error = nil
-        Task {
-            do { try await work() } catch {
-                self.error = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+        .task { identities = await Gitch.accounts() }
+        .sheet(item: $sheet) { request in
+            switch request {
+            case .add(let provider, let server):
+                AddAccountSheet(provider: provider, server: server, signInWithBrowser: { sheet = .login(nil, .standard) })
+            case .login(let expected, let capability):
+                GitHubBrowserLoginSheet(expectedLogin: expected, capability: capability) { _, _ in }
+            case .identity(let id):
+                GitchAccountSetupSheet(accountID: id) { Task { identities = await Gitch.accounts() } }
             }
-            working = nil
+        }
+        // removing deletes the token, so it asks first
+        .alert(Text("Remove @\(removing?.username ?? "")?"), isPresented: Binding(get: { removing != nil }, set: { if !$0 { removing = nil } }), presenting: removing) { account in
+            Button("Remove", role: .destructive) { accounts.disconnect(account) }
+            Button("Cancel", role: .cancel) {}
+        } message: { _ in
+            Text("Gitrochi forgets this account and deletes its token from the Keychain. Repositories that used it go back to another account on the same server, if there is one.")
+        }
+    }
+
+    private func header(_ title: LocalizedStringKey, action: LocalizedStringKey, identifier: String, run: @escaping () -> Void) -> some View {
+        HStack {
+            Text(title)
+            Spacer()
+            Button(action: run) { Label(action, symbol: "plus") }.controlSize(.small).accessibilityIdentifier(identifier)
+        }
+    }
+
+    /// github.com accounts renew in the browser; a GitLab server takes a new token in the Add account sheet
+    private func resolve(_ account: HostAccount) {
+        if accounts.status(for: account) == .needsYourApproval {
+            Task { try? await accounts.allowStoredAccess(for: account) }
+        } else if account.provider == .github, account.host == "github.com" {
+            sheet = .login(account.username, .standard)
+        } else {
+            sheet = .add(account.provider, account.server)
         }
     }
 }
 
-private struct ConnectedRow: View {
+enum AccountsSettingsSheet: Identifiable {
+    case add(Provider, String?)
+    case login(String?, Gitch.GitHubLoginCapability)
+    /// A Git identity's SSH setup, or a new identity
+    case identity(String?)
+    var id: String {
+        switch self {
+        case .add(let provider, let server): "add:\(provider.rawValue):\(server ?? "")"
+        case .login(let expected, let capability): "login:\(expected ?? "new"):\(capability.rawValue)"
+        case .identity(let id): "identity:\(id ?? "new")"
+        }
+    }
+}
+
+/// One hosting account: its photo, name and server, its state with the action that settles it, and ⋯ whose last item
+/// removes it
+struct HostingAccountRow: View {
     let account: HostAccount
-    var showServer = false
-    let disconnect: () -> Void
+    let status: AccountStatus
+    let resolve: () -> Void
+    let present: (AccountsSettingsSheet) -> Void
+    let remove: () -> Void
+
+    private var gitHub: Bool { account.provider == .github && account.host == "github.com" }
 
     var body: some View {
         HStack(spacing: 10) {
-            AsyncImage(url: account.avatarURL.flatMap(URL.init(string:))) { image in
-                image.resizable()
-            } placeholder: {
-                Avatar(name: account.name ?? account.username, email: account.username, size: 30)
-            }
-            .frame(width: 30, height: 30)
-            .clipShape(Circle())
+            AccountAvatar(account: account, size: 28)
             VStack(alignment: .leading, spacing: 1) {
-                Text(account.name ?? account.username).fontWeight(.medium)
-                Text("@\(account.username)" + (showServer ? " · \(account.host)" : "")).font(.caption).foregroundStyle(.secondary)
+                Text(verbatim: "@" + account.username).fontWeight(.medium).fixedSize(horizontal: false, vertical: true)
+                Text(verbatim: [account.host, account.name ?? ""].filter { !$0.isEmpty }.joined(separator: " · "))
+                    .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }
-            Spacer()
-            Label("Connected", symbol: "checkmark.circle.fill")
-                .foregroundStyle(.green)
-                .font(.caption)
-            Button("Disconnect", action: disconnect)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            AccountStatusPill(status: status)
+            if let action = status.action { Button(action, action: resolve).fixedSize() }
+            Menu {
+                if gitHub {
+                    Button("Renew browser connection…") { present(.login(account.username, .standard)) }
+                    Button("Connect project access…") { present(.login(account.username, .projects)) }
+                }
+                Button("Copy username") {
+                    NSPasteboard.general.clearContents(); NSPasteboard.general.setString(account.username, forType: .string)
+                }
+                Divider()
+                Button("Remove account…", role: .destructive, action: remove)
+            } label: {
+                SymbolIcon("ellipsis").frame(width: 24, height: 24).contentShape(Rectangle())
+            }
+            .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+            .accessibilityLabel("More actions for \("@" + account.username)")
+            .help("More")
+        }
+    }
+}
+
+/// One Git identity: the photo of the hosting account it belongs to, its name and email, and where it is used
+struct GitIdentityRow: View {
+    let identity: Gitch.Account
+    let connect: () -> Void
+
+    var body: some View {
+        HStack(spacing: 10) {
+            GitAccountAvatar(account: identity, size: 28)
+            VStack(alignment: .leading, spacing: 1) {
+                (Text(verbatim: identity.id).fontWeight(.medium) + Text(verbatim: identity.email.isEmpty ? "" : " <\(identity.email)>").foregroundStyle(.secondary))
+                    .fixedSize(horizontal: false, vertical: true).textSelection(.enabled)
+                Text(verbatim: [identity.hosts, identity.rules ?? ""].filter { !$0.isEmpty }.joined(separator: " · "))
+                    .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            Menu {
+                Button("Connect with SSH…", action: connect)
+                Button("Copy email") {
+                    NSPasteboard.general.clearContents(); NSPasteboard.general.setString(identity.email, forType: .string)
+                }.disabled(identity.email.isEmpty)
+            } label: {
+                SymbolIcon("ellipsis").frame(width: 24, height: 24).contentShape(Rectangle())
+            }
+            .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+            .accessibilityLabel("More actions for \(identity.id)")
+            .help("More")
         }
     }
 }
