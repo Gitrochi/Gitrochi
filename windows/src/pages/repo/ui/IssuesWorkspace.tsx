@@ -4,15 +4,15 @@ import { ChevronLeft, GitBranch, GitPullRequest, MessageSquare, PanelRight, Plus
 import { IssueDetail } from "@/widgets/inspector";
 import type { RepoStore } from "@/entities/repo";
 import {
-  accounts, assignedIssueCount, type InboxItem, issueNext, type IssueScope, type IssueSort, issueSummary, issueSummaryCounts, issueSummaryLines,
+  accounts, assignedIssueCount, type InboxItem, issueNext, type IssueScope, type IssueSort, issueSummary, issueSummaryCard, issueSummaryCounts, issueSummaryLines,
   issueSummaryTotal, workStateTitle,
 } from "@/entities/hosting";
 import { t } from "@/shared/i18n";
 import { listDay, listWhen, useObserve } from "@/shared/lib";
 import {
   Avatar, Button, FailureBlock, hostedListAge, HostedAccountNeeded, HostedListChip, HostedListColumns, HostedListEmpty, HostedListHeader, HostedListIconButton,
-  HostedListLoading, HostedListPage, HostedListRow, HostedListSearch, HostedListSegments, HostedListSummary, HostedListTextButton,
-  showContextMenu,
+  HostedListLoading, HostedListPage, HostedListRow, HostedListSearch, HostedListSegments, HostedListSummary, HostedListSummaryBar, HostedListSummaryBars,
+  HostedListSummaryLoadingLine, HostedListTextButton, showContextMenu, Spinner,
 } from "@/shared/ui";
 import "./issues-workspace.css";
 
@@ -78,9 +78,10 @@ export function IssuesWorkspace({ store, openSettings }: { store: RepoStore; ope
 function IssueSummaryCard({ store }: { store: RepoStore }) {
   const items = store.issueAssigned;
   // what stands in for the summary until the assigned issues are read: still on their way, or out of reach
-  const pending = store.issueAssignedFailed ? t("Couldn't reach {0}", store.target?.host ?? "") : t("Loading…");
+  const pending = store.issueAssignedFailed ? t("Couldn't reach {0}", store.target?.host ?? "") : t("Loading issues…");
   const assigned = (items ?? []).map((item) => store.issueProgress(item));
   const summary = issueSummary(assigned), total = issueSummaryTotal(summary), lines = issueSummaryLines(summary), counts = issueSummaryCounts(summary);
+  const card = issueSummaryCard(items !== null, store.issueAssignedFailed, total);
   const next = issueNext(assigned, store.headBranch);
   const nextItem = next ? items?.find((item) => item.number === next.number) : undefined;
   const reviewOnThisBranch = !!store.headBranch && assigned.some((item) => item.progress === "inReview" && item.branch === store.headBranch);
@@ -101,15 +102,18 @@ function IssueSummaryCard({ store }: { store: RepoStore }) {
   return (
     <HostedListSummary
       label={t("Issues assigned to you")}
+      // with nothing assigned the card is one column of words, as the board draws it
+      spread={card === "empty"}
       lead={
         <>
           <span className="hosted-summary-key">{t("Assigned to you")}</span>
-          {items === null ? <span className="hosted-caption">{pending}</span>
-            : lines.length ? <><span className="hosted-summary-value">{lines[0]}</span>{lines.length > 1 && <span className="hosted-caption ellipsis">{lines.slice(1).join(" · ")}</span>}</>
-            : <span className="issue-summary-none">{t("No open issues are assigned to you")}</span>}
+          {card === "loading" ? <HostedListSummaryLoadingLine caption={pending} />
+            : card === "unreachable" ? <span className="hosted-caption ellipsis">{pending}</span>
+            : card === "empty" ? <><span className="hosted-summary-value">{t("No open issues are assigned to you")}</span>{open !== null && open > 0 && <span className="hosted-caption ellipsis">{t("{0} issues are open in {1}.", open, store.target?.path ?? "")}</span>}</>
+            : <><span className="hosted-summary-value">{lines[0]}</span>{lines.length > 1 && <span className="hosted-caption ellipsis">{lines.slice(1).join(" · ")}</span>}</>}
         </>
       }
-      middle={total > 0 ? (
+      middle={card === "loading" ? <HostedListSummaryBars /> : total > 0 ? (
         <div className="issue-summary-middle">
           {/* one bar, a part for each group as wide as its share; the legend under it says which is which */}
           <div className="issue-bar" role="img" aria-label={counts}>
@@ -121,9 +125,10 @@ function IssueSummaryCard({ store }: { store: RepoStore }) {
             {summary.notStarted.length > 0 && <span><i className="idle" /><b>{t("Not started")}</b></span>}
           </div>
         </div>
-      ) : items && open !== null ? <span className="hosted-caption">{t("{0} issues are open in {1}.", open, store.target?.path ?? "")}</span> : null}
+      ) : null}
       trail={
         <>
+          {card === "loading" && <HostedListSummaryBar />}
           {action}
           {next?.kind === "createBranch" && nextItem?.created != null && <span className="hosted-caption">{t("Oldest, opened {0}", listDay(nextItem.created))}</span>}
           {next?.kind === "createRequest" && <span className="hosted-caption ellipsis" style={{ maxWidth: "100%" }}>{next.branch}</span>}
@@ -131,9 +136,10 @@ function IssueSummaryCard({ store }: { store: RepoStore }) {
       }
       strip={
         <>
-          <CircleDot size={14} />
+          {card === "loading" ? <Spinner size={14} /> : <CircleDot size={14} />}
           <span className="hosted-caption" style={{ flex: "none" }}>{t("Assigned to you")}</span>
-          <span className="hosted-strip-text">{items === null ? pending : total === 0 ? t("No open issues are assigned to you") : counts.replace(/, /g, " · ")}</span>
+          {items === null ? <span className="hosted-caption ellipsis">{pending}</span>
+            : <span className="hosted-strip-text">{total === 0 ? t("No open issues are assigned to you") : counts.replace(/, /g, " · ")}</span>}
           <span className="spacer" />
           {action}
         </>
