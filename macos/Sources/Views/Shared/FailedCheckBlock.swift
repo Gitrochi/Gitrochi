@@ -426,15 +426,24 @@ private struct CheckLogText: NSViewRepresentable {
             state.limit = -1
             view.textStorage?.setAttributedString(text.string)
             state.fit(scroll)
-            if following { view.scrollToEndOfDocument(nil) }
+            if following { view.scrollToEndOfDocument(nil); Self.showLineStart(scroll) }
         } else {
             state.fit(scroll)
         }
         if state.jump != jump {
             state.jump = jump
-            if let error = state.errors.first { view.scrollRangeToVisible(error) }
+            if let error = state.errors.first { view.scrollRangeToVisible(error); Self.showLineStart(scroll) }
         }
         state.measure(scroll)
+    }
+
+    /// Scrolling to a line also moves sideways to where that line ends; a log is read from its line numbers
+    private static func showLineStart(_ scroll: NSScrollView) {
+        var origin = scroll.contentView.bounds.origin
+        guard origin.x != 0 else { return }
+        origin.x = 0
+        scroll.contentView.scroll(to: origin)
+        scroll.reflectScrolledClipView(scroll.contentView)
     }
 
     /// Lines are 20 pt tall; a wrapped line continues under its text, not under its number
