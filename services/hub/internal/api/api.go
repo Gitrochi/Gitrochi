@@ -67,27 +67,6 @@ type Presence struct {
 	Changed []string `json:"changed"`
 	Related []string `json:"related"`
 	Client  string   `json:"client"`
-	// Ledger describes the Gitrochi Ledger session this entry stands for, when
-	// an app shares its sessions (one client per session). Optional.
-	Ledger *LedgerSession `json:"ledger,omitempty"`
-}
-
-// Ledger roles and verdicts, as the Ledger core names them.
-var (
-	LedgerRoles    = []string{"decision", "implementation", "research", "document", "other"}
-	LedgerVerdicts = []string{"archived", "needs_human", "expirable", "confirm", "shelved", "pending_merge", "stale", "active"}
-)
-
-// LedgerSession is what an app shares about one Ledger session: never its
-// questions, answers, reports or notes.
-type LedgerSession struct {
-	Session      string    `json:"session"`
-	Project      string    `json:"project"`
-	Title        string    `json:"title"`
-	Kind         string    `json:"kind"`
-	Role         string    `json:"role"`
-	Verdict      string    `json:"verdict"`
-	LastActivity time.Time `json:"lastActivity,omitzero"`
 }
 
 // PresenceEntry is a stored presence report. Repo is the normalized key.
