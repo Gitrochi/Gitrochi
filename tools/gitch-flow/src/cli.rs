@@ -230,6 +230,15 @@ pub fn main(raw: Vec<String>) -> i32 {
         json: wants_json(&raw),
     };
     let cmd = early.pos.first().cloned().unwrap_or_default();
+    // Asking for help never plans, runs, reads stdin or reaches a remote, wherever the flag is.
+    if let Some(topic) = help_request(&raw) {
+        if topic == "design" {
+            // The design command keeps its own request examples.
+            return crate::design::command(&Args::parse(&["help".to_string()]));
+        }
+        println!("{}", help_for(&topic));
+        return 0;
+    }
     let args = Args {
         pos: early.pos.iter().skip(1).cloned().collect(),
         flags: early.flags,
@@ -245,7 +254,7 @@ pub fn main(raw: Vec<String>) -> i32 {
         }
     }
     match cmd.as_str() {
-        "" | "help" | "-h" | "--help" => {
+        "" => {
             println!("{}", help());
             0
         }
@@ -293,6 +302,92 @@ pub fn main(raw: Vec<String>) -> i32 {
             ),
             Value::Null,
         ),
+    }
+}
+
+/// The subcommand that `--help`, `-h` or `help <subcommand>` asks about (empty for the general help), or `None` when
+/// nobody asked. Scanning stops at `--`, and the value of an option that takes one is a value, not a flag.
+fn help_request(raw: &[String]) -> Option<String> {
+    let mut words: Vec<&str> = Vec::new();
+    let mut asked = false;
+    let mut i = 0;
+    while i < raw.len() {
+        let a = raw[i].as_str();
+        if a == "--" {
+            break;
+        }
+        if a == "--help" || a == "-h" {
+            asked = true;
+        } else if VALUE_FLAGS.contains(&a) || a == "-j" {
+            i += 1;
+        } else if !a.starts_with('-') {
+            words.push(a);
+        }
+        i += 1;
+    }
+    match words.first().copied() {
+        Some("help") => Some(words.get(1).copied().unwrap_or_default().to_string()),
+        first if asked => Some(first.unwrap_or_default().to_string()),
+        _ => None,
+    }
+}
+
+/// (subcommand, usage, Korean summary, English summary). `help <subcommand>` and `<subcommand> --help` print one entry.
+/// A usage line that starts with a space continues the line above it.
+const TOPICS: &[(&str, &str, &str, &str)] = &[
+    ("init", "init [--dry-run] [--json] [--yes] [--force]", "프로젝트 파일을 읽고 흐름 파일(.gitch/flow.yml)을 제안 · 만든다. 프로젝트 코드는 실행하지 않고, 있는 파일은 묻지 않고 덮어쓰지 않는다.", "Reads the project files and proposes or writes a flow file (.gitch/flow.yml). It never runs project code or overwrites a file without asking."),
+    ("doctor", "doctor [--env E] [--json]", "흐름이 쓰는 도구 · Docker · 연결 · 신뢰를 점검한다. 아무것도 바꾸지 않는다.", "Checks the tools flows use, Docker, connections and trust. It changes nothing."),
+    ("validate", "validate [--json]", "흐름 파일을 검사한다. 아무것도 실행하지 않는다.", "Checks the flow files. Nothing is run."),
+    ("list", "list [--json]", "흐름 · 스위트 · 서비스 · 블록 목록을 보여 준다.", "Lists flows, suites, services and blocks."),
+    ("plan", "plan <flow> [--env E] [--affected[=base|staged|worktree]] [--only node,…] [--json]", "흐름이 무엇을 어떤 순서로 실행할지 보여 준다. 아무것도 실행하지 않는다.", "Shows what a flow would run and in which order. Nothing is run."),
+    ("run", "run <flow> [--env E] [--affected[=base|staged|worktree]] [--only node,…] [--jobs N] [--fail-fast|--no-fail-fast]\n      [--no-cache] [--keep-services] [--detach] [--json|--events|--summary] [--ci] [--idempotency-key K] [--yes]", "흐름을 실행한다: 프로젝트 명령과 서비스를 돌리고 서명된 결과를 남긴다. 사람 확인 단계는 --yes 가 있어야 넘어간다.", "Runs a flow: project commands and services, with a signed result. Steps that need a person wait for --yes."),
+    ("test", "test [suite|tag …] [--affected] [--watch] [--json|--summary]", "테스트 스위트를 바로 실행한다(--summary: AI 용 짧은 요약). 0개 실행은 통과가 아니다.", "Runs test suites directly (--summary: a short result for AI agents). Zero tests run is not a pass."),
+    ("status", "status [run-id|last] [--all] [--json]", "실행 상태와 노드별 결과를 보여 준다.", "Shows the state of a run and of each node."),
+    ("events", "events <run-id|last> [--follow] [--since N]", "실행 이벤트를 NDJSON 으로 내보낸다.", "Prints the events of a run as NDJSON."),
+    ("logs", "logs <run-id|last> [node] [--follow]", "실행 로그를 보여 준다.", "Shows the logs of a run."),
+    ("report", "report <run-id|last> [--format text|md|json|junit|html] [--out file]", "실행 결과 보고서를 만든다. --out 파일만 쓴다.", "Writes the report of a run. Only the --out file is written."),
+    ("rerun", "rerun <run-id|last> [--failed]", "실행을 다시 돌린다(--failed: 실패한 노드만).", "Runs a run again (--failed: only the nodes that failed)."),
+    ("cancel", "cancel <run-id|last>", "진행 중인 실행을 취소한다.", "Cancels a run in progress."),
+    ("watch", "watch <flow> [--affected]", "파일을 저장할 때마다 영향받은 노드만 다시 실행한다. Ctrl-C 로 끝낸다.", "Reruns only the affected nodes whenever a file is saved. Ctrl-C stops it."),
+    ("trust", "trust [--show|--revoke] [--yes]", "흐름 파일을 신뢰한다(사람이 내용을 확인한 뒤). --show 는 상태만, --revoke 는 신뢰를 거둔다.", "Trusts the flow files after a person has read them. --show only reports; --revoke withdraws trust."),
+    ("hold", "hold list | hold release <env>", "잠긴 환경을 보고, 사람이 상태를 확인한 뒤 푼다.", "Lists held environments; a person releases one after checking it."),
+    ("gate", "gate status | gate prepush | gate on [--flow F] | gate off", "pre-push 게이트의 상태를 보고 켜고 끈다(켜고 끄기는 사람만).", "Shows the pre-push gate and switches it on or off (people only)."),
+    ("blocks", "blocks [--json]", "쓸 수 있는 블록 목록을 보여 준다.", "Lists the available blocks."),
+    ("block", "block <ID> [--json]", "블록 하나의 입력과 동작을 보여 준다.", "Shows the inputs and behavior of one block."),
+    ("explain", "explain <code>", "오류 코드의 뜻과 할 일을 설명한다.", "Explains an error code and what to do about it."),
+    ("gc", "gc [--older-than 7d] [--keep N] [--dry-run]", "오래된 실행 기록과 캐시를 지운다. --dry-run 은 지울 것만 보여 준다.", "Removes old run records and caches. --dry-run only lists them."),
+    ("schema", "schema [name]", "JSON 출력 계약(JSON Schema)을 출력한다.", "Prints the JSON output contracts (JSON Schema)."),
+    ("export", "export github|gitlab|jenkins [--flow F] [--out path] [--dry-run] [--force]", "같은 흐름을 CI 러너에서 돌리는 얇은 설정 파일을 만든다. 다른 내용의 파일은 --force 없이 덮어쓰지 않는다.", "Writes a thin CI configuration that runs the same flow on a runner. A different file is not overwritten without --force."),
+    ("import", "import [--dry-run] [--yes] [--force]", "기존 CI 설정(GitHub · GitLab · Jenkins)을 읽고 흐름을 제안한다. --yes 가 있어야 파일을 쓴다.", "Reads existing CI configuration (GitHub, GitLab, Jenkins) and proposes a flow. It writes the file only with --yes."),
+    ("connect", "connect list | connect add <kind> --name N --url U [--user U] | connect test <name> | connect remove <name>", "원격 CI 연결(주소와 인증 참조)을 보고 바꾼다. 비밀값은 OS 보안 저장소에만 둔다.", "Lists and changes remote CI connections (addresses and credential references). Secrets stay in the OS secret store."),
+    ("ci", "ci status [--connection NAME] [--ref R] [--json] | ci logs <job-id> | ci report [pipeline]\nci browse --connection NAME [JOB_PATH] [RUN_ID]", "연결한 원격 CI(GitHub · GitLab)의 결과를 조회하고, browse 로 Jenkins 작업 · 실행 · 로그를 본다. 읽기만 한다.", "Reads results from the connected remote CI (GitHub, GitLab); browse reads Jenkins jobs, runs and logs. Read-only."),
+    ("version", "version [--json]", "엔진 버전을 보여 준다.", "Shows the engine version."),
+];
+
+/// Help for one subcommand, or the general help when the topic is empty or unknown.
+pub fn help_for(topic: &str) -> String {
+    let topic = if topic == "ls" { "list" } else { topic };
+    match TOPICS.iter().find(|t| t.0 == topic) {
+        Some((_, usage, ko, en)) => format!(
+            "{}\n  {}\n\n{}",
+            usage
+                .lines()
+                .map(|l| {
+                    if l.starts_with(' ') {
+                        l.to_string()
+                    } else {
+                        format!("gitch flow {l}")
+                    }
+                })
+                .collect::<Vec<_>>()
+                .join("\n"),
+            tr(ko, en),
+            tr(
+                "전체 명령: gitch flow help",
+                "All commands: gitch flow help"
+            )
+        ),
+        None => help(),
     }
 }
 
