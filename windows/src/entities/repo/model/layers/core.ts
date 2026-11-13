@@ -181,17 +181,6 @@ export abstract class RepoCore extends Observable implements AgentHost {
   stagedStats: Record<string, LineStat> = {};
   unstagedStats: Record<string, LineStat> = {};
   me: Identity | null = null;
-  /** The global Git author (git config --global), shown while no repository is open */
-  globalIdentity: Identity | null = null;
-
-  /** Reads the global author through the system git; a repository's own identity is `me` */
-  async loadGlobalIdentity() {
-    const result = await gitRaw(["config", "--global", "--get-regexp", "^user\\.(name|email)$"], env.home || ".").catch(() => null);
-    const next = result && (result.status === 0 || result.status === 1) ? P.parseIdentityConfig(result.stdout) : this.globalIdentity;
-    if (JSON.stringify(next) === JSON.stringify(this.globalIdentity)) return;
-    this.globalIdentity = next; this.emit();
-  }
-
   // 검색
   searchText = "";
   searchScope: SearchScope = "commits";

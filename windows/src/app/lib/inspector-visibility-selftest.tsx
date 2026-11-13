@@ -22,7 +22,6 @@ export async function inspectorVisibilitySelfTest(): Promise<[boolean, string]> 
   store.showTerminal = true;
   store.selection = { kind: "commit", sha: commit.id };
   store.detail = { sha: commit.id, parents: [], author: commit.author, email: commit.email, date: commit.date, committer: commit.author, committerEmail: commit.email, commitDate: commit.date, summary: "Keep the right panel's state", body: "A long description with a locally expanded view. ".repeat(30) };
-  store.loadGlobalIdentity = async () => {};
   const ensure = (value: unknown, message: string) => { if (!value) throw new Error(message); };
   const panel = () => host.querySelector<HTMLElement>(".repository-screen > .inspector")!;
   const center = () => host.querySelector<HTMLElement>(".repository-screen > .center")!;

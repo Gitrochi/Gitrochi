@@ -47,7 +47,6 @@ if (mode === "selftest") {
   env.ledgerDemo = "1";
   ipc.openUrl = async () => {};
   const app = new RepoStore();
-  app.loadGlobalIdentity = async () => {};
   app.navigate("ledger");
   root.style.height = "100vh";
   createRoot(root).render(<><RepoPage store={app} openSettings={() => {}} /><MenuHost /><TooltipHost /></>);

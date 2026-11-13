@@ -96,7 +96,6 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     // Ledger navigation and settings work without enabling optional background tracking.
     ensure(isWorkspaceDestination("ledger") && destinationEnabled("ledger") && restoredDestination("ledger", false) === "ledger", "Ledger must be available without an environment variable");
     const app = new RepoStore();
-    app.loadGlobalIdentity = async () => {};
     workspace.tabs = [app]; workspace.activeId = app.id;
     const numberedShortcut = () => {
       // Ledger is the ninth page in the sidebar's order
@@ -591,7 +590,6 @@ export async function ledgerSelfTest(): Promise<[boolean, string]> {
     await notifier.poll();
     ensure(sent.some((n) => n.title === t("Answered automatically for {0}", asker.id)), "An automatic answer did not notify");
     const clickTab = new RepoStore();
-    clickTab.loadGlobalIdentity = async () => {};
     const clickStore = new LedgerStore(noticeDemo);
     stores.push(clickStore);
     openLedgerAt(clickTab, clickStore, waitingNotice!.target);
