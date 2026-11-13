@@ -501,6 +501,7 @@ struct PullRequest: Identifiable, Hashable {
     var comments: Int? = nil
     /// The signed-in user is asked to review it
     var reviewRequested = false
+    var authorAvatarURL: String? = nil
     var id: Int { number }
 }
 

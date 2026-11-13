@@ -9,6 +9,7 @@ import { keyLabel } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { listDay, listWhen, longDate, useObserve } from "@/shared/lib";
 import { Avatar, Button, HostedListIconButton, HostedListTextButton, Markdown, showMenuBelow, Spinner, StatusPill } from "@/shared/ui";
+import { ownAvatarURL } from "../lib/own-avatar";
 import { IssueDevelopment } from "./IssueDevelopment";
 import "./inspector.css";
 import "./issue-detail.css";
@@ -49,7 +50,7 @@ export function IssueDetail({ store, detail }: { store: RepoStore; detail: Inbox
         </div>
       </div>
       {/* the list row owns the updated date; the detail says when the issue was opened */}
-      <div className="issue-head-meta"><span className="issue-author"><Avatar name={item.author} email={item.author} size={20}/><strong>@{item.author}</strong></span>{item.created != null && <span title={longDate(item.created)}>{t("Opened {0}", listDay(item.created))}</span>}</div>
+      <div className="issue-head-meta"><span className="issue-author"><Avatar name={item.author} email={item.author} size={20} url={ownAvatarURL(store, item.author, item.authorAvatarURL)}/><strong>@{item.author}</strong></span>{item.created != null && <span title={longDate(item.created)}>{t("Opened {0}", listDay(item.created))}</span>}</div>
     </header>
     <div className="issue-body" key={context} tabIndex={0}>
       <div className="issue-main">
@@ -59,7 +60,7 @@ export function IssueDetail({ store, detail }: { store: RepoStore; detail: Inbox
         <section className="issue-activity" aria-label={t("Activity")}>
           {!detail.comments.length && !store.inboxLoading && <span className="hosted-caption">{t("No comments yet. Start the conversation.")}</span>}
           {detail.comments.map(comment => <article key={comment.id} className="issue-comment">
-            <Avatar name={comment.author} email={comment.author} size={24}/>
+            <Avatar name={comment.author} email={comment.author} size={24} url={ownAvatarURL(store, comment.author, comment.authorAvatarURL)}/>
             <div className="issue-comment-body">
               <span className="issue-comment-head"><strong>@{comment.author}</strong>{comment.date !== null && <span className="hosted-caption" title={longDate(comment.date)}>{listWhen(comment.date)}</span>}{comment.author.toLowerCase() === item.author.toLowerCase() && <StatusPill tone="neutral">{t("Author")}</StatusPill>}</span>
               {editing === comment.id ? <div className="col" style={{ gap: 8 }}><textarea className="textarea" aria-label={t("Edit comment")} rows={5} value={editText} disabled={busy} onChange={event => setEditText(event.target.value)}/><div className="row"><Button kind="primary" disabled={busy || !editText.trim()} onClick={() => void store.changeIssueComment(item, comment, editText).then(ok => { if (ok) setEditing(null); })}>{t("Save comment")}</Button><Button disabled={busy} onClick={() => setEditing(null)}>{t("Cancel")}</Button></div></div> : <Markdown text={comment.body} {...md}/>}
@@ -78,7 +79,7 @@ export function IssueDetail({ store, detail }: { store: RepoStore; detail: Inbox
           <span className="issue-card-title">{t("Details")}</span>
           <div className="issue-facts">
             <span className="hosted-caption">{t("Assignees")}</span>
-            {item.assignees?.length ? <span className="issue-assignees">{item.assignees.map(name => <span key={name}><Avatar name={name} email={name} size={20}/><span className="ellipsis">@{name}</span></span>)}</span> : <span className="hosted-caption">{t("None")}</span>}
+            {item.assignees?.length ? <span className="issue-assignees">{item.assignees.map(name => <span key={name}><Avatar name={name} email={name} size={20} url={ownAvatarURL(store, name)}/><span className="ellipsis">@{name}</span></span>)}</span> : <span className="hosted-caption">{t("None")}</span>}
             <span className="hosted-caption">{t("Labels")}</span>
             {/* a label is neutral; its colour is a dot beside the name, never the only sign */}
             {item.labels?.length ? <span className="issue-labels">{item.labels.map(label => <StatusPill key={label.name} tone="neutral">{label.color && /^#?[0-9a-f]{6}$/i.test(label.color) && <i style={{ background: `#${label.color.replace("#", "")}` }}/>}{label.name}</StatusPill>)}</span> : <span className="hosted-caption">{t("None")}</span>}

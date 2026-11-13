@@ -22,9 +22,11 @@ struct CollaborationInboxItem: Identifiable {
     var state: String; var author: String; var unread = false; var readID: String?; var isRequest = false; var createdAt: String? = nil; var updatedAt: String? = nil
     /// What an issue's own list or detail response says about it; nil or empty when the server did not say
     var comments: Int? = nil; var assignees: [String] = []; var labels: [IssueLabel] = []
+    var authorAvatarURL: String? = nil
 }
 struct CollaborationInboxComment: Identifiable {
     var id: String; var author: String; var body: String; var createdAt: String? = nil; var editable = false
+    var authorAvatarURL: String? = nil
 }
 struct CollaborationInboxDetail {
     var item: CollaborationInboxItem; var comments: [CollaborationInboxComment]; var page = 1; var more = false
@@ -89,11 +91,11 @@ struct CollaborationInboxDetail {
             let head = obj(p, "head"), base = obj(p, "base")
             guard number(p, "number") > 0, !text(head, "sha").isEmpty else { throw fail(String(localized: "The server returned an unexpected response.")) }
             return PullRequest(number: number(p, "number"), title: text(p, "title"), author: text(obj(p, "user"), "login"), source: text(head, "ref"), target: text(base, "ref"), url: text(p, "html_url"), isDraft: bool(p, "draft"), updated: Hosting.date(p["updated_at"] as? String), body: text(p, "body"), headSHA: text(head, "sha"), fromFork: text(obj(head, "repo"), "full_name").lowercased() != c.target.path.lowercased(),
-                               comments: p["comments"] as? Int, reviewRequested: array(p, "requested_reviewers").contains { text($0, "login").caseInsensitiveCompare(c.me) == .orderedSame })
+                               comments: p["comments"] as? Int, reviewRequested: array(p, "requested_reviewers").contains { text($0, "login").caseInsensitiveCompare(c.me) == .orderedSame }, authorAvatarURL: obj(p, "user")["avatar_url"] as? String)
         }
         guard number(p, "iid") > 0 else { throw fail(String(localized: "The server returned an unexpected response.")) }
         return PullRequest(number: number(p, "iid"), title: text(p, "title"), author: text(obj(p, "author"), "username"), source: text(p, "source_branch"), target: text(p, "target_branch"), url: text(p, "web_url"), isDraft: bool(p, "draft") || bool(p, "work_in_progress"), updated: Hosting.date(p["updated_at"] as? String), body: text(p, "description"), headSHA: text(p, "sha"), fromFork: number(p, "source_project_id") != number(p, "target_project_id"),
-                           comments: p["user_notes_count"] as? Int, reviewRequested: array(p, "reviewers").contains { text($0, "username").caseInsensitiveCompare(c.me) == .orderedSame })
+                           comments: p["user_notes_count"] as? Int, reviewRequested: array(p, "reviewers").contains { text($0, "username").caseInsensitiveCompare(c.me) == .orderedSame }, authorAvatarURL: obj(p, "author")["avatar_url"] as? String)
     }
     /// One page of the request list. GitHub's list endpoint carries everything the list shows, so no request is read on its own;
     /// it has no author, reviewer or text filter, so those narrow each loaded page here (the search API is rate limited,
@@ -200,8 +202,12 @@ struct CollaborationInboxDetail {
         issueFacts(p, into: &item)
         return item
     }
-    /// Dates, comment count, assignees and labels, read from the issue's own response (GitHub and GitLab name them differently)
+    /// Facts from the issue's own response; notifications may initially have no author.
     static func issueFacts(_ p: Object, into item: inout CollaborationInboxItem) {
+        if let author = (p["user"] as? Object) ?? (p["author"] as? Object) {
+            item.author = (author["login"] as? String) ?? text(author, "username")
+            item.authorAvatarURL = author["avatar_url"] as? String
+        }
         if let created = p["created_at"] as? String { item.createdAt = created }
         if let updated = p["updated_at"] as? String { item.updatedAt = updated }
         if let count = (p["comments"] as? Int) ?? (p["user_notes_count"] as? Int) { item.comments = count }
@@ -217,7 +223,7 @@ struct CollaborationInboxDetail {
     static func inbox(_ c: ReviewAccess, kind: String, page: Int) async throws -> ([CollaborationInboxItem], Bool) {
         if kind == "review" {
             let (items, more, _) = try await requests(c, RequestQuery(scope: "reviewRequested", search: "", page: page))
-            return (items.map { CollaborationInboxItem(id: "review-\($0.number)", kind: "review", number: $0.number, title: $0.title, url: $0.url, body: $0.body, state: "open", author: $0.author, isRequest: true) }, more)
+            return (items.map { CollaborationInboxItem(id: "review-\($0.number)", kind: "review", number: $0.number, title: $0.title, url: $0.url, body: $0.body, state: "open", author: $0.author, isRequest: true, authorAvatarURL: $0.authorAvatarURL) }, more)
         }
         if kind == "issue" {
             let params = c.target.provider == .github ? ["state": "open", "assignee": c.me] : ["state": "opened", "assignee_username": c.me]
@@ -237,7 +243,7 @@ struct CollaborationInboxDetail {
         let values = try await list(c, c.apiBase + "/todos?state=pending&per_page=30&page=\(page)")
         let items = values.filter { text(obj($0, "project"), "path_with_namespace").lowercased() == c.target.path.lowercased() && ["Issue", "MergeRequest"].contains(text($0, "target_type")) && ["mentioned", "directly_addressed", "review_requested"].contains(text($0, "action_name")) }.map { v in
             let target = obj(v, "target"), id = String(number(v, "id"))
-            return CollaborationInboxItem(id: "mention-\(id)", kind: "mention", number: number(target, "iid"), title: text(target, "title"), url: text(v, "target_url"), body: text(v, "body"), state: text(v, "target_type"), author: text(obj(v, "author"), "username"), unread: true, readID: id, isRequest: text(v, "target_type") == "MergeRequest")
+            return CollaborationInboxItem(id: "mention-\(id)", kind: "mention", number: number(target, "iid"), title: text(target, "title"), url: text(v, "target_url"), body: text(v, "body"), state: text(v, "target_type"), author: text(obj(v, "author"), "username"), unread: true, readID: id, isRequest: text(v, "target_type") == "MergeRequest", authorAvatarURL: obj(v, "author")["avatar_url"] as? String)
         }
         return (items, values.count == 30)
     }
@@ -246,8 +252,8 @@ struct CollaborationInboxDetail {
         let detail = try await object(c, item.isRequest && c.target.provider == .github ? requestURL(c, item.number) : base)
         let values = try await list(c, base + "/\(c.target.provider == .github ? "comments" : "notes")?per_page=30&page=\(page)")
         var item = item; item.title = text(detail, "title"); item.body = (detail["body"] as? String) ?? text(detail, "description"); item.state = text(detail, "state"); item.createdAt = detail["created_at"] as? String; item.updatedAt = detail["updated_at"] as? String
-        if !item.isRequest { issueFacts(detail, into: &item) }
-        let comments = values.map { CollaborationInboxComment(id: String(number($0, "id")), author: c.target.provider == .github ? text(obj($0, "user"), "login") : text(obj($0, "author"), "username"), body: text($0, "body"), createdAt: $0["created_at"] as? String, editable: $0["system"] as? Bool != true && (c.target.provider == .github ? text(obj($0, "user"), "login") : text(obj($0, "author"), "username")).caseInsensitiveCompare(c.me) == .orderedSame) }
+        issueFacts(detail, into: &item)
+        let comments = values.map { CollaborationInboxComment(id: String(number($0, "id")), author: c.target.provider == .github ? text(obj($0, "user"), "login") : text(obj($0, "author"), "username"), body: text($0, "body"), createdAt: $0["created_at"] as? String, editable: $0["system"] as? Bool != true && (c.target.provider == .github ? text(obj($0, "user"), "login") : text(obj($0, "author"), "username")).caseInsensitiveCompare(c.me) == .orderedSame, authorAvatarURL: obj($0, c.target.provider == .github ? "user" : "author")["avatar_url"] as? String) }
         return CollaborationInboxDetail(item: item, comments: comments, page: page, more: values.count == 30)
     }
     static func inboxAction(_ c: ReviewAccess, item: CollaborationInboxItem, action: String, body: String) async throws {

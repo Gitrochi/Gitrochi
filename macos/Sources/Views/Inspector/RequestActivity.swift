@@ -92,7 +92,7 @@ struct RequestActivity: View {
 
     private func article(_ comment: ReviewComment) -> some View {
         HStack(alignment: .top, spacing: 10) {
-            Avatar(name: comment.author, email: comment.author, size: 24).accessibilityHidden(true)
+            RequestAuthorAvatar(author: comment.author, avatarURL: comment.authorAvatarURL, size: 24).accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 8) {
                     Text(verbatim: "@\(comment.author)").fontWeight(.semibold)

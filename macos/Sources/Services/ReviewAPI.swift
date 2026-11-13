@@ -60,6 +60,7 @@ struct ReviewComment: Identifiable, Hashable {
     var resolvable = false
     var resolved = false
     var kind: Kind = .comment
+    var authorAvatarURL: String? = nil
 }
 struct ReviewFile: Identifiable, Hashable {
     let path: String
@@ -97,7 +98,7 @@ struct ReviewSubmissionError: LocalizedError {
 
 /// GitHub atomically submits a review; GitLab publishes discussions sequentially and reconciles retries.
 enum ReviewAPI {
-    private struct GHUser: Decodable { let login: String }
+    private struct GHUser: Decodable { let login: String; let avatarUrl: String? }
     private struct GHComment: Decodable { let id: Int; let user: GHUser?; let body: String?; let createdAt: String? }
     private struct GHLineComment: Decodable {
         let id: Int; let user: GHUser?; let body: String?; let createdAt: String?
@@ -107,7 +108,7 @@ enum ReviewAPI {
     private struct GHFile: Decodable { let filename: String; let previousFilename: String?; let status: String; let additions: Int; let deletions: Int; let patch: String? }
     private struct GHRef: Decodable { let sha: String }
     private struct GHRefs: Decodable { let head: GHRef; let base: GHRef }
-    private struct GLAuthor: Decodable { let username: String }
+    private struct GLAuthor: Decodable { let username: String; let avatarUrl: String? }
     private struct GLPosition: Decodable { let newPath: String?; let newLine: Int?; let oldPath: String?; let oldLine: Int? }
     private struct GLNote: Decodable {
         let id: Int; let author: GLAuthor?; let body: String; let createdAt: String?; let system: Bool?
@@ -165,10 +166,10 @@ enum ReviewAPI {
             async let reviewsR = pages(GHReview.self, t, token: token, url: r + "/pulls/\(number)/reviews")
             async let filesR = pages(GHFile.self, t, token: token, url: r + "/pulls/\(number)/files", maxPages: 30)
             let (comments, lines, reviews, files) = try await (commentsR, linesR, reviewsR, filesR)
-            review.comments += comments.map { ReviewComment(id: "c\($0.id)", author: $0.user?.login ?? "", body: clean($0.body ?? ""), date: Hosting.date($0.createdAt)) }
+            review.comments += comments.map { ReviewComment(id: "c\($0.id)", author: $0.user?.login ?? "", body: clean($0.body ?? ""), date: Hosting.date($0.createdAt), authorAvatarURL: $0.user?.avatarUrl) }
             review.comments += lines.map { c in
                 ReviewComment(id: "l\(c.id)", author: c.user?.login ?? "", body: clean(c.body ?? ""), date: Hosting.date(c.createdAt), path: c.path, line: c.line ?? c.originalLine,
-                              side: c.side, threadID: String(c.inReplyToId ?? c.id), replyID: c.inReplyToId ?? c.id)
+                              side: c.side, threadID: String(c.inReplyToId ?? c.id), replyID: c.inReplyToId ?? c.id, authorAvatarURL: c.user?.avatarUrl)
             }
             do {
                 let threads = try await GitHubReviewThreads.load(t, token: token, apiBase: apiBase, number: number)
@@ -185,7 +186,7 @@ enum ReviewAPI {
                 let kind: ReviewComment.Kind = rv.state == "APPROVED" ? .approved : rv.state == "CHANGES_REQUESTED" ? .changesRequested : .comment
                 let body = clean(rv.body ?? "")
                 guard kind != .comment || !body.isEmpty else { continue }
-                review.comments.append(ReviewComment(id: "r\(rv.id)", author: who, body: body, date: Hosting.date(rv.submittedAt), kind: kind))
+                review.comments.append(ReviewComment(id: "r\(rv.id)", author: who, body: body, date: Hosting.date(rv.submittedAt), kind: kind, authorAvatarURL: rv.user?.avatarUrl))
             }
             review.state.approvedBy = latest.filter { $0.value == "APPROVED" }.map(\.key).sorted()
             review.state.changesRequestedBy = latest.filter { $0.value == "CHANGES_REQUESTED" }.map(\.key).sorted()
@@ -205,7 +206,7 @@ enum ReviewAPI {
                 ReviewComment(id: "n\(n.id)", author: n.author?.username ?? "", body: clean(n.body), date: Hosting.date(n.createdAt),
                               path: n.position?.newPath ?? n.position?.oldPath, line: n.position?.newLine ?? n.position?.oldLine,
                               side: n.position?.newLine != nil ? .right : .left, threadID: d.individualNote == true ? nil : d.id,
-                              resolvable: n.resolvable == true, resolved: n.resolved == true, kind: n.system == true ? .system : .comment)
+                              resolvable: n.resolvable == true, resolved: n.resolved == true, kind: n.system == true ? .system : .comment, authorAvatarURL: n.author?.avatarUrl)
             } }
             review.state.approvedBy = (approvals?.approvedBy ?? []).map(\.user.username)
             review.state.approvalsLeft = approvals?.approvalsLeft

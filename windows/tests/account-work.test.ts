@@ -262,4 +262,21 @@ describe("selected-account work without a local repository", () => {
     expect([todo.kind, todo.reason, todo.actor, todo.status, todo.body, todo.source, todo.target]).toEqual(["request", "mentioned", "Sam", "merged", "Notes", "feature/a", "main"]);
     expect(todo.updated).toBe(Date.parse("2026-11-03T12:00:00.000Z") / 1000);
   });
+  it("keeps the subject author's GitHub photo and the notification actor's GitLab photo", async () => {
+    const githubPhoto = "https://avatars.githubusercontent.com/u/42";
+    const http = vi.spyOn(ipc, "http").mockResolvedValue(response({
+      total_count: 1,
+      items: [{ id: 1, number: 7, title: "Review", user: { login: "author", avatar_url: githubPhoto }, html_url: "https://github.com/org/repo/pull/7", repository_url: "https://api.github.com/repos/org/repo", state: "open" }],
+    }));
+    expect((await accountWorkPage(access(), "review")).items[0]).toMatchObject({ author: "author", authorAvatarURL: githubPhoto, actor: "", actorAvatarURL: null });
+    http.mockResolvedValue(response([
+      { id: 2, action_name: "mentioned", author: { username: "actor", name: "Actor", avatar_url: "/uploads/actor.png" }, target_type: "Issue", target_url: "https://gitlab.example/group/repo/-/issues/7", target: { iid: 7, title: "Issue", author: { username: "issue-author", avatar_url: "/uploads/author.png" } }, project: { path_with_namespace: "group/repo" } },
+      { id: 3, action_name: "mentioned", author: { username: "other", avatar_url: "https://unconnected.example/photo.png" }, target_type: "Issue", target_url: "https://gitlab.example/group/repo/-/issues/8", target: { iid: 8, title: "Other issue" }, project: { path_with_namespace: "group/repo" } },
+    ]));
+    const items = (await accountWorkPage(access("gitlab"), "inbox")).items;
+    expect(items[0]).toMatchObject({ provider: "gitlab", author: "issue-author", authorAvatarURL: "https://gitlab.example/uploads/author.png", actor: "Actor", actorUsername: "actor", actorAvatarURL: "https://gitlab.example/uploads/actor.png" });
+    expect(items[1].actorAvatarURL).toBeNull();
+    expect(http).toHaveBeenCalledTimes(2);
+  });
+
 });

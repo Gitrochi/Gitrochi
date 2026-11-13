@@ -108,7 +108,7 @@ export function PullRequestDetailView({ store, number, page }: { store: RepoStor
         <Button className="pr-button-icon" aria-label={moreLabel} aria-haspopup="menu" tip={moreLabel} onClick={(event) => showMenuBelow(event.currentTarget, more)}><Ellipsis size={14} /></Button>
       </div>
       <div className="pr-head-meta">
-        <span className="pr-author"><span aria-hidden="true"><Avatar name={pr.author} email={pr.author} size={20} url={ownAvatarURL(store, pr.author)} /></span><strong>@{pr.author}</strong></span>
+        <span className="pr-author"><span aria-hidden="true"><Avatar name={pr.author} email={pr.author} size={20} url={ownAvatarURL(store, pr.author, pr.authorAvatarURL)} /></span><strong>@{pr.author}</strong></span>
         <span className="pr-chip selectable">{thisBranch && <span className="pr-dot" aria-hidden="true" />}{branchLabel(pr, store.headBranch)}</span>
         {added + deleted > 0 && <span className="pr-stat mono"><span className="a">+{added}</span> <span className="d">−{deleted}</span></span>}
       </div>

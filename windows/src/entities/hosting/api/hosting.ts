@@ -107,6 +107,16 @@ export async function sendRaw(p: Provider, url: string, token: string, method = 
 export const projectID = (path: string) => encodeURIComponent(path);
 export const date = (s?: string | null) => (s ? Date.parse(s) / 1000 : null);
 
+/** Profile photos use the connected host or known avatar CDNs without credentials. */
+export function avatarURL(c: { target: Pick<RepoTarget, "provider" | "host">; apiBase: string }, value: unknown): string | null {
+  if (typeof value !== "string" || !value.trim()) return null;
+  try {
+    const avatar = value.startsWith("/") && !value.startsWith("//") ? new URL(value, c.apiBase) : new URL(value);
+    const allowed = new Set([c.target.host.toLowerCase(), "gravatar.com", "www.gravatar.com", "secure.gravatar.com", ...(c.target.provider === "github" ? ["avatars.githubusercontent.com", "github.com"] : [])]);
+    return avatar.protocol === "https:" && !avatar.username && !avatar.password && allowed.has(avatar.hostname.toLowerCase()) ? avatar.href : null;
+  } catch { return null; }
+}
+
 interface GHUser { login: string; name?: string | null; avatar_url?: string | null }
 interface GHRef { ref: string; sha: string; repo?: { full_name: string } | null }
 interface GHPull { number: number; title: string; html_url: string; draft?: boolean; updated_at?: string; body?: string | null; user: GHUser; head: GHRef; base: GHRef }
@@ -119,10 +129,11 @@ interface GLMergeRequest {
 }
 interface GLProject { path_with_namespace: string; http_url_to_repo: string; visibility?: string; description?: string | null; default_branch?: string }
 
-const fromPull = (p: GHPull, repoPath: string): PullRequest => ({
+const fromPull = (p: GHPull, target: RepoTarget, apiBase: string): PullRequest => ({
   number: p.number,
   title: p.title,
   author: p.user.login,
+  authorAvatarURL: avatarURL({ target, apiBase }, p.user.avatar_url),
   source: p.head.ref,
   target: p.base.ref,
   url: p.html_url,
@@ -130,13 +141,14 @@ const fromPull = (p: GHPull, repoPath: string): PullRequest => ({
   updated: date(p.updated_at),
   body: p.body ?? "",
   headSHA: p.head.sha,
-  fromFork: p.head.repo ? p.head.repo.full_name.toLowerCase() !== repoPath.toLowerCase() : true,
+  fromFork: p.head.repo ? p.head.repo.full_name.toLowerCase() !== target.path.toLowerCase() : true,
 });
 
-const fromMerge = (m: GLMergeRequest): PullRequest => ({
+const fromMerge = (m: GLMergeRequest, target: RepoTarget, apiBase: string): PullRequest => ({
   number: m.iid,
   title: m.title,
   author: m.author.username,
+  authorAvatarURL: avatarURL({ target, apiBase }, m.author.avatar_url),
   source: m.source_branch,
   target: m.target_branch,
   url: m.web_url,
@@ -177,7 +189,7 @@ export async function createPullRequest(
     const p = await send<GHPull>("github", `${apiBase}/repos/${target.path}/pulls`, token, "POST", {
       title: a.title, body: a.body, head: a.source, base: a.target, draft: a.draft,
     });
-    return fromPull(p, target.path);
+    return fromPull(p, target, apiBase);
   }
   const m = await send<GLMergeRequest>("gitlab", `${apiBase}/projects/${projectID(target.path)}/merge_requests`, token, "POST", {
     title: a.draft ? "Draft: " + a.title : a.title,
@@ -185,7 +197,7 @@ export async function createPullRequest(
     source_branch: a.source,
     target_branch: a.target,
   });
-  return fromMerge(m);
+  return fromMerge(m, target, apiBase);
 }
 
 /** 계정이 접근할 수 있는 저장소(최근 활동 순) */

@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { AtSign, Bell, PencilLine, TriangleAlert } from "lucide-react";
 import { CircleDot, CirclePlay, CircleX, GitMerge, ListChecks } from "@/shared/icons";
 import { ArrowUpDown, Check, ExternalLink, Eye, GitPullRequest, Inbox, Search, User } from "@/shared/icons";
+import { gitAccountAvatarURL } from "@/entities/gitch";
 import { accountHost, type HostAccount } from "@/entities/git";
 import { accounts, workStateTitle, type AccountWorkItem, type AccountWorkKind } from "@/entities/hosting";
 import { ipc } from "@/shared/api";
@@ -150,6 +151,8 @@ export function AccountWorkPanel({ model, account, target, onOpen, openSettings 
     }
   };
   const who = selected ? selected.actor || selected.author : "";
+  const whoAvatar = selected ? (selected.actor ? selected.actorAvatarURL : selected.authorAvatarURL)
+    ?? ((selected.provider ?? account?.provider) === "github" ? gitAccountAvatarURL(selected.host, selected.actor ? selected.actorUsername ?? "" : selected.author) : null) : null;
 
   return (
     <div className="account-work">
@@ -195,7 +198,7 @@ export function AccountWorkPanel({ model, account, target, onOpen, openSettings 
             </div>
             <h2 className="selectable">{selected.title}</h2>
             <div className="account-detail-meta">
-              {who && <span className="account-detail-who"><Avatar name={who} email={selected.author || who} size={20} /><strong>{selected.actor ? who : `@${who}`}</strong></span>}
+              {who && <span className="account-detail-who"><Avatar name={who} email={selected.author || who} size={20} url={whoAvatar} /><strong>{selected.actor ? who : `@${who}`}</strong></span>}
               {model.inbox && <span>{inboxReasonLabel(inboxReason(selected))}</span>}
             {/* the row shows the repository's name only; here is where it lives */}
               <span className="selectable">{selected.host}/{selected.repository}</span>

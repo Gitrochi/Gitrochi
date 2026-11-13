@@ -2,7 +2,7 @@ import { ipc } from "@/shared/api";
 import type { RemoteRepo } from "@/entities/git";
 import { t } from "@/shared/i18n";
 import { collaborationRepoURL, issueFacts, type InboxItem, type IssueFactsRecord } from "./collaboration";
-import { send, sendRaw, date } from "./hosting";
+import { send, sendRaw, date, avatarURL } from "./hosting";
 import type { ReviewAccess } from "./review";
 
 /** `assigned` is open and assigned to this account */
@@ -25,11 +25,11 @@ interface IssueRecord extends IssueFactsRecord {
   web_url?: string;
   state: string;
   updated_at?: string;
-  user?: { login?: string };
-  author?: { username?: string };
+  user?: { login?: string; avatar_url?: string | null };
+  author?: { username?: string; avatar_url?: string | null };
   pull_request?: unknown;
 }
-export const workspaceIssue = (i: IssueRecord): InboxItem => ({
+export const workspaceIssue = (i: IssueRecord, c?: ReviewAccess): InboxItem => ({
   id: `issue-${i.number ?? i.iid}`,
   kind: "issue",
   number: i.number ?? i.iid ?? 0,
@@ -39,6 +39,7 @@ export const workspaceIssue = (i: IssueRecord): InboxItem => ({
   state: i.state,
   updated: date(i.updated_at),
   author: i.user?.login ?? i.author?.username ?? "",
+  authorAvatarURL: c ? avatarURL(c, i.user?.avatar_url ?? i.author?.avatar_url) : null,
   unread: false,
   ...issueFacts(i),
 });
@@ -62,7 +63,7 @@ export async function issuePage(
       c.token,
     );
     return {
-      items: result.items.map(workspaceIssue),
+      items: result.items.map(i => workspaceIssue(i, c)),
       more: n * 30 < Math.min(result.total_count, 1000),
     };
   }
@@ -83,7 +84,7 @@ export async function issuePage(
     c.token,
   );
   return {
-    items: items.filter((i) => !i.pull_request).map(workspaceIssue),
+    items: items.filter((i) => !i.pull_request).map(i => workspaceIssue(i, c)),
     more: items.length === 30,
   };
 }
@@ -108,7 +109,7 @@ export async function saveWorkspaceIssue(
     number ? (c.target.provider === "github" ? "PATCH" : "PUT") : "POST",
     payload,
   );
-  return workspaceIssue(JSON.parse(result));
+  return workspaceIssue(JSON.parse(result), c);
 }
 export async function searchWorkspaceRepositories(
   c: ReviewAccess,
