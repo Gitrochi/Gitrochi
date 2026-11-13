@@ -20725,8 +20725,13 @@ completion_repositories() {
     i=$((i + 1))
   done
 }
-completion_commands() {
-  printf '%s\n' preflight ck c p cp pl up l d b undo amend continue abort rescue o app pr ci flow test publish status use unlock ignore protect clone fork sync fix scan audit prune wt workspace work issue git overlap move module report g graph list add remove org config setup login auto sign ai ssh install uninstall migrate export import doctor version logo self-update completion schema help
+completion_commands() {   # the names in the help table, so a new command is completed without a second list (g: the short graph)
+  local name
+  for name in $HELP_COMMANDS; do
+    help_topic "$name"
+    [ "$H_GROUP" = internal ] || printf '%s\n' "$name"
+  done
+  printf '%s\n' g
 }
 completion_candidates() {   # _complete -- 이후: 실행 파일 이름을 뺀 낱말들(마지막은 입력 중인 낱말)
   local empty_current=""
@@ -20772,6 +20777,7 @@ completion_candidates() {   # _complete -- 이후: 실행 파일 이름을 뺀 �
         preflight|pf) printf '%s\n' --json --no-fetch ;;
         c|commit|cp) printf '%s\n' -a -m -F --trailer ;;
         amend) printf '%s\n' -m ;;
+        help) printf '%s\n' --all ;;
         p|push) printf '%s\n' --force --dry-run --tags --yes ;;
         rescue) printf '%s\n' --branch --restore --yes ;;
         prune) printf '%s\n' --gone --yes ;;
@@ -20829,6 +20835,12 @@ completion_candidates() {   # _complete -- 이후: 실행 파일 이름을 뺀 �
           fi ;;
         test) e=$(flow_engine) && "$e" _names suites 2>/dev/null ;;
         ci) [ "$n" -ne 2 ] || printf '%s\n' status logs report browse ;;
+        help)   # topics, then the subcommands that have help of their own
+          if [ "$n" -eq 2 ]; then completion_commands
+          elif [ "$n" -eq 3 ] && help_resolve "${words[1]:-}"; then
+            help_topic "$HELP_NAME"
+            for candidate in $H_SUBS; do printf '%s\n' "$candidate"; done
+          fi ;;
         schema) printf '%s\n' public graph error languages status ck preflight rules version list doctor scan audit report pr view watch index account login review overlap move module logo workspace work hosting worktrees ;;
         logo) printf '%s\n' on off status ;;
         login) [ "$n" -ne 2 ] || printf '%s\n' github ;;

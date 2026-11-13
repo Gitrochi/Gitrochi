@@ -163,10 +163,13 @@ help_state() {   # everything a command could change: commits, refs, index, work
   cat "$FAKE_REMOTES/.log" "$FAKE_GH/log" "$FAKE_WEB/log" 2>/dev/null   # ssh, gh and curl calls: help uses no network
   ls "$T/opened" 2>/dev/null
 }
-assert_help_only() {   # $@ a gitch command line with a help flag: exit 0, a usage text, nothing changed
+assert_help_printed() {   # $@ a gitch command line with a help flag: exit 0 and a usage text
   run gitch "$@" < /dev/null
   [ "$RC" -eq 0 ] || fail "gitch $* exited $RC\n$OUT"
   case "$OUT" in *'사용법'*|*'Usage'*|*'gitch '*) ;; *) fail "gitch $* printed no usage\n$OUT" ;; esac
+}
+assert_help_only() {   # the same, and nothing changed
+  assert_help_printed "$@"
   [ "$(help_state)" = "$HELP_BEFORE" ] || fail "gitch $* changed something:\n$(diff <(printf '%s\n' "$HELP_BEFORE") <(help_state))"
 }
 
@@ -177,8 +180,8 @@ test_help_flag_on_every_command_runs_nothing() {
   help_fixture
   HELP_BEFORE=$(help_state)
   for name in $names; do
-    assert_help_only "$name" --help
-    assert_help_only "$name" -h
+    assert_help_printed "$name" --help
+    assert_help_only "$name" -h   # one comparison for both spellings keeps the loop short
   done
   assert_eq "$(git log -1 --format=%s)" 'Local work'
   assert_eq "$(git config --get-all gitswitch.protect)" release
@@ -381,4 +384,17 @@ test_help_completion_options_of_confirming_commands() {
   run gitch _complete -- amend --h; assert_ok; assert_eq "$OUT" --help
   run gitch _complete -- st --he; assert_ok; assert_eq "$OUT" --help
   run gitch _complete -- _hook --; assert_ok; assert_eq "$OUT" ''
+}
+
+test_help_completion_names_and_topics_come_from_the_table() {
+  local expected
+  expected=$({ help_table_names | grep -vx guard; echo g; } | LC_ALL=C sort -u)
+  run gitch _complete -- ''; assert_ok; assert_eq "$OUT" "$expected" 'command names'
+  run gitch _complete --empty-current --; assert_ok; assert_eq "$OUT" "$expected" 'command names for an empty word'
+  run gitch _complete -- help ''; assert_ok; assert_eq "$OUT" "$expected" 'help topics'
+  run gitch _complete -- help pre; assert_ok; assert_eq "$OUT" preflight
+  run gitch _complete -- help --a; assert_ok; assert_eq "$OUT" --all
+  run gitch _complete -- help graph ''; assert_ok; assert_out diff; assert_out check; assert_out review
+  run gitch _complete -- help g d; assert_ok; assert_eq "$OUT" diff
+  run gitch _complete -- help push ''; assert_ok; assert_eq "$OUT" ''
 }
