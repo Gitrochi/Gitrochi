@@ -74,6 +74,7 @@ export const ListOrdered = designIcon("rebase");
 export const LockKeyhole = designIcon("lock");
 export const Mic = designIcon("mic");
 export const Settings = designIcon("settings");
+export const ShieldLock = designIcon("shieldLock");
 export const SquareCheck = designIcon("squareCheck");
 export const SquarePen = designIcon("edit");
 export const Undo2 = designIcon("undo");

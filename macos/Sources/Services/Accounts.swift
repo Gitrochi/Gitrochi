@@ -244,6 +244,21 @@ final class AccountStore {
         return out
     }
 
+    /// The account the user chose for this repository, or nil while the host's first account is used
+    func preferredID(for repoPath: String?) -> String? {
+        repoPath.flatMap { preferred[$0] }
+    }
+
+    /// What the account needs from the user: the system's approval while the Keychain asks, a new sign-in once the
+    /// saved token is gone or rejected. A read in flight is nothing to act on. (Windows: AccountStore.status)
+    func status(for account: HostAccount) -> AccountStatus {
+        switch credentialState(for: account) {
+        case .ready, .loading: .signedIn
+        case .authorizationRequired: .needsYourApproval
+        case .unavailable: .expired
+        }
+    }
+
     func setPreferred(_ a: HostAccount, for repoPath: String) {
         preferred[repoPath] = a.id
         UserDefaults.standard.set(preferred, forKey: "preferredAccounts")
