@@ -89,6 +89,7 @@ describe("flow graph and step text", () => {
     expect(flowStepSummary({ id: "install", title: "Install dependencies" })).toBe("Install dependencies");
     expect(flowStepSummary({ id: "install", title: "install" })).toBeNull();
     expect(flowStepSummary({ id: "install", title: "Command" })).toBeNull();
+    expect(flowStepSummary({ id: "install", title: "명령" })).toBeNull();
     expect(flowStepSummary({ id: "install" })).toBeNull();
   });
 

@@ -89,10 +89,16 @@ export function flowSkipCause(step: FlowStepView, steps: readonly FlowStepView[]
   return step.needs.find((id) => { const state = byID.get(id)?.state; return !!state && !passedStates.has(state); }) ?? null;
 }
 
+/**
+ * What the engine calls a step that has no description: its block's name, in the language the engine was asked for
+ * (tools/gitch-flow/src/blocks/cmd.rs). Those are not the step's own words.
+ */
+const engineStepTitles = new Set(["Command", "명령"]);
+
 /** A step's own words, when the flow file gives it any beyond its name */
 export function flowStepSummary(step: { id: string; title?: string | null }): string | null {
   const title = step.title?.trim();
-  return title && title !== step.id && title !== "Command" ? title : null;
+  return title && title !== step.id && !engineStepTitles.has(title) ? title : null;
 }
 
 /** The first line a person would recognise from the step's script */
