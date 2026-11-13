@@ -16,7 +16,6 @@ tauri-build = { version = "2", features = [] }
 [dependencies]
 tauri = { version = "2", features = [] }
 tauri-plugin-dialog = "2"
-tauri-plugin-notification = "2"
 tauri-plugin-opener = "2"
 tauri-plugin-single-instance = "2"
 tauri-plugin-updater = "2"
@@ -34,8 +33,6 @@ tokio = { version = "1", features = ["sync"] }
 sysinfo = { version = "0.39", default-features = false, features = ["system"] }
 # repository index shared with the macOS app and the CLIs: SQLite and the C++ tokenizer
 gitrochi-index = { path = "../../crates/gitrochi-index" }
-# session ledger shared with the macOS app, the gitrochi-ledger CLI and its MCP server
-gitrochi-ledger = { path = "../../crates/gitrochi-ledger" }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2 = "0.6"

@@ -5,7 +5,6 @@ mod agents;
 mod editors;
 pub mod helper;
 mod launch;
-mod ledger;
 mod local_projects;
 mod net;
 mod process;
@@ -30,13 +29,11 @@ pub fn run() {
             }
         }))
         .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(update::PendingUpdate::default())
         .setup(|app| {
             launch::receive(app.handle(), std::env::args().collect());
-            ledger::open_on_notification_click(app.handle());
             // 배포본에서는 웹뷰의 브라우저 단축키(F5 새로 고침, Ctrl+F 찾기, Ctrl+P 인쇄 등)를 끈다 — 앱 단축키와 겹치지 않게
             #[cfg(all(windows, not(debug_assertions)))]
             if let Some(w) = app.get_webview_window("main") {
@@ -84,8 +81,6 @@ pub fn run() {
             watch::watch_stop,
             net::http_request,
             net::team_hub_read,
-            net::team_hub_publish,
-            net::team_hub_withdraw,
             net::ci_job_log,
             net::http_image,
             net::resolve_host,
@@ -113,10 +108,6 @@ pub fn run() {
             local_projects::local_projects_read,
             local_projects::local_projects_write,
             repo_index::index_call,
-            ledger::ledger_call,
-            ledger::ledger_pick_database,
-            ledger::ledger_notify,
-            ledger::ledger_badge,
             update::update_check,
             update::update_install,
             update::update_verify,
