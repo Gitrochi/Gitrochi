@@ -93,9 +93,13 @@ struct HostedListHeader<Actions: View>: View {
 }
 
 /// The summary card every hosted page starts with: what it is about on the left, its picture in the middle and the one
-/// next step on the right. In a narrow window it is a 44 pt strip with the same words on one line.
+/// next step on the right. In a narrow window it is a 44 pt strip with the same words on one line. A page draws it
+/// from its first frame, in a loading or an empty state when it has nothing else to say: its height never changes, so
+/// nothing below it moves when the data arrives.
 struct HostedListSummary<Lead: View, Middle: View, Trail: View, Strip: View>: View {
     let compact: Bool
+    /// The lead takes the middle's room too: an empty state that is one caption, one line and one caption
+    var spread = false
     @ViewBuilder let lead: Lead
     @ViewBuilder let middle: Middle
     @ViewBuilder let trail: Trail
@@ -111,8 +115,12 @@ struct HostedListSummary<Lead: View, Middle: View, Trail: View, Strip: View>: Vi
                     .padding(.horizontal, 12).padding(.bottom, 10)
             } else {
                 HStack(spacing: 32) {
-                    VStack(alignment: .leading, spacing: 2) { lead }.frame(width: 220, alignment: .leading)
-                    middle.frame(maxWidth: .infinity)
+                    if spread {
+                        VStack(alignment: .leading, spacing: 4) { lead }.frame(maxWidth: .infinity, alignment: .leading)
+                    } else {
+                        VStack(alignment: .leading, spacing: 2) { lead }.frame(width: 220, alignment: .leading)
+                        middle.frame(maxWidth: .infinity)
+                    }
                     VStack(alignment: .trailing, spacing: 6) { trail }.frame(width: 200, alignment: .trailing)
                 }
                 .padding(.horizontal, 20)
@@ -130,6 +138,62 @@ struct HostedListSummaryCaption: View {
     let text: String
     var body: some View {
         Text(verbatim: text).font(.system(size: 12)).foregroundStyle(HostedList.caption).lineLimit(1)
+    }
+}
+
+/// The summary's headline: one 15 pt line
+struct HostedListSummaryTitle: View {
+    let text: String
+    var body: some View {
+        Text(verbatim: text).font(.system(size: 15, weight: .semibold)).lineLimit(1)
+    }
+}
+
+/// "Loading runs…" under the summary's name, or first on its strip, while its data is read
+struct HostedListSummaryLoadingLine: View {
+    let caption: String
+    var body: some View {
+        HStack(spacing: 6) {
+            ProgressView().controlSize(.mini)
+            HostedListSummaryCaption(text: caption)
+        }
+    }
+}
+
+/// The summary's middle while its data is read: five grey bars where the picture will be
+struct HostedListSummaryBars: View {
+    var body: some View {
+        HStack(spacing: 16) {
+            ForEach(0..<5, id: \.self) { _ in HostedListSummaryBar(width: 64) }
+        }
+        .padding(.horizontal, 8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityHidden(true)
+    }
+}
+
+/// One grey bar of a summary that is loading; the trail's is 120 pt wide
+struct HostedListSummaryBar: View {
+    var width: CGFloat = 120
+    var body: some View {
+        RoundedRectangle(cornerRadius: 4).fill(StudioStyle.Tone.neutral.fill).frame(minWidth: 0, maxWidth: width).frame(height: 10)
+            .accessibilityHidden(true)
+    }
+}
+
+/// The summary's middle with nothing to draw: one 15 pt line and the caption that explains it
+struct HostedListSummaryMessage: View {
+    let title: String
+    var caption: String? = nil
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            // the middle is narrow in a window just past the strip's width, so each may wrap once
+            Text(verbatim: title).font(.system(size: 15, weight: .semibold)).lineLimit(2)
+            if let caption { Text(verbatim: caption).font(.system(size: 12)).foregroundStyle(HostedList.caption).lineLimit(2) }
+        }
+        .multilineTextAlignment(.leading)
+        .fixedSize(horizontal: false, vertical: true)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

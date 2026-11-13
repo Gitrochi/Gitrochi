@@ -22,8 +22,21 @@
 .hosted-summary-trail { flex: 0 0 200px; width: 200px; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; text-align: right; }
 .hosted-summary-key { font-size: 12px; line-height: 16px; color: var(--text-2); }
 .hosted-summary-value { display: block; font-size: 15px; line-height: 20px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* an empty state without a picture: the words take the middle's room too */
+.hosted-summary.spread .hosted-summary-lead { flex: 1 1 auto; width: auto; gap: 4px; }
+.hosted-summary.spread .hosted-summary-middle { display: none; }
+/* while the data is read: grey bars where the picture and the next step will be */
+.hosted-summary-loading { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.hosted-summary-loading > .spinner { flex: none; }
+.hosted-summary-bars { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 16px; padding: 0 8px; }
+.hosted-summary-bar { display: block; flex: 0 1 64px; min-width: 0; height: 10px; border-radius: 4px; background: var(--bar); }
+.hosted-summary-trail > .hosted-summary-bar { flex: none; width: 120px; }
+/* the middle is narrow in a window just past the strip's width, so each line may wrap once */
+.hosted-summary-message { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
+.hosted-summary-message > * { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; white-space: normal; overflow-wrap: anywhere; }
 .hosted-strip { display: none; flex: none; margin: 0 12px 10px; border: 1px solid var(--border); border-radius: 10px; height: 44px; box-sizing: border-box; padding: 0 10px 0 16px; align-items: center; gap: 10px; min-width: 0; }
 .hosted-strip > svg { flex: none; color: var(--text-2); }
+.hosted-strip > .spinner { flex: none; }
 .hosted-strip-text { flex: 0 1 auto; min-width: 0; font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .hosted-columns { flex: 1 1 auto; min-height: 0; display: flex; border-top: 1px solid var(--border); }
