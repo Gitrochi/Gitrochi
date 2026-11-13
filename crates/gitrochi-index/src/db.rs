@@ -23,7 +23,7 @@ pub fn now() -> i64 {
         .unwrap_or(0)
 }
 
-// Like the ledger, wait through WAL's non-blocking read-to-write lock upgrade.
+// Wait through WAL's non-blocking read-to-write lock upgrade.
 fn enable_wal(connection: &Connection, path: &Path, patience: Duration) -> Result<()> {
     let deadline = Instant::now() + patience;
     let is_busy = |error: &rusqlite::Error| {
