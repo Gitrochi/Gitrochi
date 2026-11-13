@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Renders the production account button, its popover, the Add account sheet and Settings › Accounts off screen, with
 # isolated defaults, fake credential reads and no network, and measures them: the badge only for the repository's own
-# account, rows that wrap instead of squeezing, and each state's own icon.
+# account, rows that wrap instead of squeezing, each state's own icon, an unreadable saved sign-in that is not called
+# expired, and a failed approval shown next to the account it concerns.
 #   macos/Tools/test-account-layout.sh [output folder for the screenshots]
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -54,11 +55,13 @@ for source in (root / 'Sources').rglob('*.swift'):
     elif relative == 'Views/Shared/AccountPopover.swift':
         text = probe(text, '.frame(minHeight: size > 24 ? 52 : 44)', '"row:" + account.id', 'Account row')
         text = replace_once(text, '''            .frame(maxWidth: .infinity, alignment: .leading)
-            if ownAction, let action = status.action {''', '''            .frame(maxWidth: .infinity, alignment: .leading).background(AccountLayoutProbe(identifier: "words:" + account.id))
-            if ownAction, let action = status.action {''', 'Account row words')
+            if ownAction, busy {''', '''            .frame(maxWidth: .infinity, alignment: .leading).background(AccountLayoutProbe(identifier: "words:" + account.id))
+            if ownAction, busy {''', 'Account row words')
         text = probe(text, 'Button(action) { resolve(account, status) }.buttonStyle(HostedListButtonStyle()).fixedSize()', '"action:" + account.id', 'Account row action')
         text = probe(text, '.accessibilityIdentifier("account-popover-change")', '"change"', 'Change menu')
         text = probe(text, '.accessibilityIdentifier("account-popover-identity")', '"identity"', 'Identity row')
+        text = probe(text, '.accessibilityIdentifier("account-popover-refresh")', '"refresh"', 'Refresh account status')
+        text = probe(text, 'title: String(localized: "Couldn\'t use the saved sign-in"), caption: failure)', '"failure:" + account.id', 'Account row failure')
         text = probe(text, '.frame(width: Self.width, alignment: .leading)', '"popover"', 'Popover width')
     elif relative == 'Views/Shared/AccountQuickControls.swift':
         text = probe(text, '.offset(x: 3, y: 3)', '"badge"', 'Warning badge')
@@ -74,6 +77,7 @@ for source in (root / 'Sources').rglob('*.swift'):
         assert text.count('await Gitch.accounts()') == 2, 'Identity loading changed'
         text = text.replace('await Gitch.accounts()', 'accountFixtureIdentities')
         text = probe(text, 'AccountStatusPill(status: status)', '"settings-status:" + account.id', 'Settings status')
+        text = probe(text, 'title: String(localized: "Couldn\'t use the saved sign-in"), caption: failure)', '"failure:" + account.id', 'Settings row failure')
         text = probe(text, '.accessibilityLabel("More actions for \\("@" + account.username)")', '"settings-more:" + account.id', 'Settings more menu')
         text = probe(text, '.accessibilityIdentifier(identifier)', 'identifier', 'Settings header action')
     dest = target / 'Sources' / relative
@@ -104,7 +108,7 @@ xcrun swiftc -parse-as-library -swift-version 5 -whole-module-optimization -Onon
     -I "$ST" -I "$ROOT/../crates/gitrochi-core/include" -L "$ST" -lSwiftTerm \
     "${SOURCES[@]}" "$TASK_TMP/AccountLayout.swift" "$TASK_TMP/core.a" \
     -o "$TASK_APP/Contents/MacOS/AccountLayout"
-for TASK_SCENARIO in repository attention expired locked no-repository no-account settings add-account add-gitlab; do
+for TASK_SCENARIO in repository attention unreadable failed locked no-repository no-account settings add-account add-gitlab; do
     for TASK_APPEARANCE in light dark; do
         "$TASK_APP/Contents/MacOS/AccountLayout" "$TASK_OUTPUT" "$TASK_SCENARIO" "$TASK_APPEARANCE"
     done

@@ -6,33 +6,48 @@ import { t } from "@/shared/i18n";
 
 /**
  * What a hosting account needs from the user. `needsApproval`: the organization asks to approve access again in the
- * browser. `needsYourApproval`: the system must allow the saved sign-in. `expired`: the token expired or was revoked.
+ * browser. `needsYourApproval`: the system must allow the saved sign-in. `expired`: the server rejected the saved
+ * token. `unreadable`: the saved sign-in can't be read, and reading it again may be all it takes. `checking`: the
+ * first read is under way and nothing is known yet.
  */
-export type AccountStatus = "signedIn" | "needsApproval" | "needsYourApproval" | "expired";
+export type AccountStatus = "signedIn" | "needsApproval" | "needsYourApproval" | "expired" | "unreadable" | "checking";
 
-/** Which drawing a state uses: the states that need the user never share one */
-export type AccountStatusIcon = "check" | "shield" | "key" | "warning";
+/** Which drawing a state uses: the states that need the user never share one with the lock */
+export type AccountStatusIcon = "check" | "shield" | "key" | "warning" | "clock";
 
 export const accountStatusIcon = (status: AccountStatus): AccountStatusIcon =>
-  status === "needsApproval" ? "shield" : status === "needsYourApproval" ? "key" : status === "expired" ? "warning" : "check";
+  status === "needsApproval" ? "shield" : status === "needsYourApproval" || status === "unreadable" ? "key" : status === "expired" ? "warning" : status === "checking" ? "clock" : "check";
 
 export const accountStatusTitle = (status: AccountStatus) =>
-  status === "needsApproval" ? t("Needs approval") : status === "needsYourApproval" ? t("Needs your approval") : status === "expired" ? t("Sign-in expired") : t("Signed in");
+  status === "needsApproval" ? t("Needs approval") : status === "needsYourApproval" ? t("Needs your approval") : status === "expired" ? t("Sign-in expired")
+    : status === "unreadable" ? t("Saved sign-in can't be read") : status === "checking" ? t("Checking saved account access…") : t("Signed in");
 
 /** The one action that settles a state, or null when there is nothing to do */
 export const accountStatusAction = (status: AccountStatus) =>
-  status === "needsApproval" ? t("Renew…") : status === "needsYourApproval" ? t("Approve…") : status === "expired" ? t("Sign in again…") : null;
+  status === "needsApproval" ? t("Renew…") : status === "needsYourApproval" ? t("Approve…") : status === "expired" ? t("Sign in again…") : status === "unreadable" ? t("Retry") : null;
 
 /** What the state means, for the notice above this repository's account; null where the title says it all */
 export const accountStatusCaption = (status: AccountStatus) =>
-  status === "needsApproval" ? t("The organization asks to approve access again in the browser.") : status === "expired" ? t("The token expired or was revoked.") : null;
+  status === "needsApproval" ? t("The organization asks to approve access again in the browser.") : status === "expired" ? t("The token expired or was revoked.")
+    : status === "unreadable" ? t("Saved credentials are unavailable. Retry access or reconnect this account in Settings.") : null;
+
+/** Where a read of the saved sign-in stands (macOS: CredentialCache.State) */
+export type CredentialState = "ready" | "loading" | "authorizationRequired" | "unavailable";
+
+/**
+ * What a saved credential's read says about the account. An unreadable credential is not an expired sign-in: only a
+ * token the server rejected is. While a read or an approval is under way the account keeps the state it had, so a row
+ * never claims "Signed in" and the badge never clears before the answer is known.
+ */
+export const accountStatusFor = (credential: CredentialState, rejected: boolean, previous: AccountStatus | null): AccountStatus =>
+  credential === "ready" ? "signedIn" : credential === "loading" ? previous ?? "checking" : credential === "authorizationRequired" ? "needsYourApproval" : rejected ? "expired" : "unreadable";
 
 /**
  * The toolbar's warning badge: only when the open repository's own account needs attention. Another account that
  * needs something is flagged inside the popover, and a window without a repository account has no badge.
  */
 export const toolbarAccountBadge = (repositoryAccountStatus: AccountStatus | null) =>
-  repositoryAccountStatus !== null && repositoryAccountStatus !== "signedIn";
+  repositoryAccountStatus !== null && repositoryAccountStatus !== "signedIn" && repositoryAccountStatus !== "checking";
 
 /** Why a repository uses its account */
 export type AccountReason =

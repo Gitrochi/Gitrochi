@@ -5,7 +5,7 @@ import SwiftUI
 // (Windows: features/account-connection/ui/AccountStatusLabel.tsx)
 
 private extension AccountStatus {
-    var tone: StudioStyle.Tone { self == .signedIn ? .passed : .waiting }
+    var tone: StudioStyle.Tone { self == .signedIn ? .passed : self == .checking ? .neutral : .waiting }
 }
 
 /// A row's second line: the state's 12 pt icon and its words in the state's tone

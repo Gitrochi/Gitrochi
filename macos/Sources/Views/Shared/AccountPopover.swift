@@ -13,6 +13,8 @@ struct AccountPopoverRepository {
     /// The repository's Git identity follows gitch's rules
     var managed = false
     var locked = false
+    /// The Git account and its rules are being read again
+    var refreshing = false
 }
 
 /// What the popover asks its owner to do; the owner closes the popover and opens the sheet or page
@@ -20,6 +22,8 @@ struct AccountPopoverActions {
     var choose: (HostAccount) -> Void = { _ in }
     /// Settle an account's state: renew it, approve it or sign in again
     var resolve: (HostAccount, AccountStatus) -> Void = { _, _ in }
+    /// Read the repository's Git account and rules again
+    var refreshIdentity: () -> Void = {}
     var inbox: () -> Void = {}
     var addAccount: () -> Void = {}
     var manageAccounts: () -> Void = {}
@@ -33,6 +37,10 @@ struct AccountPopover: View {
     let repository: AccountPopoverRepository?
     let accounts: [HostAccount]
     let status: (HostAccount) -> AccountStatus
+    /// A read of the saved sign-in, or its approval, is under way
+    var busy: (HostAccount) -> Bool = { _ in false }
+    /// Why the last attempt to restore the saved sign-in failed
+    var failure: (HostAccount) -> String? = { _ in nil }
     let actions: AccountPopoverActions
 
     static let width: CGFloat = 360
@@ -62,7 +70,7 @@ struct AccountPopover: View {
                         divider
                         heading(repository?.account == nil ? String(localized: "Accounts") : String(localized: "Other accounts"))
                     }
-                    ForEach(others) { account in AccountPopoverRow(account: account, status: status(account), resolve: actions.resolve) }
+                    ForEach(others) { account in AccountPopoverRow(account: account, status: status(account), busy: busy(account), failure: failure(account), resolve: actions.resolve) }
                 }
                 divider
                 AccountPopoverAction(symbol: "tray", title: String(localized: "Inbox"), run: actions.inbox)
@@ -82,7 +90,7 @@ struct AccountPopover: View {
         if let account = repository.account, let target = repository.target {
             let reason = AccountPresentation.reason(account: account, target: target, candidates: repository.candidates, preferredID: repository.preferredID)
             // the notice above carries this account's action, so the row keeps Change… only
-            AccountPopoverRow(account: account, status: status(account), size: 32, caption: reason.text, ownAction: false, resolve: actions.resolve) {
+            AccountPopoverRow(account: account, status: status(account), size: 32, caption: reason.text, busy: busy(account), ownAction: false, resolve: actions.resolve) {
                 Menu {
                     Picker("Account for this repository", selection: Binding(get: { account.id }, set: { id in
                         if let next = repository.candidates.first(where: { $0.id == id }) { actions.choose(next) }
@@ -117,14 +125,16 @@ struct AccountPopover: View {
         identity(repository)
     }
 
-    /// This repository's own account needs the user: the shared notice, with the one action that settles it
+    /// This repository's own account needs the user: the shared notice, with the one action that settles it. It
+    /// stays through the attempt, with a spinner, and afterwards says what went wrong.
     @ViewBuilder private func attention(_ account: HostAccount) -> some View {
-        let state = status(account)
-        if state == .needsYourApproval {
-            SavedAccountAccessNotice(account: account, popover: true).padding(.horizontal, 12).padding(.top, 6).padding(.bottom, 4)
-        } else if let action = state.action {
-            NoticeBlock(symbol: state.symbol, title: state.title, caption: state.caption,
-                        actions: [NoticeAction(title: action) { actions.resolve(account, state) }])
+        let state = status(account), working = busy(account), problem = failure(account)
+        if state.action != nil || problem != nil {
+            NoticeBlock(symbol: state == .signedIn ? "exclamationmark.triangle.fill" : state.symbol,
+                        title: state == .needsYourApproval ? String(localized: "Saved sign-in needs your approval") : state.title,
+                        caption: problem ?? (state == .needsYourApproval
+                            ? String(localized: "macOS asks before Gitrochi uses the saved sign-in for @\(account.username). Your drafts are kept.") : state.caption),
+                        actions: working ? [] : state.action.map { [NoticeAction(title: $0) { actions.resolve(account, state) }] } ?? [], busy: working)
                 .padding(.horizontal, 12).padding(.top, 6).padding(.bottom, 4)
         }
     }
@@ -150,6 +160,16 @@ struct AccountPopover: View {
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+            if repository.managed {
+                if repository.refreshing {
+                    ProgressView().controlSize(.small).frame(width: 28, height: 28)
+                } else {
+                    Button(action: actions.refreshIdentity) { SymbolIcon("arrow.clockwise") }
+                        .buttonStyle(HostedListButtonStyle(iconOnly: true))
+                        .accessibilityLabel("Refresh account status").help("Refresh account status")
+                        .accessibilityIdentifier("account-popover-refresh")
+                }
+            }
         }
         .padding(.horizontal, 14).padding(.vertical, 4).frame(minHeight: 48)
         .accessibilityIdentifier("account-popover-identity")
@@ -171,7 +191,10 @@ struct AccountPopoverRow<Trailing: View>: View {
     let status: AccountStatus
     var size: CGFloat = 24
     var caption: String? = nil
-    /// false where a notice above the row already carries the action
+    var busy = false
+    /// Why the last attempt to restore this account's saved sign-in failed
+    var failure: String? = nil
+    /// false where a notice above the row already carries the action and what went wrong
     var ownAction = true
     let resolve: (HostAccount, AccountStatus) -> Void
     @ViewBuilder let trailing: Trailing
@@ -179,6 +202,19 @@ struct AccountPopoverRow<Trailing: View>: View {
     private var service: String { account.provider == .gitlab ? String(localized: "Self-hosted GitLab") : account.provider.title }
 
     var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            row
+            // what went wrong sits right under the account it concerns
+            if ownAction, let failure {
+                NoticeBlock(symbol: "xmark.circle.fill", tone: .failed, title: String(localized: "Couldn't use the saved sign-in"), caption: failure)
+            }
+        }
+        .padding(.horizontal, 14).padding(.vertical, 4)
+        .frame(minHeight: size > 24 ? 52 : 44)
+        .accessibilityElement(children: .contain)
+    }
+
+    private var row: some View {
         HStack(spacing: 10) {
             AccountAvatar(account: account, size: size)
             VStack(alignment: .leading, spacing: 2) {
@@ -192,22 +228,21 @@ struct AccountPopoverRow<Trailing: View>: View {
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            if ownAction, let action = status.action {
+            if ownAction, busy {
+                ProgressView().controlSize(.small)
+            } else if ownAction, let action = status.action {
                 Button(action) { resolve(account, status) }.buttonStyle(HostedListButtonStyle()).fixedSize()
                     .accessibilityLabel(Text(verbatim: action + " @" + account.username))
             }
             trailing
         }
-        .padding(.horizontal, 14).padding(.vertical, 4)
-        .frame(minHeight: size > 24 ? 52 : 44)
-        .accessibilityElement(children: .contain)
     }
 }
 
 extension AccountPopoverRow where Trailing == EmptyView {
-    init(account: HostAccount, status: AccountStatus, size: CGFloat = 24, caption: String? = nil, ownAction: Bool = true,
-         resolve: @escaping (HostAccount, AccountStatus) -> Void) {
-        self.init(account: account, status: status, size: size, caption: caption, ownAction: ownAction, resolve: resolve) { EmptyView() }
+    init(account: HostAccount, status: AccountStatus, size: CGFloat = 24, caption: String? = nil, busy: Bool = false, failure: String? = nil,
+         ownAction: Bool = true, resolve: @escaping (HostAccount, AccountStatus) -> Void) {
+        self.init(account: account, status: status, size: size, caption: caption, busy: busy, failure: failure, ownAction: ownAction, resolve: resolve) { EmptyView() }
     }
 }
 

@@ -4,9 +4,9 @@ import { accountHost, type HostAccount, providerInfo } from "@/entities/git";
 import { type AccountStatus, accountReason, accountReasonText, accounts, accountStatusAction, accountStatusCaption, accountStatusIcon, accountStatusTitle } from "@/entities/hosting";
 import type { RepoStore } from "@/entities/repo";
 import { AccountAvatar, AccountStatusLabel, LockedLabel } from "@/features/account-connection";
-import { designIcon, Inbox, KeyRound, Plus, Settings, ShieldLock, UserRound } from "@/shared/icons";
+import { designIcon, Inbox, KeyRound, Plus, RefreshCw, Settings, ShieldLock, UserRound } from "@/shared/icons";
 import { t } from "@/shared/i18n";
-import { Button, type MenuItem, NoticeBlock, showMenuBelow } from "@/shared/ui";
+import { Button, IconButton, type MenuItem, NoticeBlock, showMenuBelow, Spinner } from "@/shared/ui";
 
 const AccountGlyph = designIcon("account");
 
@@ -133,6 +133,10 @@ function IdentityRow({ store, locked }: { store: RepoStore; locked: boolean }) {
           ? <span className="account-popover-caption"><LockedLabel text={t("Locked by this repository's rules")} /></span>
           : store.gitchStatus && <span className="account-popover-caption">{t("Author and SSH follow this repository's rules")}</span>}
       </span>
+      {/* reads the repository's Git account and rules again */}
+      {store.gitchStatus && (store.gitchChecking
+        ? <span className="account-popover-refreshing"><Spinner size={12} /></span>
+        : <IconButton className="account-popover-refresh" icon={<RefreshCw size={14} />} aria-label={t("Refresh account status")} tip={t("Refresh account status")} onClick={() => void store.refreshGitch()} />)}
     </div>
   );
 }

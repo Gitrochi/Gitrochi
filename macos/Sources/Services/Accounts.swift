@@ -156,6 +156,11 @@ final class AccountStore {
     private let credentials = CredentialCache { await Keychain.read($0) }
     @ObservationIgnored private var activationObserver: NSObjectProtocol?
     private var connectionAttempts: [String: UUID] = [:]
+    /// Each account's state after its last finished read
+    private var settled: [String: AccountStatus] = [:]
+    /// Accounts whose saved token the server refused
+    private var rejected = Set<String>()
+    private var accessErrors: [String: String] = [:]
 
     private init() {
         let d = UserDefaults.standard
@@ -169,7 +174,7 @@ final class AccountStore {
                 d.set(try? JSONEncoder().encode(saved), forKey: "accounts")
             }
         }
-        credentials.onChange = { [weak self] in self?.revision += 1 }
+        credentials.onChange = { [weak self] in self?.credentialsChanged() }
         for account in accounts {
             credentials.prepare("acct:" + account.id)
             if account.id.hasPrefix("legacy-") { credentials.prepare(account.provider.rawValue) }
@@ -249,14 +254,36 @@ final class AccountStore {
         repoPath.flatMap { preferred[$0] }
     }
 
-    /// What the account needs from the user: the system's approval while the Keychain asks, a new sign-in once the
-    /// saved token is gone or rejected. A read in flight is nothing to act on. (Windows: AccountStore.status)
+    /// What the account needs from the user (the rules are AccountPresentation.status). (Windows: AccountStore.status)
     func status(for account: HostAccount) -> AccountStatus {
-        switch credentialState(for: account) {
-        case .ready, .loading: .signedIn
-        case .authorizationRequired: .needsYourApproval
-        case .unavailable: .expired
+        AccountPresentation.status(credential: credentialState(for: account), rejected: rejected.contains(account.id), previous: settled[account.id])
+    }
+
+    /// A read of the saved sign-in, or the user's approval of it, is under way
+    func isBusy(_ account: HostAccount) -> Bool { credentialState(for: account) == .loading }
+
+    /// Why the last attempt to restore the saved sign-in failed; nil once it works or is tried again
+    func accessError(for account: HostAccount) -> String? { accessErrors[account.id] }
+
+    /// The user asked: lets the system prompt, checks the token still belongs to the account, and keeps what went
+    /// wrong so every view of the account can say it
+    func restoreAccess(for account: HostAccount) async {
+        accessErrors[account.id] = nil
+        do { try await allowStoredAccess(for: account) } catch {
+            if AccountPresentation.rejects(error) { rejected.insert(account.id) }
+            accessErrors[account.id] = savedAccessErrorMessage(for: account, error: error)
         }
+    }
+
+    /// Remembers each account's state once a read settles, for the time the next read is under way
+    private func credentialsChanged() {
+        for account in accounts {
+            let state = credentialState(for: account)
+            guard state != .loading else { continue }
+            if state == .ready { rejected.remove(account.id) }
+            settled[account.id] = AccountPresentation.status(credential: state, rejected: rejected.contains(account.id), previous: nil)
+        }
+        revision += 1
     }
 
     func setPreferred(_ a: HostAccount, for repoPath: String) {
@@ -464,6 +491,7 @@ final class AccountStore {
             Task { await Keychain.set(nil, for: a.provider.rawValue) }
         }
         accounts.removeAll { $0.id == a.id }
+        settled[a.id] = nil; rejected.remove(a.id); accessErrors[a.id] = nil
         preferred = preferred.filter { $0.value != a.id }
         UserDefaults.standard.set(preferred, forKey: "preferredAccounts")
         aliases = aliases.filter { $0.value != a.id }

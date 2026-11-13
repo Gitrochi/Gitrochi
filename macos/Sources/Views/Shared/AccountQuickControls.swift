@@ -56,11 +56,14 @@ struct AccountQuickControls: View {
             AccountPopover(repository: store.url == nil ? nil : AccountPopoverRepository(
                                target: store.target, account: account, candidates: candidates,
                                preferredID: accounts.preferredID(for: store.url?.path), identity: store.me,
-                               managed: store.gitchStatus != nil, locked: store.gitchStatus?.lockedAccount != nil),
-                           accounts: connected, status: { accounts.status(for: $0) },
+                               managed: store.gitchStatus != nil, locked: store.gitchStatus?.lockedAccount != nil,
+                               refreshing: store.gitchChecking),
+                           accounts: connected, status: { accounts.status(for: $0) }, busy: { accounts.isBusy($0) },
+                           failure: { accounts.accessError(for: $0) },
                            actions: AccountPopoverActions(
                                choose: { store.useAccount($0) },
                                resolve: resolve,
+                               refreshIdentity: { Task { await store.refreshGitch() } },
                                inbox: { showing = false; store.navigate(.account) },
                                addAccount: { present(.add(store.target?.provider == .gitlab ? .gitlab : .github, nil)) },
                                manageAccounts: { showing = false; SettingsRoute.shared.tab = .accounts; openSettings() }))
@@ -75,11 +78,11 @@ struct AccountQuickControls: View {
         }
     }
 
-    /// The system's approval happens in place; github.com accounts renew in the browser; a GitLab server takes a new
-    /// token in the Add account sheet
+    /// The system's approval and a second read happen in place, and the popover says what went wrong; github.com
+    /// accounts renew in the browser; a GitLab server takes a new token in the Add account sheet
     private func resolve(_ account: HostAccount, _ status: AccountStatus) {
-        if status == .needsYourApproval {
-            Task { try? await accounts.allowStoredAccess(for: account) }
+        if status == .needsYourApproval || status == .unreadable {
+            Task { await accounts.restoreAccess(for: account) }
         } else if account.provider == .github, account.host == "github.com" {
             present(.login(account.username, .standard))
         } else {

@@ -62,7 +62,8 @@
 .account-popover-row { flex: none; display: flex; align-items: center; gap: 10px; min-width: 0; min-height: 44px; box-sizing: border-box; padding: 4px 14px; }
 .account-popover-row.tall { min-height: 52px; }
 .account-popover-row.identity { min-height: 48px; }
-.account-popover-row > .avatar, .account-popover-row > .btn { flex: none; }
+.account-popover-row > .avatar, .account-popover-row > .btn, .account-popover-row > .icon-btn { flex: none; }
+.account-popover-refreshing { flex: none; width: 28px; display: inline-flex; justify-content: center; }
 .account-popover-glyph { flex: none; width: 24px; height: 24px; border-radius: 50%; background: var(--bar); color: var(--text-2); display: inline-flex; align-items: center; justify-content: center; }
 .account-popover-glyph.large { width: 32px; height: 32px; }
 .account-popover-text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }

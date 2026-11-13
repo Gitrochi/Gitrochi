@@ -10,8 +10,12 @@ enum AccountStatus: Hashable {
     case needsApproval
     /// The system must allow the saved sign-in
     case needsYourApproval
-    /// The token expired or was revoked
+    /// The server rejected the saved token: it expired or was revoked
     case expired
+    /// The saved sign-in can't be read (a locked Keychain, a missing item): reading it again may be all it takes
+    case unreadable
+    /// The first read of the saved sign-in is under way and nothing is known yet
+    case checking
 
     /// Which drawing a state uses: the states that need the user never share one
     var symbol: String {
@@ -20,6 +24,8 @@ enum AccountStatus: Hashable {
         case .needsApproval: "lock.shield"
         case .needsYourApproval: "key"
         case .expired: "exclamationmark.triangle.fill"
+        case .unreadable: "key"
+        case .checking: "clock"
         }
     }
 
@@ -29,13 +35,16 @@ enum AccountStatus: Hashable {
         case .needsApproval: String(localized: "Needs approval")
         case .needsYourApproval: String(localized: "Needs your approval")
         case .expired: String(localized: "Sign-in expired")
+        case .unreadable: String(localized: "Saved sign-in can't be read")
+        case .checking: String(localized: "Checking saved account access…")
         }
     }
 
     /// The one action that settles a state, or nil when there is nothing to do
     var action: String? {
         switch self {
-        case .signedIn: nil
+        case .signedIn, .checking: nil
+        case .unreadable: String(localized: "Retry")
         case .needsApproval: String(localized: "Renew…")
         case .needsYourApproval: String(localized: "Approve…")
         case .expired: String(localized: "Sign in again…")
@@ -47,7 +56,8 @@ enum AccountStatus: Hashable {
         switch self {
         case .needsApproval: String(localized: "The organization asks to approve access again in the browser.")
         case .expired: String(localized: "The token expired or was revoked.")
-        case .signedIn, .needsYourApproval: nil
+        case .unreadable: String(localized: "Saved credentials are unavailable. Retry access or reconnect this account in Settings.")
+        case .signedIn, .needsYourApproval, .checking: nil
         }
     }
 }
@@ -74,7 +84,29 @@ enum AccountPresentation {
     /// needs something is flagged inside the popover, and a window without a repository account has no badge.
     static func toolbarBadge(_ repositoryAccountStatus: AccountStatus?) -> Bool {
         guard let repositoryAccountStatus else { return false }
-        return repositoryAccountStatus != .signedIn
+        return repositoryAccountStatus != .signedIn && repositoryAccountStatus != .checking
+    }
+
+    /// What a saved credential's read says about the account. An unreadable credential is not an expired sign-in:
+    /// only a token the server rejected is. While a read or an approval is under way the account keeps the state it
+    /// had, so a row never claims "Signed in" and the badge never clears before the answer is known.
+    static func status(credential: CredentialCache.State, rejected: Bool, previous: AccountStatus?) -> AccountStatus {
+        switch credential {
+        case .ready: .signedIn
+        case .loading: previous ?? .checking
+        case .authorizationRequired: .needsYourApproval
+        case .unavailable: rejected ? .expired : .unreadable
+        }
+    }
+
+    /// The server refused the saved token or it belongs to someone else: only a new sign-in helps
+    static func rejects(_ error: Error) -> Bool {
+        guard let failure = error as? AccountConnectionFailure else { return false }
+        switch failure {
+        case .identityMismatch: return true
+        case .verification(let status): return status == 401
+        default: return false
+        }
     }
 
     /// The user's own choice comes first; then an account reached through another address of the same server; then the

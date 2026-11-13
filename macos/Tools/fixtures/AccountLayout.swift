@@ -37,7 +37,7 @@ final class AccountFixtureNetworkBlocker: URLProtocol {
     static let publicPhotoURL = "https://github.com/alex-studio.png?size=64"
     static func credentialRead(_ name: String) -> CredentialReadResult {
         if name.hasSuffix("-approval") { return CredentialReadResult(value: nil, status: -25308) }
-        if name.hasSuffix("-expired") { return CredentialReadResult(value: nil, status: -25300) }
+        if name.hasSuffix("-unreadable") { return CredentialReadResult(value: nil, status: -25300) }
         return CredentialReadResult(value: "fixture-credential", status: 0)
     }
     private static let photo: Data = {
@@ -93,6 +93,19 @@ final class AccountFixtureNetworkBlocker: URLProtocol {
         precondition(AccountPresentation.reason(account: mirror, target: rules, candidates: [mirror], preferredID: nil) == .sameServer(host: "github.com"), "Another address of the same server")
         precondition(AccountPresentation.initial(name: "Alex Kim", username: "demo-alex") == "A" && AccountPresentation.initial(name: nil, username: "demo-alex") == "D"
             && AccountPresentation.initial(name: "  ", username: "zoe") == "Z" && AccountPresentation.initial(name: "", username: "") == "?", "The initial comes from the name, else the username")
+        // an unreadable saved sign-in is not an expired one; a read under way keeps the state the account had
+        precondition(AccountPresentation.status(credential: .unavailable, rejected: false, previous: nil) == .unreadable, "A locked or missing credential is not an expired sign-in")
+        precondition(AccountPresentation.status(credential: .unavailable, rejected: true, previous: nil) == .expired, "Only a token the server rejected is expired")
+        precondition(AccountStatus.unreadable.action == "Retry" && AccountStatus.unreadable.title != AccountStatus.expired.title, "An unreadable sign-in offers another read")
+        precondition(AccountPresentation.status(credential: .ready, rejected: true, previous: .expired) == .signedIn, "A readable token is signed in")
+        for previous in [AccountStatus.needsYourApproval, .unreadable, .expired, .signedIn] {
+            precondition(AccountPresentation.status(credential: .loading, rejected: false, previous: previous) == previous, "A read under way keeps the previous state")
+        }
+        precondition(AccountPresentation.status(credential: .loading, rejected: false, previous: nil) == .checking, "Nothing known yet is not signed in")
+        precondition(!AccountPresentation.toolbarBadge(.checking) && AccountStatus.checking.action == nil && AccountPresentation.toolbarBadge(.unreadable), "Checking clears no badge and shows none")
+        precondition(AccountPresentation.rejects(AccountConnectionFailure.verification(status: 401)) && AccountPresentation.rejects(AccountConnectionFailure.identityMismatch)
+            && !AccountPresentation.rejects(AccountConnectionFailure.verification(status: 503)) && !AccountPresentation.rejects(AccountConnectionFailure.credentialAccess(status: -25291)),
+            "Only a refused token or another identity means a new sign-in")
         let statuses: [AccountStatus] = [.signedIn, .needsApproval, .needsYourApproval, .expired]
         precondition(Set(statuses.map(\.symbol) + ["lock"]).count == 5 && Set(statuses.map(\.title)).count == 4, "Each state has its own icon and words")
         let drawings = ["lock.shield", "key", "lock"].compactMap { DesignSymbols.image($0)?.tiffRepresentation }
@@ -100,7 +113,7 @@ final class AccountFixtureNetworkBlocker: URLProtocol {
 
         let demo = HostAccount(id: "fixture-demo", provider: .github, server: "https://github.com", username: "demo-alex", name: "Personal", avatarURL: AccountFixtureNetworkBlocker.photoURL)
         let studio = HostAccount(id: "fixture-studio-approval", provider: .github, server: "https://github.com", username: "alex-studio", name: "Studio organization", avatarURL: nil)
-        let lab = HostAccount(id: "fixture-lab-expired", provider: .gitlab, server: "https://gitlab.example.com", username: "alex", name: nil, avatarURL: nil)
+        let lab = HostAccount(id: "fixture-lab-unreadable", provider: .gitlab, server: "https://gitlab.example.com", username: "alex", name: nil, avatarURL: nil)
         let long = HostAccount(id: "fixture-long", provider: .gitlab, server: "https://gitlab-with-a-long-server-name.example.com", username: "a-very-long-account-name-that-wraps", name: nil, avatarURL: nil)
         let saved = scenario == "no-account" ? [] : scenario == "locked" ? [demo, studio, lab, long] : [demo, studio, lab]
         accountFixtureDefaults.set(try JSONEncoder().encode(saved), forKey: "accounts")
@@ -117,16 +130,19 @@ final class AccountFixtureNetworkBlocker: URLProtocol {
         let loaded = Date().addingTimeInterval(3)
         while saved.contains(where: { accounts.credentialState(for: $0) == .loading }) && Date() < loaded { settle() }
         if !saved.isEmpty {
-            precondition(accounts.status(for: demo) == .signedIn && accounts.status(for: studio) == .needsYourApproval && accounts.status(for: lab) == .expired,
+            precondition(accounts.status(for: demo) == .signedIn && accounts.status(for: studio) == .needsYourApproval && accounts.status(for: lab) == .unreadable && !accounts.isBusy(lab),
                          "Fixture credential states must settle without real Keychain access")
         }
 
         let connected = accounts.accounts(for: .github) + accounts.accounts(for: .gitlab)
-        let own: HostAccount? = scenario == "attention" ? studio : scenario == "expired" ? lab : ["repository", "locked"].contains(scenario) ? demo : nil
+        // "failed": an approval was tried and refused, for the repository's account and for another one
+        let failures: [String: String] = scenario == "failed" ? [studio.id: "Couldn't access the saved account. Allow the macOS Keychain request, then try again.",
+                                                                  lab.id: "Couldn't read the account's token."] : [:]
+        let own: HostAccount? = ["attention", "failed"].contains(scenario) ? studio : scenario == "unreadable" ? lab : ["repository", "locked"].contains(scenario) ? demo : nil
         let target = own.map { RepoTarget(provider: $0.provider, remote: "origin", host: $0.host, path: "sample-studio/desktop") }
         let repository: AccountPopoverRepository? = own.map { account in
             AccountPopoverRepository(target: target, account: account, candidates: connected.filter { $0.provider == account.provider && $0.host == account.host },
-                                     preferredID: scenario == "attention" ? account.id : nil, identity: Identity(name: "Alex Kim", email: "alex@example.com"),
+                                     preferredID: ["attention", "failed"].contains(scenario) ? account.id : nil, identity: Identity(name: "Alex Kim", email: "alex@example.com"),
                                      managed: true, locked: scenario == "locked")
         }
         let badge = AccountPresentation.toolbarBadge(own.map { accounts.status(for: $0) })
@@ -148,7 +164,7 @@ final class AccountFixtureNetworkBlocker: URLProtocol {
                 AccountButtonPhoto(account: own ?? connected.first, badge: badge).frame(width: 36, height: 36)
                     .background(Capsule().fill(Color(nsColor: .controlBackgroundColor)).shadow(color: .black.opacity(0.08), radius: 3, y: 2))
                     .padding(.trailing, 8)
-                AccountPopover(repository: repository, accounts: connected, status: { accounts.status(for: $0) },
+                AccountPopover(repository: repository, accounts: connected, status: { accounts.status(for: $0) }, failure: { failures[$0.id] },
                                actions: AccountPopoverActions(resolve: { account, _ in resolved.append(account.id) }))
                     .background(RoundedRectangle(cornerRadius: 12).fill(StudioStyle.surface))
                     .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(StudioStyle.border))
@@ -199,9 +215,10 @@ final class AccountFixtureNetworkBlocker: URLProtocol {
         default:
             guard let popover = frame("popover") else { fatalError("The popover must render") }
             precondition(abs(popover.width - AccountPopover.width) <= 1, "The popover is 360 pt wide: \(popover.width)")
-            precondition((frame("badge") != nil) == badge && badge == ["attention", "expired"].contains(scenario), "The badge is for the repository's own account only")
+            precondition((frame("badge") != nil) == badge && badge == ["attention", "unreadable", "failed"].contains(scenario), "The badge is for the repository's own account only")
             precondition((frame("change") != nil) == (own != nil), "Change… belongs to the repository's account")
             precondition((frame("identity") != nil) == (own != nil), "The Git identity is shown with a repository")
+            precondition((frame("refresh") != nil) == (own != nil), "Refresh account status sits with the repository's Git identity")
             for probe in probes() where probe.fixtureIdentifier.hasPrefix("words:") {
                 precondition(probe.bounds.width >= 120, "A row's words must not be squeezed: \(probe.fixtureIdentifier) \(probe.bounds.width)")
             }
@@ -210,11 +227,17 @@ final class AccountFixtureNetworkBlocker: URLProtocol {
                 precondition(frame("action:" + own.id) == nil, "The repository's row keeps Change… only")
                 precondition(has("notice-action:") == badge, "A repository account that needs the user gets the notice")
                 if scenario == "attention" { precondition(frame("notice-action:Approve…") != nil, "The saved sign-in is approved from the notice") }
-                if scenario == "expired" { precondition(frame("notice-action:Sign in again…") != nil, "An expired sign-in offers to sign in again") }
+                if scenario == "unreadable" { precondition(frame("notice-action:Retry") != nil && frame("notice-action:Sign in again…") == nil, "An unreadable sign-in offers another read, not a new sign-in") }
+                if scenario == "failed" {
+                    // the notice stays with its action after a failed attempt, and the other account's failure sits under its row
+                    precondition(frame("notice-action:Approve…") != nil && frame("failure:" + own.id) == nil, "The repository account's failure is said in its notice")
+                    guard let failed = frame("failure:" + lab.id), let row = frame("row:" + lab.id) else { fatalError("Another account's failure must be shown") }
+                    precondition(row.insetBy(dx: -1, dy: -1).contains(failed) && failed.height >= 30, "The failure sits under the account it concerns: \(failed) in \(row)")
+                } else { precondition(!has("failure:"), "No failure without a failed attempt") }
             }
             if scenario == "repository" {
                 precondition(frame("action:" + studio.id) != nil && frame("action:" + lab.id) != nil, "Another account's state comes with its action")
-                precondition(frame("status:key") != nil && frame("status:exclamationmark.triangle.fill") != nil, "Each state draws its own icon")
+                precondition(frame("status:key") != nil, "A state draws its icon beside its words")
             }
             if scenario == "locked" {
                 precondition(frame("status:lock") != nil, "A locked identity shows the lock")

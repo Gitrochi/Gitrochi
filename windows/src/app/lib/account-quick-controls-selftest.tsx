@@ -21,7 +21,7 @@ export async function accountQuickControlsSelfTest(): Promise<[boolean, string]>
   const root = createRoot(host), store = new RepoStore();
   const alice: HostAccount = { id: "quick-alice", provider: "github", server: "https://github.com", username: "alice", name: "Alice", avatarURL: null };
   const bob: HostAccount = { ...alice, id: "quick-bob", username: "bob-with-a-long-account-name-for-narrow-rows", name: "Bob" };
-  let active = alice, chosen: string | null = null, selections = 0, starts = 0;
+  let active = alice, chosen: string | null = null, selections = 0, starts = 0, refreshes = 0;
   let states: Record<string, AccountStatus> = {};
   let requested: { capability?: GitHubLoginCapability; login?: string } | null = null;
   const flow: GitchBrowserLogin = { schemaVersion: 1, session: "github-quickQA123", state: "pending", phase: "queued", deviceCode: null, verificationURL: "https://github.com/login/device", login: null, email: null, message: "Fake sign-in only" };
@@ -32,6 +32,7 @@ export async function accountQuickControlsSelfTest(): Promise<[boolean, string]>
     store.me = { name: "Git Author", email: "author@example.invalid" };
     store.gitchStatus = { inRepo: true, lockedAccount: "locked-git-user", account: "locked-git-user", accountSource: "lock", pushAccount: "locked-git-user", ignored: false };
     store.useAccount = (account) => { active = account; chosen = account.id; selections++; store.changed(); };
+    store.refreshGitch = async () => { refreshes++; };
     gitch.startBrowserLogin = async (capability, login) => { starts++; requested = { capability, login }; return flow; };
     gitch.browserLoginStatus = async () => flow; gitch.cancelBrowserLogin = async () => ({ ...flow, state: "cancelled" });
     root.render(createElement(AccountQuickControls, { store }));
@@ -49,6 +50,12 @@ export async function accountQuickControlsSelfTest(): Promise<[boolean, string]>
     if (!text().includes("Git Author") || !text().includes("author@example.invalid") || !text().includes(t("Locked by this repository's rules")) || !popover()!.querySelector('[data-status="locked"]')) return [false, "The Git identity or its lock is missing"];
     if (!text().includes(t("Other accounts")) || !text().includes(`${t("Signed in")} · GitHub`) || !inPopover("Inbox") || !inPopover("Add account…") || !inPopover("Manage accounts…")) return [false, "The other accounts or the popover's actions are missing"];
     if (text().includes(t("Remove account…")) || text().includes(t("Disconnect"))) return [false, "Accounts are removed only in Settings"];
+
+    // the Git account and its rules can be read again from where they are shown
+    const refresh = popover()!.querySelector<HTMLButtonElement>(".account-popover-row.identity .account-popover-refresh");
+    if (!refresh || refresh.getAttribute("aria-label") !== t("Refresh account status")) return [false, "Refresh account status is missing from the Git identity row"];
+    refresh.click();
+    if (!await until(() => refreshes === 1)) return [false, "Refresh account status did not read the Git account again"];
 
     // nothing in the 360px popover is squeezed or clipped, even with a long account name
     const panel = popover()!, box = panel.getBoundingClientRect();

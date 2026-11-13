@@ -23,7 +23,8 @@ struct AccountsSettings: View {
                         .font(.caption).foregroundStyle(.secondary)
                 }
                 ForEach(hosting) { account in
-                    HostingAccountRow(account: account, status: accounts.status(for: account), resolve: { resolve(account) }, present: { sheet = $0 },
+                    HostingAccountRow(account: account, status: accounts.status(for: account), busy: accounts.isBusy(account),
+                                      failure: accounts.accessError(for: account), resolve: { resolve(account) }, present: { sheet = $0 },
                                       remove: { removing = account })
                 }
             } header: {
@@ -89,10 +90,12 @@ struct AccountsSettings: View {
         }
     }
 
-    /// github.com accounts renew in the browser; a GitLab server takes a new token in the Add account sheet
+    /// The system's approval and a second read happen in place, and the row says what went wrong; github.com accounts
+    /// renew in the browser; a GitLab server takes a new token in the Add account sheet
     private func resolve(_ account: HostAccount) {
-        if accounts.status(for: account) == .needsYourApproval {
-            Task { try? await accounts.allowStoredAccess(for: account) }
+        let status = accounts.status(for: account)
+        if status == .needsYourApproval || status == .unreadable {
+            Task { await accounts.restoreAccess(for: account) }
         } else if account.provider == .github, account.host == "github.com" {
             sheet = .login(account.username, .standard)
         } else {
@@ -120,6 +123,9 @@ enum AccountsSettingsSheet: Identifiable {
 struct HostingAccountRow: View {
     let account: HostAccount
     let status: AccountStatus
+    var busy = false
+    /// Why the last attempt to restore this account's saved sign-in failed
+    var failure: String? = nil
     let resolve: () -> Void
     let present: (AccountsSettingsSheet) -> Void
     let remove: () -> Void
@@ -127,6 +133,16 @@ struct HostingAccountRow: View {
     private var gitHub: Bool { account.provider == .github && account.host == "github.com" }
 
     var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            row
+            // what went wrong sits right under the account it concerns
+            if let failure {
+                NoticeBlock(symbol: "xmark.circle.fill", tone: .failed, title: String(localized: "Couldn't use the saved sign-in"), caption: failure)
+            }
+        }
+    }
+
+    private var row: some View {
         HStack(spacing: 10) {
             AccountAvatar(account: account, size: 28)
             VStack(alignment: .leading, spacing: 1) {
@@ -136,7 +152,11 @@ struct HostingAccountRow: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             AccountStatusPill(status: status)
-            if let action = status.action { Button(action, action: resolve).fixedSize() }
+            if busy {
+                ProgressView().controlSize(.small)
+            } else if let action = status.action {
+                Button(action, action: resolve).fixedSize()
+            }
             Menu {
                 if gitHub {
                     Button("Renew browser connection…") { present(.login(account.username, .standard)) }

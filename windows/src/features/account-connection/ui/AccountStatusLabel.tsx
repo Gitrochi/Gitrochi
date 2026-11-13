@@ -1,16 +1,16 @@
 import { TriangleAlert } from "lucide-react";
-import { Check, KeyRound, Lock, ShieldLock } from "@/shared/icons";
+import { Check, Clock, KeyRound, Lock, ShieldLock } from "@/shared/icons";
 import { t } from "@/shared/i18n";
 import { StatusPill, type StatusTone } from "@/shared/ui";
 import { type AccountStatus, accountStatusIcon, accountStatusTitle } from "@/entities/hosting";
 import "./account-status.css";
 
-const tone = (status: AccountStatus): StatusTone => (status === "signedIn" ? "passed" : "waiting");
+const tone = (status: AccountStatus): StatusTone => (status === "signedIn" ? "passed" : status === "checking" ? "neutral" : "waiting");
 
 /** Each state its own drawing: a shield for the organization's approval, a key for the system's, a warning for an expired sign-in */
 function StatusIcon({ status, size }: { status: AccountStatus; size: number }) {
   const icon = accountStatusIcon(status);
-  return icon === "shield" ? <ShieldLock size={size} /> : icon === "key" ? <KeyRound size={size} /> : icon === "warning" ? <TriangleAlert size={size} /> : <Check size={size} />;
+  return icon === "shield" ? <ShieldLock size={size} /> : icon === "key" ? <KeyRound size={size} /> : icon === "warning" ? <TriangleAlert size={size} /> : icon === "clock" ? <Clock size={size} /> : <Check size={size} />;
 }
 
 /** A row's second line: the state's 12 px icon and its words in the state's tone (macOS: AccountStatusLabel) */

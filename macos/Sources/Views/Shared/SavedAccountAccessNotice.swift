@@ -7,8 +7,6 @@ struct SavedAccountAccessNotice: View {
     var page = false
     /// A sidebar section: one row, the explanation on hover
     var row = false
-    /// The account popover: the notice above this repository's account, with the one action
-    var popover = false
     var restored: () -> Void = {}
     @Environment(\.openSettings) private var openSettings
     @ViewState private var allowing = false
@@ -23,7 +21,7 @@ struct SavedAccountAccessNotice: View {
     }
 
     var body: some View {
-        if page { pageState } else if row { rowState } else if popover { popoverState } else { note }
+        if page { pageState } else if row { rowState } else { note }
     }
 
     @ViewBuilder private var pageState: some View {
@@ -47,13 +45,6 @@ struct SavedAccountAccessNotice: View {
             : NoticeAction(title: String(localized: "Approve…"), run: allow)
         return NoticeRow(symbol: "key", title: String(localized: "Needs approval"),
                          caption: error ?? accounts.savedAccessMessage(for: account), action: action, busy: allowing || state == .loading)
-    }
-
-    private var popoverState: some View {
-        let state = AccountStore.shared.credentialState(for: account)
-        return NoticeBlock(symbol: "key", title: String(localized: "Saved sign-in needs your approval"),
-                           caption: error ?? String(localized: "macOS asks before Gitrochi uses the saved sign-in for @\(account.username). Your drafts are kept."),
-                           actions: state == .loading ? [] : [NoticeAction(title: String(localized: "Approve…"), run: allow)], busy: allowing || state == .loading)
     }
 
     /// One action sits on the right; when the credential can't be read at all, Account settings joins it below

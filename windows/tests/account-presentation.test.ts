@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { HostAccount, RepoTarget } from "@/entities/git";
-import { type AccountStatus, accountInitial, accountReason, accountReasonText, accountStatusAction, accountStatusCaption, accountStatusIcon, accountStatusTitle, toolbarAccountBadge } from "@/entities/hosting";
+import { type AccountStatus, accountInitial, accountStatusFor, accountReason, accountReasonText, accountStatusAction, accountStatusCaption, accountStatusIcon, accountStatusTitle, toolbarAccountBadge } from "@/entities/hosting";
 
 const account = (id: string, server = "https://github.com"): HostAccount => ({ id, provider: "github", server, username: id, name: null, avatarURL: null });
 const target: RepoTarget = { provider: "github", host: "github.com", path: "sample-studio/desktop", remote: "origin" };
@@ -11,6 +11,27 @@ describe("Account presentation", () => {
     expect(toolbarAccountBadge(null)).toBe(false);
     expect(toolbarAccountBadge("signedIn")).toBe(false);
     for (const status of ["needsApproval", "needsYourApproval", "expired"] as const) expect(toolbarAccountBadge(status)).toBe(true);
+  });
+
+  it("does not call an unreadable saved sign-in expired", () => {
+    // a locked or missing credential may only need another read
+    expect(accountStatusFor("unavailable", false, null)).toBe("unreadable");
+    expect(accountStatusAction("unreadable")).toBe("Retry");
+    expect(accountStatusTitle("unreadable")).not.toBe(accountStatusTitle("expired"));
+    // only a token the server rejected is an expired sign-in
+    expect(accountStatusFor("unavailable", true, null)).toBe("expired");
+    expect(accountStatusFor("authorizationRequired", false, "signedIn")).toBe("needsYourApproval");
+    expect(accountStatusFor("ready", true, "expired")).toBe("signedIn");
+  });
+
+  it("keeps the previous state while a read or an approval is under way", () => {
+    for (const previous of ["needsYourApproval", "unreadable", "expired", "signedIn"] as const) expect(accountStatusFor("loading", false, previous)).toBe(previous);
+    // nothing known yet: neither signed in nor a badge
+    expect(accountStatusFor("loading", false, null)).toBe("checking");
+    expect(toolbarAccountBadge("checking")).toBe(false);
+    expect(accountStatusAction("checking")).toBeNull();
+    expect(toolbarAccountBadge(accountStatusFor("loading", false, "needsYourApproval"))).toBe(true);
+    expect(toolbarAccountBadge("unreadable")).toBe(true);
   });
 
   it("gives each state its own icon, words and action", () => {
