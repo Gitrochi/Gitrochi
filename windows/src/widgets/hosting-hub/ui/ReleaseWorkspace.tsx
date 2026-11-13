@@ -114,7 +114,7 @@ export function ReleaseWorkspace({ source, openSettings }: { source: HubSource; 
       <Button disabled={busy || !hub.account} onClick={() => edit(false)}><Plus size={13}/>{t("New release…")}</Button>
     </HostedListHeader>
     {!hub.account ? <HostedAccountNeeded gitlab={target.provider === "gitlab"} host={target.host} path={target.path} onConnect={settingsOpener}/> : <>
-      <ReleaseSummary source={source} items={packaged} family={current}/>
+      <ReleaseSummary source={source} items={packaged} family={current} read={hub.items.length > 0 || !(hub.loading || hub.page === 0)} failed={!!hub.error && !hub.items.length} none={!hub.items.length}/>
       {hub.notice && <div className="hub-notice" role="status">{hub.notice}</div>}
       {hub.error && hub.items.length > 0 && <FailureBlock className="release-notice" title={hub.error} retry={retry}/>}
       <HostedListColumns detail={detailOpen} list={list}>

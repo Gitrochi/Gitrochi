@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { compareReleaseVersions, releaseVersion, orderedReleases, releaseCompareURL, newestReleases, releaseAssetSize, releaseMarkdownLinks, defaultReleaseFamily, releasePackageName, releaseTimeline, releaseAssetGroups, releaseToOpen, releaseTaggedOn } from "@/entities/hosting/model/releases";
+import { compareReleaseVersions, releaseVersion, orderedReleases, releaseCompareURL, newestReleases, releaseAssetSize, releaseMarkdownLinks, defaultReleaseFamily, releasePackageName, releaseTimeline, releaseAssetGroups, releaseToOpen, releaseTaggedOn, releaseSummaryCard } from "@/entities/hosting/model/releases";
 import { ReleasePortfolio } from "@/entities/hosting/model/release-portfolio";
 import { accounts } from "@/entities/hosting/model/accounts";
 import type { HubSource } from "@/entities/hosting/model/hub";
@@ -124,5 +124,14 @@ describe("release portfolio", () => {
     const missing = { ...source(), hostingAccount: null }; await portfolio.refresh([missing]); expect(portfolio.entry(missing).status).toBe("Access required");
     const offline = new ReleasePortfolio(async () => { throw new Error("network connection lost"); }); await offline.refresh([value]); expect(offline.entry(value).status).toBe("Offline");
     const failed = new ReleasePortfolio(async () => { throw new Error("HTTP 500"); }); await failed.refresh([value]); expect(failed.entry(value).status).toBe("Check failed");
+  });
+  it("gives the summary card a state from the first frame, also without a release", () => {
+    expect(releaseSummaryCard(false, false, false)).toBe("loading");
+    expect(releaseSummaryCard(true, false, false)).toBe("empty");
+    expect(releaseSummaryCard(false, true, false)).toBe("unreachable");
+    expect(releaseSummaryCard(true, true, false)).toBe("unreachable");
+    // a refresh keeps the releases that were read
+    expect(releaseSummaryCard(true, false, true)).toBe("release");
+    expect(releaseSummaryCard(false, false, true)).toBe("release");
   });
 });

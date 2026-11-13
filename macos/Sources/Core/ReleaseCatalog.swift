@@ -68,6 +68,15 @@ enum ReleaseCatalog {
         }
         return value.replacingOccurrences(of: #"[@/\-_]+$"#, with: "", options: .regularExpression)
     }
+    /// Which state the summary card is in (Windows: releaseSummaryCard)
+    enum SummaryCard: Equatable { case loading, unreachable, empty, release }
+    /// `read` is false until the release list arrived, `failed` says it could not be read and nothing is shown, and
+    /// `latest` that it holds a published release
+    static func summaryCard(read: Bool, failed: Bool, latest: Bool) -> SummaryCard {
+        if latest { return .release }
+        if failed { return .unreachable }
+        return read ? .empty : .loading
+    }
     struct Timeline { var stable: HubItem?; var prerelease: HubItem?; var path: [HubItem] }
     /// Recent releases of one package, oldest first: older stables, the newest stable, then a newer prerelease.
     static func timeline(_ items: [HubItem], family value: String, count: Int = 4) -> Timeline {

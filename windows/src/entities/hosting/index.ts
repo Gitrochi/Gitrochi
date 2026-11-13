@@ -31,7 +31,7 @@ export { hubOrganizationDetail, hubOrganizationInviteError, inviteHubOrganizatio
 export { loadHubOrganizationSection, loadHubOrganizationTeamMembers, applyHubOrganizationSection, type HubOrganizationSection, type HubOrganizationSectionState, type HubOrganizationSectionPage } from "./api/organization-dashboard";
 export { readHubOrganizationMemberAccess, readHubOrganizationTeamAccess, setHubOrganizationMemberRole, setHubOrganizationTeamRole, type HubOrganizationMemberAccess, type HubOrganizationAccessScope } from "./api/organization-permissions";
 export { resolveHubOrganizationMember } from "./api/organization-permissions";
-export { releaseVersion, compareReleaseVersions, releaseTag, releaseDate, releaseState, releaseFamily, orderedReleases, newestReleases, defaultReleaseFamily, releasePackageName, releaseTimeline, releaseAssetGroups, releaseToOpen, releaseTaggedOn, releaseCompareURL, releaseAssetSize, releaseMarkdownLinks } from "./model/releases";
+export { releaseVersion, releaseSummaryCard, compareReleaseVersions, releaseTag, releaseDate, releaseState, releaseFamily, orderedReleases, newestReleases, defaultReleaseFamily, releasePackageName, releaseTimeline, releaseAssetGroups, releaseToOpen, releaseTaggedOn, releaseCompareURL, releaseAssetSize, releaseMarkdownLinks } from "./model/releases";
 export { ReleasePortfolio, releasePortfolio, type ReleaseSummary } from "./model/release-portfolio";
 export { issueTaskReference, issueBranchName, issueRequestBody, quoteIssueComment } from "./model/issue-workflow";
 export { changeIssueComment, issueLinkedRequests, type InboxComment, type IssueLinkedRequest } from "./api/issue-workflow";

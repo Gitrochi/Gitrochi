@@ -1,9 +1,9 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { GitCompare, Tag } from "@/shared/icons";
-import { releaseTag, releaseTaggedOn, releaseTimeline, type HubItem, type HubSource } from "@/entities/hosting";
+import { releaseSummaryCard, releaseTag, releaseTaggedOn, releaseTimeline, type HubItem, type HubSource } from "@/entities/hosting";
 import { t } from "@/shared/i18n";
 import { git } from "@/shared/platform";
-import { Button, HostedListSummary } from "@/shared/ui";
+import { Button, HostedListSummary, HostedListSummaryBar, HostedListSummaryBars, HostedListSummaryLoadingLine, Spinner } from "@/shared/ui";
 
 type Distances = { segments: (number | null)[]; ahead: number | null; behind: number | null; prereleaseInHead: boolean };
 // Square roots keep a 200-commit gap from flattening the 10-commit ones next to it.
@@ -13,9 +13,11 @@ const nothing: Distances = { segments: [], ahead: null, behind: null, prerelease
 
 /**
  * What this branch has not released yet and the way there (macOS: ReleaseWorkspace.summary). Without the tag in this
- * clone the distance is unknown, so the card says what it does know: the newest release.
+ * clone the distance is unknown, so the card says what it does know: the newest release. Before the list is read
+ * (`read`), when it could not be (`failed`) and in a repository without a release (`none`: not even a draft) the card
+ * is there all the same, loading or saying so.
  */
-export function ReleaseSummary({ source, items, family }: { source: HubSource; items: HubItem[]; family: string }) {
+export function ReleaseSummary({ source, items, family, read, failed, none }: { source: HubSource; items: HubItem[]; family: string; read: boolean; failed: boolean; none: boolean }) {
   const timeline = useMemo(() => releaseTimeline(items, family), [items, family]);
   // the line runs up to the newest stable release; a newer prerelease sits beside it, not on it
   const fork = timeline.stable ? timeline.prerelease : undefined;
@@ -38,7 +40,30 @@ export function ReleaseSummary({ source, items, family }: { source: HubSource; i
     return () => { active = false; };
   }, [key]);
   const latest = timeline.stable ?? timeline.prerelease;
-  if (!latest) return null;
+  if (!latest) {
+    // the card without a published release to start from
+    const card = releaseSummaryCard(read, failed, false), loading = t("Loading releases…");
+    const line = card === "unreachable" ? t("Couldn't reach {0}", source.target?.host ?? "") : t("No releases yet");
+    return <HostedListSummary
+      label={t("Versions")}
+      // with no release the card is one column of words, as the board draws an empty summary
+      spread={card === "empty"}
+      lead={<>
+        <span className="hosted-summary-key">{t("Unreleased")}</span>
+        {card === "loading" ? <HostedListSummaryLoadingLine caption={loading}/>
+          : card === "empty" ? <><span className="hosted-summary-value">{line}</span>{none && <span className="hosted-caption ellipsis">{t("{0} has no releases.", source.target?.path ?? "")}</span>}</>
+          : <span className="hosted-caption ellipsis">{line}</span>}
+      </>}
+      middle={card === "loading" ? <HostedListSummaryBars/> : null}
+      trail={card === "loading" ? <HostedListSummaryBar/> : null}
+      strip={<>
+        {card === "loading" ? <Spinner size={14}/> : <Tag size={14}/>}
+        <span className="hosted-caption" style={{ flex: "none" }}>{t("Unreleased")}</span>
+        {card === "loading" ? <span className="hosted-caption ellipsis">{loading}</span> : <span className="hosted-strip-text">{line}</span>}
+        <span className="spacer"/>
+      </>}
+    />;
+  }
   const tag = releaseTag(latest), value = !source.path ? nothing : distances?.key === key ? distances.value : null;
   const unknown = !!value && value.ahead == null;
   const atLast = value?.ahead === 0 && value.behind === 0;
