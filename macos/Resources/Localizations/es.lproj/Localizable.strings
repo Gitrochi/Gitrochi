@@ -2718,3 +2718,16 @@
 "Retry above" = "Reintenta arriba";
 "Couldn't check the push destination" = "No se pudo comprobar el destino del push";
 "Needs approval" = "Requiere aprobación";
+"Commands" = "Comandos";
+"Copy current folder" = "Copiar carpeta actual";
+"Exited" = "Finalizado";
+"Folder path copied" = "Ruta de la carpeta copiada";
+"Insert command" = "Insertar comando";
+"Insert, then Return" = "Insertar y luego Return";
+"New output" = "Nueva salida";
+"Next terminal with new output" = "Siguiente terminal con nueva salida";
+"Terminal actions" = "Acciones del terminal";
+"%lld new" = "%lld nuevos";
+"Idle" = "Inactivo";
+"Terminals" = "Terminales";
+"%lld more terminals" = "%lld terminales más";

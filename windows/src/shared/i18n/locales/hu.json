@@ -2720,5 +2720,19 @@
   "Retry above": "Próbálja újra fent",
   "Couldn't check the push destination": "Nem sikerült ellenőrizni a push célját",
   "Couldn't read the saved account credentials": "Nem sikerült beolvasni a mentett fiók hitelesítő adatait",
-  "Unlock your credentials, then retry.": "Oldja fel a hitelesítő adatokat, majd próbálja újra."
+  "Unlock your credentials, then retry.": "Oldja fel a hitelesítő adatokat, majd próbálja újra.",
+  "Commands": "Parancsok",
+  "Copy current folder": "Aktuális mappa másolása",
+  "Exited": "Kilépett",
+  "Folder path copied": "Mappa útvonala másolva",
+  "Insert command": "Parancs beszúrása",
+  "Insert, then Enter": "Beszúrás, majd Enter",
+  "New output": "Új kimenet",
+  "Next terminal with new output": "Következő terminál új kimenettel",
+  "Terminal actions": "Terminálműveletek",
+  "{0} new": "{0} új",
+  "Idle": "Tétlen",
+  "Terminals": "Terminálok",
+  "{0} more terminals": "További {0} terminál",
+  "CI": "CI"
 }

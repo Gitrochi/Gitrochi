@@ -3450,3 +3450,16 @@
 "Retry above" = "上で再試行してください";
 "Couldn't check the push destination" = "Push 先を確認できませんでした";
 "Needs approval" = "承認が必要";
+"Commands" = "コマンド";
+"Copy current folder" = "現在のフォルダをコピー";
+"Exited" = "終了";
+"Folder path copied" = "フォルダのパスをコピーしました";
+"Insert command" = "コマンドを挿入";
+"Insert, then Return" = "挿入後、Return で実行";
+"New output" = "新しい出力";
+"Next terminal with new output" = "新しい出力のある次のターミナル";
+"Terminal actions" = "ターミナルの操作";
+"%lld new" = "新着 %lld 件";
+"Idle" = "待機中";
+"Terminals" = "ターミナル";
+"%lld more terminals" = "ほか %lld 個のターミナル";

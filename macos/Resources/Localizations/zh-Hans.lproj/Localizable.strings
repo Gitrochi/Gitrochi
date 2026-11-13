@@ -2827,3 +2827,16 @@
 "Retry above" = "请在上方重试";
 "Couldn't check the push destination" = "无法检查推送目标";
 "Needs approval" = "需要批准";
+"Commands" = "命令";
+"Copy current folder" = "复制当前文件夹";
+"Exited" = "已退出";
+"Folder path copied" = "已复制文件夹路径";
+"Insert command" = "插入命令";
+"Insert, then Return" = "插入后按 Return 执行";
+"New output" = "新输出";
+"Next terminal with new output" = "下一个有新输出的终端";
+"Terminal actions" = "终端操作";
+"%lld new" = "%lld 个新输出";
+"Idle" = "空闲";
+"Terminals" = "终端";
+"%lld more terminals" = "另外 %lld 个终端";

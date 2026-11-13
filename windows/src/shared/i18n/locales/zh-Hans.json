@@ -2870,5 +2870,19 @@
   "Retry above": "请在上方重试",
   "Couldn't check the push destination": "无法检查推送目标",
   "Couldn't read the saved account credentials": "无法读取已保存的账户凭据",
-  "Unlock your credentials, then retry.": "请解锁凭据后重试。"
+  "Unlock your credentials, then retry.": "请解锁凭据后重试。",
+  "Commands": "命令",
+  "Copy current folder": "复制当前文件夹",
+  "Exited": "已退出",
+  "Folder path copied": "已复制文件夹路径",
+  "Insert command": "插入命令",
+  "Insert, then Enter": "插入后按 Enter 执行",
+  "New output": "新输出",
+  "Next terminal with new output": "下一个有新输出的终端",
+  "Terminal actions": "终端操作",
+  "{0} new": "{0} 个新输出",
+  "Idle": "空闲",
+  "Terminals": "终端",
+  "{0} more terminals": "另外 {0} 个终端",
+  "CI": "CI"
 }

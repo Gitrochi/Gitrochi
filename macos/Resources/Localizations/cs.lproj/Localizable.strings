@@ -2666,3 +2666,16 @@
 "Retry above" = "Zkuste to znovu výše";
 "Couldn't check the push destination" = "Cíl odeslání se nepodařilo zkontrolovat";
 "Needs approval" = "Vyžaduje schválení";
+"Commands" = "Příkazy";
+"Copy current folder" = "Kopírovat aktuální složku";
+"Exited" = "Ukončeno";
+"Folder path copied" = "Cesta ke složce zkopírována";
+"Insert command" = "Vložit příkaz";
+"Insert, then Return" = "Vložit, pak Return";
+"New output" = "Nový výstup";
+"Next terminal with new output" = "Další terminál s novým výstupem";
+"Terminal actions" = "Akce terminálu";
+"%lld new" = "%lld nových";
+"Idle" = "Nečinný";
+"Terminals" = "Terminály";
+"%lld more terminals" = "Další terminály: %lld";

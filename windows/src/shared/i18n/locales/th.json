@@ -2730,5 +2730,19 @@
   "Retry above": "ลองอีกครั้งด้านบน",
   "Couldn't check the push destination": "ตรวจปลายทาง push ไม่ได้",
   "Couldn't read the saved account credentials": "อ่านข้อมูลรับรองของบัญชีที่บันทึกไว้ไม่ได้",
-  "Unlock your credentials, then retry.": "ปลดล็อกข้อมูลรับรอง แล้วลองอีกครั้ง"
+  "Unlock your credentials, then retry.": "ปลดล็อกข้อมูลรับรอง แล้วลองอีกครั้ง",
+  "Commands": "คำสั่ง",
+  "Copy current folder": "คัดลอกโฟลเดอร์ปัจจุบัน",
+  "Exited": "จบการทำงานแล้ว",
+  "Folder path copied": "คัดลอกพาธโฟลเดอร์แล้ว",
+  "Insert command": "แทรกคำสั่ง",
+  "Insert, then Enter": "แทรก แล้วกด Enter",
+  "New output": "เอาต์พุตใหม่",
+  "Next terminal with new output": "เทอร์มินัลถัดไปที่มีเอาต์พุตใหม่",
+  "Terminal actions": "การทำงานของเทอร์มินัล",
+  "{0} new": "ใหม่ {0}",
+  "Idle": "ว่าง",
+  "Terminals": "เทอร์มินัล",
+  "{0} more terminals": "เทอร์มินัลอีก {0} รายการ",
+  "CI": "CI"
 }

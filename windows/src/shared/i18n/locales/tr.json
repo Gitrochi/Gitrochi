@@ -2723,5 +2723,19 @@
   "Retry above": "Yukarıdan yeniden deneyin",
   "Couldn't check the push destination": "Push hedefi denetlenemedi",
   "Couldn't read the saved account credentials": "Kayıtlı hesap kimlik bilgileri okunamadı",
-  "Unlock your credentials, then retry.": "Kimlik bilgilerinizin kilidini açıp yeniden deneyin."
+  "Unlock your credentials, then retry.": "Kimlik bilgilerinizin kilidini açıp yeniden deneyin.",
+  "Commands": "Komutlar",
+  "Copy current folder": "Geçerli klasörü kopyala",
+  "Exited": "Çıkıldı",
+  "Folder path copied": "Klasör yolu kopyalandı",
+  "Insert command": "Komut ekle",
+  "Insert, then Enter": "Ekle, sonra Enter",
+  "New output": "Yeni çıktı",
+  "Next terminal with new output": "Yeni çıktısı olan sonraki terminal",
+  "Terminal actions": "Terminal eylemleri",
+  "{0} new": "{0} yeni",
+  "Idle": "Boşta",
+  "Terminals": "Terminaller",
+  "{0} more terminals": "{0} terminal daha",
+  "CI": "CI"
 }

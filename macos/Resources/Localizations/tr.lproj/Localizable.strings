@@ -2671,3 +2671,16 @@
 "Retry above" = "Yukarıdan yeniden deneyin";
 "Couldn't check the push destination" = "Push hedefi denetlenemedi";
 "Needs approval" = "Onay gerekiyor";
+"Commands" = "Komutlar";
+"Copy current folder" = "Geçerli klasörü kopyala";
+"Exited" = "Çıkıldı";
+"Folder path copied" = "Klasör yolu kopyalandı";
+"Insert command" = "Komut ekle";
+"Insert, then Return" = "Ekle, sonra Return";
+"New output" = "Yeni çıktı";
+"Next terminal with new output" = "Yeni çıktısı olan sonraki terminal";
+"Terminal actions" = "Terminal eylemleri";
+"%lld new" = "%lld yeni";
+"Idle" = "Boşta";
+"Terminals" = "Terminaller";
+"%lld more terminals" = "%lld terminal daha";

@@ -2684,3 +2684,16 @@
 "Retry above" = "Повторіть спробу вище";
 "Couldn't check the push destination" = "Не вдалося перевірити призначення push";
 "Needs approval" = "Потрібне схвалення";
+"Commands" = "Команди";
+"Copy current folder" = "Скопіювати поточну папку";
+"Exited" = "Завершено";
+"Folder path copied" = "Шлях до папки скопійовано";
+"Insert command" = "Вставити команду";
+"Insert, then Return" = "Вставити, потім Return";
+"New output" = "Новий вивід";
+"Next terminal with new output" = "Наступний термінал із новим виводом";
+"Terminal actions" = "Дії термінала";
+"%lld new" = "Нових: %lld";
+"Idle" = "Бездіяльний";
+"Terminals" = "Термінали";
+"%lld more terminals" = "Ще терміналів: %lld";

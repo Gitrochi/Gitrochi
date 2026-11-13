@@ -2671,3 +2671,16 @@
 "Retry above" = "Oben erneut versuchen";
 "Couldn't check the push destination" = "Push-Ziel konnte nicht geprüft werden";
 "Needs approval" = "Freigabe nötig";
+"Commands" = "Befehle";
+"Copy current folder" = "Aktuellen Ordner kopieren";
+"Exited" = "Beendet";
+"Folder path copied" = "Ordnerpfad kopiert";
+"Insert command" = "Befehl einfügen";
+"Insert, then Return" = "Einfügen, dann Return";
+"New output" = "Neue Ausgabe";
+"Next terminal with new output" = "Nächstes Terminal mit neuer Ausgabe";
+"Terminal actions" = "Terminalaktionen";
+"%lld new" = "%lld neu";
+"Idle" = "Leerlauf";
+"Terminals" = "Terminals";
+"%lld more terminals" = "%lld weitere Terminals";

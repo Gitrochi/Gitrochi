@@ -2689,3 +2689,16 @@
 "Retry above" = "請在上方重試";
 "Couldn't check the push destination" = "無法檢查推送目標";
 "Needs approval" = "需要核准";
+"Commands" = "指令";
+"Copy current folder" = "複製目前的資料夾";
+"Exited" = "已結束";
+"Folder path copied" = "已複製資料夾路徑";
+"Insert command" = "插入指令";
+"Insert, then Return" = "插入後按 Return 執行";
+"New output" = "新輸出";
+"Next terminal with new output" = "下一個有新輸出的終端機";
+"Terminal actions" = "終端機操作";
+"%lld new" = "%lld 個新輸出";
+"Idle" = "閒置";
+"Terminals" = "終端機";
+"%lld more terminals" = "另外 %lld 個終端機";

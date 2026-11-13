@@ -2645,3 +2645,16 @@
 "Retry above" = "Thử lại ở trên";
 "Couldn't check the push destination" = "Không thể kiểm tra đích push";
 "Needs approval" = "Cần phê duyệt";
+"Commands" = "Lệnh";
+"Copy current folder" = "Sao chép thư mục hiện tại";
+"Exited" = "Đã thoát";
+"Folder path copied" = "Đã sao chép đường dẫn thư mục";
+"Insert command" = "Chèn lệnh";
+"Insert, then Return" = "Chèn, rồi nhấn Return";
+"New output" = "Đầu ra mới";
+"Next terminal with new output" = "Terminal tiếp theo có đầu ra mới";
+"Terminal actions" = "Thao tác terminal";
+"%lld new" = "%lld mới";
+"Idle" = "Rảnh";
+"Terminals" = "Terminal";
+"%lld more terminals" = "Thêm %lld terminal";

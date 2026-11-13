@@ -2735,5 +2735,19 @@
   "Retry above": "Повторите попытку выше",
   "Couldn't check the push destination": "Не удалось проверить назначение push",
   "Couldn't read the saved account credentials": "Не удалось прочитать сохранённые учётные данные",
-  "Unlock your credentials, then retry.": "Разблокируйте учётные данные и повторите попытку."
+  "Unlock your credentials, then retry.": "Разблокируйте учётные данные и повторите попытку.",
+  "Commands": "Команды",
+  "Copy current folder": "Скопировать текущую папку",
+  "Exited": "Завершён",
+  "Folder path copied": "Путь к папке скопирован",
+  "Insert command": "Вставить команду",
+  "Insert, then Enter": "Вставить, затем Enter",
+  "New output": "Новый вывод",
+  "Next terminal with new output": "Следующий терминал с новым выводом",
+  "Terminal actions": "Действия терминала",
+  "{0} new": "Новых: {0}",
+  "Idle": "Бездействует",
+  "Terminals": "Терминалы",
+  "{0} more terminals": "Ещё терминалов: {0}",
+  "CI": "CI"
 }

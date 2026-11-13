@@ -2718,5 +2718,19 @@
   "Retry above": "Zkuste to znovu výše",
   "Couldn't check the push destination": "Cíl odeslání se nepodařilo zkontrolovat",
   "Couldn't read the saved account credentials": "Uložené přihlašovací údaje účtu se nepodařilo přečíst",
-  "Unlock your credentials, then retry.": "Odemkněte přihlašovací údaje a zkuste to znovu."
+  "Unlock your credentials, then retry.": "Odemkněte přihlašovací údaje a zkuste to znovu.",
+  "Commands": "Příkazy",
+  "Copy current folder": "Kopírovat aktuální složku",
+  "Exited": "Ukončeno",
+  "Folder path copied": "Cesta ke složce zkopírována",
+  "Insert command": "Vložit příkaz",
+  "Insert, then Enter": "Vložit, pak Enter",
+  "New output": "Nový výstup",
+  "Next terminal with new output": "Další terminál s novým výstupem",
+  "Terminal actions": "Akce terminálu",
+  "{0} new": "{0} nových",
+  "Idle": "Nečinný",
+  "Terminals": "Terminály",
+  "{0} more terminals": "Další terminály: {0}",
+  "CI": "CI"
 }

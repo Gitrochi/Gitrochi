@@ -44,6 +44,7 @@ import { ledgerHubSelfTest } from "./lib/ledger-hub-selftest";
 import { compactNavigationSelfTest } from "./lib/compact-navigation-selftest";
 import { inspectorLayoutSelfTest } from "./lib/inspector-layout-selftest";
 import { inspectorVisibilitySelfTest } from "./lib/inspector-visibility-selftest";
+import { terminalPanelSelfTest } from "./lib/terminal-panel-selftest";
 import { changesPerformanceSelfTest } from "./lib/changes-performance-selftest";
 import { localWorkbenchSelfTest } from "./lib/local-workbench-selftest";
 import { localPlannerSelfTest } from "./lib/local-planner-selftest";
@@ -295,6 +296,7 @@ export async function runSelfTest(): Promise<boolean> {
   await step("Ledger team hub sharing: off by default, what is shared, unchanged bodies, overlap pill and withdrawal", ledgerHubSelfTest);
   await step("좁은 커밋 상세의 긴 브랜치·작성자·부모 커밋 배치", inspectorLayoutSelfTest);
   await step("Close and reopen the right panel with retained width and view state", inspectorVisibilitySelfTest);
+  await step("Terminal panel docked under the centre column: status marks by shape, narrow folding and terminals kept through layout changes", terminalPanelSelfTest);
   await step("변경 1000개의 빠른 진입·마지막 파일 선택·트리 접기", changesPerformanceSelfTest);
   await step("Shared pane heights remain stable after content grows and shrinks", sharedStackSelfTest);
   await step("Failure and notice blocks keep their one form, and a disabled button says why", noticeBlockSelfTest);

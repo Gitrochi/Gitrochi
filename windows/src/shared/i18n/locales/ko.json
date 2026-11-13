@@ -4689,5 +4689,19 @@
   "Retry above": "위에서 다시 시도하세요",
   "Couldn't check the push destination": "Push 대상을 확인하지 못했습니다",
   "Couldn't read the saved account credentials": "저장된 계정 자격 증명을 읽지 못했습니다",
-  "Unlock your credentials, then retry.": "자격 증명 잠금을 해제한 뒤 다시 시도하세요."
+  "Unlock your credentials, then retry.": "자격 증명 잠금을 해제한 뒤 다시 시도하세요.",
+  "Commands": "명령",
+  "Copy current folder": "현재 폴더 경로 복사",
+  "Exited": "종료됨",
+  "Folder path copied": "폴더 경로를 복사했습니다",
+  "Insert command": "명령 입력",
+  "Insert, then Enter": "입력 후 Enter로 실행",
+  "New output": "새 출력",
+  "Next terminal with new output": "새 출력이 있는 터미널로 이동",
+  "Terminal actions": "터미널 작업",
+  "{0} new": "새 출력 {0}개",
+  "Idle": "대기 중",
+  "Terminals": "터미널",
+  "{0} more terminals": "터미널 {0}개 더",
+  "CI": "CI"
 }

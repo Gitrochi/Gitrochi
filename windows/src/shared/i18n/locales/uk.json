@@ -2735,5 +2735,19 @@
   "Retry above": "Повторіть спробу вище",
   "Couldn't check the push destination": "Не вдалося перевірити призначення push",
   "Couldn't read the saved account credentials": "Не вдалося прочитати збережені облікові дані",
-  "Unlock your credentials, then retry.": "Розблокуйте облікові дані й повторіть спробу."
+  "Unlock your credentials, then retry.": "Розблокуйте облікові дані й повторіть спробу.",
+  "Commands": "Команди",
+  "Copy current folder": "Скопіювати поточну папку",
+  "Exited": "Завершено",
+  "Folder path copied": "Шлях до папки скопійовано",
+  "Insert command": "Вставити команду",
+  "Insert, then Enter": "Вставити, потім Enter",
+  "New output": "Новий вивід",
+  "Next terminal with new output": "Наступний термінал із новим виводом",
+  "Terminal actions": "Дії термінала",
+  "{0} new": "Нових: {0}",
+  "Idle": "Бездіяльний",
+  "Terminals": "Термінали",
+  "{0} more terminals": "Ще терміналів: {0}",
+  "CI": "CI"
 }

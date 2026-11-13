@@ -54,7 +54,8 @@ private struct SplitHandle: View {
 }
 
 /// The terminal panel: panes split right or down, each with its own tabs. Its top edge drags to resize it, and every
-/// page shares the height. (Windows: widgets/terminal-panel/ui/TerminalPanel.tsx)
+/// page shares the height. It docks under the centre column only: the sidebar and the right panel keep the full window
+/// height (docs/design.md › App shell). (Windows: widgets/terminal-panel/ui/TerminalPanel.tsx)
 struct TerminalPanel: View {
     @Environment(RepoStore.self) private var store
     @AppStorage("terminalHeight") private var terminalHeight = 260.0
@@ -67,7 +68,6 @@ struct TerminalPanel: View {
             Divider()
             if let layout = store.terminalLayout {
                 TerminalNodeView(node: layout, corner: layout.corner.id, split: layout.panes.count > 1)
-                    .padding(8)
             }
         }
         .background(Color(nsColor: .windowBackgroundColor))
@@ -162,7 +162,8 @@ private struct TerminalSplitLayout: Layout {
 private struct TerminalPaneView: View {
     @Environment(RepoStore.self) private var store
     @AppStorage("terminalFontSize") private var fontSize = 13.0
-    @ViewState private var paneHeight: CGFloat = 260
+    /// The bar, the rail and the status line fold by the pane's own size, so a split pane folds before the panel does
+    @ViewState private var paneSize = CGSize(width: 800, height: 260)
     let pane: TerminalNode.Pane
     let isCorner: Bool
     let split: Bool
@@ -171,7 +172,7 @@ private struct TerminalPaneView: View {
         let shown = store.shownTerminal(in: pane)
         let focused = shown != nil && shown?.id == store.activeTerminal?.id
         VStack(spacing: 0) {
-            header(shown)
+            tabBar(shown, focused: !split || focused)
             Divider()
             ZStack {
                 Color(nsColor: TerminalSession.background)
@@ -183,16 +184,17 @@ private struct TerminalPaneView: View {
                     if !session.running { ended(session, focused: focused) }
                 }
             }
-            if paneHeight >= 200 {
-                TerminalQuickActions(enabled: shown?.running == true) { command in
+            if TerminalPanelLayout.railShown(height: paneSize.height) {
+                TerminalQuickActions(enabled: shown?.running == true, width: paneSize.width) { command in
                     insert(command.command, into: shown)
                 }
             }
             if let session = shown {
-                TerminalStatusBar(directory: session.directory, running: session.running,
+                TerminalStatusBar(directory: session.directory, activity: session.tabStatus.activity,
                                   program: session.command?.title ?? URL(fileURLWithPath: TerminalSession.loginShell).lastPathComponent,
                                   branch: session.directory == store.url?.path ? store.currentBranch?.name : nil,
                                   unseenCount: store.terminals.filter(\.unseenOutput).count,
+                                  width: paneSize.width,
                                   copyDirectory: {
                                       NSPasteboard.general.clearContents()
                                       NSPasteboard.general.setString(session.directory, forType: .string)
@@ -202,67 +204,25 @@ private struct TerminalPaneView: View {
             }
         }
         .background(Color(nsColor: .controlBackgroundColor))
-        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .strokeBorder(split && focused ? Color.primary.opacity(0.3) : Color.primary.opacity(0.12))
-                .allowsHitTesting(false)
-        }
-        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { paneHeight = $0 }
-
+        .onGeometryChange(for: CGSize.self) { $0.size } action: { paneSize = $0 }
     }
 
-    private func header(_ shown: TerminalSession?) -> some View {
-        ViewThatFits(in: .horizontal) {
-            headerContents(shown, style: 0)
-            headerContents(shown, style: 1)
-            headerContents(shown, style: 2)
+    private func tabBar(_ shown: TerminalSession?, focused: Bool) -> some View {
+        let session = { (id: UUID) in store.terminals.first { $0.id == id } }
+        let tabs = pane.sessions.compactMap(session).map { session in
+            let status = session.tabStatus
+            return TerminalTabItem(id: session.id, title: session.title, directory: session.directory,
+                                   number: store.terminals.count > 1 ? (store.terminals.firstIndex { $0.id == session.id } ?? 0) + 1 : nil,
+                                   mark: status.mark, state: status.title)
         }
-        .padding(.horizontal, 10)
-        .frame(height: 42)
-        .background(Color(nsColor: .controlBackgroundColor))
-    }
-
-    private func headerContents(_ shown: TerminalSession?, style: Int) -> some View {
-        HStack(spacing: 8) {
-            TerminalBrand(compact: style != 0)
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 4) {
-                    ForEach(pane.sessions, id: \.self) { id in
-                        if let session = store.terminals.first(where: { $0.id == id }) {
-                            TerminalSessionTab(title: session.title, directory: session.directory,
-                                               number: store.terminals.count > 1 ? (store.terminals.firstIndex { $0.id == id } ?? 0) + 1 : nil,
-                                               running: session.running, unseenOutput: session.unseenOutput,
-                                               selected: session.id == shown?.id,
-                                               select: { store.selectTerminal(session) },
-                                               close: { store.requestCloseTerminal(session) })
-                        }
-                    }
-                }
-            }
-            .frame(minWidth: style == 0 ? 200 : style == 1 ? 60 : 40,
-                   idealWidth: style == 0 ? 200 : style == 1 ? 60 : 40)
-            if style < 2 {
-                TerminalToolbarButton(symbol: "plus", label: "New terminal") { newTerminal(at: shown) }
-                TerminalToolbarButton(symbol: "mic", label: "Voice input", selected: store.terminalVoice.presented && store.terminalVoice.context?.sessionID == shown?.id) {
-                    openDictation(for: shown)
-                }
-                .disabled(shown?.running != true)
-            }
-            actions(shown, compact: style == 2)
-            if isCorner && style < 2 {
-                TerminalToolbarButton(symbol: "chevron.down", label: "Hide terminal") { store.showTerminal = false }
-            }
-        }
-    }
-
-    private func actions(_ shown: TerminalSession?, compact: Bool) -> some View {
-        Menu {
-            if compact {
-                Button("New terminal", symbol: "plus") { newTerminal(at: shown) }
-                Button("Voice input", symbol: "mic") { openDictation(for: shown) }
-                    .disabled(shown?.running != true)
-            }
+        return TerminalTabBar(tabs: tabs, selected: shown?.id, focused: focused, width: paneSize.width, corner: isCorner,
+                              voiceOn: store.terminalVoice.presented && store.terminalVoice.context?.sessionID == shown?.id,
+                              voiceEnabled: shown?.running == true,
+                              select: { if let s = session($0) { store.selectTerminal(s) } },
+                              close: { if let s = session($0) { store.requestCloseTerminal(s) } },
+                              newTerminal: { newTerminal(at: shown) },
+                              voice: { openDictation(for: shown) },
+                              hide: { store.showTerminal = false }) {
             Section("Insert command") {
                 ForEach(TerminalQuickCommand.allCases) { command in
                     Button { insert(command.command, into: shown) } label: { Text(command.title) }
@@ -275,20 +235,9 @@ private struct TerminalPaneView: View {
                 if let shown {
                     Button("Open in Terminal", symbol: "arrow.up.forward.app") { Launcher.openTerminal(at: shown.directory) }
                 }
-                if compact && isCorner {
-                    Button("Hide terminal", symbol: "chevron.down") { store.showTerminal = false }
-                }
             }
-        } label: {
-            DesignIconImage(icon: .more)
-                .font(.system(size: 12, weight: .semibold))
-                .frame(width: 26, height: 26)
         }
-        .menuStyle(.borderlessButton)
-        .menuIndicator(.hidden)
-        .fixedSize()
-        .help("Terminal actions")
-        .accessibilityLabel("Terminal actions")
+        .background(Color(nsColor: .controlBackgroundColor))
     }
 
     private func newTerminal(at session: TerminalSession?) {
@@ -412,5 +361,21 @@ private final class TerminalContainer: NSView {
                 w.makeFirstResponder(s.view)
             }
         }
+    }
+}
+
+extension TerminalSession {
+    /// What the tab's status slot and the status line show for this terminal (Windows: tabStatus in TerminalTabBar.tsx)
+    var tabStatus: (mark: TerminalTabMark, activity: TerminalActivity, title: String) {
+        let state = TerminalPanelLayout.tabActivity(agent: AgentCenter.shared.status(in: self)?.rawValue, shellBusy: busy)
+        let mark = TerminalPanelLayout.tabMark(exited: !running, busy: state.busy, unseen: unseenOutput, waiting: state.waiting)
+        let title: String
+        switch mark {
+        case .ring: title = String(localized: "Running")
+        case .hollow: title = String(localized: "Exited")
+        case .dot: title = state.waiting ? String(localized: "Waiting for input") : String(localized: "New output")
+        case .none: title = String(localized: "Idle")
+        }
+        return (mark, TerminalPanelLayout.activity(exited: !running, busy: state.busy), title)
     }
 }

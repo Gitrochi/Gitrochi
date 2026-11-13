@@ -2640,3 +2640,16 @@
 "Retry above" = "Coba lagi di atas";
 "Couldn't check the push destination" = "Tidak dapat memeriksa tujuan push";
 "Needs approval" = "Perlu persetujuan";
+"Commands" = "Perintah";
+"Copy current folder" = "Salin folder saat ini";
+"Exited" = "Selesai";
+"Folder path copied" = "Jalur folder disalin";
+"Insert command" = "Sisipkan perintah";
+"Insert, then Return" = "Sisipkan, lalu Return";
+"New output" = "Output baru";
+"Next terminal with new output" = "Terminal berikutnya dengan output baru";
+"Terminal actions" = "Tindakan terminal";
+"%lld new" = "%lld baru";
+"Idle" = "Diam";
+"Terminals" = "Terminal";
+"%lld more terminals" = "%lld terminal lainnya";

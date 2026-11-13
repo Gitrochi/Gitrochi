@@ -2632,3 +2632,16 @@
 "Retry above" = "Probeer het hierboven opnieuw";
 "Couldn't check the push destination" = "Pushbestemming kan niet worden gecontroleerd";
 "Needs approval" = "Goedkeuring nodig";
+"Commands" = "Opdrachten";
+"Copy current folder" = "Huidige map kopiëren";
+"Exited" = "Beëindigd";
+"Folder path copied" = "Mappad gekopieerd";
+"Insert command" = "Opdracht invoegen";
+"Insert, then Return" = "Invoegen, dan Return";
+"New output" = "Nieuwe uitvoer";
+"Next terminal with new output" = "Volgende terminal met nieuwe uitvoer";
+"Terminal actions" = "Terminalacties";
+"%lld new" = "%lld nieuw";
+"Idle" = "Inactief";
+"Terminals" = "Terminals";
+"%lld more terminals" = "Nog %lld terminals";

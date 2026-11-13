@@ -3528,5 +3528,19 @@
   "Retry above": "上で再試行してください",
   "Couldn't check the push destination": "Push 先を確認できませんでした",
   "Couldn't read the saved account credentials": "保存されたアカウントの資格情報を読み取れませんでした",
-  "Unlock your credentials, then retry.": "資格情報のロックを解除してから再試行してください。"
+  "Unlock your credentials, then retry.": "資格情報のロックを解除してから再試行してください。",
+  "Commands": "コマンド",
+  "Copy current folder": "現在のフォルダをコピー",
+  "Exited": "終了",
+  "Folder path copied": "フォルダのパスをコピーしました",
+  "Insert command": "コマンドを挿入",
+  "Insert, then Enter": "挿入後、Enter で実行",
+  "New output": "新しい出力",
+  "Next terminal with new output": "新しい出力のある次のターミナル",
+  "Terminal actions": "ターミナルの操作",
+  "{0} new": "新着 {0} 件",
+  "Idle": "待機中",
+  "Terminals": "ターミナル",
+  "{0} more terminals": "ほか {0} 個のターミナル",
+  "CI": "CI"
 }

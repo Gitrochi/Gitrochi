@@ -2740,5 +2740,19 @@
   "Retry above": "請在上方重試",
   "Couldn't check the push destination": "無法檢查推送目標",
   "Couldn't read the saved account credentials": "無法讀取已儲存的帳號憑證",
-  "Unlock your credentials, then retry.": "請解鎖憑證後重試。"
+  "Unlock your credentials, then retry.": "請解鎖憑證後重試。",
+  "Commands": "指令",
+  "Copy current folder": "複製目前的資料夾",
+  "Exited": "已結束",
+  "Folder path copied": "已複製資料夾路徑",
+  "Insert command": "插入指令",
+  "Insert, then Enter": "插入後按 Enter 執行",
+  "New output": "新輸出",
+  "Next terminal with new output": "下一個有新輸出的終端機",
+  "Terminal actions": "終端機操作",
+  "{0} new": "{0} 個新輸出",
+  "Idle": "閒置",
+  "Terminals": "終端機",
+  "{0} more terminals": "另外 {0} 個終端機",
+  "CI": "CI"
 }

@@ -2690,5 +2690,19 @@
   "Retry above": "Probeer het hierboven opnieuw",
   "Couldn't check the push destination": "Pushbestemming kan niet worden gecontroleerd",
   "Couldn't read the saved account credentials": "Opgeslagen accountgegevens kunnen niet worden gelezen",
-  "Unlock your credentials, then retry.": "Ontgrendel je inloggegevens en probeer het opnieuw."
+  "Unlock your credentials, then retry.": "Ontgrendel je inloggegevens en probeer het opnieuw.",
+  "Commands": "Opdrachten",
+  "Copy current folder": "Huidige map kopiëren",
+  "Exited": "Beëindigd",
+  "Folder path copied": "Mappad gekopieerd",
+  "Insert command": "Opdracht invoegen",
+  "Insert, then Enter": "Invoegen, dan Enter",
+  "New output": "Nieuwe uitvoer",
+  "Next terminal with new output": "Volgende terminal met nieuwe uitvoer",
+  "Terminal actions": "Terminalacties",
+  "{0} new": "{0} nieuw",
+  "Idle": "Inactief",
+  "Terminals": "Terminals",
+  "{0} more terminals": "Nog {0} terminals",
+  "CI": "CI"
 }

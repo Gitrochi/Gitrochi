@@ -2692,5 +2692,19 @@
   "Retry above": "Thử lại ở trên",
   "Couldn't check the push destination": "Không thể kiểm tra đích push",
   "Couldn't read the saved account credentials": "Không thể đọc thông tin xác thực tài khoản đã lưu",
-  "Unlock your credentials, then retry.": "Hãy mở khóa thông tin xác thực rồi thử lại."
+  "Unlock your credentials, then retry.": "Hãy mở khóa thông tin xác thực rồi thử lại.",
+  "Commands": "Lệnh",
+  "Copy current folder": "Sao chép thư mục hiện tại",
+  "Exited": "Đã thoát",
+  "Folder path copied": "Đã sao chép đường dẫn thư mục",
+  "Insert command": "Chèn lệnh",
+  "Insert, then Enter": "Chèn, rồi nhấn Enter",
+  "New output": "Đầu ra mới",
+  "Next terminal with new output": "Terminal tiếp theo có đầu ra mới",
+  "Terminal actions": "Thao tác terminal",
+  "{0} new": "{0} mới",
+  "Idle": "Rảnh",
+  "Terminals": "Terminal",
+  "{0} more terminals": "Thêm {0} terminal",
+  "CI": "CI"
 }

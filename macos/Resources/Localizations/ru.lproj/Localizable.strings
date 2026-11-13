@@ -2684,3 +2684,16 @@
 "Retry above" = "Повторите попытку выше";
 "Couldn't check the push destination" = "Не удалось проверить назначение push";
 "Needs approval" = "Требуется одобрение";
+"Commands" = "Команды";
+"Copy current folder" = "Скопировать текущую папку";
+"Exited" = "Завершён";
+"Folder path copied" = "Путь к папке скопирован";
+"Insert command" = "Вставить команду";
+"Insert, then Return" = "Вставить, затем Return";
+"New output" = "Новый вывод";
+"Next terminal with new output" = "Следующий терминал с новым выводом";
+"Terminal actions" = "Действия терминала";
+"%lld new" = "Новых: %lld";
+"Idle" = "Бездействует";
+"Terminals" = "Терминалы";
+"%lld more terminals" = "Ещё терминалов: %lld";

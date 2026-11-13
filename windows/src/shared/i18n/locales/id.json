@@ -2690,5 +2690,19 @@
   "Retry above": "Coba lagi di atas",
   "Couldn't check the push destination": "Tidak dapat memeriksa tujuan push",
   "Couldn't read the saved account credentials": "Tidak dapat membaca kredensial akun yang disimpan",
-  "Unlock your credentials, then retry.": "Buka kunci kredensial Anda, lalu coba lagi."
+  "Unlock your credentials, then retry.": "Buka kunci kredensial Anda, lalu coba lagi.",
+  "Commands": "Perintah",
+  "Copy current folder": "Salin folder saat ini",
+  "Exited": "Selesai",
+  "Folder path copied": "Jalur folder disalin",
+  "Insert command": "Sisipkan perintah",
+  "Insert, then Enter": "Sisipkan, lalu Enter",
+  "New output": "Output baru",
+  "Next terminal with new output": "Terminal berikutnya dengan output baru",
+  "Terminal actions": "Tindakan terminal",
+  "{0} new": "{0} baru",
+  "Idle": "Diam",
+  "Terminals": "Terminal",
+  "{0} more terminals": "{0} terminal lainnya",
+  "CI": "CI"
 }

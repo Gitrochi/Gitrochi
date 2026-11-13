@@ -2719,5 +2719,19 @@
   "Retry above": "Ponów powyżej",
   "Couldn't check the push destination": "Nie udało się sprawdzić miejsca docelowego push",
   "Couldn't read the saved account credentials": "Nie udało się odczytać zapisanych danych logowania konta",
-  "Unlock your credentials, then retry.": "Odblokuj dane logowania i ponów próbę."
+  "Unlock your credentials, then retry.": "Odblokuj dane logowania i ponów próbę.",
+  "Commands": "Polecenia",
+  "Copy current folder": "Kopiuj bieżący folder",
+  "Exited": "Zakończono",
+  "Folder path copied": "Skopiowano ścieżkę folderu",
+  "Insert command": "Wstaw polecenie",
+  "Insert, then Enter": "Wstaw, potem Enter",
+  "New output": "Nowe dane wyjściowe",
+  "Next terminal with new output": "Następny terminal z nowymi danymi wyjściowymi",
+  "Terminal actions": "Akcje terminala",
+  "{0} new": "Nowe: {0}",
+  "Idle": "Bezczynny",
+  "Terminals": "Terminale",
+  "{0} more terminals": "Więcej terminali: {0}",
+  "CI": "CI"
 }

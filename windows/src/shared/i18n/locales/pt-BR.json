@@ -2706,5 +2706,19 @@
   "Retry above": "Tente novamente acima",
   "Couldn't check the push destination": "Não foi possível verificar o destino do push",
   "Couldn't read the saved account credentials": "Não foi possível ler as credenciais da conta salva",
-  "Unlock your credentials, then retry.": "Desbloqueie suas credenciais e tente novamente."
+  "Unlock your credentials, then retry.": "Desbloqueie suas credenciais e tente novamente.",
+  "Commands": "Comandos",
+  "Copy current folder": "Copiar pasta atual",
+  "Exited": "Encerrado",
+  "Folder path copied": "Caminho da pasta copiado",
+  "Insert command": "Inserir comando",
+  "Insert, then Enter": "Inserir e depois Enter",
+  "New output": "Nova saída",
+  "Next terminal with new output": "Próximo terminal com nova saída",
+  "Terminal actions": "Ações do terminal",
+  "{0} new": "{0} novos",
+  "Idle": "Ocioso",
+  "Terminals": "Terminais",
+  "{0} more terminals": "Mais {0} terminais",
+  "CI": "CI"
 }
