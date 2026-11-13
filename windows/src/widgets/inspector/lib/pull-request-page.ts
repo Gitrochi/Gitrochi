@@ -1,4 +1,3 @@
-import { isLogError, logLines as readableLog } from "@/shared/lib";
 import type { CIStatus } from "@/entities/ci";
 import type { PullRequest } from "@/entities/git";
 import type { PullRequestReview, ReviewComment } from "@/entities/hosting";
@@ -14,8 +13,6 @@ export const compactWidth = 916;
 export const splitMinimumWidth = 1000;
 /** Below this detail width the one-row Changed files header cannot hold its title, tabs and actions, so the tall header stays */
 export const oneRowMinimumWidth = 720;
-/** A longer job log shows only this many last lines until the reader asks for the rest */
-export const logTail = 200;
 
 /** Compact: the file tree narrows, Show in graph and Open in browser move into the More menu, and a file row's +/- counts give way */
 export const isCompact = (listShown: boolean, width: number) => listShown || width <= compactWidth;
@@ -79,19 +76,6 @@ export function checksBadge(checks: Check[]): { kind: "failed" | "running"; coun
   return null;
 }
 
-export interface LogLine { n: number; text: string; isError: boolean }
-
-const exitCode = /exit code [1-9]/;
-
-/** A job log as numbered lines; the ones that report a failure are marked */
-export function logLines(body: string): LogLine[] {
-  // the same reading as the Actions page, so a log says the same thing on both
-  const lines = readableLog(body);
-  if (lines.length > 1 && !lines[lines.length - 1]) lines.pop();
-  return lines.map((text, index) => ({ n: index + 1, text, isError: isLogError(text) || exitCode.test(text) }));
-}
-
-/** The number of the first line that reports a failure */
 /** The one reason beside a disabled Merge…: what to do first. `blockers` are the server's own words, for what the page cannot say better. (macOS: PullRequestPage.mergeReason) */
 export function mergeReason(conflicts: boolean, base: string, badge: ReturnType<typeof checksBadge>, approvalsLeft: number | null | undefined, blockers: string[]): string | null {
   if (!blockers.length) return null;
@@ -118,14 +102,6 @@ export function branchSummary(hasRequest: boolean, ahead: number, incoming: numb
   if (!hasRequest) return { kind: "noRequest", commits };
   if (ahead > 0) return { kind: "notPushed", onServer: Math.max(0, commits - ahead), local: ahead };
   return incoming > 0 ? { kind: "moved", incoming, commits } : { kind: "upToDate", commits };
-}
-
-export const firstError = (lines: LogLine[]): number | null => lines.find((line) => line.isError)?.n ?? null;
-
-/** The lines a log shows: the last `logTail` until the reader asks for all of them */
-export function logWindow(lines: LogLine[], all: boolean): { shown: LogLine[]; earlier: number } {
-  if (all || lines.length <= logTail) return { shown: lines, earlier: 0 };
-  return { shown: lines.slice(-logTail), earlier: lines.length - logTail };
 }
 
 /** The issues a description closes ("Closes #42", "fixes #7"), in order and once each */

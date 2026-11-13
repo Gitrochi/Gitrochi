@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { PullRequest } from "@/entities/git";
 import type { PullRequestReview, ReviewComment } from "@/entities/hosting";
 import {
-  branchLabel, checkGroups, checkJob, checksBadge, commentCount, branchSummary, mergeReason, requestToOpen, firstError, folderLabel, headerInOneRow, isCompact, isThisBranch, linkedIssues, logLines, logTail, logWindow,
+  branchLabel, checkGroups, checkJob, checksBadge, commentCount, branchSummary, mergeReason, requestToOpen, folderLabel, headerInOneRow, isCompact, isThisBranch, linkedIssues,
   reviewRequestedCount, sorted, splitAllowed, threadCount, treeWidth, viewedKey, withViewed,
 } from "@/widgets/inspector/lib/pull-request-page";
 
@@ -84,20 +84,6 @@ describe("Pull requests page", () => {
     expect(checksBadge(checks.filter((check) => check.status !== "failed"))).toEqual({ kind: "running", count: 2 });
     expect(checksBadge(groups.passed)).toBeNull();
     expect(checksBadge([])).toBeNull();
-  });
-
-  it("numbers a log, marks the lines that report a failure and keeps the tail", () => {
-    const lines = logLines("Test Suite started.\r\nSearch.swift:58: error: XCTAssertTrue failed\nterrors and failedover are words too\nError: Process completed with exit code 1.\n");
-    expect(lines.map((line) => line.n)).toEqual([1, 2, 3, 4]);
-    expect(lines.map((line) => line.isError)).toEqual([false, true, false, true]);
-    expect(firstError(lines)).toBe(2);
-    expect(firstError(logLines("All good\nexit code 0"))).toBeNull();
-    expect(logLines("")).toEqual([{ n: 1, text: "", isError: false }]);
-    const long = logLines(Array.from({ length: logTail + 37 }, (_, index) => `line ${index + 1}`).join("\n"));
-    expect(logWindow(long, false).earlier).toBe(37);
-    expect(logWindow(long, false).shown[0].n).toBe(38);
-    expect(logWindow(long, true)).toEqual({ shown: long, earlier: 0 });
-    expect(logWindow(lines, false)).toEqual({ shown: lines, earlier: 0 });
   });
 
   it("finds the issues a description closes", () => {

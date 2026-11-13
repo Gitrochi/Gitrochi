@@ -15,6 +15,8 @@ struct RequestChecksPanel: View {
     @ViewState private var error: String?
     @ViewState private var refreshID = UUID()
     @ViewState private var logs: [String: WorkspaceCILog.Result] = [:]
+    /// Each loaded log as it is drawn: numbered lines and the tests it names
+    @ViewState private var readings: [String: JobLog.Reading] = [:]
     @ViewState private var logErrors: [String: String] = [:]
     @ViewState private var loadingLogs = Set<String>()
     @ViewState private var failedOpen = true
@@ -39,19 +41,28 @@ struct RequestChecksPanel: View {
                 }
                 if !groups.failed.isEmpty {
                     VStack(alignment: .leading, spacing: 6) {
-                        groupButton(String(localized: "Failed"), open: $failedOpen)
+                        // the Checks tab already counts the failures
+                        CheckGroupHead(title: String(localized: "Failed"), open: $failedOpen)
                         if failedOpen { ForEach(groups.failed) { failedCard($0) } }
                     }
                 }
                 if !groups.running.isEmpty {
                     VStack(alignment: .leading, spacing: 6) {
-                        groupButton(String(localized: "Running"), open: $runningOpen)
+                        // the tab counts what still runs only while nothing failed
+                        CheckGroupHead(title: String(localized: "Running"), count: groups.failed.isEmpty ? nil : groups.running.count, open: $runningOpen)
                         if runningOpen { rows(groups.running) }
                     }
                 }
                 if !groups.passed.isEmpty {
                     VStack(alignment: .leading, spacing: 6) {
-                        passedButton(groups.passed)
+                        // "Passed 5" and the names on one line: what passed needs no rows until someone asks
+                        CheckGroupHead(title: String(localized: "Passed"), count: groups.passed.count, open: $passedOpen) {
+                            if !passedOpen {
+                                SymbolIcon("checkmark.circle.fill").font(.system(size: 11)).foregroundStyle(StudioStyle.Tone.passed.text)
+                                Text(verbatim: groups.passed.map(\.name).joined(separator: " · ")).font(.system(size: 11, design: .monospaced))
+                                    .foregroundStyle(StudioStyle.Rail.icon).lineLimit(1).truncationMode(.tail)
+                            }
+                        }
                         if passedOpen { rows(groups.passed) }
                     }
                 }
@@ -61,7 +72,7 @@ struct RequestChecksPanel: View {
         }
         .onChange(of: results.checks.map(\.status), initial: true) { _, _ in onBadge(PullRequestPage.checksBadge(results.checks)) }
         .task(id: context + refreshID.uuidString) {
-            results = RequestCheckResults(); logs = [:]; logErrors = [:]; loadingLogs = []; loading = false; error = nil
+            results = RequestCheckResults(); logs = [:]; readings = [:]; logErrors = [:]; loadingLogs = []; loading = false; error = nil
             repeat {
                 await load()
                 // the failed check opens with its log; one job, so opening the tab stays one extra read
@@ -90,52 +101,35 @@ struct RequestChecksPanel: View {
         }
     }
 
-    private func groupButton(_ title: String, open: Binding<Bool>) -> some View {
-        Button { open.wrappedValue.toggle() } label: {
-            HStack(spacing: 6) {
-                SymbolIcon(open.wrappedValue ? "chevron.down" : "chevron.right").font(.system(size: 9, weight: .semibold)).frame(width: 12)
-                Text(verbatim: title)
-                Spacer(minLength: 0)
-            }
-            .font(.system(size: 12, weight: .semibold)).foregroundStyle(StudioStyle.Rail.icon)
-            .frame(minHeight: 24).contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
+    /// The log of a check as it is drawn, read once when it arrives
+    private func reading(_ check: RequestCheck) -> JobLog.Reading? {
+        readings[check.id] ?? logs[check.id].map { JobLog.Reading(log: $0.body) }
     }
 
-    /// "Passed 5" and the names on one line: what passed needs no rows until someone asks
-    private func passedButton(_ checks: [RequestCheck]) -> some View {
-        Button { passedOpen.toggle() } label: {
-            HStack(spacing: 6) {
-                SymbolIcon(passedOpen ? "chevron.down" : "chevron.right").font(.system(size: 9, weight: .semibold)).frame(width: 12)
-                Text(verbatim: String(localized: "Passed") + " \(checks.count)").fixedSize()
-                SymbolIcon("checkmark.circle.fill").font(.system(size: 11)).foregroundStyle(StudioStyle.Tone.passed.text)
-                Text(verbatim: checks.map(\.name).joined(separator: " · ")).font(.system(size: 11, design: .monospaced)).fontWeight(.regular).lineLimit(1).truncationMode(.tail)
-                Spacer(minLength: 0)
-            }
-            .font(.system(size: 12, weight: .semibold)).foregroundStyle(StudioStyle.Rail.icon)
-            .frame(minHeight: 24).contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-    }
-
+    /// A failed check is the shared block: what failed and after how long, the ways to act on it, and its log below
     private func failedCard(_ check: RequestCheck) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            VStack(alignment: .leading, spacing: 4) {
-                ViewThatFits(in: .horizontal) {
-                    HStack(spacing: 8) { title(check); Spacer(minLength: 8); actions(check, failed: true) }
-                    VStack(alignment: .leading, spacing: 6) { title(check); actions(check, failed: true) }
-                }
-                if !check.detail.isEmpty { PullRequestCaption(check.detail).textSelection(.enabled).padding(.leading, 22) }
-                if !check.output.isEmpty {
-                    DisclosureGroup("Details") { MarkdownView(check.output, target: store.target).padding(.top, 6) }.font(.system(size: 12)).padding(.leading, 22)
-                }
-            }
-            .padding(.horizontal, 12).padding(.vertical, 10)
-            log(check)
+        let log = logs[check.id], reading = reading(check)
+        var actions = FailedCheckActions()
+        if let reading, JobLog.firstError(reading.lines) != nil { actions.jump = { jumps[check.id, default: 0] += 1 } }
+        if check.jobID != nil {
+            actions.rerun = (String(localized: "Re-run job"), rerunning.contains(check.id), { Task { await rerun(check) } })
+            actions.menu = true
+            if let log { actions.copy = { store.copy(log.body) } }
+            actions.more = [CheckMenuItem(title: log == nil ? String(localized: "Load log") : String(localized: "Refresh log"), disabled: loadingLogs.contains(check.id)) { Task { await loadLog(check) } }]
         }
-        .clipShape(RoundedRectangle(cornerRadius: 10))
-        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(StudioStyle.border))
+        if let url = safeURL(check.url) { actions.open = { NSWorkspace.shared.open(url) } }
+        // "Failed after 3m 12s" where the server says how long the check ran, else its state
+        let outcome = check.duration.flatMap { $0 > 0 ? String(localized: "Failed after \(ciDuration($0))") : nil } ?? check.status.title
+        return FailedCheckBlock(form: .card, name: check.name, outcome: outcome, tests: reading?.tests ?? [], caption: check.detail,
+                                busy: loadingLogs.contains(check.id) || rerunning.contains(check.id), actions: actions) {
+            CIStatusIcon(status: check.status, size: 14)
+        } content: {
+            if !check.output.isEmpty {
+                DisclosureGroup("Details") { MarkdownView(check.output, target: store.target).padding(.top, 6) }
+                    .font(.system(size: 12)).padding(.leading, 34).padding(.trailing, 12).padding(.bottom, 10)
+            }
+            self.log(check)
+        }
     }
 
     private func rows(_ checks: [RequestCheck]) -> some View {
@@ -144,7 +138,7 @@ struct RequestChecksPanel: View {
                 if index > 0 { Divider() }
                 VStack(alignment: .leading, spacing: 0) {
                     VStack(alignment: .leading, spacing: 4) {
-                        HStack(spacing: 8) { title(check); Spacer(minLength: 8); actions(check, failed: false) }
+                        HStack(spacing: 8) { title(check); Spacer(minLength: 8); actions(check) }
                         if !check.detail.isEmpty { PullRequestCaption(check.detail).textSelection(.enabled).padding(.leading, 22) }
                         if !check.output.isEmpty {
                             DisclosureGroup("Details") { MarkdownView(check.output, target: store.target).padding(.top, 6) }.font(.system(size: 12)).padding(.leading, 22)
@@ -170,19 +164,12 @@ struct RequestChecksPanel: View {
         }
     }
 
-    private func actions(_ check: RequestCheck, failed: Bool) -> some View {
+    /// What a check that did not fail offers: its log on request, its page, and what to do with a loaded log
+    private func actions(_ check: RequestCheck) -> some View {
         let log = logs[check.id]
         return HStack(spacing: 6) {
-            if loadingLogs.contains(check.id) || rerunning.contains(check.id) { ProgressView().controlSize(.small) }
-            if failed {
-                if let log, PullRequestPage.firstError(PullRequestPage.logLines(log.body)) != nil {
-                    Button("Jump to first error") { jumps[check.id, default: 0] += 1 }.buttonStyle(PullRequestButtonStyle())
-                }
-                if check.jobID != nil {
-                    Button { Task { await rerun(check) } } label: { Label("Re-run job", symbol: "arrow.clockwise") }
-                        .buttonStyle(PullRequestButtonStyle()).disabled(rerunning.contains(check.id))
-                }
-            } else if check.jobID != nil, log == nil {
+            if loadingLogs.contains(check.id) { ProgressView().controlSize(.small) }
+            if check.jobID != nil, log == nil {
                 Button("Load log") { Task { await loadLog(check) } }.buttonStyle(PullRequestTextButtonStyle()).disabled(loadingLogs.contains(check.id))
             }
             if let url = safeURL(check.url) {
@@ -190,11 +177,10 @@ struct RequestChecksPanel: View {
                     .buttonStyle(PullRequestButtonStyle(iconOnly: true))
                     .help("Open check result").accessibilityLabel("Open check result")
             }
-            if check.jobID != nil, failed || log != nil {
+            if check.jobID != nil, let log {
                 Menu {
-                    if let log { Button("Copy log") { store.copy(log.body) } }
-                    Button(log == nil ? String(localized: "Load log") : String(localized: "Refresh log")) { Task { await loadLog(check) } }
-                        .disabled(loadingLogs.contains(check.id))
+                    Button("Copy log") { store.copy(log.body) }
+                    Button("Refresh log") { Task { await loadLog(check) } }.disabled(loadingLogs.contains(check.id))
                 } label: {
                     DesignIconImage(icon: .more, size: 12).foregroundStyle(.secondary)
                         .frame(width: 28, height: 28)
@@ -210,12 +196,9 @@ struct RequestChecksPanel: View {
     }
 
     @ViewBuilder private func log(_ check: RequestCheck) -> some View {
-        if let log = logs[check.id] {
+        if let log = logs[check.id], let reading = reading(check) {
             Divider()
-            RequestCheckLog(log: log, jump: jumps[check.id] ?? 0)
-            if log.truncated {
-                PullRequestCaption(String(localized: "Log truncated. Open the job in the browser for the full output.")).padding(.horizontal, 16).padding(.vertical, 6)
-            }
+            CheckLog(label: check.name + " · " + String(localized: "Job log"), lines: reading.lines, jump: jumps[check.id] ?? 0, truncated: log.truncated)
         }
         if let error = logErrors[check.id] {
             Text(error).font(.system(size: 12)).foregroundStyle(StudioStyle.Tone.failed.text).textSelection(.enabled).padding(.horizontal, 12).padding(.bottom, 8)
@@ -262,7 +245,7 @@ struct RequestChecksPanel: View {
         defer { if isCurrent(expected) { loadingLogs.remove(check.id) } }
         do {
             let log = try await WorkspaceCILog.load(c, job: job)
-            if isCurrent(expected) { logs[check.id] = log }
+            if isCurrent(expected) { logs[check.id] = log; readings[check.id] = JobLog.Reading(log: log.body) }
         } catch is CancellationError {} catch { if isCurrent(expected) { logErrors[check.id] = WorkspaceCILog.redact(error.localizedDescription, token: c.token) } }
     }
     /// Restarts the job with the call the Actions page uses, then reads the checks again
@@ -276,53 +259,5 @@ struct RequestChecksPanel: View {
             try await CIAPI.retry(target, token: original.token, apiBase: original.apiBase, job: job)
             if isCurrent(expected) { refreshID = UUID() }
         } catch { if isCurrent(expected) { store.errorMessage = store.ciError(error, target.provider) } }
-    }
-}
-
-/// A job's log: numbered lines, error lines in the failed tone on its fill. A long log shows its end first.
-private struct RequestCheckLog: View {
-    let log: WorkspaceCILog.Result
-    let jump: Int
-    @ViewState private var all = false
-
-    var body: some View {
-        let lines = PullRequestPage.logLines(log.body)
-        let hidden = all ? 0 : max(0, lines.count - PullRequestPage.logTail)
-        let shown = lines.count - hidden
-        ScrollViewReader { proxy in
-            ScrollView {
-                LazyVStack(alignment: .leading, spacing: 0) {
-                    if hidden > 0 {
-                        Button("Show \(hidden) earlier lines") { all = true }.buttonStyle(PullRequestTextButtonStyle()).padding(.leading, 64)
-                    }
-                    if lines.isEmpty { PullRequestCaption(String(localized: "No log output yet.")).padding(.horizontal, 16) }
-                    ForEach(lines.dropFirst(hidden)) { line in
-                        HStack(alignment: .top, spacing: 14) {
-                            Text(verbatim: String(line.number)).foregroundStyle(StudioStyle.Rail.icon).frame(width: 34, alignment: .trailing)
-                            Text(verbatim: line.text).foregroundStyle(line.isError ? StudioStyle.Tone.failed.text : Color.primary)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                        .font(.system(size: 12, design: .monospaced))
-                        .padding(.horizontal, 16).padding(.vertical, 2)
-                        .background(line.isError ? StudioStyle.Tone.failed.fill : Color.clear)
-                        .id(line.number)
-                    }
-                }
-                .padding(.vertical, 8)
-                .textSelection(.enabled)
-            }
-            .frame(height: min(320, CGFloat(max(1, shown)) * 20 + 16 + (hidden > 0 ? 24 : 0)))
-            // a log opens at its first error, when that is among the lines shown
-            .onAppear { if let first = PullRequestPage.firstError(lines), first.number > hidden { proxy.scrollTo(first.number, anchor: .top) } }
-            .onChange(of: jump) { _, _ in
-                guard let first = PullRequestPage.firstError(lines) else { return }
-                // the first error may be among the lines not shown yet
-                if first.number <= hidden { all = true }
-                proxy.scrollTo(first.number, anchor: .top)
-            }
-        }
-        .background(StudioStyle.canvas)
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel("Job log")
     }
 }

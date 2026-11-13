@@ -7,9 +7,12 @@ let requestFixtureDefaults = UserDefaults(suiteName: requestFixtureSuite)!
 @MainActor var requestFixtureDetailTab = "conversation"
 @MainActor let requestFixtureChecks = RequestCheckResults(checks: [
     RequestCheck(id: "build", name: "Build macOS", status: .success, detail: "All 128 tests passed", url: "https://github.com/team/repo/actions/runs/1/job/101", jobID: 101),
-    RequestCheck(id: "security", name: "External security", status: .failed, detail: "One dependency needs an update", url: "https://ci.example.invalid/security"),
+    RequestCheck(id: "security", name: "External security", status: .failed, detail: "One dependency needs an update", url: "https://ci.example.invalid/security", jobID: 102, duration: 192),
     RequestCheck(id: "lint", name: "Swift formatting", status: .running, detail: "Checking changed files")
 ])
+/// A failed job's log: the failed-check block opens on its first error and names the failed test
+let requestFixtureFailedLog = (1...40).map { "Resolving package \($0)" }.joined(separator: "\n")
+    + "\nTest Case '-[SecurityTests.DependencyTests testLockfileIsCurrent]' started.\nDependencyTests.swift:58: error: XCTAssertEqual failed: the lockfile names an older release of the parser than the manifest allows, so the audit stops here\nTest Case '-[SecurityTests.DependencyTests testLockfileIsCurrent]' failed (0.031 seconds).\nExecuted 12 tests, with 1 failure (0 unexpected) in 2.204 seconds\nError: Process completed with exit code 1."
 @MainActor let requestFixtureImage: NSImage = {
     NSImage(size: NSSize(width: 560, height: 125), flipped: false) { bounds in
         NSColor(calibratedRed: 0.91, green: 0.89, blue: 0.99, alpha: 1).setFill()
@@ -184,7 +187,7 @@ struct RequestFixtureAvatarImage<Content: View>: View {
                     let recognition = VNRecognizeTextRequest(); recognition.recognitionLevel = .accurate; recognition.recognitionLanguages = ["en-US"]
                     try VNImageRequestHandler(data: data).perform([recognition])
                     let text = (recognition.results ?? []).compactMap { $0.topCandidates(1).first?.string }.joined(separator: "\n")
-                    let expected = scenario == "pipeline" ? ["Improve review and pipeline workspaces", "Open in browser", "Build workspace", "Update the dependency lockfile"] : scenario == "activity" ? ["Review workspace refresh", "Marked ready", "Conversation"] : scenario == "organizations" ? ["Gitrochi team", "Studio", "Repositories", "team/Gitrochi", "Desktop Git client", "Copy clone URL"] : scenario == "members" ? ["Alex Kim", "Sam Lee", "Maintainer", "Members"] : scenario == "checks" ? ["Review workspace refresh", "Build macOS", "External security", "TESTS PASSED"] : scenario == "files" ? ["Review workspace refresh", "HostingHubPanel.swift", "MemberProfileCard", "viewed", "Unified", "Split", "One member of an organization"] : scenario == "empty" ? ["No pull requests match this filter", "Select a pull request"] : ["Review workspace refresh", "Implementation notes", "Review preview image", "Looks ready", "Approve"]
+                    let expected = scenario == "pipeline" ? ["Improve review and pipeline workspaces", "Open in browser", "Build workspace", "Update the dependency lockfile", "Failed after 1m 32s", "Jump to first error"] : scenario == "activity" ? ["Review workspace refresh", "Marked ready", "Conversation"] : scenario == "organizations" ? ["Gitrochi team", "Studio", "Repositories", "team/Gitrochi", "Desktop Git client", "Copy clone URL"] : scenario == "members" ? ["Alex Kim", "Sam Lee", "Maintainer", "Members"] : scenario == "checks" ? ["Review workspace refresh", "Build macOS", "External security", "TESTS PASSED", "Failed after 3m 12s", "1 test failed", "Jump to first error", "Show 38 earlier lines"] : scenario == "files" ? ["Review workspace refresh", "HostingHubPanel.swift", "MemberProfileCard", "viewed", "Unified", "Split", "One member of an organization"] : scenario == "empty" ? ["No pull requests match this filter", "Select a pull request"] : ["Review workspace refresh", "Implementation notes", "Review preview image", "Looks ready", "Approve"]
                     try text.write(to: output.appendingPathComponent(name + ".txt"), atomically: true, encoding: .utf8)
                     let searchable = text.replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
                     for value in expected { precondition(searchable.localizedCaseInsensitiveContains(value), "Missing \(value): \(name)\n\(text)") }
