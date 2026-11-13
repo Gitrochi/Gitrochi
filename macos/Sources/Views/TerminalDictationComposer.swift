@@ -47,7 +47,8 @@ struct TerminalDictationComposer: View {
 
     var body: some View {
         SharedSheet(title: String(localized: "Voice"),
-                    context: repositoryName.isEmpty ? target : repositoryName + " · " + target,
+                    // a terminal named after its repository would say the same word twice
+                    context: repositoryName.isEmpty || repositoryName == target ? target : repositoryName + " · " + target,
                     primary: primary, cancel: dismiss) {
             if confirmation == nil {
                 listenButton
