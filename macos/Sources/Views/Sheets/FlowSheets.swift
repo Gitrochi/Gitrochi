@@ -263,8 +263,14 @@ struct FlowTrustSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
+        SharedSheet(title: String(localized: "Review this flow"), context: plan.flow, width: 640,
+                    primary: SheetPrimary(title: actionTitle) { dismiss(); onApprove() }, cancel: { dismiss() }) {
+            review.padding(.horizontal, 20).padding(.vertical, 16)
+        }
+    }
+
+    private var review: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Review this flow").font(.title3.weight(.semibold))
             Text("A flow file is code. Approve it only if you would run these commands yourself — changing the file asks again.")
                 .font(.callout).foregroundStyle(.secondary)
             if let changed = plan.trust.changed, !changed.isEmpty {
@@ -286,14 +292,7 @@ struct FlowTrustSheet: View {
                     .font(.callout).foregroundStyle(.secondary)
             }
             ForEach(plan.warnings, id: \.self) { w in Label(w, symbol: "exclamationmark.triangle").font(.caption).foregroundStyle(.orange) }
-            HStack {
-                Spacer()
-                Button("Cancel", role: .cancel) { dismiss() }.keyboardShortcut(.cancelAction)
-                Button(actionTitle) { dismiss(); onApprove() }.keyboardShortcut(.defaultAction)
-            }
         }
-        .padding(20)
-        .frame(width: 640)
     }
 
     private func nodeBlock(_ n: FlowPlan.Node) -> some View {

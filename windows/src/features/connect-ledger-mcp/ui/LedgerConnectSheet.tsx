@@ -3,7 +3,7 @@ import { useState } from "react";
 import type { LedgerInfo, LedgerStore } from "@/entities/ledger";
 import { env, isWindows, joinPath } from "@/shared/config";
 import { t } from "@/shared/i18n";
-import { Button, IconButton, Modal, Spinner } from "@/shared/ui";
+import { Button, IconButton, SharedSheet, Spinner } from "@/shared/ui";
 import { type LedgerClient, ledgerSetup } from "../lib/setup";
 import { LedgerConnections } from "./LedgerConnections";
 import "./ledger-connect-sheet.css";
@@ -55,19 +55,17 @@ export function LedgerConnectSheet({ store, onClose, onOpenBrowser }: { store: L
     }
   };
   return (
-    <Modal
+    <SharedSheet
       title={t("Connect agents")}
+      context={t("Local agents report their work to this app's Ledger.")}
       width={680}
       onClose={onClose}
-      footer={
-        <>
-          <Button disabled={testing} onClick={() => void test()}>
-            {testing && <Spinner size={11} />}
-            {t("Test Ledger")}
-          </Button>
-          <span className="spacer" />
-          <Button kind="primary" onClick={onClose}>{t("Done")}</Button>
-        </>
+      cancelLabel={t("Close")}
+      secondary={
+        <Button disabled={testing} onClick={() => void test()}>
+          {testing && <Spinner size={11} />}
+          {t("Test Ledger")}
+        </Button>
       }
     >
       <strong>{t("Connections")}</strong>
@@ -109,6 +107,6 @@ export function LedgerConnectSheet({ store, onClose, onOpenBrowser }: { store: L
       )}
       {notice && <span role="status" className="hint">{notice}</span>}
       {error && <span role="alert" className="error-text">{error}</span>}
-    </Modal>
+    </SharedSheet>
   );
 }

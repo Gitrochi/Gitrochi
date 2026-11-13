@@ -60,15 +60,10 @@ struct AccountQuickControls: View {
         .sheet(item: $sheet) { request in
             switch request {
             case .connections:
-                VStack(spacing: 0) {
-                    HStack {
-                        Text("Connected accounts").font(.title2.weight(.semibold))
-                        Spacer()
-                        Button("Done") { sheet = nil }.keyboardShortcut(.cancelAction)
-                    }.padding(20)
-                    Divider()
+                SharedSheet(title: String(localized: "Connected accounts"), width: 710, cancelTitle: String(localized: "Done"),
+                            cancel: { sheet = nil }) {
                     AccountsSettings()
-                }.frame(width: 710, height: 650)
+                }.frame(height: 650)
             case .gitAccounts: GitchGuideSheet(repo: store)
             case .login(let expected, let capability):
                 GitHubBrowserLoginSheet(expectedLogin: expected, capability: capability) { _, connected in

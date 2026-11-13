@@ -2724,5 +2724,9 @@
   "Retry above": "Yukarıdan yeniden deneyin",
   "Couldn't check the push destination": "Push hedefi denetlenemedi",
   "Couldn't read the saved account credentials": "Kayıtlı hesap kimlik bilgileri okunamadı",
-  "Unlock your credentials, then retry.": "Kimlik bilgilerinizin kilidini açıp yeniden deneyin."
+  "Unlock your credentials, then retry.": "Kimlik bilgilerinizin kilidini açıp yeniden deneyin.",
+  "Local agents report their work to this app's Ledger.": "Yerel ajanlar çalışmalarını bu uygulamanın Ledger'ına bildirir.",
+  "Agent executable not found": "Ajanın çalıştırılabilir dosyası bulunamadı",
+  "Enter a new branch name": "Yeni dal adını girin",
+  "Confirm the risk first": "Önce riski onaylayın"
 }

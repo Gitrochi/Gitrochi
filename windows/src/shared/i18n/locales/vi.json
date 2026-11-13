@@ -2693,5 +2693,9 @@
   "Retry above": "Thử lại ở trên",
   "Couldn't check the push destination": "Không thể kiểm tra đích push",
   "Couldn't read the saved account credentials": "Không thể đọc thông tin xác thực tài khoản đã lưu",
-  "Unlock your credentials, then retry.": "Hãy mở khóa thông tin xác thực rồi thử lại."
+  "Unlock your credentials, then retry.": "Hãy mở khóa thông tin xác thực rồi thử lại.",
+  "Local agents report their work to this app's Ledger.": "Các agent cục bộ báo cáo công việc vào Ledger của ứng dụng này.",
+  "Agent executable not found": "Không tìm thấy tệp thực thi của agent",
+  "Enter a new branch name": "Nhập tên nhánh mới",
+  "Confirm the risk first": "Hãy xác nhận rủi ro trước"
 }

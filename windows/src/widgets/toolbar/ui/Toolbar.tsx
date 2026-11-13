@@ -107,7 +107,7 @@ export function Toolbar({ store }: { store: RepoStore }) {
   // without a repository only the account control is useful; the Home page has the open and clone actions
   if (set === "noRepository")
     return (
-      <div className="toolbar no-repository">
+      <div className="toolbar no-repository" data-sheet-anchor>
         {leading}
         <span className="toolbar-spacer" />
         <AccountQuickControls store={store} />
@@ -207,7 +207,7 @@ export function Toolbar({ store }: { store: RepoStore }) {
   const back = store.cameFromRepository && returnsToRepository.has(store.destination);
 
   return (
-    <div className="toolbar">
+    <div className="toolbar" data-sheet-anchor>
       {leading}
       {back && (
         <div className="tool-group">

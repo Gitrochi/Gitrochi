@@ -2707,5 +2707,9 @@
   "Retry above": "Tente novamente acima",
   "Couldn't check the push destination": "Não foi possível verificar o destino do push",
   "Couldn't read the saved account credentials": "Não foi possível ler as credenciais da conta salva",
-  "Unlock your credentials, then retry.": "Desbloqueie suas credenciais e tente novamente."
+  "Unlock your credentials, then retry.": "Desbloqueie suas credenciais e tente novamente.",
+  "Local agents report their work to this app's Ledger.": "Os agentes locais relatam o trabalho ao Ledger deste app.",
+  "Agent executable not found": "Executável do agente não encontrado",
+  "Enter a new branch name": "Digite o nome do novo branch",
+  "Confirm the risk first": "Confirme o risco primeiro"
 }

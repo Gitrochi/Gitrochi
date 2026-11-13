@@ -2721,5 +2721,9 @@
   "Retry above": "Próbálja újra fent",
   "Couldn't check the push destination": "Nem sikerült ellenőrizni a push célját",
   "Couldn't read the saved account credentials": "Nem sikerült beolvasni a mentett fiók hitelesítő adatait",
-  "Unlock your credentials, then retry.": "Oldja fel a hitelesítő adatokat, majd próbálja újra."
+  "Unlock your credentials, then retry.": "Oldja fel a hitelesítő adatokat, majd próbálja újra.",
+  "Local agents report their work to this app's Ledger.": "A helyi ügynökök ennek az alkalmazásnak a Ledgerébe jelentik a munkájukat.",
+  "Agent executable not found": "Az ügynök futtatható fájlja nem található",
+  "Enter a new branch name": "Adja meg az új ág nevét",
+  "Confirm the risk first": "Előbb erősítse meg a kockázatot"
 }
