@@ -24,11 +24,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             MainActor.assumeIsolated { if !Workspace.shared.launchedByEvent { Splash.shared.show() } }
         }
         MainActor.assumeIsolated { UpdateCenter.shared.start() }
+        cleanUpLedger()
         // Actions runs scheduled for later start while the app is open, whichever repositories are
         MainActor.assumeIsolated { ScheduledRunStore.shared.start() }
         // 시스템이 첫 창을 만들지 않고 넘어가는 때가 있다(백그라운드 실행 등) — 그러면 직접 하나 연다
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             MainActor.assumeIsolated { Workspace.shared.ensureWindow() }
+        }
+    }
+
+    /// The Ledger is gone, but Claude Code and Codex may still run its hooks and MCP server: has its command take them
+    /// out, then deletes that command (LedgerCleanup). Does nothing once the command is gone.
+    private func cleanUpLedger() {
+        // the tool store reads the login shell's PATH for a few seconds before it knows where the clients are
+        MainActor.assumeIsolated { _ = ToolStore.shared }
+        Task.detached(priority: .utility) {
+            try? await Task.sleep(for: .seconds(5))
+            let manager = FileManager.default
+            let stable = LedgerCleanup.stableCommand(support: manager.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0])
+            await LedgerCleanup.run(stable: stable, program: { ToolPaths.shared.get($0 == .claude ? .claude : .codex) }) { executable, arguments in
+                // a client installed with npm starts through `env node`, and node lives next to it
+                var environment = ProcessInfo.processInfo.environment
+                environment["PATH"] = URL(fileURLWithPath: executable).deletingLastPathComponent().path + ":" + (environment["PATH"] ?? "/usr/bin:/bin")
+                guard let result = try? await Shell.run(executable, arguments, cwd: manager.homeDirectoryForCurrentUser, env: environment, timeout: 30) else { return nil }
+                return (result.status, result.output)
+            }
         }
     }
 }
