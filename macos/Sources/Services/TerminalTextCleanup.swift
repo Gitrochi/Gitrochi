@@ -18,6 +18,8 @@ final class TerminalTextCleanup {
     private(set) var original: String?
     private(set) var suggestion: String?
     private(set) var error: String?
+    /// The request itself failed: the error is then what became of the draft, and the provider is named beside it
+    private(set) var unreachable = false
     @ObservationIgnored private let client: Client
     @ObservationIgnored private var task: Task<Void, Never>?
     @ObservationIgnored private var generation = UUID()
@@ -63,8 +65,9 @@ final class TerminalTextCleanup {
                 guard let self, self.generation == token, !Task.isCancelled else { return }
                 self.working = false
                 self.task = nil
-                self.error = client.configuration() == configuration
-                    ? String(localized: "Could not clean up text. Your original is unchanged.")
+                self.unreachable = client.configuration() == configuration
+                self.error = self.unreachable
+                    ? String(localized: "Your draft is unchanged.")
                     : String(localized: "AI settings changed. Clean up again using the current provider.")
             }
         }
@@ -82,6 +85,7 @@ final class TerminalTextCleanup {
         working = false
         suggestion = nil
         error = nil
+        unreachable = false
     }
 
     func reset() {

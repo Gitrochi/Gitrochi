@@ -71,15 +71,20 @@ struct SharedSheet<Secondary: View, Content: View>: View {
 
     private var line: some View { StudioStyle.border.frame(height: 1) }
 
-    @ViewBuilder private func primaryButton(_ primary: SheetPrimary) -> some View {
-        let button = Button(primary.title, action: primary.run).buttonStyle(.borderedProminent)
-            .disabled(primary.disabled || primary.busy)
-            .accessibilityIdentifier(primary.identifier ?? "shared-sheet-primary")
-        if primary.isDefault {
-            button.keyboardShortcut(.defaultAction).disabledReason(primary.disabledReason)
-        } else {
-            button.disabledReason(primary.disabledReason)
+    /// Filled only while it can be pressed: a disabled primary is neutral, never a faded accent (docs/design.md, Controls)
+    private func primaryButton(_ primary: SheetPrimary) -> some View {
+        let off = primary.disabled || primary.busy || primary.disabledReason != nil
+        return Group {
+            if off {
+                Button(primary.title, action: primary.run).buttonStyle(.bordered).disabled(true)
+            } else if primary.isDefault {
+                Button(primary.title, action: primary.run).buttonStyle(.borderedProminent).keyboardShortcut(.defaultAction)
+            } else {
+                Button(primary.title, action: primary.run).buttonStyle(.borderedProminent)
+            }
         }
+        .accessibilityIdentifier(primary.identifier ?? "shared-sheet-primary")
+        .disabledReason(primary.disabledReason)
     }
 }
 
