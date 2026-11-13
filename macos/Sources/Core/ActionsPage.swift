@@ -1,8 +1,8 @@
 import Foundation
 
 /// What the Actions page shows of the runs it already has (the redesign's Actions board): the segments and their
-/// counts, the list's search and order, this branch's recent runs, a run's jobs by result and the part of a log to
-/// open on. Nothing here asks the server. (Windows: entities/ci/model/actions-page.ts)
+/// counts, the list's search and order, this branch's recent runs and a run's jobs by result.
+/// Nothing here asks the server. (Windows: entities/ci/model/actions-page.ts)
 enum ActionsPage {
     /// The list's filter; all but `all` are states that need attention or are live, so only they carry a count
     enum Segment: String, CaseIterable { case all, failed, running, waiting }
@@ -101,13 +101,5 @@ enum ActionsPage {
             let list = jobs.filter { self.group($0.status) == group }
             return list.isEmpty ? nil : (group, list)
         }
-    }
-
-    // MARK: Log
-
-    /// The first line a log opens on: a few lines before its first error, or its last two hundred lines
-    static func firstShown(_ lines: [String]) -> Int {
-        if let error = lines.firstIndex(where: JobLog.isError) { return max(0, error - 3) }
-        return max(0, lines.count - 200)
     }
 }

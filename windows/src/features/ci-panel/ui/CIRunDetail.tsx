@@ -1,19 +1,17 @@
 import { CircleStop, Hand, TriangleAlert } from "lucide-react";
 import { CirclePlay } from "@/shared/icons";
-import { Ellipsis, ExternalLink, RotateCw } from "@/shared/icons";
-import { type MouseEvent, type ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Ellipsis, ExternalLink } from "@/shared/icons";
+import { type MouseEvent, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import {
   canPlay,
   type CIDeployment,
+  ciDuration,
   type CIJob,
   type CIPipeline,
   type CIStatus,
   CIStatusIcon,
-  firstLogLine,
   isActiveCI,
   isFinishedCI,
-  isLogError,
-  logLines,
   type JobGroup,
   jobGroups,
   runTook,
@@ -22,10 +20,9 @@ import {
 import type { Provider } from "@/entities/git";
 import { accounts, workspaceJobLog } from "@/entities/hosting";
 import type { RepoStore } from "@/entities/repo";
-import { settings } from "@/shared/config";
 import { t } from "@/shared/i18n";
-import { listWhen, useObserve } from "@/shared/lib";
-import { Button, HostedListChip, HostedListIconButton, HostedListTextButton, IconButton, type MenuItem, NoticeBlock, showContextMenu, showMenuBelow, Spinner, StatusPill, type StatusTone } from "@/shared/ui";
+import { checkLogLines, failedTests, firstError, listWhen, useObserve } from "@/shared/lib";
+import { Button, CheckGroupHead, CheckLog, checkLogMenu, FailedCheckBlock, HostedListChip, HostedListIconButton, IconButton, type MenuItem, NoticeBlock, showContextMenu, showMenuBelow, Spinner, StatusPill, type StatusTone } from "@/shared/ui";
 
 /**
  * The run picked on the Actions page, as the Actions board draws it: which run and its state, the title with its
@@ -110,7 +107,7 @@ export function CIRunDetail({
             // the jobs by result, what failed first; each group says how many it holds
             jobGroups(jobs).map(({ group, jobs: list }) => (
               <section key={group} className="ci-job-group">
-                <span className="ci-job-group-title">{jobGroupTitle(group)} {list.length}</span>
+                <CheckGroupHead className="ci-job-group-title" title={jobGroupTitle(group)} count={list.length} />
                 {list.map((j) => (
                   <JobRow
                     key={j.id}
@@ -157,12 +154,7 @@ export function statusTone(status: CIStatus): StatusTone {
 }
 
 /** "5m 48s" */
-export function duration(s: number) {
-  const secs = Math.round(s);
-  return secs >= 60
-    ? t("{0}m {1}s", Math.floor(secs / 60), secs % 60)
-    : t("{0}s", secs);
-}
+export const duration = ciDuration;
 
 const jobGroupTitle = (group: JobGroup) =>
   t(({ failed: "Failed", running: "Running", waiting: "Waiting", passed: "Passed", other: "Other" } as const)[group]);
@@ -199,8 +191,7 @@ export function runMenu(
 
 /**
  * The picked job's log, read with the account and masked for secrets; it stays on this computer.
- * A running job's log is read again every ten seconds. Lines that name an error are marked in the failed tone; a log
- * without one opens at its end and keeps following the end while it is there, one with an error opens on it.
+ * A running job's log is read again every ten seconds. The header and the log are the shared failed-check block.
  */
 function JobLog({
   store,
@@ -214,19 +205,15 @@ function JobLog({
   close: () => void;
 }) {
   useObserve(accounts);
-  useObserve(settings);
-  const wrap = settings.get<boolean>("ciLogWrap", false);
   const [text, setText] = useState(""),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
     [truncated, setTruncated] = useState(false),
     [reload, setReload] = useState(0),
-    // the lines before the part the log opens on are shown on request
-    [showAll, setShowAll] = useState(false);
+    // counts presses of Jump to first error
+    [jump, setJump] = useState(0);
   const generation = useRef(0),
-    loaded = useRef<number | null>(null),
-    following = useRef(true),
-    box = useRef<HTMLDivElement>(null);
+    loaded = useRef<number | null>(null);
   const identity = `${job.id}|${job.status}|${store.path}|${store.collaborationRevision}|${store.hostingAccount?.id}|${accounts.revision}`;
   useEffect(() => {
     let stop = false;
@@ -234,10 +221,8 @@ function JobLog({
     const id = ++generation.current;
     if (loaded.current !== job.id) {
       loaded.current = job.id;
-      following.current = true;
       setText("");
       setTruncated(false);
-      setShowAll(false);
     }
     const run = async () => {
       setBusy(true);
@@ -267,14 +252,9 @@ function JobLog({
     // the job, its status and the account decide what to read; `reload` is the button
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [identity, reload]);
-  const lines = useMemo(() => logLines(text), [text]);
-  const errors = useMemo(() => lines.map(isLogError), [lines]);
-  const hasError = errors.includes(true);
-  const first = showAll ? 0 : firstLogLine(lines);
-  useLayoutEffect(() => {
-    const el = box.current;
-    if (el && following.current && !hasError) el.scrollTop = el.scrollHeight;
-  }, [text, hasError]);
+  const lines = useMemo(() => checkLogLines(text), [text]);
+  const failed = job.status === "failed";
+  const tests = useMemo(() => (failed ? failedTests(lines.map((line) => line.text)) : []), [lines, failed]);
   const provider = store.target?.provider ?? "gitlab";
   const canRetry =
     provider === "gitlab"
@@ -283,47 +263,26 @@ function JobLog({
   // "Failed after 3m 12s" for a failed job, how long any other finished one took, else its state
   const outcome =
     job.duration != null && job.duration > 0
-      ? t(job.status === "failed" ? "Failed after {0}" : "Took {0}", duration(job.duration))
+      ? t(failed ? "Failed after {0}" : "Took {0}", duration(job.duration))
       : statusInfo[job.status].title;
-  const more = t("More job actions");
   return (
-    <>
-      <div className="ci-log-head">
-        <div className="ci-log-head-row">
-          <CIStatusIcon status={job.status} size={14} />
-          <strong className="mono ellipsis">{job.name}</strong>
-          {/* the failed tone on words that say it failed; the icon says it too */}
-          <span className={`ci-log-outcome${job.status === "failed" ? " status-tone" : ""}`} data-tone="failed">{outcome}</span>
-          {busy && <Spinner size={11} />}
-          <span className="spacer" />
-          <span className="ci-log-buttons">
-            {hasError && (
-              <Button onClick={() => { setShowAll(false); requestAnimationFrame(() => box.current?.querySelector(".ci-log-line.error")?.scrollIntoView({ block: "center" })); }}>
-                {t("Jump to first error")}
-              </Button>
-            )}
-            {canRetry && (
-              <Button disabled={store.ci.busy.has(`job:${job.id}`)} onClick={() => void store.ci.retryJob(job, pipeline)}>
-                <RotateCw size={14} />
-                {t("Re-run job")}
-              </Button>
-            )}
-            <HostedListIconButton label={t("Open in browser")} onClick={() => store.openUrl(job.url)}>
-              <ExternalLink size={13} />
-            </HostedListIconButton>
-            <HostedListIconButton label={more} aria-haspopup="menu" onClick={(event) => showMenuBelow(event.currentTarget, [
-              { label: t("Wrap long lines"), checked: wrap, onClick: () => settings.set("ciLogWrap", !wrap) },
-              { label: t("Copy redacted log"), disabled: !text, onClick: () => store.copy(text) },
-              { label: t("Reload log"), disabled: busy, onClick: () => setReload((n) => n + 1) },
-              "divider",
-              { label: t("Close log"), onClick: close },
-            ])}>
-              <Ellipsis size={14} />
-            </HostedListIconButton>
-          </span>
-        </div>
-        {truncated && <span className="hosted-caption ci-log-note">{t("Log preview is limited to 2 MB. Open the browser for the complete log.")}</span>}
-      </div>
+    <FailedCheckBlock
+      form="pane"
+      icon={<CIStatusIcon status={job.status} size={14} />}
+      name={job.name}
+      outcome={outcome}
+      failed={failed}
+      tests={tests}
+      busy={busy}
+      onJump={firstError(lines) != null ? () => setJump((n) => n + 1) : undefined}
+      rerun={canRetry ? { label: t("Re-run job"), disabled: store.ci.busy.has(`job:${job.id}`), onClick: () => void store.ci.retryJob(job, pipeline) } : undefined}
+      onOpen={() => store.openUrl(job.url)}
+      menu={() => checkLogMenu(text ? () => store.copy(text) : undefined, [
+        { label: t("Refresh log"), disabled: busy, onClick: () => setReload((n) => n + 1) },
+        "divider",
+        { label: t("Close log"), onClick: close },
+      ])}
+    >
       {error ? (
         <p className="error-text selectable ci-log-message" role="alert">
           {error}
@@ -331,27 +290,9 @@ function JobLog({
       ) : !text ? (
         <div className="ci-log-empty hosted-caption">{busy ? <Spinner size={14} /> : t("No log output yet.")}</div>
       ) : (
-        <div
-          ref={box}
-          className={`ci-log-text selectable mono${wrap ? " wrap" : ""}`}
-          role="region"
-          aria-label={t("Job log")}
-          tabIndex={0}
-          onScroll={(e) => {
-            const el = e.currentTarget;
-            following.current = el.scrollTop + el.clientHeight >= el.scrollHeight - 8;
-          }}
-        >
-          {first > 0 && <HostedListTextButton className="ci-log-earlier" onClick={() => setShowAll(true)}>{t("Show {0} earlier lines", first)}</HostedListTextButton>}
-          {lines.slice(first).map((line, index) => (
-            <div key={first + index} className={`ci-log-line${errors[first + index] ? " error status-tone" : ""}`} data-tone="failed">
-              <span className="ci-log-number">{first + index + 1}</span>
-              <span className="ci-log-words">{line}</span>
-            </div>
-          ))}
-        </div>
+        <CheckLog key={job.id} className="framed fill ci-log-text" label={`${job.name} · ${t("Job log")}`} lines={lines} truncated={truncated} jump={jump} />
       )}
-    </>
+    </FailedCheckBlock>
   );
 }
 

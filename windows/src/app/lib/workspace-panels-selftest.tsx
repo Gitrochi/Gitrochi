@@ -219,11 +219,11 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
     check([t("Newest first"), t("All branches"), t("Group by branch")].every((label) => [...document.querySelectorAll(".menu .menu-item")].some((item) => item.textContent?.trim() === label)), "The sort and filter menu must hold the order, the branch filter and the grouping");
     window.dispatchEvent(new MouseEvent("mousedown")); await pause();
     host.querySelector<HTMLButtonElement>(".ci-job-select")!.click(); await pause(); await pause(); await pause();
-    check(host.querySelector(".ci-log-text")?.textContent?.includes("build passed"), "Job log preview missing");
+    check(await until(() => host.querySelector(".ci-log-text")?.textContent?.includes("build passed") === true), "Job log preview missing");
     check(host.querySelector(".ci-job-select")?.getAttribute("aria-pressed") === "true", "Selected job is not accessible");
-    check(host.querySelector(".ci-log-line .ci-log-number")?.textContent === "1", "Log lines must be numbered");
+    check(host.querySelector(".ci-log-text .check-log-line .check-log-n")?.textContent === "1", "Log lines must be numbered");
     host.querySelector<HTMLButtonElement>('button[aria-label="' + t("More job actions") + '"]')!.click(); await pause();
-    [...document.querySelectorAll<HTMLElement>(".menu .menu-item")].find((item) => item.textContent?.trim() === t("Copy redacted log"))!.click(); await pause();
+    [...document.querySelectorAll<HTMLElement>(".menu .menu-item")].find((item) => item.textContent?.trim() === t("Copy log"))!.click(); await pause();
     check(copies.includes("[redacted]") && !copies.includes("private-secret") && !copies.includes("fixture-token"), "Copied log did not redact credentials");
     store.ciSelected = null;
     check(writes === 4, `Unexpected mutation total: ${writeDetails()}`);

@@ -169,7 +169,7 @@ struct FixtureFailure: LocalizedError {
         precondition(!JobLog.isError("Test Suite 'TerminalFocusTests' started.") && !JobLog.isError("Checked 12 terrors, errorless") && !JobLog.isError("Executed 231 tests, with 1 failure"), "Words that only contain one are not")
         precondition(!JobLog.isError("curl --retry 10 --show-error --fail https://example.test") && !JobLog.isError("CACHE_ON_FAILURE: false"))
         precondition(JobLog.lines("2026-11-06T00:45:22.6820373Z ##[group]Run tests\r\n2026-11-06T00:45:22.68Z \u{1B}[36;1mmake\u{1B}[0m\n##[endgroup]\n##[error]Process completed\n##[start-action id=1]") == ["Run tests", "make", "Error: Process completed"])
-        precondition(ActionsPage.firstShown((1...46).map { $0 == 41 ? "x.swift:58: error: failed" : "line \($0)" }) == 37 && ActionsPage.firstShown((1...500).map { "line \($0)" }) == 300 && ActionsPage.firstShown(["one"]) == 0, "A log opens a few lines before its first error, or on its last two hundred lines")
+        precondition(JobLog.firstShown(JobLog.numbered((1...46).map { $0 == 41 ? "x.swift:58: error: failed" : "line \($0)" })) == 37 && JobLog.firstShown(JobLog.numbered((1...500).map { "line \($0)" })) == 300 && JobLog.firstShown(JobLog.numbered(["one"])) == 0, "A log opens a few lines before its first error, or on its last two hundred lines")
         print("Request checks: GitHub check/status pagination and latest deduplication, partial failures/redaction, GitLab merged-result pipeline/job routing, stale context and cancellation, and the Actions page's segments, search, branch history, job groups and log errors passed")
     }
 }
