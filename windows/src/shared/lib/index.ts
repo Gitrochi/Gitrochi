@@ -13,4 +13,4 @@ export { flowEvidence, safeWorkPath, decodeAgentAssignments, decodeValidationBin
 export { teamHubEndpoint, teamRepoKey, decodeTeamSnapshot, readTeamSnapshot, type TeamSnapshot, type TeamOverlap, type TeamPresence, decodePresenceAnswer, publishTeamPresence, withdrawTeamPresence, type TeamPresenceAnswer } from "./team-hub";
 export { sourceLanguage, sourceTokens, sourceMatches, sourceLineCount, sourceMatchLimit, syntaxCharacterLimit, syntaxTokenLimit, wrappingLineLimit, type SourceMatch, type SourceToken } from "./source-reader";
 export { applyEditorText, editorLineRange, editorText, indentEditorText } from "./source-editing";
-export { isLogError, logLines } from "./job-log";
+export { checkLogLines, failedTests, firstError, firstLogLine, isLogError, type LogLine, logLines, numberedLog, testNames } from "./job-log";

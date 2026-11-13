@@ -69,55 +69,294 @@
   flex-direction: column;
 }
 
-.term-pane.focused > .term-head {
-  box-shadow: inset 0 -2px var(--accent);
-}
-
-.term-head {
-  height: 32px;
+/* The tab bar: no logo; tabs are UI chrome, the output below stays monospaced */
+.term-bar {
+  height: 36px;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 0 8px;
-  background: var(--bar);
+  gap: 2px;
+  padding: 0 6px 0 10px;
+  background: var(--surface);
   border-bottom: 1px solid var(--border);
   flex: none;
+  min-width: 0;
 }
 
 .term-tabs {
   display: flex;
-  gap: 4px;
-  overflow-x: auto;
+  flex: 0 1 auto;
+  align-self: stretch;
   min-width: 0;
-  scrollbar-width: none;
+  overflow: hidden;
 }
 
 .term-tab {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 2px 4px 2px 8px;
-  border-radius: 5px;
-  font-size: 12px;
-  white-space: nowrap;
+  flex: 0 1 200px;
   max-width: 200px;
+  min-width: 0;
+  padding: 0 2px;
+  box-sizing: border-box;
 }
 
-.term-tab:hover {
+.term-tab-select {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 2px 0 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-2);
+  text-align: left;
+  cursor: pointer;
+}
+
+.term-tab:hover .term-tab-select {
   background: var(--hover);
 }
 
-.term-tab.on {
-  background: color-mix(in srgb, var(--text) 10%, transparent);
+.term-tab.on .term-tab-select {
+  color: var(--text);
+}
+
+/* the active tab's 2px accent underline; a pane without the keyboard keeps a neutral one */
+.term-tab.on::after {
+  content: "";
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 0;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--accent);
+}
+
+.term-pane.unfocused .term-tab.on::after {
+  background: var(--border-strong);
+}
+
+.term-tab-n {
+  flex: none;
+  font-size: 11px;
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Tab status marks: told apart by shape, not by colour alone. Every tab reserves the slot. */
+.term-mark-slot {
+  flex: 0 0 12px;
+  width: 12px;
+  height: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.term-mark {
+  display: block;
+  box-sizing: border-box;
+  border-radius: 50%;
+  flex: none;
+}
+
+.term-mark.none {
+  width: 0;
+  height: 0;
+}
+
+.term-mark.ring {
+  width: 9px;
+  height: 9px;
+  border: 1.5px solid var(--orange);
+  border-right-color: transparent;
+  transform: rotate(-45deg);
+}
+
+.term-mark.dot {
+  width: 6px;
+  height: 6px;
+  background: var(--accent);
+}
+
+.term-mark.hollow {
+  width: 7px;
+  height: 7px;
+  border: 1.5px solid var(--text-3);
 }
 
 .term-tab .x {
+  flex: none;
   visibility: hidden;
 }
 
 .term-tab:hover .x,
 .term-tab.on .x {
   visibility: visible;
+}
+
+.term-overflow {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 24px;
+  padding: 0 6px 0 4px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-2);
+  cursor: pointer;
+}
+
+.term-overflow:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+/* The command rail */
+.term-rail {
+  height: 36px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  border-top: 1px solid var(--border);
+  background: var(--sidebar);
+  flex: none;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.term-cmd {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 9px;
+  box-sizing: border-box;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--surface);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.term-cmd:hover:not(:disabled) {
+  background: var(--hover);
+}
+
+.term-cmd:disabled {
+  background: var(--bar);
+  border-color: var(--border);
+  color: var(--text-3);
+  cursor: default;
+}
+
+.term-cmd .g {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-2);
+}
+
+.term-rail-hint {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--text-2);
+}
+
+/* The status line: the path and the state always stay */
+.term-status {
+  height: 28px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 8px 0 12px;
+  border-top: 1px solid var(--border);
+  background: var(--sidebar);
+  font-size: 11px;
+  color: var(--text-2);
+  flex: none;
+  min-width: 0;
+}
+
+.term-status-path {
+  flex: 0 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-family: var(--mono);
+}
+
+.term-status-path > svg {
+  flex: none;
+}
+
+.term-status-copy {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.term-status-copy:hover {
+  background: var(--hover);
+}
+
+.term-status-item {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.term-status-branch {
+  flex: 0 1 auto;
+  max-width: 220px;
+}
+
+.term-status-unseen {
+  height: 24px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.term-status-unseen:hover {
+  background: var(--hover);
 }
 
 .term-body {

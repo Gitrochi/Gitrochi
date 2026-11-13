@@ -44,6 +44,7 @@ import { ledgerHubSelfTest } from "./lib/ledger-hub-selftest";
 import { compactNavigationSelfTest } from "./lib/compact-navigation-selftest";
 import { inspectorLayoutSelfTest } from "./lib/inspector-layout-selftest";
 import { inspectorVisibilitySelfTest } from "./lib/inspector-visibility-selftest";
+import { terminalPanelSelfTest } from "./lib/terminal-panel-selftest";
 import { changesPerformanceSelfTest } from "./lib/changes-performance-selftest";
 import { localWorkbenchSelfTest } from "./lib/local-workbench-selftest";
 import { localPlannerSelfTest } from "./lib/local-planner-selftest";
@@ -66,6 +67,7 @@ import { graphColumnsSelfTest } from "./lib/graph-columns-selftest";
 import { selfTestProgress, selfTestRecorder } from "./lib/selftest-report";
 import { sharedStackSelfTest } from "./lib/shared-stack-selftest";
 import { noticeBlockSelfTest } from "./lib/notice-block-selftest";
+import { failedCheckSelfTest } from "./lib/failed-check-selftest";
 import { sharedSheetSelfTest } from "./lib/shared-sheet-selftest";
 import { sidebarTreeSelfTest } from "./lib/sidebar-tree-selftest";
 
@@ -298,9 +300,11 @@ export async function runSelfTest(): Promise<boolean> {
   await step("Ledger team hub sharing: off by default, what is shared, unchanged bodies, overlap pill and withdrawal", ledgerHubSelfTest);
   await step("좁은 커밋 상세의 긴 브랜치·작성자·부모 커밋 배치", inspectorLayoutSelfTest);
   await step("Close and reopen the right panel with retained width and view state", inspectorVisibilitySelfTest);
+  await step("Terminal panel docked under the centre column: status marks by shape, narrow folding and terminals kept through layout changes", terminalPanelSelfTest);
   await step("변경 1000개의 빠른 진입·마지막 파일 선택·트리 접기", changesPerformanceSelfTest);
   await step("Shared pane heights remain stable after content grows and shrinks", sharedStackSelfTest);
   await step("Failure and notice blocks keep their one form, and a disabled button says why", noticeBlockSelfTest);
+  await step("The failed-check block, its log and the group heads keep their one form", failedCheckSelfTest);
   await step("Sheets share one layout, hang from the toolbar and leave the window undimmed", sharedSheetSelfTest);
   await step("비교·리베이스·Code 전체 화면", localWorkbenchSelfTest);
   await step("릴리스·프로젝트·조직 작업 화면", hostingHubSelfTest);

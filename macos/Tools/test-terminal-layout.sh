@@ -11,7 +11,7 @@ from pathlib import Path
 import re
 import sys
 root, target = map(Path, sys.argv[1:])
-for relative in ['Sources/Core/TerminalInput.swift', 'Sources/Core/TerminalVoiceAction.swift', 'Sources/Core/TerminalSpeechVocabulary.swift', 'Sources/Core/TerminalCleanupPolicy.swift', 'Sources/Services/TerminalTextCleanup.swift', 'Sources/Views/Shared/DesignIcon.swift', 'Sources/Views/Shared/DesignSymbols.swift', 'Sources/Views/Shared/StudioStyle.swift', 'Sources/Views/TerminalChrome.swift', 'Tools/fixtures/TerminalLayout.swift']:
+for relative in ['Sources/Core/TerminalPanelLayout.swift', 'Sources/Core/TerminalInput.swift', 'Sources/Core/TerminalVoiceAction.swift', 'Sources/Core/TerminalSpeechVocabulary.swift', 'Sources/Core/TerminalCleanupPolicy.swift', 'Sources/Services/TerminalTextCleanup.swift', 'Sources/Views/Shared/DesignIcon.swift', 'Sources/Views/Shared/DesignSymbols.swift', 'Sources/Views/Shared/StudioStyle.swift', 'Sources/Views/TerminalChrome.swift', 'Tools/fixtures/TerminalLayout.swift']:
     source = root / relative
     (target / source.name).write_bytes(source.read_bytes())
 service = (root / 'Sources/Services/TerminalDictation.swift').read_text()
@@ -30,7 +30,14 @@ chrome = target / 'TerminalChrome.swift'
 text = chrome.read_text()
 needle = '.accessibilityValue(Text(verbatim: directory))'
 assert text.count(needle) == 1, 'The folder copy control changed'
-chrome.write_text(text.replace(needle, needle + '.background(TerminalLayoutProbe(identifier: "folder-copy"))'))
+text = text.replace(needle, needle + '.background(TerminalLayoutProbe(identifier: "folder-copy"))')
+# the tab bar's own controls are measured where production draws them
+for name in ['tabs', 'overflow', 'new', 'voice', 'actions', 'hide', 'commands']:
+    needle = '.accessibilityIdentifier("terminal-' + name + '")'
+    assert text.count(needle) == 1, 'The terminal tab bar changed: ' + name
+    text = text.replace(needle, needle + '.background(TerminalLayoutProbe(identifier: "' + name + '"))')
+assert 'TerminalBrand' not in text[text.index('struct TerminalTabBar'):text.index('struct TerminalSessionTab')], 'The tab bar has no logo'
+chrome.write_text(text)
 
 def instrument(text, needle, suffix):
     assert text.count(needle) == 1, 'Terminal voice probe changed: ' + needle
@@ -95,7 +102,7 @@ PLIST
 cp -R "$ROOT/Resources/Localizations/ko.lproj" "$TASK_APP/Contents/Resources/"
 swiftc -parse-as-library -swift-version 5 -target "$(uname -m)-apple-macos15.0" \
     -module-cache-path "${GITROCHI_TERMINAL_LAYOUT_MODULE_CACHE:-$TASK_TMP/module-cache}" \
-    "$TASK_TMP/TerminalInput.swift" "$TASK_TMP/TerminalVoiceAction.swift" "$TASK_TMP/TerminalSpeechVocabulary.swift" \
+    "$TASK_TMP/TerminalPanelLayout.swift" "$TASK_TMP/TerminalInput.swift" "$TASK_TMP/TerminalVoiceAction.swift" "$TASK_TMP/TerminalSpeechVocabulary.swift" \
     "$TASK_TMP/TerminalCleanupPolicy.swift" "$TASK_TMP/TerminalTextCleanup.swift" "$TASK_TMP/StudioStyle.swift" "$TASK_TMP/SharedSheet.swift" "$TASK_TMP/TerminalChrome.swift" "$TASK_TMP/DesignIcon.swift" "$TASK_TMP/DesignSymbols.swift" \
     "$TASK_TMP/TerminalVoiceReview.swift" "$TASK_TMP/TerminalDictationComposer.swift" "$TASK_TMP/TerminalLayout.swift" \
     -o "$TASK_APP/Contents/MacOS/TerminalLayout"

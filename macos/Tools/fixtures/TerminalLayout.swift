@@ -46,74 +46,41 @@ private struct TerminalPreviewPane: View {
     let id: String
     let focused: Bool
     let short: Bool
-    let icon: NSImage
     let eyes: String
     let actions: PreviewActions
+    private let tabs = [UUID(), UUID(), UUID()]
+
+    @ViewState private var paneSize = CGSize(width: 800, height: 260)
 
     var body: some View {
         VStack(spacing: 0) {
-            ViewThatFits(in: .horizontal) {
-                header(style: 0)
-                header(style: 1)
-                header(style: 2)
-            }
-            .padding(.horizontal, 10)
-            .frame(height: 42)
-            .background(Color(nsColor: .controlBackgroundColor))
+            // the production tab bar, folded by the pane's measured width as TerminalPaneView does
+            TerminalTabBar(tabs: [
+                TerminalTabItem(id: tabs[0], title: focused ? "desktop-client" : "Release checks", directory: "/Workspace/desktop-client", number: 1,
+                                mark: focused ? .none : .ring, state: focused ? "Idle" : "Running"),
+                TerminalTabItem(id: tabs[1], title: "Claude Code", directory: "/Workspace/desktop-client", number: 2, mark: .dot, state: "New output"),
+                TerminalTabItem(id: tabs[2], title: "A long session title to check horizontal overflow", directory: "/Workspace/desktop-client", number: 3,
+                                mark: .hollow, state: "Exited"),
+            ], selected: tabs[0], focused: focused, width: paneSize.width, corner: focused,
+                           select: { _ in }, close: { _ in }, newTerminal: {}, voice: {}, hide: {}) { EmptyView() }
+                .background(Color(nsColor: .controlBackgroundColor))
             Divider()
             output
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 .clipped()
-            if !short {
-                TerminalQuickActions(enabled: true, select: actions.select)
-                    .background(TerminalLayoutProbe(identifier: id + "-quick-rail"))
+            if TerminalPanelLayout.railShown(height: paneSize.height) {
+                TerminalQuickActions(enabled: true, width: paneSize.width, select: actions.select)
+                    .background(TerminalLayoutProbe(identifier: "quick-rail"))
             }
-            TerminalStatusBar(directory: "/Workspace/a-long-project-folder/desktop-client", running: true,
+            TerminalStatusBar(directory: "/Workspace/a-long-project-folder/desktop-client", activity: focused ? .idle : .running,
                               program: focused ? "zsh" : "npm", branch: focused ? "feature/terminal" : nil,
-                              unseenCount: focused ? 1 : 0,
+                              unseenCount: focused ? 1 : 0, width: paneSize.width,
                               copyDirectory: { actions.copies += 1 }, nextUnseen: { actions.nextTabs += 1 })
-                .background(TerminalLayoutProbe(identifier: id + "-status"))
+                .background(TerminalLayoutProbe(identifier: "status"))
         }
         .background(Color(nsColor: .controlBackgroundColor))
-        .clipShape(RoundedRectangle(cornerRadius: 10))
-        .overlay {
-            RoundedRectangle(cornerRadius: 10)
-                .strokeBorder(Color.primary.opacity(focused ? 0.3 : 0.12))
-                .allowsHitTesting(false)
-        }
-        .background(TerminalLayoutProbe(identifier: id + "-pane"))
-    }
-
-    private func header(style: Int) -> some View {
-        HStack(spacing: 8) {
-            TerminalBrand(compact: style != 0, image: icon)
-                .background(TerminalLayoutProbe(identifier: id + "-brand"))
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 4) {
-                    TerminalSessionTab(title: focused ? "desktop-client" : "Release checks", directory: "/Workspace/desktop-client", number: 1,
-                                       running: true, unseenOutput: false, selected: true, select: {}, close: {})
-                    TerminalSessionTab(title: "Claude Code", directory: "/Workspace/desktop-client", number: 2,
-                                       running: true, unseenOutput: true, selected: false, select: {}, close: {})
-                    TerminalSessionTab(title: "A long session title to check horizontal overflow", directory: "/Workspace/desktop-client", number: 3,
-                                       running: false, unseenOutput: false, selected: false, select: {}, close: {})
-                }
-            }
-            .frame(minWidth: style == 0 ? 200 : style == 1 ? 60 : 40,
-                   idealWidth: style == 0 ? 200 : style == 1 ? 60 : 40)
-            .background(TerminalLayoutProbe(identifier: id + "-tabs"))
-            if style < 2 {
-                TerminalToolbarButton(symbol: "plus", label: "New terminal", action: {})
-                    .background(TerminalLayoutProbe(identifier: id + "-new"))
-                TerminalToolbarButton(symbol: "mic", label: "Voice input", action: {})
-                    .background(TerminalLayoutProbe(identifier: id + "-voice"))
-            }
-            TerminalToolbarButton(symbol: "ellipsis", label: "Terminal actions", action: {})
-                .background(TerminalLayoutProbe(identifier: id + "-actions"))
-            if focused && style < 2 {
-                TerminalToolbarButton(symbol: "chevron.down", label: "Hide terminal", action: {})
-                    .background(TerminalLayoutProbe(identifier: id + "-hide"))
-            }
-        }
+        .onGeometryChange(for: CGSize.self) { $0.size } action: { paneSize = $0 }
+        .background(TerminalLayoutProbe(identifier: "pane"))
     }
 
     private var output: some View {
@@ -312,12 +279,17 @@ private enum FixtureFailure: LocalizedError {
                         .background(TerminalLayoutProbe(identifier: "composer")))
                     size = CGSize(width: 544, height: 704)
                 } else {
-                    content = AnyView(HStack(spacing: 8) {
-                        TerminalPreviewPane(id: "primary", focused: true, short: short, icon: icon, eyes: eyes, actions: actions)
-                        if split { TerminalPreviewPane(id: "secondary", focused: false, short: false, icon: icon, eyes: eyes, actions: actions) }
-                    }.padding(8))
+                    // docked: flat panes with a 1pt line between them, as under the centre column
+                    content = AnyView(HStack(spacing: 0) {
+                        TerminalPreviewPane(id: "primary", focused: true, short: short, eyes: eyes, actions: actions)
+                        if split {
+                            Rectangle().fill(Color(nsColor: .separatorColor)).frame(width: 1)
+                            TerminalPreviewPane(id: "secondary", focused: false, short: false, eyes: eyes, actions: actions)
+                        }
+                    })
                     size = CGSize(width: narrow ? 360 : scenario == "split-450" ? 450 : split ? 900 : 1000,
                                   height: short ? 120 : narrow ? 300 : split ? 340 : 450)
+                    precondition(TerminalPanelLayout.railShown(height: size.height) == !short, "Only the short scenario is below the rail's height")
                 }
                 let host = NSHostingController(rootView: content.defaultAppStorage(defaults)
                     .environment(\.locale, Locale(identifier: language))
@@ -419,6 +391,9 @@ private enum FixtureFailure: LocalizedError {
                 }
                 let measured = probes(), bounds = host.view.bounds
                 var measurements: [String: [Double]] = [:]
+                // a split draws every control once per pane: the second pane's are "<name>#2"
+                func key(_ identifier: String) -> String { measurements[identifier] == nil ? identifier : identifier + "#2" }
+                func count(_ identifier: String) -> Int { measured.filter { $0.fixtureIdentifier == identifier }.count }
                 for probe in measured {
                     let frame = probe.convert(probe.bounds, to: host.view)
                     precondition(frame.width > 0 && frame.height > 0, "A measured production control must retain its hit area: " + probe.fixtureIdentifier)
@@ -426,10 +401,10 @@ private enum FixtureFailure: LocalizedError {
                     if !voice || ["composer", "composer-cancel", "composer-insert"].contains(probe.fixtureIdentifier) {
                         precondition(bounds.insetBy(dx: -1, dy: -1).contains(frame), "Persistent controls must fit in the viewport: " + probe.fixtureIdentifier)
                     }
-                    if probe.fixtureIdentifier.hasSuffix("-new") || probe.fixtureIdentifier.hasSuffix("-voice") || probe.fixtureIdentifier.hasSuffix("-actions") || probe.fixtureIdentifier.hasSuffix("-hide") {
+                    if ["new", "voice", "actions", "hide"].contains(probe.fixtureIdentifier) {
                         precondition(frame.width >= 26 && frame.height >= 26, "Toolbar hit areas remain intact")
                     }
-                    measurements[probe.fixtureIdentifier] = [frame.origin.x, frame.origin.y, frame.width, frame.height].map(Double.init)
+                    measurements[key(probe.fixtureIdentifier)] = [frame.origin.x, frame.origin.y, frame.width, frame.height].map(Double.init)
                 }
                 if voice {
                     precondition(measurements["composer-editor"] != nil && measurements["composer-cancel"] != nil && measurements["composer-insert"] != nil)
@@ -438,12 +413,20 @@ private enum FixtureFailure: LocalizedError {
                     precondition((measurements["composer-recovery"] != nil) == (dictation.recovery != nil))
                     precondition((measurements["composer-insertion-preview"] != nil) == (scenario == "voice-multiline"))
                 } else {
-                    for id in split ? ["primary", "secondary"] : ["primary"] {
-                        precondition(measurements[id + "-brand"] != nil && measurements[id + "-tabs"]![2] >= 40 && measurements[id + "-actions"] != nil)
-                        precondition((measurements[id + "-new"] != nil) == (scenario != "split-450"))
-                        precondition((measurements[id + "-voice"] != nil) == (scenario != "split-450"))
-                        precondition((measurements[id + "-quick-rail"] != nil) == !short)
-                    }
+                    let panes = split ? 2 : 1, compact = scenario == "split-450"
+                    let paneWidth = Double(bounds.width - (split ? 1 : 0)) / Double(panes)
+                    precondition(count("tabs") == panes && count("actions") == panes, "Every pane has its tabs and its actions menu")
+                    precondition(measurements["tabs"]![2] >= 40, "At least one tab stays readable")
+                    // no logo: the tabs start the bar
+                    precondition(measurements["tabs"]![0] <= measurements["pane"]![0] + 12, "The tab bar starts with the tabs")
+                    precondition(TerminalPanelLayout.compactBar(width: paneWidth) == compact, "The fixture's narrowest split is the compact one")
+                    precondition(count("new") == (compact ? 0 : panes) && count("voice") == (compact ? 0 : panes), "A compact bar folds New terminal and Voice input into the actions menu")
+                    precondition(count("hide") == (compact ? 0 : 1), "Hide appears once, in the corner pane")
+                    precondition(count("quick-rail") == (short ? 0 : panes), "A short pane hides the command rail")
+                    precondition(count("commands") == (short || !TerminalPanelLayout.commandsFolded(width: paneWidth) ? 0 : panes), "A narrow pane folds the commands into one menu")
+                    let hidden = TerminalPanelLayout.tabOverflow(count: 3, selected: 0, width: TerminalPanelLayout.tabStripWidth(bar: paneWidth, controls: compact ? 1 : 4)).hidden.count
+                    precondition((count("overflow") > 0) == (hidden > 0), "Tabs that do not fit go into the » menu")
+                    precondition(count("status") == panes, "The status line always stays")
                 }
                 precondition(actions.commands.isEmpty && actions.copies == (scenario == "copied" ? 1 : 0) && actions.nextTabs == 0, "Rendering cannot execute commands or touch the clipboard")
                 guard let bitmap = host.view.bitmapImageRepForCachingDisplay(in: bounds) else { fatalError("Could not allocate terminal preview") }

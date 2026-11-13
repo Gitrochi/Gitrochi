@@ -74,6 +74,8 @@
 "Merges %@ into this branch" = "%@을 이 브랜치에 병합합니다";
 "More file actions" = "파일 작업 더 보기";
 "More job actions" = "작업 동작 더 보기";
+"1 test failed:" = "테스트 1개 실패:";
+"%lld tests failed:" = "테스트 %lld개 실패:";
 "More merge request actions" = "머지 리퀘스트 작업 더 보기";
 "More pull request actions" = "풀 리퀘스트 작업 더 보기";
 "More release actions" = "릴리스 작업 더 보기";
@@ -1831,7 +1833,6 @@
 "Connect a GitHub or GitLab account to use this workspace." = "이 작업 공간을 사용하려면 GitHub 또는 GitLab 계정을 연결하세요.";
 "Connect an account to load this workspace." = "이 작업 화면을 보려면 계정을 연결하세요.";
 "Copy clone URL" = "복제 주소 복사";
-"Copy redacted log" = "민감 정보가 가려진 로그 복사";
 "Couldn't read this file." = "이 파일을 읽을 수 없습니다.";
 "Create gist?" = "Gist를 만들까요?";
 "Current" = "현재";
@@ -2261,7 +2262,6 @@
 "Runs" = "실행 목록";
 "Jobs" = "작업";
 "Choose a job to read its log here." = "작업을 고르면 여기에서 로그를 볼 수 있습니다.";
-"Reload log" = "로그 다시 불러오기";
 "Close log" = "로그 닫기";
 "Select a run" = "실행을 선택하세요";
 "Choose a run to see its jobs and read their logs." = "실행을 고르면 작업과 로그를 볼 수 있습니다.";
@@ -2299,7 +2299,6 @@
 "No checks reported for this commit." = "이 커밋에 보고된 검사가 없습니다.";
 "Open check result" = "검사 결과 열기";
 "No log output yet." = "아직 로그가 없습니다.";
-"Log truncated. Open the job in the browser for the full output." = "로그 일부를 표시했습니다. 전체 로그는 브라우저에서 확인하세요.";
 "Refresh log" = "로그 새로고침";
 "Connect an account to load checks." = "검사 결과를 보려면 계정을 연결하세요.";
 "No comments yet." = "아직 댓글이 없습니다.";
@@ -4722,6 +4721,9 @@
 "Confirm the risk first" = "먼저 위험을 확인하세요";
 "Speak or type a draft first" = "먼저 말하거나 내용을 입력하세요";
 "Stop listening first" = "먼저 받아쓰기를 중지하세요";
+"Idle" = "대기 중";
+"Terminals" = "터미널";
+"%lld more terminals" = "터미널 %lld개 더";
 "Signed in" = "로그인됨";
 "Needs your approval" = "내 승인 필요";
 "Renew…" = "갱신…";

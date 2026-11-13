@@ -2,3 +2,4 @@
 export { TerminalSession, type TerminalSpec } from "./model/terminal";
 export { addTab, cornerPane, paneOf, panes, removeTab, selectTab, setRatio, shownIn, splitPane, type TermNode, type TermPane, type TermSplit } from "./lib/layout";
 export { pastedImageName, shellPath } from "./lib/paths";
+export { activity, commandHintShown, commandsFolded, compactBar, railShown, statusLine, tabActivity, tabMark, type TabMark, tabOverflow, tabStripWidth, type TerminalActivity } from "./lib/panel-layout";

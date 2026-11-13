@@ -11,6 +11,8 @@ struct RequestCheck: Identifiable {
     var logProjectID: Int? = nil
     /// A GitLab job whose failure does not fail the pipeline
     var allowFailure = false
+    /// Seconds from start to end, where the server says
+    var duration: Double? = nil
 }
 struct RequestCheckResults {
     var checks: [RequestCheck] = []
@@ -43,7 +45,7 @@ struct RequestCheckResults {
                             && parts.count == prefix.count + 3 && Array(parts.prefix(prefix.count)).map { $0.lowercased() } == prefix.map { $0.lowercased() }
                             && Int(parts[prefix.count]) != nil && parts[prefix.count + 1] == "job"
                         let jobID = isJobURL ? Int(parts[parts.count - 1]).flatMap { $0 > 0 ? $0 : nil } : nil
-                        return RequestCheck(id: "check:\(CollaborationAPI.number(row, "id"))", name: CollaborationAPI.text(row, "name"), status: CIStatus(github: row["status"] as? String, conclusion: row["conclusion"] as? String), detail: CollaborationAPI.text(output, "title"), url: detailsURL.isEmpty ? url : detailsURL, output: text, jobID: jobID)
+                        return RequestCheck(id: "check:\(CollaborationAPI.number(row, "id"))", name: CollaborationAPI.text(row, "name"), status: CIStatus(github: row["status"] as? String, conclusion: row["conclusion"] as? String), detail: CollaborationAPI.text(output, "title"), url: detailsURL.isEmpty ? url : detailsURL, output: text, jobID: jobID, duration: took(row["started_at"] as? String, row["completed_at"] as? String))
                     }
                     if rows.count < 100 { break }; page += 1
                 }
@@ -77,7 +79,7 @@ struct RequestCheckResults {
                 while true {
                     let rows = try await CollaborationAPI.list(c, pipelineBase + "/pipelines/\(pipelineID)/jobs?include_retried=false&per_page=100&page=\(page)")
                     result.checks += rows.map { row in
-                        RequestCheck(id: "job:\(CollaborationAPI.number(row, "id"))", name: CollaborationAPI.text(row, "name"), status: CIStatus(gitlab: CollaborationAPI.text(row, "status")), detail: CollaborationAPI.text(row, "stage") + (row["allow_failure"] as? Bool == true ? " · " + String(localized: "Allowed to fail") : ""), url: CollaborationAPI.text(row, "web_url"), jobID: CollaborationAPI.number(row, "id"), logProjectID: projectID > 0 ? projectID : nil, allowFailure: row["allow_failure"] as? Bool == true)
+                        RequestCheck(id: "job:\(CollaborationAPI.number(row, "id"))", name: CollaborationAPI.text(row, "name"), status: CIStatus(gitlab: CollaborationAPI.text(row, "status")), detail: CollaborationAPI.text(row, "stage") + (row["allow_failure"] as? Bool == true ? " · " + String(localized: "Allowed to fail") : ""), url: CollaborationAPI.text(row, "web_url"), jobID: CollaborationAPI.number(row, "id"), logProjectID: projectID > 0 ? projectID : nil, allowFailure: row["allow_failure"] as? Bool == true, duration: (row["duration"] as? NSNumber)?.doubleValue)
                     }
                     if rows.count < 100 { break }; page += 1
                 }
@@ -88,6 +90,11 @@ struct RequestCheckResults {
         var ids = Set<String>()
         result.checks = result.checks.filter { ids.insert($0.id).inserted }
         return result
+    }
+    /// Seconds between two server times, when both are known
+    private static func took(_ start: String?, _ end: String?) -> Double? {
+        guard let start = Hosting.date(start), let end = Hosting.date(end), end >= start else { return nil }
+        return end.timeIntervalSince(start)
     }
     private static func rethrowCancellation(_ error: Error) throws {
         if error is CancellationError || Task.isCancelled { throw CancellationError() }

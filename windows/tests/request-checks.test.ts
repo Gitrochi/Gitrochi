@@ -9,10 +9,10 @@ afterEach(() => vi.restoreAllMocks());
 describe("request commit checks and CI runs", () => {
   it("loads external check runs and commit statuses independently of Actions", async () => {
     const http = vi.spyOn(ipc, "http").mockImplementation(async (_method, url) => response(url.includes("/check-runs?") ? {
-      total_count: 2, check_runs: [{ id: 1, name: "External analysis", status: "completed", conclusion: "failure", details_url: "https://ci.example.com/result/1", output: { title: "Type check failed" } }],
+      total_count: 2, check_runs: [{ id: 1, name: "External analysis", status: "completed", conclusion: "failure", details_url: "https://ci.example.com/result/1", started_at: "2026-11-06T00:00:00Z", completed_at: "2026-11-06T00:03:12Z", output: { title: "Type check failed" } }],
     } : { total_count: 2, statuses: [{ id: 2, context: "Deploy preview", state: "success", target_url: "https://preview.example.com", description: "Ready" }, { id: 3, context: "Legacy CI", state: "error", target_url: "https://ci.example.com/result/3" }] }));
     const result = await CIAPI.requestChecks(access(), "head123");
-    expect(result.checks).toMatchObject([{ id: "check:1", name: "External analysis", status: "failed", url: "https://ci.example.com/result/1", summary: "Type check failed" }, { id: "status:2", status: "success" }, { id: "status:3", status: "failed" }]);
+    expect(result.checks).toMatchObject([{ id: "check:1", name: "External analysis", status: "failed", url: "https://ci.example.com/result/1", summary: "Type check failed", duration: 192 }, { id: "status:2", status: "success" }, { id: "status:3", status: "failed" }]);
     expect(result.truncated).toBe(true);
     expect(http.mock.calls.every(([method, url]) => method === "GET" && url.includes("/commits/head123/"))).toBe(true);
   });
@@ -37,9 +37,9 @@ describe("request commit checks and CI runs", () => {
     expect(http.mock.calls.some(([, url]) => url.includes("sha=source-sha"))).toBe(true);
   });
 
-  it("preserves GitLab external status result links and descriptions", async () => {
-    vi.spyOn(ipc, "http").mockResolvedValue(response([{ id: 9, name: "External tests", status: "running", target_url: "https://ci.example.com/job/9", description: "Integration suite" }]));
+  it("preserves GitLab external status result links, descriptions and how long they ran", async () => {
+    vi.spyOn(ipc, "http").mockResolvedValue(response([{ id: 9, name: "External tests", status: "running", target_url: "https://ci.example.com/job/9", description: "Integration suite", started_at: "2026-11-06T00:00:00Z", finished_at: "2026-11-06T00:03:12Z" }]));
     const result = await CIAPI.requestChecks(access("gitlab"), "head123");
-    expect(result).toEqual({ checks: [{ id: "status:9", name: "External tests", status: "running", url: "https://ci.example.com/job/9", summary: "Integration suite" }], truncated: false });
+    expect(result).toEqual({ checks: [{ id: "status:9", name: "External tests", status: "running", url: "https://ci.example.com/job/9", summary: "Integration suite", duration: 192 }], truncated: false });
   });
 });

@@ -126,6 +126,8 @@ export interface CIRequestCheck {
   status: CIStatus;
   url: string;
   summary: string;
+  /** Seconds from start to end, where the server says */
+  duration?: number | null;
 }
 
 /** GitLab 수동 작업(when: manual)·지연 작업(when: delayed)은 바로 실행할 수 있다 */
