@@ -13,7 +13,9 @@ enum AIError: LocalizedError {
 final class CoordinatorFixtureWindow: NSWindow {
     var fixtureKey = true
     var fixtureParent: NSWindow?
+    var fixtureSheet: NSWindow?
     override var isKeyWindow: Bool { fixtureKey }
+    override var attachedSheet: NSWindow? { fixtureSheet }
     override var sheetParent: NSWindow? { fixtureParent }
     convenience init() {
         self.init(contentRect: NSRect(x: -5000, y: 0, width: 200, height: 100), styleMask: [.borderless], backing: .buffered, defer: false)
@@ -234,6 +236,20 @@ struct CoordinatorFixtureGitResult { let data: Data }
         backgroundGate.finish(); await cancelled(background)
         check(capture.presented && capture.dictation.transcript == "Reviewed draft stays local", "Late background completion preserves the reviewed text")
         capture.detach()
+
+        // a page's own sheet (not `store.sheet`) is over the window: voice waits for it instead of queueing behind it
+        let (coveredStore, covered) = environment()
+        coveredStore.fixtureWindow.fixtureSheet = CoordinatorFixtureWindow()
+        covered.open()
+        check(!covered.presented && !covered.dictation.isBusy && covered.context == nil, "Voice does not open under another sheet")
+        coveredStore.fixtureWindow.fixtureSheet = nil
+        covered.open()
+        check(covered.presented, "Voice opens once the other sheet has closed")
+        // while it is open, the window's sheet is the voice sheet itself
+        coveredStore.fixtureWindow.fixtureSheet = CoordinatorFixtureWindow()
+        covered.startListening()
+        check(covered.dictation.isBusy, "The voice sheet does not block its own capture")
+        covered.detach()
 
         for competition in ["none", "newVoice", "otherSheet", "newQuestion", "newRepository", "inactiveWindow", "dismissed"] {
             let (store, voice) = environment()

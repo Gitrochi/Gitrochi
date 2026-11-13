@@ -67,7 +67,7 @@ final class TerminalVoiceCoordinator {
         if hold == nil {
             hold = TerminalHoldToTalk(isEligible: { [weak self, weak store] in
                 guard let self, let store else { return false }
-                return store.isActive && store.url != nil && store.sheet == nil && !self.performing
+                return store.isActive && store.url != nil && store.sheet == nil && !self.performing && !self.underAnotherSheet
             }, begin: { [weak self] in
                 guard let self else { return }
                 if !self.presented { self.open() }
@@ -96,8 +96,12 @@ final class TerminalVoiceCoordinator {
         store = nil
     }
 
+    /// A sheet that is not `store.sheet` (a page's own) is over the window. The voice sheet would queue behind it while
+    /// the microphone already listens, so the shortcut and the button wait for it to close.
+    private var underAnotherSheet: Bool { !presented && store?.window?.attachedSheet != nil }
+
     func open(for session: TerminalSession? = nil) {
-        guard let store, store.url != nil, store.sheet == nil, !performing else { return }
+        guard let store, store.url != nil, store.sheet == nil, !performing, !underAnotherSheet else { return }
         if presented { return }
         let terminal = session ?? (store.activeTerminal?.running == true ? store.activeTerminal : nil) ?? store.newTerminal()
         guard let terminal, terminal.running,
