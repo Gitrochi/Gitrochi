@@ -2669,3 +2669,9 @@
 "Retry above" = "Próbálja újra fent";
 "Couldn't check the push destination" = "Nem sikerült ellenőrizni a push célját";
 "Needs approval" = "Jóváhagyás szükséges";
+"Local agents report their work to this app's Ledger." = "A helyi ügynökök ennek az alkalmazásnak a Ledgerébe jelentik a munkájukat.";
+"Agent executable not found" = "Az ügynök futtatható fájlja nem található";
+"Enter a new branch name" = "Adja meg az új ág nevét";
+"Confirm the risk first" = "Előbb erősítse meg a kockázatot";
+"Speak or type a draft first" = "Előbb mondjon vagy írjon be egy piszkozatot";
+"Stop listening first" = "Előbb állítsa le a hallgatást";

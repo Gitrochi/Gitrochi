@@ -2651,3 +2651,9 @@
 "Retry above" = "Tente novamente acima";
 "Couldn't check the push destination" = "Não foi possível verificar o destino do push";
 "Needs approval" = "Aprovação necessária";
+"Local agents report their work to this app's Ledger." = "Os agentes locais relatam o trabalho ao Ledger deste app.";
+"Agent executable not found" = "Executável do agente não encontrado";
+"Enter a new branch name" = "Digite o nome do novo branch";
+"Confirm the risk first" = "Confirme o risco primeiro";
+"Speak or type a draft first" = "Primeiro dite ou digite um rascunho";
+"Stop listening first" = "Primeiro pare a escuta";

@@ -2632,3 +2632,9 @@
 "Retry above" = "Probeer het hierboven opnieuw";
 "Couldn't check the push destination" = "Pushbestemming kan niet worden gecontroleerd";
 "Needs approval" = "Goedkeuring nodig";
+"Local agents report their work to this app's Ledger." = "Lokale agents melden hun werk aan de Ledger van deze app.";
+"Agent executable not found" = "Uitvoerbaar bestand van agent niet gevonden";
+"Enter a new branch name" = "Voer een nieuwe branchnaam in";
+"Confirm the risk first" = "Bevestig eerst het risico";
+"Speak or type a draft first" = "Spreek of typ eerst een concept";
+"Stop listening first" = "Stop eerst met luisteren";

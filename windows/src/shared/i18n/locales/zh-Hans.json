@@ -2870,5 +2870,9 @@
   "Retry above": "请在上方重试",
   "Couldn't check the push destination": "无法检查推送目标",
   "Couldn't read the saved account credentials": "无法读取已保存的账户凭据",
-  "Unlock your credentials, then retry.": "请解锁凭据后重试。"
+  "Unlock your credentials, then retry.": "请解锁凭据后重试。",
+  "Local agents report their work to this app's Ledger.": "本地代理将工作报告到此应用的 Ledger。",
+  "Agent executable not found": "找不到代理的可执行文件",
+  "Enter a new branch name": "请输入新分支名称",
+  "Confirm the risk first": "请先确认风险"
 }
