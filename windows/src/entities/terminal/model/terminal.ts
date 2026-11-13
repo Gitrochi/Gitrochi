@@ -6,6 +6,7 @@ import { t } from "@/shared/i18n";
 import { Observable } from "@/shared/lib";
 import { tools } from "@/shared/platform";
 import { theme as appTheme } from "@/shared/ui";
+import { shellBusy } from "../lib/panel-layout";
 import { pastedImageName, shellPath } from "../lib/paths";
 
 export interface TerminalSpec {
@@ -57,6 +58,10 @@ export class TerminalSession extends Observable {
   onExit?: (code: number | null) => void;
   /** The shell's process id while it runs; an agent typed into this tab has it as an ancestor */
   pid: number | null = null;
+  /** A command or program runs in it (the tab's ring); a tab that runs a program instead of the shell is busy while it lives */
+  busy = false;
+  /** The fewest processes seen below the shell: what it has at its prompt */
+  private idleChildren: number | null = null;
 
   private ptyId: string | null = null;
   private opened = false;
@@ -200,6 +205,23 @@ export class TerminalSession extends Observable {
     this.term.focus();
   }
 
+  /** What the status line names: the program this tab runs, or the shell */
+  get program(): string {
+    const name = (path: string) => basename(path).replace(/\.exe$/i, "");
+    if (this.spec.program) return this.spec.title ?? name(this.spec.program);
+    const shell = tools.path("shell") ?? (isWindows() ? "powershell.exe" : env.shell || "/bin/zsh");
+    return shell.startsWith("wsl:") ? shell.slice(4) || "WSL" : name(shell);
+  }
+
+  /** Takes the number of processes below the shell from the panel's poll */
+  noteChildren(count: number) {
+    this.idleChildren = this.idleChildren === null ? count : Math.min(this.idleChildren, count);
+    const busy = shellBusy(count, this.idleChildren);
+    if (busy === this.busy) return;
+    this.busy = busy;
+    this.emit();
+  }
+
   /** 셸에 글자를 보낸다(키를 친 것처럼) */
   send(data: string) {
     if (this.ptyId && this.running) return ipc.ptyWrite(this.ptyId, data);
@@ -219,6 +241,8 @@ export class TerminalSession extends Observable {
     this.started = true;
     this.exitCode = null;
     this.running = true;
+    this.idleChildren = null;
+    this.busy = !!this.spec.program;
     this.emit();
     const shell = this.spec.program ? { program: this.spec.program, args: this.spec.args ?? [], cwd: this.spec.cwd } : this.defaultShell();
     const { program, args } = shell;
@@ -244,6 +268,7 @@ export class TerminalSession extends Observable {
         } else {
           this.running = false;
           this.pid = null;
+          this.busy = false;
           this.exitCode = ev.code;
           this.emit();
           this.onExit?.(ev.code);
@@ -253,6 +278,7 @@ export class TerminalSession extends Observable {
       if (this.ptyId === ptyId && this.running) this.pid = pid;
     } catch (e) {
       this.running = false;
+      this.busy = false;
       this.term.write(t("\r\n\u001b[31mCouldn't start the terminal: {0}\u001b[0m\r\n", String(e)));
       this.emit();
     }
@@ -262,6 +288,7 @@ export class TerminalSession extends Observable {
   terminate() {
     if (this.ptyId && this.running) void ipc.ptyKill(this.ptyId).catch(() => {});
     this.running = false;
+    this.busy = false;
     this.emit();
   }
 
