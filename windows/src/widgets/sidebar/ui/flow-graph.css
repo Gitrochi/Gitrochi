@@ -1,0 +1,30 @@
+/* The step graph: one card per step, a connector for every "needs". Shared by the workspace, the run dialog and the editor preview. */
+.flow-graph button:focus-visible { outline: 2px solid color-mix(in srgb, var(--accent) 40%, transparent); outline-offset: 1px; }
+.flow-graph { display: flex; flex-direction: column; flex: 1; min-width: 0; min-height: 200px; }
+.flow-canvas-controls { flex: none; align-self: flex-end; margin-bottom: 8px; display: inline-flex; align-items: center; gap: 2px; height: 28px; box-sizing: border-box; padding: 0 2px; border: 1px solid var(--border-strong); border-radius: 6px; background: var(--surface); }
+.flow-canvas-controls .icon-btn.small { width: 24px; height: 24px; border-radius: 6px; }
+.flow-canvas-divider { width: 1px; height: 16px; background: var(--border); }
+.flow-zoom { min-width: 40px; height: 24px; padding: 0 2px; border: 0; border-radius: 6px; background: transparent; color: var(--text); font-size: 11px; text-align: center; cursor: pointer; }
+.flow-fit { height: 24px; padding: 0 8px; border: 0; border-radius: 6px; background: transparent; color: var(--text); font-size: 12px; font-weight: 500; cursor: pointer; }
+.flow-zoom:hover, .flow-fit:hover { background: var(--hover); }
+.flow-canvas-scroll { flex: 1; min-height: 0; overflow: auto; cursor: grab; }
+.flow-canvas-scroll.panning { cursor: grabbing; user-select: none; }
+.flow-canvas { position: relative; transform-origin: 0 0; }
+.flow-edges { position: absolute; overflow: visible; pointer-events: none; }
+.flow-edges > path { fill: none; stroke: var(--border-strong); stroke-width: 2; stroke-linecap: round; }
+.flow-edges > circle { fill: var(--border-strong); }
+/* the failed path is the one coloured connector; a connector into a skipped step is dashed */
+.flow-edges > path.failed { stroke: var(--red); }
+.flow-edges > circle.failed { fill: var(--red); }
+.flow-edges > path.dashed { stroke-dasharray: 4 4; }
+.flow-node { position: absolute; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; gap: 2px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); font: inherit; text-align: left; cursor: pointer; touch-action: none; }
+.flow-node:hover { background: var(--hover); }
+.flow-node.selected { background: color-mix(in srgb, var(--accent) 16%, var(--surface)); }
+.flow-node.skipped { border-style: dashed; border-color: var(--border-strong); }
+.flow-node-heading { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.flow-node-heading strong { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-weight: 600; }
+.flow-node.skipped .flow-node-heading strong { color: var(--text-2); }
+.flow-node-duration { flex: none; font-size: 11px; color: var(--text-2); }
+.flow-node.failed .flow-node-duration, .flow-node.indeterminate .flow-node-duration { color: var(--red); }
+.flow-node-summary { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: var(--text-2); }
+.flow-node-command { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; color: var(--text-2); }
