@@ -62,6 +62,7 @@ import { noticeBlockSelfTest } from "./lib/notice-block-selftest";
 import { failedCheckSelfTest } from "./lib/failed-check-selftest";
 import { sharedSheetSelfTest } from "./lib/shared-sheet-selftest";
 import { sidebarTreeSelfTest } from "./lib/sidebar-tree-selftest";
+import { settingsNavigationSelfTest } from "./lib/settings-navigation-selftest";
 
 /**
  * 자동 점검(CI 의 Windows 서버에서): GITROCHI_SELFTEST=<테스트 저장소> 로 켜면
@@ -267,6 +268,7 @@ export async function runSelfTest(): Promise<boolean> {
   await step("Pull requests page: list controls and the Hide list choice kept across tabs, one-line composer, Split reason, timeline, keyboard tabs and retained drafts", prConversationSelfTest);
   await step("PR·이슈 목록의 검색 줄·필터·페이지 이동", listSectionsSelfTest);
   await step("Sidebar branch tree indentation, aligned rows and disclosure controls", sidebarTreeSelfTest);
+  await step("Settings category icons, selection and narrow navigation", settingsNavigationSelfTest);
   await step("다른 앱에서 도는 에이전트 목록과 그 앱 앞으로 가져오기(가짜 프로세스 목록)", externalAgentsSelfTest);
   await step("레인이 많은 그래프: 머리줄 스크롤 막대·옆 스크롤·선택한 노드 보이기", graphLanesSelfTest);
   await step("Graph columns: author, time and SHA off by default and turned on from the column menu, lined up with the header, every column resized by its edge, and reset", graphColumnsSelfTest);
