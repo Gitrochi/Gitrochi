@@ -155,29 +155,42 @@ private struct MarkdownTable: View {
     let canLoadImage: (URL) -> Bool
 
     var body: some View {
+        let widths = widths
         ScrollView(.horizontal, showsIndicators: false) {
             Grid(alignment: .leading, horizontalSpacing: 0, verticalSpacing: 0) {
                 GridRow {
                     ForEach(head.indices, id: \.self) { c in
-                        cell(head[c], c).fontWeight(.semibold).background(Color.secondary.opacity(0.06))
+                        cell(head[c], c, widths).fontWeight(.semibold).background(Color.secondary.opacity(0.06))
                     }
                 }
                 ForEach(rows.indices, id: \.self) { r in
                     GridRow {
-                        ForEach(rows[r].indices, id: \.self) { c in cell(rows[r][c], c) }
+                        ForEach(rows[r].indices, id: \.self) { c in cell(rows[r][c], c, widths) }
                     }
                 }
             }
+            // rows are as tall as their tallest cell, and the shorter cells' boxes stretch to it
+            .fixedSize(horizontal: false, vertical: true)
         }
     }
 
-    private func cell(_ inlines: [Markdown.Inline], _ column: Int) -> some View {
+    /// One width per column, from its longest cell (60…300 pt). A range would let the grid measure a row's height at
+    /// one width and draw its wrapped text at another, so rows overlapped.
+    private var widths: [CGFloat] {
+        let count = ([head.count] + rows.map(\.count)).max() ?? 0
+        return (0..<count).map { column in
+            let longest = ([head] + rows).compactMap { $0.indices.contains(column) ? Markdown.plain($0[column]).count : nil }.max() ?? 0
+            return min(300, max(60, CGFloat(longest) * 7.5))
+        }
+    }
+
+    private func cell(_ inlines: [Markdown.Inline], _ column: Int, _ widths: [CGFloat]) -> some View {
         let a = column < align.count ? align[column] : nil
         return MarkdownInlineContent(inlines: inlines, canLoadImage: canLoadImage)
-            .frame(minWidth: 60, maxWidth: 300, alignment: .leading)
+            .frame(width: column < widths.count ? widths[column] : 60, alignment: a == .center ? .center : a == .right ? .trailing : .leading)
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
-            .frame(maxWidth: .infinity, alignment: a == .center ? .center : a == .right ? .trailing : .leading)
+            .frame(maxHeight: .infinity, alignment: .topLeading)
             .border(Color.secondary.opacity(0.25), width: 0.5)
     }
 }

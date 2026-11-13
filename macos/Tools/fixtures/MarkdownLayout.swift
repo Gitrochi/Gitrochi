@@ -40,6 +40,8 @@ typealias ViewState<Value> = SwiftUI.State<Value>
         | --- | --- |
         | macOS | Ready |
         | Windows | Ready |
+        | Linux | A long cell wraps onto several lines inside its column and must push the next row down instead of running over it WRAPPED CELL END |
+        | Web | NEXT ROW CLEAR |
 
         ---
 
@@ -73,7 +75,7 @@ typealias ViewState<Value> = SwiftUI.State<Value>
                 try VNImageRequestHandler(data: rendered).perform([request])
                 let lines = (request.results ?? []).compactMap { $0.topCandidates(1).first?.string }
                 let text = lines.joined(separator: "\n")
-                for expected in ["What and why", "Checklist", "Completed build", "Pending review", "BUILD PASSED", "Platform", "END OF DESCRIPTION"] {
+                for expected in ["What and why", "Checklist", "Completed build", "Pending review", "BUILD PASSED", "Platform", "A long cell wraps", "NEXT ROW CLEAR", "END OF DESCRIPTION"] {
                     precondition(text.contains(expected), "Markdown content missing: \(expected), \(name)\n\(text)")
                 }
                 precondition(!text.contains("##") && !text.contains("[x]"), "Raw block syntax remains: \(name)")
