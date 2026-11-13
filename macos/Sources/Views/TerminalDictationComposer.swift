@@ -1,23 +1,36 @@
 import SwiftUI
 import AppKit
 
+/// What stopped a send, in the failure block's words
+struct TerminalVoiceFailure {
+    let title: String
+    var caption: String? = nil
+    /// The provider's own words, on hover
+    var detail: String? = nil
+}
+
 /// Voice input moves from a local draft to optional cleanup and an explicitly reviewed destination.
 struct TerminalDictationComposer: View {
     @Bindable var dictation: TerminalDictation
     @AppStorage("terminalDictationLocale") private var localeIdentifier = ""
     @AppStorage("terminalDictationUseRepositoryWords") private var useRepositoryWords = true
     @AppStorage("terminalDictationWords") private var customWords = ""
+    @Environment(\.openSettings) private var openSettings
     @ViewState private var cleanup = TerminalTextCleanup()
     @ViewState private var destination = TerminalVoiceDestination.terminal
     @ViewState private var agentKind = AgentKind.claude
     @ViewState private var confirmation: TerminalVoiceReviewDraft?
     @ViewState private var acceptedOriginal: String?
     @ViewState private var submitting = false
-    @ViewState private var actionError: String?
+    @ViewState private var failure: TerminalVoiceFailure?
     @ViewState private var actionTask: Task<Void, Never>?
     @ViewState private var refreshingContext = false
+    @ViewState private var listeningSince: Date?
+    // the board's idle body, until the first layout measures the real one
+    @ViewState private var bodyHeight: CGFloat = 474
     let target: String
     var repositoryName = ""
+    var branch = ""
     var directory = ""
     var repositoryWords: [String] = []
     var commitAvailable = true
@@ -29,231 +42,313 @@ struct TerminalDictationComposer: View {
     let insert: (String) -> Void
     let dismiss: () -> Void
 
+    /// The sheet is as tall as what it shows, up to the comparison of two versions; past this the body scrolls
+    private static let bodyLimit: CGFloat = 624
+
     var body: some View {
-        SharedSheet(title: String(localized: "Voice workspace"),
-                    context: repositoryName.isEmpty ? target : repositoryName + " · " + target, width: 500,
-                    primary: SheetPrimary(title: destination == .terminal ? String(localized: "Insert text") : String(localized: "Review before sending"),
-                                          disabledReason: submitReason, disabled: submitDisabled, busy: submitting, isDefault: false,
-                                          identifier: "terminal-dictation-submit", run: submit),
-                    cancel: dismiss) {
-            listenButton
+        SharedSheet(title: String(localized: "Voice"),
+                    context: repositoryName.isEmpty ? target : repositoryName + " · " + target,
+                    primary: primary, cancel: dismiss) {
+            if confirmation == nil {
+                listenButton
+            } else {
+                Button("Back") { confirmation = nil; failure = nil }.disabled(submitting || refreshingContext)
+            }
         } content: {
-            ScrollViewReader { scroll in
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 16) {
-                        recordingSection
-                        editor
-                        if destination == .terminal && !dictation.isBusy && !insertionText.isEmpty && dictation.transcript != insertionText {
-                            insertionPreview
+            VStack(alignment: .leading, spacing: 0) {
+                ScrollViewReader { scroll in
+                    ScrollView {
+                        Group {
+                            if let confirmation { summary(confirmation) } else { compose }
                         }
-                        VStack(alignment: .leading, spacing: 8) { errors }.id("voice-errors")
-                        cleanupSection.disabled(submitting || dictation.isBusy || refreshingContext)
-                            .id("voice-cleanup")
-                        if send != nil { destinationSection }
-                        TerminalVocabularyOptions(enabled: $useRepositoryWords, words: $customWords, hints: activeWords)
-                            .disabled(dictation.isBusy || submitting)
-                        if let confirmation {
-                            TerminalVoiceConfirmation(draft: confirmation, repository: repositoryName,
-                                                      directory: directory, provider: providerTitle(confirmation.destination), working: submitting,
-                                                      back: { self.confirmation = nil },
-                                                      confirm: { perform(confirmation) })
-                                .id("voice-confirmation")
-                        }
-                        Label("Speech stays on your Mac. Clean up and AI destinations use your configured provider only when you send.", symbol: "lock.shield")
-                            .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                        .padding(.horizontal, 20).padding(.vertical, 16)
+                        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { bodyHeight = $0 }
                     }
-                    .padding(.horizontal, 20).padding(.vertical, 16)
+                    .frame(height: min(bodyHeight, Self.bodyLimit))
+                    .onChange(of: cleanup.hasSuggestion) { _, ready in
+                        if ready { withAnimation { scroll.scrollTo("voice-cleanup", anchor: .top) } }
+                    }
+                    .onChange(of: failure != nil) { _, failed in
+                        if failed && confirmation == nil { withAnimation { scroll.scrollTo("voice-destination", anchor: .bottom) } }
+                    }
                 }
-                .onChange(of: confirmation != nil) { _, ready in
-                    if ready { withAnimation { scroll.scrollTo("voice-confirmation", anchor: .bottom) } }
-                }
-                .onChange(of: cleanup.hasSuggestion) { _, ready in
-                    if ready { withAnimation { scroll.scrollTo("voice-cleanup", anchor: .top) } }
-                }
-                .onChange(of: actionError) { _, error in
-                    if error != nil { withAnimation { scroll.scrollTo("voice-errors", anchor: .top) } }
-                }
+                privacy
             }
         }
-        .frame(minHeight: 520, idealHeight: 660, maxHeight: 760)
+        .onAppear { if dictation.state == .listening { listeningSince = Date() } }
         .onChange(of: dictation.transcript) { _, text in
             cleanup.invalidate(ifSourceChanged: text)
             confirmation = nil
         }
         .onChange(of: dictation.state) { _, state in
             if state == .requesting || state == .listening {
-                cleanup.reset(); acceptedOriginal = nil; confirmation = nil; actionError = nil
+                cleanup.reset(); acceptedOriginal = nil; confirmation = nil; failure = nil
             }
+            listeningSince = state == .listening ? Date() : nil
         }
-        .onChange(of: destination) { _, _ in confirmation = nil; actionError = nil }
-        .onChange(of: agentKind) { _, _ in confirmation = nil; actionError = nil }
+        .onChange(of: destination) { _, _ in confirmation = nil; failure = nil }
+        .onChange(of: agentKind) { _, _ in confirmation = nil; failure = nil }
         .onChange(of: customWords) { _, value in
             if value.count > 4_000 { customWords = String(value.prefix(4_000)) }
         }
         .onDisappear { actionTask?.cancel(); cleanup.reset(); dictation.cancel() }
     }
 
-    private var recordingSection: some View {
-        VStack(alignment: .leading, spacing: 9) {
+    // MARK: The draft
+
+    private var compose: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            languageRow
+            // what went wrong takes the status's place, above the draft that can still be typed
+            if let error = dictation.error { recognitionNotice(error) } else { statusBlock }
+            editor
+            if destination == .terminal && !dictation.isBusy && !insertionText.isEmpty && dictation.transcript != insertionText {
+                insertionPreview
+            }
+            cleanupCard.disabled(submitting || refreshingContext).id("voice-cleanup")
+            if send != nil { destinationSection.id("voice-destination") }
+            TerminalVocabularyOptions(enabled: $useRepositoryWords, words: $customWords, hints: activeWords)
+                .disabled(dictation.isBusy || submitting)
+        }
+    }
+
+    private var languageRow: some View {
+        HStack(spacing: 10) {
+            Text("Speech language").font(.system(size: 13))
             Picker("Speech language", selection: $localeIdentifier) {
                 Text("Automatic").tag("")
                 Text(verbatim: "English (US)").tag("en-US")
                 Text(verbatim: "한국어").tag("ko-KR")
             }
+            .labelsHidden().fixedSize()
             .disabled(dictation.isBusy || submitting || refreshingContext)
-            HStack(spacing: 10) {
-                waveform
-                Text(status).font(.callout.weight(.medium))
-                Spacer(minLength: 0)
-                if dictation.isBusy && dictation.state != .listening { ProgressView().controlSize(.small) }
-                Text(verbatim: "⌃⇧Space")
-                    .font(.system(size: 10, design: .monospaced)).foregroundStyle(.secondary)
-                    .padding(.horizontal, 6).padding(.vertical, 4)
-                    .background(Color.primary.opacity(isHolding ? 0.12 : 0.045), in: RoundedRectangle(cornerRadius: 4))
-            }
-            .frame(height: 28)
-            if dictation.needsPermissionSetup {
-                Text("Allow access with Start listening before using hold to talk.")
-                    .font(.caption).foregroundStyle(.secondary)
-            } else {
-                Text("Hold Control-Shift-Space to talk. Release to review. Works only in this app.")
-                    .font(.caption).foregroundStyle(.secondary)
-            }
+            Spacer(minLength: 8)
+            Text(verbatim: "⌃⇧Space")
+                .font(.system(size: 11, weight: .medium)).foregroundStyle(StudioStyle.Tone.neutral.text)
+                .padding(.horizontal, 7).frame(height: 22)
+                .background(RoundedRectangle(cornerRadius: 5).fill(isHolding ? StudioStyle.Tone.neutral.fill : StudioStyle.canvas))
+                .overlay(RoundedRectangle(cornerRadius: 5).strokeBorder(HostedList.edge))
         }
+        .frame(height: 28)
+    }
+
+    private var statusBlock: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 10) {
+                meter
+                Text(status).font(.system(size: 13, weight: .semibold))
+                if dictation.state == .listening, let listeningSince {
+                    TimelineView(.periodic(from: listeningSince, by: 1)) { timeline in
+                        Text(verbatim: Self.elapsed(from: listeningSince, to: timeline.date))
+                            .font(.system(size: 12)).monospacedDigit().foregroundStyle(HostedList.caption)
+                    }
+                }
+                if dictation.state == .requesting || dictation.state == .finishing { ProgressView().controlSize(.small) }
+            }
+            .frame(height: 20)
+            Text(verbatim: hint).font(.system(size: 12)).foregroundStyle(HostedList.caption)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .accessibilityElement(children: .combine)
     }
 
     private var editor: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Text("Your draft").font(.caption.weight(.medium))
+                Text("Your draft").font(.system(size: 12, weight: .medium))
                 Spacer()
                 Text(verbatim: "\(dictation.transcript.count.formatted()) / 6,000")
-                    .font(.caption2.monospacedDigit())
-                    .foregroundStyle(dictation.transcript.count > TerminalVoiceActionRequest.textLimit ? Color.red : Color.secondary)
+                    .font(.system(size: 11)).monospacedDigit()
+                    .foregroundStyle(tooLong ? StudioStyle.Tone.failed.text : HostedList.caption)
             }
+            .frame(height: 16)
             ZStack(alignment: .topLeading) {
                 TextEditor(text: $dictation.transcript)
-                    .font(.system(size: 13))
-                    .scrollContentBackground(.hidden).padding(6)
+                    .font(.system(size: 13)).lineSpacing(4)
+                    .scrollContentBackground(.hidden).padding(.horizontal, 5).padding(.vertical, 8)
                     .disabled(dictation.isBusy || submitting)
-                    .accessibilityLabel("Dictated text")
+                    .accessibilityLabel("Your draft")
                 if dictation.transcript.isEmpty {
-                    Text("Speak a prompt, then review it here.")
-                        .font(.system(size: 13)).foregroundStyle(.tertiary)
-                        .padding(.horizontal, 11).padding(.vertical, 8).allowsHitTesting(false)
+                    Text("Speak or type a prompt, then review it here.")
+                        .font(.system(size: 13)).foregroundStyle(Color(nsColor: .placeholderTextColor))
+                        .padding(.horizontal, 10).padding(.vertical, 8).allowsHitTesting(false)
                 }
             }
-            .frame(height: 110)
-            .background(Color(nsColor: .textBackgroundColor), in: RoundedRectangle(cornerRadius: 8))
-            .overlay { RoundedRectangle(cornerRadius: 8).strokeBorder(Color.primary.opacity(0.12)) }
+            .frame(height: 96)
+            .background(RoundedRectangle(cornerRadius: 8).fill(StudioStyle.surface))
+            .overlay {
+                // the words land here while listening: the input's focus ring, as the board draws it
+                if dictation.state == .listening {
+                    RoundedRectangle(cornerRadius: 8).strokeBorder(Color.accentColor.opacity(0.4), lineWidth: 2)
+                } else {
+                    RoundedRectangle(cornerRadius: 8).strokeBorder(HostedList.edge)
+                }
+            }
         }
     }
 
     private var insertionPreview: some View {
-        VStack(alignment: .leading, spacing: 5) {
-            Text("Will insert as one line").font(.caption.weight(.medium))
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Will insert as one line").font(.system(size: 12, weight: .medium))
             ScrollView(.horizontal) {
                 Text(verbatim: insertionText).font(.system(size: 11, design: .monospaced))
                     .fixedSize().textSelection(.enabled)
-            }.frame(height: 26)
+            }.frame(height: 24)
         }
-        .foregroundStyle(.secondary)
+        .foregroundStyle(HostedList.caption)
         .accessibilityIdentifier("terminal-dictation-insertion-preview")
     }
 
-    @ViewBuilder private var errors: some View {
-        if let error = dictation.error {
-            Text(error).font(.caption).foregroundStyle(.red).fixedSize(horizontal: false, vertical: true)
-        }
-        if let recovery = dictation.recovery, let url = recovery.settingsURL {
-            Button(recoveryTitle(recovery)) { NSWorkspace.shared.open(url) }
-                .buttonStyle(.borderless).font(.caption)
-                .accessibilityIdentifier("terminal-dictation-recovery")
-        }
-        if let notice = dictation.notice { Text(notice).font(.caption).foregroundStyle(.secondary) }
-        if let actionError { Text(actionError).font(.caption).foregroundStyle(.red).textSelection(.enabled) }
-        if actionError != nil, let refreshContext {
-            Button("Refresh repository context") {
-                refreshingContext = true; confirmation = nil
-                actionTask = Task { @MainActor in
-                    await refreshContext()
-                    guard !Task.isCancelled else { return }
-                    refreshingContext = false; actionError = nil
+    /// A refused permission offers the one way out, filled; anything else can be tried again
+    @ViewBuilder private func recognitionNotice(_ error: String) -> some View {
+        let again = NoticeAction(title: String(localized: "Try again"), run: startListening)
+        if let recovery = dictation.recovery {
+            Group {
+                switch recovery {
+                case .microphone:
+                    NoticeBlock(symbol: "exclamationmark.triangle.fill", title: String(localized: "Microphone access is off"), caption: error,
+                                actions: [settings(String(localized: "Open Microphone Settings…"), recovery, filled: true)])
+                case .speech:
+                    NoticeBlock(symbol: "exclamationmark.triangle.fill", title: String(localized: "Speech recognition access is off"), caption: error,
+                                actions: [settings(String(localized: "Open Speech Recognition Settings…"), recovery, filled: true)])
+                case .language:
+                    NoticeBlock(symbol: "xmark.circle.fill", tone: .failed, title: String(localized: "Speech recognition isn't available"),
+                                caption: error, actions: [settings(String(localized: "Open Keyboard Settings…"), recovery), again])
+                case .inputDevice:
+                    NoticeBlock(symbol: "xmark.circle.fill", tone: .failed, title: error,
+                                actions: [settings(String(localized: "Open Sound Settings…"), recovery), again])
                 }
             }
-                .buttonStyle(.borderless).font(.caption)
-                .disabled(submitting || refreshingContext)
+            .accessibilityIdentifier("terminal-dictation-recovery")
+        } else {
+            NoticeBlock(symbol: "xmark.circle.fill", tone: .failed, title: error, actions: [again])
         }
     }
 
-    private var cleanupSection: some View {
-        VStack(alignment: .leading, spacing: 9) {
+    private func settings(_ title: String, _ recovery: TerminalDictation.Recovery, filled: Bool = false) -> NoticeAction {
+        NoticeAction(title: title, filled: filled) {
+            if let url = recovery.settingsURL { NSWorkspace.shared.open(url) }
+        }
+    }
+
+    private var cleanupCard: some View {
+        VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 8) {
-                Label("Polish your words", symbol: "wand.and.stars").font(.callout.weight(.medium))
-                Spacer()
+                Text("Clean up with AI").font(.system(size: 13, weight: .semibold))
+                Spacer(minLength: 8)
                 if cleanup.working {
                     ProgressView().controlSize(.small)
-                    Button("Stop") { cleanup.cancel() }.controlSize(.small)
-                } else {
-                    Button("Clean up") {
-                        actionError = nil; confirmation = nil
-                        cleanup.clean(dictation.transcript, vocabulary: activeWords, language: effectiveLocale)
-                    }
-                    .controlSize(.small)
-                    .disabled(dictation.isBusy || submitting || cleanupProblem != nil || dictation.transcript.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                    .accessibilityIdentifier("terminal-dictation-cleanup")
+                    Button("Stop") { cleanup.cancel() }.buttonStyle(HostedListButtonStyle())
+                } else if !cleanup.hasSuggestion && cleanup.error == nil && cleanupProblem == nil {
+                    // it hides while there are two versions to choose from and after a failure, whose block has Retry
+                    Button("Clean up", action: clean).buttonStyle(HostedListButtonStyle())
+                        .disabled(dictation.isBusy || submitting || dictation.transcript.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        .accessibilityIdentifier("terminal-dictation-cleanup")
                 }
             }
-            Text(verbatim: cleanup.providerTitle).font(.caption).foregroundStyle(.secondary).lineLimit(2)
+            .frame(height: 28)
+            Text("Sends this draft and word hints to \(Self.name(cleanup.providerTitle)). The original is kept.")
+                .font(.system(size: 12)).foregroundStyle(HostedList.caption)
+                .fixedSize(horizontal: false, vertical: true).padding(.top, 4)
             if let cleanupProblem {
-                Text(cleanupProblem).font(.caption).foregroundStyle(.secondary)
-                SettingsLink { Text("Open Settings") }.font(.caption)
-            }
-            Text("Only this draft and enabled word hints are sent. The original is kept for comparison.")
-                .font(.caption).foregroundStyle(.secondary)
-            if let error = cleanup.error { Text(error).font(.caption).foregroundStyle(.red) }
-            if cleanup.hasSuggestion, let original = cleanup.original, let suggestion = cleanup.suggestion {
+                NoticeBlock(symbol: "exclamationmark.triangle.fill", title: cleanupProblem,
+                            actions: [NoticeAction(title: String(localized: "Open Settings")) { openSettings() }])
+                    .padding(.top, 10)
+            } else if let error = cleanup.error {
+                FailureBlock(title: cleanup.unreachable ? String(localized: "Couldn't reach \(Self.name(cleanup.providerTitle))") : error,
+                             caption: cleanup.unreachable ? error : nil, retry: clean)
+                    .padding(.top, 10)
+                    .accessibilityIdentifier("terminal-dictation-cleanup-failure")
+            } else if cleanup.hasSuggestion, let original = cleanup.original, let suggestion = cleanup.suggestion {
                 TerminalCleanupComparison(original: original, suggestion: suggestion,
-                                          canApply: cleanup.canApply(to: dictation.transcript), apply: {
+                                          canApply: cleanup.canApply(to: dictation.transcript), discard: { cleanup.reset() }, apply: {
                     guard cleanup.canApply(to: dictation.transcript) else { return }
                     acceptedOriginal = original
                     cleanup.reset()
                     dictation.transcript = suggestion
                 })
+                .padding(.top, 10)
             }
             if let acceptedOriginal, dictation.transcript != acceptedOriginal {
                 Button("Restore original") {
                     cleanup.reset(); dictation.transcript = acceptedOriginal; self.acceptedOriginal = nil
-                }.buttonStyle(.borderless).font(.caption)
+                }
+                .buttonStyle(PullRequestTextButtonStyle()).padding(.top, 6)
+                .accessibilityIdentifier("terminal-dictation-restore")
             }
         }
-        .padding(12)
-        .background(Color.primary.opacity(0.025), in: RoundedRectangle(cornerRadius: 9))
+        .padding(.horizontal, 16).padding(.vertical, 12)
+        .background(RoundedRectangle(cornerRadius: 10).fill(StudioStyle.surface))
+        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(StudioStyle.border))
     }
 
     private var destinationSection: some View {
-        VStack(alignment: .leading, spacing: 9) {
-            Text("Choose a destination").font(.callout.weight(.medium))
-            Picker("Destination", selection: $destination) {
-                ForEach(TerminalVoiceDestination.allCases) { value in Text(verbatim: value.title).tag(value) }
-            }
-            .pickerStyle(.segmented).labelsHidden()
-            .disabled(dictation.isBusy || submitting || refreshingContext)
-            Text(TerminalVoiceConfirmation.detail(for: destination))
-                .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-            if !providerTitle(destination).isEmpty {
-                Text("Provider: \(providerTitle(destination))").font(.caption).foregroundStyle(.secondary)
-            }
+        VStack(alignment: .leading, spacing: 0) {
+            Text("Send to").font(.system(size: 13, weight: .semibold)).frame(height: 20)
+            PullRequestSegmented(label: "Send to", items: TerminalVoiceDestination.allCases.map { value in
+                .init(value: value, title: value.title, disabledReason: dictation.isBusy ? String(localized: "Stop listening first") : nil)
+            }, selection: destination, fill: true) { destination = $0 }
+                .disabled(submitting || refreshingContext)
+                .padding(.top, 8)
+            Text(verbatim: TerminalVoiceSummary.hint(for: destination, target: target))
+                .font(.system(size: 12)).foregroundStyle(HostedList.caption)
+                .fixedSize(horizontal: false, vertical: true).padding(.top, 6)
             if destination == .agent {
-                Picker("Agent", selection: $agentKind) {
-                    ForEach(AgentKind.allCases) { kind in Text(verbatim: kind.title).tag(kind) }
-                }.disabled(submitting || refreshingContext)
+                HStack(spacing: 8) {
+                    Text("Agent").foregroundStyle(StudioStyle.Tone.neutral.text)
+                    Picker("Agent", selection: $agentKind) {
+                        ForEach(AgentKind.allCases) { kind in Text(verbatim: kind.title).tag(kind) }
+                    }
+                    .labelsHidden().fixedSize().disabled(dictation.isBusy || submitting || refreshingContext)
+                    Text("\(agentKind.title) opens in a new terminal tab.").foregroundStyle(HostedList.caption)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .font(.system(size: 12)).frame(minHeight: 24).padding(.top, 8)
             }
-            if destination == .commitDraft && !commitAvailable {
-                Text("Stage changes before drafting a commit.").font(.caption).foregroundStyle(.secondary)
+            // an insertion that failed has no summary to show it in, so it sits under the destination it was for
+            if let failure {
+                FailureBlock(title: failure.title, caption: failure.caption, detail: failure.detail, retrying: refreshingContext, retry: retry)
+                    .padding(.top, 10)
             }
         }
         .accessibilityIdentifier("terminal-dictation-destination")
+    }
+
+    // MARK: The review before sending
+
+    /// A destination other than the terminal turns the body into what is about to be sent, and the primary into the send
+    private func summary(_ draft: TerminalVoiceReviewDraft) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Ready to send").font(.system(size: 13, weight: .semibold)).frame(height: 20)
+            TerminalVoiceSummary(draft: draft, repository: branch.isEmpty ? repositoryName : repositoryName + " · " + branch,
+                                 directory: directory, provider: providerTitle(draft.destination))
+            if let failure {
+                FailureBlock(title: failure.title, caption: failure.caption, detail: failure.detail, retrying: refreshingContext, retry: retry)
+            } else if submitting {
+                HStack(spacing: 8) {
+                    ProgressView().controlSize(.small)
+                    Text(draft.destination == .explainChanges ? LocalizedStringKey("Sending… The answer opens when it's ready.") : LocalizedStringKey("Sending…"))
+                }
+                .font(.system(size: 12)).foregroundStyle(HostedList.caption).frame(minHeight: 16)
+            } else {
+                Text(verbatim: TerminalVoiceSummary.detail(for: draft.destination, target: target))
+                    .font(.system(size: 12)).foregroundStyle(HostedList.caption)
+                    .fixedSize(horizontal: false, vertical: true).frame(minHeight: 16)
+            }
+        }
+        .accessibilityIdentifier("terminal-dictation-confirmation")
+    }
+
+    // MARK: The strip and the footer
+
+    private var privacy: some View {
+        HStack(spacing: 8) {
+            SymbolIcon("lock.shield").font(.system(size: 13))
+            Text("Speech is recognized on this Mac. Text goes to AI only when you choose.")
+                .font(.system(size: 12)).fixedSize(horizontal: false, vertical: true)
+        }
+        .foregroundStyle(HostedList.caption)
+        .padding(.horizontal, 20).frame(minHeight: 32)
     }
 
     /// The footer's secondary action: recording starts and stops on the left, away from the one primary
@@ -262,12 +357,20 @@ struct TerminalDictationComposer: View {
             Button("Stop listening") { dictation.stop() }
                 .disabled(dictation.state != .listening)
         } else {
-            Button(dictation.transcript.isEmpty ? LocalizedStringKey("Start listening") : LocalizedStringKey("Record again")) {
-                cleanup.reset(); acceptedOriginal = nil; confirmation = nil
-                if let listen { listen() }
-                else { dictation.start(localeIdentifier: effectiveLocale, contextualStrings: activeWords) }
-            }.disabled(submitting)
+            Button(dictation.transcript.isEmpty ? LocalizedStringKey("Start listening") : LocalizedStringKey("Record again"),
+                   action: startListening).disabled(submitting)
         }
+    }
+
+    private var primary: SheetPrimary {
+        if let confirmation {
+            return SheetPrimary(title: submitting ? String(localized: "Sending…") : confirmation.destination.actionTitle,
+                                disabledReason: failure == nil ? nil : DisabledReason.retryAbove, busy: submitting, isDefault: false,
+                                identifier: "terminal-dictation-submit") { perform(confirmation) }
+        }
+        return SheetPrimary(title: destination == .terminal ? String(localized: "Insert text") : String(localized: "Review before sending"),
+                            disabledReason: submitReason, disabled: submitting || refreshingContext, busy: submitting, isDefault: false,
+                            identifier: "terminal-dictation-submit", run: submit)
     }
 
     private func submit() {
@@ -275,19 +378,19 @@ struct TerminalDictationComposer: View {
         if destination == .terminal { perform(draft) } else { confirmation = draft }
     }
 
-    /// Why the primary can't be used, where one line says it; the other waits are short and show their own progress
+    /// Why the primary can't be used: it is never disabled without one of these beside it
     private var submitReason: String? {
+        if failure != nil { return DisabledReason.retryAbove }
         if dictation.isBusy { return String(localized: "Stop listening first") }
+        if cleanup.working { return String(localized: "Cleanup is still running") }
+        if cleanup.hasSuggestion { return String(localized: "Choose a version first") }
         if insertionText.isEmpty { return String(localized: "Speak or type a draft first") }
+        if tooLong { return String(localized: "This prompt is too long. Keep it under 6,000 characters.") }
         if destination == .commitDraft && !commitAvailable { return String(localized: "Stage changes before drafting a commit.") }
         return nil
     }
 
-    private var submitDisabled: Bool {
-        dictation.isBusy || cleanup.working || submitting || refreshingContext || insertionText.isEmpty
-            || dictation.transcript.count > TerminalVoiceActionRequest.textLimit
-            || (destination == .commitDraft && !commitAvailable)
-    }
+    private var tooLong: Bool { dictation.transcript.count > TerminalVoiceActionRequest.textLimit }
     private var insertionText: String { TerminalInput.singleLine(dictation.transcript) }
     private var cleanupProblem: String? { AIStore.shared.problem(AIStore.shared.provider) }
     private var activeWords: [String] {
@@ -299,9 +402,29 @@ struct TerminalDictationComposer: View {
             appLanguage: UserDefaults.standard.string(forKey: AppLanguage.key) ?? "system",
             systemLanguage: TerminalSpeechVocabulary.preferredSystemLanguage)
     }
+
+    /// "Claude · sonnet" names its model too; a sentence takes the provider alone
+    private static func name(_ provider: String) -> String { provider.components(separatedBy: " · ").first ?? provider }
+
+    private static func elapsed(from start: Date, to now: Date) -> String {
+        let seconds = max(0, Int(now.timeIntervalSince(start)))
+        return "\(seconds / 60):" + (seconds % 60 < 10 ? "0" : "") + "\(seconds % 60)"
+    }
+
+    private func startListening() {
+        cleanup.reset(); acceptedOriginal = nil; confirmation = nil
+        if let listen { listen() }
+        else { dictation.start(localeIdentifier: effectiveLocale, contextualStrings: activeWords) }
+    }
+
+    private func clean() {
+        failure = nil; confirmation = nil
+        cleanup.clean(dictation.transcript, vocabulary: activeWords, language: effectiveLocale)
+    }
+
     private func perform(_ draft: TerminalVoiceReviewDraft) {
         guard !submitting else { return }
-        submitting = true; actionError = nil
+        submitting = true; failure = nil
         actionTask = Task { @MainActor in
             do {
                 if let send { try await send(draft.destination, draft.text, draft.agentKind) }
@@ -309,41 +432,67 @@ struct TerminalDictationComposer: View {
                 submitting = false
             } catch is CancellationError {
                 guard !Task.isCancelled else { return }
-                submitting = false; confirmation = nil
-                actionError = String(localized: "The request was cancelled. Your draft is kept.")
+                submitting = false
+                failure = TerminalVoiceFailure(title: String(localized: "The request was cancelled. Your draft is kept."))
             } catch {
                 guard !Task.isCancelled else { return }
-                submitting = false; confirmation = nil; actionError = error.localizedDescription
+                submitting = false
+                // the summary stays, with what failed and Retry in it
+                let provider = Self.name(providerTitle(draft.destination)), kept = String(localized: "Nothing was sent. Your draft is kept.")
+                if case AIError.failed = error, !provider.isEmpty {
+                    failure = TerminalVoiceFailure(title: String(localized: "Couldn't reach \(provider)"), caption: kept, detail: error.localizedDescription)
+                } else {
+                    failure = TerminalVoiceFailure(title: error.localizedDescription, caption: kept)
+                }
             }
         }
     }
-    private func recoveryTitle(_ recovery: TerminalDictation.Recovery) -> LocalizedStringKey {
-        switch recovery {
-        case .microphone: return "Open Microphone settings"
-        case .speech: return "Open Speech Recognition settings"
-        case .language: return "Open Keyboard settings"
-        case .inputDevice: return "Open Sound settings"
+
+    /// Most sends fail because the repository or the terminal moved on: Retry reads them again, and the send is then
+    /// the user's to press once more
+    private func retry() {
+        guard let refreshContext else { failure = nil; return }
+        refreshingContext = true
+        actionTask = Task { @MainActor in
+            await refreshContext()
+            guard !Task.isCancelled else { return }
+            refreshingContext = false; failure = nil
         }
     }
+
     private var status: LocalizedStringKey {
         switch dictation.state {
-        case .idle: return "Ready to listen"
+        case .idle, .failure: return "Ready"
         case .requesting: return "Requesting access…"
         case .listening: return "Listening…"
         case .finishing: return "Finishing…"
         case .review: return "Review your text"
-        case .failure: return "Voice input unavailable"
         }
     }
-    private var waveform: some View {
+
+    private var hint: String {
+        if let notice = dictation.notice { return notice }
+        switch dictation.state {
+        case .listening, .finishing:
+            return isHolding ? String(localized: "Release ⌃⇧Space to stop. Your words appear below as you speak.")
+                : String(localized: "Your words appear below as you speak.")
+        case .review: return String(localized: "Edit the draft if needed, or hold ⌃⇧Space to record again.")
+        case .idle, .requesting, .failure:
+            return dictation.needsPermissionSetup ? String(localized: "Allow access with Start listening before using hold to talk.")
+                : String(localized: "Hold ⌃⇧Space to talk, release to review. Works only in this app.")
+        }
+    }
+
+    /// Progress, not status: the bars take the accent only while they move
+    private var meter: some View {
         HStack(spacing: 2) {
             ForEach(0..<9) { index in
-                Capsule().fill(dictation.state == .listening ? Color.accentColor : Color.secondary.opacity(0.4))
+                Capsule().fill(dictation.state == .listening ? Color.accentColor : StudioStyle.Rail.blocked)
                     .frame(width: 3, height: dictation.state == .listening
-                           ? 4 + CGFloat(dictation.level) * CGFloat([12, 20, 14, 24, 16, 22, 12, 18, 10][index]) : 4)
+                           ? 4 + CGFloat(dictation.level) * CGFloat([3, 9, 12, 6, 12, 10, 4, 9, 2][index]) : 4)
             }
         }
-        .frame(width: 44, height: 28).animation(.easeOut(duration: 0.1), value: dictation.level)
+        .frame(width: 43, height: 16).animation(.easeOut(duration: 0.1), value: dictation.level)
         .accessibilityHidden(true)
     }
 }

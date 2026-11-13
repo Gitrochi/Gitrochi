@@ -8,6 +8,7 @@ struct TerminalVoiceSheet: View {
         let voice = store.terminalVoice
         TerminalDictationComposer(dictation: voice.dictation, target: voice.targetTitle,
                                   repositoryName: voice.context?.repositoryName ?? store.name,
+                                  branch: store.headBranch ?? "",
                                   directory: voice.context?.directory ?? "",
                                   repositoryWords: voice.repositoryWords,
                                   commitAvailable: !store.status.staged.isEmpty,

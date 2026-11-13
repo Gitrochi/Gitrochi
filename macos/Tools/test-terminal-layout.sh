@@ -11,7 +11,7 @@ from pathlib import Path
 import re
 import sys
 root, target = map(Path, sys.argv[1:])
-for relative in ['Sources/Core/TerminalPanelLayout.swift', 'Sources/Core/TerminalInput.swift', 'Sources/Core/TerminalVoiceAction.swift', 'Sources/Core/TerminalSpeechVocabulary.swift', 'Sources/Core/TerminalCleanupPolicy.swift', 'Sources/Services/TerminalTextCleanup.swift', 'Sources/Views/Shared/DesignIcon.swift', 'Sources/Views/Shared/DesignSymbols.swift', 'Sources/Views/Shared/StudioStyle.swift', 'Sources/Views/TerminalChrome.swift', 'Tools/fixtures/TerminalLayout.swift']:
+for relative in ['Sources/Core/TerminalPanelLayout.swift', 'Sources/Core/TerminalInput.swift', 'Sources/Core/TerminalVoiceAction.swift', 'Sources/Core/TerminalSpeechVocabulary.swift', 'Sources/Core/TerminalCleanupPolicy.swift', 'Sources/Services/TerminalTextCleanup.swift', 'Sources/Views/Shared/DesignIcon.swift', 'Sources/Views/Shared/DesignSymbols.swift', 'Sources/Views/Shared/StudioStyle.swift', 'Sources/Views/Shared/SharedSheet.swift', 'Sources/Views/Shared/NoticeBlock.swift', 'Sources/Views/Shared/PageControls.swift', 'Sources/Views/TerminalChrome.swift', 'Tools/fixtures/TerminalLayout.swift']:
     source = root / relative
     (target / source.name).write_bytes(source.read_bytes())
 service = (root / 'Sources/Services/TerminalDictation.swift').read_text()
@@ -47,31 +47,31 @@ text = (root / 'Sources/Views/TerminalDictationComposer.swift').read_text()
 needle = '@ViewState private var destination = TerminalVoiceDestination.terminal'
 assert text.count(needle) == 1, 'The initial voice destination changed'
 text = text.replace(needle, '@ViewState private var destination = terminalLayoutInitialDestination')
-for needle, suffix in [('.accessibilityLabel("Dictated text")', 'composer-editor'), ('.disabled(dictation.state != .listening)', 'composer-stop')]:
+for needle, suffix in [('.accessibilityLabel("Your draft")', 'composer-editor'), ('.disabled(dictation.state != .listening)', 'composer-stop')]:
     text = instrument(text, needle, suffix)
-for name, suffix in [('cleanup', 'composer-cleanup'), ('destination', 'composer-destination'), ('recovery', 'composer-recovery'), ('insertion-preview', 'composer-insertion-preview')]:
-    text = instrument(text, '.accessibilityIdentifier("terminal-dictation-' + name + '")', suffix)
-start = text.index('Button("Restore original")')
-needle = '}.buttonStyle(.borderless).font(.caption)'
-at = text.index(needle, start)
-text = text[:at] + text[at:].replace(needle, needle + '.background(TerminalLayoutProbe(identifier: "composer-restore"))', 1)
+for name in ['cleanup', 'cleanup-failure', 'restore', 'destination', 'recovery', 'insertion-preview', 'confirmation']:
+    text = instrument(text, '.accessibilityIdentifier("terminal-dictation-' + name + '")', 'composer-' + name)
 assert text.count('NSWorkspace.shared.open(url)') == 1, 'The Settings recovery action changed'
 text = text.replace('NSWorkspace.shared.open(url)', 'terminalLayoutOpenSettings(url)')
 (target / 'TerminalDictationComposer.swift').write_text(text)
-# The shared sheet draws the composer's header and footer; the reason beside a disabled primary comes with it.
-text = (root / 'Sources/Views/Shared/SharedSheet.swift').read_text()
+# The shared sheet draws the composer's header and footer; the notice file brings the failure blocks and the reason
+# beside a disabled primary.
+sheet = target / 'SharedSheet.swift'
+text = sheet.read_text()
 text = instrument(text, '.accessibilityIdentifier("shared-sheet-cancel")', 'composer-cancel')
 text = instrument(text, '.accessibilityIdentifier(primary.identifier ?? "shared-sheet-primary")', 'composer-insert')
-notice = (root / 'Sources/Views/Shared/NoticeBlock.swift').read_text()
-text += '\n' + notice[notice.index('/// A disabled button says why'):]
-assert text.count('HostedList.caption') == 2, 'The sheet caption colour changed'
-(target / 'SharedSheet.swift').write_text(text.replace('HostedList.caption', 'StudioStyle.Rail.icon'))
+sheet.write_text(text)
+notice = target / 'NoticeBlock.swift'
+notice.write_text(instrument(notice.read_text(), '.disabledReason(action.disabledReason)', 'composer-notice-action'))
+# The 28 pt button and the caption grey, without the hosted pages the rest of the file draws
+text = (root / 'Sources/Views/Shared/HostedList.swift').read_text()
+(target / 'HostedList.swift').write_text('import AppKit\nimport SwiftUI\n\n' + text[text.index('enum HostedList {'):text.index('/// A 12 pt grey text button')])
 text = (root / 'Sources/Views/TerminalVoiceReview.swift').read_text()
-needle = 'DisclosureGroup("Recognition hints")'
+needle = '@ViewState private var expanded = false'
 assert text.count(needle) == 1, 'The word-hint disclosure changed'
-text = text.replace(needle, 'DisclosureGroup("Recognition hints", isExpanded: .constant(terminalLayoutShowVocabulary))')
-for name, suffix in [('comparison', 'composer-comparison'), ('vocabulary', 'composer-vocabulary'), ('confirm-send', 'composer-confirm-send'), ('confirmation', 'composer-confirmation')]:
-    text = instrument(text, '.accessibilityIdentifier("terminal-dictation-' + name + '")', suffix)
+text = text.replace(needle, '@ViewState private var expanded = terminalLayoutShowVocabulary')
+for name in ['comparison', 'discard', 'vocabulary']:
+    text = instrument(text, '.accessibilityIdentifier("terminal-dictation-' + name + '")', 'composer-' + name)
 text = instrument(text, '.disabled(!canApply)', 'composer-use-cleaned')
 text = instrument(text, '.accessibilityLabel("Custom recognition words")', 'composer-custom-words')
 (target / 'TerminalVoiceReview.swift').write_text(text)
@@ -103,7 +103,7 @@ cp -R "$ROOT/Resources/Localizations/ko.lproj" "$TASK_APP/Contents/Resources/"
 swiftc -parse-as-library -swift-version 5 -target "$(uname -m)-apple-macos15.0" \
     -module-cache-path "${GITROCHI_TERMINAL_LAYOUT_MODULE_CACHE:-$TASK_TMP/module-cache}" \
     "$TASK_TMP/TerminalPanelLayout.swift" "$TASK_TMP/TerminalInput.swift" "$TASK_TMP/TerminalVoiceAction.swift" "$TASK_TMP/TerminalSpeechVocabulary.swift" \
-    "$TASK_TMP/TerminalCleanupPolicy.swift" "$TASK_TMP/TerminalTextCleanup.swift" "$TASK_TMP/StudioStyle.swift" "$TASK_TMP/SharedSheet.swift" "$TASK_TMP/TerminalChrome.swift" "$TASK_TMP/DesignIcon.swift" "$TASK_TMP/DesignSymbols.swift" \
+    "$TASK_TMP/TerminalCleanupPolicy.swift" "$TASK_TMP/TerminalTextCleanup.swift" "$TASK_TMP/StudioStyle.swift" "$TASK_TMP/HostedList.swift" "$TASK_TMP/NoticeBlock.swift" "$TASK_TMP/PageControls.swift" "$TASK_TMP/SharedSheet.swift" "$TASK_TMP/TerminalChrome.swift" "$TASK_TMP/DesignIcon.swift" "$TASK_TMP/DesignSymbols.swift" \
     "$TASK_TMP/TerminalVoiceReview.swift" "$TASK_TMP/TerminalDictationComposer.swift" "$TASK_TMP/TerminalLayout.swift" \
     -o "$TASK_APP/Contents/MacOS/TerminalLayout"
 for TASK_LANGUAGE in en ko; do

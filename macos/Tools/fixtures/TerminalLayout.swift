@@ -155,6 +155,15 @@ enum AgentKind: String, CaseIterable, Identifiable {
     var title: String { self == .claude ? "Claude Code" : self == .codex ? "Codex" : "Gemini CLI" }
 }
 enum AppLanguage { static let key = "appLanguage" }
+enum AIError: LocalizedError {
+    case notConfigured(String), refused(String), failed(String, String)
+    var errorDescription: String? {
+        switch self {
+        case .notConfigured(let message), .refused(let message): return message
+        case .failed(let who, let message): return who + " request failed: " + message
+        }
+    }
+}
 enum AIProvider: String { case compatible, fixture; var title: String { "Preview AI" } }
 
 /// The production cleanup client calls only this in-process fixture; there is no network implementation.
@@ -194,10 +203,13 @@ private enum FixtureFailure: LocalizedError {
     var holdSend = false
     var attempts = 0
     var pendingSend: CheckedContinuation<Void, Never>?
+    var refreshes = 0
+    func refresh() async { refreshes += 1 }
     func send(_ destination: TerminalVoiceDestination, _ text: String, _ kind: AgentKind) async throws {
         attempts += 1
         if holdSend { await withCheckedContinuation { pendingSend = $0 } }
-        if failSend { throw FixtureFailure.unavailable }
+        // the terminal names no provider, so its failure is the error's own words
+        if failSend { throw destination == .terminal ? TerminalVoiceActionError.terminalUnavailable : AIError.failed("Preview AI", "The preview provider is unavailable.") }
         sent.append((destination, destination == .terminal ? TerminalInput.singleLine(text) : text, kind))
     }
 }
@@ -226,10 +238,13 @@ private enum FixtureFailure: LocalizedError {
         if language == "ko" { precondition(String(localized: "Cancel") != "Cancel", "The fixture bundle must load Korean localization") }
         let commands = TerminalQuickCommand.allCases.map(\.command)
         precondition(commands == ["gitch ck", "gitch preflight", "gitch pr status", "gitch ci"], "Quick actions preserve reviewable commands")
-        let legacy = ["normal", "narrow", "split", "split-450", "short", "copied", "voice-idle", "voice-review", "voice-listening", "voice-unavailable", "voice-microphone-denied", "voice-speech-denied", "voice-language-unavailable", "voice-input-device", "voice-multiline"]
-        let workflows = ["voice-korean-hints", "voice-cleanup-comparison", "voice-cleanup-applied", "voice-cleanup-restored", "voice-cleanup-source-edit", "voice-cleanup-working", "voice-ai-unavailable", "voice-ai-unconfigured", "voice-destination-terminal", "voice-destination-explain", "voice-destination-commit", "voice-destination-agent", "voice-confirmed-explain", "voice-confirmed-commit", "voice-confirmed-agent", "voice-commit-no-staged", "voice-send-failure", "voice-send-working"]
+        let legacy = ["normal", "narrow", "split", "split-450", "short", "copied", "voice-idle", "voice-review", "voice-listening", "voice-unavailable", "voice-microphone-denied", "voice-speech-denied", "voice-language-unavailable", "voice-input-device", "voice-multiline", "voice-no-speech", "voice-too-long"]
+        let workflows = ["voice-korean-hints", "voice-cleanup-comparison", "voice-cleanup-applied", "voice-cleanup-restored", "voice-cleanup-source-edit", "voice-cleanup-working", "voice-ai-unavailable", "voice-ai-unconfigured", "voice-destination-terminal", "voice-destination-explain", "voice-destination-commit", "voice-destination-agent", "voice-confirmed-explain", "voice-confirmed-commit", "voice-confirmed-agent", "voice-commit-no-staged", "voice-send-failure", "voice-send-retried", "voice-send-working",
+                         "voice-cleanup-discarded", "voice-draft-explain", "voice-draft-agent", "voice-terminal-failure"]
+        // the states whose words wrap: Korean runs them too
+        let states = ["voice-idle", "voice-listening", "voice-microphone-denied", "voice-speech-denied", "voice-language-unavailable", "voice-input-device"]
         let selectedScenario = ProcessInfo.processInfo.environment["GITROCHI_TERMINAL_LAYOUT_SCENARIO"]
-        let scenarios = (language == "en" ? legacy + workflows : workflows).filter { selectedScenario == nil || $0 == selectedScenario }
+        let scenarios = (language == "en" ? legacy + workflows : states + workflows).filter { selectedScenario == nil || $0 == selectedScenario }
         for appearance in ["light", "dark"] {
             for scenario in scenarios {
                 let voice = scenario.hasPrefix("voice-")
@@ -239,26 +254,30 @@ private enum FixtureFailure: LocalizedError {
                 ai.requests = []; ai.unavailable = scenario == "voice-ai-unavailable"; ai.unconfigured = scenario == "voice-ai-unconfigured"
                 terminalLayoutShowVocabulary = scenario == "voice-korean-hints"
                 ai.holdCleanup = scenario == "voice-cleanup-working"
-                voiceActions.failSend = scenario == "voice-send-failure"
+                voiceActions.failSend = scenario == "voice-send-failure" || scenario == "voice-send-retried" || scenario == "voice-terminal-failure"
                 voiceActions.holdSend = scenario == "voice-send-working"
-                terminalLayoutInitialDestination = scenario.contains("explain") || scenario == "voice-send-failure" || scenario == "voice-send-working" ? .explainChanges
+                terminalLayoutInitialDestination = scenario.contains("explain") || scenario.hasPrefix("voice-send-") ? .explainChanges
                     : scenario.contains("commit") ? .commitDraft : scenario.contains("agent") ? .agent : .terminal
                 if scenario == "voice-listening" {
                     dictation.state = .listening; dictation.level = 0.65; dictation.transcript = "Review the changes in this repository"
                 } else if scenario == "voice-unavailable" {
-                    dictation.state = .failure; dictation.error = "Speech recognition is unavailable right now. Try again in a moment."
+                    dictation.state = .failure; dictation.error = String(localized: "Speech recognition is unavailable right now. Try again in a moment.")
                 } else if scenario == "voice-microphone-denied" {
                     dictation.state = .failure; dictation.recovery = .microphone
-                    dictation.error = "Allow Microphone access for Gitrochi in System Settings to use voice input."
+                    dictation.error = String(localized: "Allow Gitrochi in Privacy & Security › Microphone. You can still type.")
                 } else if scenario == "voice-speech-denied" {
                     dictation.state = .failure; dictation.recovery = .speech
-                    dictation.error = "Allow Speech Recognition for Gitrochi in System Settings to use voice input."
+                    dictation.error = String(localized: "Allow Gitrochi in Privacy & Security › Speech Recognition. You can still type.")
                 } else if scenario == "voice-language-unavailable" {
                     dictation.state = .failure; dictation.recovery = .language
-                    dictation.error = "On-device speech is unavailable for this language. Choose another language or install its dictation support in System Settings."
+                    dictation.error = String(localized: "\(Locale(identifier: language).localizedString(forLanguageCode: "ko") ?? "ko-KR") speech isn't installed on this Mac, or recognition is busy.")
                 } else if scenario == "voice-input-device" {
                     dictation.state = .failure; dictation.recovery = .inputDevice
-                    dictation.error = "No microphone is available. Connect a microphone and try again."
+                    dictation.error = String(localized: "No microphone is available. Connect a microphone and try again.")
+                } else if scenario == "voice-no-speech" {
+                    dictation.state = .failure; dictation.error = String(localized: "No speech was recognized. Try again.")
+                } else if scenario == "voice-too-long" {
+                    dictation.state = .review; dictation.transcript = String(repeating: "Review the changes. ", count: 301) + "Done."
                 } else if scenario == "voice-multiline" {
                     dictation.state = .review; dictation.transcript = "Review this diff.\n\tExplain the next steps.\u{1B}"
                 } else if voice && scenario != "voice-idle" {
@@ -268,16 +287,17 @@ private enum FixtureFailure: LocalizedError {
                 let source = dictation.transcript
                 let content: AnyView, size: CGSize
                 if voice {
-                    content = AnyView(TerminalDictationComposer(dictation: dictation, target: "desktop-client",
-                        repositoryName: "desktop-client", directory: "/Workspace/desktop-client",
+                    content = AnyView(TerminalDictationComposer(dictation: dictation, target: "Terminal 1",
+                        repositoryName: "desktop-client", branch: "feature/voice", directory: "/Workspace/desktop-client",
                         repositoryWords: ["RepoStore.swift", "feature/voice", "Gitrochi"],
                         commitAvailable: scenario != "voice-commit-no-staged",
-                        providerTitle: { $0 == .agent ? "Claude Code" : "Preview AI · local fixture" },
-                        send: voiceActions.send,
+                        providerTitle: { $0 == .agent ? "" : "Preview AI · local fixture" },
+                        isHolding: scenario == "voice-listening", send: voiceActions.send, refreshContext: voiceActions.refresh,
                         insert: { _ in fatalError("The fixture never sends PTY input") }, dismiss: {})
-                        .frame(width: 500, height: 660)
+                        // the sheet's own size: 560 wide, as tall as the state it shows
+                        .fixedSize()
                         .background(TerminalLayoutProbe(identifier: "composer")))
-                    size = CGSize(width: 544, height: 704)
+                    size = CGSize(width: 604, height: 836)
                 } else {
                     // docked: flat panes with a 1pt line between them, as under the centre column
                     content = AnyView(HStack(spacing: 0) {
@@ -309,6 +329,7 @@ private enum FixtureFailure: LocalizedError {
                         app.updateWindows(); RunLoop.current.run(until: Date().addingTimeInterval(0.01))
                     } while Date() < deadline
                 }
+                func shown(_ identifier: String) -> Bool { probes().contains { $0.fixtureIdentifier == identifier } }
                 func click(_ identifier: String, xFraction: CGFloat = 0.5) {
                     guard let probe = probes().first(where: { $0.fixtureIdentifier == identifier }) else { fatalError("Missing actual production control: " + identifier) }
                     scrollTo(identifier)
@@ -346,9 +367,16 @@ private enum FixtureFailure: LocalizedError {
                     if scenario == "voice-cleanup-working" {
                         click("composer-insert")
                         precondition(voiceActions.sent.isEmpty && ai.requests.count == 1, "Cleanup in flight cannot submit or duplicate requests")
-                    } else if scenario != "voice-ai-unavailable" {
-                        precondition(probes().contains { $0.fixtureIdentifier == "composer-comparison" }, "Successful cleanup shows the real comparison view")
-                        if scenario == "voice-cleanup-applied" || scenario == "voice-cleanup-restored" {
+                    } else if scenario == "voice-ai-unavailable" {
+                        precondition(shown("composer-cleanup-failure") && !shown("composer-cleanup"), "A failed cleanup shows the failure block, whose Retry replaces Clean up")
+                    } else {
+                        precondition(shown("composer-comparison") && !shown("composer-cleanup"), "Successful cleanup shows the real comparison view, and Clean up hides")
+                        click("composer-insert")
+                        precondition(voiceActions.sent.isEmpty, "Nothing is inserted while a version is still to be chosen")
+                        if scenario == "voice-cleanup-discarded" {
+                            click("composer-discard")
+                            precondition(dictation.transcript == source && !shown("composer-comparison") && shown("composer-cleanup"), "Discard keeps the original and brings Clean up back")
+                        } else if scenario == "voice-cleanup-applied" || scenario == "voice-cleanup-restored" {
                             click("composer-use-cleaned")
                             precondition(dictation.transcript == "RepoStore.swift 변경을 설명해줘.", "Only Use cleaned text applies the suggestion")
                             if scenario == "voice-cleanup-restored" {
@@ -361,16 +389,23 @@ private enum FixtureFailure: LocalizedError {
                     }
                 }
                 if scenario == "voice-ai-unconfigured" {
-                    click("composer-cleanup")
-                    precondition(ai.requests.isEmpty, "An unconfigured provider cannot receive cleanup text")
+                    precondition(!shown("composer-cleanup") && ai.requests.isEmpty, "An unconfigured provider cannot receive cleanup text")
+                }
+                if scenario == "voice-too-long" {
+                    click("composer-insert")
+                    precondition(voiceActions.attempts == 0, "A draft over the limit cannot be inserted")
                 }
                 if scenario == "voice-korean-hints" {
                     precondition(probes().contains { $0.fixtureIdentifier == "composer-custom-words" }, "Expanded hints must show the actual custom-word editor")
                     scrollTo("composer-vocabulary")
                 }
-                if scenario.contains("destination-") || scenario.contains("confirmed-") || scenario == "voice-commit-no-staged" || scenario == "voice-send-failure" || scenario == "voice-send-working" {
+                if scenario.contains("destination-") || scenario.contains("confirmed-") || scenario == "voice-commit-no-staged" || scenario.hasPrefix("voice-send-") || scenario == "voice-terminal-failure" {
                     click("composer-insert")
-                    if terminalLayoutInitialDestination == .terminal {
+                    if scenario == "voice-terminal-failure" {
+                        click("composer-insert")
+                        precondition(voiceActions.attempts == 1 && voiceActions.sent.isEmpty && !shown("composer-confirmation"), "A failed insertion waits for Retry above")
+                        scrollTo("composer-destination")
+                    } else if terminalLayoutInitialDestination == .terminal {
                         precondition(voiceActions.sent.count == 1 && voiceActions.sent[0].destination == .terminal, "Terminal insertion uses only the explicit submit action")
                     } else if scenario == "voice-commit-no-staged" {
                         precondition(voiceActions.sent.isEmpty && !probes().contains { $0.fixtureIdentifier == "composer-confirmation" }, "Commit review stays disabled when nothing is staged")
@@ -378,13 +413,24 @@ private enum FixtureFailure: LocalizedError {
                     } else {
                         precondition(voiceActions.sent.isEmpty && probes().contains { $0.fixtureIdentifier == "composer-confirmation" }, "Review shows the real confirmation without dispatching")
                         scrollTo("composer-confirmation")
-                        if scenario.contains("confirmed-") || scenario == "voice-send-failure" || scenario == "voice-send-working" {
-                            click("composer-confirm-send")
-                            precondition(voiceActions.sent.count == (scenario == "voice-send-failure" || scenario == "voice-send-working" ? 0 : 1), "Dispatch occurs only after the actual confirmation button")
+                        precondition(!shown("composer-editor") && !shown("composer-cleanup"), "The summary takes the body: the draft is edited after Back")
+                        if scenario.contains("confirmed-") || scenario.hasPrefix("voice-send-") {
+                            // the summary's send is the sheet's one primary
+                            click("composer-insert")
+                            precondition(voiceActions.sent.count == (scenario.hasPrefix("voice-send-") ? 0 : 1), "Dispatch occurs only after the actual confirmation button")
                             if scenario == "voice-send-working" {
-                                click("composer-confirm-send"); click("composer-cleanup")
+                                click("composer-insert")
                                 precondition(voiceActions.attempts == 1 && ai.requests.isEmpty, "In-flight sends cannot duplicate dispatch or start cleanup")
-                                scrollTo("composer-confirmation")
+                            } else if scenario == "voice-send-failure" {
+                                click("composer-insert")
+                                precondition(voiceActions.attempts == 1 && shown("composer-confirmation"), "A failed send keeps its summary and waits for Retry above")
+                            } else if scenario == "voice-send-retried" {
+                                // Retry reads the repository again; sending stays the user's to press
+                                click("composer-notice-action")
+                                precondition(voiceActions.refreshes == 1 && voiceActions.attempts == 1, "Retry refreshes the context without sending")
+                                voiceActions.failSend = false
+                                click("composer-insert")
+                                precondition(voiceActions.sent.count == 1, "After Retry the send is available again")
                             }
                         }
                     }
@@ -407,8 +453,11 @@ private enum FixtureFailure: LocalizedError {
                     measurements[key(probe.fixtureIdentifier)] = [frame.origin.x, frame.origin.y, frame.width, frame.height].map(Double.init)
                 }
                 if voice {
-                    precondition(measurements["composer-editor"] != nil && measurements["composer-cancel"] != nil && measurements["composer-insert"] != nil)
-                    precondition(measurements["composer-editor"]![3] >= 80)
+                    precondition(measurements["composer-cancel"] != nil && measurements["composer-insert"] != nil)
+                    // the draft and the summary take turns in the body
+                    precondition((measurements["composer-editor"] != nil) != (measurements["composer-confirmation"] != nil))
+                    precondition(measurements["composer-editor"].map { $0[3] >= 80 } ?? true)
+                    precondition(measurements["composer"]![2] == 560, "The sheet is the shared 560 pt wide")
                     precondition((measurements["composer-stop"] != nil) == (scenario == "voice-listening"))
                     precondition((measurements["composer-recovery"] != nil) == (dictation.recovery != nil))
                     precondition((measurements["composer-insertion-preview"] != nil) == (scenario == "voice-multiline"))

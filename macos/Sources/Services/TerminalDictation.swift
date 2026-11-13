@@ -86,13 +86,13 @@ final class TerminalDictation {
             let speech = await Self.speechPermission()
             guard let self, self.run.accepts(token), !Task.isCancelled else { return }
             guard speech == .authorized else {
-                self.fail(token, String(localized: "Allow Speech Recognition for Gitrochi in System Settings to use voice input."), recovery: .speech)
+                self.fail(token, String(localized: "Allow Gitrochi in Privacy & Security › Speech Recognition. You can still type."), recovery: .speech)
                 return
             }
             let microphone = await Self.microphonePermission()
             guard self.run.accepts(token), !Task.isCancelled else { return }
             guard microphone else {
-                self.fail(token, String(localized: "Allow Microphone access for Gitrochi in System Settings to use voice input."), recovery: .microphone)
+                self.fail(token, String(localized: "Allow Gitrochi in Privacy & Security › Microphone. You can still type."), recovery: .microphone)
                 return
             }
             if needsPermissions {
@@ -138,7 +138,10 @@ final class TerminalDictation {
         guard run.accepts(token) else { return }
         guard let recognizer = SFSpeechRecognizer(locale: Locale(identifier: localeIdentifier)),
               recognizer.supportsOnDeviceRecognition else {
-            fail(token, String(localized: "On-device speech is unavailable for this language. Choose another language or install its dictation support in System Settings."), recovery: .language)
+            // "Korean", not "Korean (South Korea)": the picker already says which
+            let language = Locale(identifier: localeIdentifier).language.languageCode
+                .flatMap { Locale.current.localizedString(forLanguageCode: $0.identifier) } ?? localeIdentifier
+            fail(token, String(localized: "\(language) speech isn't installed on this Mac, or recognition is busy."), recovery: .language)
             return
         }
         guard recognizer.isAvailable else {
