@@ -68,7 +68,7 @@ export function FlowStepDetails({ step, steps, run, record, onEdit, onOpenRun }:
 }
 
 /** The outcome in one line ("Failed after 2m 10s"), the engine's reason below it, and the way into the run */
-function StepOutcome({ step, steps, run, failure, onOpenRun }: { step: FlowStepView; steps: FlowStepView[]; run?: RunNode; failure?: Json; onOpenRun?: () => void }) {
+export function StepOutcome({ step, steps, run, failure, onOpenRun }: { step: FlowStepView; steps: FlowStepView[]; run?: RunNode; failure?: Json; onOpenRun?: () => void }) {
   const tone = flowTone(step.state);
   const took = step.durationMs != null ? formatDuration(step.durationMs) : null;
   const cause = flowSkipCause(step, steps);
@@ -88,7 +88,7 @@ function StepOutcome({ step, steps, run, failure, onOpenRun }: { step: FlowStepV
 }
 
 /** The engine's own checks for this step, exactly as it judged them */
-function StepVerdicts({ verdicts }: { verdicts: Json[] }) {
+export function StepVerdicts({ verdicts }: { verdicts: Json[] }) {
   if (!verdicts.length) return null;
   return (
     <section className="flow-step-section">

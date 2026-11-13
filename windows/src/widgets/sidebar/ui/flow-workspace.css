@@ -53,7 +53,6 @@
 .flow-config p { margin: 0; font-size: 12px; line-height: 1.6; }
 .flow-config-editor { resize: vertical; min-height: 330px; height: 45vh; max-height: 60vh; width: 100%; box-sizing: border-box; padding: 14px; font-size: 12px; line-height: 1.6; tab-size: 2; white-space: pre; background: var(--term-bg); }
 .flow-config-error { max-height: 100px; overflow: auto; white-space: pre-wrap; user-select: text; font-size: 11px; }
-.flow-run-graph { height: 220px; flex: none; margin-bottom: 12px; }
 
 @container flow-workspace (max-width: 1180px) {
   .flow-library { width: 240px; }
