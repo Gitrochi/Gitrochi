@@ -20771,6 +20771,16 @@ completion_candidates() {   # _complete -- 이후: 실행 파일 이름을 뺀 �
         status|st) printf '%s\n' --json --strict --ssh ;;
         preflight|pf) printf '%s\n' --json --no-fetch ;;
         c|commit|cp) printf '%s\n' -a -m -F --trailer ;;
+        amend) printf '%s\n' -m ;;
+        p|push) printf '%s\n' --force --dry-run --tags --yes ;;
+        rescue) printf '%s\n' --branch --restore --yes ;;
+        prune) printf '%s\n' --gone --yes ;;
+        publish) printf '%s\n' --public --private --description --yes ;;
+        abort|unlock|fix|uninstall|import|config|org|sign|ssh) printf '%s\n' --yes ;;
+        ignore) printf '%s\n' --off --yes ;;
+        protect) printf '%s\n' --rm --list ;;
+        migrate) printf '%s\n' --force ;;
+        ai) printf '%s\n' --print --skill --remove ;;
         pr|mr) printf '%s\n' --title --body --body-file --base --draft --web --json; [ "${words[1]:-}" != list ] || printf '%s\n' --state --limit ;;
         issue) printf '%s\n' --help --json --state --limit --label --assignee ;;
         workspace|ws) printf '%s\n' --help --json --dry-run ;;
@@ -20789,6 +20799,8 @@ completion_candidates() {   # _complete -- 이후: 실행 파일 이름을 뺀 �
         ci) printf '%s\n' --json --connection --ref ;;
         flow|test) printf '%s\n' --json --affected --env --only --jobs --fail-fast --no-fail-fast --no-cache --keep-services --detach --events --summary --ci --yes --dry-run --follow --since --format --out --idempotency-key --watch --lang ;;
       esac
+      # Every command with a help topic answers --help (the internal protocol commands have none).
+      ! help_resolve "$cmd" || printf '%s\n' --help
     else
       case "$cmd" in
         use|remove|rm|setup|clone|fork) load_config >/dev/null 2>&1; for i in "${ACC_IDS[@]}"; do printf '%s\n' "$i"; done ;;

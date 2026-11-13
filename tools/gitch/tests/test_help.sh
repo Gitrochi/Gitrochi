@@ -366,3 +366,19 @@ test_help_completion_ci_and_flow_subcommands() {
   run gitch _complete -- flow design ''; assert_ok; assert_eq "$OUT" $'inspect\nrender\nsource'
   run gitch _complete -- flow ci ''; assert_ok; assert_eq "$OUT" $'browse\nlogs\nreport\nstatus'
 }
+
+test_help_completion_options_of_confirming_commands() {
+  run gitch _complete -- p --; assert_ok; assert_eq "$OUT" $'--dry-run\n--force\n--help\n--tags\n--yes'
+  run gitch _complete -- push --f; assert_ok; assert_eq "$OUT" --force
+  run gitch _complete -- rescue 1 --; assert_ok; assert_eq "$OUT" $'--branch\n--help\n--restore\n--yes'
+  run gitch _complete -- prune --; assert_ok; assert_eq "$OUT" $'--gone\n--help\n--yes'
+  run gitch _complete -- publish --p; assert_ok; assert_eq "$OUT" $'--private\n--public'
+  run gitch _complete -- publish --; assert_ok; assert_out --description; assert_out --yes
+  run gitch _complete -- abort --y; assert_ok; assert_eq "$OUT" --yes
+  run gitch _complete -- unlock --; assert_ok; assert_eq "$OUT" $'--help\n--yes'
+  # Every command answers --help, so every command completes it; the internal protocol commands do not.
+  run gitch _complete -- undo --; assert_ok; assert_eq "$OUT" --help
+  run gitch _complete -- amend --h; assert_ok; assert_eq "$OUT" --help
+  run gitch _complete -- st --he; assert_ok; assert_eq "$OUT" --help
+  run gitch _complete -- _hook --; assert_ok; assert_eq "$OUT" ''
+}
