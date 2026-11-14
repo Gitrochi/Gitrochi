@@ -93,5 +93,5 @@
 
 /* every full-width page; the toolbar is the only title */
 .workspace-page { display: flex; flex-direction: column; flex: 1; min-height: 0; min-width: 0; height: 100%; }
-/* a hosted list page (Issues, Actions) reaches the edges and scrolls inside its columns */
-.workspace-page:has(> .hosted-page) { padding: 0; gap: 0; overflow: hidden; }
+/* a hosted list page (Pull requests, Issues, Actions) reaches the edges and scrolls inside its columns */
+.workspace-page:has(> .hosted-page, > .pr-page) { padding: 0; gap: 0; overflow: hidden; }
