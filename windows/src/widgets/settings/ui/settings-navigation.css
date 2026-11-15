@@ -8,14 +8,14 @@
 }
 
 .settings-category {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 5px;
   min-width: 0;
-  padding: 7px 4px;
+  padding: 7px 4px 9px;
   border: 0;
-  border-bottom: 2px solid transparent;
   border-radius: 8px;
   background: transparent;
   color: var(--text-2);
@@ -42,9 +42,19 @@
 }
 
 .settings-category[aria-current="page"] {
-  border-bottom-color: var(--accent);
   color: var(--text);
   font-weight: 600;
+}
+
+/* A pseudo-element keeps the underline straight; a bottom border would follow the hover radius. */
+.settings-category[aria-current="page"]::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: var(--accent);
 }
 
 .settings-category:focus-visible {
