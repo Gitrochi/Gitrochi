@@ -702,7 +702,6 @@
 "Loading" = "Yükleniyor";
 "Loading earlier history…" = "Daha eski geçmiş yükleniyor…";
 "Local branches" = "Yerel dallar";
-"Local branches %lld" = "Yerel dallar %1$lld";
 "Local: %@" = "Yerel: %1$@";
 "Locate" = "Konum seç";
 "Locate…" = "Konum seç…";
@@ -885,7 +884,6 @@
 "Release notes" = "Sürüm notları";
 "Remote: " = "Uzak: ";
 "Remotes" = "Uzak depolar";
-"Remotes %lld" = "Uzak depolar %1$lld";
 "Remove" = "Kaldır";
 "Remove from list" = "Listeden kaldır";
 "Remove this variable" = "Bu değişkeni kaldır";
@@ -1005,7 +1003,6 @@
 "Start point" = "Başlangıç noktası";
 "Start with the reason for the change" = "Değişikliğin nedeniyle başla";
 "Stash changes" = "Değişiklikleri stash'e kaydet";
-"Stashes %lld" = "Stash'ler %1$lld";
 "Stashing…" = "Stash'e kaydediliyor…";
 "Structure graph" = "Yapı grafiği";
 "Structure graph needs gitch %@ or later, but the gitch inside Gitrochi is %@." = "Yapı grafiği için gitch %1$@ veya üstü gerekir, ancak Gitrochi içindeki gitch %2$@.";
@@ -1019,7 +1016,6 @@
 "Tag here…" = "Buraya etiket koy…";
 "Tag: %@" = "Etiket: %1$@";
 "Tags" = "Etiketler";
-"Tags %lld" = "Etiketler %1$lld";
 "Task" = "Görev";
 "Task for the agent (optional)" = "Ajan için görev (isteğe bağlı)";
 "Technical tone" = "Teknik ton";
@@ -1140,7 +1136,6 @@
 "Worktree in a temporary folder — it may break when the folder is deleted on restart" = "Geçici bir klasördeki worktree — yeniden başlatmada klasör silinirse bozulabilir";
 "Worktree whose folder is gone — remove it with 'Clean up'" = "Klasörü artık olmayan worktree — 'Temizle' ile kaldırın";
 "Worktrees" = "Worktree'ler";
-"Worktrees %lld" = "Worktree'ler %1$lld";
 "Write commit message with AI" = "Commit mesajını yapay zekayla yaz";
 "Write in English" = "İngilizce yaz";
 "Write in Korean" = "Korece yaz";
@@ -1311,7 +1306,6 @@
 "Open in Merge requests" = "Merge request'lerde aç";
 "Open in Issues" = "Issue'larda aç";
 "Merge request" = "Merge request";
-"Issues %lld" = "Issue'lar %1$lld";
 "Edit issue #%lld" = "Issue #%1$lld düzenle";
 "State" = "Durum";
 "Refresh conversation" = "Konuşmayı yenile";

@@ -711,7 +711,6 @@
 "Loading" = "Cargando";
 "Loading earlier history…" = "Cargando historial anterior…";
 "Local branches" = "Ramas locales";
-"Local branches %lld" = "Ramas locales %1$lld";
 "Locate" = "Localizar";
 "Locate…" = "Localizar…";
 "Location" = "Ubicación";
@@ -890,7 +889,6 @@
 "Release notes" = "Notas de la versión";
 "Remote: " = "Remoto: ";
 "Remotes" = "Remotos";
-"Remotes %lld" = "Remotos %1$lld";
 "Remove" = "Eliminar";
 "Remove from list" = "Quitar de la lista";
 "Remove this variable" = "Quitar esta variable";
@@ -1023,7 +1021,6 @@
 "Tag here…" = "Crear etiqueta aquí…";
 "Tag: %@" = "Etiqueta: %1$@";
 "Tags" = "Etiquetas";
-"Tags %lld" = "Etiquetas %1$lld";
 "Task" = "Tarea";
 "Task for the agent (optional)" = "Tarea para el agente (opcional)";
 "Technical tone" = "Tono técnico";
@@ -1309,7 +1306,6 @@
 "Open in Merge requests" = "Abrir en Merge requests";
 "Open in Issues" = "Abrir en Incidencias";
 "Merge request" = "Merge request";
-"Issues %lld" = "Incidencias %1$lld";
 "Edit issue #%lld" = "Editar incidencia #%1$lld";
 "State" = "Estado";
 "Refresh conversation" = "Actualizar conversación";

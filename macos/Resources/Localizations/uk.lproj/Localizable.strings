@@ -712,7 +712,6 @@
 "Loading" = "Завантаження";
 "Loading earlier history…" = "Завантаження ранішої історії…";
 "Local branches" = "Локальні гілки";
-"Local branches %lld" = "Локальні гілки %1$lld";
 "Local: %@" = "Локальна: %1$@";
 "Locate" = "Вказати";
 "Locate…" = "Вказати…";
@@ -896,7 +895,6 @@
 "Release notes" = "Примітки до випуску";
 "Remote: " = "Віддалена: ";
 "Remotes" = "Віддалені репозиторії";
-"Remotes %lld" = "Віддалені репозиторії %1$lld";
 "Remove" = "Вилучити";
 "Remove from list" = "Вилучити зі списку";
 "Remove this variable" = "Вилучити цю змінну";
@@ -1017,7 +1015,6 @@
 "Start with the reason for the change" = "Починати з причини зміни";
 "Stash Pop" = "Дістати зі схованки";
 "Stash changes" = "Сховати зміни";
-"Stashes %lld" = "Схованки %1$lld";
 "Stashing…" = "Збереження в схованку…";
 "Stash…" = "Сховати…";
 "Structure graph" = "Граф структури";
@@ -1032,7 +1029,6 @@
 "Tag here…" = "Створити тег тут…";
 "Tag: %@" = "Тег: %1$@";
 "Tags" = "Теги";
-"Tags %lld" = "Теги %1$lld";
 "Task" = "Завдання";
 "Task for the agent (optional)" = "Завдання для агента (необов’язково)";
 "Technical tone" = "Технічний тон";
@@ -1154,7 +1150,6 @@
 "Worktree in a temporary folder — it may break when the folder is deleted on restart" = "Робоче дерево в тимчасовій папці — воно може зламатися, коли папку буде видалено після перезапуску";
 "Worktree whose folder is gone — remove it with 'Clean up'" = "Робоче дерево, папки якого вже немає — вилучіть його кнопкою «Очистити»";
 "Worktrees" = "Робочі дерева";
-"Worktrees %lld" = "Робочі дерева %1$lld";
 "Write commit message with AI" = "Написати повідомлення коміту за допомогою AI";
 "Write in English" = "Писати англійською";
 "Write in Korean" = "Писати корейською";
@@ -1322,7 +1317,6 @@
 "Open in Merge requests" = "Відкрити в Merge requests";
 "Open in Issues" = "Відкрити в задачах";
 "Merge request" = "Merge request";
-"Issues %lld" = "Задачі %1$lld";
 "Edit issue #%lld" = "Редагувати задачу #%1$lld";
 "State" = "Стан";
 "Refresh conversation" = "Оновити обговорення";

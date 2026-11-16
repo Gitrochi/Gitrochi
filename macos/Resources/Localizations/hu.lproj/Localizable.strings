@@ -703,7 +703,6 @@
 "Loading" = "Betöltés";
 "Loading earlier history…" = "Korábbi előzmények betöltése…";
 "Local branches" = "Helyi ágak";
-"Local branches %lld" = "Helyi ágak %1$lld";
 "Local: %@" = "Helyi: %1$@";
 "Locate" = "Tallózás";
 "Locate…" = "Tallózás…";
@@ -884,7 +883,6 @@
 "Release notes" = "Kiadási megjegyzések";
 "Remote: " = "Távoli: ";
 "Remotes" = "Távoli tárolók";
-"Remotes %lld" = "Távoli tárolók %1$lld";
 "Remove" = "Eltávolítás";
 "Remove from list" = "Eltávolítás a listáról";
 "Remove this variable" = "Változó eltávolítása";
@@ -1004,7 +1002,6 @@
 "Start point" = "Kiindulópont";
 "Start with the reason for the change" = "A módosítás okával kezdődjön";
 "Stash changes" = "Módosítások félretétele (stash)";
-"Stashes %lld" = "Stash-ek %1$lld";
 "Stashing…" = "Stash folyamatban…";
 "Structure graph" = "Szerkezeti gráf";
 "Structure graph needs gitch %@ or later, but the gitch inside Gitrochi is %@." = "A szerkezeti gráfhoz gitch %1$@ vagy újabb kell, de a Gitrochiben lévő gitch verziója %2$@.";
@@ -1018,7 +1015,6 @@
 "Tag here…" = "Címke ide…";
 "Tag: %@" = "Címke: %1$@";
 "Tags" = "Címkék";
-"Tags %lld" = "Címkék %1$lld";
 "Task" = "Feladat";
 "Task for the agent (optional)" = "Feladat az ügynöknek (nem kötelező)";
 "Technical tone" = "Szakmai hangnem";
@@ -1139,7 +1135,6 @@
 "Worktree in a temporary folder — it may break when the folder is deleted on restart" = "Ideiglenes mappában lévő worktree — megsérülhet, ha a mappa újraindításkor törlődik";
 "Worktree whose folder is gone — remove it with 'Clean up'" = "Worktree, amelynek a mappája eltűnt — a 'Takarítás' gombbal eltávolítható";
 "Worktrees" = "Worktree-k";
-"Worktrees %lld" = "Worktree-k %1$lld";
 "Write commit message with AI" = "Commitüzenet írása AI-jal";
 "Write in English" = "Legyen angol nyelvű";
 "Write in Korean" = "Legyen koreai nyelvű";
@@ -1307,7 +1302,6 @@
 "Open in Merge requests" = "Megnyitás a Merge requestekben";
 "Open in Issues" = "Megnyitás az Issue-kban";
 "Merge request" = "Merge request";
-"Issues %lld" = "Issue-k %1$lld";
 "Edit issue #%lld" = "Issue #%1$lld szerkesztése";
 "State" = "Állapot";
 "Refresh conversation" = "Beszélgetés frissítése";

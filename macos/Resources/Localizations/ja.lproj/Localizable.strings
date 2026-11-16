@@ -733,7 +733,6 @@
 "Loading" = "読み込み中";
 "Loading earlier history…" = "以前の履歴を読み込んでいます…";
 "Local branches" = "ローカルブランチ";
-"Local branches %lld" = "ローカルブランチ %1$lld";
 "Local: %@" = "ローカル: %1$@";
 "Locate" = "場所を指定";
 "Locate…" = "場所を指定…";
@@ -917,7 +916,6 @@
 "Release notes" = "リリースノート";
 "Remote: " = "リモート: ";
 "Remotes" = "リモート";
-"Remotes %lld" = "リモート %1$lld";
 "Remove" = "削除";
 "Remove from list" = "一覧から削除";
 "Remove this variable" = "この変数を削除";
@@ -1038,7 +1036,6 @@
 "Start with the reason for the change" = "変更の理由から書く";
 "Stash Pop" = "スタッシュをポップ";
 "Stash changes" = "変更をスタッシュ";
-"Stashes %lld" = "スタッシュ %1$lld";
 "Stashing…" = "スタッシュしています…";
 "Stash…" = "スタッシュ…";
 "Structure graph" = "構造グラフ";
@@ -1053,7 +1050,6 @@
 "Tag here…" = "ここにタグ…";
 "Tag: %@" = "タグ: %1$@";
 "Tags" = "タグ";
-"Tags %lld" = "タグ %1$lld";
 "Task" = "タスク";
 "Task for the agent (optional)" = "エージェントへのタスク (任意)";
 "Technical tone" = "技術的な口調";
@@ -1175,7 +1171,6 @@
 "Worktree in a temporary folder — it may break when the folder is deleted on restart" = "一時フォルダー内のワークツリー — 再起動時にフォルダーが削除されると壊れる可能性があります";
 "Worktree whose folder is gone — remove it with 'Clean up'" = "フォルダーが存在しないワークツリー — 「整理」で削除できます";
 "Worktrees" = "ワークツリー";
-"Worktrees %lld" = "ワークツリー %1$lld";
 "Write commit message with AI" = "AI でコミットメッセージを作成";
 "Write in English" = "英語で書く";
 "Write in Korean" = "韓国語で書く";
@@ -1868,7 +1863,6 @@
 "Edit issue #%lld" = "Issue #%1$lld を編集";
 "Toolbar" = "ツールバー";
 "Back to the repository screen" = "リポジトリ画面に戻る";
-"Issues %lld" = "Issue %1$lld";
 "Connect a GitHub or GitLab account to search its repositories." = "GitHub または GitLab のアカウントを接続すると、そのリポジトリを検索できます。";
 "No merge requests match this filter." = "この条件に一致するマージリクエストはありません。";
 "Toolbar buttons" = "ツールバーのボタン";

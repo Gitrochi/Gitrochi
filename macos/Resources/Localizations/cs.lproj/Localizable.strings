@@ -699,7 +699,6 @@
 "Loading" = "Načítání";
 "Loading earlier history…" = "Načítání starší historie…";
 "Local branches" = "Lokální větve";
-"Local branches %lld" = "Lokální větve %1$lld";
 "Local: %@" = "Lokální: %1$@";
 "Locate" = "Vybrat";
 "Locate…" = "Vybrat…";
@@ -879,7 +878,6 @@
 "Release notes" = "Poznámky k vydání";
 "Remote: " = "Vzdálená: ";
 "Remotes" = "Vzdálené repozitáře";
-"Remotes %lld" = "Vzdálené repozitáře %1$lld";
 "Remove" = "Odebrat";
 "Remove from list" = "Odebrat ze seznamu";
 "Remove this variable" = "Odebrat tuto proměnnou";
@@ -999,7 +997,6 @@
 "Start point" = "Výchozí bod";
 "Start with the reason for the change" = "Začni důvodem změny";
 "Stash changes" = "Uložit změny do stashe";
-"Stashes %lld" = "Stashe %1$lld";
 "Stashing…" = "Ukládání do stashe…";
 "Structure graph" = "Graf struktury";
 "Structure graph needs gitch %@ or later, but the gitch inside Gitrochi is %@." = "Graf struktury potřebuje gitch %1$@ nebo novější, ale gitch v Gitrochi má verzi %2$@.";
@@ -1012,7 +1009,6 @@
 "System follows your macOS setting (light, dark or auto). The graph and terminal change with it." = "Možnost Systém se řídí nastavením macOS (světlý, tmavý nebo automatický vzhled). Graf a terminál se mění s ním.";
 "Tag here…" = "Vytvořit tag zde…";
 "Tags" = "Tagy";
-"Tags %lld" = "Tagy %1$lld";
 "Task" = "Úkol";
 "Task for the agent (optional)" = "Úkol pro agenta (volitelné)";
 "Technical tone" = "Technický tón";
@@ -1133,7 +1129,6 @@
 "Worktree in a temporary folder — it may break when the folder is deleted on restart" = "Worktree v dočasné složce — po restartu se může poškodit, pokud se složka smaže";
 "Worktree whose folder is gone — remove it with 'Clean up'" = "Worktree, jehož složka zmizela — odeberte ho pomocí 'Pročistit'";
 "Worktrees" = "Worktree";
-"Worktrees %lld" = "Worktree %1$lld";
 "Write commit message with AI" = "Napsat zprávu commitu pomocí AI";
 "Write in English" = "Piš anglicky";
 "Write in Korean" = "Piš korejsky";
@@ -1303,7 +1298,6 @@
 "Open in Merge requests" = "Otevřít v Merge requestech";
 "Open in Issues" = "Otevřít v Issues";
 "Merge request" = "Merge request";
-"Issues %lld" = "Issues %1$lld";
 "Edit issue #%lld" = "Upravit issue #%1$lld";
 "State" = "Stav";
 "Refresh conversation" = "Obnovit konverzaci";

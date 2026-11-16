@@ -895,7 +895,6 @@
 "Loading" = "읽는 중";
 "Loading earlier history…" = "이전 기록 불러오는 중…";
 "Local branches" = "로컬 브랜치";
-"Local branches %lld" = "로컬 브랜치 %1$lld";
 "Local: %@" = "로컬: %1$@";
 "Locate" = "불러오기";
 "Locate…" = "불러오기…";
@@ -1077,7 +1076,6 @@
 "Release notes" = "릴리스 노트";
 "Remote: " = "원격: ";
 "Remotes" = "원격";
-"Remotes %lld" = "원격 %1$lld";
 "Remove" = "제거";
 "Remove from list" = "목록에서 제거";
 "Remove this variable" = "이 변수 빼기";
@@ -1197,7 +1195,6 @@
 "Start point" = "시작 위치";
 "Start with the reason for the change" = "변경 이유를 먼저";
 "Stash changes" = "변경 사항 Stash";
-"Stashes %lld" = "스태시 %1$lld";
 "Stashing…" = "Stash 중…";
 "Structure graph" = "구조 그래프";
 "Structure graph needs gitch %@ or later, but the gitch inside Gitrochi is %@." = "구조 그래프에는 gitch %1$@ 이상이 필요한데, Gitrochi 안의 gitch 는 %2$@ 입니다.";
@@ -1212,7 +1209,6 @@
 "Tag here…" = "여기에 태그…";
 "Tag: %@" = "태그: %1$@";
 "Tags" = "태그";
-"Tags %lld" = "태그 %1$lld";
 "Task" = "작업";
 "Task for the agent (optional)" = "에이전트에게 맡길 작업 (선택)";
 "Technical tone" = "기술적인 말투";
@@ -1334,7 +1330,6 @@
 "Worktree in a temporary folder — it may break when the folder is deleted on restart" = "임시 폴더 안의 워크트리 — 재부팅하면 폴더가 지워져 깨질 수 있습니다";
 "Worktree whose folder is gone — remove it with 'Clean up'" = "폴더가 사라진 워크트리 — '정리'로 지울 수 있습니다";
 "Worktrees" = "워크트리";
-"Worktrees %lld" = "워크트리 %1$lld";
 "Write commit message with AI" = "AI 로 커밋 메시지 작성";
 "Write in English" = "영어로 작성";
 "Write in Korean" = "한국어로 작성";
@@ -2212,7 +2207,6 @@
 "Open in Merge requests" = "머지 리퀘스트 페이지에서 열기";
 "Open in Issues" = "이슈 페이지에서 열기";
 "Merge request" = "머지 리퀘스트";
-"Issues %lld" = "이슈 %1$lld";
 "Edit issue #%lld" = "이슈 #%1$lld 편집";
 
 "Refresh conversation" = "대화 새로 고침";

@@ -686,7 +686,6 @@
 "Loading" = "Laden";
 "Loading earlier history…" = "Eerdere geschiedenis wordt geladen…";
 "Local branches" = "Lokale branches";
-"Local branches %lld" = "Lokale branches %1$lld";
 "Local: %@" = "Lokaal: %1$@";
 "Locate" = "Aanwijzen";
 "Locate…" = "Aanwijzen…";
@@ -1271,7 +1270,6 @@
 "Open in Merge requests" = "Openen in Merge requests";
 "Open in Issues" = "Openen in Issues";
 "Merge request" = "Merge request";
-"Issues %lld" = "Issues %1$lld";
 "Edit issue #%lld" = "Issue #%1$lld bewerken";
 "State" = "Status";
 "Refresh conversation" = "Gesprek vernieuwen";

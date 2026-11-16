@@ -686,7 +686,6 @@
 "Loading" = "Memuat";
 "Loading earlier history…" = "Memuat riwayat sebelumnya…";
 "Local branches" = "Branch lokal";
-"Local branches %lld" = "Branch lokal %1$lld";
 "Local: %@" = "Lokal: %1$@";
 "Locate" = "Pilih lokasi";
 "Locate…" = "Pilih lokasi…";
@@ -860,7 +859,6 @@
 "Reject the '%@' deployment?" = "Tolak deployment '%1$@'?";
 "Release notes" = "Catatan rilis";
 "Remotes" = "Remote";
-"Remotes %lld" = "Remote %1$lld";
 "Remove" = "Hapus";
 "Remove from list" = "Hapus dari daftar";
 "Remove this variable" = "Hapus variabel ini";
@@ -977,7 +975,6 @@
 "Start point" = "Titik awal";
 "Start with the reason for the change" = "Awali dengan alasan perubahan";
 "Stash changes" = "Stash perubahan";
-"Stashes %lld" = "Stash %1$lld";
 "Stashing…" = "Melakukan stash…";
 "Structure graph" = "Grafik struktur";
 "Structure graph needs gitch %@ or later, but the gitch inside Gitrochi is %@." = "Grafik struktur memerlukan gitch %1$@ atau yang lebih baru, tetapi gitch di dalam Gitrochi adalah %2$@.";
@@ -990,7 +987,6 @@
 "System follows your macOS setting (light, dark or auto). The graph and terminal change with it." = "Sistem mengikuti pengaturan macOS Anda (terang, gelap, atau otomatis). Grafik dan terminal ikut berubah.";
 "Tag here…" = "Tag di sini…";
 "Tags" = "Tag";
-"Tags %lld" = "Tag %1$lld";
 "Task" = "Tugas";
 "Task for the agent (optional)" = "Tugas untuk agen (opsional)";
 "Technical tone" = "Nada teknis";
@@ -1107,7 +1103,6 @@
 "Worktree in a temporary folder — it may break when the folder is deleted on restart" = "Worktree di folder sementara — bisa rusak jika folder dihapus saat mulai ulang";
 "Worktree whose folder is gone — remove it with 'Clean up'" = "Worktree yang foldernya sudah hilang — hapus dengan 'Bersihkan'";
 "Worktrees" = "Worktree";
-"Worktrees %lld" = "Worktree %1$lld";
 "Write commit message with AI" = "Tulis pesan commit dengan AI";
 "Write in English" = "Tulis dalam bahasa Inggris";
 "Write in Korean" = "Tulis dalam bahasa Korea";
@@ -1276,7 +1271,6 @@
 "Open in Merge requests" = "Buka di Merge request";
 "Open in Issues" = "Buka di Issue";
 "Merge request" = "Merge request";
-"Issues %lld" = "Issue %1$lld";
 "Edit issue #%lld" = "Edit issue #%1$lld";
 "State" = "Status";
 "Refresh conversation" = "Segarkan percakapan";

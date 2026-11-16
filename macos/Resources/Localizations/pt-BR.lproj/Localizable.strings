@@ -696,7 +696,6 @@
 "Loading" = "Carregando";
 "Loading earlier history…" = "Carregando histórico anterior…";
 "Local branches" = "Branches locais";
-"Local branches %lld" = "Branches locais %1$lld";
 "Locate" = "Localizar";
 "Locate…" = "Localizar…";
 "Location" = "Local";
@@ -874,7 +873,6 @@
 "Release notes" = "Notas da versão";
 "Remote: " = "Remoto: ";
 "Remotes" = "Remotos";
-"Remotes %lld" = "Remotos %1$lld";
 "Remove" = "Remover";
 "Remove from list" = "Remover da lista";
 "Remove this variable" = "Remover esta variável";
@@ -1288,7 +1286,6 @@
 "Open in Merge requests" = "Abrir em Merge requests";
 "Open in Issues" = "Abrir em Issues";
 "Merge request" = "Merge request";
-"Issues %lld" = "Issues %1$lld";
 "Edit issue #%lld" = "Editar issue #%1$lld";
 "State" = "Estado";
 "Refresh conversation" = "Atualizar conversa";
