@@ -191,6 +191,10 @@ final class RepoStore: Identifiable {
     var hiddenRefs: Set<String> = []
     var pinnedBranches: Set<String> = []
     var graphCurrentOnly = false
+    /// The text in the sidebar's Filter branches field, and whether the keys are in it: view state, not saved
+    /// (Windows: RepoStore.branchFilter)
+    var branchFilter = ""
+    var branchFilterFocused = false
     /// 충돌 해결 중인 파일과 블록마다 고른 것
     var conflictDoc: ConflictDocument?
     var conflictChoices: [Int: ConflictDocument.Choice] = [:]
@@ -480,6 +484,7 @@ final class RepoStore: Identifiable {
         pullRequestSelection = nil; pullRequestDiff = nil; pullRequestInspect = nil
         worktreeDiffs = [:]; worktreeInspects = [:]
         showCommandPalette = false; selectedBranchID = nil
+        branchFilter = ""
         resetCommitImpact()
         closeFileInspect()
         entries = []; maxLanes = 1; commitIndex = [:]; refsByCommit = [:]

@@ -48,6 +48,13 @@ export abstract class RepoFilters extends RepoSearch {
     this.emit();
   }
 
+  /** Narrows the sidebar's branches and tags to the names that contain the text; "" lists everything again */
+  setBranchFilter(text: string) {
+    if (text === this.branchFilter) return;
+    this.branchFilter = text;
+    this.emit();
+  }
+
   async setCurrentOnly(on: boolean) {
     this.graphCurrentOnly = on;
     this.saveFilter("graphCurrentOnly", on ? true : undefined);

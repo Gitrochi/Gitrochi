@@ -230,6 +230,8 @@ export abstract class RepoCore extends Observable implements AgentHost {
   fileInspectError: string | null = null;
   hiddenRefs = new Set<string>();
   pinnedBranches = new Set<string>();
+  /** The text in the sidebar's Filter branches field: view state, not saved (macOS: RepoStore.branchFilter) */
+  branchFilter = "";
   graphCurrentOnly = false;
   /** 충돌 해결 중인 파일과 블록마다 고른 것 */
   conflictDoc: ConflictDocument | null = null;
@@ -476,6 +478,7 @@ export abstract class RepoCore extends Observable implements AgentHost {
     this.ciFocus = null;
     this.ciSelected = null;
     this.showSearchBar = false;
+    this.branchFilter = "";
     this.cancelPushReview();
     this.cancelChangeQuestion();
     this.cancelRepositoryAssistant();

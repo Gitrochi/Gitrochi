@@ -27,10 +27,13 @@ export function handleShortcut(e: KeyboardEvent, openSettings: () => void) {
       repositoryScreen: s.destination === "repository",
       fileInspect: !!s.fileInspect,
       diff: !!s.diffSource,
+      // the sidebar's Filter branches field, while the keys are in it and it has text
+      filter: !!target?.closest?.(".side-filter") && s.branchFilter !== "",
       changes: s.changesShown,
     });
     if (action === "closeFileInspect") return run(() => s.closeFileInspect());
     if (action === "closeDiff") return run(() => s.closeDiff());
+    if (action === "clearFilter") return run(() => s.setBranchFilter(""));
     if (action === "showGraph") return run(() => s.hideChanges());
     return;
   }
