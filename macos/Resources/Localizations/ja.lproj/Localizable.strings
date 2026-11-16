@@ -274,7 +274,6 @@
 "  (fork)" = "  (フォーク)";
 " %lld files that aren't committed stay as they are." = " コミットしない %1$lld 個のファイルはそのまま残ります。";
 " (current)" = " (現在)";
-" (on)" = " (オン)";
 " · %@ stages" = " · %1$@ ステージ";
 " · %lld outside the graph" = " · グラフ外 %1$lld";
 " · %lld%% similar" = " · 類似度 %1$lld%%";
@@ -377,7 +376,6 @@
 "Binary file" = "バイナリファイル";
 "Binary or too large — view it in the browser" = "バイナリまたはサイズが大きすぎます — ブラウザーで表示してください";
 "Blame" = "行ごとの作成者";
-"Blame — who changed each line and when" = "行ごとの作成者 (blame) — 各行を誰がいつ変更したか";
 "Blocked" = "ブロック";
 "Both" = "両方";
 "Both (mine first)" = "両方 (自分側を先に)";
@@ -655,7 +653,6 @@
 "Fetches new commits and branches from all remotes. Your branches aren't changed." = "すべてのリモートから新しいコミットとブランチを取得します。自分のブランチは変更されません。";
 "Fetching…" = "フェッチしています…";
 "File history" = "ファイルの履歴";
-"File history — commits that changed this file" = "ファイルの履歴 — このファイルを変更したコミット";
 "File imports" = "ファイルの import";
 "File path" = "ファイルパス";
 "Files that change together" = "一緒に変わるファイル";
@@ -696,8 +693,6 @@
 "History" = "履歴";
 "If a request is blocked by the safety classifier, the server retries once with the recommended model (fallbacks)." = "リクエストが安全分類器にブロックされた場合、サーバーが推奨モデルで 1 回再試行します (fallbacks)。";
 "If the same server is used under another address, an account you've already connected works there too" = "同じサーバーが別のアドレスで使われている場合も、接続済みのアカウントがそのまま使えます";
-"Ignore whitespace" = "空白を無視";
-"Ignore whitespace%@ — lines that only changed indentation or spaces are treated as unchanged (line staging is unavailable while on)" = "空白を無視%1$@ — インデントや空白だけが変わった行は変更なしとみなします (オンの間は行単位のステージは使えません)";
 "Import gh CLI login" = "gh CLI のログインをインポート";
 "In use" = "使用中";
 "In use by a worktree: %@" = "ワークツリーで使用中: %1$@";
@@ -1007,7 +1002,6 @@
 "Show this commit in the graph" = "このコミットをグラフで表示";
 "Show uncommitted changes" = "未コミットの変更を表示";
 "Side by side" = "左右に並べて表示";
-"Side by side (old on the left · new on the right)" = "左右に並べて表示 (左が変更前 · 右が変更後)";
 "Skip this version" = "このバージョンをスキップ";
 "Skipped" = "スキップ";
 "Soft — keep changes staged" = "Soft — 変更はステージされたまま残す";

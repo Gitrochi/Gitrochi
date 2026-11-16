@@ -254,7 +254,6 @@
 "  (fork)" = "  (ฟอร์ก)";
 " %lld files that aren't committed stay as they are." = " ไฟล์ที่ยังไม่ได้คอมมิต %1$lld ไฟล์จะยังคงอยู่เหมือนเดิม";
 " (current)" = " (ปัจจุบัน)";
-" (on)" = " (เปิด)";
 " · %@ stages" = " · %1$@ ขั้นตอน";
 " · %lld outside the graph" = " · นอกกราฟ %1$lld";
 " · %lld%% similar" = " · คล้ายกัน %1$lld%%";
@@ -356,7 +355,6 @@
 "Binary" = "ไบนารี";
 "Binary file" = "ไฟล์ไบนารี";
 "Binary or too large — view it in the browser" = "เป็นไบนารีหรือใหญ่เกินไป — ดูในเบราว์เซอร์";
-"Blame — who changed each line and when" = "Blame — ใครแก้ไขแต่ละบรรทัดและเมื่อใด";
 "Blocked" = "ถูกหยุด";
 "Both" = "ทั้งสองฝั่ง";
 "Both (mine first)" = "ทั้งสองฝั่ง (ของฉันก่อน)";
@@ -629,7 +627,6 @@
 "Fetches new commits and branches from all remotes. Your branches aren't changed." = "เฟตช์คอมมิตและแบรนช์ใหม่จากรีโมตทั้งหมด แบรนช์ของคุณจะไม่ถูกเปลี่ยนแปลง";
 "Fetching…" = "กำลังเฟตช์…";
 "File history" = "ประวัติไฟล์";
-"File history — commits that changed this file" = "ประวัติไฟล์ — คอมมิตที่เปลี่ยนแปลงไฟล์นี้";
 "File imports" = "การ import ไฟล์";
 "File path" = "พาธไฟล์";
 "Files that change together" = "ไฟล์ที่เปลี่ยนพร้อมกัน";
@@ -670,8 +667,6 @@
 "History" = "ประวัติ";
 "If a request is blocked by the safety classifier, the server retries once with the recommended model (fallbacks)." = "หากคำขอถูกตัวจำแนกความปลอดภัยบล็อก เซิร์ฟเวอร์จะลองใหม่อีกครั้งด้วยโมเดลที่แนะนำ (fallbacks)";
 "If the same server is used under another address, an account you've already connected works there too" = "หากใช้เซิร์ฟเวอร์เดียวกันภายใต้ที่อยู่อื่น บัญชีที่เชื่อมต่อไว้แล้วจะใช้ได้ที่นั่นด้วย";
-"Ignore whitespace" = "ละเว้นช่องว่าง";
-"Ignore whitespace%@ — lines that only changed indentation or spaces are treated as unchanged (line staging is unavailable while on)" = "ละเว้นช่องว่าง%1$@ — บรรทัดที่เปลี่ยนเฉพาะการเยื้องหรือช่องว่างจะถือว่าไม่เปลี่ยน (สเตจรายบรรทัดไม่ได้ขณะเปิดอยู่)";
 "Import gh CLI login" = "นำเข้าการเข้าสู่ระบบ gh CLI";
 "In use" = "กำลังใช้งาน";
 "In use by a worktree: %@" = "กำลังถูกใช้งานโดยเวิร์กทรี: %1$@";
@@ -982,7 +977,6 @@
 "Show this commit in the graph" = "แสดงคอมมิตนี้ในกราฟ";
 "Show uncommitted changes" = "แสดงการเปลี่ยนแปลงที่ยังไม่ได้คอมมิต";
 "Side by side" = "แบบเคียงข้าง";
-"Side by side (old on the left · new on the right)" = "แบบเคียงข้าง (เก่าทางซ้าย · ใหม่ทางขวา)";
 "Skip this version" = "ข้ามเวอร์ชันนี้";
 "Skipped" = "ข้ามแล้ว";
 "Soft — keep changes staged" = "Soft — เก็บการเปลี่ยนแปลงไว้ในสถานะสเตจ";

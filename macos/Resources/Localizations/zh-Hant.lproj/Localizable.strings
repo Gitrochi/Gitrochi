@@ -254,7 +254,6 @@
 "  (fork)" = "  (分叉)";
 " %lld files that aren't committed stay as they are." = " 未提交的 %1$lld 個檔案會維持原狀。";
 " (current)" = " (目前)";
-" (on)" = " (開啟)";
 " · %@ stages" = " · %1$@ 個階段";
 " · %lld outside the graph" = " · 圖表外 %1$lld 個";
 " · %lld%% similar" = " · %1$lld%% 相似";
@@ -357,7 +356,6 @@
 "Binary file" = "二進位檔案";
 "Binary or too large — view it in the browser" = "二進位檔案或檔案過大 — 請在瀏覽器中檢視";
 "Blame" = "逐行追溯";
-"Blame — who changed each line and when" = "逐行追溯 — 每一行由誰在何時修改";
 "Blocked" = "已阻擋";
 "Both" = "兩者";
 "Both (mine first)" = "兩者（我方在前）";
@@ -635,7 +633,6 @@
 "Fetches new commits and branches from all remotes. Your branches aren't changed." = "從所有遠端擷取新的提交與分支。不會變更你的分支。";
 "Fetching…" = "正在擷取…";
 "File history" = "檔案歷程記錄";
-"File history — commits that changed this file" = "檔案歷程記錄 — 變更過此檔案的提交";
 "File imports" = "檔案匯入";
 "File path" = "檔案路徑";
 "Files that change together" = "一起變更的檔案";
@@ -676,8 +673,6 @@
 "History" = "歷程記錄";
 "If a request is blocked by the safety classifier, the server retries once with the recommended model (fallbacks)." = "若要求遭安全分類器封鎖，伺服器會改用建議的模型重試一次 (fallbacks)。";
 "If the same server is used under another address, an account you've already connected works there too" = "若同一部伺服器以其他位址使用，已連結的帳號在該處同樣可用";
-"Ignore whitespace" = "忽略空白字元";
-"Ignore whitespace%@ — lines that only changed indentation or spaces are treated as unchanged (line staging is unavailable while on)" = "忽略空白字元%1$@ — 僅縮排或空格有變動的行會視為未變更（開啟時無法逐行暫存）";
 "Import gh CLI login" = "匯入 gh CLI 登入";
 "In use" = "使用中";
 "In use by a worktree: %@" = "由工作樹使用中：%1$@";
@@ -988,7 +983,6 @@
 "Show this commit in the graph" = "在圖表中顯示此提交";
 "Show uncommitted changes" = "顯示未提交的變更";
 "Side by side" = "並排顯示";
-"Side by side (old on the left · new on the right)" = "並排顯示（左側為舊版 · 右側為新版）";
 "Skip this version" = "略過此版本";
 "Skipped" = "已略過";
 "Soft — keep changes staged" = "Soft — 將變更保留為已暫存";

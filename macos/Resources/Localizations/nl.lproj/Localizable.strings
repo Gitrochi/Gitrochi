@@ -253,7 +253,6 @@
 "\n\n[... %lld more characters omitted ...]" = "\n\n[... nog %1$lld tekens weggelaten ...]";
 " %lld files that aren't committed stay as they are." = " Bestanden die niet gecommit worden (%1$lld), blijven ongewijzigd.";
 " (current)" = " (huidige)";
-" (on)" = " (aan)";
 " · %@ stages" = " · fase %1$@";
 " · %lld outside the graph" = " · %1$lld buiten de graaf";
 " · %lld%% similar" = " · %1$lld%% gelijk";
@@ -349,7 +348,6 @@
 "Binary" = "Binair";
 "Binary file" = "Binair bestand";
 "Binary or too large — view it in the browser" = "Binair of te groot — bekijk het in de browser";
-"Blame — who changed each line and when" = "Blame — wie elke regel wanneer heeft gewijzigd";
 "Blocked" = "Geblokkeerd";
 "Both" = "Beide";
 "Both (mine first)" = "Beide (eerst mijn versie)";
@@ -610,7 +608,6 @@
 "Fetches new commits and branches from all remotes. Your branches aren't changed." = "Haalt nieuwe commits en branches op van alle remotes. Je eigen branches blijven ongewijzigd.";
 "Fetching…" = "Bezig met fetchen…";
 "File history" = "Bestandsgeschiedenis";
-"File history — commits that changed this file" = "Bestandsgeschiedenis — commits die dit bestand hebben gewijzigd";
 "File imports" = "Bestandsimports";
 "File path" = "Bestandspad";
 "Files that change together" = "Bestanden die samen veranderen";
@@ -650,8 +647,6 @@
 "History" = "Geschiedenis";
 "If a request is blocked by the safety classifier, the server retries once with the recommended model (fallbacks)." = "Als een verzoek door de veiligheidsclassificatie wordt geblokkeerd, probeert de server het één keer opnieuw met het aanbevolen model (fallbacks).";
 "If the same server is used under another address, an account you've already connected works there too" = "Als dezelfde server onder een ander adres wordt gebruikt, werkt een al gekoppeld account daar ook";
-"Ignore whitespace" = "Witruimte negeren";
-"Ignore whitespace%@ — lines that only changed indentation or spaces are treated as unchanged (line staging is unavailable while on)" = "Witruimte negeren%1$@ — regels waarin alleen inspringing of spaties zijn gewijzigd, gelden als ongewijzigd (regels stagen is dan niet beschikbaar)";
 "Import gh CLI login" = "Login van gh CLI importeren";
 "In use" = "In gebruik";
 "In use by a worktree: %@" = "In gebruik door een worktree: %1$@";
@@ -951,7 +946,6 @@
 "Show this commit in the graph" = "Deze commit tonen in de graaf";
 "Show uncommitted changes" = "Niet-gecommitte wijzigingen tonen";
 "Side by side" = "Naast elkaar";
-"Side by side (old on the left · new on the right)" = "Naast elkaar (oud links · nieuw rechts)";
 "Skip this version" = "Deze versie overslaan";
 "Skipped" = "Overgeslagen";
 "Soft — keep changes staged" = "Soft — wijzigingen gestaged houden";

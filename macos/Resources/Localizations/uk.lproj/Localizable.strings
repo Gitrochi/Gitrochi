@@ -254,7 +254,6 @@
 "  (fork)" = "  (форк)";
 " %lld files that aren't committed stay as they are." = " Файли, що не потрапили в коміти (%1$lld), залишаться як є.";
 " (current)" = " (поточна)";
-" (on)" = " (увімкнено)";
 " · %@ stages" = " · етапів: %1$@";
 " · %lld outside the graph" = " · поза графом: %1$lld";
 " · %lld%% similar" = " · схожість %1$lld%%";
@@ -357,7 +356,6 @@
 "Binary file" = "Двійковий файл";
 "Binary or too large — view it in the browser" = "Двійковий або завеликий — перегляньте в браузері";
 "Blame" = "Авторство рядків";
-"Blame — who changed each line and when" = "Авторство рядків — хто і коли змінював кожен рядок";
 "Blocked" = "Зупинено";
 "Both" = "Обидва";
 "Both (mine first)" = "Обидва (спершу моє)";
@@ -634,7 +632,6 @@
 "Fetches new commits and branches from all remotes. Your branches aren't changed." = "Отримує нові коміти й гілки з усіх віддалених репозиторіїв. Ваші гілки не змінюються.";
 "Fetching…" = "Отримання…";
 "File history" = "Історія файлу";
-"File history — commits that changed this file" = "Історія файлу — коміти, що змінювали цей файл";
 "File imports" = "Імпорти файлів";
 "File path" = "Шлях до файлу";
 "Files that change together" = "Файли, що змінюються разом";
@@ -675,8 +672,6 @@
 "History" = "Історія";
 "If a request is blocked by the safety classifier, the server retries once with the recommended model (fallbacks)." = "Якщо запит заблокує класифікатор безпеки, сервер один раз повторить спробу з рекомендованою моделлю (fallbacks).";
 "If the same server is used under another address, an account you've already connected works there too" = "Якщо той самий сервер доступний за іншою адресою, уже підключений обліковий запис працюватиме й там";
-"Ignore whitespace" = "Ігнорувати пробіли";
-"Ignore whitespace%@ — lines that only changed indentation or spaces are treated as unchanged (line staging is unavailable while on)" = "Ігнорувати пробіли%1$@ — рядки, де змінилися лише відступи чи пробіли, вважаються незміненими (поки ввімкнено, індексування окремих рядків недоступне)";
 "Import gh CLI login" = "Імпортувати вхід із gh CLI";
 "In use" = "Використовується";
 "In use by a worktree: %@" = "Використовується робочим деревом: %1$@";
@@ -986,7 +981,6 @@
 "Show this commit in the graph" = "Показати цей коміт у графі";
 "Show uncommitted changes" = "Показати незакомічені зміни";
 "Side by side" = "Поруч";
-"Side by side (old on the left · new on the right)" = "Поруч (старе ліворуч · нове праворуч)";
 "Skip this version" = "Пропустити цю версію";
 "Skipped" = "Пропущено";
 "Soft — keep changes staged" = "Soft — зберегти зміни в індексі";

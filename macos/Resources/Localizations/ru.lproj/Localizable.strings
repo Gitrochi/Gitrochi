@@ -254,7 +254,6 @@
 "  (fork)" = "  (форк)";
 " %lld files that aren't committed stay as they are." = " Файлы, которые не войдут в коммиты, останутся как есть (%1$lld).";
 " (current)" = " (текущая)";
-" (on)" = " (вкл.)";
 " · %@ stages" = " · этап %1$@";
 " · %lld outside the graph" = " · вне графа: %1$lld";
 " · %lld%% similar" = " · сходство %1$lld%%";
@@ -357,7 +356,6 @@
 "Binary file" = "Двоичный файл";
 "Binary or too large — view it in the browser" = "Двоичный или слишком большой — откройте в браузере";
 "Blame" = "Авторство";
-"Blame — who changed each line and when" = "Авторство — кто и когда менял каждую строку";
 "Blocked" = "Остановлено";
 "Both" = "Оба";
 "Both (mine first)" = "Оба (сначала моё)";
@@ -634,7 +632,6 @@
 "Fetches new commits and branches from all remotes. Your branches aren't changed." = "Получает новые коммиты и ветки из всех удалённых репозиториев. Ваши ветки не меняются.";
 "Fetching…" = "Получение…";
 "File history" = "История файла";
-"File history — commits that changed this file" = "История файла — коммиты, изменявшие этот файл";
 "File imports" = "Импорты файлов";
 "File path" = "Путь к файлу";
 "Files that change together" = "Файлы, меняющиеся вместе";
@@ -675,8 +672,6 @@
 "History" = "История";
 "If a request is blocked by the safety classifier, the server retries once with the recommended model (fallbacks)." = "Если запрос заблокирован классификатором безопасности, сервер один раз повторит его с рекомендуемой моделью (fallbacks).";
 "If the same server is used under another address, an account you've already connected works there too" = "Если тот же сервер доступен по другому адресу, уже подключённая учётная запись работает и там";
-"Ignore whitespace" = "Игнорировать пробелы";
-"Ignore whitespace%@ — lines that only changed indentation or spaces are treated as unchanged (line staging is unavailable while on)" = "Игнорировать пробелы%1$@ — строки, в которых изменились только отступы или пробелы, считаются неизменёнными (индексирование отдельных строк при этом недоступно)";
 "Import gh CLI login" = "Импортировать вход из gh CLI";
 "In use" = "Используется";
 "In use by a worktree: %@" = "Используется рабочим деревом: %1$@";
@@ -986,7 +981,6 @@
 "Show this commit in the graph" = "Показать этот коммит в графе";
 "Show uncommitted changes" = "Показать незакоммиченные изменения";
 "Side by side" = "Рядом";
-"Side by side (old on the left · new on the right)" = "Рядом (старое слева · новое справа)";
 "Skip this version" = "Пропустить эту версию";
 "Skipped" = "Пропущено";
 "Soft — keep changes staged" = "Soft — оставить изменения в индексе";

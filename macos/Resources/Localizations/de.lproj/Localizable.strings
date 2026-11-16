@@ -266,7 +266,6 @@
 "  (fork)" = "  (Fork)";
 " %lld files that aren't committed stay as they are." = " Dateien, die nicht committet werden, bleiben unverändert (%1$lld).";
 " (current)" = " (aktuell)";
-" (on)" = " (ein)";
 " · %@ stages" = " · Stage %1$@";
 " · %lld outside the graph" = " · %1$lld außerhalb des Graphen";
 " · %lld%% similar" = " · %1$lld %% ähnlich";
@@ -368,7 +367,6 @@
 "Binary" = "Binär";
 "Binary file" = "Binärdatei";
 "Binary or too large — view it in the browser" = "Binär oder zu groß — im Browser ansehen";
-"Blame — who changed each line and when" = "Blame — wer welche Zeile wann geändert hat";
 "Blocked" = "Blockiert";
 "Both" = "Beide";
 "Both (mine first)" = "Beide (meine zuerst)";
@@ -635,7 +633,6 @@
 "Fetches new commits and branches from all remotes. Your branches aren't changed." = "Holt neue Commits und Branches von allen Remotes. Ihre Branches bleiben unverändert.";
 "Fetching…" = "Fetch läuft…";
 "File history" = "Dateiverlauf";
-"File history — commits that changed this file" = "Dateiverlauf — Commits, die diese Datei geändert haben";
 "File imports" = "Datei-Importe";
 "File path" = "Dateipfad";
 "Files that change together" = "Gemeinsam geänderte Dateien";
@@ -675,8 +672,6 @@
 "History" = "Verlauf";
 "If a request is blocked by the safety classifier, the server retries once with the recommended model (fallbacks)." = "Wird eine Anfrage vom Sicherheitsklassifikator blockiert, versucht der Server es einmal mit dem empfohlenen Modell erneut (Fallbacks).";
 "If the same server is used under another address, an account you've already connected works there too" = "Wird derselbe Server unter einer anderen Adresse genutzt, funktioniert ein bereits verbundenes Konto auch dort";
-"Ignore whitespace" = "Leerraum ignorieren";
-"Ignore whitespace%@ — lines that only changed indentation or spaces are treated as unchanged (line staging is unavailable while on)" = "Leerraum ignorieren%1$@ — Zeilen, in denen sich nur Einrückung oder Leerzeichen geändert haben, gelten als unverändert (zeilenweises Stagen ist dann nicht verfügbar)";
 "Import gh CLI login" = "gh-CLI-Anmeldung importieren";
 "In use" = "In Verwendung";
 "In use by a worktree: %@" = "Von einem Worktree verwendet: %1$@";
@@ -977,7 +972,6 @@
 "Show this commit in the graph" = "Diesen Commit im Graphen anzeigen";
 "Show uncommitted changes" = "Nicht committete Änderungen anzeigen";
 "Side by side" = "Nebeneinander";
-"Side by side (old on the left · new on the right)" = "Nebeneinander (alt links · neu rechts)";
 "Skip this version" = "Diese Version überspringen";
 "Skipped" = "Übersprungen";
 "Soft — keep changes staged" = "Soft — Änderungen gestagt lassen";

@@ -440,7 +440,6 @@
 "  (fork)" = "  (포크)";
 " %lld files that aren't committed stay as they are." = " 커밋하지 않는 %1$lld개 파일은 그대로 남습니다.";
 " (current)" = " (현재)";
-" (on)" = "(켜짐)";
 " · %@ stages" = " · %1$@ 단계";
 " · %lld outside the graph" = " · 그래프 밖 %1$lld";
 " · %lld%% similar" = " · %1$lld%% 같음";
@@ -543,7 +542,6 @@
 "Binary file" = "바이너리 파일";
 "Binary or too large — view it in the browser" = "바이너리이거나 너무 커서 브라우저에서 보세요";
 "Blame" = "줄별 작성자";
-"Blame — who changed each line and when" = "줄별 작성자(blame) — 줄마다 누가 언제 바꿨는지";
 "Blocked" = "막힘";
 "Both" = "둘 다";
 "Both (mine first)" = "둘 다(내 것 먼저)";
@@ -818,7 +816,6 @@
 "Fetches new commits and branches from all remotes. Your branches aren't changed." = "모든 원격에서 새 커밋과 브랜치를 가져옵니다. 내 브랜치는 바꾸지 않습니다.";
 "Fetching…" = "가져오는 중…";
 "File history" = "파일 히스토리";
-"File history — commits that changed this file" = "파일 히스토리 — 이 파일을 바꾼 커밋들";
 "File imports" = "파일 import";
 "File path" = "파일 경로";
 "Files that change together" = "같이 바뀌는 파일";
@@ -858,8 +855,6 @@
 "History" = "히스토리";
 "If a request is blocked by the safety classifier, the server retries once with the recommended model (fallbacks)." = "요청이 안전 분류기에 막히면 서버가 권장 모델로 한 번 더 시도하도록(fallbacks) 켜 두었습니다.";
 "If the same server is used under another address, an account you've already connected works there too" = "같은 서버가 다른 주소로 쓰이는 경우, 이미 연결한 계정이 그대로 통합니다";
-"Ignore whitespace" = "공백 무시";
-"Ignore whitespace%@ — lines that only changed indentation or spaces are treated as unchanged (line staging is unavailable while on)" = "공백 무시%1$@ — 들여쓰기·공백만 바뀐 줄은 같은 것으로 봅니다(켜 두면 줄 단위 스테이지는 쓸 수 없습니다)";
 "Import gh CLI login" = "gh CLI 로그인 가져오기";
 "In use" = "사용 중";
 "In use by a worktree: %@" = "워크트리에서 사용 중: %1$@";
@@ -1167,7 +1162,6 @@
 "Show this commit in the graph" = "그래프에서 이 커밋 보기";
 "Show uncommitted changes" = "작업 중인 변경 보기";
 "Side by side" = "나란히 보기";
-"Side by side (old on the left · new on the right)" = "나란히 보기(왼쪽 이전 · 오른쪽 이후)";
 "Skip this version" = "이 버전 건너뛰기";
 "Skipped" = "건너뜀";
 "Soft — keep changes staged" = "Soft — 변경은 스테이지된 상태로 유지";
@@ -1433,7 +1427,6 @@
 "Commit description" = "커밋 설명";
 "Close diff" = "diff 닫기";
 "Close diff (Esc)" = "diff 닫기 (Esc)";
-"File actions" = "파일 작업";
 
 "Checking the Git account and repository…" = "Git 계정과 저장소를 점검하는 중…";
 "Resolve the gitch checks below before committing." = "아래 gitch 점검의 차단 사유를 해결한 뒤 커밋하세요.";

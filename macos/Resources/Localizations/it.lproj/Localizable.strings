@@ -253,7 +253,6 @@
 "\n\n[... %lld more characters omitted ...]" = "\n\n[... altri caratteri omessi: %1$lld ...]";
 " %lld files that aren't committed stay as they are." = " I file non sottoposti a commit (%1$lld) restano invariati.";
 " (current)" = " (corrente)";
-" (on)" = " (attivo)";
 " · %@ stages" = " · fasi: %1$@";
 " · %lld outside the graph" = " · %1$lld fuori dal grafico";
 " · %lld%% similar" = " · simile al %1$lld%%";
@@ -352,7 +351,6 @@
 "Binary" = "Binario";
 "Binary file" = "File binario";
 "Binary or too large — view it in the browser" = "Binario o troppo grande — visualizzalo nel browser";
-"Blame — who changed each line and when" = "Blame — chi ha modificato ogni riga e quando";
 "Blocked" = "Fermato";
 "Both" = "Entrambe";
 "Both (mine first)" = "Entrambe (prima la mia)";
@@ -617,7 +615,6 @@
 "Fetches new commits and branches from all remotes. Your branches aren't changed." = "Recupera nuovi commit e branch da tutti i remoti. I tuoi branch non vengono modificati.";
 "Fetching…" = "Fetch in corso…";
 "File history" = "Cronologia del file";
-"File history — commits that changed this file" = "Cronologia del file — commit che hanno modificato questo file";
 "File imports" = "Import dei file";
 "File path" = "Percorso del file";
 "Files that change together" = "File che cambiano insieme";
@@ -658,8 +655,6 @@
 "History" = "Cronologia";
 "If a request is blocked by the safety classifier, the server retries once with the recommended model (fallbacks)." = "Se una richiesta viene bloccata dal classificatore di sicurezza, il server riprova una volta con il modello consigliato (fallbacks).";
 "If the same server is used under another address, an account you've already connected works there too" = "Se lo stesso server è usato con un altro indirizzo, anche lì funziona un account già collegato";
-"Ignore whitespace" = "Ignora spazi vuoti";
-"Ignore whitespace%@ — lines that only changed indentation or spaces are treated as unchanged (line staging is unavailable while on)" = "Ignora spazi vuoti%1$@ — le righe in cui sono cambiati solo rientri o spazi sono considerate invariate (lo stage per riga non è disponibile quando è attivo)";
 "Import gh CLI login" = "Importa l'accesso della CLI gh";
 "In use" = "In uso";
 "In use by a worktree: %@" = "In uso in un worktree: %1$@";
@@ -965,7 +960,6 @@
 "Show this commit in the graph" = "Mostra questo commit nel grafico";
 "Show uncommitted changes" = "Mostra le modifiche non sottoposte a commit";
 "Side by side" = "Affiancato";
-"Side by side (old on the left · new on the right)" = "Affiancato (vecchio a sinistra · nuovo a destra)";
 "Skip this version" = "Salta questa versione";
 "Skipped" = "Saltato";
 "Soft — keep changes staged" = "Soft — mantieni le modifiche in stage";
