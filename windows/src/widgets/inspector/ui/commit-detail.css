@@ -11,7 +11,8 @@
 
 /* the sections carry their own padding, so the shared scroller's is dropped */
 .commit-detail > .panel-scroll { padding: 0; gap: 0; }
-.commit-main { display: flex; flex-direction: column; min-width: 0; padding: 12px 16px 16px; overflow-wrap: anywhere; }
+/* a looser rhythm than the board's 8 / 10 / 6: read in the app, its blocks ran together (macOS: CommitDetailView) */
+.commit-main { display: flex; flex-direction: column; min-width: 0; padding: 14px 16px 16px; overflow-wrap: anywhere; }
 .commit-caption { font-size: 12px; color: var(--text-2); }
 
 /* branches and tags here are neutral: lane colours belong to the graph */
@@ -21,26 +22,26 @@
 :root[data-theme="dark"] .commit-ref { border-color: #4a4a50; background: #2b2b2f; color: #a1a1a6; }
 
 .commit-title { margin: 0; min-width: 0; font-size: 17px; line-height: 1.35; font-weight: 600; }
-.commit-author { display: flex; align-items: center; gap: 6px; min-width: 0; margin-top: 8px; }
+.commit-author { display: flex; align-items: center; gap: 6px; min-width: 0; margin-top: 10px; }
 .commit-author-name { flex: 0 1 auto; font-weight: 600; }
 .commit-author-when { flex: none; white-space: nowrap; }
-.commit-committer { margin-top: 2px; line-height: 16px; }
+.commit-committer { margin-top: 4px; line-height: 16px; }
 
-.commit-body { margin-top: 10px; font-size: 13px; line-height: 1.55; color: var(--status-text); }
+.commit-body { margin-top: 14px; font-size: 13px; line-height: 1.55; color: var(--status-text); }
 .commit-body.folded { max-height: 160px; overflow: hidden; mask-image: linear-gradient(black 70%, transparent); }
 .commit-text-button { align-self: flex-start; gap: 6px; padding: 0; }
 .commit-text-button > svg { flex: none; }
 
-.commit-parents { display: flex; flex-wrap: wrap; align-items: center; gap: 0 4px; margin-top: 6px; }
+.commit-parents { display: flex; flex-wrap: wrap; align-items: center; gap: 0 4px; margin-top: 12px; }
 .commit-parent { height: 24px; padding: 0 4px; border: 0; border-radius: 6px; background: transparent; font-size: 12px; color: #0b5cad; cursor: pointer; }
 .commit-parent:hover { text-decoration: underline; }
 :root[data-theme="dark"] .commit-parent { color: #6cb0ff; }
 
-.commit-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.commit-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
 /* a disabled button is neutral, never faded (docs/design.md, Controls) */
 .commit-actions .btn:disabled { opacity: 1; background: var(--bar); border-color: var(--border); color: var(--text-3); }
 
-.commit-explain, .commit-explaining, .commit-explain-failure { margin-top: 8px; }
+.commit-explain, .commit-explaining, .commit-explain-failure { margin-top: 12px; }
 .commit-explaining { display: inline-flex; align-items: center; gap: 6px; min-height: 24px; }
 .commit-explanation { display: flex; flex-direction: column; margin-top: 12px; min-width: 0; }
 .commit-explanation-by { display: inline-flex; align-items: center; gap: 6px; }

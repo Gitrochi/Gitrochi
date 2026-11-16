@@ -17,7 +17,7 @@ struct CommitDetailView: View {
                 InspectorScrollView(inset: 0) {
                     VStack(alignment: .leading, spacing: 0) {
                         message(d)
-                            .padding(EdgeInsets(top: 12, leading: 16, bottom: 16, trailing: 16))
+                            .padding(EdgeInsets(top: 14, leading: 16, bottom: 16, trailing: 16))
                         files(d)
                             .padding(EdgeInsets(top: 4, leading: 16, bottom: 12, trailing: 16))
                     }
@@ -77,9 +77,10 @@ struct CommitDetailView: View {
                 .textSelection(.enabled)
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityIdentifier("commit-detail-summary")
-            author(d).padding(.top, 8)
-            if !d.body.isEmpty { description(d).padding(.top, 10) }
-            if !d.parents.isEmpty { parents(d).padding(.top, 6) }
+            // a looser rhythm than the board's 8 / 10 / 6: read in the app, its blocks ran together
+            author(d).padding(.top, 10)
+            if !d.body.isEmpty { description(d).padding(.top, 14) }
+            if !d.parents.isEmpty { parents(d).padding(.top, 12) }
             WorkbenchFlow(spacing: 6) {
                 Button("New branch…") { store.requestNewBranch(from: d.sha, label: String(d.sha.prefix(7))) }
                 Button("Tag…") { store.sheet = .tag(sha: d.sha) }
@@ -87,7 +88,7 @@ struct CommitDetailView: View {
             .buttonStyle(HostedListButtonStyle())
             // a running git command blocks both; the tip names it
             .disabled(store.busy != nil).help(store.busy ?? "")
-            .padding(.top, 10)
+            .padding(.top, 12)
             explanation
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -96,7 +97,7 @@ struct CommitDetailView: View {
     /// One line: the photo (or the initial), the name and when. The email and the exact date are on hover; who
     /// committed it appears only when that differs from the author.
     private func author(_ d: CommitDetail) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 6) {
                 AuthorAvatar(name: d.author, email: d.email, size: 20)
                 Text(verbatim: d.author).font(.system(size: 13, weight: .semibold)).lineLimit(1).truncationMode(.tail)
@@ -188,7 +189,7 @@ struct CommitDetailView: View {
                 .help(provider)
             }
         }
-        .padding(.top, 8)
+        .padding(.top, 12)
     }
 
     private func files(_ d: CommitDetail) -> some View {
