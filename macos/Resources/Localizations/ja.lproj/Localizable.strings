@@ -522,7 +522,6 @@
 "Conversation %lld" = "会話 %1$lld";
 "Copied" = "コピーしました";
 "Copy SHA" = "SHA をコピー";
-"Copy full SHA" = "完全な SHA をコピー";
 "Copy link" = "リンクをコピー";
 "Copy message" = "メッセージをコピー";
 "Copy name" = "名前をコピー";
@@ -648,7 +647,6 @@
 "Executable" = "実行ファイル";
 "Existing branch" = "既存のブランチ";
 "Explain again" = "もう一度説明";
-"Explain this commit" = "このコミットを説明";
 "Failed" = "失敗";
 "Fast-forward" = "早送り";
 "Fast-forward '%@' (current) to '%@'" = "'%1$@' (現在) を '%2$@' まで早送り (fast-forward)";
@@ -2935,3 +2933,10 @@
 "Saved sign-in can't be read" = "保存されたサインイン情報を読み取れません";
 "Couldn't use the saved sign-in" = "保存されたサインイン情報を使用できませんでした";
 "Refresh account status" = "アカウントの状態を更新";
+"Tag…" = "タグ…";
+"Explain with AI…" = "AI で説明…";
+"Copy commit SHA" = "コミットの SHA をコピー";
+"Parent" = "親";
+"Parents" = "親";
+"Couldn't explain this commit" = "このコミットを説明できませんでした";
+"More commit actions" = "コミットのその他の操作";

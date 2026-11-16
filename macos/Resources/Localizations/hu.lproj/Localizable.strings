@@ -495,7 +495,6 @@
 "Conversation %lld" = "Beszélgetés %1$lld";
 "Copied" = "Másolva";
 "Copy SHA" = "SHA másolása";
-"Copy full SHA" = "Teljes SHA másolása";
 "Copy link" = "Hivatkozás másolása";
 "Copy message" = "Üzenet másolása";
 "Copy name" = "Név másolása";
@@ -621,7 +620,6 @@
 "Executable" = "Futtatható fájl";
 "Existing branch" = "Meglévő ág";
 "Explain again" = "Magyarázat újra";
-"Explain this commit" = "A commit elmagyarázása";
 "Failed" = "Sikertelen";
 "Fast-forward '%@' (current) to '%@'" = "Fast-forward: '%1$@' (aktuális) → '%2$@'";
 "Fast-forward '%@' to '%@'" = "Fast-forward: '%1$@' → '%2$@'";
@@ -2258,3 +2256,10 @@
 "Saved sign-in can't be read" = "A mentett bejelentkezés nem olvasható";
 "Couldn't use the saved sign-in" = "A mentett bejelentkezést nem sikerült használni";
 "Refresh account status" = "Fiókállapot frissítése";
+"Tag…" = "Címke…";
+"Explain with AI…" = "Magyarázat AI-val…";
+"Copy commit SHA" = "Commit SHA másolása";
+"Parent" = "Szülő";
+"Parents" = "Szülők";
+"Couldn't explain this commit" = "Nem sikerült elmagyarázni a commitot";
+"More commit actions" = "További commitműveletek";

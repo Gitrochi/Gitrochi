@@ -488,7 +488,6 @@
 "Conversation %lld" = "Thảo luận %1$lld";
 "Copied" = "Đã sao chép";
 "Copy SHA" = "Sao chép SHA";
-"Copy full SHA" = "Sao chép SHA đầy đủ";
 "Copy link" = "Sao chép liên kết";
 "Copy message" = "Sao chép thông điệp";
 "Copy name" = "Sao chép tên";
@@ -609,7 +608,6 @@
 "Executable" = "Tệp thực thi";
 "Existing branch" = "Nhánh có sẵn";
 "Explain again" = "Giải thích lại";
-"Explain this commit" = "Giải thích commit này";
 "Failed" = "Thất bại";
 "Fast-forward '%@' (current) to '%@'" = "Fast-forward '%1$@' (hiện tại) tới '%2$@'";
 "Fast-forward '%@' to '%@'" = "Fast-forward '%1$@' tới '%2$@'";
@@ -2234,3 +2232,10 @@
 "Saved sign-in can't be read" = "Không đọc được phiên đăng nhập đã lưu";
 "Couldn't use the saved sign-in" = "Không thể dùng phiên đăng nhập đã lưu";
 "Refresh account status" = "Làm mới trạng thái tài khoản";
+"Tag…" = "Tag…";
+"Explain with AI…" = "Giải thích bằng AI…";
+"Copy commit SHA" = "Sao chép SHA của commit";
+"Parent" = "Cha";
+"Parents" = "Cha";
+"Couldn't explain this commit" = "Không thể giải thích commit này";
+"More commit actions" = "Thao tác khác với commit";

@@ -482,7 +482,6 @@
 "Conversation %lld" = "Gesprek %1$lld";
 "Copied" = "Gekopieerd";
 "Copy SHA" = "SHA kopiëren";
-"Copy full SHA" = "Volledige SHA kopiëren";
 "Copy link" = "Link kopiëren";
 "Copy message" = "Bericht kopiëren";
 "Copy name" = "Naam kopiëren";
@@ -605,7 +604,6 @@
 "Executable" = "Uitvoerbaar bestand";
 "Existing branch" = "Bestaande branch";
 "Explain again" = "Opnieuw uitleggen";
-"Explain this commit" = "Deze commit uitleggen";
 "Failed" = "Mislukt";
 "Fast-forward '%@' (current) to '%@'" = "'%1$@' (huidige) fast-forwarden naar '%2$@'";
 "Fast-forward '%@' to '%@'" = "'%1$@' fast-forwarden naar '%2$@'";
@@ -2223,3 +2221,10 @@
 "Saved sign-in can't be read" = "Opgeslagen aanmelding kan niet worden gelezen";
 "Couldn't use the saved sign-in" = "Opgeslagen aanmelding kon niet worden gebruikt";
 "Refresh account status" = "Accountstatus vernieuwen";
+"Tag…" = "Tag…";
+"Explain with AI…" = "Uitleggen met AI…";
+"Copy commit SHA" = "Commit-SHA kopiëren";
+"Parent" = "Bovenliggend";
+"Parents" = "Bovenliggend";
+"Couldn't explain this commit" = "Kan deze commit niet uitleggen";
+"More commit actions" = "Meer commitacties";

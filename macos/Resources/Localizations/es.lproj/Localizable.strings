@@ -502,7 +502,6 @@
 "Conversation %lld" = "Conversación %1$lld";
 "Copied" = "Copiado";
 "Copy SHA" = "Copiar SHA";
-"Copy full SHA" = "Copiar SHA completo";
 "Copy link" = "Copiar enlace";
 "Copy message" = "Copiar mensaje";
 "Copy name" = "Copiar nombre";
@@ -628,7 +627,6 @@
 "Executable" = "Ejecutable";
 "Existing branch" = "Rama existente";
 "Explain again" = "Explicar de nuevo";
-"Explain this commit" = "Explicar este commit";
 "Failed" = "Fallido";
 "Fast-forward '%@' (current) to '%@'" = "Hacer fast-forward de '%1$@' (actual) a '%2$@'";
 "Fast-forward '%@' to '%@'" = "Hacer fast-forward de '%1$@' a '%2$@'";
@@ -2306,3 +2304,10 @@
 "Saved sign-in can't be read" = "No se puede leer el inicio de sesión guardado";
 "Couldn't use the saved sign-in" = "No se pudo usar el inicio de sesión guardado";
 "Refresh account status" = "Actualizar estado de la cuenta";
+"Tag…" = "Etiqueta…";
+"Explain with AI…" = "Explicar con IA…";
+"Copy commit SHA" = "Copiar SHA del commit";
+"Parent" = "Padre";
+"Parents" = "Padres";
+"Couldn't explain this commit" = "No se pudo explicar este commit";
+"More commit actions" = "Más acciones del commit";

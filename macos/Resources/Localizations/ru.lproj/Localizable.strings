@@ -501,7 +501,6 @@
 "Conversation %lld" = "Обсуждение %1$lld";
 "Copied" = "Скопировано";
 "Copy SHA" = "Копировать SHA";
-"Copy full SHA" = "Копировать полный SHA";
 "Copy link" = "Копировать ссылку";
 "Copy message" = "Копировать сообщение";
 "Copy name" = "Копировать имя";
@@ -627,7 +626,6 @@
 "Executable" = "Исполняемый файл";
 "Existing branch" = "Существующая ветка";
 "Explain again" = "Объяснить заново";
-"Explain this commit" = "Объяснить этот коммит";
 "Failed" = "Сбой";
 "Fast-forward" = "Перемотать вперёд";
 "Fast-forward '%@' (current) to '%@'" = "Перемотать «%1$@» (текущая) вперёд до «%2$@»";
@@ -2272,3 +2270,10 @@
 "Saved sign-in can't be read" = "Не удаётся прочитать сохранённый вход";
 "Couldn't use the saved sign-in" = "Не удалось использовать сохранённый вход";
 "Refresh account status" = "Обновить состояние аккаунта";
+"Tag…" = "Тег…";
+"Explain with AI…" = "Объяснить с помощью ИИ…";
+"Copy commit SHA" = "Копировать SHA коммита";
+"Parent" = "Родитель";
+"Parents" = "Родители";
+"Couldn't explain this commit" = "Не удалось объяснить этот коммит";
+"More commit actions" = "Другие действия с коммитом";

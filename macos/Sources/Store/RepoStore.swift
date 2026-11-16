@@ -182,6 +182,8 @@ final class RepoStore: Identifiable {
     var aiNotice: String?
     var explanations: [String: String] = [:]
     var explaining: Set<String> = []
+    /// Why the last explanation of a commit failed; shown beside that commit, not as an alert
+    var explainFailures: [String: String] = [:]
     var splitPlan: [SplitGroup]?
     /// 되돌릴 수 있는 작업(마지막이 맨 뒤)
     var undoStack: [UndoPoint] = []
@@ -490,7 +492,7 @@ final class RepoStore: Identifiable {
         changesInspect = nil; historyInspect = nil; operationNotice = nil
         summary = ""; message = ""; amend = false; mergeMessageFilled = false
         worktrees = []; worktreeStats = [:]; worktreeStatus = [:]; remoteURLs = [:]; target = nil; pullRequests = []; prState = .idle
-        aiWorking = nil; aiNotice = nil; explanations = [:]; explaining = []; undoStack = []
+        aiWorking = nil; aiNotice = nil; explanations = [:]; explaining = []; explainFailures = [:]; undoStack = []
         ciBadgeTask?.cancel(); ciBadgeTask = nil
         detailTask?.cancel(); diffTask?.cancel(); watchTask?.cancel()
     }

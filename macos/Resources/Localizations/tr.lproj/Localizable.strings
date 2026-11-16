@@ -491,7 +491,6 @@
 "Conversation %lld" = "Konuşma %1$lld";
 "Copied" = "Kopyalandı";
 "Copy SHA" = "SHA'yı kopyala";
-"Copy full SHA" = "Tam SHA'yı kopyala";
 "Copy link" = "Bağlantıyı kopyala";
 "Copy message" = "Mesajı kopyala";
 "Copy name" = "Adı kopyala";
@@ -617,7 +616,6 @@
 "Executable" = "Çalıştırılabilir dosya";
 "Existing branch" = "Mevcut dal";
 "Explain again" = "Yeniden açıkla";
-"Explain this commit" = "Bu commit'i açıkla";
 "Failed" = "Başarısız";
 "Fast-forward" = "İleri sar";
 "Fast-forward '%@' (current) to '%@'" = "'%1$@' (geçerli) dalını '%2$@' konumuna ileri sar";
@@ -2260,3 +2258,10 @@
 "Saved sign-in can't be read" = "Kayıtlı oturum okunamıyor";
 "Couldn't use the saved sign-in" = "Kayıtlı oturum kullanılamadı";
 "Refresh account status" = "Hesap durumunu yenile";
+"Tag…" = "Etiket…";
+"Explain with AI…" = "Yapay zeka ile açıkla…";
+"Copy commit SHA" = "Commit SHA'sını kopyala";
+"Parent" = "Üst commit";
+"Parents" = "Üst commit'ler";
+"Couldn't explain this commit" = "Bu commit açıklanamadı";
+"More commit actions" = "Diğer commit işlemleri";

@@ -687,7 +687,6 @@
 "Conversation %lld" = "대화 %1$lld";
 "Copied" = "복사됨";
 "Copy SHA" = "SHA 복사";
-"Copy full SHA" = "전체 SHA 복사";
 "Copy link" = "링크 복사";
 "Copy message" = "메시지 복사";
 "Copy name" = "이름 복사";
@@ -812,7 +811,6 @@
 "Executable" = "실행 파일";
 "Existing branch" = "기존 브랜치";
 "Explain again" = "다시 설명";
-"Explain this commit" = "이 커밋 설명 듣기";
 "Failed" = "실패";
 "Fast-forward" = "빨리 감기";
 "Fast-forward '%@' (current) to '%@'" = "'%1$@'(현재)을(를) '%2$@'까지 빨리 감기 (fast-forward)";
@@ -4022,3 +4020,9 @@
 "This repository" = "이 리포지터리";
 "Saved sign-in can't be read" = "저장된 로그인을 읽을 수 없음";
 "Couldn't use the saved sign-in" = "저장된 로그인을 쓰지 못했습니다";
+"Tag…" = "태그…";
+"Explain with AI…" = "AI로 설명…";
+"Copy commit SHA" = "커밋 SHA 복사";
+"Parent" = "부모";
+"Parents" = "부모";
+"Couldn't explain this commit" = "이 커밋을 설명하지 못했습니다";
