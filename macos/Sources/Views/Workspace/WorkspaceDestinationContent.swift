@@ -40,7 +40,7 @@ struct WorkspaceDestinationContent: View {
 /// The repository screen: branches and refs | graph or diff with the terminal below | uncommitted changes or details
 struct RepositoryScreen: View {
     @AppStorage("repositorySidebarWidth") private var sidebarWidth = 250.0
-    @AppStorage("repositoryInspectorWidth") private var inspectorWidth = 380.0
+    @AppStorage("repositoryInspectorWidth") private var inspectorWidth = 340.0
     @AppStorage("repositoryInspectorCollapsed") private var inspectorCollapsed = false
     /// While the page list slides, the side columns keep their widths and the centre one is cut off (PageListFold)
     @Environment(\.pageListOverhang) private var overhang

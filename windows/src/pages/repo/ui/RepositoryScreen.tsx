@@ -18,7 +18,7 @@ export function RepositoryScreen({ store, openSettings }: { store: RepoStore; op
   useObserve(settings);
   const sidebarW = settings.get("sidebarWidth", 250);
   const sidebarCollapsed = settings.get("sidebarCollapsed", false);
-  const inspectorW = settings.get("inspectorWidth", 380);
+  const inspectorW = settings.get("inspectorWidth", 340);
   const inspectorCollapsed = settings.get("inspectorCollapsed", false);
   const centerRef = useRef<HTMLDivElement>(null);
   const [centerH, setCenterH] = useState(800);
