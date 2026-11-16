@@ -162,6 +162,12 @@
   transform: translateY(-50%);
 }
 
+/* the empty state sits in the middle of the list's room, as on macOS */
+.graph-scroll > .hosted-empty {
+  min-height: 100%;
+  box-sizing: border-box;
+}
+
 .commit-row.miss {
   opacity: 0.32;
 }
