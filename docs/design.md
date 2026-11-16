@@ -117,6 +117,6 @@ On macOS the window and sidebar are native (`NavigationSplitView` with a `.listS
 
 ## Frames and spacing
 
-- Repository screens: no page toolbar under the window toolbar (see App shell), a 240px sidebar, a 340px inspector (header 44px). List/detail pages: a 312px list column. Blame: a 280px gutter with a 56px age column.
+- Repository screens: no page toolbar under the window toolbar (see App shell), a 240px sidebar, a 340px inspector (its header is as tall as the graph's column header beside it, so their dividers meet in one line; the board draws it at 44px). List/detail pages: a 312px list column. Blame: a 280px gutter with a 56px age column.
 - Spacing steps: 4, 6, 8, 10, 12, 16, 20, 24, 28, 32. Card padding 12 16.
 - Avatars: 24 in conversations, 20 in meta and side cards, 22 as graph nodes, 16 in dense rows.

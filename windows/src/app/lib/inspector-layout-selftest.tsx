@@ -15,7 +15,7 @@ const until = async (done: () => boolean, ms = 2500) => {
 };
 
 /**
- * The commit inspector as the flat panel: the 44 px header (short SHA, copy, the commit menu under ⋯), the one-line
+ * The commit inspector as the flat panel: a header as tall as the graph's (short SHA, copy, the commit menu under ⋯), the one-line
  * author, parents as links, New branch… and Tag…, and long references, names and parents kept inside a narrow panel.
  */
 export async function inspectorLayoutSelfTest(): Promise<[boolean, string]> {
@@ -68,9 +68,9 @@ export async function inspectorLayoutSelfTest(): Promise<[boolean, string]> {
       widths.push({ width, bounded, authorLine, scrollbarWidth: panel.offsetWidth - panel.clientWidth, scrollWidth: panel.scrollWidth, contentWidth: panel.clientWidth });
     }
 
-    // the board's flat panel: no cards, a 44 px header with 16 px sides, a 17 px semibold title
+    // the board's flat panel: no cards, a header as tall as the graph's (35 px with its divider) with 16 px sides, a 17 px semibold title
     const head = one(".commit-head")!, headStyle = getComputedStyle(head), titleStyle = getComputedStyle(one(".commit-title")!), mainStyle = getComputedStyle(one(".commit-main")!);
-    const flat = !one(".commit-detail .card") && Math.round(head.getBoundingClientRect().height) === 44 && headStyle.paddingLeft === "16px" && headStyle.paddingRight === "16px"
+    const flat = !one(".commit-detail .card") && Math.round(head.getBoundingClientRect().height) === 35 && headStyle.paddingLeft === "16px" && headStyle.paddingRight === "16px"
       && titleStyle.fontSize === "17px" && titleStyle.fontWeight === "600" && mainStyle.padding === "12px 16px 16px";
     const headWords = one(".commit-head h2")?.textContent === t("Merge commit") && one(".commit-head-sha")?.textContent === sha.slice(0, 7);
 

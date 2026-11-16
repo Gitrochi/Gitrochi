@@ -1,7 +1,7 @@
 import AppKit
 import SwiftUI
 
-/// The selected commit, as the redesign board's flat panel: a 44 pt header (what it is, the short SHA, copy, ⋯), then
+/// The selected commit, as the redesign board's flat panel: a header as tall as the graph's (what it is, the short SHA, copy, ⋯), then
 /// the message, its author, parents and actions, and the changed files. (Windows: widgets/inspector/ui/CommitDetailView.tsx)
 struct CommitDetailView: View {
     @Environment(RepoStore.self) private var store
@@ -54,7 +54,8 @@ struct CommitDetailView: View {
                 .help("More commit actions").accessibilityLabel("More commit actions")
         }
         .padding(.horizontal, 16)
-        .frame(height: 44)
+        // as tall as the graph's column header beside it, so the two dividers meet in one line
+        .frame(height: GraphMetrics.headerHeight)
     }
 
     private func message(_ d: CommitDetail) -> some View {
