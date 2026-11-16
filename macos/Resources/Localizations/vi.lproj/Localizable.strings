@@ -360,7 +360,6 @@
 "Branch being merged" = "Nhánh đang được merge";
 "Branch name" = "Tên nhánh";
 "Branch to check out" = "Nhánh cần checkout";
-"Branches pinned to the top" = "Các nhánh được ghim lên đầu";
 "Check again with fetch" = "Kiểm tra lại có fetch";
 "Check this repository with gitch again" = "Kiểm tra lại kho này bằng gitch";
 "Click to use another gitch account for this repository." = "Nhấp để dùng tài khoản gitch khác cho kho này.";
@@ -652,7 +651,6 @@
 "If the same server is used under another address, an account you've already connected works there too" = "Nếu cùng một máy chủ được dùng với địa chỉ khác, tài khoản bạn đã kết nối cũng dùng được ở đó";
 "Import gh CLI login" = "Nhập thông tin đăng nhập gh CLI";
 "In use" = "Đang dùng";
-"In use by a worktree: %@" = "Đang được dùng bởi worktree: %1$@";
 "Include how to test" = "Nêu cách kiểm thử";
 "Include the affected areas" = "Nêu các phần bị ảnh hưởng";
 "Include the issue number" = "Ghi số issue";
@@ -689,7 +687,6 @@
 "Locate…" = "Chỉ định…";
 "Location" = "Vị trí";
 "Locked to %@" = "Đã khóa với %1$@";
-"Locked worktree" = "Worktree bị khóa";
 "Looks for a GitHub profile, then a connected self-hosted GitLab profile, then Gravatar, and uses initials if none is found. An email hash is sent to Gravatar." = "Tìm ảnh hồ sơ GitHub, rồi hồ sơ GitLab tự host đã kết nối, rồi Gravatar, và dùng chữ cái đầu tên nếu không tìm thấy. Mã băm email sẽ được gửi tới Gravatar.";
 "Manual" = "Thủ công";
 "Mark all as resolved" = "Đánh dấu tất cả đã giải quyết";
@@ -865,7 +862,6 @@
 "Remove this variable" = "Xóa biến này";
 "Remove worktree '%@'?" = "Gỡ bỏ worktree '%1$@'?";
 "Remove worktree…" = "Gỡ bỏ worktree…";
-"Remove…" = "Gỡ bỏ…";
 "Removing worktree…" = "Đang gỡ bỏ worktree…";
 "Renamed" = "Đã đổi tên";
 "Renamed  %@ → %@" = "Đã đổi tên  %1$@ → %2$@";
@@ -901,7 +897,6 @@
 "Run" = "Chạy";
 "Run %@ after creating" = "Chạy %1$@ sau khi tạo";
 "Run again" = "Chạy lại";
-"Run agent (%@)" = "Chạy agent (%1$@)";
 "Run an agent in a worktree" = "Chạy agent trong worktree";
 "Run doctor in Terminal" = "Chạy doctor trong Terminal";
 "Run manual job" = "Chạy job thủ công";
@@ -991,7 +986,6 @@
 "Task for the agent (optional)" = "Nhiệm vụ cho agent (tùy chọn)";
 "Technical tone" = "Giọng văn kỹ thuật";
 "Tells you when a new version is available; click to download, replace and restart. A downloaded file is installed only if its SHA-256 and signature match the release." = "Thông báo khi có phiên bản mới; nhấp để tải xuống, thay thế và khởi động lại. Tệp tải về chỉ được cài đặt nếu SHA-256 và chữ ký khớp với bản phát hành.";
-"Temporary" = "Tạm thời";
 "Terminal shell" = "Shell của terminal";
 "Test connection" = "Kiểm tra kết nối";
 "That backup no longer exists." = "Bản sao lưu đó không còn nữa.";
@@ -1100,7 +1094,6 @@
 "Where to work" = "Nơi làm việc";
 "Whole file" = "Cả tệp";
 "Working directory is clean" = "Thư mục làm việc không có thay đổi";
-"Worktree in a temporary folder — it may break when the folder is deleted on restart" = "Worktree trong thư mục tạm — có thể bị hỏng khi thư mục bị xóa lúc khởi động lại";
 "Worktree whose folder is gone — remove it with 'Clean up'" = "Worktree có thư mục không còn tồn tại — hãy gỡ bỏ bằng 'Dọn dẹp'";
 "Worktrees" = "Worktree";
 "Write commit message with AI" = "Viết thông điệp commit bằng AI";
@@ -1256,6 +1249,8 @@
 "Search filters loaded pages. Load more to search older items." = "Tìm kiếm chỉ lọc các trang đã tải. Tải thêm để tìm các mục cũ hơn.";
 "Compare with the current branch" = "So sánh với nhánh hiện tại";
 "Filter branches and tags" = "Lọc nhánh và thẻ";
+"Filter branches" = "Lọc nhánh";
+"No branch or tag name contains “%@”." = "Không có tên nhánh hay thẻ nào chứa “%@”.";
 "Comparing…" = "Đang so sánh…";
 "Use branches, tags or commit IDs, or pick a branch on the left." = "Dùng nhánh, thẻ hoặc ID commit, hoặc chọn một nhánh ở bên trái.";
 "Clear search" = "Xóa tìm kiếm";
@@ -1264,9 +1259,7 @@
 "Search merge requests" = "Tìm merge request";
 "No pull requests match this filter." = "Không có pull request nào khớp bộ lọc này.";
 "No merge requests match this filter." = "Không có merge request nào khớp bộ lọc này.";
-"No issues match this filter." = "Không có issue nào khớp bộ lọc này.";
 "Open in Pull requests" = "Mở trong Pull request";
-"Open in Merge requests" = "Mở trong Merge request";
 "Open in Issues" = "Mở trong Issue";
 "Merge request" = "Merge request";
 "Edit issue #%lld" = "Sửa issue #%1$lld";
@@ -1283,7 +1276,6 @@
 "Icons only" = "Chỉ biểu tượng";
 "Icons and text" = "Biểu tượng và chữ";
 "With text, each button's name sits to the right of its icon." = "Khi bật chữ, tên mỗi nút nằm bên phải biểu tượng.";
-"Filtered: %@" = "Đã lọc: %1$@";
 "Clear filter" = "Xóa bộ lọc";
 "Close search (Esc)" = "Đóng tìm kiếm (Esc)";
 "Close search" = "Đóng tìm kiếm";

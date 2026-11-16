@@ -373,7 +373,6 @@
 "Branch being merged" = "Rama que se fusiona";
 "Branch name" = "Nombre de la rama";
 "Branch to check out" = "Rama para hacer checkout";
-"Branches pinned to the top" = "Ramas fijadas arriba";
 "Check again with fetch" = "Volver a comprobar con fetch";
 "Check this repository with gitch again" = "Volver a comprobar este repositorio con gitch";
 "Click to use another gitch account for this repository." = "Haz clic para usar otra cuenta de gitch en este repositorio.";
@@ -673,7 +672,6 @@
 "If the same server is used under another address, an account you've already connected works there too" = "Si el mismo servidor se usa con otra dirección, la cuenta que ya conectaste también funciona ahí";
 "Import gh CLI login" = "Importar el inicio de sesión de la CLI gh";
 "In use" = "En uso";
-"In use by a worktree: %@" = "En uso por un worktree: %1$@";
 "Include how to test" = "Incluir cómo probarlo";
 "Include the affected areas" = "Incluir las áreas afectadas";
 "Include the issue number" = "Incluir el número de issue";
@@ -709,7 +707,6 @@
 "Locate…" = "Localizar…";
 "Location" = "Ubicación";
 "Locked to %@" = "Vinculado a %1$@";
-"Locked worktree" = "Worktree bloqueado";
 "Looks for a GitHub profile, then a connected self-hosted GitLab profile, then Gravatar, and uses initials if none is found. An email hash is sent to Gravatar." = "Busca un perfil de GitHub, luego un perfil de GitLab autoalojado conectado y luego Gravatar; si no encuentra ninguno, usa las iniciales. Se envía un hash del correo electrónico a Gravatar.";
 "Mark all as resolved" = "Marcar todo como resuelto";
 "Mark as resolved" = "Marcar como resuelto";
@@ -888,7 +885,6 @@
 "Remove this variable" = "Quitar esta variable";
 "Remove worktree '%@'?" = "¿Eliminar el worktree '%1$@'?";
 "Remove worktree…" = "Eliminar worktree…";
-"Remove…" = "Eliminar…";
 "Removing worktree…" = "Eliminando worktree…";
 "Renamed" = "Renombrado";
 "Renamed  %@ → %@" = "Renombrado  %1$@ → %2$@";
@@ -925,7 +921,6 @@
 "Run" = "Ejecutar";
 "Run %@ after creating" = "Ejecutar %1$@ después de crearlo";
 "Run again" = "Ejecutar de nuevo";
-"Run agent (%@)" = "Ejecutar agente (%1$@)";
 "Run an agent in a worktree" = "Ejecutar un agente en un worktree";
 "Run doctor in Terminal" = "Ejecutar doctor en Terminal";
 "Run manual job" = "Ejecutar trabajo manual";
@@ -1018,7 +1013,6 @@
 "Task for the agent (optional)" = "Tarea para el agente (opcional)";
 "Technical tone" = "Tono técnico";
 "Tells you when a new version is available; click to download, replace and restart. A downloaded file is installed only if its SHA-256 and signature match the release." = "Te avisa cuando hay una nueva versión; haz clic para descargarla, reemplazar la app y reiniciar. Un archivo descargado solo se instala si su SHA-256 y su firma coinciden con la versión publicada.";
-"Temporary" = "Temporal";
 "Terminal shell" = "Shell de la terminal";
 "Test connection" = "Probar conexión";
 "That backup no longer exists." = "Esa copia de seguridad ya no existe.";
@@ -1130,7 +1124,6 @@
 "Workflow" = "Flujo de trabajo";
 "Working directory is clean" = "El directorio de trabajo está limpio";
 "Working tree" = "Árbol de trabajo";
-"Worktree in a temporary folder — it may break when the folder is deleted on restart" = "Worktree en una carpeta temporal: puede romperse si la carpeta se elimina al reiniciar";
 "Worktree whose folder is gone — remove it with 'Clean up'" = "Worktree cuya carpeta ya no existe: elimínalo con 'Limpiar'";
 "Write commit message with AI" = "Redactar el mensaje de commit con IA";
 "Write in English" = "Redactar en inglés";
@@ -1286,6 +1279,8 @@
 "Search filters loaded pages. Load more to search older items." = "La búsqueda filtra las páginas cargadas. Carga más para buscar elementos anteriores.";
 "Compare with the current branch" = "Comparar con la rama actual";
 "Filter branches and tags" = "Filtrar ramas y etiquetas";
+"Filter branches" = "Filtrar ramas";
+"No branch or tag name contains “%@”." = "Ningún nombre de rama o etiqueta contiene “%@”.";
 "Comparing…" = "Comparando…";
 "Use branches, tags or commit IDs, or pick a branch on the left." = "Usa ramas, etiquetas o ID de commit, o elige una rama a la izquierda.";
 "Clear search" = "Borrar búsqueda";
@@ -1294,9 +1289,7 @@
 "Search merge requests" = "Buscar merge requests";
 "No pull requests match this filter." = "Ningún pull request coincide con este filtro.";
 "No merge requests match this filter." = "Ningún merge request coincide con este filtro.";
-"No issues match this filter." = "Ninguna incidencia coincide con este filtro.";
 "Open in Pull requests" = "Abrir en Pull requests";
-"Open in Merge requests" = "Abrir en Merge requests";
 "Open in Issues" = "Abrir en Incidencias";
 "Merge request" = "Merge request";
 "Edit issue #%lld" = "Editar incidencia #%1$lld";
@@ -1313,7 +1306,6 @@
 "Icons only" = "Solo iconos";
 "Icons and text" = "Iconos y texto";
 "With text, each button's name sits to the right of its icon." = "Con texto, el nombre de cada botón aparece a la derecha de su icono.";
-"Filtered: %@" = "Filtrado: %1$@";
 "Clear filter" = "Quitar filtro";
 "Close search (Esc)" = "Cerrar búsqueda (Esc)";
 "Close search" = "Cerrar búsqueda";

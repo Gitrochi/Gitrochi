@@ -363,7 +363,6 @@
 "Branch being merged" = "Egyesítendő ág";
 "Branch name" = "Ág neve";
 "Branch to check out" = "Ág, amelyre átvált";
-"Branches pinned to the top" = "Felülre rögzített ágak";
 "Check again with fetch" = "Újraellenőrzés fetch-csel";
 "Check this repository with gitch again" = "A tároló újbóli ellenőrzése gitch-csel";
 "Click to use another gitch account for this repository." = "Kattintson, ha másik gitch-fiókot használna ehhez a tárolóhoz.";
@@ -665,7 +664,6 @@
 "If the same server is used under another address, an account you've already connected works there too" = "Ha ugyanaz a szerver más címen is elérhető, a már csatlakoztatott fiók ott is működik";
 "Import gh CLI login" = "gh CLI-bejelentkezés importálása";
 "In use" = "Használatban";
-"In use by a worktree: %@" = "Egy worktree használja: %1$@";
 "Include how to test" = "Tartalmazza a tesztelés módját";
 "Include the affected areas" = "Tartalmazza az érintett területeket";
 "Include the issue number" = "Tartalmazza az issue számát";
@@ -702,7 +700,6 @@
 "Locate…" = "Tallózás…";
 "Location" = "Hely";
 "Locked to %@" = "Zárolva: %1$@";
-"Locked worktree" = "Zárolt worktree";
 "Looks for a GitHub profile, then a connected self-hosted GitLab profile, then Gravatar, and uses initials if none is found. An email hash is sent to Gravatar." = "Először GitHub-profilt keres, majd egy csatlakoztatott saját üzemeltetésű GitLab-profilt, végül a Gravatarban; ha egyik sem található, monogramot használ. A Gravatar az e-mail-cím hash-ét kapja meg.";
 "Manual" = "Kézi";
 "Mark all as resolved" = "Összes megjelölése feloldottként";
@@ -882,7 +879,6 @@
 "Remove this variable" = "Változó eltávolítása";
 "Remove worktree '%@'?" = "Eltávolítja ezt a worktree-t: '%1$@'?";
 "Remove worktree…" = "Worktree eltávolítása…";
-"Remove…" = "Eltávolítás…";
 "Removing worktree…" = "Worktree eltávolítása…";
 "Renamed" = "Átnevezve";
 "Renamed  %@ → %@" = "Átnevezve  %1$@ → %2$@";
@@ -919,7 +915,6 @@
 "Run" = "Futtatás";
 "Run %@ after creating" = "%1$@ futtatása a létrehozás után";
 "Run again" = "Újrafuttatás";
-"Run agent (%@)" = "Ügynök futtatása (%1$@)";
 "Run an agent in a worktree" = "Ügynök futtatása egy worktree-ben";
 "Run doctor in Terminal" = "doctor futtatása a Terminálban";
 "Run manual job" = "Kézi job futtatása";
@@ -1012,7 +1007,6 @@
 "Task for the agent (optional)" = "Feladat az ügynöknek (nem kötelező)";
 "Technical tone" = "Szakmai hangnem";
 "Tells you when a new version is available; click to download, replace and restart. A downloaded file is installed only if its SHA-256 and signature match the release." = "Értesít, ha új verzió érhető el; kattintásra letölti, lecseréli és újraindítja az alkalmazást. A letöltött fájl csak akkor települ, ha az SHA-256 értéke és az aláírása egyezik a kiadáséval.";
-"Temporary" = "Ideiglenes";
 "Terminal" = "Terminál";
 "Terminal shell" = "Terminál-shell";
 "Test connection" = "Kapcsolat tesztelése";
@@ -1125,7 +1119,6 @@
 "Whole file" = "Teljes fájl";
 "Working directory is clean" = "A munkakönyvtár tiszta";
 "Working tree" = "Munkakönyvtár";
-"Worktree in a temporary folder — it may break when the folder is deleted on restart" = "Ideiglenes mappában lévő worktree — megsérülhet, ha a mappa újraindításkor törlődik";
 "Worktree whose folder is gone — remove it with 'Clean up'" = "Worktree, amelynek a mappája eltűnt — a 'Takarítás' gombbal eltávolítható";
 "Worktrees" = "Worktree-k";
 "Write commit message with AI" = "Commitüzenet írása AI-jal";
@@ -1282,6 +1275,8 @@
 "Search filters loaded pages. Load more to search older items." = "A keresés a betöltött oldalakat szűri. Töltsön be többet a régebbi elemek kereséséhez.";
 "Compare with the current branch" = "Összehasonlítás a jelenlegi ággal";
 "Filter branches and tags" = "Ágak és címkék szűrése";
+"Filter branches" = "Ágak szűrése";
+"No branch or tag name contains “%@”." = "Egyetlen ág vagy címke neve sem tartalmazza ezt: „%@”.";
 "Comparing…" = "Összehasonlítás…";
 "Use branches, tags or commit IDs, or pick a branch on the left." = "Használj ágakat, címkéket vagy commit-azonosítókat, vagy válassz egy ágat balra.";
 "Clear search" = "Keresés törlése";
@@ -1290,9 +1285,7 @@
 "Search merge requests" = "Merge requestek keresése";
 "No pull requests match this filter." = "Egy pull request sem felel meg a szűrőnek.";
 "No merge requests match this filter." = "Egy merge request sem felel meg a szűrőnek.";
-"No issues match this filter." = "Egy issue sem felel meg a szűrőnek.";
 "Open in Pull requests" = "Megnyitás a Pull requestekben";
-"Open in Merge requests" = "Megnyitás a Merge requestekben";
 "Open in Issues" = "Megnyitás az Issue-kban";
 "Merge request" = "Merge request";
 "Edit issue #%lld" = "Issue #%1$lld szerkesztése";
@@ -1309,7 +1302,6 @@
 "Icons only" = "Csak ikonok";
 "Icons and text" = "Ikonok és szöveg";
 "With text, each button's name sits to the right of its icon." = "Szöveggel minden gomb neve az ikonja jobb oldalán jelenik meg.";
-"Filtered: %@" = "Szűrve: %1$@";
 "Clear filter" = "Szűrő törlése";
 "Close search (Esc)" = "Keresés bezárása (Esc)";
 "Close search" = "Keresés bezárása";

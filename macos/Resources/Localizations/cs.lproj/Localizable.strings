@@ -361,7 +361,6 @@
 "Branch being merged" = "Slučovaná větev";
 "Branch name" = "Název větve";
 "Branch to check out" = "Větev, na kterou přepnout";
-"Branches pinned to the top" = "Větve připnuté nahoře";
 "Check again with fetch" = "Znovu zkontrolovat s fetch";
 "Check this repository with gitch again" = "Znovu kontrolovat tento repozitář pomocí gitch";
 "Click to use another gitch account for this repository." = "Kliknutím použijete pro tento repozitář jiný účet gitch.";
@@ -661,7 +660,6 @@
 "If the same server is used under another address, an account you've already connected works there too" = "Pokud je stejný server dostupný i pod jinou adresou, funguje tam i účet, který jste už připojili";
 "Import gh CLI login" = "Importovat přihlášení z gh CLI";
 "In use" = "Používá se";
-"In use by a worktree: %@" = "Používá worktree: %1$@";
 "Include how to test" = "Uveď, jak to otestovat";
 "Include the affected areas" = "Uveď dotčené oblasti";
 "Include the issue number" = "Uveď číslo issue";
@@ -698,7 +696,6 @@
 "Locate…" = "Vybrat…";
 "Location" = "Umístění";
 "Locked to %@" = "Zamčeno na %1$@";
-"Locked worktree" = "Zamčený worktree";
 "Looks for a GitHub profile, then a connected self-hosted GitLab profile, then Gravatar, and uses initials if none is found. An email hash is sent to Gravatar." = "Hledá profil na GitHubu, pak profil na připojeném vlastním GitLabu, pak Gravatar, a pokud nic nenajde, použije iniciály. Do služby Gravatar se odesílá hash e-mailu.";
 "Manual" = "Ruční";
 "Mark all as resolved" = "Označit vše jako vyřešené";
@@ -877,7 +874,6 @@
 "Remove this variable" = "Odebrat tuto proměnnou";
 "Remove worktree '%@'?" = "Odebrat worktree '%1$@'?";
 "Remove worktree…" = "Odebrat worktree…";
-"Remove…" = "Odebrat…";
 "Removing worktree…" = "Odebírání worktree…";
 "Renamed" = "Přejmenováno";
 "Renamed  %@ → %@" = "Přejmenováno  %1$@ → %2$@";
@@ -914,7 +910,6 @@
 "Run" = "Spustit";
 "Run %@ after creating" = "Po vytvoření spustit %1$@";
 "Run again" = "Spustit znovu";
-"Run agent (%@)" = "Spustit agenta (%1$@)";
 "Run an agent in a worktree" = "Spustit agenta ve worktree";
 "Run doctor in Terminal" = "Spustit doctor v Terminálu";
 "Run manual job" = "Spustit ruční úlohu";
@@ -1006,7 +1001,6 @@
 "Task for the agent (optional)" = "Úkol pro agenta (volitelné)";
 "Technical tone" = "Technický tón";
 "Tells you when a new version is available; click to download, replace and restart. A downloaded file is installed only if its SHA-256 and signature match the release." = "Upozorní vás na novou verzi; kliknutím ji stáhnete, nahradíte stávající verzi a aplikace se restartuje. Stažený soubor se nainstaluje, jen pokud jeho SHA-256 a podpis odpovídají vydání.";
-"Temporary" = "Dočasný";
 "Terminal" = "Terminál";
 "Terminal shell" = "Shell terminálu";
 "Test connection" = "Otestovat připojení";
@@ -1119,7 +1113,6 @@
 "Whole file" = "Celý soubor";
 "Working directory is clean" = "Pracovní adresář je čistý";
 "Working tree" = "Pracovní strom";
-"Worktree in a temporary folder — it may break when the folder is deleted on restart" = "Worktree v dočasné složce — po restartu se může poškodit, pokud se složka smaže";
 "Worktree whose folder is gone — remove it with 'Clean up'" = "Worktree, jehož složka zmizela — odeberte ho pomocí 'Pročistit'";
 "Worktrees" = "Worktree";
 "Write commit message with AI" = "Napsat zprávu commitu pomocí AI";
@@ -1278,6 +1271,8 @@
 "Search filters loaded pages. Load more to search older items." = "Hledání filtruje načtené stránky. Načtěte další, chcete-li hledat ve starších položkách.";
 "Compare with the current branch" = "Porovnat s aktuální větví";
 "Filter branches and tags" = "Filtrovat větve a značky";
+"Filter branches" = "Filtrovat větve";
+"No branch or tag name contains “%@”." = "Žádný název větve ani tagu neobsahuje „%@“.";
 "Comparing…" = "Porovnávání…";
 "Use branches, tags or commit IDs, or pick a branch on the left." = "Použijte větve, značky nebo ID commitů, nebo vyberte větev vlevo.";
 "Clear search" = "Vymazat hledání";
@@ -1286,9 +1281,7 @@
 "Search merge requests" = "Hledat merge requesty";
 "No pull requests match this filter." = "Tomuto filtru neodpovídá žádný pull request.";
 "No merge requests match this filter." = "Tomuto filtru neodpovídá žádný merge request.";
-"No issues match this filter." = "Tomuto filtru neodpovídá žádný issue.";
 "Open in Pull requests" = "Otevřít v Pull requestech";
-"Open in Merge requests" = "Otevřít v Merge requestech";
 "Open in Issues" = "Otevřít v Issues";
 "Merge request" = "Merge request";
 "Edit issue #%lld" = "Upravit issue #%1$lld";
@@ -1305,7 +1298,6 @@
 "Icons only" = "Jen ikony";
 "Icons and text" = "Ikony a text";
 "With text, each button's name sits to the right of its icon." = "S textem je název každého tlačítka vpravo od ikony.";
-"Filtered: %@" = "Filtr: %1$@";
 "Clear filter" = "Zrušit filtr";
 "Close search (Esc)" = "Zavřít hledání (Esc)";
 "Close search" = "Zavřít hledání";

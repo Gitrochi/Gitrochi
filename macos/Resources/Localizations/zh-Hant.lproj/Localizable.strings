@@ -366,7 +366,6 @@
 "Branch being merged" = "要合併的分支";
 "Branch name" = "分支名稱";
 "Branch to check out" = "要簽出的分支";
-"Branches pinned to the top" = "釘選在最上方的分支";
 "Check again with fetch" = "擷取後重新檢查";
 "Check this repository with gitch again" = "重新用 gitch 檢查此儲存庫";
 "Click to use another gitch account for this repository." = "按一下可變更此儲存庫使用的 gitch 帳號。";
@@ -675,7 +674,6 @@
 "If the same server is used under another address, an account you've already connected works there too" = "若同一部伺服器以其他位址使用，已連結的帳號在該處同樣可用";
 "Import gh CLI login" = "匯入 gh CLI 登入";
 "In use" = "使用中";
-"In use by a worktree: %@" = "由工作樹使用中：%1$@";
 "Include how to test" = "包含測試方法";
 "Include the affected areas" = "包含受影響的範圍";
 "Include the issue number" = "包含議題編號";
@@ -712,7 +710,6 @@
 "Locate…" = "手動指定…";
 "Location" = "位置";
 "Locked to %@" = "已鎖定為 %1$@";
-"Locked worktree" = "已鎖定的工作樹";
 "Looks for a GitHub profile, then a connected self-hosted GitLab profile, then Gravatar, and uses initials if none is found. An email hash is sent to Gravatar." = "依序尋找 GitHub 個人檔案、已連結的自架 GitLab 個人檔案、Gravatar，都找不到時則使用姓名縮寫。電子郵件的雜湊值會傳送給 Gravatar。";
 "Manual" = "手動";
 "Mark all as resolved" = "全部標示為已解決";
@@ -896,7 +893,6 @@
 "Remove this variable" = "移除此變數";
 "Remove worktree '%@'?" = "要移除工作樹「%1$@」嗎？";
 "Remove worktree…" = "移除工作樹…";
-"Remove…" = "移除…";
 "Removing worktree…" = "正在移除工作樹…";
 "Renamed" = "已重新命名";
 "Renamed  %@ → %@" = "已重新命名  %1$@ → %2$@";
@@ -933,7 +929,6 @@
 "Run" = "執行";
 "Run %@ after creating" = "建立後執行 %1$@";
 "Run again" = "重新執行";
-"Run agent (%@)" = "執行代理程式 (%1$@)";
 "Run an agent in a worktree" = "在工作樹中執行代理程式";
 "Run doctor in Terminal" = "在終端機中執行 doctor";
 "Run manual job" = "執行手動作業";
@@ -1028,7 +1023,6 @@
 "Task for the agent (optional)" = "交給代理程式的任務（選填）";
 "Technical tone" = "技術性的語氣";
 "Tells you when a new version is available; click to download, replace and restart. A downloaded file is installed only if its SHA-256 and signature match the release." = "有新版本時會通知你；按一下即可下載、替換並重新啟動。下載的檔案只有在 SHA-256 與簽章都符合發行版本時才會安裝。";
-"Temporary" = "暫時";
 "Terminal" = "終端機";
 "Terminal shell" = "終端機 Shell";
 "Test connection" = "測試連線";
@@ -1142,7 +1136,6 @@
 "Workflow" = "工作流程";
 "Working directory is clean" = "工作目錄沒有任何變更";
 "Working tree" = "工作目錄";
-"Worktree in a temporary folder — it may break when the folder is deleted on restart" = "位於暫存資料夾中的工作樹 — 重新開機時資料夾若被刪除，可能會損毀";
 "Worktree whose folder is gone — remove it with 'Clean up'" = "資料夾已不存在的工作樹 — 可用「整理」移除";
 "Worktrees" = "工作樹";
 "Write commit message with AI" = "使用 AI 撰寫提交訊息";
@@ -1299,6 +1292,8 @@
 "Search filters loaded pages. Load more to search older items." = "搜尋只篩選已載入的頁面。載入更多以搜尋較舊的項目。";
 "Compare with the current branch" = "與目前分支比較";
 "Filter branches and tags" = "篩選分支和標籤";
+"Filter branches" = "篩選分支";
+"No branch or tag name contains “%@”." = "沒有包含「%@」的分支或標籤名稱。";
 "Comparing…" = "正在比較…";
 "Use branches, tags or commit IDs, or pick a branch on the left." = "輸入分支、標籤或提交 ID，或在左側選擇一個分支。";
 "Clear search" = "清除搜尋";
@@ -1307,9 +1302,7 @@
 "Search merge requests" = "搜尋合併請求";
 "No pull requests match this filter." = "沒有符合此篩選條件的拉取請求。";
 "No merge requests match this filter." = "沒有符合此篩選條件的合併請求。";
-"No issues match this filter." = "沒有符合此篩選條件的議題。";
 "Open in Pull requests" = "在拉取請求中開啟";
-"Open in Merge requests" = "在合併請求中開啟";
 "Open in Issues" = "在議題中開啟";
 "Merge request" = "合併請求";
 "Edit issue #%lld" = "編輯議題 #%1$lld";
@@ -1326,7 +1319,6 @@
 "Icons only" = "僅圖示";
 "Icons and text" = "圖示和文字";
 "With text, each button's name sits to the right of its icon." = "顯示文字時，每個按鈕的名稱位於圖示右側。";
-"Filtered: %@" = "篩選：%1$@";
 "Clear filter" = "清除篩選";
 "Close search (Esc)" = "關閉搜尋 (Esc)";
 "Close search" = "關閉搜尋";

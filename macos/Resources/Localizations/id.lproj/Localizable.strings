@@ -357,7 +357,6 @@
 "Branch being merged" = "Branch yang di-merge";
 "Branch name" = "Nama branch";
 "Branch to check out" = "Branch yang akan di-checkout";
-"Branches pinned to the top" = "Branch yang disematkan di atas";
 "Check again with fetch" = "Periksa ulang dengan fetch";
 "Check this repository with gitch again" = "Periksa repositori ini dengan gitch lagi";
 "Click to use another gitch account for this repository." = "Klik untuk memakai akun gitch lain di repositori ini.";
@@ -648,7 +647,6 @@
 "If the same server is used under another address, an account you've already connected works there too" = "Jika server yang sama dipakai dengan alamat lain, akun yang sudah Anda hubungkan juga berlaku di sana";
 "Import gh CLI login" = "Impor login gh CLI";
 "In use" = "Digunakan";
-"In use by a worktree: %@" = "Digunakan oleh worktree: %1$@";
 "Include how to test" = "Sertakan cara pengujian";
 "Include the affected areas" = "Sertakan bagian yang terdampak";
 "Include the issue number" = "Sertakan nomor issue";
@@ -685,7 +683,6 @@
 "Locate…" = "Pilih lokasi…";
 "Location" = "Lokasi";
 "Locked to %@" = "Dikunci ke %1$@";
-"Locked worktree" = "Worktree terkunci";
 "Looks for a GitHub profile, then a connected self-hosted GitLab profile, then Gravatar, and uses initials if none is found. An email hash is sent to Gravatar." = "Mencari profil GitHub, lalu profil GitLab self-hosted yang terhubung, lalu Gravatar, dan memakai inisial jika tidak ditemukan. Hash email dikirim ke Gravatar.";
 "Mark all as resolved" = "Tandai semua selesai";
 "Mark as resolved" = "Tandai selesai";
@@ -858,7 +855,6 @@
 "Remove this variable" = "Hapus variabel ini";
 "Remove worktree '%@'?" = "Hapus worktree '%1$@'?";
 "Remove worktree…" = "Hapus worktree…";
-"Remove…" = "Hapus…";
 "Removing worktree…" = "Menghapus worktree…";
 "Renamed" = "Diganti nama";
 "Renamed  %@ → %@" = "Diganti nama  %1$@ → %2$@";
@@ -894,7 +890,6 @@
 "Run" = "Jalankan";
 "Run %@ after creating" = "Jalankan %1$@ setelah dibuat";
 "Run again" = "Jalankan lagi";
-"Run agent (%@)" = "Jalankan agen (%1$@)";
 "Run an agent in a worktree" = "Jalankan agen di worktree";
 "Run doctor in Terminal" = "Jalankan doctor di Terminal";
 "Run manual job" = "Jalankan job manual";
@@ -984,7 +979,6 @@
 "Task for the agent (optional)" = "Tugas untuk agen (opsional)";
 "Technical tone" = "Nada teknis";
 "Tells you when a new version is available; click to download, replace and restart. A downloaded file is installed only if its SHA-256 and signature match the release." = "Memberi tahu saat versi baru tersedia; klik untuk mengunduh, mengganti, dan memulai ulang. File yang diunduh hanya diinstal jika SHA-256 dan tanda tangannya cocok dengan rilis.";
-"Temporary" = "Sementara";
 "Terminal shell" = "Shell terminal";
 "Test connection" = "Uji koneksi";
 "That backup no longer exists." = "Cadangan itu sudah tidak ada.";
@@ -1093,7 +1087,6 @@
 "Where to work" = "Tempat bekerja";
 "Whole file" = "Seluruh file";
 "Working directory is clean" = "Direktori kerja bersih";
-"Worktree in a temporary folder — it may break when the folder is deleted on restart" = "Worktree di folder sementara — bisa rusak jika folder dihapus saat mulai ulang";
 "Worktree whose folder is gone — remove it with 'Clean up'" = "Worktree yang foldernya sudah hilang — hapus dengan 'Bersihkan'";
 "Worktrees" = "Worktree";
 "Write commit message with AI" = "Tulis pesan commit dengan AI";
@@ -1251,6 +1244,8 @@
 "Search filters loaded pages. Load more to search older items." = "Pencarian menyaring halaman yang sudah dimuat. Muat lebih banyak untuk mencari item yang lebih lama.";
 "Compare with the current branch" = "Bandingkan dengan cabang saat ini";
 "Filter branches and tags" = "Saring cabang dan tag";
+"Filter branches" = "Saring cabang";
+"No branch or tag name contains “%@”." = "Tidak ada nama cabang atau tag yang memuat “%@”.";
 "Comparing…" = "Membandingkan…";
 "Use branches, tags or commit IDs, or pick a branch on the left." = "Gunakan cabang, tag, atau ID commit, atau pilih cabang di sebelah kiri.";
 "Clear search" = "Hapus pencarian";
@@ -1259,9 +1254,7 @@
 "Search merge requests" = "Cari merge request";
 "No pull requests match this filter." = "Tidak ada pull request yang cocok dengan filter ini.";
 "No merge requests match this filter." = "Tidak ada merge request yang cocok dengan filter ini.";
-"No issues match this filter." = "Tidak ada issue yang cocok dengan filter ini.";
 "Open in Pull requests" = "Buka di Pull request";
-"Open in Merge requests" = "Buka di Merge request";
 "Open in Issues" = "Buka di Issue";
 "Merge request" = "Merge request";
 "Edit issue #%lld" = "Edit issue #%1$lld";
@@ -1278,7 +1271,6 @@
 "Icons only" = "Hanya ikon";
 "Icons and text" = "Ikon dan teks";
 "With text, each button's name sits to the right of its icon." = "Dengan teks, nama tiap tombol tampil di sebelah kanan ikonnya.";
-"Filtered: %@" = "Difilter: %1$@";
 "Clear filter" = "Hapus filter";
 "Close search (Esc)" = "Tutup pencarian (Esc)";
 "Close search" = "Tutup pencarian";

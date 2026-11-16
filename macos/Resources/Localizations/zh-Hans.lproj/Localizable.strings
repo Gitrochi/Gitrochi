@@ -375,7 +375,6 @@
 "Branch being merged" = "被合并的分支";
 "Branch name" = "分支名称";
 "Branch to check out" = "要检出的分支";
-"Branches pinned to the top" = "置顶的分支";
 "Check again with fetch" = "获取后重新检查";
 "Check this repository with gitch again" = "重新用 gitch 检查此仓库";
 "Click to use another gitch account for this repository." = "点击可更改此仓库使用的 gitch 账户。";
@@ -685,7 +684,6 @@
 "If the same server is used under another address, an account you've already connected works there too" = "如果同一服务器通过其他地址访问，已连接的账户在那里同样可用";
 "Import gh CLI login" = "导入 gh CLI 登录信息";
 "In use" = "使用中";
-"In use by a worktree: %@" = "正被工作树使用：%1$@";
 "Include how to test" = "包含测试方法";
 "Include the affected areas" = "包含受影响的部分";
 "Include the issue number" = "包含议题编号";
@@ -722,7 +720,6 @@
 "Locate…" = "定位…";
 "Location" = "位置";
 "Locked to %@" = "已锁定为 %1$@";
-"Locked worktree" = "已锁定的工作树";
 "Looks for a GitHub profile, then a connected self-hosted GitLab profile, then Gravatar, and uses initials if none is found. An email hash is sent to Gravatar." = "依次查找 GitHub 个人资料、已连接的自托管 GitLab 个人资料和 Gravatar，均未找到时使用姓名首字母。电子邮件的哈希值会发送给 Gravatar。";
 "Manual" = "手动";
 "Mark all as resolved" = "全部标记为已解决";
@@ -906,7 +903,6 @@
 "Remove this variable" = "移除此变量";
 "Remove worktree '%@'?" = "要移除工作树“%1$@”吗？";
 "Remove worktree…" = "移除工作树…";
-"Remove…" = "移除…";
 "Removing worktree…" = "正在移除工作树…";
 "Renamed" = "已重命名";
 "Renamed  %@ → %@" = "已重命名  %1$@ → %2$@";
@@ -943,7 +939,6 @@
 "Run" = "运行";
 "Run %@ after creating" = "创建后运行 %1$@";
 "Run again" = "重新运行";
-"Run agent (%@)" = "运行代理（%1$@）";
 "Run an agent in a worktree" = "在工作树中运行代理";
 "Run doctor in Terminal" = "在终端中运行 doctor";
 "Run manual job" = "运行手动作业";
@@ -1038,7 +1033,6 @@
 "Task for the agent (optional)" = "交给代理的任务（可选）";
 "Technical tone" = "技术性语气";
 "Tells you when a new version is available; click to download, replace and restart. A downloaded file is installed only if its SHA-256 and signature match the release." = "有新版本时通知你；点击即可下载、替换并重新启动。下载的文件只有在 SHA-256 和签名与发布版本一致时才会安装。";
-"Temporary" = "临时";
 "Terminal" = "终端";
 "Terminal shell" = "终端 Shell";
 "Test connection" = "测试连接";
@@ -1152,7 +1146,6 @@
 "Workflow" = "工作流";
 "Working directory is clean" = "工作区是干净的";
 "Working tree" = "工作区";
-"Worktree in a temporary folder — it may break when the folder is deleted on restart" = "位于临时文件夹中的工作树 — 重启时如果该文件夹被删除，它可能会损坏";
 "Worktree whose folder is gone — remove it with 'Clean up'" = "文件夹已不存在的工作树 — 可通过“清理”将其移除";
 "Worktrees" = "工作树";
 "Write commit message with AI" = "使用 AI 编写提交信息";
@@ -1309,6 +1302,8 @@
 "Search filters loaded pages. Load more to search older items." = "搜索只筛选已加载的页面。加载更多以搜索更早的项目。";
 "Compare with the current branch" = "与当前分支比较";
 "Filter branches and tags" = "筛选分支和标签";
+"Filter branches" = "筛选分支";
+"No branch or tag name contains “%@”." = "没有包含“%@”的分支或标签名称。";
 "Comparing…" = "正在比较…";
 "Use branches, tags or commit IDs, or pick a branch on the left." = "输入分支、标签或提交 ID，或在左侧选择一个分支。";
 "Clear search" = "清除搜索";
@@ -1317,9 +1312,7 @@
 "Search merge requests" = "搜索合并请求";
 "No pull requests match this filter." = "没有符合此筛选条件的拉取请求。";
 "No merge requests match this filter." = "没有符合此筛选条件的合并请求。";
-"No issues match this filter." = "没有符合此筛选条件的议题。";
 "Open in Pull requests" = "在拉取请求中打开";
-"Open in Merge requests" = "在合并请求中打开";
 "Open in Issues" = "在议题中打开";
 "Merge request" = "合并请求";
 "Edit issue #%lld" = "编辑议题 #%1$lld";
@@ -1336,7 +1329,6 @@
 "Icons only" = "仅图标";
 "Icons and text" = "图标和文字";
 "With text, each button's name sits to the right of its icon." = "显示文字时，每个按钮的名称位于图标右侧。";
-"Filtered: %@" = "筛选：%1$@";
 "Clear filter" = "清除筛选";
 "Close search (Esc)" = "关闭搜索 (Esc)";
 "Close search" = "关闭搜索";

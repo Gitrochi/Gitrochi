@@ -366,7 +366,6 @@
 "Branch being merged" = "Гілка, що зливається";
 "Branch name" = "Назва гілки";
 "Branch to check out" = "Гілка для переходу";
-"Branches pinned to the top" = "Гілки, закріплені вгорі";
 "Check again with fetch" = "Перевірити знову з fetch";
 "Check this repository with gitch again" = "Знову перевіряти цей репозиторій через gitch";
 "Click to use another gitch account for this repository." = "Натисніть, щоб вибрати для цього репозиторію інший обліковий запис gitch.";
@@ -674,7 +673,6 @@
 "If the same server is used under another address, an account you've already connected works there too" = "Якщо той самий сервер доступний за іншою адресою, уже підключений обліковий запис працюватиме й там";
 "Import gh CLI login" = "Імпортувати вхід із gh CLI";
 "In use" = "Використовується";
-"In use by a worktree: %@" = "Використовується робочим деревом: %1$@";
 "Include how to test" = "Описати, як тестувати";
 "Include the affected areas" = "Указати, яких частин стосується";
 "Include the issue number" = "Указати номер задачі";
@@ -711,7 +709,6 @@
 "Locate…" = "Вказати…";
 "Location" = "Розташування";
 "Locked to %@" = "Закріплено за %1$@";
-"Locked worktree" = "Заблоковане робоче дерево";
 "Looks for a GitHub profile, then a connected self-hosted GitLab profile, then Gravatar, and uses initials if none is found. An email hash is sent to Gravatar." = "Шукає профіль GitHub, потім профіль у підключеному GitLab на власному сервері, потім Gravatar; якщо нічого не знайдено, показує ініціали. До Gravatar надсилається хеш email.";
 "Manual" = "Вручну";
 "Mark all as resolved" = "Позначити все як розв’язане";
@@ -894,7 +891,6 @@
 "Remove this variable" = "Вилучити цю змінну";
 "Remove worktree '%@'?" = "Вилучити робоче дерево '%1$@'?";
 "Remove worktree…" = "Вилучити робоче дерево…";
-"Remove…" = "Вилучити…";
 "Removing worktree…" = "Вилучення робочого дерева…";
 "Renamed" = "Перейменовано";
 "Renamed  %@ → %@" = "Перейменовано  %1$@ → %2$@";
@@ -931,7 +927,6 @@
 "Run" = "Запустити";
 "Run %@ after creating" = "Запустити %1$@ після створення";
 "Run again" = "Запустити знову";
-"Run agent (%@)" = "Запустити агента (%1$@)";
 "Run an agent in a worktree" = "Запустити агента в робочому дереві";
 "Run doctor in Terminal" = "Запустити doctor у Терміналі";
 "Run manual job" = "Запустити ручне завдання";
@@ -1026,7 +1021,6 @@
 "Task for the agent (optional)" = "Завдання для агента (необов’язково)";
 "Technical tone" = "Технічний тон";
 "Tells you when a new version is available; click to download, replace and restart. A downloaded file is installed only if its SHA-256 and signature match the release." = "Повідомляє про нову версію; клацніть, щоб завантажити, замінити й перезапустити. Завантажений файл буде встановлено, лише якщо його SHA-256 і підпис збігаються з випуском.";
-"Temporary" = "Тимчасове";
 "Terminal" = "Термінал";
 "Terminal shell" = "Оболонка термінала";
 "Test connection" = "Перевірити з’єднання";
@@ -1140,7 +1134,6 @@
 "Workflow" = "Робочий процес";
 "Working directory is clean" = "Робоча копія чиста";
 "Working tree" = "Робоча копія";
-"Worktree in a temporary folder — it may break when the folder is deleted on restart" = "Робоче дерево в тимчасовій папці — воно може зламатися, коли папку буде видалено після перезапуску";
 "Worktree whose folder is gone — remove it with 'Clean up'" = "Робоче дерево, папки якого вже немає — вилучіть його кнопкою «Очистити»";
 "Worktrees" = "Робочі дерева";
 "Write commit message with AI" = "Написати повідомлення коміту за допомогою AI";
@@ -1297,6 +1290,8 @@
 "Search filters loaded pages. Load more to search older items." = "Пошук фільтрує завантажені сторінки. Завантажте більше, щоб шукати серед старіших елементів.";
 "Compare with the current branch" = "Порівняти з поточною гілкою";
 "Filter branches and tags" = "Фільтр гілок і тегів";
+"Filter branches" = "Фільтр гілок";
+"No branch or tag name contains “%@”." = "Жодна назва гілки чи тегу не містить «%@».";
 "Comparing…" = "Порівняння…";
 "Use branches, tags or commit IDs, or pick a branch on the left." = "Вкажіть гілки, теги або ID комітів або виберіть гілку ліворуч.";
 "Clear search" = "Очистити пошук";
@@ -1305,9 +1300,7 @@
 "Search merge requests" = "Пошук merge request";
 "No pull requests match this filter." = "Немає pull request, що відповідають фільтру.";
 "No merge requests match this filter." = "Немає merge request, що відповідають фільтру.";
-"No issues match this filter." = "Немає задач, що відповідають фільтру.";
 "Open in Pull requests" = "Відкрити в Pull requests";
-"Open in Merge requests" = "Відкрити в Merge requests";
 "Open in Issues" = "Відкрити в задачах";
 "Merge request" = "Merge request";
 "Edit issue #%lld" = "Редагувати задачу #%1$lld";
@@ -1324,7 +1317,6 @@
 "Icons only" = "Лише значки";
 "Icons and text" = "Значки й текст";
 "With text, each button's name sits to the right of its icon." = "З текстом назва кожної кнопки стоїть праворуч від значка.";
-"Filtered: %@" = "Фільтр: %1$@";
 "Clear filter" = "Скинути фільтр";
 "Close search (Esc)" = "Закрити пошук (Esc)";
 "Close search" = "Закрити пошук";

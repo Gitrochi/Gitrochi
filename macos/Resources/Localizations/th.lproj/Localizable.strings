@@ -365,7 +365,6 @@
 "Branch being merged" = "แบรนช์ที่กำลังเมิร์จเข้ามา";
 "Branch name" = "ชื่อแบรนช์";
 "Branch to check out" = "แบรนช์ที่จะเช็กเอาต์";
-"Branches pinned to the top" = "แบรนช์ที่ปักหมุดไว้ด้านบน";
 "Check again with fetch" = "ตรวจใหม่พร้อม fetch";
 "Check this repository with gitch again" = "ตรวจรีโพซิทอรีนี้ด้วย gitch อีกครั้ง";
 "Click to use another gitch account for this repository." = "คลิกเพื่อเปลี่ยนบัญชี gitch ที่ใช้กับรีโพซิทอรีนี้";
@@ -669,7 +668,6 @@
 "If the same server is used under another address, an account you've already connected works there too" = "หากใช้เซิร์ฟเวอร์เดียวกันภายใต้ที่อยู่อื่น บัญชีที่เชื่อมต่อไว้แล้วจะใช้ได้ที่นั่นด้วย";
 "Import gh CLI login" = "นำเข้าการเข้าสู่ระบบ gh CLI";
 "In use" = "กำลังใช้งาน";
-"In use by a worktree: %@" = "กำลังถูกใช้งานโดยเวิร์กทรี: %1$@";
 "Include how to test" = "ระบุวิธีทดสอบ";
 "Include the affected areas" = "ระบุส่วนที่ได้รับผลกระทบ";
 "Include the issue number" = "ระบุหมายเลข issue";
@@ -706,7 +704,6 @@
 "Locate…" = "ระบุตำแหน่ง…";
 "Location" = "ตำแหน่ง";
 "Locked to %@" = "ล็อกไว้กับ %1$@";
-"Locked worktree" = "เวิร์กทรีที่ถูกล็อก";
 "Looks for a GitHub profile, then a connected self-hosted GitLab profile, then Gravatar, and uses initials if none is found. An email hash is sent to Gravatar." = "ค้นหาโปรไฟล์ GitHub ก่อน ตามด้วยโปรไฟล์ GitLab แบบโฮสต์เองที่เชื่อมต่อไว้ แล้วจึง Gravatar หากไม่พบจะใช้อักษรย่อของชื่อ ค่าแฮชของอีเมลจะถูกส่งไปยัง Gravatar";
 "Manual" = "ด้วยตนเอง";
 "Mark all as resolved" = "ทำเครื่องหมายทั้งหมดว่าแก้แล้ว";
@@ -890,7 +887,6 @@
 "Remove this variable" = "นำตัวแปรนี้ออก";
 "Remove worktree '%@'?" = "นำเวิร์กทรี '%1$@' ออกหรือไม่";
 "Remove worktree…" = "นำเวิร์กทรีออก…";
-"Remove…" = "นำออก…";
 "Removing worktree…" = "กำลังนำเวิร์กทรีออก…";
 "Renamed" = "เปลี่ยนชื่อ";
 "Renamed  %@ → %@" = "เปลี่ยนชื่อ  %1$@ → %2$@";
@@ -927,7 +923,6 @@
 "Run" = "รัน";
 "Run %@ after creating" = "รัน %1$@ หลังสร้าง";
 "Run again" = "รันอีกครั้ง";
-"Run agent (%@)" = "รันเอเจนต์ (%1$@)";
 "Run an agent in a worktree" = "รันเอเจนต์ในเวิร์กทรี";
 "Run doctor in Terminal" = "รัน doctor ใน Terminal";
 "Run manual job" = "รันจ็อบแบบแมนนวล";
@@ -1022,7 +1017,6 @@
 "Task for the agent (optional)" = "งานสำหรับเอเจนต์ (ไม่บังคับ)";
 "Technical tone" = "น้ำเสียงเชิงเทคนิค";
 "Tells you when a new version is available; click to download, replace and restart. A downloaded file is installed only if its SHA-256 and signature match the release." = "แจ้งเมื่อมีเวอร์ชันใหม่ คลิกเพื่อดาวน์โหลด แทนที่ และรีสตาร์ท ไฟล์ที่ดาวน์โหลดจะถูกติดตั้งก็ต่อเมื่อ SHA-256 และลายเซ็นตรงกับรีลีสเท่านั้น";
-"Temporary" = "ชั่วคราว";
 "Terminal" = "เทอร์มินัล";
 "Terminal shell" = "เชลล์ของเทอร์มินัล";
 "Test connection" = "ทดสอบการเชื่อมต่อ";
@@ -1136,7 +1130,6 @@
 "Workflow" = "เวิร์กโฟลว์";
 "Working directory is clean" = "ไม่มีการเปลี่ยนแปลงในเวิร์กกิงทรี";
 "Working tree" = "เวิร์กกิงทรี";
-"Worktree in a temporary folder — it may break when the folder is deleted on restart" = "เวิร์กทรีในโฟลเดอร์ชั่วคราว — อาจเสียหายเมื่อโฟลเดอร์ถูกลบตอนรีสตาร์ท";
 "Worktree whose folder is gone — remove it with 'Clean up'" = "เวิร์กทรีที่โฟลเดอร์หายไปแล้ว — นำออกด้วย 'Prune'";
 "Worktrees" = "เวิร์กทรี";
 "Write commit message with AI" = "เขียนข้อความคอมมิตด้วย AI";
@@ -1293,6 +1286,8 @@
 "Search filters loaded pages. Load more to search older items." = "การค้นหาจะกรองเฉพาะหน้าที่โหลดแล้ว โหลดเพิ่มเพื่อค้นหารายการเก่ากว่า";
 "Compare with the current branch" = "เปรียบเทียบกับสาขาปัจจุบัน";
 "Filter branches and tags" = "กรองสาขาและแท็ก";
+"Filter branches" = "กรองสาขา";
+"No branch or tag name contains “%@”." = "ไม่มีชื่อสาขาหรือแท็กที่มี “%@”";
 "Comparing…" = "กำลังเปรียบเทียบ…";
 "Use branches, tags or commit IDs, or pick a branch on the left." = "ใช้สาขา แท็ก หรือรหัสคอมมิต หรือเลือกสาขาจากด้านซ้าย";
 "Clear search" = "ล้างการค้นหา";
@@ -1301,9 +1296,7 @@
 "Search merge requests" = "ค้นหาเมิร์จรีเควสต์";
 "No pull requests match this filter." = "ไม่มีพูลรีเควสต์ที่ตรงกับตัวกรองนี้";
 "No merge requests match this filter." = "ไม่มีเมิร์จรีเควสต์ที่ตรงกับตัวกรองนี้";
-"No issues match this filter." = "ไม่มีอิชชูที่ตรงกับตัวกรองนี้";
 "Open in Pull requests" = "เปิดในพูลรีเควสต์";
-"Open in Merge requests" = "เปิดในเมิร์จรีเควสต์";
 "Open in Issues" = "เปิดในอิชชู";
 "Merge request" = "เมิร์จรีเควสต์";
 "Edit issue #%lld" = "แก้ไขอิชชู #%1$lld";
@@ -1320,7 +1313,6 @@
 "Icons only" = "ไอคอนเท่านั้น";
 "Icons and text" = "ไอคอนและข้อความ";
 "With text, each button's name sits to the right of its icon." = "เมื่อแสดงข้อความ ชื่อปุ่มจะอยู่ทางขวาของไอคอน";
-"Filtered: %@" = "กรอง: %1$@";
 "Clear filter" = "ล้างตัวกรอง";
 "Close search (Esc)" = "ปิดการค้นหา (Esc)";
 "Close search" = "ปิดการค้นหา";

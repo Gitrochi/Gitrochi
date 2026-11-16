@@ -366,7 +366,6 @@
 "Branch being merged" = "Сливаемая ветка";
 "Branch name" = "Имя ветки";
 "Branch to check out" = "Ветка для переключения";
-"Branches pinned to the top" = "Ветки, закреплённые вверху";
 "Check again with fetch" = "Проверить снова с fetch";
 "Check this repository with gitch again" = "Снова проверять этот репозиторий через gitch";
 "Click to use another gitch account for this repository." = "Нажмите, чтобы выбрать для этого репозитория другой аккаунт gitch.";
@@ -674,7 +673,6 @@
 "If the same server is used under another address, an account you've already connected works there too" = "Если тот же сервер доступен по другому адресу, уже подключённая учётная запись работает и там";
 "Import gh CLI login" = "Импортировать вход из gh CLI";
 "In use" = "Используется";
-"In use by a worktree: %@" = "Используется рабочим деревом: %1$@";
 "Include how to test" = "Указывать, как проверить";
 "Include the affected areas" = "Указывать затронутые области";
 "Include the issue number" = "Указывать номер задачи";
@@ -711,7 +709,6 @@
 "Locate…" = "Указать…";
 "Location" = "Расположение";
 "Locked to %@" = "Закреплён за %1$@";
-"Locked worktree" = "Заблокированное рабочее дерево";
 "Looks for a GitHub profile, then a connected self-hosted GitLab profile, then Gravatar, and uses initials if none is found. An email hash is sent to Gravatar." = "Ищет профиль GitHub, затем профиль подключённого GitLab на своём сервере, затем Gravatar; если ничего не найдено, используются инициалы. В Gravatar отправляется хеш адреса электронной почты.";
 "Manual" = "Вручную";
 "Mark all as resolved" = "Отметить все как разрешённые";
@@ -894,7 +891,6 @@
 "Remove this variable" = "Удалить эту переменную";
 "Remove worktree '%@'?" = "Удалить рабочее дерево «%1$@»?";
 "Remove worktree…" = "Удалить рабочее дерево…";
-"Remove…" = "Удалить…";
 "Removing worktree…" = "Удаление рабочего дерева…";
 "Renamed" = "Переименован";
 "Renamed  %@ → %@" = "Переименован  %1$@ → %2$@";
@@ -931,7 +927,6 @@
 "Run" = "Запустить";
 "Run %@ after creating" = "Запустить %1$@ после создания";
 "Run again" = "Запустить снова";
-"Run agent (%@)" = "Запустить агента (%1$@)";
 "Run an agent in a worktree" = "Запустить агента в рабочем дереве";
 "Run doctor in Terminal" = "Запустить doctor в Терминале";
 "Run manual job" = "Запустить ручное задание";
@@ -1026,7 +1021,6 @@
 "Task for the agent (optional)" = "Задача для агента (необязательно)";
 "Technical tone" = "Технический тон";
 "Tells you when a new version is available; click to download, replace and restart. A downloaded file is installed only if its SHA-256 and signature match the release." = "Сообщает о выходе новой версии; одним нажатием загружает, заменяет и перезапускает. Загруженный файл устанавливается, только если его SHA-256 и подпись совпадают с релизом.";
-"Temporary" = "Временное";
 "Terminal" = "Терминал";
 "Terminal shell" = "Оболочка терминала";
 "Test connection" = "Проверить подключение";
@@ -1140,7 +1134,6 @@
 "Workflow" = "Рабочий процесс";
 "Working directory is clean" = "Нет изменений в рабочей копии";
 "Working tree" = "Рабочая копия";
-"Worktree in a temporary folder — it may break when the folder is deleted on restart" = "Рабочее дерево во временной папке — оно может сломаться, если папка будет удалена при перезагрузке";
 "Worktree whose folder is gone — remove it with 'Clean up'" = "Папка рабочего дерева отсутствует — удалите его кнопкой «Очистить»";
 "Worktrees" = "Рабочие деревья";
 "Write commit message with AI" = "Написать сообщение коммита с помощью ИИ";
@@ -1297,6 +1290,8 @@
 "Search filters loaded pages. Load more to search older items." = "Поиск фильтрует загруженные страницы. Загрузите ещё, чтобы искать среди более старых элементов.";
 "Compare with the current branch" = "Сравнить с текущей веткой";
 "Filter branches and tags" = "Фильтр веток и тегов";
+"Filter branches" = "Фильтр веток";
+"No branch or tag name contains “%@”." = "Ни одно имя ветки или тега не содержит «%@».";
 "Comparing…" = "Сравнение…";
 "Use branches, tags or commit IDs, or pick a branch on the left." = "Укажите ветки, теги или ID коммитов либо выберите ветку слева.";
 "Clear search" = "Очистить поиск";
@@ -1305,9 +1300,7 @@
 "Search merge requests" = "Поиск merge request";
 "No pull requests match this filter." = "Нет pull request, подходящих под фильтр.";
 "No merge requests match this filter." = "Нет merge request, подходящих под фильтр.";
-"No issues match this filter." = "Нет задач, подходящих под фильтр.";
 "Open in Pull requests" = "Открыть в Pull requests";
-"Open in Merge requests" = "Открыть в Merge requests";
 "Open in Issues" = "Открыть в задачах";
 "Merge request" = "Merge request";
 "Edit issue #%lld" = "Изменить задачу #%1$lld";
@@ -1324,7 +1317,6 @@
 "Icons only" = "Только значки";
 "Icons and text" = "Значки и текст";
 "With text, each button's name sits to the right of its icon." = "С текстом название каждой кнопки стоит справа от значка.";
-"Filtered: %@" = "Фильтр: %1$@";
 "Clear filter" = "Сбросить фильтр";
 "Close search (Esc)" = "Закрыть поиск (Esc)";
 "Close search" = "Закрыть поиск";

@@ -361,7 +361,6 @@
 "Branch being merged" = "Birleştirilen dal";
 "Branch name" = "Dal adı";
 "Branch to check out" = "Geçilecek dal";
-"Branches pinned to the top" = "En üste sabitlenen dallar";
 "Check again with fetch" = "fetch ile yeniden denetle";
 "Check this repository with gitch again" = "Bu depoyu yeniden gitch ile denetle";
 "Click to use another gitch account for this repository." = "Bu depo için başka bir gitch hesabı kullanmak üzere tıklayın.";
@@ -664,7 +663,6 @@
 "If the same server is used under another address, an account you've already connected works there too" = "Aynı sunucu başka bir adresle kullanılıyorsa, önceden bağladığınız hesap orada da çalışır";
 "Import gh CLI login" = "gh CLI oturumunu içe aktar";
 "In use" = "Kullanımda";
-"In use by a worktree: %@" = "Bir worktree tarafından kullanılıyor: %1$@";
 "Include how to test" = "Nasıl test edileceğini ekle";
 "Include the affected areas" = "Etkilenen alanları ekle";
 "Include the issue number" = "Issue numarasını ekle";
@@ -701,7 +699,6 @@
 "Locate…" = "Konum seç…";
 "Location" = "Konum";
 "Locked to %@" = "%1$@ hesabına kilitli";
-"Locked worktree" = "Kilitli worktree";
 "Looks for a GitHub profile, then a connected self-hosted GitLab profile, then Gravatar, and uses initials if none is found. An email hash is sent to Gravatar." = "Önce GitHub profiline, sonra bağlı şirket içi GitLab profiline, ardından Gravatar'a bakar; hiçbiri bulunamazsa baş harfleri kullanır. Gravatar'a e-posta adresinin hash değeri gönderilir.";
 "Manual" = "Manuel";
 "Mark all as resolved" = "Tümünü çözüldü olarak işaretle";
@@ -883,7 +880,6 @@
 "Remove this variable" = "Bu değişkeni kaldır";
 "Remove worktree '%@'?" = "'%1$@' worktree'si kaldırılsın mı?";
 "Remove worktree…" = "Worktree'yi kaldır…";
-"Remove…" = "Kaldır…";
 "Removing worktree…" = "Worktree kaldırılıyor…";
 "Renamed" = "Yeniden adlandırıldı";
 "Renamed  %@ → %@" = "Yeniden adlandırıldı  %1$@ → %2$@";
@@ -920,7 +916,6 @@
 "Run" = "Çalıştır";
 "Run %@ after creating" = "Oluşturduktan sonra %1$@ çalıştır";
 "Run again" = "Yeniden çalıştır";
-"Run agent (%@)" = "Ajan çalıştır (%1$@)";
 "Run an agent in a worktree" = "Bir worktree'de ajan çalıştır";
 "Run doctor in Terminal" = "Terminal'de doctor çalıştır";
 "Run manual job" = "Manuel işi çalıştır";
@@ -1013,7 +1008,6 @@
 "Task for the agent (optional)" = "Ajan için görev (isteğe bağlı)";
 "Technical tone" = "Teknik ton";
 "Tells you when a new version is available; click to download, replace and restart. A downloaded file is installed only if its SHA-256 and signature match the release." = "Yeni bir sürüm çıktığında size bildirir; indirmek, değiştirmek ve yeniden başlatmak için tıklayın. İndirilen dosya yalnızca SHA-256 değeri ve imzası sürümle eşleşirse yüklenir.";
-"Temporary" = "Geçici";
 "Terminal shell" = "Terminal kabuğu";
 "Test connection" = "Bağlantıyı test et";
 "That backup no longer exists." = "Bu yedek artık yok.";
@@ -1126,7 +1120,6 @@
 "Workflow" = "İş akışı";
 "Working directory is clean" = "Çalışma dizini temiz";
 "Working tree" = "Çalışma ağacı";
-"Worktree in a temporary folder — it may break when the folder is deleted on restart" = "Geçici bir klasördeki worktree — yeniden başlatmada klasör silinirse bozulabilir";
 "Worktree whose folder is gone — remove it with 'Clean up'" = "Klasörü artık olmayan worktree — 'Temizle' ile kaldırın";
 "Worktrees" = "Worktree'ler";
 "Write commit message with AI" = "Commit mesajını yapay zekayla yaz";
@@ -1286,6 +1279,8 @@
 "Search filters loaded pages. Load more to search older items." = "Arama, yüklenen sayfaları süzer. Daha eski öğelerde aramak için daha fazlasını yükleyin.";
 "Compare with the current branch" = "Geçerli dalla karşılaştır";
 "Filter branches and tags" = "Dalları ve etiketleri filtrele";
+"Filter branches" = "Dalları filtrele";
+"No branch or tag name contains “%@”." = "Hiçbir dal veya etiket adı “%@” içermiyor.";
 "Comparing…" = "Karşılaştırılıyor…";
 "Use branches, tags or commit IDs, or pick a branch on the left." = "Dal, etiket veya commit kimliği kullanın ya da soldan bir dal seçin.";
 "Clear search" = "Aramayı temizle";
@@ -1294,9 +1289,7 @@
 "Search merge requests" = "Merge request ara";
 "No pull requests match this filter." = "Bu filtreyle eşleşen pull request yok.";
 "No merge requests match this filter." = "Bu filtreyle eşleşen merge request yok.";
-"No issues match this filter." = "Bu filtreyle eşleşen issue yok.";
 "Open in Pull requests" = "Pull request'lerde aç";
-"Open in Merge requests" = "Merge request'lerde aç";
 "Open in Issues" = "Issue'larda aç";
 "Merge request" = "Merge request";
 "Edit issue #%lld" = "Issue #%1$lld düzenle";
@@ -1313,7 +1306,6 @@
 "Icons only" = "Yalnızca simgeler";
 "Icons and text" = "Simgeler ve metin";
 "With text, each button's name sits to the right of its icon." = "Metin açıkken her düğmenin adı simgesinin sağında görünür.";
-"Filtered: %@" = "Filtre: %1$@";
 "Clear filter" = "Filtreyi temizle";
 "Close search (Esc)" = "Aramayı kapat (Esc)";
 "Close search" = "Aramayı kapat";

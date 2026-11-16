@@ -356,7 +356,6 @@
 "Branch being merged" = "Branch die wordt gemerged";
 "Branch name" = "Branchnaam";
 "Branch to check out" = "Uit te checken branch";
-"Branches pinned to the top" = "Bovenaan vastgezette branches";
 "Check again with fetch" = "Opnieuw controleren met fetch";
 "Check this repository with gitch again" = "Deze repository weer met gitch controleren";
 "Click to use another gitch account for this repository." = "Klik om een ander gitch-account voor deze repository te gebruiken.";
@@ -649,7 +648,6 @@
 "If the same server is used under another address, an account you've already connected works there too" = "Als dezelfde server onder een ander adres wordt gebruikt, werkt een al gekoppeld account daar ook";
 "Import gh CLI login" = "Login van gh CLI importeren";
 "In use" = "In gebruik";
-"In use by a worktree: %@" = "In gebruik door een worktree: %1$@";
 "Include how to test" = "Beschrijf hoe je kunt testen";
 "Include the affected areas" = "Vermeld de betrokken onderdelen";
 "Include the issue number" = "Vermeld het issuenummer";
@@ -685,7 +683,6 @@
 "Locate…" = "Aanwijzen…";
 "Location" = "Locatie";
 "Locked to %@" = "Vergrendeld op %1$@";
-"Locked worktree" = "Vergrendelde worktree";
 "Looks for a GitHub profile, then a connected self-hosted GitLab profile, then Gravatar, and uses initials if none is found. An email hash is sent to Gravatar." = "Zoekt eerst een GitHub-profiel, dan een profiel op een gekoppelde self-hosted GitLab, dan Gravatar, en gebruikt initialen als er niets wordt gevonden. Er wordt een hash van het e-mailadres naar Gravatar gestuurd.";
 "Manual" = "Handmatig";
 "Mark all as resolved" = "Alles markeren als opgelost";
@@ -861,7 +858,6 @@
 "Remove this variable" = "Deze variabele verwijderen";
 "Remove worktree '%@'?" = "Worktree '%1$@' verwijderen?";
 "Remove worktree…" = "Worktree verwijderen…";
-"Remove…" = "Verwijderen…";
 "Removing worktree…" = "Worktree wordt verwijderd…";
 "Renamed" = "Hernoemd";
 "Renamed  %@ → %@" = "Hernoemd  %1$@ → %2$@";
@@ -897,7 +893,6 @@
 "Run" = "Uitvoeren";
 "Run %@ after creating" = "%1$@ starten na het maken";
 "Run again" = "Opnieuw uitvoeren";
-"Run agent (%@)" = "Agent starten (%1$@)";
 "Run an agent in a worktree" = "Een agent starten in een worktree";
 "Run doctor in Terminal" = "doctor uitvoeren in Terminal";
 "Run manual job" = "Handmatige job uitvoeren";
@@ -987,7 +982,6 @@
 "Task for the agent (optional)" = "Taak voor de agent (optioneel)";
 "Technical tone" = "Technische toon";
 "Tells you when a new version is available; click to download, replace and restart. A downloaded file is installed only if its SHA-256 and signature match the release." = "Laat weten wanneer er een nieuwe versie is; klik om te downloaden, te vervangen en opnieuw te starten. Een gedownload bestand wordt alleen geïnstalleerd als de SHA-256 en de handtekening overeenkomen met de release.";
-"Temporary" = "Tijdelijk";
 "Terminal shell" = "Terminalshell";
 "Test connection" = "Verbinding testen";
 "That backup no longer exists." = "Die back-up bestaat niet meer.";
@@ -1096,7 +1090,6 @@
 "Whole file" = "Hele bestand";
 "Working directory is clean" = "Werkmap is schoon";
 "Working tree" = "Werkmap";
-"Worktree in a temporary folder — it may break when the folder is deleted on restart" = "Worktree in een tijdelijke map — kan stukgaan als de map bij een herstart wordt verwijderd";
 "Worktree whose folder is gone — remove it with 'Clean up'" = "Worktree waarvan de map verdwenen is — verwijder hem met 'Opschonen'";
 "Write commit message with AI" = "Commitbericht schrijven met AI";
 "Write in English" = "Schrijf in het Engels";
@@ -1250,6 +1243,8 @@
 "Search filters loaded pages. Load more to search older items." = "Zoeken filtert de geladen pagina's. Laad meer om oudere items te doorzoeken.";
 "Compare with the current branch" = "Vergelijken met de huidige branch";
 "Filter branches and tags" = "Branches en tags filteren";
+"Filter branches" = "Branches filteren";
+"No branch or tag name contains “%@”." = "Geen branch- of tagnaam bevat “%@”.";
 "Comparing…" = "Vergelijken…";
 "Use branches, tags or commit IDs, or pick a branch on the left." = "Gebruik branches, tags of commit-ID's, of kies links een branch.";
 "Clear search" = "Zoekopdracht wissen";
@@ -1258,9 +1253,7 @@
 "Search merge requests" = "Merge requests zoeken";
 "No pull requests match this filter." = "Geen pull requests voldoen aan dit filter.";
 "No merge requests match this filter." = "Geen merge requests voldoen aan dit filter.";
-"No issues match this filter." = "Geen issues voldoen aan dit filter.";
 "Open in Pull requests" = "Openen in Pull requests";
-"Open in Merge requests" = "Openen in Merge requests";
 "Open in Issues" = "Openen in Issues";
 "Merge request" = "Merge request";
 "Edit issue #%lld" = "Issue #%1$lld bewerken";
@@ -1277,7 +1270,6 @@
 "Icons only" = "Alleen symbolen";
 "Icons and text" = "Symbolen en tekst";
 "With text, each button's name sits to the right of its icon." = "Met tekst staat de naam van elke knop rechts van het symbool.";
-"Filtered: %@" = "Gefilterd: %1$@";
 "Clear filter" = "Filter wissen";
 "Close search (Esc)" = "Zoeken sluiten (Esc)";
 "Close search" = "Zoeken sluiten";

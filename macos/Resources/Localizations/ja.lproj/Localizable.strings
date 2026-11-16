@@ -386,7 +386,6 @@
 "Branch being merged" = "マージするブランチ";
 "Branch name" = "ブランチ名";
 "Branch to check out" = "チェックアウトするブランチ";
-"Branches pinned to the top" = "上部に固定したブランチ";
 "Check again with fetch" = "fetch して再チェック";
 "Check this repository with gitch again" = "このリポジトリを再び gitch でチェック";
 "Click to use another gitch account for this repository." = "クリックすると、このリポジトリで使う gitch アカウントを変更できます。";
@@ -695,7 +694,6 @@
 "If the same server is used under another address, an account you've already connected works there too" = "同じサーバーが別のアドレスで使われている場合も、接続済みのアカウントがそのまま使えます";
 "Import gh CLI login" = "gh CLI のログインをインポート";
 "In use" = "使用中";
-"In use by a worktree: %@" = "ワークツリーで使用中: %1$@";
 "Include how to test" = "テスト方法を含める";
 "Include the affected areas" = "影響範囲を含める";
 "Include the issue number" = "Issue 番号を含める";
@@ -732,7 +730,6 @@
 "Locate…" = "場所を指定…";
 "Location" = "場所";
 "Locked to %@" = "%1$@ にロック";
-"Locked worktree" = "ロックされたワークツリー";
 "Looks for a GitHub profile, then a connected self-hosted GitLab profile, then Gravatar, and uses initials if none is found. An email hash is sent to Gravatar." = "GitHub のプロフィール、接続したセルフホスト GitLab のプロフィール、Gravatar の順に探し、見つからなければイニシャルを使います。Gravatar にはメールアドレスのハッシュが送信されます。";
 "Manual" = "手動";
 "Mark all as resolved" = "すべて解決済みにする";
@@ -915,7 +912,6 @@
 "Remove this variable" = "この変数を削除";
 "Remove worktree '%@'?" = "ワークツリー '%1$@' を削除しますか？";
 "Remove worktree…" = "ワークツリーを削除…";
-"Remove…" = "削除…";
 "Removing worktree…" = "ワークツリーを削除しています…";
 "Renamed" = "名前変更";
 "Renamed  %@ → %@" = "名前変更  %1$@ → %2$@";
@@ -952,7 +948,6 @@
 "Run" = "実行";
 "Run %@ after creating" = "作成後に %1$@ を実行";
 "Run again" = "再実行";
-"Run agent (%@)" = "エージェントを実行 (%1$@)";
 "Run an agent in a worktree" = "ワークツリーでエージェントを実行";
 "Run doctor in Terminal" = "ターミナルで doctor を実行";
 "Run manual job" = "手動ジョブを実行";
@@ -1047,7 +1042,6 @@
 "Task for the agent (optional)" = "エージェントへのタスク (任意)";
 "Technical tone" = "技術的な口調";
 "Tells you when a new version is available; click to download, replace and restart. A downloaded file is installed only if its SHA-256 and signature match the release." = "新しいバージョンがあるとお知らせし、クリックするとダウンロード・置き換えて再起動します。ダウンロードしたファイルは、SHA-256 と署名がリリースと一致する場合にのみインストールされます。";
-"Temporary" = "一時";
 "Terminal" = "ターミナル";
 "Terminal shell" = "ターミナルのシェル";
 "Test connection" = "接続をテスト";
@@ -1161,7 +1155,6 @@
 "Workflow" = "ワークフロー";
 "Working directory is clean" = "作業ディレクトリはクリーンです";
 "Working tree" = "作業ツリー";
-"Worktree in a temporary folder — it may break when the folder is deleted on restart" = "一時フォルダー内のワークツリー — 再起動時にフォルダーが削除されると壊れる可能性があります";
 "Worktree whose folder is gone — remove it with 'Clean up'" = "フォルダーが存在しないワークツリー — 「整理」で削除できます";
 "Worktrees" = "ワークツリー";
 "Write commit message with AI" = "AI でコミットメッセージを作成";
@@ -1840,7 +1833,6 @@
 "Filter" = "フィルター";
 "Pipeline #%lld" = "パイプライン #%1$lld";
 "Bring %@ to the front" = "%1$@ を前面に表示";
-"No issues match this filter." = "この条件に一致する Issue はありません。";
 "Drag to scroll the graph sideways, or swipe sideways over the graph" = "ドラッグするか、グラフの上で横にスワイプすると横にスクロールします";
 "Releases" = "リリース";
 "Jobs" = "ジョブ";
@@ -1861,6 +1853,8 @@
 "Toolbar buttons" = "ツールバーのボタン";
 "Log preview is limited to 2 MB. Open the browser for the complete log." = "ログのプレビューは 2 MB までです。完全なログはブラウザーで開いてください。";
 "Filter branches and tags" = "ブランチとタグを絞り込む";
+"Filter branches" = "ブランチを絞り込む";
+"No branch or tag name contains “%@”." = "「%@」を含むブランチ名やタグ名はありません。";
 "Section" = "セクション";
 "Search filters loaded pages. Load more to search older items." = "検索は読み込んだページを絞り込みます。古い項目を探すにはさらに読み込んでください。";
 "Search merge requests" = "マージリクエストを検索";
@@ -1874,9 +1868,7 @@
 "Close search" = "検索を閉じる";
 "Select a run" = "実行を選択";
 "Choose a job to read its log here." = "ジョブを選ぶと、ここにログが表示されます。";
-"Open in Merge requests" = "マージリクエストで開く";
 "Remote branches" = "リモートブランチ";
-"Filtered: %@" = "フィルター: %1$@";
 "%lld jobs waiting to be run manually" = "手動実行を待っているジョブが %1$lld 件あります";
 "Unknown app" = "不明なアプリ";
 "Close search (Esc)" = "検索を閉じる (Esc)";
