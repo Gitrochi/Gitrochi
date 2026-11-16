@@ -77,6 +77,7 @@ struct PullRequestSection: View {
                 }
                 .sidebarRow()
                 .padding(.vertical, onPage ? 5 : 0)
+                .sidebarRowHover()
                 .contentShape(Rectangle())
                 .onTapGesture { store.select(.pullRequest(pr.number)) }
                 .focusable()
@@ -100,9 +101,10 @@ struct PullRequestSection: View {
             }
             if store.collaboration.more { Button("Load more") { Task { await store.loadPullRequests(append: true) } }.disabled(store.prState == .loading) }
         } header: {
-            HStack {
-                Text(verbatim: store.prState == .loaded ? "\(target.provider.requestsTitle) \(store.pullRequests.count)" : target.provider.requestsTitle)
-                Spacer()
+            HStack(spacing: 6) {
+                Text(verbatim: target.provider.requestsTitle)
+                if store.prState == .loaded { StatusPill(title: "\(store.pullRequests.count)", tone: .neutral) }
+                Spacer(minLength: 4)
                 // the account for this repository is chosen in the toolbar's account control
                 if !onPage {
                     Button { store.navigate(.pullRequests) } label: { DesignIconImage(icon: .external) }

@@ -161,7 +161,7 @@ function WorktreeGroup({ store, worktree: w, stats, sessions, typed, isCurrent, 
       >
         <span className="agent-worktree-line">
           {isCurrent ? (
-            <span className="agent-current" role="img" aria-label={t("Current")}><span /></span>
+            <span className="side-current" role="img" aria-label={t("Current")}><span /></span>
           ) : (
             <span className="agent-worktree-icon" aria-hidden="true"><GitBranch size={13} /></span>
           )}

@@ -1,5 +1,4 @@
 import { TriangleAlert } from "lucide-react";
-import { FolderOpen } from "@/shared/icons";
 import { Folder, Lock, Plus } from "@/shared/icons";
 import { short } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
@@ -59,8 +58,8 @@ export function WorktreeSection({ store }: { store: RepoStore }) {
           >
             {/* the branch rows' disclosure column keeps the sections' icons aligned (macOS: WorktreeRow) */}
             <span className="side-tree-disclosure" aria-hidden="true" />
-            <span className="lead" style={{ marginTop: 2 }}>
-              {current ? <FolderOpen size={14} /> : <Folder size={14} />}
+            <span className="lead" style={{ marginTop: current ? 0 : 3 }}>
+              {current ? <span className="side-current" role="img" aria-label={t("Current")}><span /></span> : <Folder size={13} />}
             </span>
             <span className="col grow">
               <span className="ellipsis">{w.branch ?? t("Detached HEAD {0}", w.head ? short(w.head) : "")}</span>

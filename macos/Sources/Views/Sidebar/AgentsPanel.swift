@@ -172,11 +172,7 @@ private struct WorktreeGroup: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 6) {
                 if isCurrent {
-                    // the current marker of docs/design.md: a 12 pt dot in an 18 pt halo, in the accent
-                    Circle().fill(Color.accentColor).frame(width: 12, height: 12)
-                        .background(Circle().fill(Color.accentColor.opacity(0.18)).frame(width: 18, height: 18))
-                        .frame(width: 13, height: 18)
-                        .accessibilityLabel("Current")
+                    CurrentMarker()
                 } else {
                     DesignIconImage(icon: .branch, size: 13).foregroundStyle(HostedList.caption)
                 }

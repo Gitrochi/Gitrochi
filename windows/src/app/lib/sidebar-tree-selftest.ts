@@ -12,7 +12,10 @@ async function until(test: () => boolean) {
   return false;
 }
 
-/** Measure the production branch tree and worktree rows and exercise the disclosures without opening a repository. */
+/**
+ * Measure the production branch tree, its section heads, counts and marks, and the worktree rows, and exercise the
+ * disclosures without opening a repository.
+ */
 export async function sidebarTreeSelfTest(): Promise<[boolean, string]> {
   const original = { get: settings.get, set: settings.set, subscribe: settings.subscribe, version: settings.getVersion };
   const memory = new Map<string, unknown>(), listeners = new Set<() => void>();
@@ -22,7 +25,7 @@ export async function sidebarTreeSelfTest(): Promise<[boolean, string]> {
   document.body.append(host);
   const root = createRoot(host), store = new RepoStore();
   const longLeaf = "search-with-a-long-unbroken-branch-name-".repeat(8);
-  const branch = (name: string, isRemote = false): Branch => ({ name, target: name, upstream: null, ahead: 0, behind: 0, upstreamGone: false, isCurrent: name === "feature/checkout", isRemote });
+  const branch = (name: string, isRemote = false): Branch => ({ name, target: name, upstream: null, ahead: name === "main" ? 2 : 0, behind: name === "main" ? 5 : 0, upstreamGone: false, isCurrent: name === "feature/checkout", isRemote });
   const worktree = (path: string, name: string): Worktree => ({ path, head: "0000000", branch: name, isMain: name === "feature/checkout", locked: false, prunable: false });
   const revealed: string[] = [];
   const ensure = (value: unknown, message: string) => { if (!value) throw new Error(message); };
@@ -44,6 +47,7 @@ export async function sidebarTreeSelfTest(): Promise<[boolean, string]> {
     store.localBranches = [branch("main"), branch("feature/checkout"), branch("feature/search")];
     store.remoteBranches = [branch("origin/main", true), branch("origin/feature/checkout", true), branch(`origin/feature/${longLeaf}`, true), branch("upstream/main", true)];
     store.worktrees = [worktree("C:/fixture/shop-web", "feature/checkout"), worktree("C:/fixture/shop-web-search", "feature/search")];
+    store.tags = [{ name: "v1.10.0", target: "v1.10.0" }];
     store.reveal = (target) => { revealed.push(target); };
     root.render(createElement(Sidebar, { store, openSettings: () => {} }));
     ensure(await until(() => !!toggle("r:origin") && !!label(group("l:feature")!, "checkout")), "The current local folder did not expand when the sidebar mounted");
@@ -57,13 +61,33 @@ export async function sidebarTreeSelfTest(): Promise<[boolean, string]> {
     ensure(await until(() => !!label(group("r:origin/feature")!, longLeaf)), "Expanding the remote folder did not reveal its branches");
     ensure(origin.getAttribute("aria-expanded") === "true" && toggle("r:origin/feature")!.getAttribute("aria-expanded") === "true", "Expanded disclosure state was not exposed");
     ensure(origin.textContent?.trim().endsWith("3") && toggle("r:origin/feature")!.textContent?.trim().endsWith("2"), "The remote and folder branch counts were lost");
-    for (const width of [280, 320]) {
+    // heads: 26px, the count a neutral pill (none on Remotes, whose rows carry it), Tags open from the start
+    const head = (id: string) => host.querySelector<HTMLElement>(`[data-section="${id}"] > .side-head`)!;
+    const count = (element: HTMLElement | null | undefined) => element?.querySelector<HTMLElement>(".side-count");
+    for (const id of ["local", "worktrees", "remote", "tags"]) ensure(near(head(id).getBoundingClientRect().height, 26), `The ${id} head is not 26px tall`);
+    ensure(count(head("local"))?.textContent === "3" && count(head("worktrees"))?.textContent === "2" && count(head("tags"))?.textContent === "1" && !count(head("remote")), "The heads must count local branches, worktrees and tags, and leave the remotes to their rows");
+    ensure(!!label(host.querySelector<HTMLElement>('[data-section="tags"]'), "v1.10.0"), "Tags must be open from the start");
+    // the current branch: the accent dot instead of an icon, its name semibold, its folder plain
+    const current = row(label(group("l:feature")!, "checkout")), marker = current.querySelector<HTMLElement>(".lead > .side-current > span")!;
+    ensure(marker && near(marker.getBoundingClientRect().width, 12) && !current.querySelector(".lead svg") && host.querySelectorAll(".side-branches [data-section=local] .side-current").length === 1, "Only the current branch has the 12px current marker");
+    ensure(Number(getComputedStyle(label(current, "checkout")).fontWeight) === 600 && Number(getComputedStyle(label(group("l:feature")!, "search")).fontWeight) === 400, "Only the current branch's name is semibold");
+    ensure(getComputedStyle(toggle("l:feature")!.querySelector<HTMLElement>(".lead")!).color === getComputedStyle(row(label(group("l:feature")!, "search")).querySelector<HTMLElement>(".lead")!).color, "The folder of the current branch must stay neutral");
+    // ahead and behind: plain monospaced text, no capsule
+    const counts = [...row(label(host.querySelector<HTMLElement>('[data-section="local"]'), "main")).querySelectorAll<HTMLElement>(".side-ab")];
+    ensure(counts.map((element) => element.textContent).join(" ") === "↑2 ↓5" && counts.every((element) => { const style = getComputedStyle(element); return style.fontSize === "11px" && style.backgroundColor === "rgba(0, 0, 0, 0)" && Number(style.fontWeight) === 400; }), "Ahead and behind must be plain 11px text");
+    for (const width of [240, 280, 320]) {
       host.style.width = `${width}px`;
       await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
       const localSection = host.querySelector<HTMLElement>('[data-section="local"]')!;
       const localMain = label(localSection, "main"), localFolder = label(toggle("l:feature")!, "feature");
       const remoteRoot = label(origin, "origin"), remoteMain = label(group("r:origin")!, "main");
       const remoteFolder = label(toggle("r:origin/feature")!, "feature"), nested = label(group("r:origin/feature")!, longLeaf);
+      const tag = label(host.querySelector<HTMLElement>('[data-section="tags"]'), "v1.10.0");
+      for (const selector of [".lead", ".side-tree-label"]) ensure(near(left(tag, selector), left(localMain, selector)), `Tag and branch columns differ at ${width}px`);
+      // the chevron of a head stands over the rows' disclosure column, and every count pill shares the right edge
+      ensure(near(head("local").querySelector<SVGElement>(".chev")!.getBoundingClientRect().left, left(localMain, ".side-tree-disclosure")), `The head chevron left the disclosure column at ${width}px`);
+      const pills = [count(head("local")), count(head("tags")), count(toggle("l:feature")), count(origin)].map((element) => element!.getBoundingClientRect());
+      ensure(pills.every((rect) => near(rect.height, 18) && near(rect.right, pills[0].right)), `The count pills are not 18px tall at one right edge at ${width}px`);
       for (const selector of [".lead", ".side-tree-label"]) {
         ensure(near(left(localMain, selector), left(localFolder, selector)), `Local folder and branch columns differ at ${width}px`);
         ensure(near(left(remoteMain, selector), left(remoteFolder, selector)), `Remote folder and branch columns differ at ${width}px`);

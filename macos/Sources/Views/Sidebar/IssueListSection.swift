@@ -47,6 +47,7 @@ struct IssueListSection: View {
                     Text(verbatim: "\(WorkState.title(item.state)) · @\(item.author)").font(.caption).foregroundStyle(.secondary).lineLimit(1)
                 }
                 .sidebarRow()
+                .sidebarRowHover()
                 .contentShape(Rectangle())
                 .onTapGesture { store.openIssue(item) }
                 .contextMenu {
@@ -58,9 +59,10 @@ struct IssueListSection: View {
                 Button("Load more") { Task { await store.loadIssues(append: true) } }.disabled(list.busy).sidebarRow()
             }
         } header: {
-            HStack {
-                Text(list.page > 0 ? "Issues \(list.items.count)" : "Issues")
-                Spacer()
+            HStack(spacing: 6) {
+                Text("Issues")
+                if list.page > 0 { StatusPill(title: "\(list.items.count)", tone: .neutral) }
+                Spacer(minLength: 4)
                 if list.busy, !list.items.isEmpty { ProgressView().controlSize(.mini) }
                 Button { store.navigate(.issues) } label: { DesignIconImage(icon: .external) }
                     .buttonStyle(.borderless)

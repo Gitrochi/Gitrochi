@@ -29,9 +29,10 @@ struct WorktreeSection: View {
                     }
             }
         } header: {
-            HStack {
-                Text("Worktrees \(store.worktrees.count)")
-                Spacer()
+            HStack(spacing: 6) {
+                Text("Worktrees")
+                StatusPill(title: "\(store.worktrees.count)", tone: .neutral)
+                Spacer(minLength: 4)
                 if store.worktrees.contains(where: \.prunable) {
                     Button("Clean up") { Task { await store.pruneWorktrees() } }
                         .buttonStyle(.borderless).font(.caption)
@@ -55,11 +56,12 @@ private struct WorktreeRow: View {
 
     var body: some View {
         HStack(spacing: 6) {
-            Color.clear.frame(width: 12, height: 16)
+            Color.clear.frame(width: 10, height: 16)
                 .accessibilityHidden(true)
-            SymbolIcon(current ? "folder.fill" : "folder")
-                .foregroundStyle(current ? Color.accentColor : .secondary)
-                .frame(width: 16)
+            Group {
+                if current { CurrentMarker() } else { DesignIconImage(icon: .repository, size: 13).foregroundStyle(StudioStyle.Rail.icon) }
+            }
+                .frame(width: 13)
             VStack(alignment: .leading, spacing: 1) {
                 Text(worktree.branch ?? String(localized: "Detached HEAD \(worktree.head.map { String($0.prefix(7)) } ?? "")"))
                     .fontWeight(current ? .semibold : .regular)

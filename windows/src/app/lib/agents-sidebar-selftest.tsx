@@ -72,7 +72,7 @@ export async function agentsSidebarSelfTest(): Promise<[boolean, string]> {
 
     // worktree rows: the current marker, one state icon, ahead and behind at the right edge
     const [main, topic] = all(".agent-worktree");
-    ensure(main.querySelector(".agent-current") && !topic.querySelector(".agent-current"), "Only the open worktree has the current marker");
+    ensure(main.querySelector(".side-current") && !topic.querySelector(".side-current"), "Only the open worktree has the current marker");
     ensure(main.querySelector('.agent-state[data-state="changed"]') && topic.querySelector('.agent-state[data-state="conflict"]') && all(".agent-state").length === 2, "Each worktree shows one state icon: uncommitted files, or a conflict");
     for (const row of [main, topic]) {
       const line = row.querySelector<HTMLElement>(".agent-worktree-line2")!.getBoundingClientRect();
