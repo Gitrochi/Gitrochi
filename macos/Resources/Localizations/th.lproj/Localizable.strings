@@ -268,7 +268,6 @@
 "%@\nThe folder is deleted; the branch and commits stay. git refuses if there are uncommitted changes." = "%1$@\nโฟลเดอร์จะถูกลบ แต่แบรนช์และคอมมิตยังคงอยู่ git จะปฏิเสธหากมีการเปลี่ยนแปลงที่ยังไม่ได้คอมมิต";
 "%@\nUncommitted changes are deleted too." = "%1$@\nการเปลี่ยนแปลงที่ยังไม่ได้คอมมิตจะถูกลบด้วย";
 "%@  (opened here)" = "%1$@  (เปิดอยู่ที่นี่)";
-"%@ (chosen by a gitch rule)" = "%1$@ (เลือกตามกฎของ gitch)";
 "%@ (current)" = "%1$@ (ปัจจุบัน)";
 "%@ (none)" = "%1$@ (ไม่มี)";
 "%@ declined this request. Try changing the content and try again." = "%1$@ ปฏิเสธคำขอนี้ ลองเปลี่ยนเนื้อหาแล้วลองอีกครั้ง";
@@ -327,7 +326,6 @@
 "Allow writing to the working folder" = "อนุญาตให้เขียนลงโฟลเดอร์ที่ทำงาน";
 "Allowed to fail" = "อนุญาตให้ล้มเหลว";
 "Amend commit" = "แก้ไขคอมมิต (amend)";
-"Amend previous commit" = "แก้ไขคอมมิตก่อนหน้า (amend)";
 "Amend: combine into the last commit" = "Amend: รวมเข้ากับคอมมิตล่าสุด";
 "An app for viewing and working with Git repositories as a graph · MIT" = "แอปสำหรับดูและทำงานกับรีโพสิทอรี Git ในรูปแบบกราฟ · MIT";
 "An empty file was deleted" = "ลบไฟล์ว่างแล้ว";
@@ -368,7 +366,6 @@
 "Branches pinned to the top" = "แบรนช์ที่ปักหมุดไว้ด้านบน";
 "Check again with fetch" = "ตรวจใหม่พร้อม fetch";
 "Check this repository with gitch again" = "ตรวจรีโพซิทอรีนี้ด้วย gitch อีกครั้ง";
-"Click to use another gitch account for this repository." = "คลิกเพื่อเปลี่ยนบัญชี gitch ที่ใช้กับรีโพซิทอรีนี้";
 "Commit authors are fine" = "ผู้เขียนคอมมิตถูกต้องแล้ว";
 "Couldn't find gitch inside Gitrochi." = "ไม่พบ gitch ใน Gitrochi";
 "Couldn't move Gitrochi to the Applications folder" = "ไม่สามารถย้าย Gitrochi ไปยังโฟลเดอร์แอปพลิเคชันได้";
@@ -447,7 +444,6 @@
 "Clear search (Esc)" = "ล้างการค้นหา (Esc)";
 "Clears the path you chose and finds it automatically again" = "ล้างพาธที่คุณเลือกเองและค้นหาอัตโนมัติอีกครั้ง";
 "Clears the staging area, then stages and commits each group from the top." = "ล้างพื้นที่สเตจ แล้วสเตจและคอมมิตทีละกลุ่มจากด้านบน";
-"Click to see the diff in the center" = "คลิกเพื่อดู diff ตรงกลาง";
 "Click to select this line (Shift: range) — you can stage only the selected lines" = "คลิกเพื่อเลือกบรรทัดนี้ (Shift: เลือกเป็นช่วง) — สเตจเฉพาะบรรทัดที่เลือกได้";
 "Clone" = "โคลน";
 "Clone repository" = "โคลนรีโพสิทอรี";
@@ -705,7 +701,6 @@
 "Locate" = "ระบุตำแหน่ง";
 "Locate…" = "ระบุตำแหน่ง…";
 "Location" = "ตำแหน่ง";
-"Locked to %@" = "ล็อกไว้กับ %1$@";
 "Locked worktree" = "เวิร์กทรีที่ถูกล็อก";
 "Looks for a GitHub profile, then a connected self-hosted GitLab profile, then Gravatar, and uses initials if none is found. An email hash is sent to Gravatar." = "ค้นหาโปรไฟล์ GitHub ก่อน ตามด้วยโปรไฟล์ GitLab แบบโฮสต์เองที่เชื่อมต่อไว้ แล้วจึง Gravatar หากไม่พบจะใช้อักษรย่อของชื่อ ค่าแฮชของอีเมลจะถูกส่งไปยัง Gravatar";
 "Manual" = "ด้วยตนเอง";
@@ -749,7 +744,6 @@
 "New branch name" = "ชื่อแบรนช์ใหม่";
 "New branch…" = "แบรนช์ใหม่…";
 "New file" = "ไฟล์ใหม่";
-"New file (untracked)" = "ไฟล์ใหม่ (untracked)";
 "New pull/merge request…" = "Pull/Merge Request ใหม่…";
 "New session in the same place" = "เซสชันใหม่ในที่เดียวกัน";
 "New tab" = "แท็บใหม่";
@@ -792,7 +786,6 @@
 "Not found (404). Check that the token has access to the repository." = "ไม่พบ (404) ตรวจสอบว่าโทเค็นมีสิทธิ์เข้าถึงรีโพสิทอรี";
 "Not found — locate it in the Tools tab" = "ไม่พบ — ระบุตำแหน่งในแท็บเครื่องมือ";
 "Not installed" = "ยังไม่ได้ติดตั้ง";
-"Not managed by gitch" = "gitch ไม่ได้จัดการ";
 "Nothing to draw" = "ไม่มีอะไรให้วาด";
 "OK" = "ตกลง";
 "Off" = "ปิด";
@@ -855,7 +848,6 @@
 "Push" = "พุช";
 "Push tag" = "พุชแท็ก";
 "Pushes %lld unpushed commits to the remote." = "พุช %1$lld คอมมิตที่ยังไม่ได้พุชไปยังรีโมต";
-"Pushes as %@" = "push ในนาม %1$@";
 "Pushes the current branch to %@ before creating." = "พุชแบรนช์ปัจจุบันไปยัง %1$@ ก่อนสร้าง";
 "Pushes the current branch to the remote (no commits to push right now)." = "พุชแบรนช์ปัจจุบันไปยังรีโมต (ขณะนี้ไม่มีคอมมิตที่ต้องพุช)";
 "Pushes the current branch to the remote for the first time and sets up tracking." = "พุชแบรนช์ปัจจุบันไปยังรีโมตเป็นครั้งแรกและตั้งค่าการติดตาม";
@@ -991,7 +983,6 @@
 "Stage selected lines (%lld)" = "สเตจบรรทัดที่เลือก (%1$lld)";
 "Staged" = "สเตจแล้ว";
 "Staged and unstaged changes and untracked new files will all be lost. This can't be undone." = "การเปลี่ยนแปลงทั้งที่สเตจและยังไม่ได้สเตจ รวมถึงไฟล์ใหม่ที่ยังไม่ได้ติดตาม จะหายไปทั้งหมด ไม่สามารถเลิกทำได้";
-"Staged files" = "ไฟล์ที่สเตจแล้ว";
 "Stages only the selected lines" = "สเตจเฉพาะบรรทัดที่เลือก";
 "Stages only this hunk (click changed lines to stage only those)" = "สเตจเฉพาะฮังก์นี้ (คลิกบรรทัดที่เปลี่ยนเพื่อสเตจเฉพาะบรรทัดเหล่านั้น)";
 "Staging…" = "กำลังสเตจ…";
@@ -1011,7 +1002,6 @@
 "Subject line only, no body" = "บรรทัดหัวเรื่องเท่านั้น ไม่มีเนื้อหา";
 "Subject within 50 characters" = "หัวเรื่องไม่เกิน 50 ตัวอักษร";
 "Succeeded" = "สำเร็จ";
-"Summary (required)" = "สรุป (จำเป็น)";
 "Syncs the current branch with the remote (no commits to pull right now)." = "ซิงค์แบรนช์ปัจจุบันกับรีโมต (ขณะนี้ไม่มีคอมมิตที่ต้องพูล)";
 "System" = "ระบบ";
 "System follows your macOS setting (light, dark or auto). The graph and terminal change with it." = "'ระบบ' จะใช้ตามการตั้งค่า macOS ของคุณ (สว่าง มืด หรืออัตโนมัติ) กราฟและเทอร์มินัลจะเปลี่ยนตาม";
@@ -1095,7 +1085,6 @@
 "Unstage all" = "ยกเลิกสเตจทั้งหมด";
 "Unstage hunk" = "ยกเลิกสเตจฮังก์";
 "Unstage selected lines (%lld)" = "ยกเลิกสเตจบรรทัดที่เลือก (%1$lld)";
-"Unstaged files" = "ไฟล์ที่ยังไม่ได้สเตจ";
 "Unstages only the selected lines" = "ยกเลิกสเตจเฉพาะบรรทัดที่เลือก";
 "Unstages this hunk" = "ยกเลิกสเตจฮังก์นี้";
 "Unstaging…" = "กำลังยกเลิกสเตจ…";
@@ -1126,7 +1115,6 @@
 "Waiting for deployment approval: %@" = "รอการอนุมัติการดีพลอย: %1$@";
 "Waiting for input" = "รอการป้อนข้อมูล";
 "Waiting to be run manually" = "รอการรันแบบแมนนวล";
-"Warning" = "คำเตือน";
 "What to do with this commit" = "จะทำอะไรกับคอมมิตนี้";
 "What would you like to do?" = "คุณต้องการทำอะไร";
 "What would you like to do? If there are conflicts, you can resolve them on the right." = "คุณต้องการทำอะไร หากมีคอนฟลิกต์ สามารถแก้ไขได้ทางด้านขวา";
@@ -1162,9 +1150,6 @@
 "git %@ failed" = "git %1$@ ล้มเหลว";
 "git refuses to delete a branch with unmerged commits. Use 'Force delete' in that case." = "git จะไม่ยอมลบแบรนช์ที่มีคอมมิตที่ยังไม่ได้เมิร์จ ในกรณีนั้นให้ใช้ 'ลบแบบบังคับ'";
 "gitch backups" = "ข้อมูลสำรองของ gitch";
-"gitch checks before commit and push" = "การตรวจของ gitch ก่อนคอมมิตและ push";
-"gitch commands for this repository" = "คำสั่ง gitch สำหรับรีโพซิทอรีนี้";
-"gitch doesn't know which account this repository uses. Lock it with gitch use <account>." = "gitch ไม่รู้ว่ารีโพซิทอรีนี้ใช้บัญชีใด ล็อกด้วย gitch use <บัญชี>";
 "gitch found nothing to draw for %@." = "%1$@: gitch ไม่พบสิ่งที่จะวาด";
 "gitch graph changes: files that are often committed together, and how often each one changes." = "gitch graph changes: ไฟล์ที่มักคอมมิตพร้อมกัน และแต่ละไฟล์เปลี่ยนบ่อยแค่ไหน";
 "gitch graph check reads its rules from .gitch/graph.rules in this repository. Create the file with commented-out examples (gitch graph check --init) and open it?" = "gitch graph check อ่านกฎจาก .gitch/graph.rules ในรีโพสิทอรีนี้ สร้างไฟล์ที่มีตัวอย่างแบบคอมเมนต์ไว้ (gitch graph check --init) แล้วเปิดหรือไม่";
@@ -1178,8 +1163,6 @@
 "gitch saves a backup before pull, up, sync, fix, undo and amend, and keeps the 30 most recent." = "gitch จะสำรองข้อมูลก่อน pull, up, sync, fix, undo และ amend และเก็บ 30 รายการล่าสุด";
 "gitch sets the commit author to %@ and points origin (and upstream) at %@'s SSH alias, then locks the repository to it." = "gitch จะตั้งผู้เขียนคอมมิตเป็น %1$@ ชี้ origin (และ upstream) ไปที่นามแฝง SSH ของ %2$@ แล้วล็อกรีโพซิทอรีไว้กับบัญชีนั้น";
 "gitch stops requiring %@ for commits and pushes here. The commit author stays as it is." = "gitch จะไม่บังคับใช้ %1$@ สำหรับคอมมิตและ push ที่นี่อีก ผู้เขียนคอมมิตยังคงเหมือนเดิม";
-"gitch sync: brings this branch up to date with the original repository (upstream)." = "gitch sync: ทำให้บรานช์นี้ทันรีโพซิทอรีต้นฉบับ (upstream)";
-"gitch up: moves this branch onto the latest default branch, or merges it if the branch is already pushed. A backup is saved first." = "gitch up: ย้ายบรานช์นี้ไปบนบรานช์เริ่มต้นล่าสุด หรือรวมเข้ากันถ้าบรานช์ถูก push แล้ว โดยจะสำรองไว้ก่อน";
 "gitch won't check authors, secrets or pushes in this repository until you turn it back on." = "gitch จะไม่ตรวจผู้เขียน ข้อมูลลับ หรือ push ในรีโพซิทอรีนี้จนกว่าคุณจะเปิดอีกครั้ง";
 "tag" = "แท็ก";
 "… The diff is too long; only the beginning is shown" = "… diff ยาวเกินไป จึงแสดงเฉพาะส่วนต้น";
@@ -2256,3 +2239,22 @@
 "Unstage line" = "ยกเลิกสเตจบรรทัด";
 "Hide changes and show the graph" = "ซ่อนการเปลี่ยนแปลงและแสดงกราฟ";
 "Sessions started here run in the terminal tabs below; click one to go to its terminal." = "เซสชันที่เริ่มจากที่นี่จะรันในแท็บของเทอร์มินัลด้านล่าง คลิกเซสชันเพื่อไปยังเทอร์มินัลของเซสชันนั้น";
+"Unstaged" = "ยังไม่ได้สเตจ";
+"Untracked" = "ยังไม่ติดตาม";
+"Summary" = "สรุป";
+"Too large" = "ใหญ่เกินไป";
+"copied from %@" = "คัดลอกจาก %@";
+"Commit 1 file" = "คอมมิต 1 ไฟล์";
+"Commit %lld files" = "คอมมิต %lld ไฟล์";
+"Couldn't write the commit message" = "เขียนข้อความคอมมิตไม่ได้";
+"gitch stopped this commit. Run gitch doctor in the terminal." = "gitch หยุดคอมมิตนี้ไว้ ให้รัน gitch doctor ในเทอร์มินัล";
+"Amend previous commit" = "แก้ไขคอมมิตก่อนหน้า (amend)";
+"Split into commits…" = "แบ่งเป็นหลายคอมมิต…";
+"AI message" = "ข้อความจาก AI";
+"Commit summary" = "สรุปคอมมิต";
+"Commit description" = "คำอธิบายคอมมิต";
+"Summary character count" = "จำนวนอักขระของสรุป";
+"Resolve conflicts before committing." = "แก้ความขัดแย้งก่อนคอมมิต";
+"Stage the files you want to include." = "สเตจไฟล์ที่ต้องการรวม";
+"Write a summary to enable commit." = "เขียนสรุปเพื่อให้คอมมิตได้";
+"Conflicted" = "ขัดแย้ง";
