@@ -272,7 +272,6 @@
 "%@ (none)" = "%1$@ (žádné)";
 "%@ declined this request. Try changing the content and try again." = "%1$@ tento požadavek odmítl. Upravte obsah a zkuste to znovu.";
 "%@ didn't respond correctly (exit code %d). Check that it's the %@ executable." = "Nástroj %1$@ neodpověděl správně (návratový kód %2$d). Zkontrolujte, zda jde o spustitelný soubor %3$@.";
-"%@ explanation" = "Vysvětlení (%1$@)";
 "%@ groups the changed files by topic and splits them into several commits. Review and edit the result, then commit. Rules are in Settings > Rules." = "%1$@ seskupí změněné soubory podle témat a rozdělí je do několika commitů. Výsledek zkontrolujte a upravte, pak commitněte. Pravidla najdete v Nastavení > Pravidla.";
 "%@ is splitting the changes by topic…" = "%1$@ rozděluje změny podle témat…";
 "%@ is writing the commit message…" = "%1$@ píše zprávu commitu…";
@@ -2225,6 +2224,11 @@
 "Copy commit SHA" = "Kopírovat SHA commitu";
 "Parent" = "Nadřazený";
 "Parents" = "Nadřazené";
+"Closes" = "Zavírá";
+"Fixes" = "Opravuje";
+"Resolves" = "Řeší";
+"Co-author" = "Spoluautor";
+"Trailers" = "Trailery";
 "Couldn't explain this commit" = "Commit se nepodařilo vysvětlit";
 "More commit actions" = "Další akce s commitem";
 "Needs you" = "Čeká na vás";

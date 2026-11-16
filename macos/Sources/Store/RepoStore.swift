@@ -90,6 +90,10 @@ final class RepoStore: Identifiable {
     var collaboration = CollaborationState()
     /// The repository's issues, shared by the sidebar section and the Issues page
     let issueList = WorkspaceIssueModel()
+    /// The issues commit trailers name, as far as they were read (RepoStore+Issues)
+    var trailerIssues: [Int: CollaborationInboxItem] = [:]
+    @ObservationIgnored var trailerIssuesKey = ""
+    @ObservationIgnored var trailerIssuesAsked: Set<Int> = []
     var localWorkflows = LocalWorkflowState()
     var repositoryAssistant = RepositoryAssistantState()
     var hostingHub = HostingHubState()

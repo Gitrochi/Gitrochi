@@ -290,7 +290,7 @@ export async function runSelfTest(): Promise<boolean> {
 
   await step("왼쪽 페이지 목록·빈 저장소·GitLab 이름·아이콘 레일", navigationSelfTest);
   await step("저장소 화면에서 접히는 페이지 목록과 세 열 배치·전체 너비 페이지", compactNavigationSelfTest);
-  await step("Flat commit inspector: 44 px header with copy and the commit menu, action buttons and long names in a narrow panel", inspectorLayoutSelfTest);
+  await step("Commit inspector as the board draws it: header with copy and the commit menu, one author line, trailer rows, action buttons and long names in a narrow panel", inspectorLayoutSelfTest);
   await step("Diff header and list/tree toggle: one 44 px row that folds in order down to 420 px, the 28 px segmented control and its icon form", diffHeaderSelfTest);
   await step("Close and reopen the right panel with retained width and view state", inspectorVisibilitySelfTest);
   await step("Terminal panel docked under the centre column: status marks by shape, narrow folding and terminals kept through layout changes", terminalPanelSelfTest);

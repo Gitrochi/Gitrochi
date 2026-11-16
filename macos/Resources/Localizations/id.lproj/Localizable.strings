@@ -272,7 +272,6 @@
 "%@ (none)" = "%1$@ (tidak ada)";
 "%@ declined this request. Try changing the content and try again." = "%1$@ menolak permintaan ini. Ubah isinya, lalu coba lagi.";
 "%@ didn't respond correctly (exit code %d). Check that it's the %@ executable." = "%1$@ tidak merespons dengan benar (kode keluar %2$d). Pastikan itu file eksekusi %3$@.";
-"%@ explanation" = "Penjelasan %1$@";
 "%@ groups the changed files by topic and splits them into several commits. Review and edit the result, then commit. Rules are in Settings > Rules." = "%1$@ mengelompokkan file yang berubah berdasarkan topik dan memecahnya menjadi beberapa commit. Tinjau dan edit hasilnya, lalu commit. Aturan ada di Pengaturan > Aturan.";
 "%@ is splitting the changes by topic…" = "%1$@ sedang memecah perubahan berdasarkan topik…";
 "%@ is writing the commit message…" = "%1$@ sedang menulis pesan commit…";
@@ -2201,6 +2200,11 @@
 "Copy commit SHA" = "Salin SHA commit";
 "Parent" = "Induk";
 "Parents" = "Induk";
+"Closes" = "Menutup";
+"Fixes" = "Memperbaiki";
+"Resolves" = "Menyelesaikan";
+"Co-author" = "Rekan penulis";
+"Trailers" = "Trailer";
 "Couldn't explain this commit" = "Tidak dapat menjelaskan commit ini";
 "More commit actions" = "Tindakan commit lainnya";
 "Needs you" = "Menunggu Anda";

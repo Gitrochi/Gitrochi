@@ -272,7 +272,6 @@
 "%@ (none)" = "%1$@ (geen)";
 "%@ declined this request. Try changing the content and try again." = "%1$@ heeft dit verzoek geweigerd. Pas de inhoud aan en probeer het opnieuw.";
 "%@ didn't respond correctly (exit code %d). Check that it's the %@ executable." = "%1$@ reageerde niet correct (exitcode %2$d). Controleer of het het uitvoerbare bestand van %3$@ is.";
-"%@ explanation" = "Uitleg van %1$@";
 "%@ groups the changed files by topic and splits them into several commits. Review and edit the result, then commit. Rules are in Settings > Rules." = "%1$@ groepeert de gewijzigde bestanden per onderwerp en splitst ze op in meerdere commits. Controleer en bewerk het resultaat en commit daarna. Regels staan in Instellingen > Regels.";
 "%@ is splitting the changes by topic…" = "%1$@ splitst de wijzigingen op per onderwerp…";
 "%@ is writing the commit message…" = "%1$@ schrijft het commitbericht…";
@@ -2198,6 +2197,11 @@
 "Copy commit SHA" = "Commit-SHA kopiëren";
 "Parent" = "Bovenliggend";
 "Parents" = "Bovenliggend";
+"Closes" = "Sluit";
+"Fixes" = "Verhelpt";
+"Resolves" = "Lost op";
+"Co-author" = "Co-auteur";
+"Trailers" = "Trailers";
 "Couldn't explain this commit" = "Kan deze commit niet uitleggen";
 "More commit actions" = "Meer commitacties";
 "Needs you" = "Wacht op jou";

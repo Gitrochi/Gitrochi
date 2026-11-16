@@ -282,7 +282,6 @@
 "%@ (none)" = "%1$@ (无)";
 "%@ declined this request. Try changing the content and try again." = "%1$@ 拒绝了此请求。请修改内容后重试。";
 "%@ didn't respond correctly (exit code %d). Check that it's the %@ executable." = "%1$@ 未正确响应（退出代码 %2$d）。请检查它是否为 %3$@ 可执行文件。";
-"%@ explanation" = "%1$@ 说明";
 "%@ groups the changed files by topic and splits them into several commits. Review and edit the result, then commit. Rules are in Settings > Rules." = "%1$@ 会按主题对已更改的文件进行分组，并拆分为多个提交。检查并编辑结果后再提交。规则位于“设置 > 规则”中。";
 "%@ is splitting the changes by topic…" = "%1$@ 正在按主题拆分更改…";
 "%@ is writing the commit message…" = "%1$@ 正在编写提交信息…";
@@ -2386,6 +2385,11 @@
 "Copy commit SHA" = "复制提交 SHA";
 "Parent" = "父提交";
 "Parents" = "父提交";
+"Closes" = "关闭";
+"Fixes" = "修复";
+"Resolves" = "解决";
+"Co-author" = "共同作者";
+"Trailers" = "尾注";
 "Couldn't explain this commit" = "无法解释此提交";
 "More commit actions" = "更多提交操作";
 "Needs you" = "等待你处理";

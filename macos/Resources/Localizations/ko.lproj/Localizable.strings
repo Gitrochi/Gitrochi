@@ -459,7 +459,6 @@
 "%@ (none)" = "%1$@ (없음)";
 "%@ declined this request. Try changing the content and try again." = "%1$@ 가 이 요청을 거절했습니다. 내용을 바꿔 다시 시도해 보세요.";
 "%@ didn't respond correctly (exit code %d). Check that it's the %@ executable." = "%1$@ 이(가) 정상적으로 응답하지 않았습니다(종료 코드 %2$d). %3$@ 실행 파일이 맞는지 확인하세요.";
-"%@ explanation" = "%1$@ 설명";
 "%@ groups the changed files by topic and splits them into several commits. Review and edit the result, then commit. Rules are in Settings > Rules." = "%1$@ 가 바뀐 파일을 주요 내용별로 묶어 여러 커밋으로 나눕니다. 나눈 결과를 확인·수정한 뒤 커밋합니다. 규칙은 설정 > 규칙에서.";
 "%@ is splitting the changes by topic…" = "%1$@ 가 변경을 주요 내용별로 나누는 중…";
 "%@ is writing the commit message…" = "%1$@ 가 커밋 메시지를 쓰는 중…";
@@ -3990,6 +3989,11 @@
 "Copy commit SHA" = "커밋 SHA 복사";
 "Parent" = "부모";
 "Parents" = "부모";
+"Closes" = "닫음";
+"Fixes" = "수정";
+"Resolves" = "해결";
+"Co-author" = "공동 작성자";
+"Trailers" = "트레일러";
 "Couldn't explain this commit" = "이 커밋을 설명하지 못했습니다";
 "Needs you" = "응답 필요";
 "Respond" = "응답하기";

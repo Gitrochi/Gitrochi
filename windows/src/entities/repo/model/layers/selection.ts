@@ -31,7 +31,7 @@ export abstract class RepoSelection extends RepoCore {
     void (async () => {
       try {
         const show = await this.g(["show", "-s", "--format=" + P.detailFormat, sha]);
-        const d = P.parseCommitDetail(show.stdout);
+        const d = P.parseCommitDetail(show.stdout, this.target ? `https://${this.target.host}/${this.target.path}` : "");
         const base = d?.parents[0] ?? EMPTY_TREE;
         const [files, num] = await Promise.all([
           this.g(["diff-tree", "-r", "-M", "--name-status", "-z", base, sha]),
@@ -42,6 +42,7 @@ export abstract class RepoSelection extends RepoCore {
         this.detailFiles = P.parseNameStatus(files.stdout);
         this.detailStats = P.parseNumstat(num.stdout);
         this.emit();
+        if (d) this.loadTrailerIssues(d.trailers.issues.map((issue) => issue.number));
       } catch (e) {
         if (gen === this.detailGen) this.fail(e);
       }

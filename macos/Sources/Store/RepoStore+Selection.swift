@@ -93,7 +93,7 @@ extension RepoStore {
         detailTask = Task {
             do {
                 let show = try await Git.run(["show", "-s", "--format=" + Parsers.detailFormat, sha], in: url)
-                let d = Parsers.commitDetail(show.output)
+                let d = Parsers.commitDetail(show.output, issueBase: self.target?.webURL ?? "")
                 let base = d?.parents.first ?? empty
                 async let filesR = Git.run(["diff-tree", "-r", "-M", "--name-status", "-z", base, sha], in: url)
                 async let numR = Git.run(["diff-tree", "-r", "-M", "--numstat", "-z", base, sha], in: url)
@@ -102,6 +102,7 @@ extension RepoStore {
                 self.detail = d
                 self.detailFiles = Parsers.nameStatus(files.data)
                 self.detailStats = Parsers.numstat(num.data)
+                if let d { self.loadTrailerIssues(d.trailers.issues.map(\.number)) }
             } catch {
                 guard !Task.isCancelled else { return }
                 self.errorMessage = describe(error)

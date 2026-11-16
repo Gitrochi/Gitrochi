@@ -293,7 +293,6 @@
 "%@ (none)" = "%1$@ (なし)";
 "%@ declined this request. Try changing the content and try again." = "%1$@ がこのリクエストを拒否しました。内容を変えてもう一度お試しください。";
 "%@ didn't respond correctly (exit code %d). Check that it's the %@ executable." = "%1$@ が正しく応答しませんでした (終了コード %2$d)。%3$@ の実行ファイルか確認してください。";
-"%@ explanation" = "%1$@ の説明";
 "%@ groups the changed files by topic and splits them into several commits. Review and edit the result, then commit. Rules are in Settings > Rules." = "%1$@ が変更されたファイルをトピックごとにまとめ、複数のコミットに分割します。結果を確認・編集してからコミットしてください。ルールは「設定 > ルール」にあります。";
 "%@ is splitting the changes by topic…" = "%1$@ が変更をトピックごとに分割しています…";
 "%@ is writing the commit message…" = "%1$@ がコミットメッセージを作成しています…";
@@ -2906,6 +2905,11 @@
 "Copy commit SHA" = "コミットの SHA をコピー";
 "Parent" = "親";
 "Parents" = "親";
+"Closes" = "クローズ";
+"Fixes" = "修正";
+"Resolves" = "解決";
+"Co-author" = "共同作成者";
+"Trailers" = "トレーラー";
 "Couldn't explain this commit" = "このコミットを説明できませんでした";
 "More commit actions" = "コミットのその他の操作";
 "Needs you" = "対応が必要";

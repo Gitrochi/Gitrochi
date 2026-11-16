@@ -2,7 +2,8 @@ import AppKit
 import SwiftUI
 
 /// The selected commit, as the redesign board's flat panel: a header as tall as the graph's (what it is, the short SHA, copy, ⋯), then
-/// the message, its author, parents and actions, and the changed files. (Windows: widgets/inspector/ui/CommitDetailView.tsx)
+/// the message, its author, trailers, parents and actions, and the changed files. Nothing else: a commit's refs are on its graph row.
+/// (Windows: widgets/inspector/ui/CommitDetailView.tsx)
 struct CommitDetailView: View {
     @Environment(RepoStore.self) private var store
     let sha: String
@@ -60,17 +61,6 @@ struct CommitDetailView: View {
 
     private func message(_ d: CommitDetail) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            let refs = store.refsByCommit[sha] ?? []
-            if !refs.isEmpty {
-                WorkbenchFlow(spacing: 4) {
-                    ForEach(refs.prefix(4)) { CommitRefChip(label: $0) }
-                    if refs.count > 4 {
-                        Text(verbatim: "+\(refs.count - 4)").font(.system(size: 12)).foregroundStyle(HostedList.caption)
-                            .frame(height: 18).help(refs.dropFirst(4).map(\.name).joined(separator: "\n"))
-                    }
-                }
-                .padding(.bottom, 8)
-            }
             Text(d.summary)
                 .font(.system(size: 17, weight: .semibold))
                 .lineSpacing(2)
@@ -79,7 +69,8 @@ struct CommitDetailView: View {
                 .accessibilityIdentifier("commit-detail-summary")
             // a looser rhythm than the board's 8 / 10 / 6: read in the app, its blocks ran together
             author(d).padding(.top, 10)
-            if !d.body.isEmpty { description(d).padding(.top, 14) }
+            if !d.prose.isEmpty { description(d).padding(.top, 14) }
+            if !d.trailers.isEmpty { trailers(d).padding(.top, 12) }
             if !d.parents.isEmpty { parents(d).padding(.top, 12) }
             WorkbenchFlow(spacing: 6) {
                 Button("New branch…") { store.requestNewBranch(from: d.sha, label: String(d.sha.prefix(7))) }
@@ -94,33 +85,34 @@ struct CommitDetailView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    /// One line: the photo (or the initial), the name and when. The email and the exact date are on hover; who
-    /// committed it appears only when that differs from the author.
+    /// One line: the photo (or the initial), the name and when. The email is on the name's hover and the exact date on the
+    /// time's, which also says who committed it and when, if that differs from the author.
     private func author(_ d: CommitDetail) -> some View {
-        // the committer line is a line of its own under the author, 8 pt apart: closer, it read as neither
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 6) {
-                AuthorAvatar(name: d.author, email: d.email, size: 20)
-                Text(verbatim: d.author).font(.system(size: 13, weight: .semibold)).lineLimit(1).truncationMode(.tail)
-                    .help("\(d.author) <\(d.email)>")
-                    .accessibilityIdentifier("commit-detail-author")
-                Text(verbatim: ListDate.when(d.date, locale: AppLanguage.locale)).font(.system(size: 12)).foregroundStyle(HostedList.caption)
-                    .fixedSize().layoutPriority(1)
-                    .help(Fmt.long(d.date))
-            }
-            if d.committer != d.author || abs(d.commitDate.timeIntervalSince(d.date)) > 60 {
-                Text(d.committer == d.author ? "Commit: \(Fmt.long(d.commitDate))" : "Commit: \(d.committer) · \(Fmt.long(d.commitDate))")
-                    .font(.system(size: 12)).foregroundStyle(HostedList.caption)
-                    .fixedSize(horizontal: false, vertical: true).textSelection(.enabled)
-                    .help(d.committer == d.author ? "" : "\(d.committer) <\(d.committerEmail)>")
-            }
+        HStack(spacing: 6) {
+            AuthorAvatar(name: d.author, email: d.email, size: 20)
+            Text(verbatim: d.author).font(.system(size: 13, weight: .semibold)).lineLimit(1).truncationMode(.tail)
+                .help("\(d.author) <\(d.email)>")
+                .accessibilityIdentifier("commit-detail-author")
+            Text(verbatim: ListDate.when(d.date, locale: AppLanguage.locale)).font(.system(size: 12)).foregroundStyle(HostedList.caption)
+                .fixedSize().layoutPriority(1)
+                .help(Self.dates(d))
         }
     }
 
+    /// The author date, and under it the committer and commit date when they are not the author's (a rebase, a cherry-pick)
+    static func dates(_ d: CommitDetail) -> String {
+        let authored = Fmt.long(d.date), committed = Fmt.long(d.commitDate)
+        if d.committer != d.author {
+            let who = "\(d.committer) <\(d.committerEmail)>"
+            return authored + "\n" + String(localized: "Commit: \(who) · \(committed)")
+        }
+        return abs(d.commitDate.timeIntervalSince(d.date)) > 60 ? authored + "\n" + String(localized: "Commit: \(committed)") : authored
+    }
+
     @ViewBuilder private func description(_ d: CommitDetail) -> some View {
-        let long = d.body.count > 400 || d.body.filter { $0 == "\n" }.count > 8
+        let long = d.prose.count > 400 || d.prose.filter { $0 == "\n" }.count > 8
         let collapsed = long && !bodyExpanded
-        MarkdownView(d.body, target: store.target)
+        MarkdownView(d.prose, target: store.target)
             .font(.system(size: 13)).lineSpacing(4)
             .foregroundStyle(StudioStyle.Tone.neutral.text)
             .fixedSize(horizontal: false, vertical: true)
@@ -131,6 +123,61 @@ struct CommitDetailView: View {
             Button(bodyExpanded ? "Collapse" : "Show all") { bodyExpanded.toggle() }
                 .buttonStyle(HostedListTextButtonStyle())
         }
+    }
+
+    /// The board's Trailers group: the issues this commit closes, as links, then its co-authors
+    private func trailers(_ d: CommitDetail) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            ForEach(d.trailers.issues, id: \.number) { issueRow($0) }
+            ForEach(d.trailers.coAuthors, id: \.email) { coAuthorRow($0) }
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Trailers")
+    }
+
+    /// "Closes #42 <title>": the title only once it was read (a connected account); the state colours the icon
+    @ViewBuilder private func issueRow(_ trailer: CommitTrailers.Issue) -> some View {
+        let item = store.trailerIssue(trailer.number)
+        let title = item?.title ?? ""
+        let open = item.map { ["open", "opened"].contains($0.state) }
+        let row = HStack(spacing: 6) {
+            SymbolIcon(open == false ? "checkmark.circle" : "smallcircle.filled.circle").font(.system(size: 14))
+                .foregroundStyle(open == true ? StudioStyle.Tone.passed.text : HostedList.caption)
+                .accessibilityHidden(true)
+            Group {
+                switch trailer.keyword {
+                case "fixes": Text("Fixes")
+                case "resolves": Text("Resolves")
+                default: Text("Closes")
+                }
+            }
+            .foregroundStyle(HostedList.caption).fixedSize()
+            Text(verbatim: "#\(trailer.number)").font(.system(size: 11, design: .monospaced)).foregroundStyle(StudioStyle.link).fixedSize()
+            if !title.isEmpty {
+                Text(verbatim: title).foregroundStyle(.primary).lineLimit(1).truncationMode(.tail)
+            }
+        }
+        .font(.system(size: 12))
+        .frame(height: 24).contentShape(Rectangle())
+        .help(title)
+        // without a hosting server there is no page to open, so the row is plain text rather than a dimmed button
+        if store.target == nil {
+            row.accessibilityElement(children: .combine)
+        } else {
+            Button { store.openTrailerIssue(trailer.number) } label: { row }.buttonStyle(.plain)
+        }
+    }
+
+    private func coAuthorRow(_ author: CommitTrailers.CoAuthor) -> some View {
+        HStack(spacing: 6) {
+            AuthorAvatar(name: author.name, email: author.email, size: 16)
+            Text(verbatim: author.name).font(.system(size: 12)).lineLimit(1).truncationMode(.tail)
+            StatusPill(title: String(localized: "Co-author"), tone: .neutral)
+                .fixedSize().layoutPriority(1)
+        }
+        .frame(height: 24)
+        // the trailer as it was written
+        .help(author.line)
     }
 
     private func parents(_ d: CommitDetail) -> some View {
@@ -149,25 +196,10 @@ struct CommitDetailView: View {
         }
     }
 
-    /// The AI's explanation: a grey text button until there is one, then the text under the provider's name.
+    /// The AI's explanation: the board's grey text button, and under it the text once there is one, in the body's type. The
+    /// provider is on the button's hover; the board draws no caption.
     @ViewBuilder private var explanation: some View {
-        let provider = AIStore.shared.short(for: .explain)
         let text = store.explanations[sha]
-        if let text {
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 6) {
-                    SymbolIcon("sparkles").font(.system(size: 13)).accessibilityHidden(true)
-                    Text("\(provider) explanation").font(.system(size: 12))
-                }
-                .foregroundStyle(HostedList.caption)
-                Text(verbatim: text)
-                    .font(.system(size: 13)).lineSpacing(4)
-                    .foregroundStyle(StudioStyle.Tone.neutral.text)
-                    .textSelection(.enabled)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .padding(.top, 12)
-        }
         Group {
             if store.explaining.contains(sha) {
                 HStack(spacing: 6) {
@@ -182,22 +214,28 @@ struct CommitDetailView: View {
             } else {
                 Button { Task { await store.explainCommit(sha) } } label: {
                     HStack(spacing: 6) {
-                        if text == nil { SymbolIcon("sparkles").font(.system(size: 13)).accessibilityHidden(true) }
+                        SymbolIcon("sparkles").font(.system(size: 13)).accessibilityHidden(true)
                         Text(text == nil ? "Explain with AI…" : "Explain again")
                     }
                 }
                 .buttonStyle(HostedListTextButtonStyle())
-                .help(provider)
+                .help(AIStore.shared.short(for: .explain))
             }
         }
         .padding(.top, 12)
+        if let text {
+            Text(verbatim: text)
+                .font(.system(size: 13)).lineSpacing(4)
+                .foregroundStyle(StudioStyle.Tone.neutral.text)
+                .textSelection(.enabled)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.top, 4)
+                .accessibilityIdentifier("commit-detail-explanation")
+        }
     }
 
     private func files(_ d: CommitDetail) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            let stats = store.detailStats.values
-            let added = stats.compactMap(\.added).reduce(0, +)
-            let deleted = stats.compactMap(\.deleted).reduce(0, +)
             HStack(spacing: 6) {
                 Text("Changed files").font(.system(size: 13, weight: .semibold)).lineLimit(1)
                 Text(verbatim: "\(store.detailFiles.count)")
@@ -209,13 +247,6 @@ struct CommitDetailView: View {
                 FileViewToggle()
             }
             .frame(minHeight: 28)
-            if added + deleted > 0 {
-                HStack(spacing: 8) {
-                    LineStatText(added: added, deleted: deleted)
-                    ChangeBar(added: added, deleted: deleted)
-                    Spacer(minLength: 0)
-                }
-            }
             ChangeList(changes: store.detailFiles,
                        isSelected: { store.diffSource == .commit(sha: sha, change: $0, parent: d.parents.first) },
                        stats: store.detailStats,
@@ -231,42 +262,5 @@ struct CommitDetailView: View {
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Changed files")
-    }
-}
-
-/// A branch or tag on this commit, in the board's neutral chip: the graph owns the lane colours.
-/// (Windows: CommitRefChip)
-private struct CommitRefChip: View {
-    let label: RefLabel
-
-    var body: some View {
-        HStack(spacing: 4) {
-            if label.isCurrent && label.kind == .local {
-                SymbolIcon("checkmark").font(.system(size: 10, weight: .semibold)).accessibilityLabel("Current branch")
-            }
-            if label.kind == .tag { SymbolIcon("tag").font(.system(size: 11)) }
-            if label.kind == .head { SymbolIcon("scope").font(.system(size: 11)) }
-            Text(verbatim: label.name).lineLimit(1).truncationMode(.middle)
-            if label.kind == .local { SymbolIcon("arrow.triangle.branch").font(.system(size: 11)) }
-            if label.kind == .remote { SymbolIcon("cloud").font(.system(size: 11)) }
-        }
-        .font(.system(size: 11, weight: .semibold))
-        .foregroundStyle(HostedList.caption)
-        .padding(.horizontal, 6)
-        .frame(height: 18)
-        .background(RoundedRectangle(cornerRadius: 6).fill(Self.fill))
-        .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Self.edge))
-        .help(label.name)
-    }
-
-    private static let fill = tone(light: 0xf6f6f7, dark: 0x2b2b2f)
-    private static let edge = tone(light: 0xc9c9ce, dark: 0x4a4a50)
-
-    private static func tone(light: UInt32, dark: UInt32) -> Color {
-        Color(nsColor: NSColor(name: nil) { appearance in
-            let rgb = appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? dark : light
-            return NSColor(srgbRed: CGFloat(rgb >> 16 & 0xff) / 255, green: CGFloat(rgb >> 8 & 0xff) / 255,
-                           blue: CGFloat(rgb & 0xff) / 255, alpha: 1)
-        })
     }
 }

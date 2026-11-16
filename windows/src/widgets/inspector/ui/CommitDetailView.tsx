@@ -1,20 +1,20 @@
-import { Crosshair } from "lucide-react";
-import { Check, Cloud, Copy, Ellipsis, GitBranch, Sparkles, Tag as TagIcon } from "@/shared/icons";
+import { CircleCheck, CircleDot, Copy, Ellipsis, Sparkles } from "@/shared/icons";
 import { useMemo, useState } from "react";
 import { ai } from "@/entities/ai";
 import { avatars } from "@/entities/avatar";
-import { type Commit, markdownLinks, type RefLabel, sameDiffSource, short } from "@/entities/git";
+import { type Commit, type CommitDetail, type CommitTrailers, markdownLinks, sameDiffSource, short } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
 import { commitMenu } from "@/features/git-menus";
 import { t } from "@/shared/i18n";
 import { listWhen, longDate, useObserve } from "@/shared/lib";
-import { Avatar, Button, ChangeBar, FailureBlock, FileViewToggle, HostedListTextButton, IconButton, LineStatText, Markdown, type MenuItem, showMenuBelow, Spinner } from "@/shared/ui";
+import { Avatar, Button, FailureBlock, FileViewToggle, HostedListTextButton, IconButton, Markdown, type MenuItem, showMenuBelow, Spinner, StatusPill } from "@/shared/ui";
 import { ChangeList } from "./FileList";
 import "./commit-detail.css";
 
 /**
- * The selected commit, as the redesign board's flat panel: a 44 px header (what it is, the short SHA, copy, ⋯), then
- * the message, its author, parents and actions, and the changed files. (macOS: CommitDetailView)
+ * The selected commit, as the redesign board's flat panel: a header as tall as the graph's (what it is, the short SHA, copy, ⋯),
+ * then the message, its author, trailers, parents and actions, and the changed files. Nothing else: a commit's refs are on its
+ * graph row. (macOS: CommitDetailView)
  */
 export function CommitDetailView({ store, sha }: { store: RepoStore; sha: string }) {
   useObserve(avatars);
@@ -29,18 +29,13 @@ export function CommitDetailView({ store, sha }: { store: RepoStore; sha: string
         <Spinner size={20} />
       </div>
     );
-  const refs = store.refsByCommit.get(sha) ?? [];
-  const long = d.body.length > 400 || d.body.split("\n").length > 9;
-  const stats = Object.values(store.detailStats);
-  const added = stats.reduce((a, s) => a + (s.added ?? 0), 0);
-  const deleted = stats.reduce((a, s) => a + (s.deleted ?? 0), 0);
+  const long = d.prose.length > 400 || d.prose.split("\n").length > 9;
   const explanation = store.explanations[sha], explaining = store.explaining.has(sha), failure = store.explainFailures[sha];
   const provider = ai.shortFor("explain");
   const merge = d.parents.length > 1;
   // the graph's own menu for this commit, so the two never drift apart
   const commit: Commit = { id: d.sha, parents: d.parents, author: d.author, email: d.email, date: d.date, subject: d.summary, body: d.body };
-  const committed = d.committer !== d.author || Math.abs(d.commitDate - d.date) > 60;
-  const who = `${d.author} <${d.email}>`;
+  const who = `${d.author} <${d.email}>`, dates = commitDates(d);
   return (
     <div className="col grow commit-detail status-tone" style={{ height: "100%" }}>
       <div className="commit-head">
@@ -53,29 +48,19 @@ export function CommitDetailView({ store, sha }: { store: RepoStore; sha: string
       </div>
       <div className="panel-scroll" key={sha}>
         <div className="commit-main">
-          {refs.length > 0 && (
-            <div className="commit-refs">
-              {refs.slice(0, 4).map((r) => <CommitRefChip key={r.kind + r.name} label={r} />)}
-              {refs.length > 4 && <span className="commit-caption" data-tip={refs.slice(4).map((r) => r.name).join("\n")}>+{refs.length - 4}</span>}
-            </div>
-          )}
           <h3 className="commit-title selectable">{d.summary}</h3>
           <div className="commit-author">
             <Avatar name={d.author} email={d.email} size={20} url={avatars.url(d.email, d.author)} />
             <span className="commit-author-name ellipsis" title={who} data-tip={who}>{d.author}</span>
-            <span className="commit-caption commit-author-when" title={longDate(d.date)} data-tip={longDate(d.date)}>{listWhen(d.date)}</span>
+            <span className="commit-caption commit-author-when" title={dates} data-tip={dates}>{listWhen(d.date)}</span>
           </div>
-          {committed && (
-            <span className="commit-caption commit-committer selectable" title={d.committer === d.author ? undefined : `${d.committer} <${d.committerEmail}>`}>
-              {d.committer === d.author ? t("Commit: {0}", longDate(d.commitDate)) : t("Commit: {0} · {1}", d.committer, longDate(d.commitDate))}
-            </span>
-          )}
-          {d.body && (
+          {d.prose && (
             <>
-              <Markdown text={d.body} {...md} className={`commit-body ${long && !expanded ? "folded" : ""}`} />
+              <Markdown text={d.prose} {...md} className={`commit-body ${long && !expanded ? "folded" : ""}`} />
               {long && <HostedListTextButton className="commit-text-button" aria-expanded={expanded} onClick={() => setExpanded(!expanded)}>{expanded ? t("Collapse") : t("Show all")}</HostedListTextButton>}
             </>
           )}
+          {(d.trailers.issues.length > 0 || d.trailers.coAuthors.length > 0) && <CommitTrailerRows store={store} trailers={d.trailers} />}
           {d.parents.length > 0 && (
             <div className="commit-parents">
               <span className="commit-caption">{merge ? t("Parents") : t("Parent")}</span>
@@ -91,22 +76,18 @@ export function CommitDetailView({ store, sha }: { store: RepoStore; sha: string
             <Button disabled={!!store.busy} tip={store.busy ?? undefined} onClick={() => store.requestNewBranch(d.sha, short(d.sha))}>{t("New branch…")}</Button>
             <Button disabled={!!store.busy} tip={store.busy ?? undefined} onClick={() => store.openSheet({ kind: "tag", sha: d.sha })}>{t("Tag…")}</Button>
           </div>
-          {explanation && (
-            <div className="commit-explanation">
-              <span className="commit-caption commit-explanation-by"><Sparkles size={13} />{t("{0} explanation", provider)}</span>
-              <div className="selectable markdown commit-body">{explanation}</div>
-            </div>
-          )}
           {explaining ? (
             <span className="commit-caption commit-explaining" role="status"><Spinner size={11} />{t("Loading")}</span>
           ) : failure ? (
             <FailureBlock className="commit-explain-failure" title={t("Couldn't explain this commit")} caption={failure} retry={() => void store.explainCommit(sha)} />
           ) : (
             <HostedListTextButton className="commit-text-button commit-explain" data-tip={provider} onClick={() => void store.explainCommit(sha)}>
-              {!explanation && <Sparkles size={13} />}
+              <Sparkles size={13} />
               {explanation ? t("Explain again") : t("Explain with AI…")}
             </HostedListTextButton>
           )}
+          {/* the board draws no caption: the text sits under the button in the body's type, the provider on the button's hover */}
+          {explanation && <div className="selectable markdown commit-body commit-explanation">{explanation}</div>}
         </div>
         <section className="commit-files" aria-label={t("Changed files")}>
           <div className="commit-files-head">
@@ -115,12 +96,6 @@ export function CommitDetailView({ store, sha }: { store: RepoStore; sha: string
             <span className="spacer" />
             <FileViewToggle />
           </div>
-          {added + deleted > 0 && (
-            <div className="commit-files-totals">
-              <LineStatText added={added} deleted={deleted} />
-              <ChangeBar added={added} deleted={deleted} />
-            </div>
-          )}
           <div className="commit-file-list">
             <ChangeList
               folderMenu={(p) => folderMenu(store, p)}
@@ -143,17 +118,44 @@ export function CommitDetailView({ store, sha }: { store: RepoStore; sha: string
   );
 }
 
-/** A branch or tag on this commit, in the board's neutral chip: the graph owns the lane colours. (macOS: CommitRefChip) */
-function CommitRefChip({ label }: { label: RefLabel }) {
-  const lead = label.kind === "tag" ? <TagIcon size={11} /> : label.kind === "head" ? <Crosshair size={11} /> : null;
+/** The author date, and under it the committer and commit date when they are not the author's (a rebase, a cherry-pick) */
+export function commitDates(d: Pick<CommitDetail, "author" | "date" | "committer" | "committerEmail" | "commitDate">): string {
+  const authored = longDate(d.date), committed = longDate(d.commitDate);
+  if (d.committer !== d.author) return `${authored}\n${t("Commit: {0} · {1}", `${d.committer} <${d.committerEmail}>`, committed)}`;
+  return Math.abs(d.commitDate - d.date) > 60 ? `${authored}\n${t("Commit: {0}", committed)}` : authored;
+}
+
+const trailerVerb = (keyword: CommitTrailers["issues"][number]["keyword"]) => keyword === "fixes" ? t("Fixes") : keyword === "resolves" ? t("Resolves") : t("Closes");
+
+/**
+ * The board's Trailers group: the issues this commit closes, as links, then its co-authors. An issue's title shows only
+ * once it was read (a connected account), and its state colours the icon. (macOS: CommitDetailView.trailers)
+ */
+function CommitTrailerRows({ store, trailers }: { store: RepoStore; trailers: CommitTrailers }) {
   return (
-    <span className="commit-ref" title={label.name} data-tip={label.name}>
-      {label.isCurrent && label.kind === "local" && <Check size={10} strokeWidth={2.4} role="img" aria-label={t("Current branch")} />}
-      {lead}
-      <span className="ellipsis">{label.name}</span>
-      {label.kind === "local" && <GitBranch size={11} />}
-      {label.kind === "remote" && <Cloud size={11} />}
-    </span>
+    <div className="commit-trailers" role="group" aria-label={t("Trailers")}>
+      {trailers.issues.map((trailer) => {
+        const item = store.trailerIssue(trailer.number), open = item ? ["open", "opened"].includes(item.state) : null;
+        return (
+          // without a hosting server there is no page to open
+          <button key={trailer.number} type="button" className="commit-trailer commit-trailer-issue" disabled={!store.target} title={item?.title || undefined}
+            onClick={() => store.openTrailerIssue(trailer.number)}>
+            {open === false ? <CircleCheck size={14} aria-hidden="true" /> : <CircleDot size={14} aria-hidden="true" className={open ? "status-tone commit-trailer-open" : undefined} data-tone={open ? "passed" : undefined} />}
+            <span className="commit-caption commit-trailer-verb">{trailerVerb(trailer.keyword)}</span>
+            <span className="mono commit-trailer-number">#{trailer.number}</span>
+            {item?.title && <span className="ellipsis commit-trailer-title">{item.title}</span>}
+          </button>
+        );
+      })}
+      {trailers.coAuthors.map((author) => (
+        // the trailer as it was written
+        <span key={author.email} className="commit-trailer commit-trailer-author" title={author.line} data-tip={author.line}>
+          <Avatar name={author.name} email={author.email} size={16} url={avatars.url(author.email, author.name)} />
+          <span className="ellipsis">{author.name}</span>
+          <StatusPill tone="neutral">{t("Co-author")}</StatusPill>
+        </span>
+      ))}
+    </div>
   );
 }
 
