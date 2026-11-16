@@ -546,6 +546,8 @@ enum SheetKind: Identifiable {
     case addWorktree(branch: String?, start: String?)
     /// AI 가 나눈 커밋 계획 확인
     case splitCommits
+    /// gitch's automatic backups (⋯ › gitch › Backups…)
+    case gitchBackups
     /// 새 파이프라인(GitLab) / 워크플로 실행(GitHub)
     case runPipeline
     /// 커밋 정리(인터랙티브 리베이스)
@@ -577,6 +579,7 @@ enum SheetKind: Identifiable {
         case .startAgent(let p): return "agent:" + (p ?? "")
         case .addWorktree(let b, let s): return "wt:" + (b ?? "") + ":" + (s ?? "")
         case .splitCommits: return "split"
+        case .gitchBackups: return "gitchBackups"
         case .runPipeline: return "runPipeline"
         case .interactiveRebase: return "interactiveRebase"
         case .graphDiff: return "graphDiff"

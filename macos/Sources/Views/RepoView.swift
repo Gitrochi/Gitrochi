@@ -439,10 +439,17 @@ struct RepoView: View {
             Button("Force push (with lease)…") { Task { await store.push(force: true) } }
                 .disabled(pushDisabled)
             Divider()
+            // the commit options the commit form leaves out (docs/design.md, Working changes)
+            Toggle("Amend previous commit", isOn: Binding(get: { store.amend }, set: { value in Task { await store.setAmend(value) } }))
+                .disabled(store.headHash == nil || store.busy != nil)
+            Button("Split into commits…") { Task { await store.planSplit() } }
+                .disabled(store.splittableChanges.count < 2 || store.aiWorking != nil || !store.status.conflicted.isEmpty || store.busy != nil)
+            Divider()
             Button("Structure graph workspace") { Task { await store.openStructureGraph(.files) } }
                 .disabled(store.graphJob != nil || Gitch.graphUnavailableReason != nil)
             Button("Repository tools…") { store.sheet = .localWorkflows }
             Button("Work validation…") { store.sheet = .workValidation }
+            GitchMenu()
             Divider()
             Button("Ask AI about changes…") { Task { await store.openChangeQuestion() } }
             Button("Repository assistant…") { Task { await store.openRepositoryAssistant() } }
@@ -451,6 +458,67 @@ struct RepoView: View {
             ToolLabel(title: String(localized: "More"), icon: "ellipsis")
         }
         .help(String(localized: "More"))
+    }
+}
+
+/// ⋯ › gitch: the account gitch uses for this repository and its repository commands (gitch use · unlock · up · sync ·
+/// fix · rescue · ignore · doctor). They sat in a bar over the commit form, which the redesign leaves out.
+/// (Windows: gitchMenu in widgets/toolbar/ui/gitch-menu.ts)
+private struct GitchMenu: View {
+    @Environment(RepoStore.self) private var store
+
+    var body: some View {
+        if let s = store.gitchStatus {
+            Menu {
+                ForEach(store.gitchAccounts) { a in
+                    Button { use(a) } label: {
+                        if a.id == s.lockedAccount {
+                            Label { Text(verbatim: "\(a.id) · \(a.email)") } icon: { DesignIconImage(icon: .check) }
+                        } else {
+                            Text(verbatim: "\(a.id) · \(a.email)")
+                        }
+                    }
+                    .disabled(a.id == s.lockedAccount)
+                }
+                if let locked = s.lockedAccount {
+                    Button("Unlock this repository…") {
+                        store.confirm = ConfirmRequest(title: String(localized: "Unlock this repository?"),
+                                                       message: String(localized: "gitch stops requiring \(locked) for commits and pushes here. The commit author stays as it is."),
+                                                       actionTitle: String(localized: "Unlock"), destructive: false) { await store.unlockGitch() }
+                    }
+                }
+                if !store.gitchAccounts.isEmpty || s.lockedAccount != nil { Divider() }
+                Button("Follow the default branch") { Task { await store.gitchUp() } }
+                if store.remotes.contains("upstream") {
+                    Button("Update the fork from upstream") { Task { await store.gitchSync() } }
+                }
+                Divider()
+                Button("Fix authors of unpushed commits…") { Task { await store.confirmGitchFix() } }
+                Button("Backups…") { store.sheet = .gitchBackups }
+                Divider()
+                if s.ignored == true {
+                    Button("Check this repository with gitch again") { Task { await store.setGitchIgnored(false) } }
+                } else {
+                    Button("Exclude this repository from gitch checks…") {
+                        store.confirm = ConfirmRequest(title: String(localized: "Exclude this repository from gitch checks?"),
+                                                       message: String(localized: "gitch won't check authors, secrets or pushes in this repository until you turn it back on."),
+                                                       actionTitle: String(localized: "Exclude")) { await store.setGitchIgnored(true) }
+                    }
+                }
+                Button("Check again with fetch") { Task { await store.refreshGitch(fetch: true) } }
+                    .disabled(store.gitchChecking)
+                Button("Run doctor in Terminal") { try? Gitch.openInTerminal(["doctor"], in: store.url?.path) }
+            } label: {
+                Text(verbatim: "gitch")
+            }
+            .disabled(store.busy != nil)
+        }
+    }
+
+    private func use(_ a: Gitch.Account) {
+        store.confirm = ConfirmRequest(title: String(localized: "Use \(a.id) for this repository?"),
+                                       message: String(localized: "gitch sets the commit author to \(a.email) and points origin (and upstream) at \(a.id)'s SSH alias, then locks the repository to it."),
+                                       actionTitle: String(localized: "Use this account"), destructive: false) { await store.useGitchAccount(a.id) }
     }
 }
 

@@ -21,7 +21,7 @@ export function handleShortcut(e: KeyboardEvent, openSettings: () => void) {
   if (e.key === "Escape" && !mod && !e.ctrlKey && !e.altKey && !e.shiftKey) {
     // the repository screen's one Escape order; the dialog check above already left dialogs alone
     const action = repositoryEscape({
-      overlay: !!document.querySelector(".menu, .gitch-popover, .account-quick-popover"),
+      overlay: !!document.querySelector(".menu, .account-quick-popover"),
       terminal: !!target?.closest?.(".xterm"),
       typing: inText || !!target?.isContentEditable,
       repositoryScreen: s.destination === "repository",

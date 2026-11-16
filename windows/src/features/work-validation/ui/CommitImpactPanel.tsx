@@ -7,7 +7,10 @@ import { t } from "@/shared/i18n";
 import { Button, Card, Spinner } from "@/shared/ui";
 import { reviewChangeStatusLabel } from "../lib/commit-impact";
 
-/** 커밋 준비 화면에서 요청할 때만 분석한다. 테스트 후보와 실행 결과를 구별해서 표시한다. */
+/**
+ * Review staged changes: analyzed only when asked, test candidates kept apart from results. It sits above the
+ * verification evidence its candidates feed. macOS: CommitImpactView
+ */
 export function CommitImpactPanel({ store }: { store: RepoStore }) {
   const state = store.commitImpact;
   const n = store.status.staged.length;
@@ -58,7 +61,6 @@ export function CommitImpactPanel({ store }: { store: RepoStore }) {
           </ImpactGroup>
         </div>
         <span className="hint">{t("Candidates come from dependencies or file names. Tests have not been run.")}</span>
-        <Button size="small" onClick={() => { store.openSheet({ kind: "workValidation" }); }}>{t("Connect verification evidence…")}</Button>
         {result.limitations.length > 0 && <details className="commit-impact-group"><summary>{t("Analysis limitations")} · {result.limitations.length}</summary><ul className="hint">{result.limitations.map((line, i) => <li key={i}>{t(line)}</li>)}</ul></details>}
         <Button size="small" disabled={stale || store.commitImpactVerifying || !!store.graphJob || !result.changed.length} onClick={() => void store.openCommitImpactGraph()}>
           {store.graphJob?.kind === "review" ? <Spinner size={11} /> : <ExternalLink size={12} />}{t("View staged impact as graph")}

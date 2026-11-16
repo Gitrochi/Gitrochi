@@ -1,6 +1,7 @@
 import SwiftUI
 
 /// 커밋할 스테이지에 한정한 분석. 테스트 후보를 실행 결과나 안전 보증으로 보이지 않게 분리한다.
+/// It heads Work validation's verification evidence, which its candidates feed. (Windows: CommitImpactPanel)
 struct CommitImpactView: View {
     @Environment(RepoStore.self) private var store
     @ViewState private var showChanged = false
@@ -40,7 +41,6 @@ struct CommitImpactView: View {
                     .font(.caption).foregroundStyle(.secondary)
             } else {
                 content
-                Button("Connect verification evidence…") { store.sheet = .workValidation }.controlSize(.small)
             }
         }
     }

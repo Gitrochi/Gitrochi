@@ -360,6 +360,7 @@ struct RepoContainer: View {
             case .startAgent(let path): StartAgentSheet(presetPath: path)
             case .addWorktree(let branch, let start): AddWorktreeSheet(presetBranch: branch, start: start)
             case .splitCommits: SplitCommitsSheet()
+            case .gitchBackups: GitchBackupsSheet()
             case .runPipeline: RunPipelineSheet()
             case .interactiveRebase: InteractiveRebaseSheet()
             case .graphDiff: GraphDiffSheet()

@@ -96,6 +96,8 @@ export async function workValidationSelfTest(): Promise<[boolean, string]> {
   try {
     root.render(<WorkValidationSheet store={fixture.store} close={() => {}} />);
     ensure(await until(() => runText("current-run").includes(t("Current content"))), "Current verification evidence not rendered");
+    // Review staged changes heads the verification tab, which its test candidates feed
+    ensure(panel("verification").firstElementChild?.firstElementChild?.classList.contains("commit-impact") === true, "Review staged changes must head the verification evidence");
     ensure(runText("stale-run").includes(t("Stale content")), "Mismatched end stamp was not stale");
     ensure(runText("unfinished-record").includes(t("No content binding")), "A missing end record was presented as current");
     ensure(runText("unbound-run").includes(t("No test execution count was reported.")), "A successful flow invented test execution");
