@@ -185,19 +185,40 @@
   min-width: 0;
 }
 
+/* the graph's neutral parts, which never take a lane colour or the accent; the dark values are derived, the boards
+   being light only (macOS: StudioStyle.Graph) */
+.commit-row {
+  --graph-neutral: #c9c9ce;
+  --graph-tag-fill: #f6f6f7;
+  --graph-tag-text: #3a3a3c;
+}
+
+:root[data-theme="dark"] .commit-row {
+  --graph-neutral: #58585d;
+  --graph-tag-fill: #2c2c30;
+  --graph-tag-text: #d1d1d6;
+}
+
+/* a branch or tag chip: the lane colour on a tint of it, inside a 1px border in the full colour */
 .ref-pill {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  padding: 1px 6px;
-  border-radius: 4px;
+  gap: 4px;
+  height: 18px;
+  padding: 0 6px;
+  box-sizing: border-box;
+  border: 1px solid transparent;
+  border-radius: 6px;
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
   white-space: nowrap;
-  max-width: 150px;
-  line-height: 16px;
   flex: 0 1 auto;
   min-width: 0;
+}
+
+.ref-pill > svg,
+.ref-pill .ref-behind {
+  flex: none;
 }
 
 .ref-pill .name {
@@ -206,14 +227,26 @@
   min-width: 0;
 }
 
-.ref-pill.solid {
-  font-weight: 700;
+.ref-pill.tag {
+  color: var(--graph-tag-text);
+  background: var(--graph-tag-fill);
+  border-color: var(--graph-neutral);
+}
+
+/* a detached HEAD is the current marker without a branch: filled with the text colour */
+.ref-pill.head {
+  color: var(--surface);
+  background: var(--text);
+  border-color: var(--text);
 }
 
 .ref-more {
-  font-size: 10.5px;
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  font-size: 11px;
   font-weight: 600;
-  padding: 0 4px;
+  padding: 0 6px;
   border-radius: 999px;
   flex: none;
 }

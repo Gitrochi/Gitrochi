@@ -158,6 +158,8 @@ struct RefGroup: Identifiable {
     var remotes: [String] = []
     var isTag = false
     var isHead = false
+    /// Commits the local branch is behind its upstream
+    var behind = 0
     var id: String { (isTag ? "t:" : isHead ? "h:" : "b:") + name }
 
     /// 체크아웃·끌기·메뉴에 쓸 실제 참조
@@ -186,6 +188,7 @@ struct RefGroup: Identifiable {
                 if byName[r.name] == nil { order.append(r.name); byName[r.name] = RefGroup(name: r.name) }
                 byName[r.name]?.local = r.name
                 byName[r.name]?.isCurrent = r.isCurrent
+                byName[r.name]?.behind = r.behind
             case .remote:
                 let short = r.name.split(separator: "/", maxSplits: 1).last.map(String.init) ?? r.name
                 if byName[short] == nil { order.append(short); byName[short] = RefGroup(name: short) }
@@ -212,12 +215,13 @@ private struct RefColumn: View {
                 RefPill(group: g, tint: tint, store: store)
                 if groups.count > 1 {
                     Text("+\(groups.count - 1)")
-                        .font(.caption2.weight(.semibold))
+                        .font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(tint)
                         // keep the count whole; the pill truncates instead (Windows: .ref-more)
                         .fixedSize()
-                        .padding(.horizontal, 4)
-                        .background(Capsule().fill(tint.opacity(0.15)))
+                        .padding(.horizontal, 6)
+                        .frame(height: 18)
+                        .background(Capsule().fill(tint.opacity(RefPill.tintOpacity)))
                         .help(groups.dropFirst().map(\.name).joined(separator: "\n"))
                         .contextMenu {
                             ForEach(groups.dropFirst()) { g in
@@ -237,25 +241,29 @@ private struct RefPill: View {
     let tint: Color
     let store: RepoStore
 
+    /// A chip's fill: the lane colour as faint as the row's band, under a border in the full colour
+    static let tintOpacity = 0.1
+
     var body: some View {
         let solid = group.isCurrent
-        let color = group.isTag ? Color(nsColor: .systemGray) : (group.isHead ? Color(nsColor: .labelColor) : tint)
-        HStack(spacing: 3) {
-            if solid { DesignIconImage(icon: .check, size: 8) }
-            if group.isTag { DesignIconImage(icon: .releases, size: 9) }
-            if group.isHead { SymbolIcon("scope").font(.system(size: 9, weight: .semibold)) }
+        HStack(spacing: 4) {
+            if solid { DesignIconImage(icon: .check, size: 10) }
+            if group.isTag { DesignIconImage(icon: .releases, size: 11) }
+            if group.isHead { SymbolIcon("scope").font(.system(size: 11, weight: .semibold)) }
             Text(group.name)
-                .font(.system(size: 11, weight: solid ? .bold : .medium))
                 .lineLimit(1)
                 .truncationMode(.middle)
-            if group.local != nil { SymbolIcon("laptopcomputer").font(.system(size: 9)) }
-            if !group.remotes.isEmpty { DesignIconImage(icon: .cloud, size: 9) }
+            // the current branch's count is the toolbar's (docs/design.md, Text)
+            if group.behind > 0 && !solid { Text(verbatim: "↓\(group.behind)").monospaced().fixedSize() }
+            if group.local != nil { SymbolIcon("laptopcomputer").font(.system(size: 11)) }
+            if !group.remotes.isEmpty { DesignIconImage(icon: .cloud, size: 11) }
         }
+        .font(.system(size: 11, weight: .semibold))
         .padding(.horizontal, 6)
-        .padding(.vertical, 2)
-        .foregroundStyle(solid ? Color.white : color)
-        .background(RoundedRectangle(cornerRadius: 4).fill(solid ? color : color.opacity(0.18)))
-        .overlay(RoundedRectangle(cornerRadius: 4).strokeBorder(color.opacity(solid ? 0 : 0.5), lineWidth: 1))
+        .frame(height: 18)
+        .foregroundStyle(text)
+        .background(RoundedRectangle(cornerRadius: 6).fill(fill))
+        .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(border, lineWidth: 1))
         .layoutPriority(1)
         .contentShape(Rectangle())
         .help(helpText)
@@ -267,6 +275,25 @@ private struct RefPill: View {
             }
         }
         .modifier(BranchInteractions(group: group, store: store, tint: tint))
+    }
+
+    // The current branch is filled with its lane colour and a detached HEAD with the text colour; tags are neutral
+    // grey, and every other branch is its lane colour on a tint of it
+    private var text: Color {
+        if group.isHead { return Color(nsColor: .textBackgroundColor) }
+        if group.isCurrent { return .white }
+        return group.isTag ? StudioStyle.Tone.neutral.text : tint
+    }
+
+    private var fill: Color {
+        if group.isHead { return Color(nsColor: .labelColor) }
+        if group.isCurrent { return tint }
+        return group.isTag ? StudioStyle.Graph.tagFill : tint.opacity(Self.tintOpacity)
+    }
+
+    private var border: Color {
+        if group.isHead { return Color(nsColor: .labelColor) }
+        return group.isTag ? StudioStyle.Graph.neutral : tint
     }
 
     private var helpText: String {

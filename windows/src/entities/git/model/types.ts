@@ -81,6 +81,8 @@ export interface RefLabel {
   name: string;
   kind: RefKind;
   isCurrent: boolean;
+  /** Commits a local branch is behind its upstream; the graph's chip shows it, so a row needs no branch lookup */
+  behind?: number;
 }
 
 export interface Branch {

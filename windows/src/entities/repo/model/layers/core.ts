@@ -843,7 +843,7 @@ export abstract class RepoCore extends Observable implements AgentHost {
       else map.set(k, [r]);
     };
     if (!this.headBranch && head) add(head, { name: "HEAD", kind: "head", isCurrent: true });
-    for (const b of this.localBranches) if (b.isCurrent || !this.hiddenRefs.has(`refs/heads/${b.name}`)) add(b.target, { name: b.name, kind: "local", isCurrent: b.isCurrent });
+    for (const b of this.localBranches) if (b.isCurrent || !this.hiddenRefs.has(`refs/heads/${b.name}`)) add(b.target, { name: b.name, kind: "local", isCurrent: b.isCurrent, behind: b.behind });
     for (const b of this.remoteBranches) if (!this.hiddenRefs.has(`refs/remotes/${b.name}`)) add(b.target, { name: b.name, kind: "remote", isCurrent: false });
     for (const tag of this.tags) add(tag.target, { name: tag.name, kind: "tag", isCurrent: false });
     for (const l of map.values()) l.sort((a, b) => (a.isCurrent ? 0 : 1) - (b.isCurrent ? 0 : 1) || refOrder[a.kind] - refOrder[b.kind]);

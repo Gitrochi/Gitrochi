@@ -61,6 +61,8 @@ struct RefLabel: Identifiable, Hashable {
     let name: String
     let kind: RefKind
     let isCurrent: Bool
+    /// Commits a local branch is behind its upstream; the graph's chip shows it, so a row needs no branch lookup
+    var behind = 0
     var id: String { "\(kind.rawValue):\(name)" }
 }
 
