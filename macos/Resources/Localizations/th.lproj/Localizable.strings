@@ -448,7 +448,6 @@
 "Clear search (Esc)" = "ล้างการค้นหา (Esc)";
 "Clears the path you chose and finds it automatically again" = "ล้างพาธที่คุณเลือกเองและค้นหาอัตโนมัติอีกครั้ง";
 "Clears the staging area, then stages and commits each group from the top." = "ล้างพื้นที่สเตจ แล้วสเตจและคอมมิตทีละกลุ่มจากด้านบน";
-"Click to go to the Terminal window" = "คลิกเพื่อไปยังหน้าต่างเทอร์มินัล";
 "Click to see the diff in the center" = "คลิกเพื่อดู diff ตรงกลาง";
 "Click to select this line (Shift: range) — you can stage only the selected lines" = "คลิกเพื่อเลือกบรรทัดนี้ (Shift: เลือกเป็นช่วง) — สเตจเฉพาะบรรทัดที่เลือกได้";
 "Clone" = "โคลน";
@@ -568,7 +567,6 @@
 "Delete tag…" = "ลบแท็ก…";
 "Delete this file" = "ลบไฟล์นี้";
 "Deleted" = "ลบ";
-"Deleted file" = "ไฟล์ที่ถูกลบ";
 "Deletes the %@ '%@' that was created." = "ลบ %1$@ '%2$@' ที่สร้างไว้";
 "Delete…" = "ลบ…";
 "Deleting branch…" = "กำลังลบแบรนช์…";
@@ -615,7 +613,6 @@
 "End session…" = "สิ้นสุดเซสชัน…";
 "End the %@ session?" = "สิ้นสุดเซสชัน %1$@ หรือไม่";
 "Ended" = "สิ้นสุดแล้ว";
-"Ended sessions" = "เซสชันที่สิ้นสุดแล้ว";
 "Enter an administrator password to update Gitrochi in %@." = "ป้อนรหัสผ่านผู้ดูแลระบบเพื่ออัปเดต Gitrochi ใน %1$@";
 "Enter the server address." = "ป้อนที่อยู่เซิร์ฟเวอร์";
 "Enter your %@ key in Settings > AI." = "ป้อนคีย์ %1$@ ในการตั้งค่า > AI";
@@ -741,7 +738,6 @@
 "Model" = "โมเดล";
 "Model or address not found (404). Check the model name. %@" = "ไม่พบโมเดลหรือที่อยู่ (404) ตรวจสอบชื่อโมเดล %1$@";
 "Modified" = "แก้ไข";
-"Modified files" = "ไฟล์ที่แก้ไข";
 "Modified files appear here." = "ไฟล์ที่แก้ไขจะแสดงที่นี่";
 "Module dependencies" = "การพึ่งพาของโมดูล";
 "Move Gitrochi to the Applications folder?" = "ย้าย Gitrochi ไปยังโฟลเดอร์แอปพลิเคชันหรือไม่";
@@ -969,7 +965,6 @@
 "Self-hosted GitLab (%@)" = "GitLab แบบโฮสต์เอง (%1$@)";
 "Server address" = "ที่อยู่เซิร์ฟเวอร์";
 "Server error %lld: %@" = "ข้อผิดพลาดของเซิร์ฟเวอร์ %1$lld: %2$@";
-"Sessions in other folders" = "เซสชันในโฟลเดอร์อื่น";
 "Set manually" = "กำหนดเอง";
 "Set up SSH key in Terminal…" = "ตั้งค่าคีย์ SSH ใน Terminal…";
 "Shell command" = "คำสั่งเชลล์";
@@ -1012,12 +1007,9 @@
 "Start" = "เริ่ม";
 "Start %@ in this worktree now" = "เริ่ม %1$@ ในเวิร์กทรีนี้ทันที";
 "Start agent session" = "เริ่มเซสชันเอเจนต์";
-"Start agent session — choose Claude Code, Codex or Gemini CLI, a worktree to work in, and a task" = "เริ่มเซสชันเอเจนต์ — เลือก Claude Code, Codex หรือ Gemini CLI, เวิร์กทรีที่จะทำงาน และงานที่มอบหมาย";
 "Start agent session…" = "เริ่มเซสชันเอเจนต์…";
-"Start an agent session in this worktree" = "เริ่มเซสชันเอเจนต์ในเวิร์กทรีนี้";
 "Start cleanup" = "เริ่มจัดระเบียบ";
 "Start point" = "จุดเริ่มต้น";
-"Start session" = "เริ่มเซสชัน";
 "Start with the reason for the change" = "เริ่มด้วยเหตุผลของการเปลี่ยนแปลง";
 "Stash Pop" = "ป๊อปสแตช";
 "Stash changes" = "สแตชการเปลี่ยนแปลง";
@@ -1153,7 +1145,6 @@
 "Where to work" = "ตำแหน่งที่จะทำงาน";
 "Whole file" = "ทั้งไฟล์";
 "Workflow" = "เวิร์กโฟลว์";
-"Working" = "กำลังทำงาน";
 "Working directory is clean" = "ไม่มีการเปลี่ยนแปลงในเวิร์กกิงทรี";
 "Working tree" = "เวิร์กกิงทรี";
 "Worktree in a temporary folder — it may break when the folder is deleted on restart" = "เวิร์กทรีในโฟลเดอร์ชั่วคราว — อาจเสียหายเมื่อโฟลเดอร์ถูกลบตอนรีสตาร์ท";
@@ -1214,8 +1205,6 @@
 "Write" = "เขียน";
 "Preview" = "แสดงตัวอย่าง";
 "Nothing to preview" = "ไม่มีเนื้อหาให้แสดงตัวอย่าง";
-"Sessions started here run in tabs of the terminal below, and their status is shown here. Click a session to go to its terminal." = "เซสชันที่เริ่มจากที่นี่จะรันในแท็บของเทอร์มินัลด้านล่าง และแสดงสถานะที่นี่ คลิกเซสชันเพื่อไปยังเทอร์มินัลของเซสชันนั้น";
-"Click to go to that terminal" = "คลิกเพื่อไปยังเทอร์มินัลนั้น";
 "Go to terminal" = "ไปที่เทอร์มินัล";
 "Runs in a new tab of the terminal below; its status is shown in the Agents tab." = "รันในแท็บใหม่ของเทอร์มินัลด้านล่าง สถานะจะแสดงในแท็บเอเจนต์";
 "The process exited" = "โปรเซสสิ้นสุดแล้ว";
@@ -1348,9 +1337,7 @@
 "Clear filter" = "ล้างตัวกรอง";
 "Close search (Esc)" = "ปิดการค้นหา (Esc)";
 "Close search" = "ปิดการค้นหา";
-"Running in other apps" = "กำลังทำงานในแอปอื่น";
 "Unknown app" = "แอปที่ไม่รู้จัก";
-"Click to bring %@ to the front" = "คลิกเพื่อนำ %1$@ ขึ้นมาด้านหน้า";
 "Bring %@ to the front" = "นำ %1$@ ขึ้นมาด้านหน้า";
 "Copy folder path" = "คัดลอกพาธโฟลเดอร์";
 "Couldn't open %@: it isn't inside a Git repository." = "เปิด %1$@ ไม่ได้: ไม่ได้อยู่ในที่เก็บ Git";
@@ -2267,3 +2254,11 @@
 "Saved sign-in can't be read" = "อ่านการลงชื่อเข้าใช้ที่บันทึกไว้ไม่ได้";
 "Couldn't use the saved sign-in" = "ใช้การลงชื่อเข้าใช้ที่บันทึกไว้ไม่ได้";
 "Refresh account status" = "รีเฟรชสถานะบัญชี";
+"Needs you" = "รอคุณดำเนินการ";
+"Respond" = "ตอบกลับ";
+"Elsewhere" = "ที่อื่น";
+"More agent actions" = "การทำงานอื่นของเอเจนต์";
+"Stage line" = "สเตจบรรทัด";
+"Unstage line" = "ยกเลิกสเตจบรรทัด";
+"Hide changes and show the graph" = "ซ่อนการเปลี่ยนแปลงและแสดงกราฟ";
+"Sessions started here run in the terminal tabs below; click one to go to its terminal." = "เซสชันที่เริ่มจากที่นี่จะรันในแท็บของเทอร์มินัลด้านล่าง คลิกเซสชันเพื่อไปยังเทอร์มินัลของเซสชันนั้น";

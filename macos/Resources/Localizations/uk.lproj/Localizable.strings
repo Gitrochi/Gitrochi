@@ -449,7 +449,6 @@
 "Clear search (Esc)" = "Очистити пошук (Esc)";
 "Clears the path you chose and finds it automatically again" = "Скидає вибраний шлях і знову шукає автоматично";
 "Clears the staging area, then stages and commits each group from the top." = "Очищає індекс, а потім по черзі згори індексує й комітить кожну групу.";
-"Click to go to the Terminal window" = "Клацніть, щоб перейти до вікна Терміналу";
 "Click to see the diff in the center" = "Клацніть, щоб побачити зміни в центрі";
 "Click to select this line (Shift: range) — you can stage only the selected lines" = "Клацніть, щоб вибрати цей рядок (Shift — діапазон): можна індексувати лише вибрані рядки";
 "Clone" = "Клонувати";
@@ -569,7 +568,6 @@
 "Delete tag…" = "Видалити тег…";
 "Delete this file" = "Видалити цей файл";
 "Deleted" = "Видалено";
-"Deleted file" = "Видалений файл";
 "Deletes the %@ '%@' that was created." = "Видаляє створене: %1$@ '%2$@'.";
 "Delete…" = "Видалити…";
 "Deleting branch…" = "Видалення гілки…";
@@ -619,7 +617,6 @@
 "End session…" = "Завершити сеанс…";
 "End the %@ session?" = "Завершити сеанс %1$@?";
 "Ended" = "Завершено";
-"Ended sessions" = "Завершені сеанси";
 "Enter an administrator password to update Gitrochi in %@." = "Введіть пароль адміністратора, щоб оновити Gitrochi у %1$@.";
 "Enter the server address." = "Введіть адресу сервера.";
 "Enter your %@ key in Settings > AI." = "Введіть ключ %1$@ у Налаштуваннях > AI.";
@@ -746,7 +743,6 @@
 "Model" = "Модель";
 "Model or address not found (404). Check the model name. %@" = "Модель або адресу не знайдено (404). Перевірте назву моделі. %1$@";
 "Modified" = "Змінено";
-"Modified files" = "Змінені файли";
 "Modified files appear here." = "Тут з’являться змінені файли.";
 "Module dependencies" = "Залежності модулів";
 "Move Gitrochi to the Applications folder?" = "Перемістити Gitrochi в папку «Програми»?";
@@ -973,7 +969,6 @@
 "Self-hosted GitLab (%@)" = "GitLab на власному сервері (%1$@)";
 "Server address" = "Адреса сервера";
 "Server error %lld: %@" = "Помилка сервера %1$lld: %2$@";
-"Sessions in other folders" = "Сеанси в інших папках";
 "Set manually" = "Задати вручну";
 "Set up SSH key in Terminal…" = "Налаштувати SSH-ключ у Терміналі…";
 "Shell command" = "Команда оболонки";
@@ -1016,12 +1011,9 @@
 "Start" = "Почати";
 "Start %@ in this worktree now" = "Запустити %1$@ у цьому робочому дереві зараз";
 "Start agent session" = "Почати сеанс агента";
-"Start agent session — choose Claude Code, Codex or Gemini CLI, a worktree to work in, and a task" = "Почати сеанс агента — виберіть Claude Code, Codex або Gemini CLI, робоче дерево для роботи та завдання";
 "Start agent session…" = "Почати сеанс агента…";
-"Start an agent session in this worktree" = "Почати сеанс агента в цьому робочому дереві";
 "Start cleanup" = "Почати впорядкування";
 "Start point" = "Початкова точка";
-"Start session" = "Почати сеанс";
 "Start with the reason for the change" = "Починати з причини зміни";
 "Stash Pop" = "Дістати зі схованки";
 "Stash changes" = "Сховати зміни";
@@ -1157,7 +1149,6 @@
 "Where to work" = "Де працювати";
 "Whole file" = "Увесь файл";
 "Workflow" = "Робочий процес";
-"Working" = "Працює";
 "Working directory is clean" = "Робоча копія чиста";
 "Working tree" = "Робоча копія";
 "Worktree in a temporary folder — it may break when the folder is deleted on restart" = "Робоче дерево в тимчасовій папці — воно може зламатися, коли папку буде видалено після перезапуску";
@@ -1218,8 +1209,6 @@
 "Write" = "Написати";
 "Preview" = "Попередній перегляд";
 "Nothing to preview" = "Немає що переглядати";
-"Sessions started here run in tabs of the terminal below, and their status is shown here. Click a session to go to its terminal." = "Сеанси, запущені тут, працюють у вкладках термінала внизу, а їхній стан показано тут. Клацніть сеанс, щоб перейти до його термінала.";
-"Click to go to that terminal" = "Клацніть, щоб перейти до цього термінала";
 "Go to terminal" = "Перейти до термінала";
 "Runs in a new tab of the terminal below; its status is shown in the Agents tab." = "Запускається в новій вкладці термінала внизу; стан показується на вкладці «Агенти».";
 "The process exited" = "Процес завершився";
@@ -1352,9 +1341,7 @@
 "Clear filter" = "Скинути фільтр";
 "Close search (Esc)" = "Закрити пошук (Esc)";
 "Close search" = "Закрити пошук";
-"Running in other apps" = "Запущені в інших програмах";
 "Unknown app" = "Невідома програма";
-"Click to bring %@ to the front" = "Натисніть, щоб вивести %1$@ на передній план";
 "Bring %@ to the front" = "Вивести %1$@ на передній план";
 "Copy folder path" = "Копіювати шлях до теки";
 "Couldn't open %@: it isn't inside a Git repository." = "Не вдалося відкрити %1$@: це не всередині репозиторію Git.";
@@ -2272,3 +2259,11 @@
 "Saved sign-in can't be read" = "Не вдається прочитати збережений вхід";
 "Couldn't use the saved sign-in" = "Не вдалося використати збережений вхід";
 "Refresh account status" = "Оновити стан облікового запису";
+"Needs you" = "Чекають на вас";
+"Respond" = "Відповісти";
+"Elsewhere" = "В інших місцях";
+"More agent actions" = "Інші дії з агентами";
+"Stage line" = "Індексувати рядок";
+"Unstage line" = "Зняти рядок з індексу";
+"Hide changes and show the graph" = "Приховати зміни й показати граф";
+"Sessions started here run in the terminal tabs below; click one to go to its terminal." = "Сеанси, запущені тут, працюють у вкладках термінала внизу; клацніть сеанс, щоб перейти до його термінала.";

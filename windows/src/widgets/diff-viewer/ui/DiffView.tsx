@@ -1,7 +1,7 @@
 import { Columns2, CornerDownLeft, Equal, FileArchive, History, ImageOff, LockOpen, Rows3, ScanText, Space, TriangleAlert } from "lucide-react";
 import { FolderOpen } from "@/shared/icons";
-import { ChevronLeft, FileText, Pencil, Sparkles, Trash2 } from "@/shared/icons";
-import { type ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { ChevronLeft, FileText, Minus, Pencil, Plus, Sparkles, Trash2 } from "@/shared/icons";
+import { type ReactNode, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ConflictView } from "@/features/resolve-conflict";
 import { type DiffDocument, type DiffLine, diffSides, modeSummary, short, type SplitRow, splitRows, StatusBadge } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
@@ -14,6 +14,8 @@ import "./diff-viewer.css";
 
 const LINE_H = 18;
 const HUNK_H = 26;
+/** The column a working diff keeps for the per-line stage button, between the line numbers and the +/− sign */
+const STAGE_W = 24;
 
 /**
  * 파일 하나의 변경 내용. 그래프 자리를 대신 차지하고, ← 또는 Esc 로 그래프로 돌아간다.
@@ -21,7 +23,7 @@ const HUNK_H = 26;
  */
 export function DiffView({ store, chrome = true, split }: {
   store: RepoStore;
-  /** false leaves out the header and the Esc shortcut, for a page that draws its own header around the diff */
+  /** false leaves out the header, for a page that draws its own header around the diff (Esc is the app's: shortcuts.ts) */
   chrome?: boolean;
   /** the layout when the page decides it, for example unified while the diff is too narrow to split */
   split?: boolean;
@@ -29,15 +31,6 @@ export function DiffView({ store, chrome = true, split }: {
   useObserve(store);
   const source = store.diffSource!;
   const c = source.change;
-  useEffect(() => {
-    if (!chrome) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !document.querySelector(".modal-backdrop") && !(e.target as HTMLElement)?.closest?.(".xterm")) store.closeDiff();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [store, chrome]);
-
   const subtitle =
     source.kind === "working"
       ? `${c.path} · ${c.kind === "conflicted" ? t("Conflict") : c.staged ? t("Staged") : t("Working tree")}`
@@ -47,13 +40,17 @@ export function DiffView({ store, chrome = true, split }: {
           ? `${c.path} · ${t("Worktree: {0}", store.worktrees.find((w) => samePath(w.path, source.path))?.branch ?? basename(source.path))}`
           : `${c.oldPath ? c.oldPath + " → " : ""}${c.path} · ${store.target?.provider === "gitlab" ? "MR" : "PR"} #${source.number}`;
   const doc = store.diff;
-  const backLabel = source.kind === "working" ? t("Changes") : source.kind === "review" ? t("Back to conversation") : t("Graph");
+  // a diff on the repository screen stands where the graph was, so its way back names the graph
+  const backLabel = source.kind === "review" ? t("Back to conversation") : t("Graph");
 
   return (
     <div className="col grow">
       {chrome && <div className="diff-head">
-        <Button size="small" onClick={() => store.closeDiff()} tip={`${backLabel} (Esc)`}>
-          <ChevronLeft size={14} /> {" "}{backLabel}</Button>
+        <button type="button" className="diff-back status-tone" aria-keyshortcuts="Escape" data-tip={source.kind === "review" ? `${backLabel} (Esc)` : t("Back to graph (Esc)")} onClick={() => store.closeDiff()}>
+          <ChevronLeft size={12} />
+          {backLabel}
+        </button>
+        <span className="diff-back-sep" aria-hidden="true" />
         <StatusBadge kind={c.kind} />
         <div className="col grow">
           <span className="ellipsis" style={{ fontWeight: 600 }}>
@@ -238,7 +235,7 @@ export function DiffBody({ store, doc, split, editable, staged }: { store: RepoS
   const [version, bump] = useState(0);
 
   const offsets = useMemo(() => {
-    const gutter = (halves ? noW : (sides.old ? noW : 0) + (sides.new ? noW : 0)) + 22 + 6;
+    const gutter = (halves ? noW : (sides.old ? noW : 0) + (sides.new ? noW : 0)) + (editable ? STAGE_W : 0) + 22 + 6;
     const columns = Math.floor(((halves ? vp.width / 2 : vp.width) - gutter) / CHAR_W);
     const est = (r: SplitRow) => {
       if (r.full !== undefined) return doc.lines[r.full].kind === "hunk" ? HUNK_H : LINE_H;
@@ -250,7 +247,7 @@ export function DiffBody({ store, doc, split, editable, staged }: { store: RepoS
     rows.forEach((r, i) => o.push(o[i] + (measured.current.h.get(i) ?? est(r))));
     return o;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rows, doc, halves, sides, noW, vp.width, version]);
+  }, [rows, doc, halves, sides, noW, editable, vp.width, version]);
 
   const find = (y: number) => {
     let lo = 0,
@@ -300,12 +297,23 @@ export function DiffBody({ store, doc, split, editable, staged }: { store: RepoS
           onClick={(e) => { e.stopPropagation(); store.addReviewDraft(source.number, source.change.path, reviewLine!, reviewSide, l.oldNo ?? undefined); }}>+</button>}
         {(side === "left" || (side === "both" && sides.old)) && <span className="no">{l.oldNo ?? ""}</span>}
         {(side === "right" || (side === "both" && sides.new)) && <span className="no">{l.newNo ?? ""}</span>}
+        {editable && (
+          <span className="diff-stage-gutter">
+            {selectable && (
+              <button type="button" className="diff-stage-line" aria-label={staged ? t("Unstage line") : t("Stage line")} data-tip={staged ? t("Unstage line") : t("Stage line")}
+                disabled={store.busy != null}
+                onClick={(e) => { e.stopPropagation(); void store.applyLines(staged ? "unstage" : "stage", l.hunk!, i); }}>
+                <span>{staged ? <Minus size={10} /> : <Plus size={10} />}</span>
+              </button>
+            )}
+          </span>
+        )}
         <span className="mk">{l.kind === "added" ? "+" : l.kind === "removed" ? "−" : ""}</span>
         <LineText line={l} />
       </div>
     );
   };
-  const gutter = (halves ? noW : (sides.old ? noW : 0) + (sides.new ? noW : 0)) + 22;
+  const gutter = (halves ? noW : (sides.old ? noW : 0) + (sides.new ? noW : 0)) + (editable ? STAGE_W : 0) + 22;
 
   return (
     <div className="col grow" style={{ minHeight: 0 }}>

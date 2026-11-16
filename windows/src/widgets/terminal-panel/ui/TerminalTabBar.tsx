@@ -2,7 +2,7 @@ import { ChevronsRight } from "lucide-react";
 import { ChevronDown, Ellipsis, Plus, X } from "@/shared/icons";
 import { agents } from "@/entities/agent";
 import type { RepoStore } from "@/entities/repo";
-import { activity, compactBar, type TabMark, tabActivity, tabMark, tabOverflow, tabStripWidth, type TerminalActivity, type TerminalSession, type TermPane } from "@/entities/terminal";
+import { activity, compactBar, type TabMark, tabActivity, tabMark, TabMarkSlot, tabOverflow, tabStripWidth, type TerminalActivity, type TerminalSession, type TermPane } from "@/entities/terminal";
 import { ipc } from "@/shared/api";
 import { displayPath } from "@/shared/config";
 import { t } from "@/shared/i18n";
@@ -16,15 +16,6 @@ export function tabStatus(term: TerminalSession): { mark: TabMark; activity: Ter
   const mark = tabMark({ exited, busy, unseen: term.unseenOutput, waiting });
   const title = mark === "ring" ? t("Running") : mark === "hollow" ? t("Exited") : mark === "dot" ? (waiting ? t("Waiting for input") : t("New output")) : t("Idle");
   return { mark, activity: activity(exited, busy), title };
-}
-
-/** The 12px slot every tab reserves, so titles never shift when a mark appears */
-export function TabMarkSlot({ mark }: { mark: TabMark }) {
-  return (
-    <span className="term-mark-slot" aria-hidden="true">
-      <span className={`term-mark ${mark}`} data-mark={mark} />
-    </span>
-  );
 }
 
 /**

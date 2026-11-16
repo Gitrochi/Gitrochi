@@ -439,7 +439,6 @@
 "Clear search (Esc)" = "Hapus pencarian (Esc)";
 "Clears the path you chose and finds it automatically again" = "Menghapus jalur yang Anda pilih dan mencarinya lagi secara otomatis";
 "Clears the staging area, then stages and commits each group from the top." = "Mengosongkan area staging, lalu melakukan stage dan commit untuk tiap grup mulai dari atas.";
-"Click to go to the Terminal window" = "Klik untuk membuka jendela Terminal";
 "Click to see the diff in the center" = "Klik untuk melihat diff di tengah";
 "Click to select this line (Shift: range) — you can stage only the selected lines" = "Klik untuk memilih baris ini (Shift: rentang) — Anda dapat melakukan stage hanya pada baris yang dipilih";
 "Clone" = "Klon";
@@ -552,7 +551,6 @@
 "Delete tag…" = "Hapus tag…";
 "Delete this file" = "Hapus file ini";
 "Deleted" = "Dihapus";
-"Deleted file" = "File yang dihapus";
 "Deletes the %@ '%@' that was created." = "Menghapus %1$@ '%2$@' yang telah dibuat.";
 "Delete…" = "Hapus…";
 "Deleting branch…" = "Menghapus branch…";
@@ -597,7 +595,6 @@
 "End session…" = "Akhiri sesi…";
 "End the %@ session?" = "Akhiri sesi %1$@?";
 "Ended" = "Berakhir";
-"Ended sessions" = "Sesi yang telah berakhir";
 "Enter an administrator password to update Gitrochi in %@." = "Masukkan kata sandi administrator untuk memperbarui Gitrochi di %1$@.";
 "Enter the server address." = "Masukkan alamat server.";
 "Enter your %@ key in Settings > AI." = "Masukkan kunci %1$@ Anda di Pengaturan > AI.";
@@ -717,7 +714,6 @@
 "Mixed — keep changes in the working tree" = "Mixed — pertahankan perubahan di working tree";
 "Model or address not found (404). Check the model name. %@" = "Model atau alamat tidak ditemukan (404). Periksa nama model. %1$@";
 "Modified" = "Diubah";
-"Modified files" = "File yang diubah";
 "Modified files appear here." = "File yang diubah akan muncul di sini.";
 "Module dependencies" = "Dependensi modul";
 "Move Gitrochi to the Applications folder?" = "Pindahkan Gitrochi ke folder Aplikasi?";
@@ -936,7 +932,6 @@
 "Self-hosted GitLab (%@)" = "GitLab self-hosted (%1$@)";
 "Server address" = "Alamat server";
 "Server error %lld: %@" = "Kesalahan server %1$lld: %2$@";
-"Sessions in other folders" = "Sesi di folder lain";
 "Set manually" = "Atur manual";
 "Set up SSH key in Terminal…" = "Atur kunci SSH di Terminal…";
 "Shell command" = "Perintah shell";
@@ -977,12 +972,9 @@
 "Start" = "Mulai";
 "Start %@ in this worktree now" = "Mulai %1$@ di worktree ini sekarang";
 "Start agent session" = "Mulai sesi agen";
-"Start agent session — choose Claude Code, Codex or Gemini CLI, a worktree to work in, and a task" = "Mulai sesi agen — pilih Claude Code, Codex, atau Gemini CLI, worktree tempat bekerja, dan tugasnya";
 "Start agent session…" = "Mulai sesi agen…";
-"Start an agent session in this worktree" = "Mulai sesi agen di worktree ini";
 "Start cleanup" = "Mulai merapikan";
 "Start point" = "Titik awal";
-"Start session" = "Mulai sesi";
 "Start with the reason for the change" = "Awali dengan alasan perubahan";
 "Stash changes" = "Stash perubahan";
 "Stashes %lld" = "Stash %1$lld";
@@ -1111,7 +1103,6 @@
 "When importing the gh login as a GitHub account" = "Saat mengimpor login gh sebagai akun GitHub";
 "Where to work" = "Tempat bekerja";
 "Whole file" = "Seluruh file";
-"Working" = "Sedang bekerja";
 "Working directory is clean" = "Direktori kerja bersih";
 "Worktree in a temporary folder — it may break when the folder is deleted on restart" = "Worktree di folder sementara — bisa rusak jika folder dihapus saat mulai ulang";
 "Worktree whose folder is gone — remove it with 'Clean up'" = "Worktree yang foldernya sudah hilang — hapus dengan 'Bersihkan'";
@@ -1172,8 +1163,6 @@
 "Write" = "Tulis";
 "Preview" = "Pratinjau";
 "Nothing to preview" = "Tidak ada yang bisa dipratinjau";
-"Sessions started here run in tabs of the terminal below, and their status is shown here. Click a session to go to its terminal." = "Sesi yang dimulai di sini berjalan di tab terminal di bawah, dan statusnya ditampilkan di sini. Klik sesi untuk membuka terminalnya.";
-"Click to go to that terminal" = "Klik untuk membuka terminal tersebut";
 "Go to terminal" = "Buka terminal";
 "Runs in a new tab of the terminal below; its status is shown in the Agents tab." = "Berjalan di tab baru pada terminal di bawah; statusnya ditampilkan di tab Agen.";
 "The process exited" = "Proses telah berhenti";
@@ -1306,9 +1295,7 @@
 "Clear filter" = "Hapus filter";
 "Close search (Esc)" = "Tutup pencarian (Esc)";
 "Close search" = "Tutup pencarian";
-"Running in other apps" = "Berjalan di aplikasi lain";
 "Unknown app" = "Aplikasi tidak dikenal";
-"Click to bring %@ to the front" = "Klik untuk membawa %1$@ ke depan";
 "Bring %@ to the front" = "Bawa %1$@ ke depan";
 "Copy folder path" = "Salin jalur folder";
 "Couldn't open %@: it isn't inside a Git repository." = "Tidak dapat membuka %1$@: tidak berada di dalam repositori Git.";
@@ -2230,3 +2217,11 @@
 "Saved sign-in can't be read" = "Info masuk tersimpan tidak dapat dibaca";
 "Couldn't use the saved sign-in" = "Tidak dapat memakai info masuk tersimpan";
 "Refresh account status" = "Segarkan status akun";
+"Needs you" = "Menunggu Anda";
+"Respond" = "Tanggapi";
+"Elsewhere" = "Di tempat lain";
+"More agent actions" = "Tindakan agen lainnya";
+"Stage line" = "Stage baris";
+"Unstage line" = "Batalkan stage baris";
+"Hide changes and show the graph" = "Sembunyikan perubahan dan tampilkan grafik";
+"Sessions started here run in the terminal tabs below; click one to go to its terminal." = "Sesi yang dimulai di sini berjalan di tab terminal di bawah; klik salah satu untuk membuka terminalnya.";

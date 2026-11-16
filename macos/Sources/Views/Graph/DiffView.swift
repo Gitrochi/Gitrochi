@@ -19,12 +19,8 @@ struct DiffView: View {
 
     private func framed(_ change: FileChange) -> some View {
         VStack(spacing: 0) {
-            HStack(spacing: 10) {
-                Button { store.closeDiff() } label: {
-                    Label(backLabel, symbol: "chevron.left")
-                }
-                .keyboardShortcut(.escape, modifiers: [])
-                .help("Close diff (Esc)")
+            HStack(spacing: 8) {
+                GraphBackButton(title: backLabel, help: isReview ? "Close diff (Esc)" : "Back to graph (Esc)") { store.closeDiff() }
 
                 StatusBadge(kind: change.kind)
                 VStack(alignment: .leading, spacing: 0) {
@@ -53,12 +49,10 @@ struct DiffView: View {
         }
     }
 
+    /// A diff on the repository screen stands where the graph was, so its way back names the graph
     private var backLabel: LocalizedStringKey {
-        switch source {
-        case .working: return "Changes"
-        case .review: return "Back to conversation"
-        case .commit, .worktree: return "Graph"
-        }
+        if case .review = source { return "Back to conversation" }
+        return "Graph"
     }
 
     @ViewBuilder
@@ -186,6 +180,38 @@ struct DiffView: View {
     }
 }
 
+/// "‹ Graph" in a diff or file history header: a text button, then a hairline before the file (the Changes board's
+/// diff header). Esc presses it.
+struct GraphBackButton: View {
+    let title: LocalizedStringKey
+    let help: LocalizedStringKey
+    let action: () -> Void
+    @ViewState private var hovered = false
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Button(action: action) {
+                HStack(spacing: 4) {
+                    DesignIconImage(icon: .chevronLeft, size: 12)
+                    Text(title).lineLimit(1).fixedSize()
+                }
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(StudioStyle.Tone.neutral.text)
+                .padding(.leading, 4).padding(.trailing, 8)
+                .frame(height: 28)
+                .background(RoundedRectangle(cornerRadius: 6).fill(hovered ? StudioStyle.hover : Color.clear))
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .onHover { hovered = $0 }
+            .keyboardShortcut(.escape, modifiers: [])
+            .help(help)
+            .padding(.leading, -4)
+            Rectangle().fill(StudioStyle.border).frame(width: 1, height: 16).accessibilityHidden(true)
+        }
+    }
+}
+
 /// 내용 줄이 없는 diff: 새 빈 파일·이름만·권한만 바뀐 경우 등을 알맞게 알린다
 struct DiffEmptyState: View {
     let doc: DiffDocument
@@ -225,7 +251,7 @@ struct DiffLinesView: View {
                 if halves {
                     ForEach(doc.splitRows) { row in
                         if let f = row.full {
-                            fullRow(doc.lines[f], gutter: numberWidth + 20)
+                            fullRow(doc.lines[f], gutter: numberWidth + (editable ? DiffLineRow.stageWidth : 0) + 20)
                         } else {
                             Halves {
                                 cell(row.left.map { doc.lines[$0] }, side: .left, numberWidth: numberWidth)
@@ -235,13 +261,13 @@ struct DiffLinesView: View {
                         }
                     }
                 } else {
-                    let gutter = (doc.hasOldSide ? numberWidth : 0) + (doc.hasNewSide ? numberWidth : 0) + 20
+                    let gutter = (doc.hasOldSide ? numberWidth : 0) + (doc.hasNewSide ? numberWidth : 0) + (editable ? DiffLineRow.stageWidth : 0) + 20
                     ForEach(doc.lines) { line in
                         if line.kind == .hunk || line.kind == .meta {
                             fullRow(line, gutter: gutter)
                         } else {
                             DiffLineRow(line: line, showOld: doc.hasOldSide, showNew: doc.hasNewSide, numberWidth: numberWidth,
-                                        selected: store.diffSelection.contains(line.id))
+                                        selected: store.diffSelection.contains(line.id), stage: stage(line))
                                 .modifier(Selectable(line: line, enabled: editable))
                                 .modifier(ReviewCommentable(line: line, side: nil, enabled: !doc.combined && !doc.multipleFiles))
                         }
@@ -260,6 +286,15 @@ struct DiffLinesView: View {
     }
 
     enum Side { case left, right }
+
+    /// What the line's gutter column holds in a working diff: the per-line button on a changed line, room on the others
+    private func stage(_ line: DiffLine) -> DiffLineRow.Stage? {
+        guard editable else { return nil }
+        guard line.kind == .added || line.kind == .removed, let hunk = line.hunk else { return .room }
+        return .button(unstage: staged, disabled: store.busy != nil) {
+            Task { await store.applyLines(staged ? .unstage : .stage, hunk: hunk, only: line.id) }
+        }
+    }
 
     /// 줄 번호 칸 너비: 가장 큰 번호의 자릿수에 맞춘다
     static func numberWidth(_ doc: DiffDocument) -> CGFloat {
@@ -286,7 +321,7 @@ struct DiffLinesView: View {
     private func cell(_ line: DiffLine?, side: Side, numberWidth: CGFloat) -> some View {
         if let line {
             DiffLineRow(line: line, showOld: side == .left, showNew: side == .right, numberWidth: numberWidth,
-                        selected: store.diffSelection.contains(line.id))
+                        selected: store.diffSelection.contains(line.id), stage: stage(line))
                 .modifier(Selectable(line: line, enabled: editable))
                 .modifier(ReviewCommentable(line: line, side: side == .left ? .left : .right, enabled: !doc.combined && !doc.multipleFiles))
         } else {
@@ -435,11 +470,21 @@ private struct HunkHeader: View {
 }
 
 private struct DiffLineRow: View {
+    /// The column a working diff keeps for the per-line stage button, between the line numbers and the +/− sign
+    static let stageWidth: CGFloat = 24
+    enum Stage {
+        case room
+        case button(unstage: Bool, disabled: Bool, run: () -> Void)
+    }
+
     let line: DiffLine
     var showOld = true
     var showNew = true
     var numberWidth: CGFloat = 44
     var selected = false
+    /// nil where lines cannot be staged (a commit's diff, file history): no column at all
+    var stage: Stage? = nil
+    @ViewState private var hovered = false
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 0) {
@@ -454,6 +499,11 @@ private struct DiffLineRow: View {
                     .frame(width: numberWidth - 6, alignment: .trailing)
                     .padding(.trailing, 6)
                     .foregroundStyle(.tertiary)
+            }
+            if let stage {
+                // a 24pt target that never makes the line taller: it is centred over a blank of the line's own height
+                Text(verbatim: " ").frame(width: Self.stageWidth)
+                    .overlay { if case .button(let unstage, let disabled, let run) = stage { stageButton(unstage: unstage, disabled: disabled, run: run) } }
             }
             Text(marker)
                 .frame(width: 20)
@@ -471,6 +521,25 @@ private struct DiffLineRow: View {
         .overlay(alignment: .leading) {
             if selected { Rectangle().fill(Color.accentColor).frame(width: 3) }
         }
+        .onHover { if stage != nil { hovered = $0 } }
+    }
+
+    /// "Stage line": a 16pt circle with a plus in a 24pt target, shown on the line under the pointer
+    private func stageButton(unstage: Bool, disabled: Bool, run: @escaping () -> Void) -> some View {
+        Button(action: run) {
+            DesignIconImage(icon: unstage ? .minus : .plus, size: 10)
+                .foregroundStyle(Color.primary)
+                .frame(width: 16, height: 16)
+                .background(Circle().fill(StudioStyle.surface))
+                .overlay(Circle().strokeBorder(HostedList.edge))
+                .frame(width: Self.stageWidth, height: 24)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(disabled)
+        .opacity(hovered ? 1 : 0)
+        .help(unstage ? "Unstage line" : "Stage line")
+        .accessibilityLabel(unstage ? "Unstage line" : "Stage line")
     }
 
     /// 단어 단위로 바뀐 부분을 진하게

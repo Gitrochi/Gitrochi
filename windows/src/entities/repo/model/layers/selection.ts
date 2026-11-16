@@ -48,6 +48,16 @@ export abstract class RepoSelection extends RepoCore {
     })();
   }
 
+  /** Changes is on while the uncommitted changes show (the toolbar's toggle, macOS: area == .changes) */
+  get changesShown() {
+    return this.destination === "repository" && this.selection?.kind === "wip";
+  }
+
+  /** Changes off: back to the graph with the branch's last commit selected */
+  hideChanges() {
+    if (this.changesShown && this.headHash) this.select({ kind: "commit", sha: this.headHash });
+  }
+
   /** 사이드바에서 브랜치·태그를 누르면 그래프에서 해당 커밋을 찾아 보여 준다 */
   reveal(sha: string) {
     this.navigate("repository", false);
@@ -340,11 +350,11 @@ export abstract class RepoSelection extends RepoCore {
     return n;
   }
 
-  /** 덩어리(고른 줄이 있으면 그 줄만)를 스테이지·언스테이지·버리기 */
-  async applyLines(action: "stage" | "unstage" | "discard", hunk: number) {
+  /** 덩어리(고른 줄이 있으면 그 줄만)를 스테이지·언스테이지·버리기. `only` is one line: the gutter's per-line button */
+  async applyLines(action: "stage" | "unstage" | "discard", hunk: number, only?: number) {
     const doc = this.diff;
     if (!doc || !this.canEditDiffLines) return;
-    const picked = new Set([...this.diffSelection].filter((i) => doc.lines[i]?.hunk === hunk));
+    const picked = only !== undefined ? new Set([only]) : new Set([...this.diffSelection].filter((i) => doc.lines[i]?.hunk === hunk));
     const patch = buildPatch(doc, [hunk], picked.size ? picked : null, action !== "stage");
     if (!patch) return;
     if (action === "discard") {

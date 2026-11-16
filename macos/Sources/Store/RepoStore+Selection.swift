@@ -15,6 +15,25 @@ extension RepoStore {
         select(destination == .changes ? .wip : savedHistory ?? headHash.map { .commit($0) }, restoringContext: true)
     }
 
+    /// Esc belongs to the Changes toggle only while the graph itself shows; an open diff or file history has its own
+    var escapeHidesChanges: Bool {
+        destination == .repository && area == .changes && diffSource == nil && fileInspect == nil
+    }
+
+    /// Changes off: back to the graph and the commit that was selected there. From Esc it checks who has the keys
+    /// first, so a sheet, the terminal and a text field keep their Escape. (Windows: hideChanges and shortcuts.ts)
+    func hideChanges(fromEscape: Bool = false) {
+        if fromEscape {
+            let window = NSApp.keyWindow, responder = window?.firstResponder
+            let action = RepositoryEscape(overlay: window?.attachedSheet != nil, terminal: responder is ShellView, typing: responder is NSText,
+                                          repositoryScreen: destination == .repository, fileInspect: fileInspect != nil,
+                                          diff: diffSource != nil, changes: area == .changes)
+            guard action == .showGraph else { return }
+        }
+        guard area == .changes else { return }
+        showArea(.history)
+    }
+
     func select(_ sel: Selection?, restoringContext: Bool = false) {
         syncWorkspaceSelection(sel)
         let nextArea: Area = sel == .wip ? .changes : .history

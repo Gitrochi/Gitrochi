@@ -11,15 +11,6 @@ import { agentHooksJson } from "../lib/hooks";
 /** 세션 상태: Claude Code 는 훅 이벤트로 자세히, 다른 에이전트는 실행 중/종료만 */
 export type AgentStatus = "starting" | "working" | "permission" | "waiting" | "running" | "ended";
 
-export const agentStatusTitle: Record<AgentStatus, string> = {
-  starting: t("Waiting for input"),
-  working: t("Working"),
-  permission: t("Needs permission"),
-  waiting: t("Waiting for input"),
-  running: t("Running"),
-  ended: t("Ended"),
-};
-
 export const isActiveStatus = (s: AgentStatus) => s === "working" || s === "permission" || s === "running";
 
 /** 아래 터미널에서 띄울 수 있는 코딩 에이전트 */

@@ -6,16 +6,21 @@ import Observation
 enum AgentStatus: String {
     case starting, working, permission, waiting, running, ended
 
+    /// The state in words, the terminal tab's own ("Running" while the agent works)
     var title: String {
-        switch self {
-        case .starting: return String(localized: "Waiting for input")
-        case .working: return String(localized: "Working")
+        switch AgentSessionState.word(rawValue) {
+        case .running: return String(localized: "Running")
         case .permission: return String(localized: "Needs permission")
         case .waiting: return String(localized: "Waiting for input")
-        case .running: return String(localized: "Running")
+        case .idle: return String(localized: "Idle")
         case .ended: return String(localized: "Ended")
         }
     }
+
+    /// The mark in the session row's 12pt slot, the terminal tab's own
+    var mark: TerminalTabMark { AgentSessionState.mark(rawValue) }
+    /// Waiting for the user: listed under Needs you
+    var needsUser: Bool { AgentSessionState.needsUser(rawValue) }
 
     var isActive: Bool { self == .working || self == .permission || self == .running }
 }

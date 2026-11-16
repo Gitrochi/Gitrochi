@@ -1,4 +1,4 @@
-import { destinationEnabled, destinationForDigit } from "@/entities/git";
+import { destinationEnabled, destinationForDigit, repositoryEscape } from "@/entities/git";
 import { workspace } from "@/entities/workspace";
 import { isMac, settings } from "@/shared/config";
 
@@ -18,6 +18,22 @@ export function handleShortcut(e: KeyboardEvent, openSettings: () => void) {
     void f();
   };
 
+  if (e.key === "Escape" && !mod && !e.ctrlKey && !e.altKey && !e.shiftKey) {
+    // the repository screen's one Escape order; the dialog check above already left dialogs alone
+    const action = repositoryEscape({
+      overlay: !!document.querySelector(".menu, .gitch-popover, .account-quick-popover"),
+      terminal: !!target?.closest?.(".xterm"),
+      typing: inText || !!target?.isContentEditable,
+      repositoryScreen: s.destination === "repository",
+      fileInspect: !!s.fileInspect,
+      diff: !!s.diffSource,
+      changes: s.changesShown,
+    });
+    if (action === "closeFileInspect") return run(() => s.closeFileInspect());
+    if (action === "closeDiff") return run(() => s.closeDiff());
+    if (action === "showGraph") return run(() => s.hideChanges());
+    return;
+  }
   if (e.ctrlKey && e.code === "Backquote") return run(() => (s.path ? (e.shiftKey ? s.newTerminal() : s.toggleTerminal()) : undefined));
   if (e.ctrlKey && e.key === "Tab") return run(() => workspace.selectRelative(e.shiftKey ? -1 : 1));
   if (e.key === "F5" || (mod && !e.shiftKey && !e.altKey && k === "r")) return run(() => s.reload());

@@ -444,7 +444,6 @@
 "Clear search (Esc)" = "Vymazat hledání (Esc)";
 "Clears the path you chose and finds it automatically again" = "Zruší zvolenou cestu a znovu ji vyhledá automaticky";
 "Clears the staging area, then stages and commits each group from the top." = "Vyprázdní oblast připravených změn a pak postupně shora připraví a commitne každou skupinu.";
-"Click to go to the Terminal window" = "Kliknutím přejdete do okna Terminálu";
 "Click to see the diff in the center" = "Kliknutím zobrazíte rozdíly uprostřed";
 "Click to select this line (Shift: range) — you can stage only the selected lines" = "Kliknutím vyberete tento řádek (Shift: rozsah) — připravit k commitu můžete jen vybrané řádky";
 "Clone" = "Klonovat";
@@ -558,7 +557,6 @@
 "Delete tag…" = "Smazat tag…";
 "Delete this file" = "Smazat tento soubor";
 "Deleted" = "Smazáno";
-"Deleted file" = "Smazaný soubor";
 "Deletes the %@ '%@' that was created." = "Nově vytvořená položka se smaže: %1$@ '%2$@'.";
 "Delete…" = "Smazat…";
 "Deleting branch…" = "Mazání větve…";
@@ -608,7 +606,6 @@
 "End session…" = "Ukončit relaci…";
 "End the %@ session?" = "Ukončit relaci %1$@?";
 "Ended" = "Ukončeno";
-"Ended sessions" = "Ukončené relace";
 "Enter an administrator password to update Gitrochi in %@." = "Zadejte heslo správce, abyste mohli aktualizovat Gitrochi v %1$@.";
 "Enter the server address." = "Zadejte adresu serveru.";
 "Enter your %@ key in Settings > AI." = "Zadejte svůj klíč %1$@ v Nastavení > AI.";
@@ -732,7 +729,6 @@
 "Mixed — keep changes in the working tree" = "Mixed — ponechat změny v pracovním stromu";
 "Model or address not found (404). Check the model name. %@" = "Model nebo adresa nebyly nalezeny (404). Zkontrolujte název modelu. %1$@";
 "Modified" = "Změněno";
-"Modified files" = "Změněné soubory";
 "Modified files appear here." = "Zde se zobrazí změněné soubory.";
 "Module dependencies" = "Závislosti modulů";
 "Move Gitrochi to the Applications folder?" = "Přesunout Gitrochi do složky Aplikace?";
@@ -956,7 +952,6 @@
 "Self-hosted GitLab (%@)" = "Vlastní GitLab (%1$@)";
 "Server address" = "Adresa serveru";
 "Server error %lld: %@" = "Chyba serveru %1$lld: %2$@";
-"Sessions in other folders" = "Relace v jiných složkách";
 "Set manually" = "Nastaveno ručně";
 "Set up SSH key in Terminal…" = "Nastavit klíč SSH v Terminálu…";
 "Shell command" = "Příkaz shellu";
@@ -999,12 +994,9 @@
 "Start" = "Spustit";
 "Start %@ in this worktree now" = "Spustit %1$@ v tomto worktree hned";
 "Start agent session" = "Spustit relaci agenta";
-"Start agent session — choose Claude Code, Codex or Gemini CLI, a worktree to work in, and a task" = "Spustit relaci agenta — vyberte Claude Code, Codex nebo Gemini CLI, worktree, ve kterém se bude pracovat, a úkol";
 "Start agent session…" = "Spustit relaci agenta…";
-"Start an agent session in this worktree" = "Spustit relaci agenta v tomto worktree";
 "Start cleanup" = "Zahájit uspořádání";
 "Start point" = "Výchozí bod";
-"Start session" = "Spustit relaci";
 "Start with the reason for the change" = "Začni důvodem změny";
 "Stash changes" = "Uložit změny do stashe";
 "Stashes %lld" = "Stashe %1$lld";
@@ -1136,7 +1128,6 @@
 "When importing the gh login as a GitHub account" = "Při importu přihlášení z gh jako účtu GitHub";
 "Where to work" = "Kde pracovat";
 "Whole file" = "Celý soubor";
-"Working" = "Pracuje";
 "Working directory is clean" = "Pracovní adresář je čistý";
 "Working tree" = "Pracovní strom";
 "Worktree in a temporary folder — it may break when the folder is deleted on restart" = "Worktree v dočasné složce — po restartu se může poškodit, pokud se složka smaže";
@@ -1199,8 +1190,6 @@
 "Write" = "Psát";
 "Preview" = "Náhled";
 "Nothing to preview" = "Není co zobrazit";
-"Sessions started here run in tabs of the terminal below, and their status is shown here. Click a session to go to its terminal." = "Relace spuštěné zde běží na kartách terminálu dole a jejich stav se zobrazuje zde. Kliknutím na relaci přejdete do jejího terminálu.";
-"Click to go to that terminal" = "Kliknutím přejdete do daného terminálu";
 "Go to terminal" = "Přejít do terminálu";
 "Runs in a new tab of the terminal below; its status is shown in the Agents tab." = "Běží na nové kartě terminálu dole; stav se zobrazuje na kartě Agenti.";
 "The process exited" = "Proces skončil";
@@ -1333,9 +1322,7 @@
 "Clear filter" = "Zrušit filtr";
 "Close search (Esc)" = "Zavřít hledání (Esc)";
 "Close search" = "Zavřít hledání";
-"Running in other apps" = "Běží v jiných aplikacích";
 "Unknown app" = "Neznámá aplikace";
-"Click to bring %@ to the front" = "Kliknutím přenesete %1$@ do popředí";
 "Bring %@ to the front" = "Přenést %1$@ do popředí";
 "Copy folder path" = "Kopírovat cestu ke složce";
 "Couldn't open %@: it isn't inside a Git repository." = "%1$@ nelze otevřít: není uvnitř repozitáře Git.";
@@ -2254,3 +2241,11 @@
 "Saved sign-in can't be read" = "Uložené přihlášení nelze přečíst";
 "Couldn't use the saved sign-in" = "Uložené přihlášení se nepodařilo použít";
 "Refresh account status" = "Obnovit stav účtu";
+"Needs you" = "Čeká na vás";
+"Respond" = "Odpovědět";
+"Elsewhere" = "Jinde";
+"More agent actions" = "Další akce agentů";
+"Stage line" = "Připravit řádek";
+"Unstage line" = "Odebrat řádek z přípravy";
+"Hide changes and show the graph" = "Skrýt změny a zobrazit graf";
+"Sessions started here run in the terminal tabs below; click one to go to its terminal." = "Relace spuštěné zde běží na kartách terminálu dole; kliknutím na relaci přejdete do jejího terminálu.";

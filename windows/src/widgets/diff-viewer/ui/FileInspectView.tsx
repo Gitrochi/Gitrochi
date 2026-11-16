@@ -1,7 +1,7 @@
 import { FileArchive, History, ScanText, TriangleAlert } from "lucide-react";
 import { FolderOpen } from "@/shared/icons";
 import { ChevronLeft, Clock } from "@/shared/icons";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { avatars } from "@/entities/avatar";
 import { type BlameLine, isUncommittedLine, short } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
@@ -18,20 +18,16 @@ export function FileInspectView({ store }: { store: RepoStore }) {
   useObserve(store);
   useObserve(avatars);
   const f = store.fileInspect!;
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !document.querySelector(".modal-backdrop") && !(e.target as HTMLElement)?.closest?.(".xterm")) store.closeFileInspect();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [store]);
   const subtitle = f.mode === "history" ? t("{0} · {1} commits", f.path, store.fileHistory.length) : `${f.path} · ${f.rev ? t("As of commit {0}", short(f.rev)) : t("As of the working tree")}`;
 
   return (
     <div className="col grow" style={{ minHeight: 0 }}>
       <div className="diff-head">
-        <Button size="small" onClick={() => store.closeFileInspect()} tip={t("Back to graph (Esc)")}>
-          <ChevronLeft size={14} /> {" "}{t("Graph")}</Button>
+        <button type="button" className="diff-back status-tone" aria-keyshortcuts="Escape" data-tip={t("Back to graph (Esc)")} onClick={() => store.closeFileInspect()}>
+          <ChevronLeft size={12} />
+          {t("Graph")}
+        </button>
+        <span className="diff-back-sep" aria-hidden="true" />
         <span className="muted" style={{ display: "inline-flex" }}>
           {f.mode === "history" ? <History size={16} /> : <ScanText size={16} />}
         </span>

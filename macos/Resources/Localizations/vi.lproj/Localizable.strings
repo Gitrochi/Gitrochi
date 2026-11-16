@@ -443,7 +443,6 @@
 "Clear search (Esc)" = "Xóa tìm kiếm (Esc)";
 "Clears the path you chose and finds it automatically again" = "Xóa đường dẫn bạn đã chọn và tự động tìm lại";
 "Clears the staging area, then stages and commits each group from the top." = "Làm trống vùng staging, rồi stage và commit từng nhóm từ trên xuống.";
-"Click to go to the Terminal window" = "Nhấp để chuyển đến cửa sổ Terminal";
 "Click to see the diff in the center" = "Nhấp để xem diff ở khung giữa";
 "Click to select this line (Shift: range) — you can stage only the selected lines" = "Nhấp để chọn dòng này (Shift: chọn khoảng) — bạn có thể chỉ stage các dòng đã chọn";
 "Clone repository" = "Clone kho lưu trữ";
@@ -556,7 +555,6 @@
 "Delete tag…" = "Xóa tag…";
 "Delete this file" = "Xóa tệp này";
 "Deleted" = "Đã xóa";
-"Deleted file" = "Tệp đã xóa";
 "Deletes the %@ '%@' that was created." = "Xóa %1$@ '%2$@' đã được tạo.";
 "Delete…" = "Xóa…";
 "Deleting branch…" = "Đang xóa nhánh…";
@@ -601,7 +599,6 @@
 "End session…" = "Kết thúc phiên…";
 "End the %@ session?" = "Kết thúc phiên %1$@?";
 "Ended" = "Đã kết thúc";
-"Ended sessions" = "Phiên đã kết thúc";
 "Enter an administrator password to update Gitrochi in %@." = "Nhập mật khẩu quản trị viên để cập nhật Gitrochi trong %1$@.";
 "Enter the server address." = "Hãy nhập địa chỉ máy chủ.";
 "Enter your %@ key in Settings > AI." = "Hãy nhập khóa %1$@ của bạn trong Cài đặt > AI.";
@@ -723,7 +720,6 @@
 "Model" = "Mô hình";
 "Model or address not found (404). Check the model name. %@" = "Không tìm thấy mô hình hoặc địa chỉ (404). Hãy kiểm tra tên mô hình. %1$@";
 "Modified" = "Đã sửa đổi";
-"Modified files" = "Tệp đã sửa đổi";
 "Modified files appear here." = "Các tệp đã sửa đổi sẽ hiện ở đây.";
 "Module dependencies" = "Phụ thuộc giữa các mô-đun";
 "Move Gitrochi to the Applications folder?" = "Chuyển Gitrochi vào thư mục Ứng dụng?";
@@ -943,7 +939,6 @@
 "Self-hosted GitLab (%@)" = "GitLab tự host (%1$@)";
 "Server address" = "Địa chỉ máy chủ";
 "Server error %lld: %@" = "Lỗi máy chủ %1$lld: %2$@";
-"Sessions in other folders" = "Phiên ở thư mục khác";
 "Set manually" = "Đặt thủ công";
 "Set up SSH key in Terminal…" = "Thiết lập khóa SSH trong Terminal…";
 "Shell command" = "Lệnh shell";
@@ -984,12 +979,9 @@
 "Start" = "Bắt đầu";
 "Start %@ in this worktree now" = "Khởi chạy %1$@ trong worktree này ngay";
 "Start agent session" = "Bắt đầu phiên agent";
-"Start agent session — choose Claude Code, Codex or Gemini CLI, a worktree to work in, and a task" = "Bắt đầu phiên agent — chọn Claude Code, Codex hoặc Gemini CLI, worktree để làm việc và nhiệm vụ";
 "Start agent session…" = "Bắt đầu phiên agent…";
-"Start an agent session in this worktree" = "Bắt đầu phiên agent trong worktree này";
 "Start cleanup" = "Bắt đầu dọn dẹp";
 "Start point" = "Điểm bắt đầu";
-"Start session" = "Bắt đầu phiên";
 "Start with the reason for the change" = "Bắt đầu bằng lý do thay đổi";
 "Stash changes" = "Stash thay đổi";
 "Stashes %lld" = "Stash %1$lld";
@@ -1118,7 +1110,6 @@
 "When importing the gh login as a GitHub account" = "Khi nhập thông tin đăng nhập gh làm tài khoản GitHub";
 "Where to work" = "Nơi làm việc";
 "Whole file" = "Cả tệp";
-"Working" = "Đang làm việc";
 "Working directory is clean" = "Thư mục làm việc không có thay đổi";
 "Worktree in a temporary folder — it may break when the folder is deleted on restart" = "Worktree trong thư mục tạm — có thể bị hỏng khi thư mục bị xóa lúc khởi động lại";
 "Worktree whose folder is gone — remove it with 'Clean up'" = "Worktree có thư mục không còn tồn tại — hãy gỡ bỏ bằng 'Dọn dẹp'";
@@ -1177,8 +1168,6 @@
 "Write" = "Viết";
 "Preview" = "Xem trước";
 "Nothing to preview" = "Không có gì để xem trước";
-"Sessions started here run in tabs of the terminal below, and their status is shown here. Click a session to go to its terminal." = "Các phiên bắt đầu từ đây chạy trong các tab của terminal bên dưới, và trạng thái được hiển thị tại đây. Nhấp vào một phiên để chuyển đến terminal của phiên đó.";
-"Click to go to that terminal" = "Nhấp để chuyển đến terminal đó";
 "Go to terminal" = "Chuyển đến terminal";
 "Runs in a new tab of the terminal below; its status is shown in the Agents tab." = "Chạy trong tab mới của terminal bên dưới; trạng thái hiển thị trong tab Agent.";
 "The process exited" = "Tiến trình đã thoát";
@@ -1311,9 +1300,7 @@
 "Clear filter" = "Xóa bộ lọc";
 "Close search (Esc)" = "Đóng tìm kiếm (Esc)";
 "Close search" = "Đóng tìm kiếm";
-"Running in other apps" = "Đang chạy trong ứng dụng khác";
 "Unknown app" = "Ứng dụng không xác định";
-"Click to bring %@ to the front" = "Nhấp để đưa %1$@ lên trước";
 "Bring %@ to the front" = "Đưa %1$@ lên trước";
 "Copy folder path" = "Sao chép đường dẫn thư mục";
 "Couldn't open %@: it isn't inside a Git repository." = "Không mở được %1$@: không nằm trong kho Git nào.";
@@ -2234,3 +2221,11 @@
 "Saved sign-in can't be read" = "Không đọc được phiên đăng nhập đã lưu";
 "Couldn't use the saved sign-in" = "Không thể dùng phiên đăng nhập đã lưu";
 "Refresh account status" = "Làm mới trạng thái tài khoản";
+"Needs you" = "Đang chờ bạn";
+"Respond" = "Phản hồi";
+"Elsewhere" = "Nơi khác";
+"More agent actions" = "Thao tác khác với agent";
+"Stage line" = "Stage dòng";
+"Unstage line" = "Bỏ stage dòng";
+"Hide changes and show the graph" = "Ẩn thay đổi và hiện đồ thị";
+"Sessions started here run in the terminal tabs below; click one to go to its terminal." = "Các phiên bắt đầu từ đây chạy trong các tab terminal bên dưới; nhấp vào một phiên để chuyển đến terminal của phiên đó.";

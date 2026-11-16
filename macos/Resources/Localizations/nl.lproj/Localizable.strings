@@ -437,7 +437,6 @@
 "Clear search (Esc)" = "Zoekopdracht wissen (Esc)";
 "Clears the path you chose and finds it automatically again" = "Wist het gekozen pad en zoekt het weer automatisch";
 "Clears the staging area, then stages and commits each group from the top." = "Maakt de staging area leeg en voert daarna voor elke groep, van boven naar beneden, een stage en commit uit.";
-"Click to go to the Terminal window" = "Klik om naar het Terminal-venster te gaan";
 "Click to see the diff in the center" = "Klik om de diff in het midden te zien";
 "Click to select this line (Shift: range) — you can stage only the selected lines" = "Klik om deze regel te selecteren (Shift: bereik) — je kunt alleen de geselecteerde regels stagen";
 "Clone" = "Klonen";
@@ -550,7 +549,6 @@
 "Delete tag…" = "Tag verwijderen…";
 "Delete this file" = "Dit bestand verwijderen";
 "Deleted" = "Verwijderd";
-"Deleted file" = "Verwijderd bestand";
 "Deletes the %@ '%@' that was created." = "Verwijdert de aangemaakte %1$@ '%2$@'.";
 "Delete…" = "Verwijderen…";
 "Deleting branch…" = "Branch wordt verwijderd…";
@@ -597,7 +595,6 @@
 "End session…" = "Sessie beëindigen…";
 "End the %@ session?" = "Sessie van %1$@ beëindigen?";
 "Ended" = "Beëindigd";
-"Ended sessions" = "Beëindigde sessies";
 "Enter an administrator password to update Gitrochi in %@." = "Voer een beheerderswachtwoord in om Gitrochi in %1$@ bij te werken.";
 "Enter the server address." = "Voer het serveradres in.";
 "Enter your %@ key in Settings > AI." = "Voer je sleutel voor %1$@ in bij Instellingen > AI.";
@@ -719,7 +716,6 @@
 "Mixed — keep changes in the working tree" = "Mixed — wijzigingen in de werkmap behouden";
 "Model or address not found (404). Check the model name. %@" = "Model of adres niet gevonden (404). Controleer de modelnaam. %1$@";
 "Modified" = "Gewijzigd";
-"Modified files" = "Gewijzigde bestanden";
 "Modified files appear here." = "Gewijzigde bestanden verschijnen hier.";
 "Module dependencies" = "Moduleafhankelijkheden";
 "Move Gitrochi to the Applications folder?" = "Gitrochi naar de map Apps verplaatsen?";
@@ -937,7 +933,6 @@
 "Select a commit in the graph." = "Selecteer een commit in de graaf.";
 "Server address" = "Serveradres";
 "Server error %lld: %@" = "Serverfout %1$lld: %2$@";
-"Sessions in other folders" = "Sessies in andere mappen";
 "Set manually" = "Handmatig ingesteld";
 "Set up SSH key in Terminal…" = "SSH-sleutel instellen in Terminal…";
 "Shell command" = "Shell-opdracht";
@@ -980,12 +975,9 @@
 "Start" = "Starten";
 "Start %@ in this worktree now" = "%1$@ nu in deze worktree starten";
 "Start agent session" = "Agentsessie starten";
-"Start agent session — choose Claude Code, Codex or Gemini CLI, a worktree to work in, and a task" = "Agentsessie starten — kies Claude Code, Codex of Gemini CLI, een worktree om in te werken en een taak";
 "Start agent session…" = "Agentsessie starten…";
-"Start an agent session in this worktree" = "Een agentsessie starten in deze worktree";
 "Start cleanup" = "Opschonen starten";
 "Start point" = "Startpunt";
-"Start session" = "Sessie starten";
 "Start with the reason for the change" = "Begin met de reden van de wijziging";
 "Stash changes" = "Wijzigingen stashen";
 "Stashing…" = "Bezig met stashen…";
@@ -1110,7 +1102,6 @@
 "When importing the gh login as a GitHub account" = "Bij het importeren van de gh-login als GitHub-account";
 "Where to work" = "Waar te werken";
 "Whole file" = "Hele bestand";
-"Working" = "Bezig";
 "Working directory is clean" = "Werkmap is schoon";
 "Working tree" = "Werkmap";
 "Worktree in a temporary folder — it may break when the folder is deleted on restart" = "Worktree in een tijdelijke map — kan stukgaan als de map bij een herstart wordt verwijderd";
@@ -1167,8 +1158,6 @@
 "Write" = "Schrijven";
 "Preview" = "Voorbeeld";
 "Nothing to preview" = "Niets om te bekijken";
-"Sessions started here run in tabs of the terminal below, and their status is shown here. Click a session to go to its terminal." = "Sessies die hier worden gestart, draaien in tabbladen van de terminal onderaan, en hun status wordt hier getoond. Klik op een sessie om naar de bijbehorende terminal te gaan.";
-"Click to go to that terminal" = "Klik om naar die terminal te gaan";
 "Go to terminal" = "Naar terminal";
 "Runs in a new tab of the terminal below; its status is shown in the Agents tab." = "Draait in een nieuw tabblad van de terminal onderaan; de status staat op het tabblad Agents.";
 "The process exited" = "Het proces is beëindigd";
@@ -1301,9 +1290,7 @@
 "Clear filter" = "Filter wissen";
 "Close search (Esc)" = "Zoeken sluiten (Esc)";
 "Close search" = "Zoeken sluiten";
-"Running in other apps" = "Actief in andere apps";
 "Unknown app" = "Onbekende app";
-"Click to bring %@ to the front" = "Klik om %1$@ naar voren te halen";
 "Bring %@ to the front" = "%1$@ naar voren halen";
 "Copy folder path" = "Mappad kopiëren";
 "Couldn't open %@: it isn't inside a Git repository." = "Kan %1$@ niet openen: het staat niet in een Git-repository.";
@@ -2223,3 +2210,11 @@
 "Saved sign-in can't be read" = "Opgeslagen aanmelding kan niet worden gelezen";
 "Couldn't use the saved sign-in" = "Opgeslagen aanmelding kon niet worden gebruikt";
 "Refresh account status" = "Accountstatus vernieuwen";
+"Needs you" = "Wacht op jou";
+"Respond" = "Reageren";
+"Elsewhere" = "Elders";
+"More agent actions" = "Meer agentacties";
+"Stage line" = "Regel stagen";
+"Unstage line" = "Regel unstagen";
+"Hide changes and show the graph" = "Wijzigingen verbergen en graaf tonen";
+"Sessions started here run in the terminal tabs below; click one to go to its terminal." = "Sessies die hier worden gestart, draaien in de terminaltabbladen onderaan; klik op een sessie om naar de bijbehorende terminal te gaan.";

@@ -410,18 +410,21 @@ struct SidebarSection<Header: View, Content: View>: View {
     let id: String
     let content: Content
     let header: Header
+    /// The caller keeps the state, for a section that starts folded; otherwise the folded sections are remembered by id
+    let ownOpen: Binding<Bool>?
     @AppStorage(SidebarSections.key) private var collapsed = ""
     /// In the rail's flyout the section is always open and does not fold
     @Environment(\.sidebarFlyout) private var flyout
 
-    init(_ id: String, @ViewBuilder content: () -> Content, @ViewBuilder header: () -> Header) {
+    init(_ id: String, open: Binding<Bool>? = nil, @ViewBuilder content: () -> Content, @ViewBuilder header: () -> Header) {
         self.id = id
+        self.ownOpen = open
         self.content = content()
         self.header = header()
     }
 
     var body: some View {
-        let open = flyout ? .constant(true) : SidebarSections.binding($collapsed, id)
+        let open = flyout ? .constant(true) : ownOpen ?? SidebarSections.binding($collapsed, id)
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 6) {
                 if !flyout {
