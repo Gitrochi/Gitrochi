@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { CornerDownLeft, Equal, FileArchive, TriangleAlert } from "lucide-react";
-import { ChevronDown, ChevronUp, MoreHorizontal, Pilcrow } from "@/shared/icons";
 import { diffSides, parseDiffAsync, splitRows, StatusBadge, type ChangeKind, type DiffDocument, type DiffLine } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
 import { describe, type ExternalEditor } from "@/shared/platform";
-import { Empty, IconButton, Segmented, showMenuBelow, Spinner } from "@/shared/ui";
-import { comparisonChangeArgs, diffGaps, fileAtCommitArgs, fileChangeArgs, shortFolder, sourceLines, workingChangeArgs, type DiffGap } from "../lib/code-history";
+import { DiffHeader, type DiffFilePosition, Empty, Spinner } from "@/shared/ui";
+import { comparisonChangeArgs, diffGaps, fileAtCommitArgs, fileChangeArgs, sourceLines, workingChangeArgs, type DiffGap } from "../lib/code-history";
 import type { RepositoryEditorSource } from "./CodeExternalEditors";
 import "./repository-code.css";
 
@@ -33,7 +32,7 @@ interface Props {
 /** Where the open file sits among a list of files, and the step to the one before or after it. macOS: CodeFilePosition */
 /** The external editors and the working-tree check behind "Open in editor". macOS: RepositoryCodeChangesView.opensInEditor */
 export interface CodeWorkingFileEditors { source: RepositoryEditorSource; exists: (repo: string, path: string) => Promise<boolean> }
-export interface CodeFilePosition { index: number; count: number; step: (by: number) => void }
+export type CodeFilePosition = DiffFilePosition;
 interface Cell { kind: DiffLine["kind"]; text: string; oldNo: number | null; newNo: number | null; changes?: Array<[number, number]> }
 type Row = { key: string } & ({ fold: DiffGap } | { hunk: DiffLine } | { note: DiffLine } | { line: Cell } | { pair: [Cell | null, Cell | null] });
 // a file's change in one commit is short; a generated file must not fill the page
@@ -112,7 +111,6 @@ export function CodeChangesView({ store, repo, path, commit, base = null, oldPat
     return result;
   }, [doc, source, expanded, halves]);
 
-  const name = path.split("/").at(-1)!, folder = path.split("/").slice(0, -1).join("/");
   const kind: ChangeKind = doc?.info?.newFile ? "added" : doc?.info?.deletedFile ? "deleted" : doc?.info?.renameFrom && doc.info.renameTo ? "renamed" : "modified";
   const code = (cell: Cell): ReactNode => {
     const text = cell.text || " ";
@@ -134,21 +132,15 @@ export function CodeChangesView({ store, repo, path, commit, base = null, oldPat
     : <div className="code-diff-line none"/>;
   const scope = commit && base ? t("Changes from {0} to {1}", base.slice(0, 7), commit.slice(0, 7)) : commit ? t("Changes in {0} against its parent", commit.slice(0, 7)) : t("Uncommitted changes against HEAD");
   return <section className="code-changes" aria-label={scope}>
-    <header className="code-changes-head">
-      {doc && !doc.error && <StatusBadge kind={kind}/>}
-      <strong>{name}</strong>
-      {shortFolder(folder) && <span className="code-changes-folder" title={folder}>{shortFolder(folder)}</span>}
-      <span className="spacer"/>
-      {position && <span className="code-changes-nav">
-        <span className="code-changes-count mono">{position.index + 1} / {position.count}</span>
-        <IconButton icon={<ChevronUp size={13}/>} disabled={position.index <= 0} aria-label={t("Previous file (K)")} aria-keyshortcuts="K" tip={t("Previous file (K)")} onClick={() => position.step(-1)}/>
-        <IconButton icon={<ChevronDown size={13}/>} disabled={position.index >= position.count - 1} aria-label={t("Next file (J)")} aria-keyshortcuts="J" tip={t("Next file (J)")} onClick={() => position.step(1)}/>
-      </span>}
-      <Segmented value={split ? "split" : "unified"} options={[{ value: "unified", label: t("Unified") }, { value: "split", label: t("Split") }]} onChange={(value) => store.setDiffSplit(value === "split")}/>
-      <IconButton className={ignoreWhitespace ? "on" : ""} icon={<Pilcrow size={14}/>} aria-label={t("Hide whitespace")} aria-pressed={ignoreWhitespace} tip={t("Hide whitespace")} onClick={() => { store.setDiffIgnoreWhitespace(!ignoreWhitespace); store.changed(); }}/>
-      <button type="button" className="code-text-button" disabled={!doc || doc.isBinary} data-tip={t("Ask questions about the selected changes")} onClick={() => { if (doc) void store.openChangeQuestion(false, { scope: commit && !base ? `${t("Commit")} ${commit}` : scope, path, doc }); }}>{t("Ask AI…")}</button>
-      <IconButton icon={<MoreHorizontal size={14}/>} aria-label={t("More file actions")} aria-haspopup="menu" tip={t("More file actions")} onClick={(event) => showMenuBelow(event.currentTarget, [
-        { label: t("Wrap lines"), checked: wrap, onClick: () => setWrap(!wrap) },
+    <DiffHeader
+      badge={doc && !doc.error ? <StatusBadge kind={kind}/> : undefined}
+      path={path}
+      position={position}
+      layout={{ split, set: (value) => store.setDiffSplit(value) }}
+      whitespace={{ hidden: ignoreWhitespace, set: (value) => { store.setDiffIgnoreWhitespace(value); store.changed(); } }}
+      ask={{ disabled: !doc || doc.isBinary, run: () => { if (doc) void store.openChangeQuestion(false, { scope: commit && !base ? `${t("Commit")} ${commit}` : scope, path, doc }); } }}
+      more={() => [
+        { label: t("Wrap long lines"), checked: wrap, onClick: () => setWrap(!wrap) },
         ...(commit && !base ? [{ label: t("Show commit"), onClick: () => store.reveal(commit) }] : []),
         { label: t("Copy path"), onClick: () => store.copy(path) },
         // the working tree's file, not the compared version; a file that is not there cannot open
@@ -156,8 +148,8 @@ export function CodeChangesView({ store, repo, path, commit, base = null, oldPat
           tip: local === false ? t("The local file is missing or is not a regular file.") : applications && !applications.some((editor) => editor.available) ? t("This application is not installed.") : t("External editors open the current local file, not the revision preview."),
           submenu: (applications ?? []).map((editor) => ({ label: editor.id === "system" ? t("System default") : editor.name, disabled: !editor.available, tip: editor.available ? undefined : t("Not installed"),
             onClick: () => { editors.source.open(repo, editor.id, path).catch((cause) => { store.errorMessage = describe(cause); store.changed(); }); } })) }] : []),
-      ])}/>
-    </header>
+      ]}
+    />
     {!doc ? <div className="code-loading" role="status"><Spinner/></div>
       : doc.error ? <Empty icon={<TriangleAlert size={24}/>} title={t("Couldn't read the changes")} detail={doc.error}/>
       : doc.isBinary ? <Empty icon={<FileArchive size={24}/>} title={t("Binary file")}/>

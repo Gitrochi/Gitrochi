@@ -35,6 +35,7 @@ import { environmentPathsSelfTest } from "./lib/environment-paths-selftest";
 import { navigationSelfTest } from "./lib/navigation-selftest";
 import { compactNavigationSelfTest } from "./lib/compact-navigation-selftest";
 import { inspectorLayoutSelfTest } from "./lib/inspector-layout-selftest";
+import { diffHeaderSelfTest } from "./lib/diff-header-selftest";
 import { inspectorVisibilitySelfTest } from "./lib/inspector-visibility-selftest";
 import { terminalPanelSelfTest } from "./lib/terminal-panel-selftest";
 import { changesPerformanceSelfTest } from "./lib/changes-performance-selftest";
@@ -292,6 +293,7 @@ export async function runSelfTest(): Promise<boolean> {
   await step("왼쪽 페이지 목록·빈 저장소·GitLab 이름·아이콘 레일", navigationSelfTest);
   await step("저장소 화면에서 접히는 페이지 목록과 세 열 배치·전체 너비 페이지", compactNavigationSelfTest);
   await step("Flat commit inspector: 44 px header with copy and the commit menu, action buttons and long names in a narrow panel", inspectorLayoutSelfTest);
+  await step("Diff header and list/tree toggle: one 44 px row that folds in order down to 420 px, the 28 px segmented control and its icon form", diffHeaderSelfTest);
   await step("Close and reopen the right panel with retained width and view state", inspectorVisibilitySelfTest);
   await step("Terminal panel docked under the centre column: status marks by shape, narrow folding and terminals kept through layout changes", terminalPanelSelfTest);
   await step("변경 1000개의 빠른 진입·마지막 파일 선택·트리 접기", changesPerformanceSelfTest);
@@ -759,8 +761,27 @@ export async function runSelfTest(): Promise<boolean> {
       s.openDiff({ kind: "working", change: change() });
       const shown = await until(() => on() && !!toggle()!.dataset.tip?.startsWith(t("Hide changes and show the graph")) && !!toggle()!.dataset.tip?.endsWith("|Esc"), 3000);
       // the diff header starts with "‹ Graph", then a hairline
-      const back = () => document.querySelector<HTMLButtonElement>(".diff-head > .diff-back");
+      const back = () => document.querySelector<HTMLButtonElement>(".diff-header-row > .diff-back");
       const header = await until(() => back()?.textContent?.trim() === t("Graph") && back()?.nextElementSibling?.className === "diff-back-sep" && back()?.getAttribute("aria-keyshortcuts") === "Escape", 3000);
+      // one 44px row: the position among the working files when there is room, Unified | Split as the 28px
+      // control, and More holding what the row does not draw (staging first, discarding last)
+      const head = document.querySelector<HTMLElement>(".diff-header");
+      const layout = head?.querySelector<HTMLElement>(`.segmented[aria-label="${t("Diff layout")}"]`);
+      const count = head?.querySelector(".diff-header-count")?.textContent;
+      const more = head?.querySelector<HTMLButtonElement>(`[aria-label="${t("More file actions")}"]`);
+      more?.click();
+      const menuLabels = () => [...document.querySelectorAll(".menu .menu-item .label")].map((item) => item.textContent);
+      const menuShown = await until(() => menuLabels().includes(t("Stage")), 2000);
+      const labels = menuLabels();
+      // a click anywhere puts the menu away; Escape here would be the screen's
+      window.dispatchEvent(new MouseEvent("mousedown"));
+      const menuGone = await until(() => !document.querySelector(".menu"), 2000);
+      const row = !!head && !!layout && Math.round(head.getBoundingClientRect().height) === 44 && Math.round(layout.getBoundingClientRect().height) === 28
+        && [...layout.querySelectorAll("button")].map((item) => item.textContent).join("|") === `${t("Unified")}|${t("Split")}`
+        && (count == null || new RegExp(`^\\d+ / ${s.status.conflicted.length + s.status.unstaged.length + s.status.staged.length}$`).test(count))
+        && !head.querySelector(".btn") && head.scrollWidth <= head.clientWidth
+        && menuShown && menuGone && labels[0] === t("Stage") && labels.at(-1) === t("Discard changes…")
+        && [t("File history"), t("Show blame"), t("Trace lines…"), t("Show in Explorer"), t("Copy path")].every((label) => labels.includes(label));
       // the stage button's column: 24px between the line numbers and the sign, the button a 24px target inside it
       if (!await until(() => !!s.diff && s.canEditDiffLines && !!document.querySelector(".diff-line.added .diff-stage-line"), 5000)) return [false, `the per-line stage button did not show (editable=${s.canEditDiffLines})`];
       const added = [...document.querySelectorAll<HTMLElement>(".diff-line.added")].find((line) => line.querySelector(".txt")?.textContent === "sixteen")!;
@@ -790,8 +811,8 @@ export async function runSelfTest(): Promise<boolean> {
       await until(() => !!back(), 3000);
       back()?.click();
       const clicked = await until(() => !s.diffSource && !!document.querySelector(".commit-row"), 2000);
-      const ok = off && shown && header && column && reserved && staged && closed && kept && graph && clicked;
-      return [ok, `off=${off} on=${shown} header=${header} column=${column} gutter=${Math.round(gutter.width)} reserved=${reserved} staged=${stagedLines} diffFirst=${closed} textField=${kept} graph=${graph} button=${clicked}`];
+      const ok = off && shown && header && row && column && reserved && staged && closed && kept && graph && clicked;
+      return [ok, `off=${off} on=${shown} header=${header} row=${row} menu=${labels.join("/")} column=${column} gutter=${Math.round(gutter.width)} reserved=${reserved} staged=${stagedLines} diffFirst=${closed} textField=${kept} graph=${graph} button=${clicked}`];
     } finally {
       s.closeDiff();
       await s.unstageAll();

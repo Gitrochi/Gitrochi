@@ -107,9 +107,9 @@ export async function prConversationSelfTest(): Promise<[boolean, string]> {
     for (let cycle = 0; cycle < 2; cycle++) {
       tab("files").click();
       // the first file opens beside the tree; with the list shown the tree is 280px and the two links live in the More menu
-      if (!await until(() => !!host.querySelector(".pr-diff-head") && host.querySelector(".pr-tree .review-file")?.getAttribute("aria-current") === "true")) return [false, "Changed files did not open the first file beside the tree"];
-      const split = host.querySelector<HTMLButtonElement>(".pr-diff-layout .pr-split button");
-      if (!split?.disabled || host.querySelector(".pr-split")?.getAttribute("data-tip") !== t("Split needs a diff at least 1000 px wide") || host.querySelector(".pr-diff-layout button.on")?.textContent !== t("Unified")) return [false, "Split must be disabled with its reason on a diff narrower than 1000px"];
+      if (!await until(() => !!host.querySelector(".pr-diff > .diff-header") && host.querySelector(".pr-tree .review-file")?.getAttribute("aria-current") === "true")) return [false, "Changed files did not open the first file beside the tree"];
+      const split = host.querySelector<HTMLButtonElement>(".pr-diff .diff-header .segmented-off button");
+      if (!split?.disabled || host.querySelector(".pr-diff .segmented-off")?.getAttribute("data-tip") !== t("Split needs a diff at least 1000 px wide") || host.querySelector(".pr-diff .diff-header .segmented button.on")?.textContent !== t("Unified")) return [false, "Split must be disabled with its reason on a diff narrower than 1000px"];
       if (host.querySelector<HTMLElement>(".pr-tree")!.getBoundingClientRect().width !== 280 || button("Open in browser") || !button("Review…")) return [false, "With the list shown the tree must be 280px and only Review… and More stay in the header"];
       const whitespace = labelled("Hide whitespace")!;
       whitespace.click();

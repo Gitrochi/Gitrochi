@@ -119,7 +119,6 @@
 @container pr-detail (max-width: 640px) {
   .pr-files:not(.pr-files-only) { flex-direction: column; }
   .pr-files:not(.pr-files-only) > .pr-tree { flex: 0 0 auto; width: auto; max-height: 40%; border-right: 0; border-bottom: 1px solid var(--border); }
-  .pr-diff-head { padding: 0 10px; }
 }
 .pr-tree-head { flex: none; height: 44px; box-sizing: border-box; display: flex; align-items: center; gap: 8px; padding-left: 6px; }
 .pr-tree-rows { display: flex; flex-direction: column; gap: 1px; }
@@ -139,19 +138,6 @@
 .pr-viewed-box { width: 14px; height: 14px; box-sizing: border-box; border: 1.5px solid var(--border-strong); border-radius: 4px; background: var(--input); display: inline-flex; align-items: center; justify-content: center; color: var(--accent-text); }
 .pr-viewed[aria-checked="true"] .pr-viewed-box { border-color: var(--accent); background: var(--accent); }
 .pr-diff { flex: 1 1 0; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
-.pr-diff-head { flex: none; height: 44px; box-sizing: border-box; display: flex; align-items: center; gap: 8px; padding: 0 16px; border-bottom: 1px solid var(--border); min-width: 0; }
-/* the folder drops to a clipped second line when it does not fit, so it hides whole instead of being cut */
-.pr-diff-file { flex: 1 1 auto; min-width: 0; height: 20px; overflow: hidden; display: flex; flex-wrap: wrap; align-items: center; column-gap: 8px; }
-.pr-diff-file > * { height: 20px; line-height: 20px; }
-.pr-diff-file > .status-badge { height: 16px; line-height: 16px; margin: 2px 0; }
-.pr-diff-name { flex: none; font-weight: 600; white-space: nowrap; }
-.pr-diff-dir { flex: none; font-size: 11px; color: var(--text-2); white-space: nowrap; }
-.pr-diff-nav { flex: none; display: flex; align-items: center; gap: 4px; }
-.pr-diff-count { font-size: 11px; color: var(--text-2); margin-right: 4px; white-space: nowrap; }
-.pr-diff-layout { flex: none; border-radius: 6px; }
-.pr-diff-layout button { height: 24px; padding: 0 8px; border-radius: 4px; font-size: 12px; font-weight: 500; }
-.pr-diff-layout button:disabled { color: var(--text-3); cursor: default; }
-.pr-split { display: inline-flex; }
 .pr-diff-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; align-items: stretch; }
 .pr-diff-body > .spinner { align-self: center; margin-top: 24px; }
 

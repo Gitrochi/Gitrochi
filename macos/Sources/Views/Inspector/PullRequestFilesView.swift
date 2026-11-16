@@ -222,52 +222,14 @@ struct PullRequestFilesView: View {
         }
     }
 
-    /// The shared diff header of docs/design.md: badge, file name and folder; position and stepping; layout, whitespace, Ask AI, more
+    /// The shared diff header of docs/design.md; the request's files carry their own position
     private func diffHeader(_ file: ReviewFile, index: Int, count: Int, splitAllowed: Bool) -> some View {
-        let _ = store.diffSettingsVersion
-        let whitespace = store.diffIgnoreWhitespace
-        return HStack(spacing: 8) {
-            HStack(spacing: 8) {
-                StatusBadge(kind: file.kind)
-                Text(verbatim: (file.path as NSString).lastPathComponent).font(.system(size: 13, weight: .semibold)).lineLimit(1).fixedSize()
-                PullRequestFolderLabel(path: file.path)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            HStack(spacing: 4) {
-                Text(verbatim: "\(index + 1) / \(count)").font(.system(size: 11, design: .monospaced)).foregroundStyle(StudioStyle.Rail.icon).padding(.trailing, 4).fixedSize()
-                Button { step(-1) } label: { DesignIconImage(icon: .chevronUp) }
-                    .buttonStyle(PullRequestIconButtonStyle()).disabled(index == 0)
-                    .help("Previous file (K)").accessibilityLabel("Previous file (K)")
-                Button { step(1) } label: { DesignIconImage(icon: .chevronDown) }
-                    .buttonStyle(PullRequestIconButtonStyle()).disabled(index + 1 >= count)
-                    .help("Next file (J)").accessibilityLabel("Next file (J)")
-            }
-            Segmented(label: "Diff layout", items: [
-                .init(value: false, title: String(localized: "Unified")),
-                .init(value: true, title: String(localized: "Split"), disabledReason: splitAllowed ? nil : String(localized: "Split needs a diff at least 1000 px wide")),
-            ], selection: store.diffSplit && splitAllowed) { store.diffSplit = $0 }
-            Button { store.diffIgnoreWhitespace.toggle() } label: { SymbolIcon("text.word.spacing") }
-                .buttonStyle(PullRequestIconButtonStyle(on: whitespace))
-                .help("Hide whitespace")
-                .accessibilityLabel("Hide whitespace")
-                .accessibilityValue(whitespace ? "On" : "Off")
-                .accessibilityAddTraits(whitespace ? .isSelected : [])
-            Button("Ask AI…") { Task { await store.openChangeQuestion() } }
-                .buttonStyle(PullRequestTextButtonStyle())
-                .disabled(store.diffLoading || store.diff?.isBinary == true)
-                .help("Ask questions about the selected changes")
-            Menu {
-                Button("Show in Finder") { store.revealInFinder(file.change) }
-                Button("Copy path") { store.copy(file.path) }
-            } label: {
-                DesignIconImage(icon: .more, size: 12).foregroundStyle(StudioStyle.Tone.neutral.text)
-                    .frame(width: 24, height: 24).contentShape(Rectangle())
-            }
-            .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize()
-            .help("More file actions").accessibilityLabel("More file actions")
+        DiffHeader(kind: file.kind, path: file.path, position: CodeFilePosition(index: index, count: count, step: step),
+                   splitDisabledReason: splitAllowed ? nil : String(localized: "Split needs a diff at least 1000 px wide"),
+                   ask: .init(disabled: store.diffLoading || store.diff?.isBinary == true) { Task { await store.openChangeQuestion() } }) {
+            Button("Show in Finder") { store.revealInFinder(file.change) }
+            Button("Copy path") { store.copy(file.path) }
         }
-        .padding(.horizontal, 16)
-        .frame(height: 44)
     }
 }
 
@@ -280,7 +242,8 @@ struct PullRequestFilesView: View {
         monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
             guard event.modifierFlags.intersection([.command, .control, .option]).isEmpty,
                   let key = event.charactersIgnoringModifiers?.lowercased(), key == "j" || key == "k",
-                  let window = event.window, window.attachedSheet == nil, !(window.firstResponder is NSText) else { return event }
+                  // a field editor and the terminal both take text: the letters are theirs
+                  let window = event.window, window.attachedSheet == nil, !(window.firstResponder is NSTextInputClient) else { return event }
             step(key == "j")
             return nil
         }
