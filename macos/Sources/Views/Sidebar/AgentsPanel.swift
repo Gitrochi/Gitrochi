@@ -1,73 +1,107 @@
 import SwiftUI
 import AppKit
 
-/// 사이드바 '에이전트' 탭: 워크트리 카드 + 그 안에서 도는 에이전트(Claude Code·Codex·Gemini CLI) 세션
+/// The sidebar's Agents tab: what waits for the user first, then each worktree with the sessions in it, then agents
+/// running elsewhere. Every session is drawn by one row, with the terminal tab's marks and words.
+/// (Windows: widgets/sidebar/ui/AgentsPanel.tsx)
 struct AgentsPanel: View {
     @Environment(RepoStore.self) private var store
     private let agents = AgentCenter.shared
+    /// Ended sessions start folded away
+    @AppStorage("agentsEndedOpen") private var endedOpen = false
 
     var body: some View {
+        let known = Set(store.worktrees.map { AgentCenter.normalize($0.path) })
+        let inWorktree = { (s: AgentSession) in known.contains(AgentCenter.normalize(s.path)) }
+        let needs = agents.sessions.filter { $0.status.needsUser }.sorted { $0.updated < $1.updated }
+        let ended = agents.sessions.filter { $0.status == .ended && inWorktree($0) }
+        let others = agents.sessions.filter { !inWorktree($0) && $0.status != .ended }
+        let typed = agents.terminalAgents(in: store.worktrees.map(\.path))
+        let elsewhere = agents.external(in: store.worktrees.map(\.path) + [store.url?.path].compactMap { $0 })
+        let mainPath = store.worktrees.first(where: \.isMain)?.path
         ScrollView {
-            VStack(alignment: .leading, spacing: 10) {
-                HStack {
-                    Text("Worktrees").font(.headline)
-                    Text("\(store.worktrees.count)").foregroundStyle(.secondary)
-                    Spacer()
+            VStack(alignment: .leading, spacing: 12) {
+                startRow
+
+                if !needs.isEmpty {
+                    SidebarSection("agent-needs") {
+                        VStack(alignment: .leading, spacing: 4) {
+                            ForEach(needs) { s in NeedCard(session: s) }
+                        }
+                    } header: {
+                        Text("Needs you")
+                        StatusPill(title: "\(needs.count)", tone: .neutral)
+                    }
+                }
+
+                SidebarSection("agent-worktrees") {
+                    VStack(alignment: .leading, spacing: 4) {
+                        ForEach(store.worktrees) { w in
+                            WorktreeGroup(worktree: w,
+                                          stats: store.worktreeStats[w.path],
+                                          sessions: agents.sessions(in: w.path).filter { $0.status != .ended },
+                                          typed: typed.filter { root(for: $0)?.path == w.path },
+                                          isCurrent: AgentCenter.normalize(w.path) == AgentCenter.normalize(store.url?.path ?? ""),
+                                          isMain: w.path == mainPath)
+                        }
+                    }
+                    if !ended.isEmpty {
+                        SidebarSection("agent-ended", open: $endedOpen) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                ForEach(ended) { s in
+                                    SessionRow(session: s, place: store.worktrees.first { AgentCenter.normalize($0.path) == AgentCenter.normalize(s.path) }?.branch
+                                               ?? (s.path as NSString).lastPathComponent)
+                                }
+                            }
+                        } header: {
+                            Text("Ended")
+                            StatusPill(title: "\(ended.count)", tone: .neutral)
+                        }
+                        // a section inside a section: its head lines up with the others
+                        .padding(.horizontal, -6)
+                    }
+                } header: {
+                    Text("Worktrees")
+                    StatusPill(title: "\(store.worktrees.count)", tone: .neutral)
+                    Spacer(minLength: 4)
+                    Button { store.sheet = .addWorktree(branch: nil, start: nil) } label: { DesignIconImage(icon: .plus, size: 13) }
+                        .buttonStyle(PullRequestIconButtonStyle())
+                        .help("New worktree…").accessibilityLabel("New worktree…")
                     if agents.sessions.contains(where: { $0.status == .ended }) {
-                        Button("Clear ended sessions") { agents.clearEnded() }
-                            .buttonStyle(.borderless).font(.caption)
+                        Menu {
+                            Button("Clear ended sessions") { agents.clearEnded() }
+                        } label: {
+                            DesignIconImage(icon: .more, size: 14).foregroundStyle(StudioStyle.Tone.neutral.text)
+                                .frame(width: 24, height: 24).contentShape(Rectangle())
+                        }
+                        .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize()
+                        .help("More agent actions").accessibilityLabel("More agent actions")
                     }
-                    Button { store.sheet = .addWorktree(branch: nil, start: nil) } label: { DesignIconImage(icon: .plus) }
-                        .buttonStyle(.borderless)
-                        .help("New worktree")
                 }
 
-                HStack(spacing: 6) {
-                    Button { store.sheet = .startAgent(path: nil) } label: {
-                        Label("Start session", symbol: "sparkles")
-                            .frame(maxWidth: .infinity)
-                    }
-                    .controlSize(.large)
-                    .help("Start agent session — choose Claude Code, Codex or Gemini CLI, a worktree to work in, and a task")
-                    Button { if let u = store.url { store.startAgent(in: u.path) } } label: {
-                        SymbolIcon("bolt.fill")
-                    }
-                    .controlSize(.large)
-                    .help("Start \(agents.defaultKind.title) in this worktree now")
-                }
-
-                let typed = agents.terminalAgents(in: store.worktrees.map(\.path))
-                ForEach(store.worktrees) { w in
-                    WorktreeCard(worktree: w,
-                                 stats: store.worktreeStats[w.path],
-                                 sessions: agents.sessions(in: w.path),
-                                 typed: typed.filter { root(for: $0)?.path == w.path },
-                                 isCurrent: AgentCenter.normalize(w.path) == AgentCenter.normalize(store.url?.path ?? ""))
-                }
-
-                let elsewhere = agents.external(in: store.worktrees.map(\.path) + [store.url?.path].compactMap { $0 })
-                if !elsewhere.isEmpty {
-                    Text("Running in other apps").font(.subheadline.weight(.semibold)).foregroundStyle(.secondary).padding(.top, 6)
-                    ForEach(elsewhere) { a in ExternalAgentRow(agent: a, root: root(for: a)) }
-                }
-
-                let known = Set(store.worktrees.map { AgentCenter.normalize($0.path) })
-                let others = agents.sessions.filter { !known.contains(AgentCenter.normalize($0.path)) && $0.status != .ended }
-                if !others.isEmpty {
-                    Text("Sessions in other folders").font(.subheadline.weight(.semibold)).foregroundStyle(.secondary).padding(.top, 6)
-                    ForEach(others) { s in
-                        SessionRow(session: s, showPath: true)
+                if !elsewhere.isEmpty || !others.isEmpty {
+                    SidebarSection("agent-elsewhere") {
+                        VStack(alignment: .leading, spacing: 4) {
+                            ForEach(elsewhere) { a in ExternalAgentRow(agent: a, root: root(for: a)) }
+                            ForEach(others) { s in
+                                SessionRow(session: s, place: (s.path as NSString).abbreviatingWithTildeInPath, flat: true)
+                            }
+                        }
+                    } header: {
+                        Text("Elsewhere")
                     }
                 }
 
                 Text(AgentCenter.Place.current == .app
-                     ? "Sessions started here run in tabs of the terminal below, and their status is shown here. Click a session to go to its terminal."
+                     ? "Sessions started here run in the terminal tabs below; click one to go to its terminal."
                      : "Only sessions started here show their status. Click a session to go to its Terminal window.")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-                    .padding(.top, 4)
+                    .font(.system(size: 12))
+                    .foregroundStyle(HostedList.caption)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, 8)
             }
-            .padding(10)
+            .padding(.horizontal, 4)
+            .padding(.vertical, 6)
         }
         .task(id: store.worktrees.map(\.path)) {
             // the store polls other worktrees while this tab is in front; count once right away
@@ -82,6 +116,22 @@ struct AgentsPanel: View {
         }
     }
 
+    /// "Start agent session…" and, beside it, a session of the last agent in this worktree right away
+    private var startRow: some View {
+        HStack(spacing: 6) {
+            Button { store.sheet = .startAgent(path: nil) } label: {
+                Label("Start agent session…", symbol: "sparkles").frame(maxWidth: .infinity)
+            }
+            .buttonStyle(HostedListButtonStyle())
+            Button { if let u = store.url { store.startAgent(in: u.path) } } label: {
+                Label("Start \(agents.defaultKind.title) in this worktree now", symbol: "bolt.fill")
+            }
+            .buttonStyle(HostedListButtonStyle(iconOnly: true))
+            .help("Start \(agents.defaultKind.title) in this worktree now")
+        }
+        .padding(.horizontal, 6)
+    }
+
     /// The worktree an agent works in, so the row can name it instead of the full path
     private func root(for agent: ExternalAgent) -> Worktree? {
         store.worktrees
@@ -90,94 +140,25 @@ struct AgentsPanel: View {
     }
 }
 
-/// An agent running in another app; clicking brings that app (and in Terminal or iTerm its tab) to the front
-private struct ExternalAgentRow: View {
-    let agent: ExternalAgent
-    let root: Worktree?
+/// A session that waits for the user: what it waits for, which session, and the way to its terminal
+private struct NeedCard: View {
+    let session: AgentSession
 
     var body: some View {
-        HStack(alignment: .top, spacing: 6) {
-            hostIcon.frame(width: 16, height: 16).padding(.top, 1)
-            VStack(alignment: .leading, spacing: 1) {
-                HStack(spacing: 4) {
-                    Text(agent.kind.title).fontWeight(.medium)
-                    Text(verbatim: "· " + agent.hostName).foregroundStyle(.secondary).lineLimit(1)
-                }
-                Text(place).font(.caption2).foregroundStyle(.tertiary).lineLimit(1).truncationMode(.head)
-            }
-            Spacer(minLength: 0)
-            DesignIconImage(icon: .external).foregroundStyle(.secondary).font(.caption)
-        }
-        .font(.callout)
-        .contentShape(Rectangle())
-        .onTapGesture { ExternalAgents.bringForward(agent) }
-        .help(String(localized: "Click to bring \(agent.hostName) to the front"))
-        .contextMenu {
-            Button("Bring \(agent.hostName) to the front") { ExternalAgents.bringForward(agent) }
-            Button("Copy folder path") { NSPasteboard.general.clearContents(); NSPasteboard.general.setString(agent.cwd, forType: .string) }
-        }
-    }
-
-    @ViewBuilder private var hostIcon: some View {
-        if let pid = agent.hostPID, let icon = NSRunningApplication(processIdentifier: pid)?.icon {
-            Image(nsImage: icon).resizable().scaledToFit()
-        } else {
-            DesignIconImage(icon: .terminal).foregroundStyle(.secondary)
-        }
-    }
-
-    /// "branch · sub/folder · 12 min ago"
-    private var place: String {
-        var parts: [String] = []
-        if let root {
-            parts.append(root.branch ?? (root.path as NSString).lastPathComponent)
-            let rel = ExternalAgents.relativeFolder(agent.cwd, in: root.path)
-            if !rel.isEmpty { parts.append(rel) }
-        } else {
-            parts.append((agent.cwd as NSString).abbreviatingWithTildeInPath)
-        }
-        if let started = agent.started { parts.append(Fmt.short(started)) }
-        return parts.joined(separator: " · ")
+        let agents = AgentCenter.shared
+        NoticeBlock(symbol: session.status == .permission ? "exclamationmark.circle.fill" : "pause.circle.fill",
+                    tone: .waiting,
+                    title: session.status.title,
+                    caption: AgentSessionState.needCaption(task: session.task, folder: (session.path as NSString).lastPathComponent,
+                                                           kind: session.kind.title,
+                                                           detail: session.status == .permission ? session.detail : nil,
+                                                           ago: Fmt.short(session.updated)),
+                    actions: [NoticeAction(title: String(localized: "Respond")) { agents.focus(session) }])
     }
 }
 
-/// An agent typed into a tab of the terminal below (not started from here); clicking goes to that tab
-private struct TerminalAgentRow: View {
-    let agent: ExternalAgent
-    let root: String
-
-    var body: some View {
-        HStack(alignment: .top, spacing: 6) {
-            StatusDot(status: .running)
-                .padding(.top, 5)
-            VStack(alignment: .leading, spacing: 1) {
-                HStack(spacing: 4) {
-                    Text(AgentStatus.running.title).fontWeight(.medium)
-                    Text(agent.kind.title).font(.caption2).foregroundStyle(.tertiary)
-                }
-                Text(place).font(.caption2).foregroundStyle(.tertiary).lineLimit(1).truncationMode(.head)
-            }
-            Spacer(minLength: 0)
-        }
-        .font(.callout)
-        .contentShape(Rectangle())
-        .onTapGesture { ExternalAgents.bringForward(agent) }
-        .help("Click to go to that terminal")
-        .contextMenu {
-            Button("Go to terminal") { ExternalAgents.bringForward(agent) }
-            Button("Copy folder path") { NSPasteboard.general.clearContents(); NSPasteboard.general.setString(agent.cwd, forType: .string) }
-        }
-    }
-
-    /// "sub/folder · 12 min ago"
-    private var place: String {
-        [ExternalAgents.relativeFolder(agent.cwd, in: root), agent.started.map(Fmt.short) ?? ""]
-            .filter { !$0.isEmpty }
-            .joined(separator: " · ")
-    }
-}
-
-private struct WorktreeCard: View {
+/// A worktree and, indented under it, the sessions working in it
+private struct WorktreeGroup: View {
     @Environment(RepoStore.self) private var store
     let worktree: Worktree
     let stats: WorktreeStats?
@@ -185,58 +166,43 @@ private struct WorktreeCard: View {
     /// Agents typed into the terminal below that work here
     let typed: [ExternalAgent]
     let isCurrent: Bool
-
-    @ViewState private var hover = false
+    let isMain: Bool
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 6) {
-                SymbolIcon(worktree.isMain ? "house" : "arrow.triangle.branch")
-                    .foregroundStyle(.secondary)
+                if isCurrent {
+                    // the current marker of docs/design.md: a 12 pt dot in an 18 pt halo, in the accent
+                    Circle().fill(Color.accentColor).frame(width: 12, height: 12)
+                        .background(Circle().fill(Color.accentColor.opacity(0.18)).frame(width: 18, height: 18))
+                        .frame(width: 13, height: 18)
+                        .accessibilityLabel("Current")
+                } else {
+                    DesignIconImage(icon: .branch, size: 13).foregroundStyle(HostedList.caption)
+                }
                 Text(worktree.branch ?? String(localized: "Detached HEAD"))
-                    .font(.headline)
-                    .lineLimit(2)
-                    .fixedSize(horizontal: false, vertical: true)
+                    .font(.system(size: 13, weight: .semibold))
+                    .lineLimit(1).truncationMode(.tail)
+                Spacer(minLength: 0)
+                stateIcon
+            }
+            .frame(minHeight: 18)
+            HStack(spacing: 4) {
+                Text(verbatim: AgentSessionState.worktreePlace((worktree.path as NSString).abbreviatingWithTildeInPath, isMain: isMain))
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundStyle(HostedList.caption)
+                    .lineLimit(1).truncationMode(.tail)
                     .help(worktree.path)
-                Spacer(minLength: 4)
-                if hover {
-                    Button { store.sheet = .startAgent(path: worktree.path) } label: { DesignIconImage(icon: .sparkles) }
-                        .buttonStyle(.borderless)
-                        .help("Start an agent session in this worktree")
-                }
+                Spacer(minLength: 0)
+                if let stats, stats.ahead > 0 { AheadBehindPill(text: "↑\(stats.ahead)").help("Commits not pushed to the remote") }
+                if let stats, stats.behind > 0 { AheadBehindPill(text: "↓\(stats.behind)").help("Commits not pulled from the remote") }
             }
-
-            if let stats {
-                HStack(spacing: 8) {
-                    if stats.isClean && stats.ahead == 0 && stats.behind == 0 {
-                        Text("No changes").foregroundStyle(.secondary)
-                    }
-                    if stats.added > 0 { Text("+\(stats.added)").foregroundStyle(.green).help("New file") }
-                    if stats.modified > 0 {
-                        Label("\(stats.modified)", symbol: "pencil").labelStyle(.titleAndIcon)
-                            .foregroundStyle(.orange).help("Modified files")
-                    }
-                    if stats.deleted > 0 { Text("−\(stats.deleted)").foregroundStyle(.red).help("Deleted file") }
-                    if stats.conflicted > 0 { Text("!\(stats.conflicted)").foregroundStyle(.red).help("Conflict") }
-                    if !stats.isClean && (stats.ahead > 0 || stats.behind > 0) { Divider().frame(height: 10) }
-                    if stats.ahead > 0 { Text("↑\(stats.ahead)").foregroundStyle(.blue).help("Commits not pushed to the remote") }
-                    if stats.behind > 0 { Text("↓\(stats.behind)").foregroundStyle(.orange).help("Commits not pulled from the remote") }
-                }
-                .font(.callout.monospacedDigit().weight(.medium))
-            }
-
-            if !sessions.isEmpty || !typed.isEmpty {
-                Divider()
-                ForEach(sessions) { s in SessionRow(session: s, showPath: false) }
-                ForEach(typed) { a in TerminalAgentRow(agent: a, root: worktree.path) }
-            }
+            .frame(minHeight: 18)
+            .padding(.leading, 19)
         }
-        .padding(10)
-        .background(RoundedRectangle(cornerRadius: 8).fill(Color(nsColor: .controlBackgroundColor)))
-        .overlay(RoundedRectangle(cornerRadius: 8)
-            .strokeBorder(isCurrent ? Color.accentColor : Color.secondary.opacity(0.25), lineWidth: isCurrent ? 1.5 : 1))
+        .padding(.horizontal, 8).padding(.vertical, 6)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
-        .onHover { hover = $0 }
         .onTapGesture(count: 2) {
             guard !isCurrent else { return }
             Task { await store.switchWorktree(to: worktree.path) }
@@ -256,50 +222,122 @@ private struct WorktreeCard: View {
             Button("Remove worktree…", role: .destructive) { store.confirmRemove(worktree) }
                 .disabled(worktree.isMain || isCurrent)
         }
+        ForEach(sessions) { s in SessionRow(session: s) }
+        ForEach(typed) { a in TerminalAgentRow(agent: a, root: worktree.path) }
+    }
+
+    /// One state icon: a conflict outranks plain uncommitted files
+    @ViewBuilder private var stateIcon: some View {
+        if let stats, stats.conflicted > 0 {
+            SymbolIcon("xmark.circle.fill").font(.system(size: 12)).foregroundStyle(StudioStyle.Tone.failed.text)
+                .help(String(localized: "Conflict") + " \(stats.conflicted)")
+                .accessibilityLabel(String(localized: "Conflict") + " \(stats.conflicted)")
+        } else if let stats, stats.added + stats.modified + stats.deleted > 0 {
+            DesignIconImage(icon: .pencil, size: 12).foregroundStyle(HostedList.caption)
+                .help(String(localized: "Uncommitted changes") + " \(stats.added + stats.modified + stats.deleted)")
+                .accessibilityLabel(String(localized: "Uncommitted changes") + " \(stats.added + stats.modified + stats.deleted)")
+        }
+    }
+}
+
+/// Ahead or behind at a row's right edge: one neutral pill each, 18 pt tall, monospaced 11 pt semibold
+private struct AheadBehindPill: View {
+    let text: String
+
+    var body: some View {
+        Text(verbatim: text)
+            .font(.system(size: 11, weight: .semibold, design: .monospaced))
+            .foregroundStyle(StudioStyle.Tone.neutral.text)
+            .padding(.horizontal, 5)
+            .frame(height: 18)
+            .background(Capsule().fill(StudioStyle.Tone.neutral.fill))
+            .fixedSize()
+    }
+}
+
+/// The one row every session is drawn by: the terminal tab's mark in its 12 pt slot, "Agent · what it does" on up to
+/// two lines, then what only some rows have (the skipped permission checks, where it runs).
+private struct AgentRow<Trailing: View>: View {
+    let mark: TerminalTabMark
+    /// The state in words, for the tooltip and VoiceOver (the mark alone shows it)
+    let word: String
+    let kind: String
+    var text: String = ""
+    /// Draws the text as a state word in the waiting tone (an agent in another app has no task to show)
+    var toned = false
+    var skips = false
+    var place: String = ""
+    /// Not indented under a worktree
+    var flat = false
+    var action: (() -> Void)? = nil
+    @ViewBuilder var trailing: Trailing
+    @ViewState private var hovered = false
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 6) {
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(alignment: .top, spacing: 6) {
+                    TerminalTabMarkView(mark: mark).padding(.top, 2)
+                    line.font(.system(size: 12)).lineLimit(2).truncationMode(.tail)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                if skips {
+                    HStack(spacing: 4) {
+                        SymbolIcon("exclamationmark.shield").font(.system(size: 12))
+                        Text("Skips permissions").lineLimit(1)
+                    }
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(StudioStyle.Tone.waiting.text)
+                    .padding(.leading, 18)
+                    .help("Started with all permission checks skipped")
+                }
+                if !place.isEmpty {
+                    Text(verbatim: place)
+                        .font(.system(size: 11)).foregroundStyle(HostedList.caption)
+                        .lineLimit(1).truncationMode(.tail)
+                        .padding(.leading, 18)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            trailing
+        }
+        .padding(.horizontal, 8).padding(.vertical, 6)
+        .background(RoundedRectangle(cornerRadius: 6).fill(hovered && action != nil ? StudioStyle.hover : Color.clear))
+        .padding(.leading, flat ? 0 : 16)
+        .contentShape(Rectangle())
+        .onHover { hovered = $0 }
+        .onTapGesture { action?() }
+        .help(word)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel([kind, word, text].filter { !$0.isEmpty }.joined(separator: ", "))
+    }
+
+    private var line: Text {
+        let name = Text(verbatim: kind).fontWeight(.semibold)
+        guard !text.isEmpty else { return name }
+        let rest = toned ? Text(verbatim: text).fontWeight(.semibold).foregroundStyle(StudioStyle.Tone.waiting.text) : Text(verbatim: text)
+        return name + Text(verbatim: " · ") + rest
+    }
+}
+
+extension AgentRow where Trailing == EmptyView {
+    init(mark: TerminalTabMark, word: String, kind: String, text: String = "", skips: Bool = false, place: String = "", flat: Bool = false, action: (() -> Void)? = nil) {
+        self.init(mark: mark, word: word, kind: kind, text: text, skips: skips, place: place, flat: flat, action: action) { EmptyView() }
     }
 }
 
 private struct SessionRow: View {
     @Environment(RepoStore.self) private var store
     let session: AgentSession
-    let showPath: Bool
+    var place: String = ""
+    var flat = false
 
     var body: some View {
         let agents = AgentCenter.shared
         let inApp = agents.runsInApp(session)
-        HStack(alignment: .top, spacing: 6) {
-            StatusDot(status: session.status)
-                .padding(.top, 5)
-            VStack(alignment: .leading, spacing: 1) {
-                HStack(spacing: 4) {
-                    Text(session.status.title).fontWeight(.medium)
-                    Text(session.kind.title).font(.caption2).foregroundStyle(.tertiary)
-                    if session.kind.skipsPermissions(session.mode) {
-                        Label("Skips permissions", symbol: "exclamationmark.shield.fill")
-                            .font(.caption2)
-                            .foregroundStyle(.red)
-                            .fixedSize()
-                            .help("Started with all permission checks skipped")
-                    }
-                    if let d = session.detail, session.status != .ended {
-                        Text("· \(d)").foregroundStyle(.secondary).lineLimit(1)
-                    }
-                }
-                if !session.task.isEmpty {
-                    Text(session.task).font(.caption).foregroundStyle(.secondary).lineLimit(2)
-                }
-                Text((showPath ? (session.path as NSString).abbreviatingWithTildeInPath + " · " : "") + Fmt.short(session.updated))
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
-                    .lineLimit(1)
-                    .truncationMode(.head)
-            }
-            Spacer(minLength: 0)
-        }
-        .font(.callout)
-        .contentShape(Rectangle())
-        .onTapGesture { agents.focus(session) }
-        .help(session.status == .ended ? "Ended sessions" : inApp ? "Click to go to that terminal" : "Click to go to the Terminal window")
+        AgentRow(mark: session.status.mark, word: session.status.title, kind: session.kind.title, text: session.task,
+                 skips: session.kind.skipsPermissions(session.mode), place: place, flat: flat,
+                 action: session.status == .ended ? nil : { agents.focus(session) })
         .contextMenu {
             Button(inApp ? "Go to terminal" : "Go to Terminal window") { agents.focus(session) }
                 .disabled(session.status == .ended)
@@ -318,26 +356,45 @@ private struct SessionRow: View {
     }
 }
 
-private struct StatusDot: View {
-    let status: AgentStatus
-    @ViewState private var pulse = false
+/// An agent typed into a tab of the terminal below (not started from here); clicking goes to that tab
+private struct TerminalAgentRow: View {
+    let agent: ExternalAgent
+    let root: String
 
     var body: some View {
-        Circle()
-            .fill(color)
-            .frame(width: 8, height: 8)
-            .opacity((status == .working || status == .running) && pulse ? 0.35 : 1)
-            .animation(status == .working || status == .running ? .easeInOut(duration: 0.8).repeatForever(autoreverses: true) : .default, value: pulse)
-            .onAppear { pulse = true }
+        AgentRow(mark: .ring, word: String(localized: "Running"), kind: agent.kind.title,
+                 place: ExternalAgents.relativeFolder(agent.cwd, in: root), action: { ExternalAgents.bringForward(agent) })
+        .contextMenu {
+            Button("Go to terminal") { ExternalAgents.bringForward(agent) }
+            Button("Copy folder path") { NSPasteboard.general.clearContents(); NSPasteboard.general.setString(agent.cwd, forType: .string) }
+        }
+    }
+}
+
+/// An agent running in another app; the button brings that app (and in Terminal or iTerm its tab) to the front
+private struct ExternalAgentRow: View {
+    let agent: ExternalAgent
+    let root: Worktree?
+
+    var body: some View {
+        AgentRow(mark: .ring, word: String(localized: "Running"), kind: agent.kind.title, text: String(localized: "Running"), toned: true,
+                 place: place, flat: true, action: { ExternalAgents.bringForward(agent) }) {
+            Button { ExternalAgents.bringForward(agent) } label: { DesignIconImage(icon: .external, size: 13) }
+                .buttonStyle(PullRequestIconButtonStyle())
+                .help("Bring \(agent.hostName) to the front")
+                .accessibilityLabel("Bring \(agent.hostName) to the front")
+        }
+        .contextMenu {
+            Button("Bring \(agent.hostName) to the front") { ExternalAgents.bringForward(agent) }
+            Button("Copy folder path") { NSPasteboard.general.clearContents(); NSPasteboard.general.setString(agent.cwd, forType: .string) }
+        }
     }
 
-    private var color: Color {
-        switch status {
-        case .working, .running: return .blue
-        case .permission: return .red
-        case .starting, .waiting: return .orange
-        case .ended: return .gray
-        }
+    /// "branch · sub/folder"
+    private var place: String {
+        guard let root else { return (agent.cwd as NSString).abbreviatingWithTildeInPath }
+        let rel = ExternalAgents.relativeFolder(agent.cwd, in: root.path)
+        return [root.branch ?? (root.path as NSString).lastPathComponent, rel].filter { !$0.isEmpty }.joined(separator: " · ")
     }
 }
 

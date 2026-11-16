@@ -30,6 +30,35 @@ export function tabMark(s: { exited: boolean; busy: boolean; unseen: boolean; wa
   return s.busy ? "ring" : "none";
 }
 
+/**
+ * How the Agents sidebar reads a session's status, by the tab's own rules so the sidebar and the tab bar use one
+ * vocabulary: a ring while the agent runs, the accent dot while it waits for the user, a hollow circle once it ended,
+ * nothing while it sits idle. (macOS: AgentSessionState)
+ */
+
+/** The session waits for the user (a permission or an answer): it is listed under Needs you */
+export const sessionNeedsUser = (status: string) => status !== "ended" && tabActivity(status, false).waiting;
+
+/** The mark in the session row's 12px slot */
+export function sessionMark(status: string): TabMark {
+  const { busy, waiting } = tabActivity(status, false);
+  return tabMark({ exited: status === "ended", busy, unseen: false, waiting });
+}
+
+/** The state's name; an agent at work is "Running", whatever its hooks call it */
+export type SessionWord = "Running" | "Needs permission" | "Waiting for input" | "Idle" | "Ended";
+export function sessionWord(status: string): SessionWord {
+  if (status === "ended") return "Ended";
+  if (status === "permission") return "Needs permission";
+  const { busy, waiting } = tabActivity(status, false);
+  return waiting ? "Waiting for input" : busy ? "Running" : "Idle";
+}
+
+/** Sessions that wait for the user, the one waiting longest first */
+export function sessionsNeedingUser<T extends { status: string; updated: number }>(sessions: readonly T[]): T[] {
+  return sessions.filter((s) => sessionNeedsUser(s.status)).sort((a, b) => a.updated - b.updated);
+}
+
 export const activity = (exited: boolean, busy: boolean): TerminalActivity => (exited ? "exited" : busy ? "running" : "idle");
 
 /** The width left for tabs in a tab bar this wide with this many icon buttons */

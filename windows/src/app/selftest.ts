@@ -55,6 +55,7 @@ import { accountsSettingsSelfTest } from "./lib/accounts-settings-selftest";
 import { prConversationSelfTest } from "./lib/pr-conversation-selftest";
 import { listSectionsSelfTest } from "./lib/list-sections-selftest";
 import { externalAgentsSelfTest } from "./lib/external-agents-selftest";
+import { agentsSidebarSelfTest } from "./lib/agents-sidebar-selftest";
 import { graphLanesSelfTest } from "./lib/graph-lanes-selftest";
 import { graphColumnsSelfTest } from "./lib/graph-columns-selftest";
 import { selfTestProgress, selfTestRecorder } from "./lib/selftest-report";
@@ -273,6 +274,7 @@ export async function runSelfTest(): Promise<boolean> {
   await step("Sidebar branch tree indentation, aligned rows and disclosure controls", sidebarTreeSelfTest);
   await step("Settings category icons, selection and narrow navigation", settingsNavigationSelfTest);
   await step("다른 앱에서 도는 에이전트 목록과 그 앱 앞으로 가져오기(가짜 프로세스 목록)", externalAgentsSelfTest);
+  await step("Agents sidebar: Needs you, worktree state icons and ahead/behind, one session row with the tab marks, Running, nothing clipped at 240px", agentsSidebarSelfTest);
   await step("레인이 많은 그래프: 머리줄 스크롤 막대·옆 스크롤·선택한 노드 보이기", graphLanesSelfTest);
   await step("Graph columns: author, time and SHA off by default and turned on from the column menu, lined up with the header, every column resized by its edge, and reset", graphColumnsSelfTest);
   await step("커밋 비교·일괄 작업·줄 이력의 실제 React 화면", historyToolsSelfTest);

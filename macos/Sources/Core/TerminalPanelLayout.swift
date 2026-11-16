@@ -78,3 +78,56 @@ enum TerminalPanelLayout {
         (width >= 560, width >= 320)
     }
 }
+
+/// How the Agents sidebar reads a session's status, by the terminal tab's own rules so the sidebar and the tab bar use
+/// one vocabulary: a ring while the agent runs, the accent dot while it waits for the user, a hollow circle once it
+/// ended, nothing while it sits idle. (Windows: the session functions of panel-layout.ts, tested in windows/tests/agents.test.ts)
+enum AgentSessionState {
+    /// The state's name; an agent at work is "Running", whatever its hooks call it
+    enum Word: String { case running, permission, waiting, idle, ended }
+
+    /// The session waits for the user (a permission or an answer): it is listed under Needs you
+    static func needsUser(_ status: String) -> Bool {
+        status != "ended" && TerminalPanelLayout.tabActivity(agent: status, shellBusy: false).waiting
+    }
+
+    /// The mark in the session row's 12pt slot
+    static func mark(_ status: String) -> TerminalTabMark {
+        let activity = TerminalPanelLayout.tabActivity(agent: status, shellBusy: false)
+        return TerminalPanelLayout.tabMark(exited: status == "ended", busy: activity.busy, unseen: false, waiting: activity.waiting)
+    }
+
+    static func word(_ status: String) -> Word {
+        if status == "ended" { return .ended }
+        if status == "permission" { return .permission }
+        let activity = TerminalPanelLayout.tabActivity(agent: status, shellBusy: false)
+        return activity.waiting ? .waiting : activity.busy ? .running : .idle
+    }
+
+    /// A Needs you card's caption: what the session is about (its task's first line, or the folder when it has none),
+    /// then "Agent · tool · 2m ago" on a line of its own (Windows: needCaption)
+    static func needCaption(task: String, folder: String, kind: String, detail: String?, ago: String) -> String {
+        let first = (task.trimmingCharacters(in: .whitespacesAndNewlines).split(separator: "\n", omittingEmptySubsequences: false).first.map(String.init) ?? "")
+            .trimmingCharacters(in: .whitespaces)
+        let about = first.count > 80 ? String(first.prefix(79)).trimmingCharacters(in: .whitespaces) + "…" : first
+        let meta = [kind, detail?.trimmingCharacters(in: .whitespaces) ?? "", ago].filter { !$0.isEmpty }.joined(separator: " · ")
+        return (about.isEmpty ? folder : about) + "\n" + meta
+    }
+
+    /// Where a worktree is, short enough for the sidebar: a linked worktree by its last folder ("…/ai-lockout"), the
+    /// repository's own folder in full, or from its end by whole folders when it is long ("…/Projects/desktop"). The
+    /// full path stays in the tooltip. `limit` is about what fits beside the ahead/behind pills in a 240 pt sidebar.
+    /// (Windows: worktreePlace)
+    static func worktreePlace(_ path: String, isMain: Bool, limit: Int = 24) -> String {
+        let parts = path.split(separator: "/").map(String.init)
+        guard parts.count > 1 else { return path }
+        if !isMain { return "…/" + parts[parts.count - 1] }
+        if path.count <= limit { return path }
+        var kept = [parts[parts.count - 1]]
+        for part in parts.dropLast().reversed() {
+            if (["…", part] + kept).joined(separator: "/").count > limit { break }
+            kept.insert(part, at: 0)
+        }
+        return (["…"] + kept).joined(separator: "/")
+    }
+}

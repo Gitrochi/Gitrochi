@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { agents, agentStatusTitle } from "@/entities/agent";
+import { agents } from "@/entities/agent";
 import { statusFiles } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
+import { sessionWord } from "@/entities/terminal";
 import { env, settings, samePath } from "@/shared/config";
 import { decodeAgentAssignments, handoffReport, safeWorkPath, taskBoundaryOverlaps, useObserve, type FlowEvidence } from "@/shared/lib";
 import { t } from "@/shared/i18n";
@@ -26,7 +27,7 @@ export function AgentHandoffPanel({ store, stamp, evidence }: { store: RepoStore
     <p className="hint">{t("Declare task boundaries explicitly. Shared paths do not prove which agent edited a file.")}</p>
     {sessions.map(session => {
       const assignment = assignments.find(item => item.sessionID === session.id);
-      return <details key={session.id}><summary>{session.kind} · {agentStatusTitle[session.status]} · {assignment?.taskID || session.id}</summary>
+      return <details key={session.id}><summary>{session.kind} · {t(sessionWord(session.status))} · {assignment?.taskID || session.id}</summary>
         <p className="hint">{t("Observed at {0}", new Date(session.updated * 1000).toISOString())}</p>
         <div className="validation-fields"><label>{t("Task ID")}<input className="input" value={assignment?.taskID ?? ""} maxLength={200} onChange={event => save(session.id, { taskID: event.target.value })} /></label><label>{t("Task goal")}<input className="input" value={assignment?.goal ?? ""} maxLength={2000} onChange={event => save(session.id, { goal: event.target.value })} /></label></div>
         <label>{t("Task boundaries · relative paths, one per line")}<textarea className="textarea" rows={3} value={drafts[session.id] ?? assignment?.paths.join("\n") ?? ""} onChange={event => { const text = event.target.value; setDrafts(values => ({ ...values, [session.id]: text })); setReport(""); const paths = text.split("\n").map(path => path.trim()).filter(Boolean); if (paths.every(safeWorkPath)) save(session.id, { paths }); }} /></label>

@@ -88,40 +88,12 @@
   transform: none;
 }
 
-.wt-card {
-  border: 1px solid var(--border-strong);
-  border-radius: 8px;
-  background: var(--card);
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.wt-card.current {
-  border: 1.5px solid var(--accent);
-}
-
-.wt-card .hover-only,
 .side-row .hover-only {
   visibility: hidden;
 }
 
-.wt-card:hover .hover-only,
 .side-row:hover .hover-only {
   visibility: visible;
-}
-
-.session-row {
-  display: flex;
-  gap: 6px;
-  align-items: flex-start;
-  padding: 3px 2px;
-  border-radius: 5px;
-}
-
-.session-row:hover {
-  background: var(--hover);
 }
 
 /* The sidebar folded away: a rail of section icons; hovering one opens that section beside it (the flyout overlaps the rail's edge so the pointer can cross) */
