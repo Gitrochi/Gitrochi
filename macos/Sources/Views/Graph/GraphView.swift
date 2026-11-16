@@ -75,7 +75,7 @@ enum GraphMetrics {
     static let columnInset: CGFloat = 8
 
     /// The column header and the commit detail header share this height so their dividers line up
-    static let headerHeight: CGFloat = 32
+    static let headerHeight: CGFloat = 34
     /// The filter and column menus at the right end of the header; rows keep this much room when right-hand columns show
     static let headerToolsWidth: CGFloat = 60
 
@@ -449,10 +449,10 @@ private struct GraphHeader: View {
         .clipped()
         .overlay(alignment: .trailing) {
             // the graph filter lives here so it stays reachable while the search bar is hidden
-            HStack(spacing: 10) {
+            HStack(spacing: 0) {
                 GraphFilterMenu()
-                Menu { toggles } label: { SymbolIcon("gearshape") }
-                    .menuStyle(.borderlessButton)
+                Menu { toggles } label: { GraphHeaderIcon(symbol: "gearshape").foregroundStyle(HostedList.caption) }
+                    .menuStyle(.button).buttonStyle(.plain)
                     .menuIndicator(.hidden)
                     .fixedSize()
                     .help("Columns")
@@ -466,8 +466,8 @@ private struct GraphHeader: View {
             .offset(x: -overhang)
         }
         .lineLimit(1)
-        .font(.caption.weight(.semibold))
-        .foregroundStyle(.secondary)
+        .font(.system(size: 12))
+        .foregroundStyle(HostedList.caption)
         .frame(height: GraphMetrics.headerHeight)
         .background(.bar)
     }
@@ -621,6 +621,15 @@ private struct SideScrollMonitor: NSViewRepresentable {
     }
 }
 
+/// A header menu's label: a 14pt icon in a 24pt click target (Windows: .graph-head-tools .icon-btn)
+private struct GraphHeaderIcon: View {
+    let symbol: String
+
+    var body: some View {
+        SymbolIcon(symbol).font(.system(size: 14)).frame(width: 24, height: 24).contentShape(Rectangle())
+    }
+}
+
 /// 그래프 거르기: 현재 브랜치만 보기, 숨긴 브랜치 다시 보이기
 private struct GraphFilterMenu: View {
     @Environment(RepoStore.self) private var store
@@ -635,10 +644,10 @@ private struct GraphFilterMenu: View {
                 .disabled(hidden == 0)
         } label: {
             // icon only, so the header's right end keeps a fixed width; what is filtered is in the tip and the menu
-            SymbolIcon(active ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
-                .foregroundStyle(active ? Color.accentColor : .secondary)
+            GraphHeaderIcon(symbol: active ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
+                .foregroundStyle(active ? Color.accentColor : HostedList.caption)
         }
-        .menuStyle(.borderlessButton)
+        .menuStyle(.button).buttonStyle(.plain)
         .menuIndicator(.hidden)
         .fixedSize()
         .help(store.graphCurrentOnly ? String(localized: "Current branch only") :

@@ -201,7 +201,7 @@ export function GraphView({ store }: { store: RepoStore }) {
         {/* the filter is not part of searching, so it stays here while the search bar is hidden */}
         <span className="graph-head-tools" style={{ width: HEADER_TOOLS_W }}>
           <GraphFilterButton store={store} />
-          <IconButton small icon={<Gear size={13} />} tip={t("Columns")} aria-label={t("Columns")} onClick={(e) => showMenuBelow(e.currentTarget, columnMenu())} />
+          <IconButton icon={<Gear size={14} />} tip={t("Columns")} aria-label={t("Columns")} onClick={(e) => showMenuBelow(e.currentTarget, columnMenu())} />
         </span>
       </div>
       <div
@@ -410,7 +410,6 @@ function GraphFilterButton({ store }: { store: RepoStore }) {
   const active = store.graphCurrentOnly || hidden > 0;
   return (
     <IconButton
-      small
       className={`graph-filter ${active ? "on" : ""}`}
       style={{ color: active ? "var(--accent)" : undefined }}
       aria-label={t("Filter graph")}
@@ -423,7 +422,7 @@ function GraphFilterButton({ store }: { store: RepoStore }) {
         ])
       }
       // icon only, so the header's right end keeps a fixed width; what is filtered is in the tip and the menu
-      icon={<ListFilter size={13} />}
+      icon={<ListFilter size={14} />}
     />
   );
 }
