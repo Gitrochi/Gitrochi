@@ -66,6 +66,14 @@ enum StudioStyle {
         static let separator = dynamic(light: 0xdcdce0, dark: 0x3a3a3e)
     }
 
+    /// The commit graph's neutral parts, which never take a lane colour or the accent; the dark values are derived,
+    /// the boards being light only (Windows: --graph-neutral, --graph-tag-fill)
+    enum Graph {
+        /// A tag chip's border
+        static let neutral = dynamic(light: 0xc9c9ce, dark: 0x58585d)
+        static let tagFill = dynamic(light: 0xf6f6f7, dark: 0x2c2c30)
+    }
+
     private enum Tones {
         static let waitingText = dynamic(light: 0x8a4600, dark: 0xf2b35e)
         static let waitingFill = dynamic(light: 0xf8ecdc, dark: 0x3a2c18)

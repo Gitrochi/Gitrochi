@@ -23,7 +23,7 @@ The accent is the **operating system's accent colour** (`Color.accentColor` / `N
 - **Hover** is `#f7f7f8`, lighter than any selection tint, so the two never look alike.
 - **Keyboard focus on a row moves the selection**: the focused row gets the tint. Focus rings (2px accent at 40%) are only for inputs and buttons. With a low-chroma accent, add a 1px `#767676` border so focus stays visible.
 - **A tinted background means selection, nothing else.** Banners and strips are white with a 1px `#e3e3e6` border, a 14px icon and dark-toned lead text. Status lives in icons and pills.
-- In the commit graph, the selected commit gets the tint on its message, and its lane band turns 40% of the lane colour. The uncommitted row has a dashed node and italic text, and no tint.
+- In the commit graph, rows are 32px with a 24px lane band, under a 34px column header in 12px regular text (the boards draw the header at 44 and at 34; 34 is the one to follow). The selected commit gets the tint on its message, and its lane band turns 40% of the lane colour; graph rows have no hover colour. A ref chip is 18px tall with radius 6: the lane colour on a tint of it inside a 1px border in the full colour, filled for the checked-out branch and neutral grey for a tag, and a local branch that is not checked out shows how far it is behind (`main ↓5`). The uncommitted row is neutral and never takes the accent or a lane colour: an 18px node with a 2px dashed `#c9c9ce` ring, a dashed `#c9c9ce` line to its parent, a 3px `#c9c9ce` bar (one board draws the row without a bar; the grey bar is the one to follow), a neutral "N files" pill and italic text. It has no lane band; selecting it tints its message like any other row.
 
 ## Badges
 

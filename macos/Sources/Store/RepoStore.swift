@@ -748,7 +748,7 @@ final class RepoStore: Identifiable {
             map[head, default: []].append(RefLabel(name: "HEAD", kind: .head, isCurrent: true))
         }
         for b in localBranches where b.isCurrent || !hiddenRefs.contains("refs/heads/" + b.name) {
-            map[b.target, default: []].append(RefLabel(name: b.name, kind: .local, isCurrent: b.isCurrent))
+            map[b.target, default: []].append(RefLabel(name: b.name, kind: .local, isCurrent: b.isCurrent, behind: b.behind))
         }
         for b in remoteBranches where !hiddenRefs.contains("refs/remotes/" + b.name) {
             map[b.target, default: []].append(RefLabel(name: b.name, kind: .remote, isCurrent: false))
