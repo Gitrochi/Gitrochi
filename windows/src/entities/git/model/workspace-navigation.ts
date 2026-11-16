@@ -30,6 +30,18 @@ export function recommendedSync(ahead: number, behind: number, hasUpstream: bool
   if (behind > 0 && ahead === 0) return "pull";
   return "none";
 }
+/**
+ * What Escape does on the repository screen; the first match wins. Whatever takes keys of its own keeps Escape (a
+ * dialog, a menu or a popover, the terminal); then an open file history or blame closes, then an open diff; only
+ * then, and never from a text field, Changes turns off and the graph is back. (macOS: RepositoryEscape)
+ */
+export type RepositoryEscape = "none" | "closeFileInspect" | "closeDiff" | "showGraph";
+export function repositoryEscape(s: { overlay: boolean; terminal: boolean; typing: boolean; repositoryScreen: boolean; fileInspect: boolean; diff: boolean; changes: boolean }): RepositoryEscape {
+  if (s.overlay || s.terminal || !s.repositoryScreen) return "none";
+  if (s.fileInspect) return "closeFileInspect";
+  if (s.diff) return "closeDiff";
+  return s.changes && !s.typing ? "showGraph" : "none";
+}
 export function isWorkspaceDestination(value: unknown): value is WorkspaceDestination {
   return typeof value === "string" && (workspaceDestinations as readonly string[]).includes(value);
 }

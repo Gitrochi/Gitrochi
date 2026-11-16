@@ -4,7 +4,7 @@ vi.mock("@/entities/terminal", () => ({ TerminalSession: class {} }));
 import { handleShortcut } from "@/app/lib/shortcuts";
 import { RepoStore } from "@/entities/repo";
 import { workspace } from "@/entities/workspace";
-import { destinationForDigit, destinationShortcut, isWorkspaceDestination, recommendedSync, repositoryDestinations, restoredDestination, toolbarSet, workspaceDestinations, type FileChange, type Selection } from "@/entities/git";
+import { destinationForDigit, destinationShortcut, isWorkspaceDestination, recommendedSync, repositoryDestinations, repositoryEscape, restoredDestination, toolbarSet, workspaceDestinations, type FileChange, type Selection } from "@/entities/git";
 import { env, settings } from "@/shared/config";
 import { ipc } from "@/shared/api";
 
@@ -259,5 +259,60 @@ describe("workspace navigation", () => {
     expect(store.showSearchBar).toBe(true);
     store.searchText = "needle"; store.closeSearchBar(); expect(store.showSearchBar).toBe(false); expect(store.searchText).toBe("");
     store.requestSearchFocus(); internal(store).resetState(); expect(store.showSearchBar).toBe(false);
+  });
+});
+
+describe("Escape on the repository screen", () => {
+  const graph = { overlay: false, terminal: false, typing: false, repositoryScreen: true, fileInspect: false, diff: false, changes: true };
+  it("closes the file history first, then the diff, and only then turns Changes off", () => {
+    expect(repositoryEscape({ ...graph, fileInspect: true, diff: true })).toBe("closeFileInspect");
+    expect(repositoryEscape({ ...graph, diff: true })).toBe("closeDiff");
+    expect(repositoryEscape(graph)).toBe("showGraph");
+    expect(repositoryEscape({ ...graph, changes: false })).toBe("none");
+  });
+  it("leaves Escape to whatever takes keys of its own", () => {
+    for (const taken of [{ overlay: true }, { terminal: true }, { repositoryScreen: false }]) {
+      expect(repositoryEscape({ ...graph, ...taken })).toBe("none");
+      expect(repositoryEscape({ ...graph, diff: true, fileInspect: true, ...taken })).toBe("none");
+    }
+    // a text field keeps Escape from turning Changes off; a diff still closes, as it did before
+    expect(repositoryEscape({ ...graph, typing: true })).toBe("none");
+    expect(repositoryEscape({ ...graph, typing: true, diff: true })).toBe("closeDiff");
+  });
+  it("is the app's one Escape handler: diff, then Changes, never from the terminal, a menu or a text field", () => {
+    const store = fixture();
+    store.status = { ...store.status, unstaged: [file] };
+    vi.spyOn(workspace, "active", "get").mockReturnValue(store);
+    let open: string[] = [];
+    vi.stubGlobal("document", { querySelector: (selector: string) => (open.some((name) => selector.includes(name)) ? {} : null) });
+    const press = (target: unknown = null, cancelled = false) => {
+      const e = { key: "Escape", code: "Escape", ctrlKey: false, metaKey: false, shiftKey: false, altKey: false, defaultPrevented: cancelled, target, preventDefault() { e.defaultPrevented = true; }, stopPropagation() {} };
+      handleShortcut(e as unknown as KeyboardEvent, () => {});
+      return e.defaultPrevented;
+    };
+    const inside = (selector: string) => ({ tagName: "DIV", closest: (s: string) => (s === selector ? {} : null) });
+    const field = { tagName: "TEXTAREA", closest: () => null };
+    try {
+      store.navigate("repository"); store.select({ kind: "wip" });
+      vi.spyOn(internal(store), "loadDiff").mockImplementation(() => {});
+      store.openDiff({ kind: "working", change: file });
+      expect(store.changesShown).toBe(true);
+      // the terminal, an open menu and a dialog keep Escape
+      press(inside(".xterm")); expect(store.diffSource).not.toBeNull();
+      open = [".menu"]; press(); expect(store.diffSource).not.toBeNull();
+      open = [".modal-backdrop"]; press(); expect(store.diffSource).not.toBeNull();
+      open = [];
+      // first press: the diff closes and Changes stays on; the second goes back to the graph
+      expect(press()).toBe(true); expect(store.diffSource).toBeNull(); expect(store.changesShown).toBe(true);
+      press(field); expect(store.changesShown).toBe(true);
+      press(null, true); expect(store.changesShown).toBe(true);
+      expect(press()).toBe(true); expect(store.changesShown).toBe(false); expect(store.selection).toEqual({ kind: "commit", sha: head });
+      // nothing left to leave: Escape is not taken
+      expect(press()).toBe(false);
+      // on another page Escape is not the repository screen's
+      store.select({ kind: "wip" }); store.navigate("issues"); press(); expect(store.selection).toEqual({ kind: "wip" });
+    } finally {
+      Reflect.deleteProperty(globalThis, "document");
+    }
   });
 });

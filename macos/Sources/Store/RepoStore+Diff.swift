@@ -56,10 +56,10 @@ extension RepoStore {
         diff?.lines.filter { $0.hunk == hunk && diffSelection.contains($0.id) }.count ?? 0
     }
 
-    /// 덩어리(고른 줄이 있으면 그 줄만)를 스테이지·언스테이지·버리기
-    func applyLines(_ action: LineAction, hunk: Int) async {
+    /// 덩어리(고른 줄이 있으면 그 줄만)를 스테이지·언스테이지·버리기. `only` is one line: the gutter's per-line button
+    func applyLines(_ action: LineAction, hunk: Int, only: DiffLine.ID? = nil) async {
         guard let doc = diff, canEditDiffLines else { return }
-        let picked = Set(doc.lines.filter { $0.hunk == hunk && diffSelection.contains($0.id) }.map(\.id))
+        let picked = only.map { [$0] } ?? Set(doc.lines.filter { $0.hunk == hunk && diffSelection.contains($0.id) }.map(\.id))
         guard let patch = DiffPatch.build(doc, hunks: [hunk], lines: picked.isEmpty ? nil : picked, reverse: action != .stage) else { return }
         if action == .discard {
             guard let repository = url, let source = diffSource,

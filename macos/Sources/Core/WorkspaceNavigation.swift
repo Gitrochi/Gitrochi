@@ -24,6 +24,20 @@ enum RecommendedSync: Equatable {
     }
 }
 
+/// What Escape does on the repository screen; the first match wins. Whatever takes keys of its own keeps Escape (a
+/// sheet, a menu or a popover, the terminal); then an open file history or blame closes, then an open diff; only then,
+/// and never from a text field, Changes turns off and the graph is back. (Windows: repositoryEscape)
+enum RepositoryEscape: Equatable {
+    case none, closeFileInspect, closeDiff, showGraph
+
+    init(overlay: Bool, terminal: Bool, typing: Bool, repositoryScreen: Bool, fileInspect: Bool, diff: Bool, changes: Bool) {
+        if overlay || terminal || !repositoryScreen { self = .none }
+        else if fileInspect { self = .closeFileInspect }
+        else if diff { self = .closeDiff }
+        else { self = changes && !typing ? .showGraph : .none }
+    }
+}
+
 /// Where the icon rail and the page sit while the page list is open, folded or sliding between the two
 /// (docs/design.md › App shell, Sidebar). The list slides over the rail, so the rail shows only where the list has left
 /// it, and the page starts where the list or the rail ends. While the list slides, a page's flexible column keeps the

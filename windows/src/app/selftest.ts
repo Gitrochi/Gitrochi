@@ -738,6 +738,65 @@ export async function runSelfTest(): Promise<boolean> {
     return [ok, `editable=${editable} staged=${staged} split=${split} images=${images} shown=${shown} error=${s.errorMessage}`];
   });
 
+  // Changes mode in the real window: the toolbar toggle, the diff header's way back, Escape's order, the stage column
+  await step("Changes mode: the toggle is on, Graph and Esc lead back to the graph, the per-line stage button has its own 24px column", async () => {
+    const file = "lines.txt";
+    const nums = Array.from({ length: 30 }, (_, i) => String(i + 1));
+    await ipc.writeText(joinPath(repo, file), nums.map((n) => (n === "3" ? "three" : n === "16" ? "sixteen" : n)).join("\n") + "\n");
+    if (!await until(() => s.status.unstaged.some((c) => c.path === file), 8000)) return [false, "the edited file did not show"];
+    const change = () => s.status.unstaged.find((c) => c.path === file)!;
+    const escape = () => window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
+    const toggle = () => document.querySelector<HTMLButtonElement>(".toolbar .tool.titled");
+    const on = () => toggle()?.getAttribute("aria-pressed") === "true" && !!toggle()?.classList.contains("on");
+    try {
+      s.navigate("repository");
+      if (s.headHash) s.select({ kind: "commit", sha: s.headHash });
+      const off = await until(() => !!toggle() && !on() && !toggle()!.dataset.tip?.includes(t("Hide changes and show the graph")), 3000);
+      s.openDiff({ kind: "working", change: change() });
+      const shown = await until(() => on() && !!toggle()!.dataset.tip?.startsWith(t("Hide changes and show the graph")) && !!toggle()!.dataset.tip?.endsWith("|Esc"), 3000);
+      // the diff header starts with "‹ Graph", then a hairline
+      const back = () => document.querySelector<HTMLButtonElement>(".diff-head > .diff-back");
+      const header = await until(() => back()?.textContent?.trim() === t("Graph") && back()?.nextElementSibling?.className === "diff-back-sep" && back()?.getAttribute("aria-keyshortcuts") === "Escape", 3000);
+      // the stage button's column: 24px between the line numbers and the sign, the button a 24px target inside it
+      if (!await until(() => !!s.diff && s.canEditDiffLines && !!document.querySelector(".diff-line.added .diff-stage-line"), 5000)) return [false, `the per-line stage button did not show (editable=${s.canEditDiffLines})`];
+      const added = [...document.querySelectorAll<HTMLElement>(".diff-line.added")].find((line) => line.querySelector(".txt")?.textContent === "sixteen")!;
+      const gutter = added.querySelector<HTMLElement>(".diff-stage-gutter")!.getBoundingClientRect();
+      const numbers = [...added.querySelectorAll<HTMLElement>(".no")].map((no) => no.getBoundingClientRect());
+      const sign = added.querySelector<HTMLElement>(".mk")!.getBoundingClientRect();
+      const button = added.querySelector<HTMLButtonElement>(".diff-stage-line")!, target = button.getBoundingClientRect();
+      const column = Math.round(gutter.width) === 24 && numbers.every((no) => no.right <= gutter.left + 0.5) && sign.left >= gutter.right - 0.5
+        && Math.round(target.width) === 24 && Math.round(target.height) === 24 && target.left >= gutter.left - 0.5 && target.right <= gutter.right + 0.5
+        && button.getAttribute("aria-label") === t("Stage line");
+      const context = document.querySelector<HTMLElement>(".diff-line.context .diff-stage-gutter, .diff-line:not(.added):not(.removed):not(.hunk) .diff-stage-gutter");
+      const reserved = !!context && !context.querySelector("button");
+      button.click();
+      const cached = async () => (await gitRaw(["diff", "--cached", "-U0"], repo)).stdout.split(/\r?\n/).filter((l) => /^[-+][^-+]/.test(l)).join(",");
+      const staged = await until(async () => (await cached()) === "-16,+sixteen" || (await cached()) === "+sixteen", 8000);
+      const stagedLines = await cached();
+      // Escape: an open diff closes first and Changes stays on; the next one turns Changes off; a text field keeps it
+      escape();
+      const closed = await until(() => !s.diffSource, 2000) && s.changesShown && on();
+      const field = document.createElement("textarea"); document.body.append(field);
+      field.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true })); field.remove();
+      const kept = s.changesShown;
+      escape();
+      const graph = await until(() => !s.changesShown && !on() && !!document.querySelector(".commit-row"), 2000);
+      // the header's Graph button closes the diff as Escape does
+      s.openDiff({ kind: "working", change: change() });
+      await until(() => !!back(), 3000);
+      back()?.click();
+      const clicked = await until(() => !s.diffSource && !!document.querySelector(".commit-row"), 2000);
+      const ok = off && shown && header && column && reserved && staged && closed && kept && graph && clicked;
+      return [ok, `off=${off} on=${shown} header=${header} column=${column} gutter=${Math.round(gutter.width)} reserved=${reserved} staged=${stagedLines} diffFirst=${closed} textField=${kept} graph=${graph} button=${clicked}`];
+    } finally {
+      s.closeDiff();
+      await s.unstageAll();
+      await gitRaw(["checkout", "--", file], repo);
+      await s.reload();
+      if (s.headHash) s.select({ kind: "commit", sha: s.headHash });
+    }
+  });
+
   // PR·MR 리뷰: 가짜 GitHub·GitLab 으로 대화·승인 상태·바뀐 파일 읽기, 승인·댓글·승인 취소 보내기, 바뀐 파일 diff
   await step("PR·MR 리뷰(가짜 서버)", async () => {
     const root = "http://127.0.0.1:18080";

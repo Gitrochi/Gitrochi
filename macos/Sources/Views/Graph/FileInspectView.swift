@@ -7,10 +7,8 @@ struct FileInspectView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack(spacing: 10) {
-                Button { store.closeFileInspect() } label: { Label(store.area == .changes ? "Changes" : "Graph", symbol: "chevron.left") }
-                    .keyboardShortcut(.escape, modifiers: [])
-                    .help("Back to graph (Esc)")
+            HStack(spacing: 8) {
+                GraphBackButton(title: "Graph", help: "Back to graph (Esc)") { store.closeFileInspect() }
                 SymbolIcon(inspect.mode == .history ? "clock.arrow.circlepath" : "person.text.rectangle")
                     .foregroundStyle(.secondary)
                 VStack(alignment: .leading, spacing: 0) {

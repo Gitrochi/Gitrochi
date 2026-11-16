@@ -115,7 +115,7 @@ export function Toolbar({ store }: { store: RepoStore }) {
     );
 
   const recommended = recommendedSync(st.ahead, st.behind, !!st.upstream);
-  const changesOn = store.destination === "repository" && store.selection?.kind === "wip";
+  const changesOn = store.changesShown;
   const lastUndo = store.undoStack[store.undoStack.length - 1];
   // the same menu on every page (docs/design.md › App shell): Fetch, Pull and Push first so pages without those buttons
   // still reach them, then Undo naming what it undoes, the pull and push options, and the repository-wide tools
@@ -237,11 +237,11 @@ export function Toolbar({ store }: { store: RepoStore }) {
               className={`tool titled ${changesOn ? "on" : ""}`}
               aria-pressed={changesOn}
               onClick={() => {
-                if (changesOn) {
-                  if (store.headHash) store.select({ kind: "commit", sha: store.headHash });
-                } else if (store.navigate("repository")) store.select({ kind: "wip" });
+                if (changesOn) store.hideChanges();
+                else if (store.navigate("repository")) store.select({ kind: "wip" });
               }}
-              data-tip={tip(
+              // a toggle's tip flips to "Hide …" while what it shows is on screen (docs/design.md › App shell)
+              data-tip={changesOn ? tip(t("Hide changes and show the graph"), "", "Esc") : tip(
                 t("Uncommitted changes"),
                 statusIsEmpty(st) ? t("No modified files. When you edit files, you can stage and commit them here.") : t("{0} modified files — stage and commit them.", store.wipCount),
               )}

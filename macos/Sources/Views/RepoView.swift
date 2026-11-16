@@ -308,14 +308,22 @@ struct RepoView: View {
     }
 
     private var changesButton: some View {
-        Button { store.showArea(store.area == .changes ? .history : .changes) } label: {
+        Button {
+            if store.area == .changes { store.hideChanges(fromEscape: NSApp.currentEvent?.type == .keyDown) } else { store.showArea(.changes) }
+        } label: {
             TitledToolLabel(title: store.status.isEmpty ? String(localized: "Changes") : String(localized: "Changes \(store.status.count)"), icon: "square.and.pencil")
         }
         .buttonStyle(ToolbarCapsuleButtonStyle(on: store.area == .changes, titled: true))
         .accessibilityAddTraits(store.area == .changes ? .isSelected : [])
-        .hoverTip(String(localized: "Uncommitted changes"),
-                  store.status.isEmpty ? String(localized: "No modified files. When you edit files, you can stage and commit them here.")
-                                       : String(localized: "\(store.status.count) modified files — stage and commit them."))
+        // Esc is this button's only while the graph itself shows: an open diff or file history closes first, with
+        // its own back button (RepositoryEscape has the whole order)
+        .keyboardShortcut(store.escapeHidesChanges ? KeyboardShortcut(.escape, modifiers: []) : nil)
+        // a toggle's tip flips to "Hide …" while what it shows is on screen (docs/design.md › App shell)
+        .help(store.area == .changes
+              ? String(localized: "Hide changes and show the graph") + "  (Esc)"
+              : String(localized: "Uncommitted changes") + "\n" + (store.status.isEmpty
+                    ? String(localized: "No modified files. When you edit files, you can stage and commit them here.")
+                    : String(localized: "\(store.status.count) modified files — stage and commit them.")))
     }
 
     private var fetchButton: some View {
