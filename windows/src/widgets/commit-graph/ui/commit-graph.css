@@ -358,8 +358,18 @@
   overflow: visible;
 }
 
+/* as tall as the header, so their resize handles and the 14px lines on them are too (macOS: ColumnResizer) */
+.graph-header > .head-opt,
+.graph-header > .head-ref,
+.graph-header > .graph-head-message {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
 .graph-header .head-opt-label {
   display: block;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
 }
