@@ -690,7 +690,6 @@
 "Loading" = "Đang tải";
 "Loading earlier history…" = "Đang tải lịch sử cũ hơn…";
 "Local branches" = "Nhánh cục bộ";
-"Local branches %lld" = "Nhánh cục bộ %1$lld";
 "Local: %@" = "Cục bộ: %1$@";
 "Locate" = "Chỉ định";
 "Locate…" = "Chỉ định…";
@@ -867,7 +866,6 @@
 "Reject the '%@' deployment?" = "Từ chối triển khai '%1$@'?";
 "Release notes" = "Ghi chú phát hành";
 "Remotes" = "Remote";
-"Remotes %lld" = "Remote %1$lld";
 "Remove" = "Gỡ bỏ";
 "Remove from list" = "Xóa khỏi danh sách";
 "Remove this variable" = "Xóa biến này";
@@ -984,7 +982,6 @@
 "Start point" = "Điểm bắt đầu";
 "Start with the reason for the change" = "Bắt đầu bằng lý do thay đổi";
 "Stash changes" = "Stash thay đổi";
-"Stashes %lld" = "Stash %1$lld";
 "Stashing…" = "Đang stash…";
 "Structure graph" = "Đồ thị cấu trúc";
 "Structure graph needs gitch %@ or later, but the gitch inside Gitrochi is %@." = "Đồ thị cấu trúc cần gitch %1$@ trở lên, nhưng gitch trong Gitrochi là %2$@.";
@@ -997,7 +994,6 @@
 "System follows your macOS setting (light, dark or auto). The graph and terminal change with it." = "Hệ thống: theo cài đặt macOS của bạn (sáng, tối hoặc tự động). Đồ thị và terminal cũng thay đổi theo.";
 "Tag here…" = "Tạo tag tại đây…";
 "Tags" = "Tag";
-"Tags %lld" = "Tag %1$lld";
 "Task" = "Nhiệm vụ";
 "Task for the agent (optional)" = "Nhiệm vụ cho agent (tùy chọn)";
 "Technical tone" = "Giọng văn kỹ thuật";
@@ -1114,7 +1110,6 @@
 "Worktree in a temporary folder — it may break when the folder is deleted on restart" = "Worktree trong thư mục tạm — có thể bị hỏng khi thư mục bị xóa lúc khởi động lại";
 "Worktree whose folder is gone — remove it with 'Clean up'" = "Worktree có thư mục không còn tồn tại — hãy gỡ bỏ bằng 'Dọn dẹp'";
 "Worktrees" = "Worktree";
-"Worktrees %lld" = "Worktree %1$lld";
 "Write commit message with AI" = "Viết thông điệp commit bằng AI";
 "Write in English" = "Viết bằng tiếng Anh";
 "Write in Korean" = "Viết bằng tiếng Hàn";
@@ -1281,7 +1276,6 @@
 "Open in Merge requests" = "Mở trong Merge request";
 "Open in Issues" = "Mở trong Issue";
 "Merge request" = "Merge request";
-"Issues %lld" = "Issue %1$lld";
 "Edit issue #%lld" = "Sửa issue #%1$lld";
 "State" = "Trạng thái";
 "Refresh conversation" = "Làm mới cuộc trò chuyện";

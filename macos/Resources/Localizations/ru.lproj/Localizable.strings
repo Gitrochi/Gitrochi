@@ -712,7 +712,6 @@
 "Loading" = "Загрузка";
 "Loading earlier history…" = "Загрузка более ранней истории…";
 "Local branches" = "Локальные ветки";
-"Local branches %lld" = "Локальные ветки %1$lld";
 "Local: %@" = "Локальная: %1$@";
 "Locate" = "Указать";
 "Locate…" = "Указать…";
@@ -896,7 +895,6 @@
 "Release notes" = "Примечания к выпуску";
 "Remote: " = "Удалённая: ";
 "Remotes" = "Удалённые репозитории";
-"Remotes %lld" = "Удалённые репозитории %1$lld";
 "Remove" = "Удалить";
 "Remove from list" = "Убрать из списка";
 "Remove this variable" = "Удалить эту переменную";
@@ -1017,7 +1015,6 @@
 "Start with the reason for the change" = "Начинать с причины изменения";
 "Stash Pop" = "Достать спрятанное";
 "Stash changes" = "Спрятать изменения";
-"Stashes %lld" = "Спрятанные изменения %1$lld";
 "Stashing…" = "Изменения прячутся…";
 "Stash…" = "Спрятать…";
 "Structure graph" = "Граф структуры";
@@ -1032,7 +1029,6 @@
 "Tag here…" = "Создать тег здесь…";
 "Tag: %@" = "Тег: %1$@";
 "Tags" = "Теги";
-"Tags %lld" = "Теги %1$lld";
 "Task" = "Задача";
 "Task for the agent (optional)" = "Задача для агента (необязательно)";
 "Technical tone" = "Технический тон";
@@ -1154,7 +1150,6 @@
 "Worktree in a temporary folder — it may break when the folder is deleted on restart" = "Рабочее дерево во временной папке — оно может сломаться, если папка будет удалена при перезагрузке";
 "Worktree whose folder is gone — remove it with 'Clean up'" = "Папка рабочего дерева отсутствует — удалите его кнопкой «Очистить»";
 "Worktrees" = "Рабочие деревья";
-"Worktrees %lld" = "Рабочие деревья %1$lld";
 "Write commit message with AI" = "Написать сообщение коммита с помощью ИИ";
 "Write in English" = "Писать на английском";
 "Write in Korean" = "Писать на корейском";
@@ -1322,7 +1317,6 @@
 "Open in Merge requests" = "Открыть в Merge requests";
 "Open in Issues" = "Открыть в задачах";
 "Merge request" = "Merge request";
-"Issues %lld" = "Задачи %1$lld";
 "Edit issue #%lld" = "Изменить задачу #%1$lld";
 "State" = "Состояние";
 "Refresh conversation" = "Обновить обсуждение";

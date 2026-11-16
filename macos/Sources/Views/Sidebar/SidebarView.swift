@@ -27,16 +27,14 @@ struct SidebarView: View {
 
     private var list: some View {
         VStack(spacing: 0) {
-            Picker("Repository tools", selection: $mode) {
-                Text("Branches").tag("list")
-                Text(activeAgents > 0 ? "Agents \(activeAgents)" : "Agents").tag("agents")
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            .accessibilityLabel("Repository tools")
+            // the board's 28 pt control; a saved "ci" mode from before the Actions page falls through to the branch list
+            PullRequestSegmented(label: "Repository tools", items: [
+                .init(value: "list", title: String(localized: "Branches")),
+                .init(value: "agents", title: activeAgents > 0 ? String(localized: "Agents \(activeAgents)") : String(localized: "Agents")),
+            ], selection: mode == "agents" ? "agents" : "list", fill: true) { mode = $0 }
             .padding(.horizontal, 10)
-            .padding(.vertical, 6)
-            // a saved "ci" mode from before the Actions page falls through to the branch list
+            .padding(.top, 12)
+            .padding(.bottom, 4)
             if mode == "agents" {
                 AgentsPanel()
             } else {
@@ -45,7 +43,7 @@ struct SidebarView: View {
         }
         // 반투명 사이드바는 바탕화면 색이 비쳐 물들어 보인다 — 불투명한 중립 배경으로
         .scrollContentBackground(.hidden)
-        .background(Color(nsColor: .windowBackgroundColor).ignoresSafeArea())
+        .background(StudioStyle.sidebar.ignoresSafeArea())
     }
 
     private func open(_ id: String) -> Binding<Bool> { SidebarSections.binding($collapsed, id) }
@@ -58,7 +56,9 @@ struct SidebarView: View {
 
     private var branchList: some View {
         SharedStack {
-            VStack(alignment: .leading, spacing: 0) { sections(only: nil) }
+            // with each section's own 6 pt on top, a head stands 12 pt under the rows before it
+            VStack(alignment: .leading, spacing: 6) { sections(only: nil) }
+                .padding(.horizontal, 4)
                 .padding(.bottom, 8)
         }
         .onAppear(perform: expandCurrent)
@@ -92,7 +92,9 @@ struct SidebarView: View {
                     .disclosureGroupStyle(SidebarTreeGroup())
                 }
             } header: {
-                Text("Local branches \(store.localBranches.count)")
+                Text("Local branches")
+                Spacer(minLength: 4)
+                StatusPill(title: "\(store.localBranches.count)", tone: .neutral)
             }
         }
 
@@ -115,18 +117,13 @@ struct SidebarView: View {
                             .disclosureGroupStyle(SidebarTreeGroup())
                         }
                     } label: {
-                        HStack(spacing: 6) {
-                            DesignIconImage(icon: .cloud).frame(width: 16)
-                                .foregroundStyle(.secondary)
-                            Text(remote).lineLimit(1).truncationMode(.middle)
-                            Spacer(minLength: 4)
-                            Text("\(branches.count)").font(.caption).foregroundStyle(.secondary)
-                        }
+                        groupLabel(remote, icon: .cloud, count: branches.count)
                     }
                     .disclosureGroupStyle(SidebarTreeGroup())
                 }
             } header: {
-                Text("Remotes \(store.remoteBranches.count)")
+                // each remote's own row carries its count
+                Text("Remotes")
             }
         }
 
@@ -142,9 +139,13 @@ struct SidebarView: View {
         if show("tags"), !store.tags.isEmpty || store.target != nil {
             SidebarSection("tags") {
                 ForEach(store.tags) { t in
-                    Label(t.name, symbol: "tag")
-                        .lineLimit(1)
-                        .sidebarRow()
+                    // the branch rows' disclosure and icon columns, so the names line up
+                    HStack(spacing: 6) {
+                        Color.clear.frame(width: 10, height: 16).accessibilityHidden(true)
+                        DesignIconImage(icon: .releases, size: 13).foregroundStyle(StudioStyle.Rail.icon)
+                        Text(t.name).lineLimit(1).truncationMode(.tail)
+                    }
+                        .sidebarTreeRow()
                         .contentShape(Rectangle())
                         .onTapGesture { store.reveal(t.target) }
                         .contextMenu {
@@ -156,9 +157,12 @@ struct SidebarView: View {
                         }
                 }
             } header: {
-                HStack {
-                    Text("Tags \(store.tags.count)")
-                    Spacer()
+                HStack(spacing: 6) {
+                    Text("Tags")
+                    // beside the title when the head has a button, at the right edge when it has none
+                    if store.target != nil { StatusPill(title: "\(store.tags.count)", tone: .neutral) }
+                    Spacer(minLength: 4)
+                    if store.target == nil { StatusPill(title: "\(store.tags.count)", tone: .neutral) }
                     if store.target != nil {
                         Button { store.navigate(.releases) } label: { DesignIconImage(icon: .external) }
                             .buttonStyle(.borderless)
@@ -171,11 +175,16 @@ struct SidebarView: View {
         if show("stashes"), !store.stashes.isEmpty {
             SidebarSection("stashes") {
                 ForEach(store.stashes) { s in
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text(s.message).lineLimit(1)
-                        Text(s.ref).font(.caption).foregroundStyle(.secondary)
+                    HStack(alignment: .top, spacing: 6) {
+                        Color.clear.frame(width: 10, height: 16).accessibilityHidden(true)
+                        SymbolIcon("archivebox").font(.system(size: 12)).foregroundStyle(StudioStyle.Rail.icon)
+                            .frame(width: 13, height: 16)
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text(s.message).lineLimit(1)
+                            Text(s.ref).font(.caption).foregroundStyle(.secondary)
+                        }
                     }
-                    .sidebarRow()
+                    .sidebarTreeRow()
                     .contentShape(Rectangle())
                     .onTapGesture { store.reveal(s.hash) }
                     .contextMenu {
@@ -186,7 +195,9 @@ struct SidebarView: View {
                     }
                 }
             } header: {
-                Text("Stashes \(store.stashes.count)")
+                Text("Stashes")
+                Spacer(minLength: 4)
+                StatusPill(title: "\(store.stashes.count)", tone: .neutral)
             }
         }
     }
@@ -203,15 +214,18 @@ struct SidebarView: View {
                 set: { if $0 { expanded.insert(id) } else { expanded.remove(id) } })
     }
 
+    /// A folder is plain grey even when it holds the current branch: the branch's own marker says so
     private func folderLabel(_ f: BranchFolder) -> some View {
-        let current = f.branches.contains(where: \.isCurrent)
-        return HStack(spacing: 6) {
-            SymbolIcon(current ? "folder.fill" : "folder")
-                .foregroundStyle(current ? Color.accentColor : .secondary)
-                .frame(width: 16)
-            Text(f.name).lineLimit(1).truncationMode(.middle)
+        groupLabel(f.name, icon: .repository, count: f.branches.count)
+    }
+
+    /// A folder or a remote: a 13 pt icon, the name, and how many branches it holds as a neutral pill at the right edge
+    private func groupLabel(_ name: String, icon: DesignIcon, count: Int) -> some View {
+        HStack(spacing: 6) {
+            DesignIconImage(icon: icon, size: 13).foregroundStyle(StudioStyle.Rail.icon)
+            Text(name).lineLimit(1).truncationMode(.tail)
             Spacer(minLength: 4)
-            Text("\(f.branches.count)").font(.caption).foregroundStyle(.secondary)
+            StatusPill(title: "\(count)", tone: .neutral)
         }
     }
 
@@ -350,16 +364,17 @@ private struct BranchRow: View {
 
     var body: some View {
         HStack(spacing: 6) {
-            Color.clear.frame(width: 12, height: 16)
+            Color.clear.frame(width: 10, height: 16)
                 .accessibilityHidden(true)
-            SymbolIcon(branch.isCurrent ? "checkmark.circle.fill" : "arrow.triangle.branch")
-                .foregroundStyle(branch.isCurrent ? Color.accentColor : .secondary)
-                .frame(width: 16)
+            Group {
+                if branch.isCurrent { CurrentMarker() } else { DesignIconImage(icon: .branch, size: 13).foregroundStyle(StudioStyle.Rail.icon) }
+            }
+                .frame(width: 13)
             Text(label ?? (branch.isRemote ? branch.shortName : branch.name))
                 .fontWeight(branch.isCurrent ? .semibold : .regular)
                 .foregroundStyle(hidden ? .secondary : .primary)
                 .lineLimit(1)
-                .truncationMode(.middle)
+                .truncationMode(.tail)
                 .help(branch.name)
             Spacer(minLength: 4)
             if pinned {
@@ -395,12 +410,12 @@ private struct BranchRow: View {
         .onHover { hovering = $0 }
     }
 
+    /// Ahead or behind: plain monospaced 11 pt in the caption grey, no capsule
     private func counter(_ s: String) -> some View {
-        Text(s)
-            .font(.caption2.monospacedDigit().weight(.semibold))
-            .padding(.horizontal, 5)
-            .padding(.vertical, 1)
-            .background(Capsule().fill(Color.secondary.opacity(0.18)))
+        Text(verbatim: s)
+            .font(.system(size: 11, design: .monospaced))
+            .foregroundStyle(StudioStyle.Rail.icon)
+            .fixedSize()
     }
 }
 
@@ -428,17 +443,16 @@ struct SidebarSection<Header: View, Content: View>: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 6) {
                 if !flyout {
-                    DesignIconImage(icon: .chevronDown)
-                        .font(.caption2.weight(.bold))
+                    DesignIconImage(icon: .chevronDown, size: 10)
                         .rotationEffect(.degrees(open.wrappedValue ? 0 : -90))
-                        .frame(width: 10)
                 }
                 header
             }
-            .font(.subheadline.weight(.semibold))
-            .foregroundStyle(.secondary)
+            .font(.system(size: 12, weight: .semibold))
+            .foregroundStyle(StudioStyle.Rail.icon)
             .lineLimit(1)
-            .padding(.horizontal, 10)
+            // the chevron stands over the rows' disclosure column, the title over their icons
+            .padding(.horizontal, 14)
             .frame(maxWidth: .infinity, alignment: .leading)
             .frame(height: 26)
             .contentShape(Rectangle())
@@ -467,10 +481,10 @@ extension EnvironmentValues {
 }
 
 extension View {
-    /// The spacing a sidebar row had inside the List
+    /// A sidebar row without the tree's columns (a pull request, an issue, a notice), with the tree rows' side padding
     func sidebarRow() -> some View {
         padding(.vertical, 3)
-            .padding(.horizontal, 4)
+            .padding(.horizontal, 8)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 }

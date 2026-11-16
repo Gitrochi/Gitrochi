@@ -16,7 +16,7 @@ import { resizeColumn } from "../lib/resize-column";
 export function RepositoryScreen({ store, openSettings }: { store: RepoStore; openSettings: () => void }) {
   useObserve(store);
   useObserve(settings);
-  const sidebarW = settings.get("sidebarWidth", 250);
+  const sidebarW = settings.get("sidebarWidth", 240);
   const sidebarCollapsed = settings.get("sidebarCollapsed", false);
   const inspectorW = settings.get("inspectorWidth", 380);
   const inspectorCollapsed = settings.get("inspectorCollapsed", false);

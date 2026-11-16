@@ -710,7 +710,6 @@
 "Loading" = "Chargement";
 "Loading earlier history…" = "Chargement de l’historique plus ancien…";
 "Local branches" = "Branches locales";
-"Local branches %lld" = "Branches locales %1$lld";
 "Local: %@" = "Locale : %1$@";
 "Locate" = "Localiser";
 "Locate…" = "Localiser…";
@@ -889,7 +888,6 @@
 "Release notes" = "Notes de version";
 "Remote: " = "Distant : ";
 "Remotes" = "Dépôts distants";
-"Remotes %lld" = "Dépôts distants %1$lld";
 "Remove" = "Supprimer";
 "Remove from list" = "Retirer de la liste";
 "Remove this variable" = "Supprimer cette variable";
@@ -1009,7 +1007,6 @@
 "Start point" = "Point de départ";
 "Start with the reason for the change" = "Commencer par la raison du changement";
 "Stash changes" = "Stash des modifications";
-"Stashes %lld" = "Stashs %1$lld";
 "Stashing…" = "Stash en cours…";
 "Structure graph" = "Graphe de structure";
 "Structure graph needs gitch %@ or later, but the gitch inside Gitrochi is %@." = "Le graphe de structure nécessite gitch %1$@ ou plus récent, mais le gitch de Gitrochi est en version %2$@.";
@@ -1308,7 +1305,6 @@
 "Open in Merge requests" = "Ouvrir dans Merge requests";
 "Open in Issues" = "Ouvrir dans Tickets";
 "Merge request" = "Merge request";
-"Issues %lld" = "Tickets %1$lld";
 "Edit issue #%lld" = "Modifier le ticket #%1$lld";
 "State" = "État";
 "Refresh conversation" = "Actualiser la conversation";

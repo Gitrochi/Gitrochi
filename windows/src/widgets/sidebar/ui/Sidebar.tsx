@@ -1,5 +1,4 @@
 import { Archive, CloudAlert, EyeOff, PanelLeftClose, Pin, ShieldCheck } from "lucide-react";
-import { CircleCheck, FolderOpen } from "@/shared/icons";
 import { ChevronDown, Cloud, Eye, Folder, GitBranch, SquareArrowOutUpRight, Tag as TagIcon } from "@/shared/icons";
 import { type ReactNode, useState } from "react";
 import { localBranchMenu, remoteBranchMenu } from "@/features/git-menus";
@@ -9,7 +8,7 @@ import { branchPayload, type RepoStore } from "@/entities/repo";
 import { displayPath, samePath, settings } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { drag, useObserve } from "@/shared/lib";
-import { IconButton, Segmented, SharedStack, showContextMenu, tip } from "@/shared/ui";
+import { IconButton, Segmented, SharedStack, showContextMenu, StatusPill, tip } from "@/shared/ui";
 import { AgentsPanel } from "./AgentsPanel";
 import { IssueListSection } from "./IssueListSection";
 import { PullRequestSection } from "./PullRequestSection";
@@ -29,7 +28,7 @@ export function Sidebar({ store, openSettings, flyout }: { store: RepoStore; ope
   if (flyout) return <SectionFlyout.Provider value={true}><BranchList store={store} openSettings={openSettings} only={flyout === "repository" ? undefined : flyout} /></SectionFlyout.Provider>;
   return (
     <>
-      <div className="row" style={{ padding: "8px 6px 4px 10px", gap: 4 }}>
+      <div className="row side-modes">
         <div style={{ flex: 1, minWidth: 0 }}>
           <Segmented
             stretch
@@ -93,26 +92,23 @@ function BranchList({ store, openSettings, only }: { store: RepoStore; openSetti
     remoteGroups.set(r, [...(remoteGroups.get(r) ?? []), b]);
   }
 
-  const folder = (id: string, name: string, count: number, current: boolean, body: ReactNode, icon?: ReactNode) => (
+  // a folder is plain grey even when it holds the current branch: the branch's own marker says so
+  const folder = (id: string, name: string, count: number, body: ReactNode, icon?: ReactNode) => (
     <div key={id} className="side-tree-group" data-tree-id={id}>
       <button type="button" className="side-row side-tree-row side-tree-toggle" aria-expanded={expanded.has(id)} onClick={() => toggle(id)}>
         <span className="side-tree-disclosure" aria-hidden="true">
-          <ChevronDown size={12} className="muted" style={{ transform: expanded.has(id) ? undefined : "rotate(-90deg)" }} />
+          <ChevronDown size={10} className="muted" style={{ transform: expanded.has(id) ? undefined : "rotate(-90deg)" }} />
         </span>
-        <span className="lead" style={{ color: current ? "var(--accent)" : undefined }}>
-          {icon ?? (current || expanded.has(id) ? <FolderOpen size={14} /> : <Folder size={14} />)}
-        </span>
+        <span className="lead">{icon ?? <Folder size={13} />}</span>
         <span className="ellipsis grow side-tree-label">{name}</span>
-        <span className="faint side-tree-count">
-          {count}
-        </span>
+        <StatusPill tone="neutral" className="side-count end">{count}</StatusPill>
       </button>
       {expanded.has(id) && <div className="side-tree-children">{body}</div>}
     </div>
   );
 
   return (
-    <SharedStack className="side-scroll">
+    <SharedStack className="side-scroll side-branches">
       {show("pinned") && store.localBranches.some((b) => store.isPinned(b)) && (
         <Section id="pinned" title={t("Pinned")}>
           {store.localBranches
@@ -132,7 +128,6 @@ function BranchList({ store, openSettings, only }: { store: RepoStore; openSetti
             "l:" + f.name,
             f.name,
             f.branches.length,
-            f.branches.some((b) => b.isCurrent),
             f.branches.map((b) => <BranchRow key={b.name} store={store} branch={b} label={leaf(b.name)} />),
           ),
         )}
@@ -141,7 +136,8 @@ function BranchList({ store, openSettings, only }: { store: RepoStore; openSetti
       {show("worktrees") && store.worktrees.length > 1 && <WorktreeSection store={store} />}
 
       {show("remote") && store.remoteBranches.length > 0 && (
-        <Section id="remote" title={t("Remotes")} count={store.remoteBranches.length}>
+        // each remote's own row carries its count
+        <Section id="remote" title={t("Remotes")}>
           {[...remoteGroups.entries()]
             .sort(([a], [b]) => a.localeCompare(b))
             .map(([remote, list]) => {
@@ -150,7 +146,6 @@ function BranchList({ store, openSettings, only }: { store: RepoStore; openSetti
                 "r:" + remote,
                 remote,
                 list.length,
-                false,
                 <>
                   {g.loose.map((b) => (
                     <BranchRow key={b.name} store={store} branch={b} label={branchShort(b)} />
@@ -160,12 +155,11 @@ function BranchList({ store, openSettings, only }: { store: RepoStore; openSetti
                       `r:${remote}/${f.name}`,
                       f.name,
                       f.branches.length,
-                      false,
                       f.branches.map((b) => <BranchRow key={b.name} store={store} branch={b} label={leaf(branchShort(b))} />),
                     ),
                   )}
                 </>,
-                <Cloud size={14} />,
+                <Cloud size={13} />,
               );
             })}
         </Section>
@@ -182,13 +176,12 @@ function BranchList({ store, openSettings, only }: { store: RepoStore; openSetti
           id="tags"
           title={t("Tags")}
           count={store.tags.length}
-          defaultOpen={false}
           actions={store.target && <IconButton small icon={<SquareArrowOutUpRight size={12} />} tip={t("Open in Releases")} aria-label={t("Open in Releases")} onClick={() => store.navigate("releases")} />}
         >
           {store.tags.map((tag) => (
             <div
               key={tag.name}
-              className="side-row"
+              className="side-row side-tree-row"
               onClick={() => store.reveal(tag.target)}
               onContextMenu={(e) =>
                 showContextMenu(e, [
@@ -200,10 +193,12 @@ function BranchList({ store, openSettings, only }: { store: RepoStore; openSetti
                 ])
               }
             >
+              {/* the branch rows' disclosure column, so the names line up */}
+              <span className="side-tree-disclosure" aria-hidden="true" />
               <span className="lead">
                 <TagIcon size={13} />
               </span>
-              <span className="ellipsis">{tag.name}</span>
+              <span className="ellipsis side-tree-label">{tag.name}</span>
             </div>
           ))}
         </Section>
@@ -214,7 +209,7 @@ function BranchList({ store, openSettings, only }: { store: RepoStore; openSetti
           {store.stashes.map((s) => (
             <div
               key={s.ref}
-              className="side-row"
+              className="side-row side-tree-row"
               style={{ alignItems: "flex-start" }}
               onClick={() => store.reveal(s.hash)}
               onContextMenu={(e) =>
@@ -226,6 +221,7 @@ function BranchList({ store, openSettings, only }: { store: RepoStore; openSetti
                 ])
               }
             >
+              <span className="side-tree-disclosure" aria-hidden="true" />
               <span className="lead" style={{ marginTop: 3 }}>
                 <Archive size={13} />
               </span>
@@ -260,7 +256,7 @@ function BranchRow({ store, branch: b, label }: { store: RepoStore; branch: Bran
       data-tip={tip(b.name, t("Click: show in graph · Double-click: check out · Drag onto another branch in the graph: merge or rebase"))}
     >
       <span className="side-tree-disclosure" aria-hidden="true" />
-      <span className="lead">{b.isCurrent ? <CircleCheck size={14} /> : <GitBranch size={14} />}</span>
+      <span className="lead">{b.isCurrent ? <span className="side-current" role="img" aria-label={t("Current")}><span /></span> : <GitBranch size={13} />}</span>
       <span className="ellipsis grow side-tree-label" style={hidden ? { color: "var(--text-2)" } : undefined}>
         {label}
       </span>
@@ -298,8 +294,8 @@ function BranchRow({ store, branch: b, label }: { store: RepoStore; branch: Bran
           <CloudAlert size={13} />
         </span>
       )}
-      {b.ahead > 0 && <span className="counter">↑{b.ahead}</span>}
-      {b.behind > 0 && <span className="counter">↓{b.behind}</span>}
+      {b.ahead > 0 && <span className="side-ab">↑{b.ahead}</span>}
+      {b.behind > 0 && <span className="side-ab">↓{b.behind}</span>}
     </div>
   );
 }

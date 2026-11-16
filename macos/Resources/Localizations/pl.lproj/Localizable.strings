@@ -700,7 +700,6 @@
 "Loading" = "Wczytywanie";
 "Loading earlier history…" = "Wczytywanie wcześniejszej historii…";
 "Local branches" = "Gałęzie lokalne";
-"Local branches %lld" = "Gałęzie lokalne %1$lld";
 "Local: %@" = "Lokalna: %1$@";
 "Locate" = "Wskaż";
 "Locate…" = "Wskaż…";
@@ -882,7 +881,6 @@
 "Release notes" = "Informacje o wydaniu";
 "Remote: " = "Zdalne: ";
 "Remotes" = "Zdalne";
-"Remotes %lld" = "Zdalne %1$lld";
 "Remove" = "Usuń";
 "Remove from list" = "Usuń z listy";
 "Remove this variable" = "Usuń tę zmienną";
@@ -1002,7 +1000,6 @@
 "Start point" = "Punkt początkowy";
 "Start with the reason for the change" = "Zacznij od powodu zmiany";
 "Stash changes" = "Zapisz zmiany w stashu";
-"Stashes %lld" = "Stashe %1$lld";
 "Stashing…" = "Zapisywanie w stashu…";
 "Structure graph" = "Graf struktury";
 "Structure graph needs gitch %@ or later, but the gitch inside Gitrochi is %@." = "Graf struktury wymaga gitch %1$@ lub nowszego, ale gitch w Gitrochi ma wersję %2$@.";
@@ -1015,7 +1012,6 @@
 "System follows your macOS setting (light, dark or auto). The graph and terminal change with it." = "Opcja Systemowy stosuje ustawienie systemu macOS (jasny, ciemny lub automatyczny). Graf i terminal zmieniają się razem z nim.";
 "Tag here…" = "Utwórz tag tutaj…";
 "Tags" = "Tagi";
-"Tags %lld" = "Tagi %1$lld";
 "Task" = "Zadanie";
 "Task for the agent (optional)" = "Zadanie dla agenta (opcjonalnie)";
 "Technical tone" = "Techniczny ton";
@@ -1135,7 +1131,6 @@
 "Worktree in a temporary folder — it may break when the folder is deleted on restart" = "Worktree w folderze tymczasowym — może przestać działać, gdy folder zostanie usunięty przy ponownym uruchomieniu";
 "Worktree whose folder is gone — remove it with 'Clean up'" = "Worktree, którego folder zniknął — usuń go przyciskiem 'Wyczyść'";
 "Worktrees" = "Worktree";
-"Worktrees %lld" = "Worktree %1$lld";
 "Write commit message with AI" = "Napisz komunikat commita z pomocą AI";
 "Write in English" = "Pisz po angielsku";
 "Write in Korean" = "Pisz po koreańsku";
@@ -1305,7 +1300,6 @@
 "Open in Merge requests" = "Otwórz w Merge requestach";
 "Open in Issues" = "Otwórz w Zgłoszeniach";
 "Merge request" = "Merge request";
-"Issues %lld" = "Zgłoszenia %1$lld";
 "Edit issue #%lld" = "Edytuj zgłoszenie #%1$lld";
 "State" = "Stan";
 "Refresh conversation" = "Odśwież rozmowę";

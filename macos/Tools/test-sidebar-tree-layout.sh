@@ -15,7 +15,7 @@ source = (root / 'Sources/Views/Sidebar/SidebarView.swift').read_text()
 start = source.index('private struct BranchRow: View {')
 end = source.index('/// A sidebar section:', start)
 row = source[start:end].replace('private struct BranchRow:', 'struct BranchRow:', 1)
-icon = '                .frame(width: 16)\n'
+icon = '                .frame(width: 13)\n'
 assert row.count(icon) == 1, 'Branch icon measurement attachment changed'
 row = row.replace(icon, icon + '                .background(TreeLayoutProbe(identifier: "icon:" + branch.name))\n')
 label = '                .help(branch.name)\n'
@@ -35,7 +35,8 @@ worktree = models[models.index('struct Worktree: Identifiable, Hashable {'):mode
 (target / 'WorktreeRow.swift').write_text('import SwiftUI\n' + worktree + '\n' + worktreeRow)
 PY
 xcrun swiftc -parse-as-library -swift-version 5 -target "$(uname -m)-apple-macos15.0" \
-    "$ROOT/Sources/Views/Shared/DesignIcon.swift" "$ROOT/Sources/Views/Shared/DesignSymbols.swift" "$ROOT/Sources/Views/Sidebar/SidebarTreeGroup.swift" \
+    "$ROOT/Sources/Views/Shared/DesignIcon.swift" "$ROOT/Sources/Views/Shared/DesignSymbols.swift" "$ROOT/Sources/Views/Shared/StudioStyle.swift" \
+    "$ROOT/Sources/Views/Shared/StatusPill.swift" "$ROOT/Sources/Views/Shared/CurrentMarker.swift" "$ROOT/Sources/Views/Sidebar/SidebarTreeGroup.swift" \
     "$TASK_TMP/BranchRow.swift" "$TASK_TMP/WorktreeRow.swift" "$ROOT/Tools/fixtures/SidebarTreeLayout.swift" \
     -o "$TASK_TMP/sidebar-tree-layout"
 "$TASK_TMP/sidebar-tree-layout" "$TASK_OUTPUT"

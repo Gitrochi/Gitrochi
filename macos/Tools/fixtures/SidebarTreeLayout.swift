@@ -30,7 +30,7 @@ private struct TreeLayoutFixture: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text("Branches").font(.headline).padding(.horizontal, 10).padding(.vertical, 12)
-            section("Local branches 4") {
+            section("Local branches", count: 4) {
                 branch("main", current: true)
                 DisclosureGroup(isExpanded: $state.localFolderExpanded) {
                     branch("feature/checkout", label: "checkout")
@@ -41,11 +41,11 @@ private struct TreeLayoutFixture: View {
                 }
                 .disclosureGroupStyle(SidebarTreeGroup())
             }
-            section("Worktrees 2") {
+            section("Worktrees", count: 2) {
                 worktree(Self.mainWorktree, branch: "main", current: true)
                 worktree(Self.searchWorktree, branch: "feature/search")
             }
-            section("Remotes 4") {
+            section("Remotes") {
                 DisclosureGroup(isExpanded: $state.remoteExpanded) {
                     branch("origin/main", remote: true)
                     DisclosureGroup(isExpanded: $state.remoteFolderExpanded) {
@@ -64,19 +64,29 @@ private struct TreeLayoutFixture: View {
             Spacer(minLength: 0)
         }
         .font(.system(size: 13))
-        .background(Color(nsColor: .windowBackgroundColor))
+        // the sidebar's own 4 pt at each side (SidebarView.branchList)
+        .padding(.horizontal, 4)
+        .background(StudioStyle.sidebar)
     }
 
-    private func section<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
+    /// The section head as SidebarSection draws it: the chevron over the rows' disclosure column, the count at the right edge
+    private func section<Content: View>(_ title: String, count: Int? = nil, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 6) {
-                Image(systemName: "chevron.down").font(.caption2.weight(.bold)).frame(width: 10)
+                DesignIconImage(icon: .chevronDown, size: 10)
+                    .background(TreeLayoutProbe(identifier: "chevron:" + title))
                 Text(title)
+                Spacer(minLength: 4)
+                if let count {
+                    StatusPill(title: "\(count)", tone: .neutral)
+                        .background(TreeLayoutProbe(identifier: "count:" + title))
+                }
             }
-            .font(.subheadline.weight(.semibold))
-            .foregroundStyle(.secondary)
-            .padding(.horizontal, 10)
+            .font(.system(size: 12, weight: .semibold))
+            .foregroundStyle(StudioStyle.Rail.icon)
+            .padding(.horizontal, 14)
             .frame(height: 26)
+            .background(TreeLayoutProbe(identifier: "head:" + title))
             VStack(alignment: .leading, spacing: 0, content: content).padding(.horizontal, 6)
         }
         .padding(.top, 6)
@@ -84,12 +94,13 @@ private struct TreeLayoutFixture: View {
 
     private func groupLabel(_ text: String, icon: String, count: Int, id: String) -> some View {
         HStack(spacing: 6) {
-            Image(systemName: icon).foregroundStyle(.secondary).frame(width: 16)
+            DesignIconImage(icon: icon == "cloud" ? .cloud : .repository, size: 13).foregroundStyle(StudioStyle.Rail.icon)
                 .background(TreeLayoutProbe(identifier: "icon:" + id))
             Text(text).lineLimit(1)
                 .background(TreeLayoutProbe(identifier: "label:" + id))
             Spacer(minLength: 4)
-            Text("\(count)").font(.caption).foregroundStyle(.secondary)
+            StatusPill(title: "\(count)", tone: .neutral)
+                .background(TreeLayoutProbe(identifier: "count:" + id))
         }
     }
 
@@ -104,8 +115,8 @@ private struct TreeLayoutFixture: View {
     }
 
     private func branch(_ name: String, label: String? = nil, current: Bool = false, remote: Bool = false) -> some View {
-        let branch = Branch(name: name, target: "fixture", upstream: nil, ahead: current ? 1 : 0,
-                            behind: 0, upstreamGone: false, isCurrent: current, isRemote: remote)
+        let branch = Branch(name: name, target: "fixture", upstream: nil, ahead: current || name == "feature/search" ? 1 : 0,
+                            behind: name == "feature/search" ? 2 : 0, upstreamGone: false, isCurrent: current, isRemote: remote)
         return BranchRow(branch: branch, label: label, toggleHidden: current ? nil : {})
             .sidebarTreeRow()
             .background(TreeLayoutProbe(identifier: "row:" + name))
@@ -164,6 +175,22 @@ private struct TreeLayoutFixture: View {
                     close(frame("label:" + path).minX, frame("label:main").minX, "Worktree and branch labels must align")
                     precondition(frame("row:" + path).height >= 26 - 1, "Worktree rows must keep the tree row height")
                 }
+                // the board's columns: heads 26 pt, their chevron over the rows' disclosure column, counts as 18 pt pills
+                // that share the right edge, 18 pt from the sidebar's
+                for title in ["Local branches", "Worktrees", "Remotes"] {
+                    close(frame("head:" + title).height, 26, "Section head height")
+                    close(frame("chevron:" + title).minX, 18, "Section chevron column")
+                    close(frame("chevron:" + title).minX, frame("row:main").minX + 8, "Head chevrons must stand over the rows' disclosure column")
+                }
+                close(frame("icon:main").minX, 34, "Row icon column")
+                close(frame("icon:main").width, 13, "Row icon width")
+                for id in ["count:Local branches", "count:local-feature", "count:origin", "count:remote-feature"] {
+                    close(frame(id).height, 18, "Count pill height")
+                }
+                close(frame("count:Local branches").maxX, width - 18, "Section count must sit at the right edge")
+                close(frame("count:local-feature").maxX, width - 18, "Folder count must share the section count's right edge")
+                close(frame("count:origin").maxX, width - 18, "Remote count must share the section count's right edge")
+                precondition(treeLayoutViews["count:Remotes"] == nil, "The Remotes head carries no count; each remote's row does")
 
                 guard let bitmap = host.bitmapImageRepForCachingDisplay(in: bounds) else { fatalError("No tree bitmap") }
                 host.cacheDisplay(in: bounds, to: bitmap)
@@ -181,12 +208,12 @@ private struct TreeLayoutFixture: View {
                 settle()
                 precondition(treeLayoutViews["row:origin/main"]?.window == nil, "Collapsed remotes must remove their children")
                 checks.append(["width": width, "theme": dark ? "dark" : "light", "childIndent": 18,
-                               "rowHeight": 26, "siblingsAligned": true, "worktreesAligned": true, "collapseReopen": true, "screenshot": name])
+                               "rowHeight": 26, "siblingsAligned": true, "worktreesAligned": true, "headHeight": 26, "countPills": true, "collapseReopen": true, "screenshot": name])
                 window.orderOut(nil)
             }
         }
         try JSONSerialization.data(withJSONObject: checks, options: [.prettyPrinted, .sortedKeys])
             .write(to: output.appendingPathComponent("result.json"))
-        print("PASS: production branch rows, worktree rows and tree groups align at 240/320 points in light/dark, with 18-point nesting and compact 26-point rows. \(output.path)")
+        print("PASS: production branch rows, worktree rows and tree groups align at 240/320 points in light/dark, with 18-point nesting, compact 26-point rows, 26-point heads and count pills at the right edge. \(output.path)")
     }
 }

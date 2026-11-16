@@ -723,7 +723,6 @@
 "Loading" = "正在加载";
 "Loading earlier history…" = "正在加载更早的历史…";
 "Local branches" = "本地分支";
-"Local branches %lld" = "本地分支 %1$lld";
 "Local: %@" = "本地：%1$@";
 "Locate" = "定位";
 "Locate…" = "定位…";
@@ -908,7 +907,6 @@
 "Release notes" = "发行说明";
 "Remote: " = "远程： ";
 "Remotes" = "远程";
-"Remotes %lld" = "远程 %1$lld";
 "Remove" = "移除";
 "Remove from list" = "从列表中移除";
 "Remove this variable" = "移除此变量";
@@ -1029,7 +1027,6 @@
 "Start with the reason for the change" = "先说明更改原因";
 "Stash Pop" = "弹出贮藏";
 "Stash changes" = "贮藏更改";
-"Stashes %lld" = "贮藏 %1$lld";
 "Stashing…" = "正在贮藏…";
 "Stash…" = "贮藏…";
 "Structure graph" = "结构图";
@@ -1044,7 +1041,6 @@
 "Tag here…" = "在此打标签…";
 "Tag: %@" = "标签：%1$@";
 "Tags" = "标签";
-"Tags %lld" = "标签 %1$lld";
 "Task" = "任务";
 "Task for the agent (optional)" = "交给代理的任务（可选）";
 "Technical tone" = "技术性语气";
@@ -1166,7 +1162,6 @@
 "Worktree in a temporary folder — it may break when the folder is deleted on restart" = "位于临时文件夹中的工作树 — 重启时如果该文件夹被删除，它可能会损坏";
 "Worktree whose folder is gone — remove it with 'Clean up'" = "文件夹已不存在的工作树 — 可通过“清理”将其移除";
 "Worktrees" = "工作树";
-"Worktrees %lld" = "工作树 %1$lld";
 "Write commit message with AI" = "使用 AI 编写提交信息";
 "Write in English" = "使用英文书写";
 "Write in Korean" = "使用韩文书写";
@@ -1334,7 +1329,6 @@
 "Open in Merge requests" = "在合并请求中打开";
 "Open in Issues" = "在议题中打开";
 "Merge request" = "合并请求";
-"Issues %lld" = "议题 %1$lld";
 "Edit issue #%lld" = "编辑议题 #%1$lld";
 "State" = "状态";
 "Refresh conversation" = "刷新对话";

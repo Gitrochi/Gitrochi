@@ -712,7 +712,6 @@
 "Loading" = "Wird geladen";
 "Loading earlier history…" = "Älterer Verlauf wird geladen…";
 "Local branches" = "Lokale Branches";
-"Local branches %lld" = "Lokale Branches %1$lld";
 "Local: %@" = "Lokal: %1$@";
 "Locate" = "Auswählen";
 "Locate…" = "Auswählen…";
@@ -1302,7 +1301,6 @@
 "Open in Merge requests" = "In Merge Requests öffnen";
 "Open in Issues" = "In Issues öffnen";
 "Merge request" = "Merge Request";
-"Issues %lld" = "Issues %1$lld";
 "Edit issue #%lld" = "Issue #%1$lld bearbeiten";
 "State" = "Status";
 "Refresh conversation" = "Unterhaltung aktualisieren";

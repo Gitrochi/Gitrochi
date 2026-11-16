@@ -707,7 +707,6 @@
 "Loading" = "กำลังโหลด";
 "Loading earlier history…" = "กำลังโหลดประวัติก่อนหน้า…";
 "Local branches" = "แบรนช์โลคัล";
-"Local branches %lld" = "แบรนช์โลคัล %1$lld";
 "Local: %@" = "โลคัล: %1$@";
 "Locate" = "ระบุตำแหน่ง";
 "Locate…" = "ระบุตำแหน่ง…";
@@ -892,7 +891,6 @@
 "Release notes" = "บันทึกประจำรุ่น";
 "Remote: " = "รีโมต: ";
 "Remotes" = "รีโมต";
-"Remotes %lld" = "รีโมต %1$lld";
 "Remove" = "นำออก";
 "Remove from list" = "นำออกจากรายการ";
 "Remove this variable" = "นำตัวแปรนี้ออก";
@@ -1013,7 +1011,6 @@
 "Start with the reason for the change" = "เริ่มด้วยเหตุผลของการเปลี่ยนแปลง";
 "Stash Pop" = "ป๊อปสแตช";
 "Stash changes" = "สแตชการเปลี่ยนแปลง";
-"Stashes %lld" = "สแตช %1$lld";
 "Stashing…" = "กำลังสแตช…";
 "Stash…" = "สแตช…";
 "Structure graph" = "กราฟโครงสร้าง";
@@ -1028,7 +1025,6 @@
 "Tag here…" = "สร้างแท็กที่นี่…";
 "Tag: %@" = "แท็ก: %1$@";
 "Tags" = "แท็ก";
-"Tags %lld" = "แท็ก %1$lld";
 "Task" = "งาน";
 "Task for the agent (optional)" = "งานสำหรับเอเจนต์ (ไม่บังคับ)";
 "Technical tone" = "น้ำเสียงเชิงเทคนิค";
@@ -1150,7 +1146,6 @@
 "Worktree in a temporary folder — it may break when the folder is deleted on restart" = "เวิร์กทรีในโฟลเดอร์ชั่วคราว — อาจเสียหายเมื่อโฟลเดอร์ถูกลบตอนรีสตาร์ท";
 "Worktree whose folder is gone — remove it with 'Clean up'" = "เวิร์กทรีที่โฟลเดอร์หายไปแล้ว — นำออกด้วย 'Prune'";
 "Worktrees" = "เวิร์กทรี";
-"Worktrees %lld" = "เวิร์กทรี %1$lld";
 "Write commit message with AI" = "เขียนข้อความคอมมิตด้วย AI";
 "Write in English" = "เขียนเป็นภาษาอังกฤษ";
 "Write in Korean" = "เขียนเป็นภาษาเกาหลี";
@@ -1318,7 +1313,6 @@
 "Open in Merge requests" = "เปิดในเมิร์จรีเควสต์";
 "Open in Issues" = "เปิดในอิชชู";
 "Merge request" = "เมิร์จรีเควสต์";
-"Issues %lld" = "อิชชู %1$lld";
 "Edit issue #%lld" = "แก้ไขอิชชู #%1$lld";
 "State" = "สถานะ";
 "Refresh conversation" = "รีเฟรชการสนทนา";
