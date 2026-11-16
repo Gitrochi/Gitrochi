@@ -25,7 +25,8 @@
 .commit-author { display: flex; align-items: center; gap: 6px; min-width: 0; margin-top: 10px; }
 .commit-author-name { flex: 0 1 auto; font-weight: 600; }
 .commit-author-when { flex: none; white-space: nowrap; }
-.commit-committer { margin-top: 4px; line-height: 16px; }
+/* under the name, past the photo: the author's second line, not a block of its own */
+.commit-committer { margin: 2px 0 0 26px; line-height: 16px; }
 
 .commit-body { margin-top: 14px; font-size: 13px; line-height: 1.55; color: var(--status-text); }
 .commit-body.folded { max-height: 160px; overflow: hidden; mask-image: linear-gradient(black 70%, transparent); }

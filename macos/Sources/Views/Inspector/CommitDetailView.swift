@@ -97,7 +97,7 @@ struct CommitDetailView: View {
     /// One line: the photo (or the initial), the name and when. The email and the exact date are on hover; who
     /// committed it appears only when that differs from the author.
     private func author(_ d: CommitDetail) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 2) {
             HStack(spacing: 6) {
                 AuthorAvatar(name: d.author, email: d.email, size: 20)
                 Text(verbatim: d.author).font(.system(size: 13, weight: .semibold)).lineLimit(1).truncationMode(.tail)
@@ -112,6 +112,8 @@ struct CommitDetailView: View {
                     .font(.system(size: 12)).foregroundStyle(HostedList.caption)
                     .fixedSize(horizontal: false, vertical: true).textSelection(.enabled)
                     .help(d.committer == d.author ? "" : "\(d.committer) <\(d.committerEmail)>")
+                    // under the name, past the photo: the author's second line, not a block of its own
+                    .padding(.leading, 26)
             }
         }
     }
