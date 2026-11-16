@@ -318,6 +318,7 @@ extension RepoStore {
     func explainCommit(_ sha: String) async {
         guard let url, !explaining.contains(sha) else { return }
         explaining.insert(sha)
+        explainFailures[sha] = nil
         defer { explaining.remove(sha) }
         do {
             let show = try await Git.run(["show", "--stat", "--patch", "--diff-merges=first-parent", "--no-ext-diff",
@@ -327,7 +328,8 @@ extension RepoStore {
             if clipped.omitted > 0 { text += String(localized: "\n\n(The diff was long, so only the beginning was explained.)") }
             explanations[sha] = text
         } catch {
-            errorMessage = describe(error)
+            // the failure belongs to this commit: the inspector shows it there, with Retry
+            explainFailures[sha] = describe(error)
         }
     }
 

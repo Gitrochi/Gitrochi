@@ -500,7 +500,6 @@
 "Conversation %lld" = "Обговорення %1$lld";
 "Copied" = "Скопійовано";
 "Copy SHA" = "Копіювати SHA";
-"Copy full SHA" = "Копіювати повний SHA";
 "Copy link" = "Копіювати посилання";
 "Copy message" = "Копіювати повідомлення";
 "Copy name" = "Копіювати назву";
@@ -624,7 +623,6 @@
 "Executable" = "Виконуваний файл";
 "Existing branch" = "Наявна гілка";
 "Explain again" = "Пояснити знову";
-"Explain this commit" = "Пояснити цей коміт";
 "Failed" = "Збій";
 "Fast-forward" = "Перемотати вперед";
 "Fast-forward '%@' (current) to '%@'" = "Перемотати '%1$@' (поточна) вперед до '%2$@'";
@@ -2253,6 +2251,13 @@
 "Saved sign-in can't be read" = "Не вдається прочитати збережений вхід";
 "Couldn't use the saved sign-in" = "Не вдалося використати збережений вхід";
 "Refresh account status" = "Оновити стан облікового запису";
+"Tag…" = "Тег…";
+"Explain with AI…" = "Пояснити за допомогою AI…";
+"Copy commit SHA" = "Копіювати SHA коміту";
+"Parent" = "Батьківський";
+"Parents" = "Батьківські";
+"Couldn't explain this commit" = "Не вдалося пояснити цей коміт";
+"More commit actions" = "Інші дії з комітом";
 "Needs you" = "Чекають на вас";
 "Respond" = "Відповісти";
 "Elsewhere" = "В інших місцях";

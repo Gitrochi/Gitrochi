@@ -501,7 +501,6 @@
 "Conventional Commits format (feat: …)" = "Format Conventional Commits (feat: …)";
 "Copied" = "Copié";
 "Copy SHA" = "Copier le SHA";
-"Copy full SHA" = "Copier le SHA complet";
 "Copy link" = "Copier le lien";
 "Copy message" = "Copier le message";
 "Copy name" = "Copier le nom";
@@ -625,7 +624,6 @@
 "Executable" = "Exécutable";
 "Existing branch" = "Branche existante";
 "Explain again" = "Expliquer à nouveau";
-"Explain this commit" = "Expliquer ce commit";
 "Failed" = "Échec";
 "Fast-forward '%@' (current) to '%@'" = "Fast-forward de « %1$@ » (actuelle) vers « %2$@ »";
 "Fast-forward '%@' to '%@'" = "Fast-forward de « %1$@ » vers « %2$@ »";
@@ -2291,6 +2289,13 @@
 "Saved sign-in can't be read" = "Impossible de lire la connexion enregistrée";
 "Couldn't use the saved sign-in" = "Impossible d’utiliser la connexion enregistrée";
 "Refresh account status" = "Actualiser l’état du compte";
+"Tag…" = "Tag…";
+"Explain with AI…" = "Expliquer avec l'IA…";
+"Copy commit SHA" = "Copier le SHA du commit";
+"Parent" = "Parent";
+"Parents" = "Parents";
+"Couldn't explain this commit" = "Impossible d'expliquer ce commit";
+"More commit actions" = "Autres actions sur le commit";
 "Needs you" = "Requiert votre attention";
 "Respond" = "Répondre";
 "Elsewhere" = "Ailleurs";

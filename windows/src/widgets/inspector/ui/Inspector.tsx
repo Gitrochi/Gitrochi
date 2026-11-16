@@ -1,15 +1,16 @@
-import { ArrowLeft, CircleMinus, CirclePlus, Hash, Layers, TriangleAlert, Waypoints } from "lucide-react";
-import { CircleCheck, CircleDot, GitMerge } from "@/shared/icons";
-import { Clock, GitBranch, Sparkles } from "@/shared/icons";
-import { type ReactNode, useMemo, useState } from "react";
+import { CircleMinus, CirclePlus, Layers, TriangleAlert, Waypoints } from "lucide-react";
+import { CircleCheck } from "@/shared/icons";
+import { GitBranch, Sparkles } from "@/shared/icons";
+import type { ReactNode } from "react";
 import { ai } from "@/entities/ai";
 import { avatars } from "@/entities/avatar";
-import { type FileChange, markdownLinks, RefBadge, sameDiffSource, short, statusCount, statusIsEmpty } from "@/entities/git";
+import { type FileChange, sameDiffSource, statusCount, statusIsEmpty } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
 import { keyLabel } from "@/shared/config";
 import { t } from "@/shared/i18n";
-import { laneColor, longDate, shortDate, useObserve } from "@/shared/lib";
-import { Avatar, Button, Card, ChangeBar, Checkbox, Empty, FileViewToggle, LineStatText, Markdown, type MenuItem, SharedPane, SharedStack, Spinner, tip } from "@/shared/ui";
+import { useObserve } from "@/shared/lib";
+import { Avatar, Button, Card, Checkbox, FileViewToggle, HostedListEmpty, LineStatText, type MenuItem, SharedPane, SharedStack, Spinner, tip } from "@/shared/ui";
+import { CommitDetailView, folderMenu } from "./CommitDetailView";
 import { ChangeList } from "./FileList";
 import { CommitImpactPanel } from "./CommitImpactPanel";
 import { GitchBar } from "./GitchBar";
@@ -22,7 +23,7 @@ export function Inspector({ store }: { store: RepoStore }) {
   useObserve(store);
   useObserve(ai);
   const sel = store.selection;
-  if (!sel) return <Empty icon={<Waypoints size={30} strokeWidth={1.5} />} title={t("No commit selected")} detail={t("Select a commit in the graph.")} />;
+  if (!sel) return <HostedListEmpty icon={<Waypoints size={24} strokeWidth={1.5} />} title={t("No commit selected")} caption={t("Select a commit in the graph.")} />;
   if (sel.kind === "wip") return <WorkingChanges store={store} />;
   if (sel.kind === "commit") return <CommitDetailView store={store} sha={sel.sha} />;
   if (sel.kind === "worktree") return <WorktreeChanges store={store} path={sel.path} />;
@@ -222,161 +223,4 @@ function CommitComposer({ store }: { store: RepoStore }) {
       </div>
     </div>
   );
-}
-
-// MARK: - 커밋 상세
-
-function CommitDetailView({ store, sha }: { store: RepoStore; sha: string }) {
-  useObserve(avatars);
-  const [expanded, setExpanded] = useState(false);
-  const md = useMemo(() => markdownLinks(store.target), [store.target]);
-  const d = store.detail;
-  if (!d || d.sha !== sha)
-    return (
-      <div className="empty">
-        <Spinner size={20} />
-      </div>
-    );
-  const refs = store.refsByCommit.get(sha) ?? [];
-  const idx = store.commitIndex.get(sha);
-  const tint = idx !== undefined ? laneColor(store.entries[idx].row.color) : "var(--accent)";
-  const long = d.body.length > 400 || d.body.split("\n").length > 9;
-  const stats = Object.values(store.detailStats);
-  const added = stats.reduce((a, s) => a + (s.added ?? 0), 0);
-  const deleted = stats.reduce((a, s) => a + (s.deleted ?? 0), 0);
-  const explanation = store.explanations[sha];
-  return (
-    <div className="col grow commit-detail" style={{ height: "100%" }}>
-      <div className="panel-head commit-head">
-        <span className="muted" style={{ display: "inline-flex" }}>
-          {d.parents.length > 1 ? <GitMerge size={15} /> : <CircleDot size={15} />}
-        </span>
-        <span style={{ fontWeight: 600 }}>{d.parents.length > 1 ? t("Merge commit") : t("Commit")}</span>
-        <span className="mono muted">{sha.slice(0, 8)}</span>
-        <span className="spacer" />
-        <span className="muted">{shortDate(d.commitDate)}</span>
-      </div>
-      <div className="panel-scroll" key={sha}>
-        <Card>
-          {refs.length > 0 && (
-            <div className="row" style={{ flexWrap: "wrap" }}>
-              {refs.slice(0, 4).map((r) => (
-                <RefBadge key={r.kind + r.name} label={r} color={tint} />
-              ))}
-              {refs.length > 4 && <span className="faint">+{refs.length - 4}</span>}
-            </div>
-          )}
-          <div className="selectable" style={{ fontSize: 15, fontWeight: 600, wordBreak: "break-word" }}>
-            {d.summary}
-          </div>
-          {d.body && (
-            <>
-              <Markdown
-                text={d.body}
-                {...md}
-                className="muted"
-                style={long && !expanded ? { maxHeight: 8 * 20, overflow: "hidden", maskImage: "linear-gradient(black 70%, transparent)" } : undefined}
-              />
-              {long && (
-                <button className="link" style={{ alignSelf: "flex-start" }} onClick={() => setExpanded(!expanded)}>
-                  {expanded ? t("Collapse") : t("Show all")}
-                </button>
-              )}
-            </>
-          )}
-        </Card>
-        <Card>
-          <div className="commit-identity">
-            <Avatar name={d.author} email={d.email} size={34} url={avatars.url(d.email, d.author)} />
-            <div className="col grow commit-author">
-              <span style={{ fontWeight: 600 }} className="ellipsis" title={d.author} data-tip={d.author}>
-                {d.author}
-              </span>
-              <span className="muted ellipsis" style={{ fontSize: 11.5 }} title={d.email} data-tip={d.email}>
-                {d.email}
-              </span>
-            </div>
-            <div className="commit-author-date muted">
-              <span>{shortDate(d.date)}</span>
-              <span style={{ fontSize: 11 }}>
-                {longDate(d.date)}
-              </span>
-            </div>
-          </div>
-          {(d.committer !== d.author || Math.abs(d.commitDate - d.date) > 60) && (
-            <span className="row muted" style={{ fontSize: 11.5 }}>
-              <Clock size={12} />
-              {d.committer === d.author ? t("Commit: {0}", longDate(d.commitDate)) : t("Commit: {0} · {1}", d.committer, longDate(d.commitDate))}
-            </span>
-          )}
-          <div style={{ height: 1, background: "var(--border)" }} />
-          <div className="row" style={{ flexWrap: "wrap" }}>
-            <button className="pill" data-tip={t("Copy full SHA")} onClick={() => store.copy(d.sha)}>
-              <Hash size={10} /> {d.sha.slice(0, 8)}
-            </button>
-            {d.parents.length > 0 && <ArrowLeft size={11} className="faint" />}
-            {d.parents.map((p) => (
-              <button key={p} className="pill" data-tip={t("Go to parent commit")} onClick={() => store.reveal(p)}>
-                {d.parents.length > 1 && <GitMerge size={10} />} {short(p)}
-              </button>
-            ))}
-          </div>
-        </Card>
-        <Card>
-          <div className="row">
-            <span className="row" style={{ color: "var(--accent)", fontWeight: 600 }}>
-              <Sparkles size={14} /> {" "}{t("{0} explanation", ai.shortFor("explain"))}</span>
-            <span className="spacer" />
-            {store.explaining.has(sha) ? (
-              <span className="row muted" style={{ fontSize: 12 }}>
-                <Spinner size={11} /> {" "}{t("Loading")}</span>
-            ) : (
-              <button className="link" onClick={() => void store.explainCommit(sha)}>
-                {explanation ? t("Explain again") : t("Explain this commit")}
-              </button>
-            )}
-          </div>
-          {explanation && <div className="selectable markdown">{explanation}</div>}
-        </Card>
-        <Card gap={6}>
-          <div className="row">
-            <span style={{ fontWeight: 600 }}>{t("Changed files")}</span>
-            <span className="muted">{store.detailFiles.length}</span>
-            <span className="spacer" />
-            <FileViewToggle />
-          </div>
-          {added + deleted > 0 && (
-            <div className="row" style={{ marginBottom: 4 }}>
-              <LineStatText added={added} deleted={deleted} />
-              <ChangeBar added={added} deleted={deleted} />
-            </div>
-          )}
-          <ChangeList
-            folderMenu={(p) => folderMenu(store, p)}
-            changes={store.detailFiles}
-            stats={store.detailStats}
-            isSelected={(c) => sameDiffSource(store.diffSource, { kind: "commit", sha, change: c, parent: d.parents[0] ?? null })}
-            onOpen={(c) => store.openDiff({ kind: "commit", sha, change: c, parent: d.parents[0] ?? null })}
-            menu={(c) => [
-              { label: t("File history"), onClick: () => store.openFileHistory(c.path) },
-              { label: t("Show blame at this commit"), disabled: c.kind === "deleted", onClick: () => store.openBlame(c.path, sha) },
-              "divider",
-              { label: t("Show in Explorer"), onClick: () => store.revealFile(c) },
-              { label: t("Copy path"), onClick: () => store.copy(c.path) },
-            ]}
-          />
-        </Card>
-      </div>
-    </div>
-  );
-}
-
-// MARK: - PR 상세
-
-/** 변경 목록 트리의 폴더 줄 우클릭 */
-function folderMenu(store: RepoStore, path: string): MenuItem[] {
-  return [
-    { label: t("Show in Explorer"), onClick: () => void store.revealPath(path) },
-    { label: t("Copy path"), onClick: () => store.copy(path) },
-  ];
 }

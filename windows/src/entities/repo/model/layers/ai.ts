@@ -302,6 +302,11 @@ export abstract class RepoAI extends RepoIssues {
   async explainCommit(sha: string) {
     if (!this.path || this.explaining.has(sha)) return;
     this.explaining.add(sha);
+    if (sha in this.explainFailures) {
+      const failures = { ...this.explainFailures };
+      delete failures[sha];
+      this.explainFailures = failures;
+    }
     this.emit();
     try {
       const show = (
@@ -312,7 +317,8 @@ export abstract class RepoAI extends RepoIssues {
       if (clipped.omitted > 0) text += t("\n\n(The diff was long, so only the beginning was explained.)");
       this.explanations = { ...this.explanations, [sha]: text };
     } catch (e) {
-      this.errorMessage = describe(e);
+      // the failure belongs to this commit: the inspector shows it there, with Retry
+      this.explainFailures = { ...this.explainFailures, [sha]: describe(e) };
     } finally {
       this.explaining.delete(sha);
       this.emit();

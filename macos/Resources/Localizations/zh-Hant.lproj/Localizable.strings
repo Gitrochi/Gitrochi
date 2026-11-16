@@ -501,7 +501,6 @@
 "Conversation %lld" = "對話 %1$lld";
 "Copied" = "已複製";
 "Copy SHA" = "複製 SHA";
-"Copy full SHA" = "複製完整 SHA";
 "Copy link" = "複製連結";
 "Copy message" = "複製訊息";
 "Copy name" = "複製名稱";
@@ -625,7 +624,6 @@
 "Executable" = "執行檔";
 "Existing branch" = "現有分支";
 "Explain again" = "重新說明";
-"Explain this commit" = "說明此提交";
 "Failed" = "失敗";
 "Fast-forward" = "快轉";
 "Fast-forward '%@' (current) to '%@'" = "將「%1$@」（目前）快轉到「%2$@」";
@@ -2258,6 +2256,13 @@
 "Saved sign-in can't be read" = "無法讀取已儲存的登入資訊";
 "Couldn't use the saved sign-in" = "無法使用已儲存的登入資訊";
 "Refresh account status" = "重新整理帳號狀態";
+"Tag…" = "標籤…";
+"Explain with AI…" = "用 AI 說明…";
+"Copy commit SHA" = "複製提交 SHA";
+"Parent" = "父提交";
+"Parents" = "父提交";
+"Couldn't explain this commit" = "無法說明此提交";
+"More commit actions" = "更多提交操作";
 "Needs you" = "等待你處理";
 "Respond" = "回應";
 "Elsewhere" = "其他位置";

@@ -464,8 +464,8 @@ struct InspectorView: View {
         case .worktree(let path)?: WorktreeChangesView(path: path)
         case .pullRequest(let n)?: PullRequestDetailView(number: n)
         case nil:
-            ContentUnavailableView("No commit selected", symbol: "point.3.connected.trianglepath.dotted",
-                                   description: Text("Select a commit in the graph."))
+            HostedListEmpty(symbol: "point.3.connected.trianglepath.dotted", title: String(localized: "No commit selected"),
+                            caption: String(localized: "Select a commit in the graph."))
         }
     }
 }

@@ -208,6 +208,8 @@ export abstract class RepoCore extends Observable implements AgentHost {
   aiNotice: string | null = null;
   explanations: Record<string, string> = {};
   explaining = new Set<string>();
+  /** Why the last explanation of a commit failed; shown beside that commit, not as a dialog */
+  explainFailures: Record<string, string> = {};
 
   /** 되돌릴 수 있는 작업(마지막이 맨 뒤) */
   undoStack: UndoPoint[] = [];
@@ -537,6 +539,7 @@ export abstract class RepoCore extends Observable implements AgentHost {
     this.aiNotice = null;
     this.explanations = {};
     this.explaining = new Set();
+    this.explainFailures = {};
     this.detailGen++;
     this.diffGen++;
   }

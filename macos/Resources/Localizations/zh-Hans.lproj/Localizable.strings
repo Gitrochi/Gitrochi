@@ -511,7 +511,6 @@
 "Conversation %lld" = "对话 %1$lld";
 "Copied" = "已复制";
 "Copy SHA" = "复制 SHA";
-"Copy full SHA" = "复制完整 SHA";
 "Copy link" = "复制链接";
 "Copy message" = "复制信息";
 "Copy name" = "复制名称";
@@ -635,7 +634,6 @@
 "Executable" = "可执行文件";
 "Existing branch" = "现有分支";
 "Explain again" = "重新解释";
-"Explain this commit" = "解释此提交";
 "Failed" = "失败";
 "Fast-forward" = "快进";
 "Fast-forward '%@' (current) to '%@'" = "将“%1$@”（当前）快进到“%2$@”";
@@ -2396,6 +2394,13 @@
 "Saved sign-in can't be read" = "无法读取已保存的登录信息";
 "Couldn't use the saved sign-in" = "无法使用已保存的登录信息";
 "Refresh account status" = "刷新账户状态";
+"Tag…" = "标签…";
+"Explain with AI…" = "用 AI 解释…";
+"Copy commit SHA" = "复制提交 SHA";
+"Parent" = "父提交";
+"Parents" = "父提交";
+"Couldn't explain this commit" = "无法解释此提交";
+"More commit actions" = "更多提交操作";
 "Needs you" = "等待你处理";
 "Respond" = "回应";
 "Elsewhere" = "其他位置";

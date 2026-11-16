@@ -484,7 +484,6 @@
 "Conversation %lld" = "Percakapan %1$lld";
 "Copied" = "Disalin";
 "Copy SHA" = "Salin SHA";
-"Copy full SHA" = "Salin SHA lengkap";
 "Copy link" = "Salin tautan";
 "Copy message" = "Salin pesan";
 "Copy name" = "Salin nama";
@@ -601,7 +600,6 @@
 "Executable" = "File eksekusi";
 "Existing branch" = "Branch yang sudah ada";
 "Explain again" = "Jelaskan lagi";
-"Explain this commit" = "Jelaskan commit ini";
 "Failed" = "Gagal";
 "Fast-forward '%@' (current) to '%@'" = "Fast-forward '%1$@' (saat ini) ke '%2$@'";
 "Fast-forward '%@' to '%@'" = "Fast-forward '%1$@' ke '%2$@'";
@@ -2211,6 +2209,13 @@
 "Saved sign-in can't be read" = "Info masuk tersimpan tidak dapat dibaca";
 "Couldn't use the saved sign-in" = "Tidak dapat memakai info masuk tersimpan";
 "Refresh account status" = "Segarkan status akun";
+"Tag…" = "Tag…";
+"Explain with AI…" = "Jelaskan dengan AI…";
+"Copy commit SHA" = "Salin SHA commit";
+"Parent" = "Induk";
+"Parents" = "Induk";
+"Couldn't explain this commit" = "Tidak dapat menjelaskan commit ini";
+"More commit actions" = "Tindakan commit lainnya";
 "Needs you" = "Menunggu Anda";
 "Respond" = "Tanggapi";
 "Elsewhere" = "Di tempat lain";

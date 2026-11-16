@@ -185,14 +185,16 @@ struct Card<Content: View>: View {
 
 /// 세로 스크롤의 내용 폭을 패널에 고정해 긴 배지나 문장이 전체 카드를 밀어내지 않게 한다.
 struct InspectorScrollView<Content: View>: View {
+    /// The room around the content; a flat panel whose sections carry their own padding passes 0
+    var inset: CGFloat = 12
     @ViewBuilder let content: Content
 
     var body: some View {
         GeometryReader { geometry in
             ScrollView {
                 content
-                    .frame(width: max(0, geometry.size.width - 24), alignment: .topLeading)
-                    .padding(12)
+                    .frame(width: max(0, geometry.size.width - inset * 2), alignment: .topLeading)
+                    .padding(inset)
             }
         }
         .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
