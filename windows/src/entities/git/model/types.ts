@@ -72,6 +72,20 @@ export interface CommitDetail {
   commitDate: number;
   summary: string;
   body: string;
+  /** The body without the trailer lines the inspector draws as rows */
+  prose: string;
+  trailers: CommitTrailers;
+}
+
+/**
+ * The trailers of a commit message that are drawn as rows; the shared core reads them (crates/gitrochi-core/src/trailers.rs).
+ * (macOS: CommitTrailers)
+ */
+export interface CommitTrailers {
+  /** `Closes #42`: the keyword is one of three, whatever form the message used */
+  issues: { keyword: "closes" | "fixes" | "resolves"; number: number }[];
+  /** `Co-authored-by: Name <email>`; `line` is the trailer as written */
+  coAuthors: { name: string; email: string; line: string }[];
 }
 
 export type RefKind = "head" | "local" | "remote" | "tag";

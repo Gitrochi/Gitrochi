@@ -49,6 +49,28 @@ struct CommitDetail: Hashable {
     let commitDate: Date
     let summary: String
     let body: String
+    /// The body without the trailer lines the inspector draws as rows
+    let prose: String
+    let trailers: CommitTrailers
+
+    init(sha: String, parents: [String], author: String, email: String, date: Date, committer: String, committerEmail: String,
+         commitDate: Date, summary: String, body: String, prose: String? = nil, trailers: CommitTrailers = CommitTrailers()) {
+        self.sha = sha; self.parents = parents; self.author = author; self.email = email; self.date = date
+        self.committer = committer; self.committerEmail = committerEmail; self.commitDate = commitDate
+        self.summary = summary; self.body = body; self.prose = prose ?? body; self.trailers = trailers
+    }
+}
+
+/// The trailers of a commit message that are drawn as rows; the shared core reads them (crates/gitrochi-core/src/trailers.rs).
+/// (Windows: CommitTrailers)
+struct CommitTrailers: Hashable {
+    /// `Closes #42`: `keyword` is closes, fixes or resolves, whatever form the message used
+    struct Issue: Hashable { let keyword: String; let number: Int }
+    /// `Co-authored-by: Name <email>`; `line` is the trailer as written
+    struct CoAuthor: Hashable { let name: String; let email: String; let line: String }
+    var issues: [Issue] = []
+    var coAuthors: [CoAuthor] = []
+    var isEmpty: Bool { issues.isEmpty && coAuthors.isEmpty }
 }
 
 // MARK: - Refs

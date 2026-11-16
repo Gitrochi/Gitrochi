@@ -202,6 +202,13 @@ struct CollaborationInboxDetail {
         issueFacts(p, into: &item)
         return item
     }
+    /// One issue by its number, for a commit trailer's row; GitHub answers a pull request's number too
+    static func trailerIssue(_ c: ReviewAccess, _ number: Int) async throws -> CollaborationInboxItem {
+        let found = try await object(c, repo(c) + "/issues/\(number)")
+        var item = issue(found)
+        item.isRequest = found["pull_request"] != nil
+        return item
+    }
     /// Facts from the issue's own response; notifications may initially have no author.
     static func issueFacts(_ p: Object, into item: inout CollaborationInboxItem) {
         if let author = (p["user"] as? Object) ?? (p["author"] as? Object) {

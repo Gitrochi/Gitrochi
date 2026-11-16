@@ -13,7 +13,8 @@ export const fileHistoryFormat = "%x1e%H%x1f%P%x1f%an%x1f%ae%x1f%ct%x1f%s";
 export const parseLog = (text: string): Commit[] => runCore({ op: "log", text });
 export const parseLogAsync = (text: string): Promise<Commit[]> => runCoreAsync({ op: "log", text });
 export const bodyPreview = (text: string): string => runCore({ op: "bodyPreview", text });
-export const parseCommitDetail = (text: string): CommitDetail | null => runCore({ op: "detail", text });
+/** `issueBase` is the repository's web address, so that an issue's full address in a trailer is read like `#42` */
+export const parseCommitDetail = (text: string, issueBase = ""): CommitDetail | null => runCore({ op: "detail", text, issueBase });
 export const parseTrack = (text: string): { ahead: number; behind: number; gone: boolean } => runCore({ op: "track", text });
 export function parseRefs(text: string): { locals: Branch[]; remotes: Branch[]; tags: Tag[] } {
   const refs = runCore<{ locals: Branch[]; remotes: Branch[]; tags: Tag[] }>({ op: "refs", text });

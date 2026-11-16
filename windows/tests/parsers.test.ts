@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { layoutGraph } from "@/entities/git/lib/graph";
-import { parseDiff, parseIdentityConfig, parseLog, parseNameStatus, parseNumstat, parseRefs, parseStatus, parseTrack, parseWorktrees } from "@/entities/git/lib/parsers";
+import { parseCommitDetail, parseDiff, parseIdentityConfig, parseLog, parseNameStatus, parseNumstat, parseRefs, parseStatus, parseTrack, parseWorktrees } from "@/entities/git/lib/parsers";
 
 const US = "\u001f",
   RS = "\u001e";
@@ -13,6 +13,23 @@ describe("parsers", () => {
     expect(c[0].parents).toEqual(["b1", "c1"]);
     expect(c[0].subject).toBe("제목 하나");
     expect(c[1].parents).toEqual([]);
+  });
+
+  it("commit detail: trailers become rows and leave the prose", () => {
+    const message = "Keep the scroll position\n\nThe list jumped.\n\n- one\n- two\n\nCloses #42\nFixes: https://github.com/o/r/issues/7\nReviewed-by: Kim <kim@example.com>\nCo-authored-by: Sam Lee <sam@example.com>\n";
+    const d = parseCommitDetail(["a1", "b1", "Alex Kim", "alex@example.com", "1700000000", "Pat Doe", "pat@example.com", "1700000900", message].join(US), "https://github.com/o/r")!;
+    expect(d.summary).toBe("Keep the scroll position");
+    expect(d.trailers).toEqual({
+      issues: [{ keyword: "closes", number: 42 }, { keyword: "fixes", number: 7 }],
+      coAuthors: [{ name: "Sam Lee", email: "sam@example.com", line: "Co-authored-by: Sam Lee <sam@example.com>" }],
+    });
+    // only the lines that became rows leave the text; the whole body stays for the commit menu
+    expect(d.prose).toBe("The list jumped.\n\n- one\n- two\n\nReviewed-by: Kim <kim@example.com>");
+    expect(d.body).toContain("Closes #42");
+    // without the repository's address an issue's address is text, and a reference in the prose is never a row
+    const plain = parseCommitDetail(["a1", "", "A", "a@x", "1", "A", "a@x", "1", "S\n\nThis closes #3.\n\nFixes https://github.com/o/r/issues/7"].join(US))!;
+    expect(plain.trailers).toEqual({ issues: [], coAuthors: [] });
+    expect(plain.prose).toBe(plain.body);
   });
 
   it("status v2 with spaces, rename, untracked, conflict", () => {

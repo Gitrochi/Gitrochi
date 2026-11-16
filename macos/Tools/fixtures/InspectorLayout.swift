@@ -16,7 +16,15 @@ import Vision
                                     date: Date(timeIntervalSince1970: 1_792_973_000), committer: String(repeating: "LongCommitter", count: 8),
                                     committerEmail: "committer@example.invalid", commitDate: Date(timeIntervalSince1970: 1_792_974_000),
                                     summary: "VISIBLE SUMMARY: preserve the beginning of a long commit message in narrow panels",
-                                    body: "The full commit description remains readable and wraps inside the card.")
+                                    body: "The full commit description remains readable and wraps inside the panel.",
+                                    trailers: CommitTrailers(
+                                        issues: [.init(keyword: "closes", number: 42), .init(keyword: "fixes", number: 7)],
+                                        coAuthors: [.init(name: "VISIBLE COAUTHOR with an unusually long display name", email: "coauthor@example.invalid",
+                                                          line: "Co-authored-by: VISIBLE COAUTHOR with an unusually long display name <coauthor@example.invalid>")]))
+        // an issue title that was read before; #7 has none, as without an account
+        store.trailerIssuesKey = store.issueAccountKey
+        store.trailerIssues = [42: CollaborationInboxItem(id: "issue-42", kind: "issue", number: 42, title: "VISIBLE ISSUE title that is far too long for a narrow panel",
+                                                          url: "", body: "", state: "open", author: "")]
         store.fixtureRefs(sha, [
             RefLabel(name: "codex/commit-impact-structure-replay-with-a-very-long-branch-name", kind: .local, isCurrent: true),
             RefLabel(name: "origin/codex/commit-impact-structure-replay-with-a-very-long-branch-name", kind: .remote, isCurrent: false)
@@ -53,7 +61,15 @@ import Vision
                 precondition(text.contains("VISIBLE AUTHOR"), "The author is clipped: \(name)\n\(text)")
                 // the recognizer sometimes splits a file name at its dot
                 precondition(text.replacingOccurrences(of: " ", with: "").contains("VisibleFile.swift"), "The changed file is hidden: \(name)\n\(text)")
-                precondition(!text.contains("LongCommitterLongCommitterLongCommitterLongCommitterLongCommitterLongCommitterLongCommitterLongCommitter"), "Long words must wrap")
+                // the board draws one author line: the committer is on the time's hover, and a commit's refs are on its graph row
+                precondition(!text.contains("LongCommitter"), "The committer has no line of its own: \(name)\n\(text)")
+                precondition(!text.contains("commit-impact"), "Ref chips are not drawn in the inspector: \(name)\n\(text)")
+                precondition(CommitDetailView.dates(store.detail!).contains("LongCommitter"), "The committer stays on the time's hover")
+                // the trailer rows: the verb, the read title from its start, and the co-author with the pill whole
+                precondition(text.contains("Closes") && text.contains("Fixes"), "The issue rows are hidden: \(name)\n\(text)")
+                precondition(text.contains("VISIBLE ISSUE"), "The issue title is clipped from its start: \(name)\n\(text)")
+                precondition(text.contains("VISIBLE COAU"), "The co-author is clipped from its start: \(name)\n\(text)")
+                precondition(text.contains("Co-author"), "The co-author pill is cut: \(name)\n\(text)")
                 // the flat panel keeps its actions in view: the two buttons and the AI entry
                 precondition(text.contains("New branch"), "The New branch button is hidden: \(name)\n\(text)")
                 precondition(text.contains("Explain with"), "The AI entry is hidden: \(name)\n\(text)")
@@ -62,6 +78,6 @@ import Vision
             }
         }
         try JSONSerialization.data(withJSONObject: results, options: [.prettyPrinted, .sortedKeys]).write(to: output.appendingPathComponent("result.json"))
-        print("PASS: actual flat commit inspector at 250/340/380 points, light/dark; long refs, summary, author, committer, six parents, the actions and the file remain visible. \(output.path)")
+        print("PASS: actual flat commit inspector at 250/340/380 points, light/dark; the summary, author, trailer rows, six parents, the actions and the file remain visible; no ref chips or committer line. \(output.path)")
     }
 }

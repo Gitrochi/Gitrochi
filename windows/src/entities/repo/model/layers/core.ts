@@ -41,6 +41,7 @@ export abstract class RepoCore extends Observable implements AgentHost {
   protected abstract loadDiff(keepCurrent: boolean): void;
   abstract get repoStateTitle(): string;
   abstract loadPullRequests(): Promise<void>;
+  abstract loadTrailerIssues(numbers: number[]): void;
   abstract newTerminal(path?: string, spec?: Partial<TerminalSpec>): TerminalSession;
   abstract focusTerminal(s: TerminalSession): void;
   abstract closeAllTerminals(): void;

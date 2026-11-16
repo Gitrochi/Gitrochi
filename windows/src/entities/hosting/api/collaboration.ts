@@ -150,6 +150,11 @@ export function issueFacts(i: IssueFactsRecord): Pick<InboxItem, "created" | "co
   };
 }
 const issue = (c: ReviewAccess, i: Issue): InboxItem => ({ id: `issue-${i.number ?? i.iid}`, kind: "issue", number: i.number ?? i.iid ?? 0, title: i.title, url: i.html_url ?? i.web_url ?? "", body: i.body ?? i.description ?? "", state: i.state, updated: H.date(i.updated_at), author: i.user?.login ?? i.author?.username ?? "", authorAvatarURL: H.avatarURL(c, i.user?.avatar_url ?? i.author?.avatar_url), unread: false, ...issueFacts(i) });
+/** One issue by its number, for a commit trailer's row; GitHub answers a pull request's number too (macOS: CollaborationAPI.trailerIssue) */
+export async function trailerIssue(c: ReviewAccess, number: number): Promise<InboxItem> {
+  const found = await send<Issue>(c, `${collaborationRepoURL(c)}/issues/${number}`);
+  return { ...issue(c, found), isRequest: !!found.pull_request };
+}
 /** 현재 저장소·연결된 계정 범위의 할 일. GitLab 멘션은 서버 To-do를 사용한다. */
 export async function inboxPage(c: ReviewAccess, kind: InboxItem["kind"], page = 1): Promise<{ items: InboxItem[]; more: boolean }> {
   if (kind === "review") {

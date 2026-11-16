@@ -1,4 +1,4 @@
-import Foundation
+import AppKit
 
 /// The repository's issue list, shared by the repository sidebar and the Issues page (Windows: entities/repo/model/layers/issues.ts)
 extension RepoStore {
@@ -67,6 +67,53 @@ extension RepoStore {
     func openIssue(_ item: CollaborationInboxItem) {
         navigate(.issues)
         Task { await openInboxItem(item) }
+    }
+
+    // MARK: Issues named by a commit's trailers (Windows: issues.ts, trailerIssue)
+
+    /// What is known of the issue a trailer names: the loaded lists first, then what was read for a trailer. Never asks the server.
+    func trailerIssue(_ number: Int) -> CollaborationInboxItem? {
+        guard trailerIssuesKey == issueAccountKey else { return nil }
+        return trailerIssues[number]
+    }
+
+    /// Reads the titles of the issues a commit closes, once each per repository and account, and only with a connected account
+    /// whose token is already at hand. Answers are kept by issue number, so one never lands under another commit.
+    func loadTrailerIssues(_ numbers: [Int]) {
+        let key = issueAccountKey
+        if trailerIssuesKey != key { trailerIssues = [:]; trailerIssuesAsked = []; trailerIssuesKey = key }
+        guard !numbers.isEmpty, let c = issueAccess else { return }
+        for item in issueList.items + (issueList.assigned ?? []) where numbers.contains(item.number) && trailerIssues[item.number] == nil {
+            trailerIssues[item.number] = item
+        }
+        // a message that names dozens of issues is not worth dozens of requests
+        for number in numbers.prefix(6) where trailerIssues[number] == nil && !trailerIssuesAsked.contains(number) {
+            trailerIssuesAsked.insert(number)
+            Task {
+                let found = try? await CollaborationAPI.trailerIssue(c, number)
+                guard issueAccountKey == key, trailerIssuesKey == key else { return }
+                // a failure may be asked again the next time a commit names the issue
+                if let found { trailerIssues[number] = found } else { trailerIssuesAsked.remove(number) }
+            }
+        }
+    }
+
+    /// Opens the issue a trailer names: its page in the app when an account is connected, else the server's page
+    func openTrailerIssue(_ number: Int) {
+        guard let target else { return }
+        let url = target.webURL + (target.provider == .github ? "/issues/\(number)" : "/-/issues/\(number)")
+        guard hostingAccount != nil else {
+            if let link = URL(string: url) { NSWorkspace.shared.open(link) }
+            return
+        }
+        let item = trailerIssue(number)
+            ?? CollaborationInboxItem(id: "issue-\(number)", kind: "issue", number: number, title: "", url: url, body: "", state: "", author: "")
+        if item.isRequest {
+            navigate(.pullRequests, prepare: false)
+            select(.pullRequest(number))
+        } else {
+            openIssue(item)
+        }
     }
 
     /// Saves a new issue or an edit, then shows it
