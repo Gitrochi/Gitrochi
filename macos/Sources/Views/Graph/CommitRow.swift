@@ -52,9 +52,10 @@ struct CommitRow: View {
                                        startPoint: .leading, endPoint: .trailing)
                     }
                     .background(alignment: .leading) {
-                        // like GitKraken: a band from the node to the message, a little shorter than the row so rows stay apart
+                        // like GitKraken: a band from the node to the message, a little shorter than the row so rows stay apart;
+                        // the uncommitted row has none, as it never takes a lane colour
                         Rectangle()
-                            .fill(tint.opacity(selected ? 0.4 : 0.1))
+                            .fill(c.isPending ? Color.clear : tint.opacity(selected ? 0.4 : 0.1))
                             .frame(height: GraphMetrics.bandHeight)
                             .padding(.leading, min(max(0, GraphMetrics.leftPad + GraphMetrics.laneWidth * (CGFloat(entry.row.column) + 0.5) - laneOffset), columns.graph))
                     }
@@ -63,7 +64,7 @@ struct CommitRow: View {
                 // the message: lane-coloured bar, subject, first body line dimmed; author, date and SHA in the tip or their columns
                 HStack(spacing: 6) {
                     Rectangle()
-                        .fill(tint.opacity(c.isPending ? 0.5 : 0.9))
+                        .fill(c.isPending ? StudioStyle.Graph.neutral : tint)
                         .frame(width: 3, height: GraphMetrics.bandHeight)
                         // 12 between the bar and the text, with the stack's 6
                         .padding(.trailing, 6)
@@ -73,10 +74,8 @@ struct CommitRow: View {
                         } else {
                             Text("// Uncommitted changes").italic().foregroundStyle(.secondary)
                         }
-                        Text("\(wipCount) files")
-                            .font(.caption.weight(.semibold))
-                            .padding(.horizontal, 6).padding(.vertical, 1)
-                            .background(Capsule().fill(tint.opacity(0.18)))
+                        // a neutral pill, white on the selection tint
+                        HostedListChip(title: String(localized: "\(wipCount) files"), selected: selected)
                     } else {
                         SubjectAndBody {
                             Text(c.subject)
@@ -366,14 +365,16 @@ struct GraphCell: View {
                         let mid = (a.y + b.y) / 2
                         p.addCurve(to: b, control1: CGPoint(x: a.x, y: mid), control2: CGPoint(x: b.x, y: mid))
                     }
-                    ctx.stroke(p, with: .color(Palette.lane(s.color)),
-                               style: StrokeStyle(lineWidth: 2, lineCap: .round, dash: s.dashed ? [3, 3] : []))
+                    // only the line from uncommitted changes to their parent is dashed, and it is neutral like their node
+                    ctx.stroke(p, with: .color(s.dashed ? StudioStyle.Graph.neutral : Palette.lane(s.color)),
+                               style: StrokeStyle(lineWidth: 2, lineCap: s.dashed ? .butt : .round, dash: s.dashed ? [3, 3] : []))
                 }
                 let center = CGPoint(x: cx, y: h / 2)
                 func circle(_ r: CGFloat) -> Path { Circle().path(in: CGRect(x: center.x - r, y: center.y - r, width: r * 2, height: r * 2)) }
                 if isWIP {
-                    ctx.fill(circle(7), with: .color(Color(nsColor: .textBackgroundColor)))
-                    ctx.stroke(circle(7), with: .color(color), style: StrokeStyle(lineWidth: 2, dash: [2.5, 2]))
+                    // an 18pt node with a 2pt dashed ring in eight even dashes; never the accent or a lane colour
+                    ctx.fill(circle(9), with: .color(Color(nsColor: .textBackgroundColor)))
+                    ctx.stroke(circle(8), with: .color(StudioStyle.Graph.neutral), style: StrokeStyle(lineWidth: 2, dash: [.pi, .pi]))
                 } else if isMerge {
                     // a merge commit is an 8pt dot with a 2pt gap around it
                     ctx.fill(circle(6), with: .color(Color(nsColor: .textBackgroundColor)))

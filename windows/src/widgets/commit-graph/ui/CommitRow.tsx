@@ -111,8 +111,9 @@ export const CommitRow = memo(function CommitRow({
           className={`graph-cell${laneOffset > 0 ? " fade-left" : ""}${laneOffset < gw - cols.graph ? " fade-right" : ""}`}
           style={{ position: "relative", display: "flex", width: cols.graph, flex: "none", overflow: "hidden" }}
         >
-          {/* like GitKraken: a band from the node to the message, a little shorter than the row so rows stay apart */}
-          <span className="lane-band" style={{ left: Math.max(0, LEFT_PAD + LANE_W * (entry.row.column + 0.5) - laneOffset), background: `color-mix(in srgb, ${tint} ${selected ? 40 : 10}%, transparent)` }} />
+          {/* like GitKraken: a band from the node to the message, a little shorter than the row so rows stay apart;
+              the uncommitted row has none, as it never takes a lane colour */}
+          {!wip && <span className="lane-band" style={{ left: Math.max(0, LEFT_PAD + LANE_W * (entry.row.column + 0.5) - laneOffset), background: `color-mix(in srgb, ${tint} ${selected ? 40 : 10}%, transparent)` }} />}
           {/* the lanes move together with the header's scrollbar; the line from the labels follows the node */}
           <span className="lane-shift" style={{ marginLeft: -laneOffset }}>
             <GraphCell row={entry.row} width={gw} isWIP={wip} isHead={isHead} isMerge={isMerge(c)} hasRefs={groups.length > 0} author={c.author} email={c.email} />
@@ -124,13 +125,12 @@ export const CommitRow = memo(function CommitRow({
       <div className="row-tail" style={{ paddingRight: 12 + (cols.author + cols.time + cols.sha > 0 ? HEADER_TOOLS_W : 0) }}>
         {/* the message: lane-coloured bar, subject, first body line dimmed; author, time and SHA in the tip or their columns */}
         <div className="msg" data-tip={wip ? undefined : `${c.author} <${c.email}>\n${longDate(c.date)} · ${short(c.id)}`}>
-          <span className="msg-bar" style={{ background: tint, opacity: wip ? 0.5 : 0.9 }} />
+          <span className="msg-bar" style={{ background: wip ? "var(--graph-neutral)" : tint }} />
           {wip ? (
             <>
               <i className="muted">{worktree !== null ? t("// Uncommitted changes in {0}", wipLabel ?? "") : t("// Uncommitted changes")}</i>
-              <span className="wip-chip" style={{ background: `color-mix(in srgb, ${tint} 18%, transparent)` }}>
-                {t("{0} files", wipCount)}
-              </span>
+              {/* a neutral pill, white on the selection tint */}
+              <span className="wip-chip status-pill status-tone">{t("{0} files", wipCount)}</span>
             </>
           ) : (
             <>
@@ -329,10 +329,19 @@ const GraphCell = memo(function GraphCell({
             by = h * s.y2;
           const mid = (ay + by) / 2;
           const d = s.x1 === s.x2 ? `M${ax},${ay}L${bx},${by}` : `M${ax},${ay}C${ax},${mid} ${bx},${mid} ${bx},${by}`;
-          return <path key={i} d={d} fill="none" stroke={laneColor(s.color)} strokeWidth={2} strokeLinecap="round" strokeDasharray={s.dashed ? "3 3" : undefined} />;
+          // only the line from uncommitted changes to their parent is dashed, and it is neutral like their node
+          return s.dashed ? (
+            <path key={i} d={d} fill="none" stroke="var(--graph-neutral)" strokeWidth={2} strokeDasharray="3 3" />
+          ) : (
+            <path key={i} d={d} fill="none" stroke={laneColor(s.color)} strokeWidth={2} strokeLinecap="round" />
+          );
         })}
         {isWIP ? (
-          <circle cx={cx} cy={cy} r={7} fill="var(--surface)" stroke={color} strokeWidth={2} strokeDasharray="2.5 2" />
+          // an 18px node with a 2px dashed ring in eight even dashes; never the accent or a lane colour
+          <>
+            <circle cx={cx} cy={cy} r={9} fill="var(--surface)" />
+            <circle cx={cx} cy={cy} r={8} fill="none" stroke="var(--graph-neutral)" strokeWidth={2} strokeDasharray={`${Math.PI} ${Math.PI}`} />
+          </>
         ) : isMerge ? (
           <>
             {/* a merge commit is an 8px dot with a 2px gap around it */}

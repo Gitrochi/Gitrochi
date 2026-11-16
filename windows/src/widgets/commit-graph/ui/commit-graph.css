@@ -436,11 +436,9 @@
   flex: none;
 }
 
-.wip-chip {
-  font-size: 11.5px;
-  font-weight: 600;
-  padding: 0 6px;
-  border-radius: 999px;
+/* the uncommitted row's "N files": a neutral status pill; pills on the selection tint turn white (docs/design.md) */
+.commit-row.selected .wip-chip {
+  background: var(--surface);
 }
 
 .searchbar .search-close {
