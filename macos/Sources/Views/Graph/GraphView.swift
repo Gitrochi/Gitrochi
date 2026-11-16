@@ -254,8 +254,10 @@ struct GraphView: View {
         })
         .overlay {
             if store.entries.isEmpty {
-                ContentUnavailableView("No commits yet", symbol: "circle.dotted",
-                                       description: Text("Create a file and make your first commit on the right."))
+                // the shared empty form (docs/design.md, Controls); the action is plain, as nothing is blocked
+                HostedListEmpty(symbol: "circle.dotted", title: String(localized: "No commits yet"),
+                                caption: String(localized: "Create a file and make your first commit on the right."),
+                                actionTitle: String(localized: "Show in Finder")) { store.revealInFinder(path: "") }
             }
         }
         .confirmationDialog(store.dropRequest?.title ?? "",

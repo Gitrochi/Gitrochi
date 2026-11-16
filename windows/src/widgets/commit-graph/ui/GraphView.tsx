@@ -7,7 +7,7 @@ import type { RepoStore } from "@/entities/repo";
 import { basename, samePath, settings } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
-import { Button, Empty, IconButton, type MenuItem, showContextMenu, showMenuBelow, Spinner } from "@/shared/ui";
+import { Button, HostedListEmpty, IconButton, type MenuItem, showContextMenu, showMenuBelow, Spinner } from "@/shared/ui";
 import { clampColumnWidth, clampLaneOffset, columnWidths, type ColumnWidths, HEADER_TOOLS_W, type GraphColumnId, graphColumns, graphColumnWidth, graphFullWidth, isDefaultWidth, laneOffsetForThumb, laneThumb, messageWidth, OPTIONAL_COLUMNS, type OptionalColumnId, RESIZABLE_COLUMNS, type ResizableColumnId, revealLaneOffset, ROW_H, tableWidth, toggleColumn } from "../lib/metrics";
 import { CommitRow } from "./CommitRow";
 import "./commit-graph.css";
@@ -219,7 +219,13 @@ export function GraphView({ store }: { store: RepoStore }) {
         }}
       >
         {entries.length === 0 ? (
-          <Empty icon={<CircleDashed size={34} strokeWidth={1.4} />} title={t("No commits yet")} detail={t("Create a file and make your first commit on the right.")} />
+          // the shared empty form (docs/design.md, Controls); the action is plain, as nothing is blocked
+          <HostedListEmpty
+            icon={<CircleDashed size={24} />}
+            title={t("No commits yet")}
+            caption={t("Create a file and make your first commit on the right.")}
+            action={{ label: t("Show in Explorer"), onClick: () => void store.revealPath("") }}
+          />
         ) : (
           <div style={{ height: entries.length * ROW_H + (store.hasMore ? 56 : 0), position: "relative", width: wide ? table : undefined }}>
             {entries.slice(first, last).map((e, k) => {
