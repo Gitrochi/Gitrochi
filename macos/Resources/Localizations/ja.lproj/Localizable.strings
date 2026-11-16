@@ -470,7 +470,6 @@
 "Clear search (Esc)" = "検索をクリア (Esc)";
 "Clears the path you chose and finds it automatically again" = "指定したパスをクリアして、もう一度自動で探します";
 "Clears the staging area, then stages and commits each group from the top." = "ステージをいったん空にしてから、上のグループから順にステージしてコミットします。";
-"Click to go to the Terminal window" = "クリックしてターミナルのウィンドウへ移動";
 "Click to see the diff in the center" = "クリックして中央に差分を表示";
 "Click to select this line (Shift: range) — you can stage only the selected lines" = "クリックしてこの行を選択 (Shift: 範囲選択) — 選択した行だけをステージできます";
 "Clone" = "クローン";
@@ -590,7 +589,6 @@
 "Delete tag…" = "タグを削除…";
 "Delete this file" = "このファイルを削除";
 "Deleted" = "削除済み";
-"Deleted file" = "削除したファイル";
 "Deletes the %@ '%@' that was created." = "作成した %1$@ '%2$@' を削除します。";
 "Delete…" = "削除…";
 "Deleting branch…" = "ブランチを削除しています…";
@@ -640,7 +638,6 @@
 "End session…" = "セッションを終了…";
 "End the %@ session?" = "%1$@ のセッションを終了しますか？";
 "Ended" = "終了済み";
-"Ended sessions" = "終了したセッション";
 "Enter an administrator password to update Gitrochi in %@." = "%1$@ の Gitrochi をアップデートするには、管理者パスワードを入力してください。";
 "Enter the server address." = "サーバーのアドレスを入力してください。";
 "Enter your %@ key in Settings > AI." = "設定 > AI で %1$@ のキーを入力してください。";
@@ -767,7 +764,6 @@
 "Model" = "モデル";
 "Model or address not found (404). Check the model name. %@" = "モデルまたはアドレスが見つかりません (404)。モデル名を確認してください。%1$@";
 "Modified" = "変更済み";
-"Modified files" = "変更したファイル";
 "Modified files appear here." = "変更したファイルがここに表示されます。";
 "Module dependencies" = "モジュールの依存関係";
 "Move Gitrochi to the Applications folder?" = "Gitrochi をアプリケーションフォルダに移動しますか？";
@@ -994,7 +990,6 @@
 "Self-hosted GitLab (%@)" = "セルフホスト GitLab (%1$@)";
 "Server address" = "サーバーのアドレス";
 "Server error %lld: %@" = "サーバーエラー %1$lld: %2$@";
-"Sessions in other folders" = "他のフォルダーのセッション";
 "Set manually" = "手動で指定";
 "Set up SSH key in Terminal…" = "ターミナルで SSH キーを設定…";
 "Shell command" = "シェルコマンド";
@@ -1037,12 +1032,9 @@
 "Start" = "開始";
 "Start %@ in this worktree now" = "このワークツリーで今すぐ %1$@ を開始";
 "Start agent session" = "エージェントセッションを開始";
-"Start agent session — choose Claude Code, Codex or Gemini CLI, a worktree to work in, and a task" = "エージェントセッションを開始 — Claude Code・Codex・Gemini CLI のいずれかと、作業するワークツリー、タスクを選びます";
 "Start agent session…" = "エージェントセッションを開始…";
-"Start an agent session in this worktree" = "このワークツリーでエージェントセッションを開始";
 "Start cleanup" = "整理を開始";
 "Start point" = "開始位置";
-"Start session" = "セッションを開始";
 "Start with the reason for the change" = "変更の理由から書く";
 "Stash Pop" = "スタッシュをポップ";
 "Stash changes" = "変更をスタッシュ";
@@ -1178,7 +1170,6 @@
 "Where to work" = "作業場所";
 "Whole file" = "ファイル全体";
 "Workflow" = "ワークフロー";
-"Working" = "作業中";
 "Working directory is clean" = "作業ディレクトリはクリーンです";
 "Working tree" = "作業ツリー";
 "Worktree in a temporary folder — it may break when the folder is deleted on restart" = "一時フォルダー内のワークツリー — 再起動時にフォルダーが削除されると壊れる可能性があります";
@@ -1239,8 +1230,6 @@
 "Write" = "書く";
 "Preview" = "プレビュー";
 "Nothing to preview" = "プレビューする内容がありません";
-"Sessions started here run in tabs of the terminal below, and their status is shown here. Click a session to go to its terminal." = "ここで開始したセッションは下のターミナルのタブで実行され、状態がここに表示されます。セッションをクリックすると、そのターミナルへ移動します。";
-"Click to go to that terminal" = "クリックしてそのターミナルへ移動";
 "Go to terminal" = "ターミナルへ移動";
 "Runs in a new tab of the terminal below; its status is shown in the Agents tab." = "下のターミナルの新しいタブで実行され、状態はエージェントタブに表示されます。";
 "The process exited" = "プロセスが終了しました";
@@ -1855,9 +1844,7 @@
 "Copy folder path" = "フォルダのパスをコピー";
 "Comparing…" = "比較中…";
 "With text, each button's name sits to the right of its icon." = "テキストを表示すると、各ボタンの名前がアイコンの右に並びます。";
-"Running in other apps" = "ほかのアプリで実行中";
 "Checking saved account access…" = "保存済みアカウントへのアクセスを確認中…";
-"Click to bring %@ to the front" = "クリックすると %1$@ を前面に表示します";
 "Couldn't open %@: it isn't inside a Git repository." = "%1$@ を開けませんでした: Git リポジトリの中にありません。";
 "Search pull requests" = "プルリクエストを検索";
 "Icons and text" = "アイコンとテキスト";
@@ -2935,3 +2922,11 @@
 "Saved sign-in can't be read" = "保存されたサインイン情報を読み取れません";
 "Couldn't use the saved sign-in" = "保存されたサインイン情報を使用できませんでした";
 "Refresh account status" = "アカウントの状態を更新";
+"Needs you" = "対応が必要";
+"Respond" = "応答";
+"Elsewhere" = "ほかの場所";
+"More agent actions" = "エージェントのその他の操作";
+"Stage line" = "行をステージ";
+"Unstage line" = "行をステージ解除";
+"Hide changes and show the graph" = "変更を隠してグラフを表示";
+"Sessions started here run in the terminal tabs below; click one to go to its terminal." = "ここで開始したセッションは下のターミナルのタブで実行されます。クリックすると、そのターミナルへ移動します。";

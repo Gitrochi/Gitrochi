@@ -460,7 +460,6 @@
 "Clear search (Esc)" = "清除搜索 (Esc)";
 "Clears the path you chose and finds it automatically again" = "清除你选择的路径，并重新自动查找";
 "Clears the staging area, then stages and commits each group from the top." = "清空暂存区，然后从上到下依次暂存并提交每一组。";
-"Click to go to the Terminal window" = "点击转到“终端”窗口";
 "Click to see the diff in the center" = "点击在中间查看差异";
 "Click to select this line (Shift: range) — you can stage only the selected lines" = "点击选择此行（Shift：选择范围）— 可以只暂存所选行";
 "Clone" = "克隆";
@@ -580,7 +579,6 @@
 "Delete tag…" = "删除标签…";
 "Delete this file" = "删除此文件";
 "Deleted" = "已删除";
-"Deleted file" = "已删除的文件";
 "Deletes the %@ '%@' that was created." = "删除已创建的%1$@“%2$@”。";
 "Delete…" = "删除…";
 "Deleting branch…" = "正在删除分支…";
@@ -630,7 +628,6 @@
 "End session…" = "结束会话…";
 "End the %@ session?" = "要结束 %1$@ 会话吗？";
 "Ended" = "已结束";
-"Ended sessions" = "已结束的会话";
 "Enter an administrator password to update Gitrochi in %@." = "输入管理员密码以更新 %1$@ 中的 Gitrochi。";
 "Enter the server address." = "请输入服务器地址。";
 "Enter your %@ key in Settings > AI." = "请在“设置 > AI”中输入你的 %1$@ 密钥。";
@@ -757,7 +754,6 @@
 "Model" = "模型";
 "Model or address not found (404). Check the model name. %@" = "找不到模型或地址 (404)。请检查模型名称。%1$@";
 "Modified" = "已修改";
-"Modified files" = "已修改的文件";
 "Modified files appear here." = "已修改的文件会显示在这里。";
 "Module dependencies" = "模块依赖";
 "Move Gitrochi to the Applications folder?" = "要将 Gitrochi 移到“应用程序”文件夹吗？";
@@ -985,7 +981,6 @@
 "Self-hosted GitLab (%@)" = "自托管 GitLab（%1$@）";
 "Server address" = "服务器地址";
 "Server error %lld: %@" = "服务器错误 %1$lld：%2$@";
-"Sessions in other folders" = "其他文件夹中的会话";
 "Set manually" = "手动设置";
 "Set up SSH key in Terminal…" = "在终端中设置 SSH 密钥…";
 "Shell command" = "Shell 命令";
@@ -1028,12 +1023,9 @@
 "Start" = "开始";
 "Start %@ in this worktree now" = "立即在此工作树中启动 %1$@";
 "Start agent session" = "启动代理会话";
-"Start agent session — choose Claude Code, Codex or Gemini CLI, a worktree to work in, and a task" = "启动代理会话 — 选择 Claude Code、Codex 或 Gemini CLI、要工作的工作树以及任务";
 "Start agent session…" = "启动代理会话…";
-"Start an agent session in this worktree" = "在此工作树中启动代理会话";
 "Start cleanup" = "开始整理";
 "Start point" = "起点";
-"Start session" = "启动会话";
 "Start with the reason for the change" = "先说明更改原因";
 "Stash Pop" = "弹出贮藏";
 "Stash changes" = "贮藏更改";
@@ -1169,7 +1161,6 @@
 "Where to work" = "工作位置";
 "Whole file" = "整个文件";
 "Workflow" = "工作流";
-"Working" = "工作中";
 "Working directory is clean" = "工作区是干净的";
 "Working tree" = "工作区";
 "Worktree in a temporary folder — it may break when the folder is deleted on restart" = "位于临时文件夹中的工作树 — 重启时如果该文件夹被删除，它可能会损坏";
@@ -1230,8 +1221,6 @@
 "Write" = "编写";
 "Preview" = "预览";
 "Nothing to preview" = "没有可预览的内容";
-"Sessions started here run in tabs of the terminal below, and their status is shown here. Click a session to go to its terminal." = "在此处启动的会话在下方终端的标签页中运行，其状态显示在这里。点击会话可转到其终端。";
-"Click to go to that terminal" = "点击转到该终端";
 "Go to terminal" = "转到终端";
 "Runs in a new tab of the terminal below; its status is shown in the Agents tab." = "在下方终端的新标签页中运行；其状态显示在“代理”标签页中。";
 "The process exited" = "进程已退出";
@@ -1364,9 +1353,7 @@
 "Clear filter" = "清除筛选";
 "Close search (Esc)" = "关闭搜索 (Esc)";
 "Close search" = "关闭搜索";
-"Running in other apps" = "正在其他应用中运行";
 "Unknown app" = "未知应用";
-"Click to bring %@ to the front" = "点按将 %1$@ 带到前面";
 "Bring %@ to the front" = "将 %1$@ 带到前面";
 "Copy folder path" = "拷贝文件夹路径";
 "Couldn't open %@: it isn't inside a Git repository." = "无法打开 %1$@：它不在 Git 仓库中。";
@@ -2415,3 +2402,11 @@
 "Saved sign-in can't be read" = "无法读取已保存的登录信息";
 "Couldn't use the saved sign-in" = "无法使用已保存的登录信息";
 "Refresh account status" = "刷新账户状态";
+"Needs you" = "等待你处理";
+"Respond" = "回应";
+"Elsewhere" = "其他位置";
+"More agent actions" = "更多代理操作";
+"Stage line" = "暂存此行";
+"Unstage line" = "取消暂存此行";
+"Hide changes and show the graph" = "隐藏更改并显示提交图";
+"Sessions started here run in the terminal tabs below; click one to go to its terminal." = "在此处启动的会话在下方终端的标签页中运行；点击会话可转到其终端。";

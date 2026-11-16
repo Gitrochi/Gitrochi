@@ -446,7 +446,6 @@
 "Clear search (Esc)" = "Keresés törlése (Esc)";
 "Clears the path you chose and finds it automatically again" = "Törli a kiválasztott útvonalat, és újra automatikusan keresi meg";
 "Clears the staging area, then stages and commits each group from the top." = "Kiüríti az előkészítési területet, majd felülről kezdve csoportonként előkészíti és commitolja a fájlokat.";
-"Click to go to the Terminal window" = "Kattintással a Terminál-ablakra ugorhat";
 "Click to see the diff in the center" = "Kattintással középen megtekintheti a diffet";
 "Click to select this line (Shift: range) — you can stage only the selected lines" = "Kattintással kijelölheti a sort (Shift: tartomány) — csak a kijelölt sorokat is előkészítheti";
 "Clone" = "Klónozás";
@@ -563,7 +562,6 @@
 "Delete tag…" = "Címke törlése…";
 "Delete this file" = "Fájl törlése";
 "Deleted" = "Törölve";
-"Deleted file" = "Törölt fájl";
 "Deletes the %@ '%@' that was created." = "Törli a létrehozott elemet (%1$@: '%2$@').";
 "Delete…" = "Törlés…";
 "Deleting branch…" = "Ág törlése…";
@@ -613,7 +611,6 @@
 "End session…" = "Munkamenet befejezése…";
 "End the %@ session?" = "Befejezi a munkamenetet (%1$@)?";
 "Ended" = "Befejeződött";
-"Ended sessions" = "Befejezett munkamenetek";
 "Enter an administrator password to update Gitrochi in %@." = "Adjon meg egy rendszergazdai jelszót a(z) %1$@ helyen lévő Gitrochi frissítéséhez.";
 "Enter the server address." = "Adja meg a szerver címét.";
 "Enter your %@ key in Settings > AI." = "Adja meg az API-kulcsot (%1$@) a Beállítások > AI alatt.";
@@ -737,7 +734,6 @@
 "Model" = "Modell";
 "Model or address not found (404). Check the model name. %@" = "A modell vagy a cím nem található (404). Ellenőrizze a modell nevét. %1$@";
 "Modified" = "Módosítva";
-"Modified files" = "Módosított fájlok";
 "Modified files appear here." = "A módosított fájlok itt jelennek meg.";
 "Module dependencies" = "Modulfüggőségek";
 "Move Gitrochi to the Applications folder?" = "Áthelyezi a Gitrochit az Alkalmazások mappába?";
@@ -961,7 +957,6 @@
 "Self-hosted GitLab (%@)" = "Saját üzemeltetésű GitLab (%1$@)";
 "Server address" = "Szerver címe";
 "Server error %lld: %@" = "Szerverhiba %1$lld: %2$@";
-"Sessions in other folders" = "Munkamenetek más mappákban";
 "Set manually" = "Kézzel megadva";
 "Set up SSH key in Terminal…" = "SSH-kulcs beállítása a Terminálban…";
 "Shell command" = "Parancssori parancs";
@@ -1004,12 +999,9 @@
 "Start" = "Indítás";
 "Start %@ in this worktree now" = "%1$@ azonnali indítása ebben a worktree-ben";
 "Start agent session" = "Ügynök-munkamenet indítása";
-"Start agent session — choose Claude Code, Codex or Gemini CLI, a worktree to work in, and a task" = "Ügynök-munkamenet indítása — válassza ki a Claude Code, Codex vagy Gemini CLI ügynököt, a munkához használt worktree-t és a feladatot";
 "Start agent session…" = "Ügynök-munkamenet indítása…";
-"Start an agent session in this worktree" = "Ügynök-munkamenet indítása ebben a worktree-ben";
 "Start cleanup" = "Rendezés indítása";
 "Start point" = "Kiindulópont";
-"Start session" = "Munkamenet indítása";
 "Start with the reason for the change" = "A módosítás okával kezdődjön";
 "Stash changes" = "Módosítások félretétele (stash)";
 "Stashes %lld" = "Stash-ek %1$lld";
@@ -1142,7 +1134,6 @@
 "When importing the gh login as a GitHub account" = "A gh-bejelentkezés GitHub-fiókként való importálásakor";
 "Where to work" = "Munkavégzés helye";
 "Whole file" = "Teljes fájl";
-"Working" = "Dolgozik";
 "Working directory is clean" = "A munkakönyvtár tiszta";
 "Working tree" = "Munkakönyvtár";
 "Worktree in a temporary folder — it may break when the folder is deleted on restart" = "Ideiglenes mappában lévő worktree — megsérülhet, ha a mappa újraindításkor törlődik";
@@ -1203,8 +1194,6 @@
 "Write" = "Írás";
 "Preview" = "Előnézet";
 "Nothing to preview" = "Nincs mit megjeleníteni";
-"Sessions started here run in tabs of the terminal below, and their status is shown here. Click a session to go to its terminal." = "Az itt indított munkamenetek az alsó terminál lapjain futnak, és az állapotuk itt látható. Egy munkamenetre kattintva a termináljára ugrik.";
-"Click to go to that terminal" = "Kattintással az adott terminálra ugorhat";
 "Go to terminal" = "Ugrás a terminálra";
 "Runs in a new tab of the terminal below; its status is shown in the Agents tab." = "Az alsó terminál új lapján fut; az állapota az Ügynökök lapon látható.";
 "The process exited" = "A folyamat kilépett";
@@ -1337,9 +1326,7 @@
 "Clear filter" = "Szűrő törlése";
 "Close search (Esc)" = "Keresés bezárása (Esc)";
 "Close search" = "Keresés bezárása";
-"Running in other apps" = "Más alkalmazásokban fut";
 "Unknown app" = "Ismeretlen alkalmazás";
-"Click to bring %@ to the front" = "Kattints, és a(z) %1$@ előtérbe kerül";
 "Bring %@ to the front" = "%1$@ előtérbe hozása";
 "Copy folder path" = "Mappa elérési útjának másolása";
 "Couldn't open %@: it isn't inside a Git repository." = "Nem sikerült megnyitni: %1$@ – nincs Git-tárolóban.";
@@ -2258,3 +2245,11 @@
 "Saved sign-in can't be read" = "A mentett bejelentkezés nem olvasható";
 "Couldn't use the saved sign-in" = "A mentett bejelentkezést nem sikerült használni";
 "Refresh account status" = "Fiókállapot frissítése";
+"Needs you" = "Önre vár";
+"Respond" = "Válasz";
+"Elsewhere" = "Máshol";
+"More agent actions" = "További ügynökműveletek";
+"Stage line" = "Sor előkészítése";
+"Unstage line" = "Sor előkészítésének visszavonása";
+"Hide changes and show the graph" = "Módosítások elrejtése és a gráf megjelenítése";
+"Sessions started here run in the terminal tabs below; click one to go to its terminal." = "Az itt indított munkamenetek az alsó terminál lapjain futnak; kattintson egyre, hogy a termináljára ugorjon.";

@@ -444,7 +444,6 @@
 "Clear search (Esc)" = "Aramayı temizle (Esc)";
 "Clears the path you chose and finds it automatically again" = "Seçtiğiniz yolu temizler ve yeniden otomatik olarak bulur";
 "Clears the staging area, then stages and commits each group from the top." = "Hazırlık alanını boşaltır, ardından her grubu yukarıdan başlayarak sırayla hazırlar ve commit eder.";
-"Click to go to the Terminal window" = "Terminal penceresine gitmek için tıklayın";
 "Click to see the diff in the center" = "Diff'i ortada görmek için tıklayın";
 "Click to select this line (Shift: range) — you can stage only the selected lines" = "Bu satırı seçmek için tıklayın (Shift: aralık) — yalnızca seçili satırları hazırlayabilirsiniz";
 "Clone" = "Klonla";
@@ -559,7 +558,6 @@
 "Delete tag…" = "Etiketi sil…";
 "Delete this file" = "Bu dosyayı sil";
 "Deleted" = "Silindi";
-"Deleted file" = "Silinen dosya";
 "Deletes the %@ '%@' that was created." = "Oluşturulan '%2$@' (%1$@) silinir.";
 "Delete…" = "Sil…";
 "Deleting branch…" = "Dal siliniyor…";
@@ -609,7 +607,6 @@
 "End session…" = "Oturumu sonlandır…";
 "End the %@ session?" = "%1$@ oturumu sonlandırılsın mı?";
 "Ended" = "Sonlandı";
-"Ended sessions" = "Sonlanan oturumlar";
 "Enter an administrator password to update Gitrochi in %@." = "%1$@ konumundaki Gitrochi'ü güncellemek için bir yönetici parolası girin.";
 "Enter the server address." = "Sunucu adresini girin.";
 "Enter your %@ key in Settings > AI." = "%1$@ anahtarınızı Ayarlar > AI bölümüne girin.";
@@ -735,7 +732,6 @@
 "Mixed — keep changes in the working tree" = "Mixed — değişiklikleri çalışma ağacında tut";
 "Model or address not found (404). Check the model name. %@" = "Model veya adres bulunamadı (404). Model adını kontrol edin. %1$@";
 "Modified" = "Değiştirildi";
-"Modified files" = "Değiştirilen dosyalar";
 "Modified files appear here." = "Değiştirilen dosyalar burada görünür.";
 "Module dependencies" = "Modül bağımlılıkları";
 "Move Gitrochi to the Applications folder?" = "Gitrochi Uygulamalar klasörüne taşınsın mı?";
@@ -962,7 +958,6 @@
 "Self-hosted GitLab (%@)" = "Şirket içi GitLab (%1$@)";
 "Server address" = "Sunucu adresi";
 "Server error %lld: %@" = "Sunucu hatası %1$lld: %2$@";
-"Sessions in other folders" = "Diğer klasörlerdeki oturumlar";
 "Set manually" = "Elle belirlendi";
 "Set up SSH key in Terminal…" = "Terminal'de SSH anahtarı ayarla…";
 "Shell command" = "Kabuk komutu";
@@ -1005,12 +1000,9 @@
 "Start" = "Başlat";
 "Start %@ in this worktree now" = "Bu worktree'de şimdi %1$@ başlat";
 "Start agent session" = "Ajan oturumu başlat";
-"Start agent session — choose Claude Code, Codex or Gemini CLI, a worktree to work in, and a task" = "Ajan oturumu başlat — ajanı (Claude Code, Codex veya Gemini CLI), çalışılacak worktree'yi ve görevi seçin";
 "Start agent session…" = "Ajan oturumu başlat…";
-"Start an agent session in this worktree" = "Bu worktree'de ajan oturumu başlat";
 "Start cleanup" = "Düzenlemeyi başlat";
 "Start point" = "Başlangıç noktası";
-"Start session" = "Oturumu başlat";
 "Start with the reason for the change" = "Değişikliğin nedeniyle başla";
 "Stash changes" = "Değişiklikleri stash'e kaydet";
 "Stashes %lld" = "Stash'ler %1$lld";
@@ -1143,7 +1135,6 @@
 "Where to work" = "Çalışılacak yer";
 "Whole file" = "Tüm dosya";
 "Workflow" = "İş akışı";
-"Working" = "Çalışıyor";
 "Working directory is clean" = "Çalışma dizini temiz";
 "Working tree" = "Çalışma ağacı";
 "Worktree in a temporary folder — it may break when the folder is deleted on restart" = "Geçici bir klasördeki worktree — yeniden başlatmada klasör silinirse bozulabilir";
@@ -1207,8 +1198,6 @@
 "Write" = "Yaz";
 "Preview" = "Önizleme";
 "Nothing to preview" = "Önizlenecek bir şey yok";
-"Sessions started here run in tabs of the terminal below, and their status is shown here. Click a session to go to its terminal." = "Burada başlatılan oturumlar alttaki terminalin sekmelerinde çalışır ve durumları burada gösterilir. Bir oturumun terminaline gitmek için üzerine tıklayın.";
-"Click to go to that terminal" = "O terminale gitmek için tıklayın";
 "Go to terminal" = "Terminale git";
 "Runs in a new tab of the terminal below; its status is shown in the Agents tab." = "Alttaki terminalin yeni bir sekmesinde çalışır; durumu Ajanlar sekmesinde gösterilir.";
 "The process exited" = "İşlem sonlandı";
@@ -1341,9 +1330,7 @@
 "Clear filter" = "Filtreyi temizle";
 "Close search (Esc)" = "Aramayı kapat (Esc)";
 "Close search" = "Aramayı kapat";
-"Running in other apps" = "Diğer uygulamalarda çalışıyor";
 "Unknown app" = "Bilinmeyen uygulama";
-"Click to bring %@ to the front" = "%1$@ uygulamasını öne getirmek için tıklayın";
 "Bring %@ to the front" = "%1$@ uygulamasını öne getir";
 "Copy folder path" = "Klasör yolunu kopyala";
 "Couldn't open %@: it isn't inside a Git repository." = "%1$@ açılamadı: bir Git deposunun içinde değil.";
@@ -2260,3 +2247,11 @@
 "Saved sign-in can't be read" = "Kayıtlı oturum okunamıyor";
 "Couldn't use the saved sign-in" = "Kayıtlı oturum kullanılamadı";
 "Refresh account status" = "Hesap durumunu yenile";
+"Needs you" = "Sizi bekliyor";
+"Respond" = "Yanıtla";
+"Elsewhere" = "Başka yerde";
+"More agent actions" = "Diğer ajan eylemleri";
+"Stage line" = "Satırı hazırla";
+"Unstage line" = "Satırı hazırlıktan çıkar";
+"Hide changes and show the graph" = "Değişiklikleri gizle ve grafiği göster";
+"Sessions started here run in the terminal tabs below; click one to go to its terminal." = "Burada başlatılan oturumlar alttaki terminal sekmelerinde çalışır; terminaline gitmek için bir oturuma tıklayın.";

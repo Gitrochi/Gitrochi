@@ -457,7 +457,6 @@
 "Clear search (Esc)" = "Suche leeren (Esc)";
 "Clears the path you chose and finds it automatically again" = "Entfernt den manuell gewählten Pfad und sucht wieder automatisch";
 "Clears the staging area, then stages and commits each group from the top." = "Leert den Staging-Bereich, dann wird jede Gruppe von oben nach unten gestagt und committet.";
-"Click to go to the Terminal window" = "Klicken, um zum Terminal-Fenster zu wechseln";
 "Click to see the diff in the center" = "Klicken, um den Diff in der Mitte anzuzeigen";
 "Click to select this line (Shift: range) — you can stage only the selected lines" = "Klicken, um diese Zeile auszuwählen (Shift: Bereich) — nur die ausgewählten Zeilen können gestagt werden";
 "Clone" = "Klonen";
@@ -571,7 +570,6 @@
 "Delete tag…" = "Tag löschen…";
 "Delete this file" = "Diese Datei löschen";
 "Deleted" = "Gelöscht";
-"Deleted file" = "Gelöschte Datei";
 "Deletes the %@ '%@' that was created." = "Entfernt %1$@ '%2$@' (neu erstellt).";
 "Delete…" = "Löschen…";
 "Deleting branch…" = "Branch wird gelöscht…";
@@ -621,7 +619,6 @@
 "End session…" = "Sitzung beenden…";
 "End the %@ session?" = "Sitzung von %1$@ beenden?";
 "Ended" = "Beendet";
-"Ended sessions" = "Beendete Sitzungen";
 "Enter an administrator password to update Gitrochi in %@." = "Geben Sie ein Administratorpasswort ein, um Gitrochi in %1$@ zu aktualisieren.";
 "Enter the server address." = "Geben Sie die Serveradresse ein.";
 "Enter your %@ key in Settings > AI." = "Geben Sie Ihren Schlüssel für %1$@ unter Einstellungen > KI ein.";
@@ -746,7 +743,6 @@
 "Model" = "Modell";
 "Model or address not found (404). Check the model name. %@" = "Modell oder Adresse nicht gefunden (404). Prüfen Sie den Modellnamen. %1$@";
 "Modified" = "Geändert";
-"Modified files" = "Geänderte Dateien";
 "Modified files appear here." = "Geänderte Dateien werden hier angezeigt.";
 "Module dependencies" = "Modulabhängigkeiten";
 "Move Gitrochi to the Applications folder?" = "Gitrochi in den Ordner „Programme“ verschieben?";
@@ -963,7 +959,6 @@
 "Self-hosted GitLab (%@)" = "Selbst gehostetes GitLab (%1$@)";
 "Server address" = "Serveradresse";
 "Server error %lld: %@" = "Serverfehler %1$lld: %2$@";
-"Sessions in other folders" = "Sitzungen in anderen Ordnern";
 "Set manually" = "Manuell festgelegt";
 "Set up SSH key in Terminal…" = "SSH-Schlüssel im Terminal einrichten …";
 "Shell command" = "Shell-Befehl";
@@ -1006,12 +1001,9 @@
 "Start" = "Starten";
 "Start %@ in this worktree now" = "%1$@ jetzt in diesem Worktree starten";
 "Start agent session" = "Agent-Sitzung starten";
-"Start agent session — choose Claude Code, Codex or Gemini CLI, a worktree to work in, and a task" = "Agent-Sitzung starten — Claude Code, Codex oder Gemini CLI, einen Worktree zum Arbeiten und eine Aufgabe wählen";
 "Start agent session…" = "Agent-Sitzung starten…";
-"Start an agent session in this worktree" = "Agent-Sitzung in diesem Worktree starten";
 "Start cleanup" = "Bereinigung starten";
 "Start point" = "Startpunkt";
-"Start session" = "Sitzung starten";
 "Start with the reason for the change" = "Mit dem Grund für die Änderung beginnen";
 "Stash changes" = "Änderungen stashen";
 "Stashing…" = "Wird gestasht…";
@@ -1136,7 +1128,6 @@
 "When importing the gh login as a GitHub account" = "Beim Importieren der gh-Anmeldung als GitHub-Konto";
 "Where to work" = "Arbeitsort";
 "Whole file" = "Ganze Datei";
-"Working" = "Arbeitet";
 "Working directory is clean" = "Keine Änderungen im Arbeitsverzeichnis";
 "Working tree" = "Arbeitsverzeichnis";
 "Worktree in a temporary folder — it may break when the folder is deleted on restart" = "Worktree in einem temporären Ordner — kann unbrauchbar werden, wenn der Ordner beim Neustart gelöscht wird";
@@ -1198,8 +1189,6 @@
 "Write" = "Schreiben";
 "Preview" = "Vorschau";
 "Nothing to preview" = "Nichts für die Vorschau";
-"Sessions started here run in tabs of the terminal below, and their status is shown here. Click a session to go to its terminal." = "Hier gestartete Sitzungen laufen in Tabs des Terminals unten, ihr Status wird hier angezeigt. Klicken Sie auf eine Sitzung, um zu ihrem Terminal zu wechseln.";
-"Click to go to that terminal" = "Klicken, um zu diesem Terminal zu wechseln";
 "Go to terminal" = "Zum Terminal wechseln";
 "Runs in a new tab of the terminal below; its status is shown in the Agents tab." = "Läuft in einem neuen Tab des Terminals unten; der Status wird im Tab Agenten angezeigt.";
 "The process exited" = "Der Prozess wurde beendet";
@@ -1332,9 +1321,7 @@
 "Clear filter" = "Filter entfernen";
 "Close search (Esc)" = "Suche schließen (Esc)";
 "Close search" = "Suche schließen";
-"Running in other apps" = "In anderen Apps aktiv";
 "Unknown app" = "Unbekannte App";
-"Click to bring %@ to the front" = "Klicken, um %1$@ nach vorne zu holen";
 "Bring %@ to the front" = "%1$@ nach vorne holen";
 "Copy folder path" = "Ordnerpfad kopieren";
 "Couldn't open %@: it isn't inside a Git repository." = "%1$@ konnte nicht geöffnet werden: Es liegt in keinem Git-Repository.";
@@ -2260,3 +2247,11 @@
 "Saved sign-in can't be read" = "Gespeicherte Anmeldung kann nicht gelesen werden";
 "Couldn't use the saved sign-in" = "Gespeicherte Anmeldung konnte nicht verwendet werden";
 "Refresh account status" = "Kontostatus aktualisieren";
+"Needs you" = "Wartet auf Sie";
+"Respond" = "Antworten";
+"Elsewhere" = "Anderswo";
+"More agent actions" = "Weitere Agentenaktionen";
+"Stage line" = "Zeile stagen";
+"Unstage line" = "Zeile unstagen";
+"Hide changes and show the graph" = "Änderungen ausblenden und Graphen anzeigen";
+"Sessions started here run in the terminal tabs below; click one to go to its terminal." = "Hier gestartete Sitzungen laufen in den Terminal-Tabs unten; klicken Sie auf eine, um zu ihrem Terminal zu wechseln.";
