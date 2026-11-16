@@ -54,7 +54,6 @@ import { browserLoginGuidanceSelfTest, browserProjectAccessSelfTest } from "./li
 import { accountQuickControlsSelfTest, accountQuickControlsWithoutRepositorySelfTest } from "./lib/account-quick-controls-selftest";
 import { accountsSettingsSelfTest } from "./lib/accounts-settings-selftest";
 import { prConversationSelfTest } from "./lib/pr-conversation-selftest";
-import { listSectionsSelfTest } from "./lib/list-sections-selftest";
 import { externalAgentsSelfTest } from "./lib/external-agents-selftest";
 import { agentsSidebarSelfTest } from "./lib/agents-sidebar-selftest";
 import { graphLanesSelfTest } from "./lib/graph-lanes-selftest";
@@ -271,7 +270,6 @@ export async function runSelfTest(): Promise<boolean> {
   await step("Settings › Accounts: hosting accounts and Git identities, the Add account sheet, Remove account… last and confirmed", accountsSettingsSelfTest);
   await step("Push 검토·PR 줄 리뷰·변경 AI 질문의 실제 React 화면", reviewWorkflowsSelfTest);
   await step("Pull requests page: list controls and the Hide list choice kept across tabs, one-line composer, Split reason, timeline, keyboard tabs and retained drafts", prConversationSelfTest);
-  await step("PR·이슈 목록의 검색 줄·필터·페이지 이동", listSectionsSelfTest);
   await step("Profile avatars recover after a failed image is replaced and obey the photo setting", hostingAvatarsSelfTest);
   await step("Sidebar branch tree indentation, aligned rows and disclosure controls", sidebarTreeSelfTest);
   await step("Settings category icons, selection and narrow navigation", settingsNavigationSelfTest);
@@ -925,17 +923,46 @@ export async function runSelfTest(): Promise<boolean> {
     await s.setCurrentOnly(false);
     s.navigate("repository");
     settings.set("sidebarCollapsed", false);
+    settings.set("sidebarMode", "list");
+    const sideRow = () => [...document.querySelectorAll<HTMLElement>(".side-branches .side-row")].find((r) => r.textContent?.includes("image-v2"));
     s.setPinned(b, true);
-    // a pinned branch gets its own section at the top of the branch list
-    const pinned = await until(() => [...document.querySelectorAll(".side-section")].some((x) => x.querySelector(".side-head")?.textContent?.includes(t("Pinned")) && x.textContent?.includes(b.name)), 3000);
+    // a pinned branch keeps its place in the list and carries the pin mark; there is no Pinned section
+    const pinned = await until(() => !!sideRow()?.querySelector(`[aria-label="${t("Pinned")}"]`), 3000) && !document.querySelector('.side-section[data-section="pinned"]');
     s.setPinned(b, false);
-    // the eye button on the sidebar row hides the branch and shows it again
-    const eye = () => [...document.querySelectorAll(".side-row")].find((r) => r.textContent?.includes("image-v2"))?.querySelector<HTMLButtonElement>("button.icon-btn");
-    eye()?.click();
-    const eyeHid = await until(() => s.isHidden(b), 5000);
-    eye()?.click();
+    // a row has no eye until its branch is hidden; then the eye says so and shows the branch again
+    const noEye = !sideRow()?.querySelector("button.icon-btn");
+    await s.setHidden(b, true);
+    const eyeHid = await until(() => s.isHidden(b) && !!sideRow()?.querySelector("button.icon-btn"), 5000);
+    sideRow()?.querySelector<HTMLButtonElement>("button.icon-btn")?.click();
     const eyeShown = await until(() => !s.isHidden(b) && has(), 5000);
-    return [before && hidden && back && current && pinned && eyeHid && eyeShown, `before=${before} hidden=${hidden} back=${back} current=${current} pinned=${pinned} eye=${eyeHid}/${eyeShown}`];
+    return [before && hidden && back && current && pinned && noEye && eyeHid && eyeShown, `before=${before} hidden=${hidden} back=${back} current=${current} pinned=${pinned} eye=${noEye}/${eyeHid}/${eyeShown}`];
+  });
+
+  // The sidebar's Filter branches field in the real window: typing narrows the tree, and Escape, through the app's
+  // one Escape order, clears the text and nothing else.
+  await step("Sidebar: Filter branches narrows the tree and Escape clears it", async () => {
+    s.navigate("repository");
+    settings.set("sidebarCollapsed", false);
+    settings.set("sidebarMode", "list");
+    const field = () => document.querySelector<HTMLInputElement>(".sidebar .side-filter input");
+    if (!(await until(() => !!field(), 5000))) return [false, "no Filter branches field"];
+    const names = () => [...document.querySelectorAll<HTMLElement>(".side-branches .side-tree-row:not(.side-tree-toggle) .side-tree-label")].map((x) => x.textContent ?? "");
+    const all = names().length;
+    const input = field()!;
+    input.focus();
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(input, "IMAGE-v2");
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    const narrowed = await until(() => s.branchFilter === "IMAGE-v2" && names().length > 0 && names().length < all && names().every((n) => n.includes("image-v2")), 5000);
+    const selection = JSON.stringify(s.selection), page = s.destination;
+    const escape = () => input.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", code: "Escape", bubbles: true, cancelable: true }));
+    const taken = !escape();
+    const cleared = await until(() => s.branchFilter === "" && field()?.value === "" && names().length === all, 5000);
+    // with the field empty Escape is not taken and changes nothing
+    const left = escape();
+    await sleep(150);
+    const untouched = JSON.stringify(s.selection) === selection && s.destination === page && names().length === all;
+    input.blur();
+    return [narrowed && taken && cleared && left && untouched, `rows=${all} narrowed=${narrowed} taken=${taken} cleared=${cleared} left=${left} untouched=${untouched}`];
   });
 
   // 충돌 해결: 두 브랜치에서 같은 줄을 고쳐 머지 → 화면의 충돌 블록에서 '상대 것'을 눌러 고르고 저장 → 머지 마침

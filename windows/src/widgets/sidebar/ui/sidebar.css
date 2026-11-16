@@ -57,9 +57,56 @@
   border-radius: 6px;
 }
 
+/* The board's Filter branches field: 28px, a 13px magnifier, 10px under the switch and over the first head */
+.side-filter {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  margin: 10px 10px 0;
+  padding: 0 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--input);
+  color: var(--text-2);
+  box-sizing: border-box;
+}
+
+.side-filter > svg {
+  flex: none;
+}
+
+.side-filter input {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font: inherit;
+  color: var(--text);
+}
+
+.side-filter:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
 /* The Branches tab, and one section of it as the rail's flyout */
 .side-branches {
   padding: 10px 10px 12px;
+}
+
+/* nothing matches the field: the empty form of docs/design.md, in the room a 240px sidebar has */
+.side-filter-empty {
+  display: flex;
+  flex-direction: column;
+}
+
+.side-filter-empty .hosted-empty {
+  justify-content: flex-start;
+  padding: 24px 14px;
 }
 
 .side-branches .side-section {
@@ -174,14 +221,6 @@
   transform: none;
 }
 
-.side-row .hover-only {
-  visibility: hidden;
-}
-
-.side-row:hover .hover-only {
-  visibility: visible;
-}
-
 /* The sidebar folded away: a rail of section icons; hovering one opens that section beside it (the flyout overlaps the rail's edge so the pointer can cross) */
 .sidebar-rail {
   width: 44px;
@@ -239,100 +278,4 @@
 
 .rail-item:hover .rail-flyout {
   display: flex;
-}
-
-/* A list's search field and filter icon (pull requests, issues) */
-.list-search-row {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 6px;
-}
-
-.list-search-field {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  height: 26px;
-  padding: 0 4px 0 7px;
-  border: 1px solid var(--border-strong);
-  border-radius: 6px;
-  background: var(--input);
-}
-
-.list-search-field:focus-within {
-  border-color: var(--accent);
-}
-
-.list-search-field > svg {
-  flex: none;
-}
-
-.list-search-field > input {
-  flex: 1;
-  min-width: 0;
-  border: 0;
-  outline: 0;
-  padding: 0;
-  background: transparent;
-  font-size: 12px;
-}
-
-.list-search-clear,
-.list-filter-button {
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 0;
-  border-radius: 5px;
-  background: transparent;
-  color: var(--text-2);
-  cursor: pointer;
-}
-
-.list-search-clear {
-  width: 18px;
-  height: 18px;
-}
-
-.list-filter-button {
-  width: 26px;
-  height: 26px;
-}
-
-.list-search-clear:hover,
-.list-filter-button:hover {
-  background: var(--hover);
-  color: var(--text);
-}
-
-.list-filter-button.on {
-  color: var(--accent);
-}
-
-/* The repository sidebar shows how a shared list is filtered instead of a search row */
-.list-filter-caption {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-  margin: 2px 6px 4px;
-  padding: 2px 4px 2px 8px;
-  border-radius: 6px;
-  background: var(--hover);
-  color: var(--accent);
-  font-size: 11.5px;
-}
-
-.list-filter-caption > svg,
-.list-filter-caption > button {
-  flex: none;
-}
-
-.list-filter-caption > span {
-  flex: 1;
-  color: var(--text);
 }

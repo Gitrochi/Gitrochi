@@ -3,7 +3,7 @@ import AppKit
 
 /// The list column of the Pull requests page, as the redesign's boards draw it: search with Sort and Hide list, a
 /// neutral segmented filter, and two-line rows that end with the comment count and the author's avatar.
-/// The repository sidebar keeps its own compact list (PullRequestSection). (Windows: PullRequestList.tsx)
+/// (Windows: PullRequestList.tsx)
 struct PullRequestList: View {
     @Environment(RepoStore.self) private var store
     @Environment(\.openSettings) private var openSettings

@@ -8,12 +8,13 @@ struct SidebarView: View {
     @ViewState private var flyoutHeight: CGFloat = 200
 
     @AppStorage("sidebarMode") private var mode = "list"
-    @AppStorage(SidebarSections.key) private var collapsed = ""
+    @FocusState private var filterFocused: Bool
 
     var body: some View {
         if let flyout {
             ScrollView {
-                VStack(alignment: .leading, spacing: 0) { sections(only: flyout) }
+                // the flyout has no field, so it lists everything
+                VStack(alignment: .leading, spacing: 0) { sections(only: flyout, query: "") }
                     .padding(.bottom, 8)
                     .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { flyoutHeight = $0 }
             }
@@ -26,7 +27,8 @@ struct SidebarView: View {
     }
 
     private var list: some View {
-        VStack(spacing: 0) {
+        @Bindable var store = store
+        return VStack(spacing: 0) {
             // the board's 28 pt control; a saved "ci" mode from before the Actions page falls through to the branch list
             Segmented(label: "Repository tools", items: [
                 .init(value: "list", title: String(localized: "Branches")),
@@ -38,6 +40,13 @@ struct SidebarView: View {
             if mode == "agents" {
                 AgentsPanel()
             } else {
+                // 10 pt under the switch and, with the first section's own 6 pt, 10 pt over the first head
+                SidebarFilterField(text: $store.branchFilter, focused: $filterFocused) { store.escapeInBranchFilter() }
+                    .padding(.horizontal, 10)
+                    .padding(.top, 6)
+                    .padding(.bottom, 4)
+                    .onChange(of: filterFocused) { _, focused in store.branchFilterFocused = focused }
+                    .onDisappear { store.branchFilterFocused = false }
                 branchList
             }
         }
@@ -46,8 +55,6 @@ struct SidebarView: View {
         .background(StudioStyle.sidebar.ignoresSafeArea())
     }
 
-    private func open(_ id: String) -> Binding<Bool> { SidebarSections.binding($collapsed, id) }
-
     /// 지금 일하거나 허락을 기다리는 세션 수
     private var activeAgents: Int {
         let paths = Set(store.worktrees.map { AgentCenter.normalize($0.path) })
@@ -55,36 +62,51 @@ struct SidebarView: View {
     }
 
     private var branchList: some View {
-        SharedStack {
-            // with each section's own 6 pt on top, a head stands 12 pt under the rows before it
-            VStack(alignment: .leading, spacing: 6) { sections(only: nil) }
-                .padding(.horizontal, 4)
-                .padding(.bottom, 8)
+        let query = BranchFilter.query(store.branchFilter)
+        return Group {
+            if !query.isEmpty, !matches(query) {
+                // nothing matches: the empty form of docs/design.md, at the top of the list
+                VStack(spacing: 0) {
+                    HostedListEmpty(symbol: "magnifyingglass", title: String(localized: "No matching branches"),
+                                    caption: String(localized: "No branch or tag name contains “\(store.branchFilter.trimmingCharacters(in: .whitespacesAndNewlines))”."),
+                                    actionTitle: String(localized: "Clear filter")) { store.branchFilter = "" }
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 0)
+                }
+            } else {
+                SharedStack {
+                    // with each section's own 6 pt on top, a head stands 12 pt under the rows before it
+                    VStack(alignment: .leading, spacing: 6) { sections(only: nil, query: query) }
+                        .padding(.horizontal, 4)
+                        .padding(.bottom, 8)
+                }
+            }
         }
+        // on the group, so coming back from the empty form does not reopen a folder the user folded
         .onAppear(perform: expandCurrent)
         .onChange(of: store.headBranch) { _, _ in expandCurrent() }
     }
 
-    /// The sections, or just the one with this id (the rail's flyout)
+    /// Whether any branch or tag name contains the query
+    private func matches(_ query: String) -> Bool {
+        (store.localBranches + store.remoteBranches).contains { BranchFilter.matches($0.name, query) }
+            || store.tags.contains { BranchFilter.matches($0.name, query) }
+    }
+
+    /// The sections, or just the one with this id (the rail's flyout). With a query each holds only the names that
+    /// match and stands open; one without a match is left out. The remembered folds are not touched meanwhile.
     @ViewBuilder
-    private func sections(only: String?) -> some View {
+    private func sections(only: String?, query: String) -> some View {
         let show = { (id: String) in only == nil || only == id }
+        let filtering = !query.isEmpty
+        let forced: Binding<Bool>? = filtering ? .constant(true) : nil
 
-        let pinned = store.localBranches.filter { store.isPinned($0) }
-        if show("pinned"), !pinned.isEmpty {
-            SidebarSection("pinned") {
-                ForEach(pinned) { b in localRow(b, label: b.name) }
-            } header: {
-                Text("Pinned")
-            }
-        }
-
-        if show("local") {
-            SidebarSection("local") {
-                let groups = BranchFolders(store.localBranches) { $0.name }
-                ForEach(groups.loose) { b in localRow(b, label: b.name) }
-                ForEach(groups.folders) { f in
-                    DisclosureGroup(isExpanded: expansion("l:" + f.name)) {
+        let locals = BranchFolders(store.localBranches) { $0.name }.filtered(query)
+        if show("local"), !filtering || locals.count > 0 {
+            SidebarSection("local", open: forced) {
+                ForEach(locals.loose) { b in localRow(b, label: b.name) }
+                ForEach(locals.folders) { f in
+                    DisclosureGroup(isExpanded: expansion("l:" + f.name, forced: filtering)) {
                         ForEach(f.branches) { b in localRow(b, label: BranchFolders.leaf(b.name)) }
                     } label: {
                         folderLabel(f)
@@ -94,22 +116,18 @@ struct SidebarView: View {
             } header: {
                 Text("Local branches")
                 Spacer(minLength: 4)
-                StatusPill(title: "\(store.localBranches.count)", tone: .neutral)
+                StatusPill(title: "\(locals.count)", tone: .neutral)
             }
         }
 
-        if show("worktrees"), store.worktrees.count > 1 {
-            WorktreeSection()
-        }
-
-        if show("remotes"), !store.remoteBranches.isEmpty {
-            SidebarSection("remotes") {
-                ForEach(remoteGroups, id: \.0) { remote, branches in
-                    DisclosureGroup(isExpanded: expansion("r:" + remote)) {
-                        let groups = BranchFolders(branches) { $0.shortName }
+        let remotes = remoteGroups(query)
+        if show("remotes"), !remotes.isEmpty {
+            SidebarSection("remotes", open: forced) {
+                ForEach(remotes, id: \.0) { remote, groups in
+                    DisclosureGroup(isExpanded: expansion("r:" + remote, forced: filtering)) {
                         ForEach(groups.loose) { b in remoteRow(b, label: b.shortName) }
                         ForEach(groups.folders) { f in
-                            DisclosureGroup(isExpanded: expansion("r:\(remote)/\(f.name)")) {
+                            DisclosureGroup(isExpanded: expansion("r:\(remote)/\(f.name)", forced: filtering)) {
                                 ForEach(f.branches) { b in remoteRow(b, label: BranchFolders.leaf(b.shortName)) }
                             } label: {
                                 folderLabel(f)
@@ -117,7 +135,7 @@ struct SidebarView: View {
                             .disclosureGroupStyle(SidebarTreeGroup())
                         }
                     } label: {
-                        groupLabel(remote, icon: .cloud, count: branches.count)
+                        groupLabel(remote, icon: .cloud, count: groups.count)
                     }
                     .disclosureGroupStyle(SidebarTreeGroup())
                 }
@@ -127,18 +145,10 @@ struct SidebarView: View {
             }
         }
 
-        // the hosting lists sit between the branches and the tags
-        if show("pullRequests"), let target = store.target {
-            PullRequestSection(target: target)
-        }
-        if show("issues"), store.target != nil {
-            IssueListSection()
-        }
-
-        // with a hosting remote the section stays, even without tags, for its way to the Releases page
-        if show("tags"), !store.tags.isEmpty || store.target != nil {
-            SidebarSection("tags") {
-                ForEach(store.tags) { t in
+        let tags = store.tags.filter { BranchFilter.matches($0.name, query) }
+        if show("tags"), !tags.isEmpty {
+            SidebarSection("tags", open: forced) {
+                ForEach(tags) { t in
                     // the branch rows' disclosure and icon columns, so the names line up
                     HStack(spacing: 6) {
                         Color.clear.frame(width: 10, height: 16).accessibilityHidden(true)
@@ -157,22 +167,15 @@ struct SidebarView: View {
                         }
                 }
             } header: {
-                HStack(spacing: 6) {
-                    Text("Tags")
-                    // beside the title when the head has a button, at the right edge when it has none
-                    if store.target != nil { StatusPill(title: "\(store.tags.count)", tone: .neutral) }
-                    Spacer(minLength: 4)
-                    if store.target == nil { StatusPill(title: "\(store.tags.count)", tone: .neutral) }
-                    if store.target != nil {
-                        Button { store.navigate(.releases) } label: { DesignIconImage(icon: .external) }
-                            .buttonStyle(.borderless)
-                            .help("Open in Releases")
-                    }
-                }
+                Text("Tags")
+                Spacer(minLength: 4)
+                StatusPill(title: "\(tags.count)", tone: .neutral)
             }
         }
 
-        if show("stashes"), !store.stashes.isEmpty {
+        // no board draws stashes; the list stays because nothing else shows it. The field filters names, so it is
+        // hidden meanwhile
+        if show("stashes"), !filtering, !store.stashes.isEmpty {
             SidebarSection("stashes") {
                 ForEach(store.stashes) { s in
                     HStack(alignment: .top, spacing: 6) {
@@ -209,8 +212,10 @@ struct SidebarView: View {
         }
     }
 
-    private func expansion(_ id: String) -> Binding<Bool> {
-        Binding(get: { expanded.contains(id) },
+    /// forced: the filter is on, so the folder holds a match and stands open whatever was remembered
+    private func expansion(_ id: String, forced: Bool = false) -> Binding<Bool> {
+        if forced { return .constant(true) }
+        return Binding(get: { expanded.contains(id) },
                 set: { if $0 { expanded.insert(id) } else { expanded.remove(id) } })
     }
 
@@ -230,11 +235,8 @@ struct SidebarView: View {
     }
 
     private func localRow(_ b: Branch, label: String) -> some View {
-        // the current branch always shows in the graph
-        let canHide = !b.isCurrent || store.isHidden(b)
-        return BranchRow(branch: b, label: label, worktreePath: store.worktree(using: b.name)?.path,
-                         hidden: store.isHidden(b), pinned: store.isPinned(b), protected: store.gitchProtected.contains(b.name),
-                         toggleHidden: canHide ? { Task { await store.setHidden(b, !store.isHidden(b)) } } : nil)
+        BranchRow(branch: b, label: label, hidden: store.isHidden(b), pinned: store.isPinned(b),
+                  protected: store.gitchProtected.contains(b.name), showAgain: { Task { await store.setHidden(b, false) } })
             .sidebarTreeRow()
             .contentShape(Rectangle())
             .draggable(RepoStore.branchPayload + b.name) { Label(b.name, symbol: "arrow.triangle.branch").padding(6) }
@@ -244,8 +246,7 @@ struct SidebarView: View {
     }
 
     private func remoteRow(_ b: Branch, label: String) -> some View {
-        BranchRow(branch: b, label: label, hidden: store.isHidden(b),
-                  toggleHidden: { Task { await store.setHidden(b, !store.isHidden(b)) } })
+        BranchRow(branch: b, label: label, hidden: store.isHidden(b), showAgain: { Task { await store.setHidden(b, false) } })
             .sidebarTreeRow()
             .contentShape(Rectangle())
             .draggable(RepoStore.branchPayload + b.name) { Label(b.name, symbol: "cloud").padding(6) }
@@ -254,10 +255,12 @@ struct SidebarView: View {
             .contextMenu { remoteMenu(b) }
     }
 
-    private var remoteGroups: [(String, [Branch])] {
+    /// Each remote with its branches in folders, narrowed to the query; a remote without a match is left out
+    private func remoteGroups(_ query: String) -> [(String, BranchFolders)] {
         Dictionary(grouping: store.remoteBranches) { $0.remote ?? "" }
             .sorted { $0.key < $1.key }
-            .map { ($0.key, $0.value) }
+            .map { ($0.key, BranchFolders($0.value) { $0.shortName }.filtered(query)) }
+            .filter { $0.1.count > 0 }
     }
 
     @ViewBuilder
@@ -313,54 +316,17 @@ struct SidebarView: View {
     }
 }
 
-/// 브랜치 이름의 첫 '/' 앞부분(feature, fix, hotfix …)으로 묶은 폴더
-struct BranchFolder: Identifiable {
-    let name: String
-    let branches: [Branch]
-    var id: String { name }
-}
-
-struct BranchFolders {
-    let loose: [Branch]
-    let folders: [BranchFolder]
-
-    init(_ branches: [Branch], key: (Branch) -> String) {
-        var loose: [Branch] = []
-        var byFolder: [String: [Branch]] = [:]
-        for b in branches {
-            let k = key(b)
-            if let slash = k.firstIndex(of: "/") {
-                byFolder[String(k[..<slash]), default: []].append(b)
-            } else {
-                loose.append(b)
-            }
-        }
-        var folders: [BranchFolder] = []
-        for (name, list) in byFolder {
-            if list.count == 1 { loose.append(list[0]) } else { folders.append(BranchFolder(name: name, branches: list)) }
-        }
-        self.loose = loose.sorted { key($0).localizedStandardCompare(key($1)) == .orderedAscending }
-        self.folders = folders.sorted { $0.name < $1.name }
-    }
-
-    /// 폴더 이름을 뺀 나머지(feature/auth-jwt → auth-jwt)
-    static func leaf(_ name: String) -> String {
-        guard let slash = name.firstIndex(of: "/") else { return name }
-        return String(name[name.index(after: slash)...])
-    }
-}
-
+/// A branch row. After the name come only the marks whose state shows nowhere else (pinned, protected by gitch,
+/// hidden from the graph, upstream gone), then ahead and behind. (Windows: BranchRow in Sidebar.tsx)
 private struct BranchRow: View {
     let branch: Branch
     var label: String? = nil
-    var worktreePath: String? = nil
     var hidden = false
     var pinned = false
     /// gitch 가 직접 push 를 막는 브랜치(gitch protect)
     var protected = false
-    /// Hides the branch from the graph or shows it again (nil: not allowed, the eye is not shown)
-    var toggleHidden: (() -> Void)? = nil
-    @ViewState private var hovering = false
+    /// Shows a hidden branch in the graph again
+    var showAgain: () -> Void = {}
 
     var body: some View {
         HStack(spacing: 6) {
@@ -378,27 +344,22 @@ private struct BranchRow: View {
                 .help(branch.name)
             Spacer(minLength: 4)
             if pinned {
-                SymbolIcon("pin.fill").font(.caption2).foregroundStyle(.secondary).help("Branches pinned to the top")
+                SymbolIcon("pin.fill").font(.caption2).foregroundStyle(.secondary).help("Pinned").accessibilityLabel("Pinned")
             }
             if protected {
                 SymbolIcon("lock.shield").font(.caption2).foregroundStyle(.secondary)
                     .help("Protected by gitch: no direct pushes, merge through a pull request")
             }
-            if let toggleHidden {
-                // the eye shows on hover; a hidden branch keeps it so the state stays visible
-                Button(action: toggleHidden) {
-                    SymbolIcon(hidden ? "eye.slash" : "eye")
+            if hidden {
+                // only a hidden branch carries the eye: it says so and shows the branch again (hiding is in the row's menu)
+                Button(action: showAgain) {
+                    SymbolIcon("eye.slash")
                         .foregroundStyle(.secondary)
                         .frame(width: 16, height: 16)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .opacity(hovering || hidden ? 1 : 0)
-                .help(hidden ? String(localized: "Show in graph again") : String(localized: "Hide from graph"))
-            }
-            if let worktreePath {
-                DesignIconImage(icon: .repository).foregroundStyle(.secondary)
-                    .help("In use by a worktree: \(worktreePath)")
+                .help("Show in graph again").accessibilityLabel("Show in graph again")
             }
             if branch.upstreamGone {
                 SymbolIcon("exclamationmark.icloud").foregroundStyle(.orange)
@@ -407,7 +368,6 @@ private struct BranchRow: View {
             if branch.ahead > 0 { counter("↑\(branch.ahead)") }
             if branch.behind > 0 { counter("↓\(branch.behind)") }
         }
-        .onHover { hovering = $0 }
     }
 
     /// Ahead or behind: plain monospaced 11 pt in the caption grey, no capsule
@@ -477,15 +437,6 @@ extension EnvironmentValues {
     var sidebarFlyout: Bool {
         get { self[SidebarFlyoutKey.self] }
         set { self[SidebarFlyoutKey.self] = newValue }
-    }
-}
-
-extension View {
-    /// A sidebar row without the tree's columns (a pull request, an issue, a notice), with the tree rows' side padding
-    func sidebarRow() -> some View {
-        padding(.vertical, 3)
-            .padding(.horizontal, 8)
-            .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
