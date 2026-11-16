@@ -138,11 +138,8 @@
   right: 0;
 }
 
-/* Hover, selection and search hits tint the message and the columns after it to the row's end, at the band's height (rows stay apart) */
-.commit-row:hover .row-tail {
-  background: var(--hover);
-}
-
+/* Selection and search hits tint the message and the columns after it to the row's end, at the band's height (rows stay apart).
+   Rows have no hover colour, as on macOS and on the board: the lane bands already tell them apart. */
 .commit-row.selected .row-tail,
 .commit-row.selected.hit .row-tail {
   background: var(--select);
