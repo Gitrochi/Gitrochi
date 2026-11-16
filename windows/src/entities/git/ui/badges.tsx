@@ -4,22 +4,26 @@ import { t } from "@/shared/i18n";
 import type { ChangeKind, RefLabel } from "../model/types";
 import "./badges.css";
 
-/** 파일 변경 종류 배지(A·M·D…) */
-const kindInfo: Record<ChangeKind, { letter: string; color: string; tip: string }> = {
-  added: { letter: "A", color: "rgb(46,158,92)", tip: t("Added") },
-  modified: { letter: "M", color: "rgb(219,140,26)", tip: t("Modified") },
-  deleted: { letter: "D", color: "rgb(219,66,77)", tip: t("Deleted") },
-  renamed: { letter: "R", color: "rgb(41,133,245)", tip: t("Renamed") },
-  copied: { letter: "C", color: "rgb(41,133,245)", tip: t("Copied") },
-  typeChanged: { letter: "T", color: "rgb(219,140,26)", tip: t("Type changed") },
-  untracked: { letter: "N", color: "rgb(46,158,92)", tip: t("New file (untracked)") },
-  conflicted: { letter: "!", color: "rgb(191,26,51)", tip: t("Conflict") },
+/**
+ * A changed file's status, as the boards draw it: one letter in its tone on that tone's fill, 18px square with a 4px
+ * radius, 11px semibold, no border. Untracked is U, a conflict is C, a copy shares the rename's R and a type change
+ * the modification's M. macOS: StatusBadge in Views/Shared/Theme.swift
+ */
+const kindInfo: Record<ChangeKind, { letter: string; tone: "passed" | "waiting" | "failed" | "info" | "neutral"; tip: string }> = {
+  added: { letter: "A", tone: "passed", tip: t("Added") },
+  modified: { letter: "M", tone: "waiting", tip: t("Modified") },
+  deleted: { letter: "D", tone: "failed", tip: t("Deleted") },
+  renamed: { letter: "R", tone: "info", tip: t("Renamed") },
+  copied: { letter: "R", tone: "info", tip: t("Copied") },
+  typeChanged: { letter: "M", tone: "waiting", tip: t("Type changed") },
+  untracked: { letter: "U", tone: "neutral", tip: t("Untracked") },
+  conflicted: { letter: "C", tone: "failed", tip: t("Conflicted") },
 };
 
 export function StatusBadge({ kind }: { kind: ChangeKind }) {
   const k = kindInfo[kind];
   return (
-    <span className="status-badge" style={{ background: k.color }} data-tip={k.tip}>
+    <span className="status-badge status-tone" data-tone={k.tone} role="img" aria-label={k.tip} data-tip={k.tip}>
       {k.letter}
     </span>
   );

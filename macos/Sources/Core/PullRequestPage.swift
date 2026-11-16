@@ -54,22 +54,6 @@ enum PullRequestPage {
         return (own ? thisBranch : request.source) + " → " + request.target
     }
 
-    /// The folder of a path, shortened from the start by whole segments: "…/Views/Search"
-    static func folderLabel(_ path: String) -> String {
-        let folders = path.split(separator: "/").dropLast()
-        guard folders.count > 2 else { return folders.joined(separator: "/") }
-        return "…/" + folders.suffix(2).joined(separator: "/")
-    }
-
-    /// The labels a view may show for a path's folder, longest first; when none fits the folder is hidden
-    static func folderLabels(_ path: String) -> [String] {
-        let folders = path.split(separator: "/").dropLast()
-        guard let last = folders.last else { return [] }
-        let short = (folders.count > 1 ? "…/" : "") + last
-        let label = folderLabel(path)
-        return label == short ? [label] : [label, short]
-    }
-
     struct CheckGroups {
         var failed: [RequestCheck] = []
         var running: [RequestCheck] = []

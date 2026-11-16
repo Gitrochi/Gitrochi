@@ -94,21 +94,6 @@ struct PullRequestCard<Content: View>: View {
     }
 }
 
-/// A file's folder beside its name: shortened from the start by whole segments, hidden when not even the last one fits
-struct PullRequestFolderLabel: View {
-    let path: String
-    var color = StudioStyle.Rail.icon
-
-    var body: some View {
-        ViewThatFits(in: .horizontal) {
-            ForEach(PullRequestPage.folderLabels(path), id: \.self) { Text(verbatim: $0).lineLimit(1).fixedSize() }
-            Color.clear.frame(width: 0, height: 0)
-        }
-        .font(.system(size: 11)).foregroundStyle(color)
-        .help((path as NSString).deletingLastPathComponent)
-    }
-}
-
 /// The page's secondary text: 12pt in the caption grey
 struct PullRequestCaption: View {
     let text: String

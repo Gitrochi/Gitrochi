@@ -15,4 +15,6 @@ export { CodeEditor } from "./CodeEditor";
 export { FileViewToggle, requestFileView, useFileViewMode } from "./FileViewToggle";
 export { DiffHeader, type DiffFilePosition } from "./DiffHeader";
 export { diffHeaderFolders, diffHeaderFolds } from "./diff-header-folds";
+export { FileFolderRow, fileIndent, FileRow } from "./FileRow";
+export { type FileRowFold, fileRowFolders, fileRowFolds } from "./file-row-folds";
 export { SourceSplit } from "./SourceSplit";

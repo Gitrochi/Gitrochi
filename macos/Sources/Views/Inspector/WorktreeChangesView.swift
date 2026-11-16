@@ -48,20 +48,8 @@ struct WorktreeChangesView: View {
 
     private func row(_ f: FileChange) -> some View {
         let source = DiffSource.worktree(path: path, change: f)
-        return HStack(spacing: 6) {
-            StatusBadge(kind: f.kind)
-            Text((f.path as NSString).lastPathComponent).lineLimit(1)
-            Text((f.path as NSString).deletingLastPathComponent).font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.head)
-            Spacer(minLength: 4)
-        }
-        .padding(.vertical, 2)
-        .padding(.horizontal, 4)
-        .background(RoundedRectangle(cornerRadius: 5).fill(store.diffSource == source ? Color.accentColor.opacity(0.18) : .clear))
-        .contentShape(Rectangle())
-        .onTapGesture { store.openDiff(source) }
-        .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(.isButton)
-        .accessibilityAction { store.openDiff(source) }
-        .help("Click to see the diff in the center")
+        return FileRow(change: f, selected: store.diffSource == source, open: { store.openDiff(source) })
+            // the row's fill reaches past the column so its text lines up with the heading above
+            .padding(.horizontal, -8)
     }
 }

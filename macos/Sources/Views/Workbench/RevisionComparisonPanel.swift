@@ -339,11 +339,11 @@ struct RevisionComparisonPanel: View {
                         ForEach(FileTree.rows(result.files, collapsed: collapsed)) { row in
                             switch row.kind {
                             case .folder(let path, let name, let files): folderRow(path: path, name: name, count: files.count, depth: row.depth)
-                            case .file(let change): fileRow(change, result, selected: change.path == current, indent: 6 + CGFloat(row.depth) * 14 + 18, folder: false)
+                            case .file(let change): fileRow(change, result, selected: change.path == current, indent: FileTree.fileIndent(depth: row.depth), folder: false)
                             }
                         }
                     } else {
-                        ForEach(result.files) { fileRow($0, result, selected: $0.path == current, indent: 6, folder: true) }
+                        ForEach(result.files) { fileRow($0, result, selected: $0.path == current, indent: 8, folder: true) }
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -358,51 +358,16 @@ struct RevisionComparisonPanel: View {
     }
 
     private func folderRow(path: String, name: String, count: Int, depth: Int) -> some View {
-        let open = !collapsed.contains(path), id = "d:" + path
-        return Button { if open { collapsed.insert(path) } else { collapsed.remove(path) } } label: {
-            HStack(spacing: 6) {
-                SymbolIcon(open ? "chevron.down" : "chevron.right").font(.system(size: 9, weight: .semibold)).foregroundStyle(StudioStyle.Rail.icon).frame(width: 12)
-                DesignIconImage(icon: .repository, size: 11).foregroundStyle(StudioStyle.Rail.icon)
-                Text(verbatim: name).fontWeight(.medium).lineLimit(1).truncationMode(.head).layoutPriority(-1)
-                // a folder holding a single file needs no count
-                if count > 1 { StatusPill(title: String(count), symbol: nil, tone: .neutral) }
-                Spacer(minLength: 0)
-            }
-            .font(.system(size: 13))
-            .padding(.leading, 6 + CGFloat(depth) * 14).padding(.trailing, 6)
-            .frame(maxWidth: .infinity, minHeight: 28, maxHeight: 28, alignment: .leading)
-            .background(RoundedRectangle(cornerRadius: 6).fill(hovered == id ? StudioStyle.hover : Color.clear))
-            .contentShape(Rectangle())
+        let open = !collapsed.contains(path)
+        return FileFolderRow(name: name, count: count, depth: depth, expanded: open) {
+            if open { collapsed.insert(path) } else { collapsed.remove(path) }
         }
-        .buttonStyle(.plain)
-        .onHover { hovered = $0 ? id : (hovered == id ? nil : hovered) }
     }
 
+    /// The shared file row: the folder gives way first, then the counts, and the name last
     private func fileRow(_ file: FileChange, _ result: RevisionComparison, selected: Bool, indent: CGFloat, folder: Bool) -> some View {
-        let id = "f:" + file.path, stat = result.stats[file.path]
-        return Button { selectedPath = file.path } label: {
-            HStack(spacing: 6) {
-                StatusBadge(kind: file.kind)
-                // a rename's old name gives way first, then the folder, then the name; the counts are never cut
-                if let old = file.oldPath, old != file.path {
-                    Text(verbatim: (old as NSString).lastPathComponent + " →").font(.system(size: 11)).foregroundStyle(StudioStyle.Rail.icon).lineLimit(1).layoutPriority(-2)
-                }
-                Text(verbatim: file.fileName).fontWeight(selected ? .semibold : .regular).lineLimit(1).truncationMode(.middle)
-                if folder { PullRequestFolderLabel(path: file.path, color: selected ? Color.primary.opacity(0.72) : StudioStyle.Rail.icon).layoutPriority(-3) }
-                Spacer(minLength: 0)
-                if let stat { LineStatText(added: stat.added ?? 0, deleted: stat.deleted ?? 0).fixedSize().layoutPriority(1) }
-            }
-            .font(.system(size: 13))
-            .padding(.leading, indent).padding(.trailing, 8)
-            .frame(maxWidth: .infinity, minHeight: 28, maxHeight: 28, alignment: .leading)
-            .background(RoundedRectangle(cornerRadius: 6).fill(selected ? StudioStyle.selection : hovered == id ? StudioStyle.hover : Color.clear))
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .onHover { hovered = $0 ? id : (hovered == id ? nil : hovered) }
-        .help(Text(verbatim: file.oldPath.map { $0 + " → " + file.path } ?? file.path))
-        .accessibilityLabel(Text(verbatim: file.path))
-        .accessibilityAddTraits(selected ? .isSelected : [])
+        FileRow(change: file, selected: selected, showDirectory: folder, stat: result.stats[file.path], indent: indent,
+                open: { selectedPath = file.path })
     }
 
     // MARK: Commits

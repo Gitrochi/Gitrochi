@@ -29,36 +29,12 @@
 .review-comment { overflow-wrap: anywhere; }
 .gitch-bar { flex-wrap: wrap; }
 
-.file-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 3px 6px;
-  border-radius: 5px;
-  min-height: 24px;
-  min-width: 0;
-}
-
-.file-row:hover {
-  background: var(--hover);
-}
-
-.file-row.selected {
-  background: var(--select);
-}
-
+/* the shared file row is shared/ui/file-row.css; a list keeps the board's 4px between its rows */
+.file-list { gap: 4px; }
 .file-list-virtual { position: relative; flex: none; min-width: 0; }
 .file-list-virtual-row { position: absolute; left: 0; right: 0; }
-.file-list-virtual-row > .file-row { height: 100%; }
-
-.file-row .act {
-  visibility: hidden;
-}
-
-.file-row:hover .act,
-.file-row.selected .act {
-  visibility: visible;
-}
+.worktree-files { gap: 4px; }
+.worktree-files > .file-row { margin: 0 -8px; }
 
 .section-dot {
   width: 7px;
@@ -116,10 +92,6 @@
 }
 
 /* PR·MR 리뷰 */
-.review-file {
-  cursor: default;
-}
-
 .review-comment {
   display: flex;
   flex-direction: column;

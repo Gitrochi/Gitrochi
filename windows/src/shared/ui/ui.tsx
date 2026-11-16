@@ -107,11 +107,12 @@ export function Avatar({ name, email, size = 28, url }: { name: string; email: s
 }
 
 
-export function LineStatText({ added, deleted }: { added: number; deleted: number }) {
+/** +12 −3. A file row passes `zeros` and shows both sides, the empty one in grey. macOS: LineStatText */
+export function LineStatText({ added, deleted, zeros = false }: { added: number; deleted: number; zeros?: boolean }) {
   return (
     <span className="linestat">
-      {added > 0 && <span className="a">+{added}</span>}
-      {deleted > 0 && <span className="d">−{deleted}</span>}
+      {(zeros || added > 0) && <span className={added > 0 ? "a" : "z"}>+{added}</span>}
+      {(zeros || deleted > 0) && <span className={deleted > 0 ? "d" : "z"}>−{deleted}</span>}
     </span>
   );
 }

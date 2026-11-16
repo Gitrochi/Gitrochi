@@ -49,13 +49,6 @@ export function branchLabel(request: PullRequest, currentBranch: string | null |
   return `${head} → ${request.target}${request.fromFork ? ` (${t("fork")})` : ""}`;
 }
 
-/** The last two folders of a path, "…/" in front when more were dropped; "" for a file at the root */
-export function folderLabel(path: string): string {
-  const folders = path.split("/").slice(0, -1);
-  if (folders.length <= 2) return folders.join("/");
-  return "…/" + folders.slice(-2).join("/");
-}
-
 interface Check { status: CIStatus }
 
 /** Failed checks, the ones that have not finished, and the ones that need no attention */

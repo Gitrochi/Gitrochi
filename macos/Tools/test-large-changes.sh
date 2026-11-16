@@ -10,7 +10,7 @@ import AppKit
 import Observation
 
 typealias ViewState<Value> = SwiftUI.State<Value>
-enum ChangeKind { case untracked }
+enum ChangeKind { case untracked, copied }
 struct FileChange: Identifiable, Hashable {
     let path: String
     var oldPath: String? = nil
@@ -26,14 +26,14 @@ struct LineStat { var added: Int?; var deleted: Int? }
     func copy(_ text: String) {}
 }
 struct StatusBadge: View { let kind: ChangeKind; var body: some View { Text("N").font(.caption).frame(width:16,height:16).background(.green) } }
-struct LineStatText: View { let added: Int; let deleted: Int; var body: some View { Text("+\(added) −\(deleted)") } }
+struct LineStatText: View { let added: Int; let deleted: Int; var zeros = false; var body: some View { Text("+\(added) −\(deleted)") } }
 
 SWIFT
 python3 - "$ROOT/Sources/Views/Shared/Theme.swift" "$TASK_TMP/main.swift" <<'PYTHON'
 from pathlib import Path
 import sys
 source = Path(sys.argv[1]).read_text()
-row = source[source.index("struct FileRow: View {"):source.index("/// SwiftUI.State")]
+row = source[source.index("struct FileRowFold: Hashable {"):source.index("/// SwiftUI.State")]
 with Path(sys.argv[2]).open("a") as output:
     output.write(row + "\n")
 PYTHON
@@ -46,10 +46,9 @@ struct Fixture: View {
    VStack(alignment:.leading,spacing:12) {
     Text("Changed files").font(.headline)
     VStack(alignment:.leading,spacing:4) {
-     Text("Unstaged files").font(.headline)
+     Text("Unstaged").font(.headline)
      ChangeList(changes:files,isSelected:{_ in counter.count+=1; return false},actionIcon:"plus.circle",onOpen:{_ in}) { _ in Button("Stage") {} }
     }
-    Text("Review staged changes")
    }.padding(12)
   }
  }
