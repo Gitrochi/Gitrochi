@@ -24,9 +24,6 @@ struct CommitRow: View {
     /// 이 커밋의 가장 최근 CI 파이프라인
     var ci: CIPipeline?
 
-    /// Rows stay 6pt apart, like GitKraken
-    static let bandHeight = GraphMetrics.rowHeight - 6
-
     var body: some View {
         let c = entry.commit
         let tint = Palette.lane(entry.row.color)
@@ -58,7 +55,7 @@ struct CommitRow: View {
                         // like GitKraken: a band from the node to the message, a little shorter than the row so rows stay apart
                         Rectangle()
                             .fill(tint.opacity(selected ? 0.4 : 0.1))
-                            .frame(height: Self.bandHeight)
+                            .frame(height: GraphMetrics.bandHeight)
                             .padding(.leading, min(max(0, GraphMetrics.leftPad + GraphMetrics.laneWidth * (CGFloat(entry.row.column) + 0.5) - laneOffset), columns.graph))
                     }
             }
@@ -67,8 +64,9 @@ struct CommitRow: View {
                 HStack(spacing: 6) {
                     Rectangle()
                         .fill(tint.opacity(c.isPending ? 0.5 : 0.9))
-                        .frame(width: 3, height: Self.bandHeight)
-                        .padding(.trailing, 4)
+                        .frame(width: 3, height: GraphMetrics.bandHeight)
+                        // 12 between the bar and the text, with the stack's 6
+                        .padding(.trailing, 6)
                     if c.isPending {
                         if c.wipWorktree != nil {
                             Text("// Uncommitted changes in \(wipLabel ?? "")").italic().foregroundStyle(.secondary)
@@ -110,11 +108,11 @@ struct CommitRow: View {
             }
             // right-hand columns line up with their labels, which sit left of the header's menus
             .padding(.trailing, 12 + (columns.trailing > 0 ? GraphMetrics.headerToolsWidth : 0))
-            .frame(height: Self.bandHeight)
+            .frame(height: GraphMetrics.bandHeight)
             // selection and search hits tint the message and the columns after it to the row's end, at the band's height
             .background(selected ? Color.accentColor.opacity(0.16) : (match == .hit ? Color.yellow.opacity(0.16) : Color.clear))
         }
-        .font(.system(size: 12.5))
+        .font(.system(size: 13))
         .frame(height: GraphMetrics.rowHeight)
         .opacity(match == .miss ? 0.32 : 1)
         .overlay(alignment: .leading) {
@@ -146,7 +144,7 @@ extension CommitRow {
     /// An optional column's text, inset from the column's left edge like its label
     fileprivate func cell(_ text: String, width: CGFloat) -> some View {
         Text(verbatim: text)
-            .font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.tail)
+            .font(.system(size: 12)).foregroundStyle(.secondary).lineLimit(1).truncationMode(.tail)
             .padding(.leading, GraphMetrics.columnInset)
             .frame(width: width, alignment: .leading)
     }
@@ -230,7 +228,7 @@ private struct RefColumn: View {
                 Rectangle().fill(tint).frame(height: 1.5)
             }
         }
-        .padding(.leading, 6)
+        .padding(.leading, 8)
     }
 }
 
@@ -350,15 +348,16 @@ struct GraphCell: View {
                     ctx.fill(circle(7), with: .color(Color(nsColor: .textBackgroundColor)))
                     ctx.stroke(circle(7), with: .color(color), style: StrokeStyle(lineWidth: 2, dash: [2.5, 2]))
                 } else if isMerge {
-                    // 머지 커밋은 작은 점
-                    ctx.fill(circle(5.5), with: .color(Color(nsColor: .textBackgroundColor)))
+                    // a merge commit is an 8pt dot with a 2pt gap around it
+                    ctx.fill(circle(6), with: .color(Color(nsColor: .textBackgroundColor)))
                     ctx.fill(circle(4), with: .color(color))
                 } else {
                     // 프로필 테두리(레인 색)
                     ctx.fill(circle(GraphMetrics.avatar / 2 + 2), with: .color(color))
                 }
                 if isHead {
-                    ctx.stroke(circle(isMerge ? 8 : GraphMetrics.avatar / 2 + 5), with: .color(color), lineWidth: 1.5)
+                    // a 2pt ring, 2pt clear of the node
+                    ctx.stroke(circle(isMerge ? 9 : GraphMetrics.avatar / 2 + 5), with: .color(color), lineWidth: 2)
                 }
             }
             if !isWIP && !isMerge {

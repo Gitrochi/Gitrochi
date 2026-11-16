@@ -54,7 +54,7 @@ export const CommitRow = memo(function CommitRow({
   return (
     <div
       className={`commit-row ${selected ? "selected" : ""} ${match === 1 ? "hit" : match === 2 ? "miss" : ""} ${dropOn ? "drop" : ""}`}
-      style={{ top, gap: 0 }}
+      style={{ top }}
       onMouseDown={() => store.select(rowSelection(c))}
       onDoubleClick={worktree !== null ? () => void store.switchWorktree(worktree) : undefined}
       onContextMenu={(e) => showContextMenu(e, commitMenu(store, c))}
@@ -330,13 +330,15 @@ const GraphCell = memo(function GraphCell({
           <circle cx={cx} cy={cy} r={7} fill="var(--surface)" stroke={color} strokeWidth={2} strokeDasharray="2.5 2" />
         ) : isMerge ? (
           <>
-            <circle cx={cx} cy={cy} r={5.5} fill="var(--surface)" />
+            {/* a merge commit is an 8px dot with a 2px gap around it */}
+            <circle cx={cx} cy={cy} r={6} fill="var(--surface)" />
             <circle cx={cx} cy={cy} r={4} fill={color} />
           </>
         ) : (
           <circle cx={cx} cy={cy} r={AVATAR / 2 + 2} fill={color} />
         )}
-        {isHead && <circle cx={cx} cy={cy} r={isMerge ? 8 : AVATAR / 2 + 5} fill="none" stroke={color} strokeWidth={1.5} />}
+        {/* a 2px ring, 2px clear of the node */}
+        {isHead && <circle cx={cx} cy={cy} r={isMerge ? 9 : AVATAR / 2 + 5} fill="none" stroke={color} strokeWidth={2} />}
       </svg>
       {avatarNode && <AvatarNode name={author} email={email} x={cx} />}
     </span>

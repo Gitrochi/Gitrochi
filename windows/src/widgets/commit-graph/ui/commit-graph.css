@@ -127,12 +127,12 @@
   min-height: 0;
 }
 
+/* a row is ROW_H high (lib/metrics.ts); the band and the message are 24, so rows stay 8px apart */
 .commit-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  height: 28px;
-  font-size: 12.5px;
+  height: 32px;
+  font-size: 13px;
   position: absolute;
   left: 0;
   right: 0;
@@ -180,7 +180,7 @@
   align-items: center;
   gap: 4px;
   height: 100%;
-  padding-left: 6px;
+  padding-left: 8px;
   flex: none;
   min-width: 0;
 }
@@ -226,8 +226,8 @@
 
 .avatar-node {
   position: absolute;
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   overflow: hidden;
   display: flex;
@@ -246,8 +246,6 @@
   display: flex;
   align-items: center;
   box-sizing: border-box;
-  /* the bar meets the band: cancel the row's gap */
-  margin-left: -8px;
 }
 
 .commit-row .msg {
@@ -265,7 +263,8 @@
   width: 3px;
   height: 100%;
   flex: none;
-  margin-right: 4px;
+  /* 12 between the bar and the text, with the message's gap */
+  margin-right: 6px;
 }
 
 /* 제목은 끝까지 보이게 먼저, 본문 첫 줄은 남는 자리에 흐리게 */
@@ -311,7 +310,7 @@
 .commit-row .col-opt {
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--text-2);
 }
 
@@ -385,7 +384,8 @@
   gap: 4px;
   flex: 1;
   min-width: 0;
-  padding-left: 20px;
+  /* over the row's text: its 3px lane bar and the 12 after it */
+  padding-left: 15px;
 }
 
 .graph-head-message > .graph-head-label {

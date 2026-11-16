@@ -2,16 +2,18 @@ import SwiftUI
 
 enum GraphMetrics {
     static let laneWidth: CGFloat = 22
-    static let rowHeight: CGFloat = 30
+    static let rowHeight: CGFloat = 32
+    /// The lane band and the message behind it; rows stay 8pt apart (Windows: .lane-band, .row-tail)
+    static let bandHeight: CGFloat = 24
     static let leftPad: CGFloat = 6
     /// Room between the last lane's avatar and the message bar; the lane band runs through it
     static let rightPad: CGFloat = 16
     /// Eight lanes wide at most; more lanes scroll sideways inside the column
     static let maxVisibleLanes = 8
     /// 왼쪽 브랜치·태그 칸 너비
-    static let refWidth: CGFloat = 190
-    /// 커밋 동그라미(프로필) 지름
-    static let avatar: CGFloat = 20
+    static let refWidth: CGFloat = 210
+    /// The author photo inside a commit node; with its 2pt lane ring the node is 22
+    static let avatar: CGFloat = 18
 
     static func width(lanes: Int) -> CGFloat {
         max(44, CGFloat(min(lanes, maxVisibleLanes)) * laneWidth + leftPad + rightPad)
@@ -418,7 +420,8 @@ private struct GraphHeader: View {
                 .overlay(alignment: .trailing) { trailingResizer("graph", width: columns.graph, range: 44...max(44, contentWidth)) }
                 .zIndex(1)
             }
-            Text("Commit message").padding(.leading, 20).frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+            // over the row's text: its 3pt lane bar and the 12 after it
+            Text("Commit message").padding(.leading, 15).frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
                 // dragged past the window, the message gets longer and the rows scroll sideways; an optional column's
                 // handle already sits on this edge when one follows
                 .overlay(alignment: .trailing) {
