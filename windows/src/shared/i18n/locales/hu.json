@@ -416,7 +416,6 @@
  "Conversation {0}": "Beszélgetés {0}",
  "Copied": "Másolva",
  "Copy SHA": "SHA másolása",
- "Copy full SHA": "Teljes SHA másolása",
  "Copy link": "Hivatkozás másolása",
  "Copy message": "Üzenet másolása",
  "Copy name": "Név másolása",
@@ -536,7 +535,6 @@
  "Executable": "Futtatható fájl",
  "Existing branch": "Meglévő ág",
  "Explain again": "Magyarázat újra",
- "Explain this commit": "A commit elmagyarázása",
  "Failed": "Sikertelen",
  "Fast-forward '{0}' (current) to '{1}'": "Fast-forward: '{0}' (aktuális) → '{1}'",
  "Fast-forward '{0}' to '{1}'": "Fast-forward: '{0}' → '{1}'",
@@ -2274,5 +2272,12 @@
   "{0} more terminals": "További {0} terminál",
   "CI": "CI",
   "Preflight": "Előzetes ellenőrzés",
-  "Pull request": "Pull request"
+  "Pull request": "Pull request",
+  "Tag…": "Címke…",
+  "Explain with AI…": "Magyarázat AI-val…",
+  "Copy commit SHA": "Commit SHA másolása",
+  "Parent": "Szülő",
+  "Parents": "Szülők",
+  "Couldn't explain this commit": "Nem sikerült elmagyarázni a commitot",
+  "More commit actions": "További commitműveletek"
 }

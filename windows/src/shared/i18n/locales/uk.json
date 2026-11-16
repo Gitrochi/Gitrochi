@@ -421,7 +421,6 @@
  "Conversation {0}": "Обговорення {0}",
  "Copied": "Скопійовано",
  "Copy SHA": "Копіювати SHA",
- "Copy full SHA": "Копіювати повний SHA",
  "Copy link": "Копіювати посилання",
  "Copy message": "Копіювати повідомлення",
  "Copy name": "Копіювати назву",
@@ -541,7 +540,6 @@
  "Executable": "Виконуваний файл",
  "Existing branch": "Наявна гілка",
  "Explain again": "Пояснити знову",
- "Explain this commit": "Пояснити цей коміт",
  "Failed": "Збій",
  "Fast-forward": "Перемотати вперед",
  "Fast-forward '{0}' (current) to '{1}'": "Перемотати '{0}' (поточна) вперед до '{1}'",
@@ -2289,5 +2287,12 @@
   "{0} more terminals": "Ще терміналів: {0}",
   "CI": "CI",
   "Preflight": "Попередня перевірка",
-  "Pull request": "Пул-реквест"
+  "Pull request": "Пул-реквест",
+  "Tag…": "Тег…",
+  "Explain with AI…": "Пояснити за допомогою AI…",
+  "Copy commit SHA": "Копіювати SHA коміту",
+  "Parent": "Батьківський",
+  "Parents": "Батьківські",
+  "Couldn't explain this commit": "Не вдалося пояснити цей коміт",
+  "More commit actions": "Інші дії з комітом"
 }

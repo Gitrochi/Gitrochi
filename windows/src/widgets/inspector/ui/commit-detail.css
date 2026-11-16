@@ -1,0 +1,55 @@
+/* The commit inspector as the redesign board draws it (aside.insp): flat, a 44px header, no cards. macOS: CommitDetailView */
+
+.commit-detail { background: var(--surface); min-width: 0; }
+
+.commit-head { flex: none; height: 44px; box-sizing: border-box; display: flex; align-items: center; gap: 8px; min-width: 0; padding: 0 16px; border-bottom: 1px solid var(--border); }
+.commit-head h2 { margin: 0; min-width: 0; font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.commit-head-sha { flex: none; font-size: 12px; color: var(--text-2); }
+.icon-btn.commit-icon-button { width: 24px; height: 24px; border-radius: 6px; cursor: pointer; }
+.commit-icon-button:focus-visible, .commit-parent:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* the sections carry their own padding, so the shared scroller's is dropped */
+.commit-detail > .panel-scroll { padding: 0; gap: 0; }
+.commit-main { display: flex; flex-direction: column; min-width: 0; padding: 12px 16px 16px; overflow-wrap: anywhere; }
+.commit-caption { font-size: 12px; color: var(--text-2); }
+
+/* branches and tags here are neutral: lane colours belong to the graph */
+.commit-refs { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; min-width: 0; margin-bottom: 8px; }
+.commit-ref { flex: 0 1 auto; min-width: 0; max-width: 100%; display: inline-flex; align-items: center; gap: 4px; height: 18px; padding: 0 6px; box-sizing: border-box; border: 1px solid #c9c9ce; border-radius: 6px; background: #f6f6f7; color: #66666b; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.commit-ref > svg { flex: none; }
+:root[data-theme="dark"] .commit-ref { border-color: #4a4a50; background: #2b2b2f; color: #a1a1a6; }
+
+.commit-title { margin: 0; min-width: 0; font-size: 17px; line-height: 1.35; font-weight: 600; }
+.commit-author { display: flex; align-items: center; gap: 6px; min-width: 0; margin-top: 8px; }
+.commit-author-name { flex: 0 1 auto; font-weight: 600; }
+.commit-author-when { flex: none; white-space: nowrap; }
+.commit-committer { margin-top: 2px; line-height: 16px; }
+
+.commit-body { margin-top: 10px; font-size: 13px; line-height: 1.55; color: var(--status-text); }
+.commit-body.folded { max-height: 160px; overflow: hidden; mask-image: linear-gradient(black 70%, transparent); }
+.commit-text-button { align-self: flex-start; gap: 6px; padding: 0; }
+.commit-text-button > svg { flex: none; }
+
+.commit-parents { display: flex; flex-wrap: wrap; align-items: center; gap: 0 4px; margin-top: 6px; }
+.commit-parent { height: 24px; padding: 0 4px; border: 0; border-radius: 6px; background: transparent; font-size: 12px; color: #0b5cad; cursor: pointer; }
+.commit-parent:hover { text-decoration: underline; }
+:root[data-theme="dark"] .commit-parent { color: #6cb0ff; }
+
+.commit-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+/* a disabled button is neutral, never faded (docs/design.md, Controls) */
+.commit-actions .btn:disabled { opacity: 1; background: var(--bar); border-color: var(--border); color: var(--text-3); }
+
+.commit-explain, .commit-explaining, .commit-explain-failure { margin-top: 8px; }
+.commit-explaining { display: inline-flex; align-items: center; gap: 6px; min-height: 24px; }
+.commit-explanation { display: flex; flex-direction: column; margin-top: 12px; min-width: 0; }
+.commit-explanation-by { display: inline-flex; align-items: center; gap: 6px; }
+.commit-explanation-by > svg { flex: none; }
+.commit-explanation > .commit-body { margin-top: 4px; }
+
+.commit-files { display: flex; flex-direction: column; gap: 4px; min-width: 0; padding: 4px 16px 12px; }
+.commit-files-head { display: flex; align-items: center; gap: 6px; min-width: 0; min-height: 28px; }
+.commit-files-title { font-weight: 600; white-space: nowrap; }
+.commit-count { flex: none; display: inline-flex; align-items: center; height: 18px; padding: 0 8px; border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap; background: var(--status-fill); color: var(--status-text); font-variant-numeric: tabular-nums; }
+.commit-files-totals { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-height: 16px; }
+/* the row's fill reaches past the column so its text lines up with the title above */
+.commit-file-list { margin: 0 -6px; min-width: 0; }

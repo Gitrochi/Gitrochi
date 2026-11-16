@@ -423,7 +423,6 @@
  "Conventional Commits format (feat: …)": "Format Conventional Commits (feat: …)",
  "Copied": "Copié",
  "Copy SHA": "Copier le SHA",
- "Copy full SHA": "Copier le SHA complet",
  "Copy link": "Copier le lien",
  "Copy message": "Copier le message",
  "Copy name": "Copier le nom",
@@ -542,7 +541,6 @@
  "Executable": "Exécutable",
  "Existing branch": "Branche existante",
  "Explain again": "Expliquer à nouveau",
- "Explain this commit": "Expliquer ce commit",
  "Failed": "Échec",
  "Fast-forward '{0}' (current) to '{1}'": "Fast-forward de « {0} » (actuelle) vers « {1} »",
  "Fast-forward '{0}' to '{1}'": "Fast-forward de « {0} » vers « {1} »",
@@ -2327,5 +2325,12 @@
   "{0} more terminals": "{0} terminaux de plus",
   "CI": "CI",
   "Preflight": "Vérification préalable",
-  "Pull request": "Pull request"
+  "Pull request": "Pull request",
+  "Tag…": "Tag…",
+  "Explain with AI…": "Expliquer avec l'IA…",
+  "Copy commit SHA": "Copier le SHA du commit",
+  "Parent": "Parent",
+  "Parents": "Parents",
+  "Couldn't explain this commit": "Impossible d'expliquer ce commit",
+  "More commit actions": "Autres actions sur le commit"
 }

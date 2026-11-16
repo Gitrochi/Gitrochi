@@ -422,7 +422,6 @@
  "Conversation {0}": "對話 {0}",
  "Copied": "已複製",
  "Copy SHA": "複製 SHA",
- "Copy full SHA": "複製完整 SHA",
  "Copy link": "複製連結",
  "Copy message": "複製訊息",
  "Copy name": "複製名稱",
@@ -542,7 +541,6 @@
  "Executable": "執行檔",
  "Existing branch": "現有分支",
  "Explain again": "重新說明",
- "Explain this commit": "說明此提交",
  "Failed": "失敗",
  "Fast-forward": "快轉",
  "Fast-forward '{0}' (current) to '{1}'": "將「{0}」（目前）快轉到「{1}」",
@@ -2294,5 +2292,12 @@
   "{0} more terminals": "另外 {0} 個終端機",
   "CI": "CI",
   "Preflight": "預檢",
-  "Pull request": "拉取請求"
+  "Pull request": "拉取請求",
+  "Tag…": "標籤…",
+  "Explain with AI…": "用 AI 說明…",
+  "Copy commit SHA": "複製提交 SHA",
+  "Parent": "父提交",
+  "Parents": "父提交",
+  "Couldn't explain this commit": "無法說明此提交",
+  "More commit actions": "更多提交操作"
 }

@@ -405,7 +405,6 @@
  "Conversation {0}": "Gesprek {0}",
  "Copied": "Gekopieerd",
  "Copy SHA": "SHA kopiëren",
- "Copy full SHA": "Volledige SHA kopiëren",
  "Copy link": "Link kopiëren",
  "Copy message": "Bericht kopiëren",
  "Copy name": "Naam kopiëren",
@@ -522,7 +521,6 @@
  "Executable": "Uitvoerbaar bestand",
  "Existing branch": "Bestaande branch",
  "Explain again": "Opnieuw uitleggen",
- "Explain this commit": "Deze commit uitleggen",
  "Failed": "Mislukt",
  "Fast-forward '{0}' (current) to '{1}'": "'{0}' (huidige) fast-forwarden naar '{1}'",
  "Fast-forward '{0}' to '{1}'": "'{0}' fast-forwarden naar '{1}'",
@@ -2245,5 +2243,12 @@
   "{0} more terminals": "Nog {0} terminals",
   "CI": "CI",
   "Preflight": "Voorcontrole",
-  "Pull request": "Pull request"
+  "Pull request": "Pull request",
+  "Tag…": "Tag…",
+  "Explain with AI…": "Uitleggen met AI…",
+  "Copy commit SHA": "Commit-SHA kopiëren",
+  "Parent": "Bovenliggend",
+  "Parents": "Bovenliggend",
+  "Couldn't explain this commit": "Kan deze commit niet uitleggen",
+  "More commit actions": "Meer commitacties"
 }

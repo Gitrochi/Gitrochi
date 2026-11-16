@@ -414,7 +414,6 @@
  "Conversation {0}": "Konuşma {0}",
  "Copied": "Kopyalandı",
  "Copy SHA": "SHA'yı kopyala",
- "Copy full SHA": "Tam SHA'yı kopyala",
  "Copy link": "Bağlantıyı kopyala",
  "Copy message": "Mesajı kopyala",
  "Copy name": "Adı kopyala",
@@ -534,7 +533,6 @@
  "Executable": "Çalıştırılabilir dosya",
  "Existing branch": "Mevcut dal",
  "Explain again": "Yeniden açıkla",
- "Explain this commit": "Bu commit'i açıkla",
  "Failed": "Başarısız",
  "Fast-forward": "İleri sar",
  "Fast-forward '{0}' (current) to '{1}'": "'{0}' (geçerli) dalını '{1}' konumuna ileri sar",
@@ -2277,5 +2275,12 @@
   "{0} more terminals": "{0} terminal daha",
   "CI": "CI",
   "Preflight": "Ön kontrol",
-  "Pull request": "Pull request"
+  "Pull request": "Pull request",
+  "Tag…": "Etiket…",
+  "Explain with AI…": "Yapay zeka ile açıkla…",
+  "Copy commit SHA": "Commit SHA'sını kopyala",
+  "Parent": "Üst commit",
+  "Parents": "Üst commit'ler",
+  "Couldn't explain this commit": "Bu commit açıklanamadı",
+  "More commit actions": "Diğer commit işlemleri"
 }

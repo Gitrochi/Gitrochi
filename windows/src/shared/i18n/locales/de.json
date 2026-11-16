@@ -422,7 +422,6 @@
  "Conversation {0}": "Unterhaltung {0}",
  "Copied": "Kopiert",
  "Copy SHA": "SHA kopieren",
- "Copy full SHA": "Vollständigen SHA kopieren",
  "Copy link": "Link kopieren",
  "Copy message": "Nachricht kopieren",
  "Copy name": "Namen kopieren",
@@ -542,7 +541,6 @@
  "Executable": "Ausführbare Datei",
  "Existing branch": "Vorhandener Branch",
  "Explain again": "Erneut erklären",
- "Explain this commit": "Diesen Commit erklären",
  "Failed": "Fehlgeschlagen",
  "Fast-forward": "Fast-Forward",
  "Fast-forward '{0}' (current) to '{1}'": "'{0}' (aktuell) per Fast-Forward auf '{1}' bringen",
@@ -2286,5 +2284,12 @@
   "{0} more terminals": "{0} weitere Terminals",
   "CI": "CI",
   "Preflight": "Vorabprüfung",
-  "Pull request": "Pull Request"
+  "Pull request": "Pull Request",
+  "Tag…": "Tag…",
+  "Explain with AI…": "Mit KI erklären…",
+  "Copy commit SHA": "Commit-SHA kopieren",
+  "Parent": "Eltern-Commit",
+  "Parents": "Eltern-Commits",
+  "Couldn't explain this commit": "Dieser Commit konnte nicht erklärt werden",
+  "More commit actions": "Weitere Commit-Aktionen"
 }

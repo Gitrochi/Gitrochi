@@ -413,7 +413,6 @@
  "Conversation {0}": "Konverzace {0}",
  "Copied": "Zkopírováno",
  "Copy SHA": "Kopírovat SHA",
- "Copy full SHA": "Kopírovat celé SHA",
  "Copy link": "Kopírovat odkaz",
  "Copy message": "Kopírovat zprávu",
  "Copy name": "Kopírovat název",
@@ -533,7 +532,6 @@
  "Executable": "Spustitelný soubor",
  "Existing branch": "Existující větev",
  "Explain again": "Vysvětlit znovu",
- "Explain this commit": "Vysvětlit tento commit",
  "Failed": "Selhalo",
  "Fast-forward '{0}' (current) to '{1}'": "Fast-forward '{0}' (aktuální) na '{1}'",
  "Fast-forward '{0}' to '{1}'": "Fast-forward '{0}' na '{1}'",
@@ -2272,5 +2270,12 @@
   "{0} more terminals": "Další terminály: {0}",
   "CI": "CI",
   "Preflight": "Předběžná kontrola",
-  "Pull request": "Pull request"
+  "Pull request": "Pull request",
+  "Tag…": "Tag…",
+  "Explain with AI…": "Vysvětlit pomocí AI…",
+  "Copy commit SHA": "Kopírovat SHA commitu",
+  "Parent": "Nadřazený",
+  "Parents": "Nadřazené",
+  "Couldn't explain this commit": "Commit se nepodařilo vysvětlit",
+  "More commit actions": "Další akce s commitem"
 }
