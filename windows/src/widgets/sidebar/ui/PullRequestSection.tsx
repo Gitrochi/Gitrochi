@@ -123,7 +123,7 @@ export function PullRequestSection({ store, target, openSettings, onPage = false
               )}
             </span>
             <span className="row side-sub">
-              {pr.isDraft && <span style={{ color: "var(--orange)", fontWeight: 600 }}>{t("Draft")}</span>}
+              {pr.isDraft && <span style={{ color: "var(--orange)", fontWeight: 600, flex: "none", whiteSpace: "nowrap" }}>{t("Draft")}</span>}
               <span className="ellipsis">
                 {pr.source} → {pr.target}
               </span>
