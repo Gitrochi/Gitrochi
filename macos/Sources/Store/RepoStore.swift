@@ -184,6 +184,8 @@ final class RepoStore: Identifiable {
     var prState: LoadState = .idle
     var aiWorking: String?
     var aiNotice: String?
+    /// Why the last commit message could not be written; shown in the composer, not as a dialog
+    var commitMessageFailure: String?
     var explanations: [String: String] = [:]
     var explaining: Set<String> = []
     /// Why the last explanation of a commit failed; shown beside that commit, not as an alert
@@ -501,7 +503,7 @@ final class RepoStore: Identifiable {
         changesInspect = nil; historyInspect = nil; operationNotice = nil
         summary = ""; message = ""; amend = false; mergeMessageFilled = false
         worktrees = []; worktreeStats = [:]; worktreeStatus = [:]; remoteURLs = [:]; target = nil; pullRequests = []; prState = .idle
-        aiWorking = nil; aiNotice = nil; explanations = [:]; explaining = []; explainFailures = [:]; undoStack = []
+        aiWorking = nil; aiNotice = nil; commitMessageFailure = nil; explanations = [:]; explaining = []; explainFailures = [:]; undoStack = []
         ciBadgeTask?.cancel(); ciBadgeTask = nil
         detailTask?.cancel(); diffTask?.cancel(); watchTask?.cancel()
     }

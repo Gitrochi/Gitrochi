@@ -1,10 +1,8 @@
-import { FILE_ROW_HEIGHT, visibleFileRange } from "../lib/visible-file-range";
-import { FolderOpen } from "@/shared/icons";
-import { ChevronDown, ChevronRight, Folder } from "@/shared/icons";
+import { FILE_ROW_HEIGHT, FILE_ROW_PITCH, visibleFileRange } from "../lib/visible-file-range";
 import { type ReactNode, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { changeId, type FileChange, fileDir, fileName, type LineStat, StatusBadge, treeRows } from "@/entities/git";
+import { changeId, type FileChange, type LineStat, renameCaption, StatusBadge, treeRows } from "@/entities/git";
 import { t } from "@/shared/i18n";
-import { IconButton, LineStatText, type MenuItem, showContextMenu, useFileViewMode } from "@/shared/ui";
+import { FileFolderRow, fileIndent, FileRow, type MenuItem, showContextMenu, useFileViewMode } from "@/shared/ui";
 
 /** 변경 파일 목록. 트리 모드에서는 폴더를 접고 펼 수 있고, 폴더 단위로 스테이지·언스테이지할 수 있다. */
 export function ChangeList({
@@ -19,7 +17,8 @@ export function ChangeList({
   changes: FileChange[];
   isSelected: (c: FileChange) => boolean;
   stats?: Record<string, LineStat>;
-  action?: { icon: ReactNode; tip: string; run: (files: FileChange[]) => void };
+  /** An icon on the hovered or focused row; with a label, words on every row (Mark as resolved) */
+  action?: { icon: ReactNode; tip: string; label?: string; run: (files: FileChange[]) => void };
   onOpen: (c: FileChange) => void;
   menu: (c: FileChange) => MenuItem[];
   /** 트리의 폴더 줄 우클릭 메뉴(경로는 저장소 기준) */
@@ -27,45 +26,25 @@ export function ChangeList({
 }) {
   const mode = useFileViewMode();
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
-  const indent = 14;
 
-  const fileRow = (c: FileChange, showDir: boolean, pad = 0) => {
-    const stat = stats[c.path];
-    return (
-      <div
-        key={changeId(c)}
-        className={`file-row ${isSelected(c) ? "selected" : ""}`}
-        style={{ paddingLeft: 6 + pad }}
-        onClick={() => onOpen(c)}
-        onContextMenu={(e) => showContextMenu(e, menu(c))}
-        data-tip={c.oldPath ? `${c.oldPath} → ${c.path}` : c.path}
-      >
-        <StatusBadge kind={c.kind} />
-        <span className="ellipsis" style={{ flex: "0 1 auto" }}>
-          {fileName(c.path)}
-        </span>
-        {(c.oldPath || showDir) && (
-          <span className="ellipsis muted" style={{ fontSize: 11.5, direction: "rtl", textAlign: "left", flex: "1 1 0" }}>
-            {c.oldPath ? `← ${showDir ? c.oldPath : fileName(c.oldPath)}` : fileDir(c.path)}
-          </span>
-        )}
-        <span className="spacer" />
-        {stat && (stat.added !== null && stat.deleted !== null ? <LineStatText added={stat.added} deleted={stat.deleted} /> : <span className="faint" style={{ fontSize: 11 }}>{t("Binary")}</span>)}
-        {action && (
-          <IconButton
-            small
-            className="act"
-            icon={action.icon}
-            tip={action.tip}
-            onClick={(e) => {
-              e.stopPropagation();
-              action.run([c]);
-            }}
-          />
-        )}
-      </div>
-    );
-  };
+  const fileRow = (c: FileChange, depth: number | null) => (
+    <FileRow
+      key={changeId(c)}
+      path={c.path}
+      oldPath={c.oldPath}
+      badge={<StatusBadge kind={c.kind} />}
+      rename={renameCaption(c)}
+      selected={isSelected(c)}
+      showFolder={depth == null}
+      stat={stats[c.path]}
+      indent={fileIndent(depth)}
+      action={action && { icon: action.icon, tip: action.tip, label: action.label, run: () => action.run([c]) }}
+      open={() => onOpen(c)}
+      // Space stages or unstages where the list has that action, and opens the file elsewhere
+      space={action ? () => action.run([c]) : undefined}
+      menu={(e) => showContextMenu(e, menu(c))}
+    />
+  );
 
   const rows = useMemo(() => mode === "tree" ? treeRows(changes, collapsed) : changes.map((change) => ({ id: changeId(change), kind: "file" as const, change, depth: 0 })), [changes, collapsed, mode]);
 
@@ -78,37 +57,18 @@ export function ChangeList({
   return (
     <VisibleFileRows rows={rows} render={(r) =>
         r.kind === "folder" ? (
-          <div
+          <FileFolderRow
             key={r.id}
-            className="file-row"
-            style={{ paddingLeft: 6 + r.depth * indent }}
-            onClick={() => toggle(r.path)}
-            onContextMenu={folderMenu ? (e) => showContextMenu(e, folderMenu(r.path)) : undefined}
-          >
-            <span className="muted" style={{ display: "inline-flex", width: 12 }}>
-              {collapsed.has(r.path) ? <ChevronRight size={12} /> : <ChevronDown size={12} />}
-            </span>
-            <span style={{ color: "var(--accent)", display: "inline-flex" }}>{collapsed.has(r.path) ? <Folder size={14} /> : <FolderOpen size={14} />}</span>
-            <span className="ellipsis">{r.name}</span>
-            <span className="muted" style={{ fontSize: 11.5 }}>
-              {r.files.length}
-            </span>
-            <span className="spacer" />
-            {action && (
-              <IconButton
-                small
-                className="act"
-                icon={action.icon}
-                tip={action.tip + t(" — whole folder")}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  action.run(r.files);
-                }}
-              />
-            )}
-          </div>
+            name={r.name}
+            count={r.files.length}
+            depth={r.depth}
+            expanded={!collapsed.has(r.path)}
+            toggle={() => toggle(r.path)}
+            menu={folderMenu ? (e) => showContextMenu(e, folderMenu(r.path)) : undefined}
+            action={action && { icon: action.icon, tip: action.tip + t(" — whole folder"), run: () => action.run(r.files) }}
+          />
         ) : (
-          fileRow(r.change, mode === "list", mode === "list" ? 0 : r.depth * indent + indent)
+          fileRow(r.change, mode === "list" ? null : r.depth)
         )
       } />
   );
@@ -140,8 +100,9 @@ function VisibleFileRows<T extends { id: string }>({ rows, render }: { rows: T[]
     observer.observe(viewport); observer.observe(element);
     return () => { viewport.removeEventListener("scroll", update); observer.disconnect(); };
   }, [virtual, rows.length]);
-  if (!virtual) return <div className="col">{rows.map(render)}</div>;
-  return <div ref={ref} className="file-list-virtual" style={{ height: rows.length * FILE_ROW_HEIGHT }} data-total-rows={rows.length}>
-    {rows.slice(range.first, range.last).map((row, index) => <div key={row.id} className="file-list-virtual-row" style={{ top: (range.first + index) * FILE_ROW_HEIGHT, height: FILE_ROW_HEIGHT }}>{render(row)}</div>)}
+  // rows are 28px with the board's 4px between them
+  if (!virtual) return <div className="col file-list">{rows.map(render)}</div>;
+  return <div ref={ref} className="file-list-virtual" style={{ height: Math.max(0, rows.length * FILE_ROW_PITCH - (FILE_ROW_PITCH - FILE_ROW_HEIGHT)) }} data-total-rows={rows.length}>
+    {rows.slice(range.first, range.last).map((row, index) => <div key={row.id} className="file-list-virtual-row" style={{ top: (range.first + index) * FILE_ROW_PITCH, height: FILE_ROW_HEIGHT }}>{render(row)}</div>)}
   </div>;
 }

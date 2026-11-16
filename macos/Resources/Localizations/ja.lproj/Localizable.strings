@@ -288,7 +288,6 @@
 "%@\nThe folder is deleted; the branch and commits stay. git refuses if there are uncommitted changes." = "%1$@\nフォルダーは削除されますが、ブランチとコミットは残ります。未コミットの変更がある場合、git は削除を拒否します。";
 "%@\nUncommitted changes are deleted too." = "%1$@\n未コミットの変更も削除されます。";
 "%@  (opened here)" = "%1$@  (ここで開いています)";
-"%@ (chosen by a gitch rule)" = "%1$@（gitch のルールで選択）";
 "%@ (current)" = "%1$@ (現在)";
 "%@ (none)" = "%1$@ (なし)";
 "%@ declined this request. Try changing the content and try again." = "%1$@ がこのリクエストを拒否しました。内容を変えてもう一度お試しください。";
@@ -346,7 +345,6 @@
 "Allow writing to the working folder" = "作業フォルダーへの書き込みを許可";
 "Allowed to fail" = "失敗を許可";
 "Amend commit" = "コミットを修正";
-"Amend previous commit" = "直前のコミットを修正";
 "Amend: combine into the last commit" = "Amend: 直前のコミットにまとめます";
 "An app for viewing and working with Git repositories as a graph · MIT" = "Git リポジトリをグラフで表示・操作するアプリ · MIT";
 "An empty file was deleted" = "空のファイルが削除されました";
@@ -387,7 +385,6 @@
 "Branch to check out" = "チェックアウトするブランチ";
 "Check again with fetch" = "fetch して再チェック";
 "Check this repository with gitch again" = "このリポジトリを再び gitch でチェック";
-"Click to use another gitch account for this repository." = "クリックすると、このリポジトリで使う gitch アカウントを変更できます。";
 "Commit authors are fine" = "コミット作成者はすべて正しいです";
 "Couldn't find gitch inside Gitrochi." = "Gitrochi 内に gitch が見つかりませんでした。";
 "Couldn't move Gitrochi to the Applications folder" = "Gitrochi をアプリケーションフォルダに移動できませんでした";
@@ -467,7 +464,6 @@
 "Clear search (Esc)" = "検索をクリア (Esc)";
 "Clears the path you chose and finds it automatically again" = "指定したパスをクリアして、もう一度自動で探します";
 "Clears the staging area, then stages and commits each group from the top." = "ステージをいったん空にしてから、上のグループから順にステージしてコミットします。";
-"Click to see the diff in the center" = "クリックして中央に差分を表示";
 "Click to select this line (Shift: range) — you can stage only the selected lines" = "クリックしてこの行を選択 (Shift: 範囲選択) — 選択した行だけをステージできます";
 "Clone" = "クローン";
 "Clone repository" = "リポジトリをクローン";
@@ -728,6 +724,7 @@
 "Locate" = "場所を指定";
 "Locate…" = "場所を指定…";
 "Location" = "場所";
+"Locked worktree" = "ロックされたワークツリー";
 "Locked to %@" = "%1$@ にロック";
 "Looks for a GitHub profile, then a connected self-hosted GitLab profile, then Gravatar, and uses initials if none is found. An email hash is sent to Gravatar." = "GitHub のプロフィール、接続したセルフホスト GitLab のプロフィール、Gravatar の順に探し、見つからなければイニシャルを使います。Gravatar にはメールアドレスのハッシュが送信されます。";
 "Manual" = "手動";
@@ -771,7 +768,6 @@
 "New branch name" = "新しいブランチ名";
 "New branch…" = "新しいブランチ…";
 "New file" = "新規ファイル";
-"New file (untracked)" = "新規ファイル (未追跡)";
 "New pull/merge request…" = "新しいプル/マージリクエスト…";
 "New session in the same place" = "同じ場所で新しいセッション";
 "New tab" = "新しいタブ";
@@ -814,7 +810,6 @@
 "Not found (404). Check that the token has access to the repository." = "見つかりません (404)。トークンにリポジトリへのアクセス権があるか確認してください。";
 "Not found — locate it in the Tools tab" = "見つかりません — ツールタブで場所を指定してください";
 "Not installed" = "未インストール";
-"Not managed by gitch" = "gitch の管理対象外";
 "Nothing to draw" = "描くものがありません";
 "Off" = "オフ";
 "On" = "オン";
@@ -876,7 +871,6 @@
 "Push" = "プッシュ";
 "Push tag" = "タグをプッシュ";
 "Pushes %lld unpushed commits to the remote." = "プッシュしていない %1$lld 件のコミットをリモートにプッシュします。";
-"Pushes as %@" = "push アカウント: %1$@";
 "Pushes the current branch to %@ before creating." = "作成する前に、現在のブランチを %1$@ にプッシュします。";
 "Pushes the current branch to the remote (no commits to push right now)." = "現在のブランチをリモートにプッシュします (今はプッシュするコミットはありません)。";
 "Pushes the current branch to the remote for the first time and sets up tracking." = "現在のブランチを初めてリモートにプッシュし、追跡を設定します。";
@@ -1010,7 +1004,6 @@
 "Stage selected lines (%lld)" = "選択した行をステージ (%1$lld)";
 "Staged" = "ステージ済み";
 "Staged and unstaged changes and untracked new files will all be lost. This can't be undone." = "ステージ済み・未ステージの変更と、未追跡の新規ファイルがすべて失われます。この操作は元に戻せません。";
-"Staged files" = "ステージ済みのファイル";
 "Stages only the selected lines" = "選択した行だけをステージします";
 "Stages only this hunk (click changed lines to stage only those)" = "このハンクだけをステージします (変更行をクリックすると、その行だけをステージ)";
 "Staging…" = "ステージしています…";
@@ -1030,7 +1023,6 @@
 "Subject line only, no body" = "件名のみ、本文なし";
 "Subject within 50 characters" = "件名は 50 文字以内";
 "Succeeded" = "成功";
-"Summary (required)" = "概要 (必須)";
 "Syncs the current branch with the remote (no commits to pull right now)." = "現在のブランチをリモートと同期します (今はプルするコミットはありません)。";
 "System" = "システム";
 "System follows your macOS setting (light, dark or auto). The graph and terminal change with it." = "「システム」は macOS の設定 (ライト・ダーク・自動) に従います。グラフとターミナルも連動して切り替わります。";
@@ -1113,7 +1105,6 @@
 "Unstage all" = "すべてステージ解除";
 "Unstage hunk" = "ハンクをステージ解除";
 "Unstage selected lines (%lld)" = "選択した行をステージ解除 (%1$lld)";
-"Unstaged files" = "未ステージのファイル";
 "Unstages only the selected lines" = "選択した行だけをステージ解除します";
 "Unstages this hunk" = "このハンクをステージ解除します";
 "Unstaging…" = "ステージ解除しています…";
@@ -1144,7 +1135,6 @@
 "Waiting for deployment approval: %@" = "デプロイの承認待ち: %1$@";
 "Waiting for input" = "入力待ち";
 "Waiting to be run manually" = "手動実行待ち";
-"Warning" = "警告";
 "What to do with this commit" = "このコミットの扱い";
 "What would you like to do?" = "どうしますか？";
 "What would you like to do? If there are conflicts, you can resolve them on the right." = "どうしますか？競合が発生した場合は、右側で解決できます。";
@@ -1179,9 +1169,6 @@
 "git %@ failed" = "git %1$@ に失敗しました";
 "git refuses to delete a branch with unmerged commits. Use 'Force delete' in that case." = "マージされていないコミットがあるブランチは、git が削除を拒否します。その場合は「強制削除」を使ってください。";
 "gitch backups" = "gitch のバックアップ";
-"gitch checks before commit and push" = "コミット・push 前の gitch チェック";
-"gitch commands for this repository" = "このリポジトリの gitch コマンド";
-"gitch doesn't know which account this repository uses. Lock it with gitch use <account>." = "gitch はこのリポジトリのアカウントを把握していません。gitch use <アカウント> でロックしてください。";
 "gitch found nothing to draw for %@." = "%1$@: gitch は描くものを見つけられませんでした。";
 "gitch graph changes: files that are often committed together, and how often each one changes." = "gitch graph changes: よく一緒にコミットされるファイルと、各ファイルの変更回数。";
 "gitch graph check reads its rules from .gitch/graph.rules in this repository. Create the file with commented-out examples (gitch graph check --init) and open it?" = "gitch graph check はこのリポジトリの .gitch/graph.rules からルールを読みます。コメントアウトした例を入れたファイルを作成して (gitch graph check --init) 開きますか？";
@@ -1195,8 +1182,6 @@
 "gitch saves a backup before pull, up, sync, fix, undo and amend, and keeps the 30 most recent." = "gitch は pull・up・sync・fix・undo・amend の前にバックアップを保存し、最新の 30 件を保持します。";
 "gitch sets the commit author to %@ and points origin (and upstream) at %@'s SSH alias, then locks the repository to it." = "gitch はコミット作成者を %1$@ に設定し、origin（と upstream）を %2$@ の SSH エイリアスに向けてから、リポジトリをそのアカウントにロックします。";
 "gitch stops requiring %@ for commits and pushes here. The commit author stays as it is." = "このリポジトリでのコミットや push に %1$@ を必須にしなくなります。コミット作成者の設定はそのままです。";
-"gitch sync: brings this branch up to date with the original repository (upstream)." = "gitch sync: このブランチを元のリポジトリ（upstream）の最新に合わせます。";
-"gitch up: moves this branch onto the latest default branch, or merges it if the branch is already pushed. A backup is saved first." = "gitch up: このブランチを最新のデフォルトブランチの上に移動します。すでに push 済みならマージします。先にバックアップを保存します。";
 "gitch won't check authors, secrets or pushes in this repository until you turn it back on." = "再びオンにするまで、このリポジトリでは作成者・秘密情報・push をチェックしません。";
 "tag" = "タグ";
 "… The diff is too long; only the beginning is shown" = "… 差分が長すぎるため、先頭部分だけを表示しています";
@@ -2920,3 +2905,22 @@
 "Unstage line" = "行をステージ解除";
 "Hide changes and show the graph" = "変更を隠してグラフを表示";
 "Sessions started here run in the terminal tabs below; click one to go to its terminal." = "ここで開始したセッションは下のターミナルのタブで実行されます。クリックすると、そのターミナルへ移動します。";
+"Unstaged" = "未ステージ";
+"Untracked" = "未追跡";
+"Summary" = "概要";
+"Too large" = "大きすぎます";
+"copied from %@" = "%@ からコピー";
+"Commit 1 file" = "1 個のファイルをコミット";
+"Commit %lld files" = "%lld 個のファイルをコミット";
+"Couldn't write the commit message" = "コミットメッセージを作成できませんでした";
+"gitch stopped this commit. Run gitch doctor in the terminal." = "gitch がこのコミットを止めました。ターミナルで gitch doctor を実行してください。";
+"Amend previous commit" = "直前のコミットを修正";
+"Split into commits…" = "分割してコミット…";
+"AI message" = "AI で作成";
+"Commit summary" = "コミットの概要";
+"Commit description" = "コミットの説明";
+"Summary character count" = "概要の文字数";
+"Resolve conflicts before committing." = "コミットする前に競合を解決してください。";
+"Stage the files you want to include." = "含めるファイルをステージしてください。";
+"Write a summary to enable commit." = "概要を入力するとコミットできます。";
+"Conflicted" = "競合";

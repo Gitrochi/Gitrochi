@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { parseGraphReview } from "@/entities/gitch";
 import { loadLanguage } from "@/shared/i18n";
-import { reviewChangeStatusLabel } from "../src/widgets/inspector/lib/commit-impact";
+import { reviewChangeStatusLabel } from "../src/features/work-validation/lib/commit-impact";
 
 describe("스테이지 변경의 사용자용 상태", () => {
   it("CLI의 실제 상태 코드를 점수나 원문 대신 기존 번역 문구로 표시한다", async () => {

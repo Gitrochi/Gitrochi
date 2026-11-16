@@ -267,7 +267,6 @@
 "%@\nThe folder is deleted; the branch and commits stay. git refuses if there are uncommitted changes." = "%1$@\nKlasör silinir; dal ve commit'ler kalır. Commit edilmemiş değişiklikler varsa git bunu reddeder.";
 "%@\nUncommitted changes are deleted too." = "%1$@\nCommit edilmemiş değişiklikler de silinir.";
 "%@  (opened here)" = "%1$@  (burada açık)";
-"%@ (chosen by a gitch rule)" = "%1$@ (bir gitch kuralıyla seçildi)";
 "%@ (current)" = "%1$@ (geçerli)";
 "%@ (none)" = "%1$@ (yok)";
 "%@ declined this request. Try changing the content and try again." = "%1$@ bu isteği reddetti. İçeriği değiştirip tekrar deneyin.";
@@ -322,7 +321,6 @@
 "Allow writing to the working folder" = "Çalışma klasörüne yazmaya izin ver";
 "Allowed to fail" = "Başarısız olabilir";
 "Amend commit" = "Commit'i düzelt";
-"Amend previous commit" = "Önceki commit'i düzelt";
 "Amend: combine into the last commit" = "Amend: son commit'e ekle";
 "An app for viewing and working with Git repositories as a graph · MIT" = "Git depolarını grafik olarak görüntüleyip üzerinde çalışmanızı sağlayan bir uygulama · MIT";
 "An empty file was deleted" = "Boş bir dosya silindi";
@@ -362,7 +360,6 @@
 "Branch to check out" = "Geçilecek dal";
 "Check again with fetch" = "fetch ile yeniden denetle";
 "Check this repository with gitch again" = "Bu depoyu yeniden gitch ile denetle";
-"Click to use another gitch account for this repository." = "Bu depo için başka bir gitch hesabı kullanmak üzere tıklayın.";
 "Commit authors are fine" = "Commit yazarları doğru";
 "Couldn't find gitch inside Gitrochi." = "Gitrochi içinde gitch bulunamadı.";
 "Couldn't move Gitrochi to the Applications folder" = "Gitrochi, Uygulamalar klasörüne taşınamadı";
@@ -441,7 +438,6 @@
 "Clear search (Esc)" = "Aramayı temizle (Esc)";
 "Clears the path you chose and finds it automatically again" = "Seçtiğiniz yolu temizler ve yeniden otomatik olarak bulur";
 "Clears the staging area, then stages and commits each group from the top." = "Hazırlık alanını boşaltır, ardından her grubu yukarıdan başlayarak sırayla hazırlar ve commit eder.";
-"Click to see the diff in the center" = "Diff'i ortada görmek için tıklayın";
 "Click to select this line (Shift: range) — you can stage only the selected lines" = "Bu satırı seçmek için tıklayın (Shift: aralık) — yalnızca seçili satırları hazırlayabilirsiniz";
 "Clone" = "Klonla";
 "Clone repository" = "Depoyu klonla";
@@ -697,6 +693,7 @@
 "Locate" = "Konum seç";
 "Locate…" = "Konum seç…";
 "Location" = "Konum";
+"Locked worktree" = "Kilitli worktree";
 "Locked to %@" = "%1$@ hesabına kilitli";
 "Looks for a GitHub profile, then a connected self-hosted GitLab profile, then Gravatar, and uses initials if none is found. An email hash is sent to Gravatar." = "Önce GitHub profiline, sonra bağlı şirket içi GitLab profiline, ardından Gravatar'a bakar; hiçbiri bulunamazsa baş harfleri kullanır. Gravatar'a e-posta adresinin hash değeri gönderilir.";
 "Manual" = "Manuel";
@@ -739,7 +736,6 @@
 "New branch name" = "Yeni dal adı";
 "New branch…" = "Yeni dal…";
 "New file" = "Yeni dosya";
-"New file (untracked)" = "Yeni dosya (izlenmiyor)";
 "New pull/merge request…" = "Yeni pull/merge request…";
 "New session in the same place" = "Aynı yerde yeni oturum";
 "New tab" = "Yeni sekme";
@@ -782,7 +778,6 @@
 "Not found (404). Check that the token has access to the repository." = "Bulunamadı (404). Token'ın depoya erişimi olduğunu kontrol edin.";
 "Not found — locate it in the Tools tab" = "Bulunamadı — Araçlar sekmesinde konumunu seçin";
 "Not installed" = "Yüklü değil";
-"Not managed by gitch" = "gitch tarafından yönetilmiyor";
 "Nothing to draw" = "Çizilecek bir şey yok";
 "OK" = "Tamam";
 "Off" = "Kapalı";
@@ -844,7 +839,6 @@
 "Push" = "Gönder";
 "Push tag" = "Etiketi gönder";
 "Pushes %lld unpushed commits to the remote." = "Gönderilmemiş %1$lld commit'i uzak depoya gönderir.";
-"Pushes as %@" = "%1$@ olarak push";
 "Pushes the current branch to %@ before creating." = "Oluşturmadan önce geçerli dalı %1$@ uzak deposuna gönderir.";
 "Pushes the current branch to the remote (no commits to push right now)." = "Geçerli dalı uzak depoya gönderir (şu anda gönderilecek commit yok).";
 "Pushes the current branch to the remote for the first time and sets up tracking." = "Geçerli dalı uzak depoya ilk kez gönderir ve izlemeyi ayarlar.";
@@ -978,7 +972,6 @@
 "Stage selected lines (%lld)" = "Seçili satırları hazırla (%1$lld)";
 "Staged" = "Hazırlanmış";
 "Staged and unstaged changes and untracked new files will all be lost. This can't be undone." = "Hazırlanmış ve hazırlanmamış değişikliklerin yanı sıra izlenmeyen yeni dosyaların tümü kaybolacak. Bu işlem geri alınamaz.";
-"Staged files" = "Hazırlanmış dosyalar";
 "Stages only the selected lines" = "Yalnızca seçili satırları hazırlar";
 "Stages only this hunk (click changed lines to stage only those)" = "Yalnızca bu parçayı hazırlar (yalnızca belirli satırları hazırlamak için değişen satırlara tıklayın)";
 "Staging…" = "Hazırlanıyor…";
@@ -996,7 +989,6 @@
 "Subject line only, no body" = "Yalnızca konu satırı, gövde yok";
 "Subject within 50 characters" = "Konu en fazla 50 karakter";
 "Succeeded" = "Başarılı";
-"Summary (required)" = "Özet (zorunlu)";
 "Syncs the current branch with the remote (no commits to pull right now)." = "Geçerli dalı uzak depoyla eşitler (şu anda çekilecek commit yok).";
 "System" = "Sistem";
 "System follows your macOS setting (light, dark or auto). The graph and terminal change with it." = "Sistem, macOS ayarınızı izler (açık, koyu veya otomatik). Grafik ve terminal de buna göre değişir.";
@@ -1078,7 +1070,6 @@
 "Unstage all" = "Tümünü hazırlıktan çıkar";
 "Unstage hunk" = "Parçayı hazırlıktan çıkar";
 "Unstage selected lines (%lld)" = "Seçili satırları hazırlıktan çıkar (%1$lld)";
-"Unstaged files" = "Hazırlanmamış dosyalar";
 "Unstages only the selected lines" = "Yalnızca seçili satırları hazırlıktan çıkarır";
 "Unstages this hunk" = "Bu parçayı hazırlıktan çıkarır";
 "Unstaging…" = "Hazırlıktan çıkarılıyor…";
@@ -1109,7 +1100,6 @@
 "Waiting for deployment approval: %@" = "Dağıtım onayı bekleniyor: %1$@";
 "Waiting for input" = "Girdi bekliyor";
 "Waiting to be run manually" = "Elle çalıştırılmayı bekliyor";
-"Warning" = "Uyarı";
 "What to do with this commit" = "Bu commit için yapılacak işlem";
 "What would you like to do?" = "Ne yapmak istersiniz?";
 "What would you like to do? If there are conflicts, you can resolve them on the right." = "Ne yapmak istersiniz? Çakışma olursa sağ tarafta çözebilirsiniz.";
@@ -1147,9 +1137,6 @@
 "git %@ failed" = "git %1$@ başarısız oldu";
 "git refuses to delete a branch with unmerged commits. Use 'Force delete' in that case." = "git, birleştirilmemiş commit'leri olan bir dalı silmeyi reddeder. Bu durumda 'Zorla sil' seçeneğini kullanın.";
 "gitch backups" = "gitch yedekleri";
-"gitch checks before commit and push" = "Commit ve push öncesi gitch denetimleri";
-"gitch commands for this repository" = "Bu depo için gitch komutları";
-"gitch doesn't know which account this repository uses. Lock it with gitch use <account>." = "gitch bu deponun hangi hesabı kullandığını bilmiyor. gitch use <hesap> ile kilitleyin.";
 "gitch found nothing to draw for %@." = "gitch, %1$@ için çizilecek bir şey bulamadı.";
 "gitch graph changes: files that are often committed together, and how often each one changes." = "gitch graph changes: sık sık birlikte commit edilen dosyalar ve her birinin ne sıklıkla değiştiği.";
 "gitch graph check reads its rules from .gitch/graph.rules in this repository. Create the file with commented-out examples (gitch graph check --init) and open it?" = "gitch graph check kuralları bu deponun .gitch/graph.rules dosyasından okur. Yorum satırı hâlinde örnekler içeren dosya oluşturulsun (gitch graph check --init) ve açılsın mı?";
@@ -1163,8 +1150,6 @@
 "gitch saves a backup before pull, up, sync, fix, undo and amend, and keeps the 30 most recent." = "gitch; pull, up, sync, fix, undo ve amend öncesinde yedek alır ve en son 30 yedeği saklar.";
 "gitch sets the commit author to %@ and points origin (and upstream) at %@'s SSH alias, then locks the repository to it." = "gitch commit yazarını %1$@ yapar, origin'i (ve upstream'i) %2$@ hesabının SSH takma adına yönlendirir ve depoyu bu hesaba kilitler.";
 "gitch stops requiring %@ for commits and pushes here. The commit author stays as it is." = "gitch artık burada commit ve push için %1$@ hesabını zorunlu tutmayacak. Commit yazarı değişmez.";
-"gitch sync: brings this branch up to date with the original repository (upstream)." = "gitch sync: bu dalı özgün depoyla (upstream) günceller.";
-"gitch up: moves this branch onto the latest default branch, or merges it if the branch is already pushed. A backup is saved first." = "gitch up: bu dalı en güncel varsayılan dalın üzerine taşır veya dal zaten push edildiyse birleştirir. Önce bir yedek kaydeder.";
 "gitch won't check authors, secrets or pushes in this repository until you turn it back on." = "gitch, siz yeniden açana kadar bu depoda yazarı, gizli bilgileri ve push'u denetlemeyecek.";
 "tag" = "etiket";
 "… The diff is too long; only the beginning is shown" = "… Diff çok uzun; yalnızca baş kısmı gösteriliyor";
@@ -2245,3 +2230,22 @@
 "Unstage line" = "Satırı hazırlıktan çıkar";
 "Hide changes and show the graph" = "Değişiklikleri gizle ve grafiği göster";
 "Sessions started here run in the terminal tabs below; click one to go to its terminal." = "Burada başlatılan oturumlar alttaki terminal sekmelerinde çalışır; terminaline gitmek için bir oturuma tıklayın.";
+"Unstaged" = "Hazırlanmamış";
+"Untracked" = "İzlenmiyor";
+"Summary" = "Özet";
+"Too large" = "Çok büyük";
+"copied from %@" = "%@ dosyasından kopyalandı";
+"Commit 1 file" = "1 dosyayı commit et";
+"Commit %lld files" = "%lld dosyayı commit et";
+"Couldn't write the commit message" = "Commit mesajı yazılamadı";
+"gitch stopped this commit. Run gitch doctor in the terminal." = "gitch bu commit'i durdurdu. Terminalde gitch doctor komutunu çalıştırın.";
+"Amend previous commit" = "Önceki commit'i düzelt";
+"Split into commits…" = "Commit'lere böl…";
+"AI message" = "AI mesajı";
+"Commit summary" = "Commit özeti";
+"Commit description" = "Commit açıklaması";
+"Summary character count" = "Özet karakter sayısı";
+"Resolve conflicts before committing." = "Commit etmeden önce çakışmaları çözün.";
+"Stage the files you want to include." = "Eklemek istediğiniz dosyaları hazırlayın.";
+"Write a summary to enable commit." = "Commit için bir özet yazın.";
+"Conflicted" = "Çakışmalı";

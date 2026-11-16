@@ -268,7 +268,6 @@
 "%@\nThe folder is deleted; the branch and commits stay. git refuses if there are uncommitted changes." = "%1$@\nПапка будет удалена; ветка и коммиты останутся. Если есть незакоммиченные изменения, git откажется её удалять.";
 "%@\nUncommitted changes are deleted too." = "%1$@\nНезакоммиченные изменения тоже будут удалены.";
 "%@  (opened here)" = "%1$@  (открыто здесь)";
-"%@ (chosen by a gitch rule)" = "%1$@ (выбран правилом gitch)";
 "%@ (current)" = "%1$@ (текущая)";
 "%@ (none)" = "%1$@ (нет)";
 "%@ declined this request. Try changing the content and try again." = "%1$@ отклонил этот запрос. Измените содержимое и повторите попытку.";
@@ -326,7 +325,6 @@
 "Allow writing to the working folder" = "Разрешить запись в рабочую папку";
 "Allowed to fail" = "Сбой допустим";
 "Amend commit" = "Исправить коммит";
-"Amend previous commit" = "Исправить предыдущий коммит";
 "Amend: combine into the last commit" = "Исправить: добавить в последний коммит";
 "An app for viewing and working with Git repositories as a graph · MIT" = "Приложение, чтобы просматривать Git-репозитории в виде графа и работать с ними · MIT";
 "An empty file was deleted" = "Удалён пустой файл";
@@ -367,7 +365,6 @@
 "Branch to check out" = "Ветка для переключения";
 "Check again with fetch" = "Проверить снова с fetch";
 "Check this repository with gitch again" = "Снова проверять этот репозиторий через gitch";
-"Click to use another gitch account for this repository." = "Нажмите, чтобы выбрать для этого репозитория другой аккаунт gitch.";
 "Commit authors are fine" = "Авторы коммитов в порядке";
 "Couldn't find gitch inside Gitrochi." = "Не удалось найти gitch внутри Gitrochi.";
 "Couldn't move Gitrochi to the Applications folder" = "Не удалось переместить Gitrochi в папку «Программы»";
@@ -446,7 +443,6 @@
 "Clear search (Esc)" = "Очистить поиск (Esc)";
 "Clears the path you chose and finds it automatically again" = "Сбрасывает выбранный путь и снова ищет автоматически";
 "Clears the staging area, then stages and commits each group from the top." = "Очищает индекс, затем по порядку сверху индексирует и коммитит каждую группу.";
-"Click to see the diff in the center" = "Нажмите, чтобы увидеть diff в центре";
 "Click to select this line (Shift: range) — you can stage only the selected lines" = "Нажмите, чтобы выбрать строку (Shift — диапазон); можно индексировать только выбранные строки";
 "Clone" = "Клонировать";
 "Clone repository" = "Клонировать репозиторий";
@@ -707,6 +703,7 @@
 "Locate" = "Указать";
 "Locate…" = "Указать…";
 "Location" = "Расположение";
+"Locked worktree" = "Заблокированное рабочее дерево";
 "Locked to %@" = "Закреплён за %1$@";
 "Looks for a GitHub profile, then a connected self-hosted GitLab profile, then Gravatar, and uses initials if none is found. An email hash is sent to Gravatar." = "Ищет профиль GitHub, затем профиль подключённого GitLab на своём сервере, затем Gravatar; если ничего не найдено, используются инициалы. В Gravatar отправляется хеш адреса электронной почты.";
 "Manual" = "Вручную";
@@ -750,7 +747,6 @@
 "New branch name" = "Имя новой ветки";
 "New branch…" = "Новая ветка…";
 "New file" = "Новый файл";
-"New file (untracked)" = "Новый файл (не отслеживается)";
 "New pull/merge request…" = "Новый pull/merge request…";
 "New session in the same place" = "Новый сеанс там же";
 "New tab" = "Новая вкладка";
@@ -793,7 +789,6 @@
 "Not found (404). Check that the token has access to the repository." = "Не найдено (404). Проверьте, есть ли у токена доступ к репозиторию.";
 "Not found — locate it in the Tools tab" = "Не найден — укажите его на вкладке «Инструменты»";
 "Not installed" = "Не установлено";
-"Not managed by gitch" = "Не управляется gitch";
 "Nothing to draw" = "Нечего рисовать";
 "Off" = "Выкл.";
 "On" = "Вкл.";
@@ -855,7 +850,6 @@
 "Push" = "Отправить";
 "Push tag" = "Отправить тег";
 "Pushes %lld unpushed commits to the remote." = "Отправляет в удалённый репозиторий неотправленные коммиты: %1$lld.";
-"Pushes as %@" = "Push от имени %1$@";
 "Pushes the current branch to %@ before creating." = "Перед созданием отправляет текущую ветку в %1$@.";
 "Pushes the current branch to the remote (no commits to push right now)." = "Отправляет текущую ветку в удалённый репозиторий (сейчас нечего отправлять).";
 "Pushes the current branch to the remote for the first time and sets up tracking." = "Впервые отправляет текущую ветку в удалённый репозиторий и настраивает отслеживание.";
@@ -989,7 +983,6 @@
 "Stage selected lines (%lld)" = "Индексировать выбранные строки (%1$lld)";
 "Staged" = "В индексе";
 "Staged and unstaged changes and untracked new files will all be lost. This can't be undone." = "Все изменения — в индексе и вне его, а также новые неотслеживаемые файлы — будут потеряны. Это действие нельзя отменить.";
-"Staged files" = "Файлы в индексе";
 "Stages only the selected lines" = "Индексирует только выбранные строки";
 "Stages only this hunk (click changed lines to stage only those)" = "Индексирует только этот фрагмент (нажмите на изменённые строки, чтобы индексировать только их)";
 "Staging…" = "Индексирование…";
@@ -1009,7 +1002,6 @@
 "Subject line only, no body" = "Только заголовок, без тела";
 "Subject within 50 characters" = "Заголовок не длиннее 50 символов";
 "Succeeded" = "Успешно";
-"Summary (required)" = "Краткое описание (обязательно)";
 "Syncs the current branch with the remote (no commits to pull right now)." = "Синхронизирует текущую ветку с удалённым репозиторием (сейчас нечего извлекать).";
 "System" = "Системная";
 "System follows your macOS setting (light, dark or auto). The graph and terminal change with it." = "«Системная» следует настройке macOS (светлое, тёмное или автоматическое оформление). Граф и терминал меняются вместе с ней.";
@@ -1092,7 +1084,6 @@
 "Unstage all" = "Убрать всё из индекса";
 "Unstage hunk" = "Убрать фрагмент из индекса";
 "Unstage selected lines (%lld)" = "Убрать выбранные строки из индекса (%1$lld)";
-"Unstaged files" = "Файлы вне индекса";
 "Unstages only the selected lines" = "Убирает из индекса только выбранные строки";
 "Unstages this hunk" = "Убирает этот фрагмент из индекса";
 "Unstaging…" = "Удаление из индекса…";
@@ -1123,7 +1114,6 @@
 "Waiting for deployment approval: %@" = "Ожидает одобрения развёртывания: %1$@";
 "Waiting for input" = "Ждёт ввода";
 "Waiting to be run manually" = "Ожидает ручного запуска";
-"Warning" = "Предупреждение";
 "What to do with this commit" = "Что сделать с этим коммитом";
 "What would you like to do?" = "Что вы хотите сделать?";
 "What would you like to do? If there are conflicts, you can resolve them on the right." = "Что вы хотите сделать? Если возникнут конфликты, их можно будет разрешить справа.";
@@ -1158,9 +1148,6 @@
 "git %@ failed" = "Ошибка git %1$@";
 "git refuses to delete a branch with unmerged commits. Use 'Force delete' in that case." = "git не удаляет ветку с неслитыми коммитами. В этом случае используйте «Удалить принудительно».";
 "gitch backups" = "Резервные копии gitch";
-"gitch checks before commit and push" = "Проверки gitch перед коммитом и push";
-"gitch commands for this repository" = "Команды gitch для этого репозитория";
-"gitch doesn't know which account this repository uses. Lock it with gitch use <account>." = "gitch не знает, какой аккаунт использует этот репозиторий. Закрепите его командой gitch use <аккаунт>.";
 "gitch found nothing to draw for %@." = "%1$@: gitch не нашёл, что нарисовать.";
 "gitch graph changes: files that are often committed together, and how often each one changes." = "gitch graph changes: файлы, которые часто коммитят вместе, и как часто меняется каждый из них.";
 "gitch graph check reads its rules from .gitch/graph.rules in this repository. Create the file with commented-out examples (gitch graph check --init) and open it?" = "gitch graph check читает правила из .gitch/graph.rules в этом репозитории. Создать файл с закомментированными примерами (gitch graph check --init) и открыть его?";
@@ -1174,8 +1161,6 @@
 "gitch saves a backup before pull, up, sync, fix, undo and amend, and keeps the 30 most recent." = "gitch сохраняет копию перед pull, up, sync, fix, undo и amend и хранит 30 последних.";
 "gitch sets the commit author to %@ and points origin (and upstream) at %@'s SSH alias, then locks the repository to it." = "gitch сделает автором коммитов %1$@, направит origin (и upstream) на SSH-псевдоним %2$@ и закрепит репозиторий за этим аккаунтом.";
 "gitch stops requiring %@ for commits and pushes here. The commit author stays as it is." = "gitch перестанет требовать %1$@ для коммитов и push здесь. Автор коммитов не изменится.";
-"gitch sync: brings this branch up to date with the original repository (upstream)." = "gitch sync: подтягивает эту ветку до состояния исходного репозитория (upstream).";
-"gitch up: moves this branch onto the latest default branch, or merges it if the branch is already pushed. A backup is saved first." = "gitch up: переносит эту ветку на свежую ветку по умолчанию или сливает её, если ветка уже отправлена. Сначала сохраняет резервную копию.";
 "gitch won't check authors, secrets or pushes in this repository until you turn it back on." = "gitch не будет проверять авторов, секреты и push в этом репозитории, пока вы снова это не включите.";
 "tag" = "тег";
 "… The diff is too long; only the beginning is shown" = "… Diff слишком длинный; показано только начало";
@@ -2257,3 +2242,22 @@
 "Unstage line" = "Убрать строку из индекса";
 "Hide changes and show the graph" = "Скрыть изменения и показать граф";
 "Sessions started here run in the terminal tabs below; click one to go to its terminal." = "Сеансы, запущенные здесь, работают во вкладках терминала внизу; нажмите на сеанс, чтобы перейти к его терминалу.";
+"Unstaged" = "Вне индекса";
+"Untracked" = "Не отслеживается";
+"Summary" = "Краткое описание";
+"Too large" = "Слишком большой";
+"copied from %@" = "скопировано из %@";
+"Commit 1 file" = "Закоммитить 1 файл";
+"Commit %lld files" = "Закоммитить файлы (%lld)";
+"Couldn't write the commit message" = "Не удалось написать сообщение коммита";
+"gitch stopped this commit. Run gitch doctor in the terminal." = "gitch остановил этот коммит. Запустите gitch doctor в терминале.";
+"Amend previous commit" = "Исправить предыдущий коммит";
+"Split into commits…" = "Разбить на коммиты…";
+"AI message" = "Сообщение от ИИ";
+"Commit summary" = "Краткое описание коммита";
+"Commit description" = "Описание коммита";
+"Summary character count" = "Число символов в описании";
+"Resolve conflicts before committing." = "Разрешите конфликты перед коммитом.";
+"Stage the files you want to include." = "Добавьте в индекс файлы, которые нужно включить.";
+"Write a summary to enable commit." = "Введите краткое описание, чтобы сделать коммит.";
+"Conflicted" = "Конфликт";

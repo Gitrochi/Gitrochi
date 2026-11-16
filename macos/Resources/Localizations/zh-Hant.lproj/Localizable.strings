@@ -268,7 +268,6 @@
 "%@\nThe folder is deleted; the branch and commits stay. git refuses if there are uncommitted changes." = "%1$@\n資料夾會被刪除，分支與提交則會保留。若有未提交的變更，git 會拒絕執行。";
 "%@\nUncommitted changes are deleted too." = "%1$@\n未提交的變更也會一併刪除。";
 "%@  (opened here)" = "%1$@  (在此開啟)";
-"%@ (chosen by a gitch rule)" = "%1$@（依 gitch 規則選擇）";
 "%@ (current)" = "%1$@ (目前)";
 "%@ (none)" = "%1$@ (無)";
 "%@ declined this request. Try changing the content and try again." = "%1$@ 拒絕了此要求。請修改內容後再試一次。";
@@ -326,7 +325,6 @@
 "Allow writing to the working folder" = "允許寫入工作資料夾";
 "Allowed to fail" = "允許失敗";
 "Amend commit" = "修訂提交";
-"Amend previous commit" = "修訂上一個提交";
 "Amend: combine into the last commit" = "修訂：併入上一個提交";
 "An app for viewing and working with Git repositories as a graph · MIT" = "以圖表檢視與操作 Git 存放庫的應用程式 · MIT";
 "An empty file was deleted" = "已刪除空白檔案";
@@ -367,7 +365,6 @@
 "Branch to check out" = "要簽出的分支";
 "Check again with fetch" = "擷取後重新檢查";
 "Check this repository with gitch again" = "重新用 gitch 檢查此儲存庫";
-"Click to use another gitch account for this repository." = "按一下可變更此儲存庫使用的 gitch 帳號。";
 "Commit authors are fine" = "提交作者都正確";
 "Couldn't find gitch inside Gitrochi." = "在 Gitrochi 中找不到 gitch。";
 "Couldn't move Gitrochi to the Applications folder" = "無法將 Gitrochi 移到「應用程式」資料夾";
@@ -447,7 +444,6 @@
 "Clear search (Esc)" = "清除搜尋 (Esc)";
 "Clears the path you chose and finds it automatically again" = "清除你選擇的路徑，並重新自動尋找";
 "Clears the staging area, then stages and commits each group from the top." = "清空暫存區，然後從最上方開始，依序暫存並提交每個群組。";
-"Click to see the diff in the center" = "按一下以在中央檢視差異";
 "Click to select this line (Shift: range) — you can stage only the selected lines" = "按一下以選取此行（Shift：選取範圍）— 可以只暫存選取的行";
 "Clone" = "複製";
 "Clone repository" = "複製存放庫";
@@ -708,6 +704,7 @@
 "Locate" = "手動指定";
 "Locate…" = "手動指定…";
 "Location" = "位置";
+"Locked worktree" = "已鎖定的工作樹";
 "Locked to %@" = "已鎖定為 %1$@";
 "Looks for a GitHub profile, then a connected self-hosted GitLab profile, then Gravatar, and uses initials if none is found. An email hash is sent to Gravatar." = "依序尋找 GitHub 個人檔案、已連結的自架 GitLab 個人檔案、Gravatar，都找不到時則使用姓名縮寫。電子郵件的雜湊值會傳送給 Gravatar。";
 "Manual" = "手動";
@@ -751,7 +748,6 @@
 "New branch name" = "新分支名稱";
 "New branch…" = "新分支…";
 "New file" = "新檔案";
-"New file (untracked)" = "新檔案（未追蹤）";
 "New pull/merge request…" = "新增提取要求/合併要求…";
 "New session in the same place" = "在相同位置開啟新工作階段";
 "New tab" = "新分頁";
@@ -794,7 +790,6 @@
 "Not found (404). Check that the token has access to the repository." = "找不到 (404)。請確認權杖有權存取此存放庫。";
 "Not found — locate it in the Tools tab" = "找不到 — 請在「工具」分頁中手動指定";
 "Not installed" = "未安裝";
-"Not managed by gitch" = "不受 gitch 管理";
 "Nothing to draw" = "沒有可繪製的內容";
 "OK" = "確定";
 "Off" = "關閉";
@@ -857,7 +852,6 @@
 "Push" = "推送";
 "Push tag" = "推送標籤";
 "Pushes %lld unpushed commits to the remote." = "將 %1$lld 個尚未推送的提交推送到遠端。";
-"Pushes as %@" = "推送帳號：%1$@";
 "Pushes the current branch to %@ before creating." = "建立前先將目前分支推送到 %1$@。";
 "Pushes the current branch to the remote (no commits to push right now)." = "將目前分支推送到遠端（目前沒有要推送的提交）。";
 "Pushes the current branch to the remote for the first time and sets up tracking." = "首次將目前分支推送到遠端，並設定追蹤。";
@@ -991,7 +985,6 @@
 "Stage selected lines (%lld)" = "暫存選取的行 (%1$lld)";
 "Staged" = "已暫存";
 "Staged and unstaged changes and untracked new files will all be lost. This can't be undone." = "已暫存與未暫存的變更，以及未追蹤的新檔案都會遺失。此操作無法復原。";
-"Staged files" = "已暫存的檔案";
 "Stages only the selected lines" = "只暫存選取的行";
 "Stages only this hunk (click changed lines to stage only those)" = "只暫存此區塊（按一下變更的行，可以只暫存那些行）";
 "Staging…" = "正在暫存…";
@@ -1011,7 +1004,6 @@
 "Subject line only, no body" = "僅標題行，不含本文";
 "Subject within 50 characters" = "標題在 50 個字元以內";
 "Succeeded" = "成功";
-"Summary (required)" = "摘要（必填）";
 "Syncs the current branch with the remote (no commits to pull right now)." = "將目前分支與遠端同步（目前沒有要提取的提交）。";
 "System" = "系統";
 "System follows your macOS setting (light, dark or auto). The graph and terminal change with it." = "「系統」會依照你的 macOS 設定（淺色、深色或自動）。圖表與終端機也會一併變更。";
@@ -1094,7 +1086,6 @@
 "Unstage all" = "全部取消暫存";
 "Unstage hunk" = "取消暫存區塊";
 "Unstage selected lines (%lld)" = "取消暫存選取的行 (%1$lld)";
-"Unstaged files" = "未暫存的檔案";
 "Unstages only the selected lines" = "只取消暫存選取的行";
 "Unstages this hunk" = "取消暫存此區塊";
 "Unstaging…" = "正在取消暫存…";
@@ -1125,7 +1116,6 @@
 "Waiting for deployment approval: %@" = "等待部署核准：%1$@";
 "Waiting for input" = "等待輸入";
 "Waiting to be run manually" = "等待手動執行";
-"Warning" = "警告";
 "What to do with this commit" = "要如何處理此提交";
 "What would you like to do?" = "要執行什麼操作？";
 "What would you like to do? If there are conflicts, you can resolve them on the right." = "要執行什麼操作？若發生衝突，可以在右側解決。";
@@ -1160,9 +1150,6 @@
 "git %@ failed" = "git %1$@ 失敗";
 "git refuses to delete a branch with unmerged commits. Use 'Force delete' in that case." = "git 會拒絕刪除含有尚未合併提交的分支。此時請使用「強制刪除」。";
 "gitch backups" = "gitch 備份";
-"gitch checks before commit and push" = "提交與推送前的 gitch 檢查";
-"gitch commands for this repository" = "此儲存庫的 gitch 指令";
-"gitch doesn't know which account this repository uses. Lock it with gitch use <account>." = "gitch 不知道此儲存庫使用哪個帳號。請用 gitch use <帳號> 鎖定。";
 "gitch found nothing to draw for %@." = "%1$@：gitch 找不到可繪製的內容。";
 "gitch graph changes: files that are often committed together, and how often each one changes." = "gitch graph changes：經常一起提交的檔案，以及每個檔案的變更次數。";
 "gitch graph check reads its rules from .gitch/graph.rules in this repository. Create the file with commented-out examples (gitch graph check --init) and open it?" = "gitch graph check 會從此存放庫的 .gitch/graph.rules 讀取規則。要建立含有註解範例的檔案（gitch graph check --init）並開啟嗎？";
@@ -1176,8 +1163,6 @@
 "gitch saves a backup before pull, up, sync, fix, undo and amend, and keeps the 30 most recent." = "gitch 會在 pull、up、sync、fix、undo 與 amend 之前儲存備份，並保留最近 30 個。";
 "gitch sets the commit author to %@ and points origin (and upstream) at %@'s SSH alias, then locks the repository to it." = "gitch 會將提交作者設為 %1$@，把 origin（與 upstream）指向 %2$@ 的 SSH 別名，然後將儲存庫鎖定到該帳號。";
 "gitch stops requiring %@ for commits and pushes here. The commit author stays as it is." = "在此儲存庫提交與推送時將不再要求使用 %1$@。提交作者設定保持不變。";
-"gitch sync: brings this branch up to date with the original repository (upstream)." = "gitch sync：將此分支更新為原始儲存庫（upstream）的最新狀態。";
-"gitch up: moves this branch onto the latest default branch, or merges it if the branch is already pushed. A backup is saved first." = "gitch up：將此分支移到最新的預設分支之上；若該分支已推送，則改為合併。會先儲存備份。";
 "gitch won't check authors, secrets or pushes in this repository until you turn it back on." = "在重新開啟之前，gitch 不會檢查此儲存庫的作者、機密資訊與推送。";
 "tag" = "標籤";
 "… The diff is too long; only the beginning is shown" = "… 差異內容過長，僅顯示開頭部分";
@@ -2262,3 +2247,22 @@
 "Unstage line" = "取消暫存此行";
 "Hide changes and show the graph" = "隱藏變更並顯示圖表";
 "Sessions started here run in the terminal tabs below; click one to go to its terminal." = "在這裡啟動的工作階段會在下方終端機的分頁中執行；按一下工作階段即可前往其終端機。";
+"Unstaged" = "未暫存";
+"Untracked" = "未追蹤";
+"Summary" = "摘要";
+"Too large" = "過大";
+"copied from %@" = "複製自 %@";
+"Commit 1 file" = "提交 1 個檔案";
+"Commit %lld files" = "提交 %lld 個檔案";
+"Couldn't write the commit message" = "無法撰寫提交訊息";
+"gitch stopped this commit. Run gitch doctor in the terminal." = "gitch 阻止了此提交。請在終端機中執行 gitch doctor。";
+"Amend previous commit" = "修訂上一個提交";
+"Split into commits…" = "拆分成多個提交…";
+"AI message" = "AI 撰寫";
+"Commit summary" = "提交摘要";
+"Commit description" = "提交說明";
+"Summary character count" = "摘要字數";
+"Resolve conflicts before committing." = "提交前請先解決衝突。";
+"Stage the files you want to include." = "請暫存要包含的檔案。";
+"Write a summary to enable commit." = "填寫摘要後即可提交。";
+"Conflicted" = "衝突";

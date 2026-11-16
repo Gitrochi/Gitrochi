@@ -267,7 +267,6 @@
 "%@\nThe folder is deleted; the branch and commits stay. git refuses if there are uncommitted changes." = "%1$@\nA pasta é excluída; o branch e os commits permanecem. O git recusa se houver alterações sem commit.";
 "%@\nUncommitted changes are deleted too." = "%1$@\nAs alterações sem commit também são excluídas.";
 "%@  (opened here)" = "%1$@  (aberto aqui)";
-"%@ (chosen by a gitch rule)" = "%1$@ (escolhida por uma regra do gitch)";
 "%@ (current)" = "%1$@ (atual)";
 "%@ (none)" = "%1$@ (nenhum)";
 "%@ declined this request. Try changing the content and try again." = "%1$@ recusou esta solicitação. Altere o conteúdo e tente novamente.";
@@ -322,7 +321,6 @@
 "Allow writing to the working folder" = "Permitir gravação na pasta de trabalho";
 "Allowed to fail" = "Falha permitida";
 "Amend commit" = "Corrigir commit (amend)";
-"Amend previous commit" = "Corrigir o commit anterior (amend)";
 "Amend: combine into the last commit" = "Amend: juntar ao último commit";
 "An app for viewing and working with Git repositories as a graph · MIT" = "Um app para visualizar e trabalhar com repositórios Git em forma de grafo · MIT";
 "An empty file was deleted" = "Um arquivo vazio foi excluído";
@@ -359,7 +357,6 @@
 "Branch to check out" = "Branch para checkout";
 "Check again with fetch" = "Verificar de novo com fetch";
 "Check this repository with gitch again" = "Verificar este repositório com o gitch de novo";
-"Click to use another gitch account for this repository." = "Clique para usar outra conta do gitch neste repositório.";
 "Commit authors are fine" = "Os autores dos commits estão corretos";
 "Couldn't find gitch inside Gitrochi." = "Não foi possível encontrar o gitch dentro do Gitrochi.";
 "Couldn't move Gitrochi to the Applications folder" = "Não foi possível mover o Gitrochi para a pasta Aplicativos";
@@ -438,7 +435,6 @@
 "Clear search (Esc)" = "Limpar pesquisa (Esc)";
 "Clears the path you chose and finds it automatically again" = "Apaga o caminho escolhido e volta a localizar automaticamente";
 "Clears the staging area, then stages and commits each group from the top." = "Esvazia a área de stage e, de cima para baixo, adiciona cada grupo ao stage e faz o commit.";
-"Click to see the diff in the center" = "Clique para ver o diff no centro";
 "Click to select this line (Shift: range) — you can stage only the selected lines" = "Clique para selecionar esta linha (Shift: intervalo) — é possível adicionar ao stage só as linhas selecionadas";
 "Clone" = "Clonar";
 "Clone repository" = "Clonar repositório";
@@ -690,6 +686,7 @@
 "Locate" = "Localizar";
 "Locate…" = "Localizar…";
 "Location" = "Local";
+"Locked worktree" = "Worktree bloqueado";
 "Locked to %@" = "Travado em %1$@";
 "Looks for a GitHub profile, then a connected self-hosted GitLab profile, then Gravatar, and uses initials if none is found. An email hash is sent to Gravatar." = "Procura um perfil do GitHub, depois um perfil de GitLab auto-hospedado conectado e então o Gravatar; se nada for encontrado, usa as iniciais. Um hash do e-mail é enviado ao Gravatar.";
 "Mark all as resolved" = "Marcar tudo como resolvido";
@@ -732,7 +729,6 @@
 "New branch name" = "Nome do novo branch";
 "New branch…" = "Novo branch…";
 "New file" = "Arquivo novo";
-"New file (untracked)" = "Arquivo novo (não rastreado)";
 "New pull/merge request…" = "Novo pull/merge request…";
 "New session in the same place" = "Nova sessão no mesmo local";
 "New tab" = "Nova aba";
@@ -775,7 +771,6 @@
 "Not found (404). Check that the token has access to the repository." = "Não encontrado (404). Verifique se o token tem acesso ao repositório.";
 "Not found — locate it in the Tools tab" = "Não encontrado — localize-o na aba Ferramentas";
 "Not installed" = "Não instalado";
-"Not managed by gitch" = "Não gerenciado pelo gitch";
 "Nothing to draw" = "Nada para desenhar";
 "Off" = "Desativado";
 "On" = "Ativado";
@@ -833,7 +828,6 @@
 "Pulling…" = "Fazendo pull…";
 "Push tag" = "Fazer push da tag";
 "Pushes %lld unpushed commits to the remote." = "Envia ao remoto os commits ainda não enviados (%1$lld).";
-"Pushes as %@" = "Faz push como %1$@";
 "Pushes the current branch to %@ before creating." = "Envia o branch atual para %1$@ antes de criar.";
 "Pushes the current branch to the remote (no commits to push right now)." = "Envia o branch atual para o remoto (não há commits para enviar agora).";
 "Pushes the current branch to the remote for the first time and sets up tracking." = "Envia o branch atual para o remoto pela primeira vez e configura o rastreamento.";
@@ -967,7 +961,6 @@
 "Stage selected lines (%lld)" = "Adicionar linhas selecionadas ao stage (%1$lld)";
 "Staged" = "No stage";
 "Staged and unstaged changes and untracked new files will all be lost. This can't be undone." = "As alterações no stage e fora dele e os arquivos novos não rastreados serão todos perdidos. Não é possível desfazer.";
-"Staged files" = "Arquivos no stage";
 "Stages only the selected lines" = "Adiciona ao stage só as linhas selecionadas";
 "Stages only this hunk (click changed lines to stage only those)" = "Adiciona ao stage só este hunk (clique nas linhas alteradas para adicionar só elas)";
 "Staging…" = "Adicionando ao stage…";
@@ -985,7 +978,6 @@
 "Subject line only, no body" = "Só a linha de assunto, sem corpo";
 "Subject within 50 characters" = "Assunto com até 50 caracteres";
 "Succeeded" = "Sucesso";
-"Summary (required)" = "Resumo (obrigatório)";
 "Syncs the current branch with the remote (no commits to pull right now)." = "Sincroniza o branch atual com o remoto (não há commits para receber agora).";
 "System" = "Sistema";
 "System follows your macOS setting (light, dark or auto). The graph and terminal change with it." = "A opção Sistema segue a configuração do macOS (claro, escuro ou automático). O grafo e o terminal acompanham a mudança.";
@@ -1065,7 +1057,6 @@
 "Unstage all" = "Remover tudo do stage";
 "Unstage hunk" = "Remover hunk do stage";
 "Unstage selected lines (%lld)" = "Remover linhas selecionadas do stage (%1$lld)";
-"Unstaged files" = "Arquivos fora do stage";
 "Unstages only the selected lines" = "Remove do stage só as linhas selecionadas";
 "Unstages this hunk" = "Remove este hunk do stage";
 "Unstaging…" = "Removendo do stage…";
@@ -1096,7 +1087,6 @@
 "Waiting for deployment approval: %@" = "Aguardando aprovação do deploy: %1$@";
 "Waiting for input" = "Aguardando entrada";
 "Waiting to be run manually" = "Aguardando execução manual";
-"Warning" = "Aviso";
 "What to do with this commit" = "O que fazer com este commit";
 "What would you like to do?" = "O que você deseja fazer?";
 "What would you like to do? If there are conflicts, you can resolve them on the right." = "O que você deseja fazer? Se houver conflitos, você pode resolvê-los à direita.";
@@ -1128,9 +1118,6 @@
 "git %@ failed" = "git %1$@ falhou";
 "git refuses to delete a branch with unmerged commits. Use 'Force delete' in that case." = "O git se recusa a excluir um branch com commits sem merge. Nesse caso, use 'Forçar exclusão'.";
 "gitch backups" = "Backups do gitch";
-"gitch checks before commit and push" = "Verificações do gitch antes de commit e push";
-"gitch commands for this repository" = "Comandos do gitch para este repositório";
-"gitch doesn't know which account this repository uses. Lock it with gitch use <account>." = "O gitch não sabe qual conta este repositório usa. Trave-o com gitch use <conta>.";
 "gitch found nothing to draw for %@." = "O gitch não encontrou nada para desenhar em %1$@.";
 "gitch graph changes: files that are often committed together, and how often each one changes." = "gitch graph changes: arquivos que costumam entrar juntos no mesmo commit e quantas vezes cada um muda.";
 "gitch graph check reads its rules from .gitch/graph.rules in this repository. Create the file with commented-out examples (gitch graph check --init) and open it?" = "O gitch graph check lê as regras de .gitch/graph.rules neste repositório. Criar o arquivo com exemplos comentados (gitch graph check --init) e abri-lo?";
@@ -1144,8 +1131,6 @@
 "gitch saves a backup before pull, up, sync, fix, undo and amend, and keeps the 30 most recent." = "O gitch salva um backup antes de pull, up, sync, fix, undo e amend, e mantém os 30 mais recentes.";
 "gitch sets the commit author to %@ and points origin (and upstream) at %@'s SSH alias, then locks the repository to it." = "O gitch define %1$@ como autor dos commits, aponta origin (e upstream) para o alias SSH de %2$@ e depois trava o repositório nessa conta.";
 "gitch stops requiring %@ for commits and pushes here. The commit author stays as it is." = "O gitch deixa de exigir %1$@ para commits e push aqui. O autor dos commits continua o mesmo.";
-"gitch sync: brings this branch up to date with the original repository (upstream)." = "gitch sync: deixa este branch em dia com o repositório original (upstream).";
-"gitch up: moves this branch onto the latest default branch, or merges it if the branch is already pushed. A backup is saved first." = "gitch up: move este branch para cima do branch padrão mais recente, ou faz merge se o branch já foi enviado. Um backup é salvo antes.";
 "gitch won't check authors, secrets or pushes in this repository until you turn it back on." = "O gitch não vai verificar autores, segredos nem push neste repositório até você ativar de novo.";
 "… The diff is too long; only the beginning is shown" = "… O diff é longo demais; só o início é exibido";
 "… show %lld more lines" = "… mostrar mais linhas (%1$lld)";
@@ -2227,3 +2212,22 @@
 "Unstage line" = "Remover linha do stage";
 "Hide changes and show the graph" = "Ocultar alterações e mostrar o grafo";
 "Sessions started here run in the terminal tabs below; click one to go to its terminal." = "As sessões iniciadas aqui são executadas nas abas do terminal abaixo; clique em uma para ir ao terminal dela.";
+"Unstaged" = "Fora do stage";
+"Untracked" = "Não rastreado";
+"Summary" = "Resumo";
+"Too large" = "Grande demais";
+"copied from %@" = "copiado de %@";
+"Commit 1 file" = "Fazer commit de 1 arquivo";
+"Commit %lld files" = "Fazer commit de %lld arquivos";
+"Couldn't write the commit message" = "Não foi possível escrever a mensagem do commit";
+"gitch stopped this commit. Run gitch doctor in the terminal." = "O gitch bloqueou este commit. Execute gitch doctor no terminal.";
+"Amend previous commit" = "Corrigir o commit anterior (amend)";
+"Split into commits…" = "Dividir em commits…";
+"AI message" = "Mensagem por IA";
+"Commit summary" = "Resumo do commit";
+"Commit description" = "Descrição do commit";
+"Summary character count" = "Caracteres do resumo";
+"Resolve conflicts before committing." = "Resolva os conflitos antes de fazer commit.";
+"Stage the files you want to include." = "Coloque no stage os arquivos que deseja incluir.";
+"Write a summary to enable commit." = "Escreva um resumo para poder fazer commit.";
+"Conflicted" = "Em conflito";

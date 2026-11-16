@@ -267,7 +267,6 @@
 "%@\nThe folder is deleted; the branch and commits stay. git refuses if there are uncommitted changes." = "%1$@\nSložka se smaže; větev a commity zůstanou. Pokud existují necommitnuté změny, git akci odmítne.";
 "%@\nUncommitted changes are deleted too." = "%1$@\nSmažou se i necommitnuté změny.";
 "%@  (opened here)" = "%1$@  (otevřeno zde)";
-"%@ (chosen by a gitch rule)" = "%1$@ (vybráno pravidlem gitch)";
 "%@ (current)" = "%1$@ (aktuální)";
 "%@ (none)" = "%1$@ (žádné)";
 "%@ declined this request. Try changing the content and try again." = "%1$@ tento požadavek odmítl. Upravte obsah a zkuste to znovu.";
@@ -322,7 +321,6 @@
 "Allow writing to the working folder" = "Povolit zápis do pracovní složky";
 "Allowed to fail" = "Smí selhat";
 "Amend commit" = "Opravit commit (amend)";
-"Amend previous commit" = "Opravit předchozí commit (amend)";
 "Amend: combine into the last commit" = "Amend: spojit s posledním commitem";
 "An app for viewing and working with Git repositories as a graph · MIT" = "Aplikace k prohlížení repozitářů Git jako grafu a práci s nimi · MIT";
 "An empty file was deleted" = "Byl smazán prázdný soubor";
@@ -362,7 +360,6 @@
 "Branch to check out" = "Větev, na kterou přepnout";
 "Check again with fetch" = "Znovu zkontrolovat s fetch";
 "Check this repository with gitch again" = "Znovu kontrolovat tento repozitář pomocí gitch";
-"Click to use another gitch account for this repository." = "Kliknutím použijete pro tento repozitář jiný účet gitch.";
 "Commit authors are fine" = "Autoři commitů jsou v pořádku";
 "Couldn't find gitch inside Gitrochi." = "gitch nebyl v Gitrochi nalezen.";
 "Couldn't move Gitrochi to the Applications folder" = "Gitrochi se nepodařilo přesunout do složky Aplikace";
@@ -441,7 +438,6 @@
 "Clear search (Esc)" = "Vymazat hledání (Esc)";
 "Clears the path you chose and finds it automatically again" = "Zruší zvolenou cestu a znovu ji vyhledá automaticky";
 "Clears the staging area, then stages and commits each group from the top." = "Vyprázdní oblast připravených změn a pak postupně shora připraví a commitne každou skupinu.";
-"Click to see the diff in the center" = "Kliknutím zobrazíte rozdíly uprostřed";
 "Click to select this line (Shift: range) — you can stage only the selected lines" = "Kliknutím vyberete tento řádek (Shift: rozsah) — připravit k commitu můžete jen vybrané řádky";
 "Clone" = "Klonovat";
 "Clone repository" = "Klonovat repozitář";
@@ -694,6 +690,7 @@
 "Locate" = "Vybrat";
 "Locate…" = "Vybrat…";
 "Location" = "Umístění";
+"Locked worktree" = "Zamčený worktree";
 "Locked to %@" = "Zamčeno na %1$@";
 "Looks for a GitHub profile, then a connected self-hosted GitLab profile, then Gravatar, and uses initials if none is found. An email hash is sent to Gravatar." = "Hledá profil na GitHubu, pak profil na připojeném vlastním GitLabu, pak Gravatar, a pokud nic nenajde, použije iniciály. Do služby Gravatar se odesílá hash e-mailu.";
 "Manual" = "Ruční";
@@ -736,7 +733,6 @@
 "New branch name" = "Název nové větve";
 "New branch…" = "Nová větev…";
 "New file" = "Nový soubor";
-"New file (untracked)" = "Nový soubor (nesledovaný)";
 "New pull/merge request…" = "Nový pull/merge request…";
 "New session in the same place" = "Nová relace na stejném místě";
 "New tab" = "Nová karta";
@@ -779,7 +775,6 @@
 "Not found (404). Check that the token has access to the repository." = "Nenalezeno (404). Zkontrolujte, zda má token přístup k repozitáři.";
 "Not found — locate it in the Tools tab" = "Nenalezeno — vyberte ho na kartě Nástroje";
 "Not installed" = "Nenainstalováno";
-"Not managed by gitch" = "Nespravováno gitch";
 "Nothing to draw" = "Není co kreslit";
 "Off" = "Vypnuto";
 "On" = "Zapnuto";
@@ -838,7 +833,6 @@
 "Pulling…" = "Probíhá pull…";
 "Push tag" = "Push tagu";
 "Pushes %lld unpushed commits to the remote." = "Provede push neodeslaných commitů (%1$lld) do vzdáleného repozitáře.";
-"Pushes as %@" = "Push jako %1$@";
 "Pushes the current branch to %@ before creating." = "Před vytvořením provede push aktuální větve do %1$@.";
 "Pushes the current branch to the remote (no commits to push right now)." = "Provede push aktuální větve do vzdáleného repozitáře (momentálně nejsou žádné commity k odeslání).";
 "Pushes the current branch to the remote for the first time and sets up tracking." = "Provede první push aktuální větve do vzdáleného repozitáře a nastaví sledování.";
@@ -972,7 +966,6 @@
 "Stage selected lines (%lld)" = "Připravit vybrané řádky (%1$lld)";
 "Staged" = "Připraveno";
 "Staged and unstaged changes and untracked new files will all be lost. This can't be undone." = "Připravené i nepřipravené změny a nové nesledované soubory budou ztraceny. Tuto akci nelze vrátit zpět.";
-"Staged files" = "Připravené soubory";
 "Stages only the selected lines" = "Připraví jen vybrané řádky";
 "Stages only this hunk (click changed lines to stage only those)" = "Připraví jen tento blok (kliknutím na změněné řádky připravíte jen je)";
 "Staging…" = "Připravování…";
@@ -990,7 +983,6 @@
 "Subject line only, no body" = "Jen předmět, bez těla";
 "Subject within 50 characters" = "Předmět nejvýše 50 znaků";
 "Succeeded" = "Úspěšné";
-"Summary (required)" = "Shrnutí (povinné)";
 "Syncs the current branch with the remote (no commits to pull right now)." = "Synchronizuje aktuální větev se vzdáleným repozitářem (momentálně nejsou žádné commity ke stažení).";
 "System" = "Systém";
 "System follows your macOS setting (light, dark or auto). The graph and terminal change with it." = "Možnost Systém se řídí nastavením macOS (světlý, tmavý nebo automatický vzhled). Graf a terminál se mění s ním.";
@@ -1072,7 +1064,6 @@
 "Unstage all" = "Odebrat vše z přípravy";
 "Unstage hunk" = "Odebrat blok z přípravy";
 "Unstage selected lines (%lld)" = "Odebrat vybrané řádky z přípravy (%1$lld)";
-"Unstaged files" = "Nepřipravené soubory";
 "Unstages only the selected lines" = "Odebere z přípravy jen vybrané řádky";
 "Unstages this hunk" = "Odebere tento blok z přípravy";
 "Unstaging…" = "Odebírání z přípravy…";
@@ -1103,7 +1094,6 @@
 "Waiting for deployment approval: %@" = "Čeká na schválení nasazení: %1$@";
 "Waiting for input" = "Čeká na vstup";
 "Waiting to be run manually" = "Čeká na ruční spuštění";
-"Warning" = "Varování";
 "What to do with this commit" = "Co s tímto commitem udělat";
 "What would you like to do?" = "Co chcete udělat?";
 "What would you like to do? If there are conflicts, you can resolve them on the right." = "Co chcete udělat? Případné konflikty můžete vyřešit vpravo.";
@@ -1140,9 +1130,6 @@
 "git %@ failed" = "git %1$@ selhal";
 "git refuses to delete a branch with unmerged commits. Use 'Force delete' in that case." = "git odmítá smazat větev s nesloučenými commity. V takovém případě použijte 'Vynutit smazání'.";
 "gitch backups" = "Zálohy gitch";
-"gitch checks before commit and push" = "Kontroly gitch před commitem a push";
-"gitch commands for this repository" = "Příkazy gitch pro tento repozitář";
-"gitch doesn't know which account this repository uses. Lock it with gitch use <account>." = "gitch neví, jaký účet tento repozitář používá. Zamkněte ho příkazem gitch use <účet>.";
 "gitch found nothing to draw for %@." = "%1$@: gitch nenašel nic ke kreslení.";
 "gitch graph changes: files that are often committed together, and how often each one changes." = "gitch graph changes: soubory, které se často commitují společně, a jak často se který mění.";
 "gitch graph check reads its rules from .gitch/graph.rules in this repository. Create the file with commented-out examples (gitch graph check --init) and open it?" = "gitch graph check čte pravidla z .gitch/graph.rules v tomto repozitáři. Vytvořit soubor se zakomentovanými příklady (gitch graph check --init) a otevřít ho?";
@@ -1156,8 +1143,6 @@
 "gitch saves a backup before pull, up, sync, fix, undo and amend, and keeps the 30 most recent." = "gitch ukládá zálohu před pull, up, sync, fix, undo a amend a ponechává 30 nejnovějších.";
 "gitch sets the commit author to %@ and points origin (and upstream) at %@'s SSH alias, then locks the repository to it." = "gitch nastaví autora commitů na %1$@, nasměruje origin (a upstream) na alias SSH účtu %2$@ a pak repozitář zamkne na tento účet.";
 "gitch stops requiring %@ for commits and pushes here. The commit author stays as it is." = "gitch zde přestane vyžadovat %1$@ pro commity a push. Autor commitů zůstane beze změny.";
-"gitch sync: brings this branch up to date with the original repository (upstream)." = "gitch sync: srovná tuto větev s původním repozitářem (upstream).";
-"gitch up: moves this branch onto the latest default branch, or merges it if the branch is already pushed. A backup is saved first." = "gitch up: přesune tuto větev na nejnovější výchozí větev, nebo ji sloučí, pokud už byla odeslána. Předtím uloží zálohu.";
 "gitch won't check authors, secrets or pushes in this repository until you turn it back on." = "gitch v tomto repozitáři nebude kontrolovat autory, tajné údaje ani push, dokud to znovu nezapnete.";
 "… The diff is too long; only the beginning is shown" = "… Změny jsou příliš dlouhé; zobrazuje se jen začátek";
 "… show %lld more lines" = "… zobrazit další řádky (%1$lld)";
@@ -2239,3 +2224,22 @@
 "Unstage line" = "Odebrat řádek z přípravy";
 "Hide changes and show the graph" = "Skrýt změny a zobrazit graf";
 "Sessions started here run in the terminal tabs below; click one to go to its terminal." = "Relace spuštěné zde běží na kartách terminálu dole; kliknutím na relaci přejdete do jejího terminálu.";
+"Unstaged" = "Nepřipraveno";
+"Untracked" = "Nesledováno";
+"Summary" = "Shrnutí";
+"Too large" = "Příliš velké";
+"copied from %@" = "zkopírováno z %@";
+"Commit 1 file" = "Commitnout 1 soubor";
+"Commit %lld files" = "Commitnout soubory (%lld)";
+"Couldn't write the commit message" = "Zprávu commitu se nepodařilo napsat";
+"gitch stopped this commit. Run gitch doctor in the terminal." = "gitch tento commit zastavil. Spusťte v terminálu gitch doctor.";
+"Amend previous commit" = "Opravit předchozí commit (amend)";
+"Split into commits…" = "Rozdělit do commitů…";
+"AI message" = "Zpráva od AI";
+"Commit summary" = "Shrnutí commitu";
+"Commit description" = "Popis commitu";
+"Summary character count" = "Počet znaků shrnutí";
+"Resolve conflicts before committing." = "Před commitem vyřešte konflikty.";
+"Stage the files you want to include." = "Připravte soubory, které chcete zahrnout.";
+"Write a summary to enable commit." = "Napište shrnutí a commit bude možný.";
+"Conflicted" = "V konfliktu";

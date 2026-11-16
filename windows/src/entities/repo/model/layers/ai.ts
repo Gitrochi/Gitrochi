@@ -271,6 +271,7 @@ export abstract class RepoAI extends RepoIssues {
     if (!this.path || this.aiWorking) return;
     this.aiWorking = t("{0} is writing the commit message…", ai.shortFor("commit"));
     this.aiNotice = null;
+    this.commitMessageFailure = null;
     this.emit();
     try {
       const diff = (await this.g(["diff", "--cached", "--no-ext-diff", "-M", "--stat", "--patch"])).stdout;
@@ -292,7 +293,9 @@ export abstract class RepoAI extends RepoIssues {
       this.message = b;
       if (clipped.omitted > 0) this.aiNotice = t("The diff was long, so only the beginning was sent to {0} ({1}K characters omitted).", ai.shortFor("commit"), Math.floor(clipped.omitted / 1000));
     } catch (e) {
-      this.errorMessage = describe(e);
+      // beside the composer while it is on screen; a dialog when the shortcut was used elsewhere
+      if (this.selection?.kind === "wip") this.commitMessageFailure = describe(e);
+      else this.errorMessage = describe(e);
     } finally {
       this.aiWorking = null;
       this.emit();

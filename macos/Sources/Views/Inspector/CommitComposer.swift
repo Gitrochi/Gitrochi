@@ -1,109 +1,159 @@
 import SwiftUI
 
-/// The commit form at the bottom of the changes column: author and account first, then the message
+/// The commit form under the working changes, as the redesign board draws it: who commits, one 28 pt Summary field
+/// with its count out of 72, the description folded away until it is wanted, "AI message" as a text button and the
+/// one filled Commit. (Windows: CommitComposer in widgets/inspector/ui/Inspector.tsx)
 struct CommitComposer: View {
     @Environment(RepoStore.self) private var store
     @ViewState private var descriptionExpanded = false
+    @FocusState private var focus: Field?
+
+    private enum Field { case summary, description }
 
     var body: some View {
         @Bindable var store = store
         VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
-                Text("Commit").font(.system(size: 14, weight: .semibold))
-                Text("\(store.status.staged.count) staged files")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 7).padding(.vertical, 3)
-                    .background(StudioStyle.canvas, in: Capsule())
-                    .lineLimit(1)
-                Spacer(minLength: 4)
-                Button { Task { await store.generateCommitMessage() } } label: {
-                    Label("AI message", symbol: "sparkles")
-                }
-                .buttonStyle(.borderless)
-                .foregroundStyle(StudioStyle.accent)
-                .disabled(store.status.staged.isEmpty || store.aiWorking != nil || store.busy != nil)
-                .help("AI writes a message from the staged changes. (⌥⌘M)")
-                Menu {
-                    Button("Split into commits") { Task { await store.planSplit() } }
-                        .disabled(store.splittableChanges.count < 2 || store.aiWorking != nil || !store.status.conflicted.isEmpty)
-                    Divider()
-                    Toggle("Amend previous commit", isOn: Binding(get: { store.amend }, set: { value in Task { await store.setAmend(value) } }))
-                        .disabled(store.headHash == nil)
-                } label: { Label("Options", symbol: "ellipsis").labelStyle(.iconOnly) }
-                .menuStyle(.borderlessButton)
-                .menuIndicator(.hidden)
-                .accessibilityLabel("Options")
-                .help("Options")
-                .fixedSize()
-                .disabled(store.busy != nil)
-            }
-            .controlSize(.small)
             if let me = store.me {
-                Label { Text(verbatim: "\(me.name) · \(me.email)") } icon: { SymbolIcon("person.crop.circle") }
-                    .font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
-                    .help("\(me.name) <\(me.email)>")
+                HStack(spacing: 6) {
+                    AuthorAvatar(name: me.name, email: me.email, size: 20)
+                    Text(verbatim: me.name).font(.system(size: 12, weight: .semibold)).lineLimit(1).layoutPriority(1)
+                    // the email gives way first: the name says who commits
+                    Text(verbatim: "· \(me.email)").font(.system(size: 12)).foregroundStyle(HostedList.caption)
+                        .lineLimit(1).truncationMode(.tail)
+                }
+                .help("\(me.name) <\(me.email)>")
+                .accessibilityElement(children: .combine)
             }
-            GitchBar()
             HStack(spacing: 8) {
-                TextField("Summary (required)", text: $store.summary)
+                TextField("Summary", text: $store.summary)
                     .textFieldStyle(.plain)
                     .font(.system(size: 13))
+                    .focused($focus, equals: .summary)
                     .accessibilityLabel("Commit summary")
-                Text("\(store.summary.count)/72")
-                    .font(.caption.monospacedDigit())
-                    .foregroundStyle(store.summary.count > 72 ? Color.orange : Color.secondary)
+                Text(verbatim: "\(store.summary.count)/72")
+                    .font(.system(size: 11, design: .monospaced))
+                    // past 72 the count is in the waiting tone, never the accent
+                    .foregroundStyle(store.summary.count > 72 ? StudioStyle.Tone.waiting.text : HostedList.caption)
+                    .fixedSize()
                     .accessibilityLabel("Summary character count")
+                    .accessibilityValue(Text(verbatim: "\(store.summary.count)/72"))
             }
-            .padding(.horizontal, 11)
-            .frame(minHeight: 32)
-            .background(StudioStyle.surface, in: RoundedRectangle(cornerRadius: StudioStyle.cornerRadius))
-            .overlay(RoundedRectangle(cornerRadius: StudioStyle.cornerRadius).strokeBorder(StudioStyle.border))
-            DisclosureGroup("Description (optional)", isExpanded: $descriptionExpanded) {
+            .padding(.horizontal, 10)
+            .frame(height: 28)
+            .field(focused: focus == .summary)
+            Button { descriptionExpanded.toggle() } label: {
+                HStack(spacing: 6) {
+                    SymbolIcon(descriptionExpanded ? "chevron.down" : "chevron.right").font(.system(size: 9, weight: .semibold)).frame(width: 10)
+                    Text("Description (optional)").font(.system(size: 12))
+                }
+                .foregroundStyle(HostedList.caption)
+                .frame(minHeight: 24)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityValue(descriptionExpanded ? "On" : "Off")
+            if descriptionExpanded {
                 TextEditor(text: $store.message)
                     .font(.system(size: 13))
                     .frame(height: 56)
                     .padding(5)
                     .scrollContentBackground(.hidden)
-                    .background(StudioStyle.surface)
-                    .clipShape(RoundedRectangle(cornerRadius: StudioStyle.cornerRadius))
+                    .focused($focus, equals: .description)
                     .accessibilityLabel("Commit description")
-                    .overlay(RoundedRectangle(cornerRadius: StudioStyle.cornerRadius).strokeBorder(StudioStyle.border))
-            }
-            .font(.system(size: 12)).foregroundStyle(.secondary)
-            if store.amend {
-                Label("Amend previous commit", symbol: "arrow.uturn.backward")
-                    .font(.caption).foregroundStyle(.orange)
+                    .field(focused: focus == .description)
             }
             if let working = store.aiWorking {
-                HStack(spacing: 6) { ProgressView().controlSize(.mini); Text(working) }.font(.caption)
-            }
-            if let notice = store.aiNotice { Text(notice).font(.caption).foregroundStyle(.secondary).lineLimit(2) }
-            HStack(alignment: .center, spacing: 10) {
-                Text(store.commitGuidance)
-                    .font(.caption).foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                Spacer(minLength: 0)
-                Button { Task { await store.commit() } } label: {
-                    Text(buttonTitle).padding(.horizontal, 8).frame(minHeight: 22)
+                HStack(spacing: 6) {
+                    ProgressView().controlSize(.mini)
+                    Text(verbatim: working).font(.system(size: 12)).foregroundStyle(HostedList.caption)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                .buttonStyle(.borderedProminent).controlSize(.regular)
-                .tint(StudioStyle.accent)
-                .keyboardShortcut(.return, modifiers: .command)
-                .disabled(!store.canCommit)
-                .help(store.commitGuidance)
-                .fixedSize()
+                .accessibilityElement(children: .combine)
+            }
+            if let failure = store.commitMessageFailure {
+                FailureBlock(title: String(localized: "Couldn't write the commit message"), caption: failure) {
+                    Task { await store.generateCommitMessage() }
+                }
+            }
+            if let notice = store.aiNotice {
+                Text(verbatim: notice).font(.system(size: 12)).foregroundStyle(HostedList.caption)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            // the reason sits beside a disabled Commit, and under the row when the panel is too narrow for that
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 8) {
+                    aiButton
+                    Spacer(minLength: 0)
+                    commitButton.disabledReason(reason)
+                }
+                VStack(alignment: .trailing, spacing: 6) {
+                    HStack(spacing: 8) {
+                        aiButton
+                        Spacer(minLength: 0)
+                        commitButton.disabled(reason != nil)
+                    }
+                    if let reason {
+                        Text(verbatim: reason).font(.system(size: 12)).foregroundStyle(HostedList.caption)
+                            .multilineTextAlignment(.trailing).fixedSize(horizontal: false, vertical: true)
+                    }
+                }
             }
         }
-        .padding(12)
-        .background(StudioStyle.canvas)
+        .padding(EdgeInsets(top: 12, leading: 16, bottom: 16, trailing: 16))
+        .background(StudioStyle.FileList.composer)
         .onAppear { descriptionExpanded = !store.message.isEmpty }
         .onChange(of: store.message) { _, message in if !message.isEmpty { descriptionExpanded = true } }
     }
 
-    private var buttonTitle: String {
+    private var aiButton: some View {
+        Button { Task { await store.generateCommitMessage() } } label: {
+            HStack(spacing: 6) {
+                SymbolIcon("sparkles").font(.system(size: 13))
+                Text("AI message")
+            }
+        }
+        .buttonStyle(HostedListTextButtonStyle())
+        .fixedSize()
+        .disabled(store.status.staged.isEmpty || store.aiWorking != nil || store.busy != nil)
+        .help("AI writes a message from the staged changes. (⌥⌘M)")
+    }
+
+    /// The region's one filled button, with its shortcut beside the words. While a merge or a rebase is in progress
+    /// the banner's Continue is the filled one and this is plain.
+    @ViewBuilder private var commitButton: some View {
+        let button = Button { Task { await store.commit() } } label: {
+            HStack(spacing: 6) {
+                Text(verbatim: title)
+                Text(verbatim: "⌘↩").font(.system(size: 12)).opacity(0.8)
+            }
+        }
+        .keyboardShortcut(.return, modifiers: .command)
+        .fixedSize()
+        if store.repoState == .clean {
+            button.hostedListFilledButton()
+        } else {
+            button.buttonStyle(HostedListButtonStyle())
+        }
+    }
+
+    /// Why Commit can't be used now; nil when it can
+    private var reason: String? { store.canCommit ? nil : store.commitGuidance }
+
+    private var title: String {
+        // Amend previous commit is in the toolbar's ⋯; while it is on, the button says what it does
         if store.amend { return String(localized: "Amend commit") }
         if store.repoState == .merging { return String(localized: "Merge commit") }
-        return String(localized: "Commit") + "  ⌘↩"
+        let count = store.status.staged.count
+        if count == 0 { return String(localized: "Commit") }
+        return count == 1 ? String(localized: "Commit 1 file") : String(localized: "Commit \(count) files")
+    }
+}
+
+private extension View {
+    /// A field of the composer: white with a hairline and a 6 pt radius, and the 2 pt accent ring while it has focus
+    func field(focused: Bool) -> some View {
+        background(RoundedRectangle(cornerRadius: 6).fill(StudioStyle.surface))
+            .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(StudioStyle.FileList.field))
+            .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.accentColor.opacity(focused ? 0.4 : 0), lineWidth: 2))
     }
 }

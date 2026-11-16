@@ -122,21 +122,6 @@
 }
 .pr-tree-head { flex: none; height: 44px; box-sizing: border-box; display: flex; align-items: center; gap: 8px; padding-left: 6px; }
 .pr-tree-rows { display: flex; flex-direction: column; gap: 1px; }
-.pr-folder-row { display: flex; align-items: center; gap: 6px; width: 100%; height: 28px; box-sizing: border-box; padding: 0 6px; border: 0; border-radius: 6px; background: transparent; font: inherit; font-weight: 500; color: var(--text); text-align: left; cursor: pointer; }
-.pr-folder-row > svg { flex: none; color: var(--text-2); }
-.pr-folder-row > .ellipsis { flex: 0 1 auto; }
-.pr-folder-row:hover, .pr-file-row:hover:not(.selected) { background: var(--hover); }
-.pr-file-row { display: flex; align-items: center; gap: 6px; height: 28px; flex: none; box-sizing: border-box; padding: 0 2px 0 6px; border-radius: 6px; min-width: 0; }
-.pr-file-row.selected { background: var(--select); }
-.pr-file-row.selected .pr-file-name { font-weight: 600; }
-.pr-file-open { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 6px; height: 28px; padding: 0; border: 0; background: transparent; font: inherit; color: var(--text); text-align: left; cursor: pointer; overflow: hidden; }
-/* a file name is never cut: the name it was renamed from, or its folder, gives way first */
-.pr-file-name { flex: none; white-space: nowrap; }
-.pr-file-from { flex: 0 100 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; color: var(--text-2); }
-.pr-file-threads { flex: none; display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text-2); }
-.pr-viewed { flex: 0 0 24px; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 6px; background: transparent; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
-.pr-viewed-box { width: 14px; height: 14px; box-sizing: border-box; border: 1.5px solid var(--border-strong); border-radius: 4px; background: var(--input); display: inline-flex; align-items: center; justify-content: center; color: var(--accent-text); }
-.pr-viewed[aria-checked="true"] .pr-viewed-box { border-color: var(--accent); background: var(--accent); }
 .pr-diff { flex: 1 1 0; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
 .pr-diff-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; align-items: stretch; }
 .pr-diff-body > .spinner { align-self: center; margin-top: 24px; }

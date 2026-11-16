@@ -16,7 +16,6 @@ struct PullRequestFilesView: View {
     @AppStorage(requestFileViewModeKey) private var mode = "tree"
     @ViewState private var collapsed = Set<String>()
     @ViewState private var viewed = Set<String>()
-    @ViewState private var hovered: String?
     @ViewState private var keys = FileKeys()
     /// The file that was open when the tab was left, to come back to
     @ViewState private var lastPath: String?
@@ -113,11 +112,11 @@ struct PullRequestFilesView: View {
                             switch row.kind {
                             case .folder(let path, let name, let files): folderRow(path: path, name: name, count: files.count, depth: row.depth)
                             case .file(let change):
-                                if let file = review.files.first(where: { $0.path == change.path }) { fileRow(file, review, indent: 6 + CGFloat(row.depth) * 14 + 18, folder: false) }
+                                if let file = review.files.first(where: { $0.path == change.path }) { fileRow(file, review, indent: FileTree.fileIndent(depth: row.depth), folder: false) }
                             }
                         }
                     } else {
-                        ForEach(review.files) { fileRow($0, review, indent: 6, folder: true) }
+                        ForEach(review.files) { fileRow($0, review, indent: 8, folder: true) }
                     }
                     // the line comments waiting to be sent stay with the files
                     ReviewDraftPanel(number: number).padding(.top, 12).padding(.horizontal, 6)
@@ -131,76 +130,25 @@ struct PullRequestFilesView: View {
 
     private func folderRow(path: String, name: String, count: Int, depth: Int) -> some View {
         let open = !collapsed.contains(path)
-        return Button { if open { collapsed.insert(path) } else { collapsed.remove(path) } } label: {
-            HStack(spacing: 6) {
-                SymbolIcon(open ? "chevron.down" : "chevron.right").font(.system(size: 9, weight: .semibold)).foregroundStyle(StudioStyle.Rail.icon).frame(width: 12)
-                DesignIconImage(icon: .repository, size: 11).foregroundStyle(StudioStyle.Rail.icon)
-                Text(verbatim: name).fontWeight(.medium).lineLimit(1).truncationMode(.head)
-                // a folder holding a single file needs no count
-                if count > 1 { StatusPill(title: String(count), symbol: nil, tone: .neutral) }
-                Spacer(minLength: 0)
-            }
-            .font(.system(size: 13))
-            .padding(.leading, 6 + CGFloat(depth) * 14).padding(.trailing, 6)
-            .frame(height: 28)
-            .background(RoundedRectangle(cornerRadius: 6).fill(hovered == "d:" + path ? StudioStyle.hover : Color.clear))
-            .contentShape(Rectangle())
+        return FileFolderRow(name: name, count: count, depth: depth, expanded: open) {
+            if open { collapsed.insert(path) } else { collapsed.remove(path) }
         }
-        .buttonStyle(.plain)
-        .onHover { hovered = $0 ? "d:" + path : (hovered == "d:" + path ? nil : hovered) }
     }
 
+    /// The shared file row with the review's marks: threads, the counts where there is room for them, and Viewed
     private func fileRow(_ file: ReviewFile, _ review: PullRequestReview, indent: CGFloat, folder: Bool) -> some View {
-        let selected = openPath == file.path, isViewed = viewed.contains(file.path)
-        let name = (file.path as NSString).lastPathComponent
-        let threads = PullRequestPage.threadCount(review.comments, path: file.path)
-        let secondary = selected ? Color.primary.opacity(0.72) : StudioStyle.Rail.icon
-        return HStack(spacing: 6) {
-            Button { store.openReviewFile(number, file) } label: {
-                HStack(spacing: 6) {
-                    StatusBadge(kind: file.kind)
-                    // a rename's old name gives way first; the file name is never cut
-                    if let old = file.oldPath, old != file.path {
-                        Text(verbatim: (old as NSString).lastPathComponent + " →").font(.system(size: 11)).foregroundStyle(StudioStyle.Rail.icon).lineLimit(1).layoutPriority(-1)
-                    }
-                    Text(verbatim: name).fontWeight(selected ? .semibold : .regular).lineLimit(1).fixedSize()
-                    if folder {
-                        PullRequestFolderLabel(path: file.path, color: secondary).layoutPriority(-2)
-                    }
-                    Spacer(minLength: 0)
-                }
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(file.path)
-            .accessibilityAddTraits(selected ? .isSelected : [])
-            if threads > 0 {
-                HStack(spacing: 4) {
-                    DesignIconImage(icon: .comment, size: 10)
-                    Text(verbatim: String(threads)).font(.system(size: 11))
-                }
-                .foregroundStyle(secondary).fixedSize()
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel(threads == 1 ? String(localized: "1 thread") : String(localized: "\(threads) threads"))
-            }
-            if !compact { LineStatText(added: file.additions, deleted: file.deletions).fixedSize() }
-            Button { setViewed(file.path, !isViewed) } label: {
-                SymbolIcon(isViewed ? "checkmark.square.fill" : "square").font(.system(size: 14))
-                    .foregroundStyle(isViewed ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(.tertiary))
-                    .frame(width: 24, height: 24).contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .help("Viewed \(name)")
-            .accessibilityLabel("Viewed \(name)")
-            .accessibilityValue(isViewed ? "On" : "Off")
-        }
-        .font(.system(size: 13))
-        .padding(.leading, indent).padding(.trailing, 2)
-        .frame(height: 28)
-        .background(RoundedRectangle(cornerRadius: 6).fill(selected ? StudioStyle.selection : hovered == file.path ? StudioStyle.hover : Color.clear))
-        .onHover { hovered = $0 ? file.path : (hovered == file.path ? nil : hovered) }
-        // the counts a compact row has no room for
-        .help(Text(verbatim: file.patch == nil ? String(localized: "Binary or too large — view it in the browser") : "\(file.path)  +\(file.additions) −\(file.deletions)"))
+        let isViewed = viewed.contains(file.path)
+        return FileRow(change: file.change, selected: openPath == file.path, showDirectory: folder,
+                       // a compact row has no room for the counts: they are in the tip
+                       stat: compact || file.patch == nil ? nil : LineStat(added: file.additions, deleted: file.deletions),
+                       note: compact || file.patch != nil ? nil : file.additions + file.deletions > 0 ? String(localized: "Too large") : String(localized: "Binary"),
+                       dimmed: isViewed,
+                       threads: PullRequestPage.threadCount(review.comments, path: file.path),
+                       indent: indent,
+                       viewed: isViewed, setViewed: { setViewed(file.path, $0) },
+                       open: { store.openReviewFile(number, file) },
+                       space: { setViewed(file.path, !isViewed) },
+                       tip: file.patch == nil ? String(localized: "Binary or too large — view it in the browser") : "\(file.path)  +\(file.additions) −\(file.deletions)")
     }
 
     // MARK: Diff

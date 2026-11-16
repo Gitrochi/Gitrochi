@@ -74,6 +74,24 @@ enum StudioStyle {
         static let tagFill = dynamic(light: 0xf6f6f7, dark: 0x2c2c30)
     }
 
+    /// The changed-file row every file list shares (docs/design.md, Shared components): 28 pt rows, the 16% selection
+    /// tint, a hover lighter than any tint, and the diff's own green and red for the counts. The dark values are
+    /// derived, the boards being light only. (Windows: shared/ui/file-row.css and the tokens in global.css)
+    enum FileList {
+        static let rowHeight: CGFloat = 28
+        static let selection = Color.accentColor.opacity(0.16)
+        static let hover = dynamic(light: 0xf7f7f8, dark: 0x2a2a2d)
+        static let added = dynamic(light: 0x1e7f3b, dark: 0x5fc47f)
+        static let deleted = dynamic(light: 0xb42a24, dark: 0xff8178)
+        /// Secondary text on the selection tint, where the caption grey is too faint
+        static let onSelection = dynamic(light: 0x5a5a5f, dark: 0xc2c2c7)
+        /// The edge of a field and of an unticked box
+        static let field = dynamic(light: 0xd6d6db, dark: 0x4a4a50)
+        static let box = dynamic(light: 0x9a9aa0, dark: 0x75757d)
+        /// The commit composer's ground, a shade off the panel's
+        static let composer = dynamic(light: 0xfbfbfc, dark: 0x232326)
+    }
+
     private enum Tones {
         static let waitingText = dynamic(light: 0x8a4600, dark: 0xf2b35e)
         static let waitingFill = dynamic(light: 0xf8ecdc, dark: 0x3a2c18)

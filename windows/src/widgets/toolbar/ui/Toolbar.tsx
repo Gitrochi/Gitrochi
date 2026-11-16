@@ -10,6 +10,7 @@ import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { type MenuItem, showMenuBelow, Spinner, tip } from "@/shared/ui";
 import { AccountQuickControls } from "./AccountQuickControls";
+import { gitchMenu } from "./gitch-menu";
 import "./toolbar.css";
 
 /**
@@ -141,9 +142,18 @@ export function Toolbar({ store }: { store: RepoStore }) {
     },
     { label: t("Force push (with lease)…"), disabled: store.busy != null, onClick: () => void store.push(true) },
     "divider",
+    // the commit options the commit form leaves out (docs/design.md, Working changes)
+    { label: t("Amend previous commit"), checked: store.amend, disabled: !store.headHash || store.busy != null, onClick: () => void store.setAmend(!store.amend) },
+    {
+      label: t("Split into commits…"),
+      disabled: store.splittableChanges.length < 2 || !!store.aiWorking || st.conflicted.length > 0 || store.busy != null,
+      onClick: () => void store.planSplit(),
+    },
+    "divider",
     { label: t("Structure graph workspace"), disabled: !!store.busy || !!store.graphJob, onClick: () => void store.openStructureGraph("files") },
     { label: t("Repository tools…"), onClick: () => sheet({ kind: "localWorkflows" }) },
     { label: t("Work validation…"), onClick: () => sheet({ kind: "workValidation" }) },
+    ...(store.gitchStatus ? [{ label: "gitch", disabled: store.busy != null, submenu: gitchMenu(store, store.gitchStatus) } as MenuItem] : []),
     "divider",
     { label: t("Ask AI about changes…"), disabled: !!store.busy, onClick: () => void store.openChangeQuestion() },
     { label: t("Repository assistant…"), onClick: () => void store.openRepositoryAssistant() },

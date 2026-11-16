@@ -25,6 +25,17 @@
   --green: #2a9a55;
   --orange: #d9800f;
   --red: #d63b46;
+  /* the redesign boards' own values (docs/design.md): the caption grey, the row hover that is lighter than any
+     selection tint, secondary text on that tint, a field's edge, and the diff's green and red as text */
+  --caption: #66666b;
+  --row-hover: #f7f7f8;
+  --row-select: color-mix(in srgb, var(--accent) 16%, transparent);
+  --on-select: #5a5a5f;
+  --field-border: #d6d6db;
+  --box-border: #9a9aa0;
+  --composer: #fbfbfc;
+  --diff-added: #1e7f3b;
+  --diff-deleted: #b42a24;
   --hit: rgba(255, 196, 0, 0.18);
   --hit-bar: #f2b600;
   --term-bg: #fcfcfc;
@@ -54,6 +65,15 @@
   --green: #3fbf6f;
   --orange: #f0a030;
   --red: #ff6670;
+  /* derived: the boards are light only */
+  --caption: #a1a1a6;
+  --row-hover: #2a2a2d;
+  --on-select: #c2c2c7;
+  --field-border: #4a4a50;
+  --box-border: #75757d;
+  --composer: #232326;
+  --diff-added: #5fc47f;
+  --diff-deleted: #ff8178;
   --hit: rgba(255, 200, 0, 0.14);
   --term-bg: #1c1c1f;
   --shadow: 0 10px 32px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.4);

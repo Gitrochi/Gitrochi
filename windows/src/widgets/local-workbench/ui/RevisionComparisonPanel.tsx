@@ -1,17 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeftRight, ArrowUpDown, ChevronDown, ChevronRight, Cloud, Folder, GitBranch, Search, Tag as TagIcon } from "@/shared/icons";
+import { ArrowLeftRight, ArrowUpDown, ChevronDown, Cloud, GitBranch, Search, Tag as TagIcon } from "@/shared/icons";
 import { Equal, TriangleAlert } from "lucide-react";
-import { commitCountLabel, comparisonCommitLimit, comparisonKey, comparisonReferences, defaultRebaseBase, type FileChange, fileDir, fileName, referenceMatches, StatusBadge, treeRows, validRevisionInput, type ComparisonReference } from "@/entities/git";
+import { commitCountLabel, comparisonCommitLimit, comparisonKey, comparisonReferences, defaultRebaseBase, type FileChange, referenceMatches, renameCaption, StatusBadge, treeRows, validRevisionInput, type ComparisonReference } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
 import { listWhen, useObserve } from "@/shared/lib";
 import { externalEditors, git } from "@/shared/platform";
 import { ipc } from "@/shared/api";
 import { joinPath } from "@/shared/config";
-import { Button, Checkbox, FileViewToggle, HostedListEmpty, LineStatText, requestFileView, Spinner, StatusPill, useFileViewMode } from "@/shared/ui";
+import { Button, Checkbox, FileFolderRow, fileIndent, FileRow, FileViewToggle, HostedListEmpty, requestFileView, Spinner, StatusPill, useFileViewMode } from "@/shared/ui";
 import { CodeChangesView, type CodeWorkingFileEditors } from "./CodeChangesView";
 import type { RepositoryEditorSource } from "./CodeExternalEditors";
-import { shortFolder } from "../lib/code-history";
 import "./local-workbench.css";
 
 type Read = (args: string[], repo: string) => Promise<string>;
@@ -110,18 +109,11 @@ export function RevisionComparisonPanel({ store, read = defaultRead, editorSourc
     return () => window.removeEventListener("keydown", onKey);
   });
 
-  const fileRow = (file: FileChange, depth: number | null) => {
-    const on = open?.path === file.path, stat = result?.stats[file.path];
-    return <button type="button" key={file.path} className={`compare-file${on ? " on" : ""}`} aria-current={on || undefined} style={{ paddingLeft: depth == null ? 6 : 24 + depth * 14 }} data-tip={file.oldPath ? `${file.oldPath} → ${file.path}` : file.path} onClick={() => setSelected(file.path)}>
-      <StatusBadge kind={file.kind}/>
-      {/* a rename's old name gives way first; the file name is never cut */}
-      {file.oldPath && file.oldPath !== file.path && <span className="compare-file-from">{fileName(file.oldPath)} →</span>}
-      <span className="compare-file-name">{fileName(file.path)}</span>
-      {depth == null && <span className="compare-file-from" title={fileDir(file.path)}>{shortFolder(fileDir(file.path))}</span>}
-      <span className="spacer"/>
-      {stat && <LineStatText added={stat.added ?? 0} deleted={stat.deleted ?? 0}/>}
-    </button>;
-  };
+  // the shared file row: the folder gives way first, then the counts, and the name last
+  const fileRow = (file: FileChange, depth: number | null) => (
+    <FileRow key={file.path} path={file.path} oldPath={file.oldPath} badge={<StatusBadge kind={file.kind}/>} rename={renameCaption(file)} selected={open?.path === file.path} showFolder={depth == null} indent={fileIndent(depth)}
+      stat={result?.stats[file.path]} open={() => setSelected(file.path)}/>
+  );
 
   const filesView = () => !result ? null : !result.files.length
     ? <HostedListEmpty icon={<Equal size={24}/>} title={t("No differences between these revisions.")}/>
@@ -130,11 +122,8 @@ export function RevisionComparisonPanel({ store, read = defaultRead, editorSourc
         <div className="compare-tree-head"><strong>{t("Changed files")}</strong><FileViewToggle view={requestFileView}/></div>
         <div className="compare-tree-rows" role="group">
           {mode === "tree" ? treeRows(result.files, collapsed).map((row) => row.kind === "folder"
-            ? <button type="button" key={row.id} className="compare-folder" aria-expanded={!collapsed.has(row.path)} style={{ paddingLeft: 6 + row.depth * 14 }} onClick={() => setCollapsed((value) => { const next = new Set(value); if (!next.delete(row.path)) next.add(row.path); return next; })}>
-              {collapsed.has(row.path) ? <ChevronRight size={12}/> : <ChevronDown size={12}/>}<Folder size={13}/><span className="ellipsis">{row.name}</span>
-              {/* a folder holding a single file needs no count */}
-              {row.files.length > 1 && <StatusPill tone="neutral">{row.files.length}</StatusPill>}
-            </button>
+            ? <FileFolderRow key={row.id} name={row.name} count={row.files.length} depth={row.depth} expanded={!collapsed.has(row.path)}
+              toggle={() => setCollapsed((value) => { const next = new Set(value); if (!next.delete(row.path)) next.add(row.path); return next; })}/>
             : fileRow(row.change, row.depth))
             : result.files.map((file) => fileRow(file, null))}
         </div>

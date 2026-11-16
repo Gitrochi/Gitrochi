@@ -267,7 +267,6 @@
 "%@\nThe folder is deleted; the branch and commits stay. git refuses if there are uncommitted changes." = "%1$@\nThư mục sẽ bị xóa; nhánh và commit vẫn được giữ. git sẽ từ chối nếu có thay đổi chưa commit.";
 "%@\nUncommitted changes are deleted too." = "%1$@\nCác thay đổi chưa commit cũng sẽ bị xóa.";
 "%@  (opened here)" = "%1$@  (đang mở ở đây)";
-"%@ (chosen by a gitch rule)" = "%1$@ (chọn theo quy tắc gitch)";
 "%@ (current)" = "%1$@ (hiện tại)";
 "%@ (none)" = "%1$@ (không có)";
 "%@ declined this request. Try changing the content and try again." = "%1$@ đã từ chối yêu cầu này. Hãy thử thay đổi nội dung rồi thử lại.";
@@ -321,7 +320,6 @@
 "Allow direct push (gitch)" = "Cho phép push trực tiếp (gitch)";
 "Allow writing to the working folder" = "Cho phép ghi vào thư mục làm việc";
 "Allowed to fail" = "Được phép thất bại";
-"Amend previous commit" = "Amend commit trước";
 "Amend: combine into the last commit" = "Amend: gộp vào commit gần nhất";
 "An app for viewing and working with Git repositories as a graph · MIT" = "Ứng dụng để xem và làm việc với kho lưu trữ Git dưới dạng đồ thị · MIT";
 "An empty file was deleted" = "Đã xóa một tệp trống";
@@ -361,7 +359,6 @@
 "Branch to check out" = "Nhánh cần checkout";
 "Check again with fetch" = "Kiểm tra lại có fetch";
 "Check this repository with gitch again" = "Kiểm tra lại kho này bằng gitch";
-"Click to use another gitch account for this repository." = "Nhấp để dùng tài khoản gitch khác cho kho này.";
 "Commit authors are fine" = "Tác giả commit đều đúng";
 "Couldn't find gitch inside Gitrochi." = "Không tìm thấy gitch trong Gitrochi.";
 "Couldn't move Gitrochi to the Applications folder" = "Không thể chuyển Gitrochi vào thư mục Ứng dụng";
@@ -440,7 +437,6 @@
 "Clear search (Esc)" = "Xóa tìm kiếm (Esc)";
 "Clears the path you chose and finds it automatically again" = "Xóa đường dẫn bạn đã chọn và tự động tìm lại";
 "Clears the staging area, then stages and commits each group from the top." = "Làm trống vùng staging, rồi stage và commit từng nhóm từ trên xuống.";
-"Click to see the diff in the center" = "Nhấp để xem diff ở khung giữa";
 "Click to select this line (Shift: range) — you can stage only the selected lines" = "Nhấp để chọn dòng này (Shift: chọn khoảng) — bạn có thể chỉ stage các dòng đã chọn";
 "Clone repository" = "Clone kho lưu trữ";
 "Clone repository…" = "Clone kho lưu trữ…";
@@ -685,6 +681,7 @@
 "Locate" = "Chỉ định";
 "Locate…" = "Chỉ định…";
 "Location" = "Vị trí";
+"Locked worktree" = "Worktree bị khóa";
 "Locked to %@" = "Đã khóa với %1$@";
 "Looks for a GitHub profile, then a connected self-hosted GitLab profile, then Gravatar, and uses initials if none is found. An email hash is sent to Gravatar." = "Tìm ảnh hồ sơ GitHub, rồi hồ sơ GitLab tự host đã kết nối, rồi Gravatar, và dùng chữ cái đầu tên nếu không tìm thấy. Mã băm email sẽ được gửi tới Gravatar.";
 "Manual" = "Thủ công";
@@ -727,7 +724,6 @@
 "New branch name" = "Tên nhánh mới";
 "New branch…" = "Nhánh mới…";
 "New file" = "Tệp mới";
-"New file (untracked)" = "Tệp mới (chưa theo dõi)";
 "New pull/merge request…" = "Pull/merge request mới…";
 "New session in the same place" = "Phiên mới ở cùng vị trí";
 "New tab" = "Tab mới";
@@ -770,7 +766,6 @@
 "Not found (404). Check that the token has access to the repository." = "Không tìm thấy (404). Hãy kiểm tra xem token có quyền truy cập kho lưu trữ không.";
 "Not found — locate it in the Tools tab" = "Không tìm thấy — hãy chỉ định trong tab Công cụ";
 "Not installed" = "Chưa cài";
-"Not managed by gitch" = "Không do gitch quản lý";
 "Nothing to draw" = "Không có gì để vẽ";
 "Off" = "Tắt";
 "On" = "Bật";
@@ -827,7 +822,6 @@
 "Pruning worktrees…" = "Đang dọn dẹp worktree…";
 "Pulling…" = "Đang pull…";
 "Pushes %lld unpushed commits to the remote." = "Push %1$lld commit chưa push lên remote.";
-"Pushes as %@" = "Push dưới tên %1$@";
 "Pushes the current branch to %@ before creating." = "Push nhánh hiện tại lên %1$@ trước khi tạo.";
 "Pushes the current branch to the remote (no commits to push right now)." = "Push nhánh hiện tại lên remote (hiện không có commit nào để push).";
 "Pushes the current branch to the remote for the first time and sets up tracking." = "Push nhánh hiện tại lên remote lần đầu và thiết lập theo dõi.";
@@ -957,7 +951,6 @@
 "Stage selected lines (%lld)" = "Stage các dòng đã chọn (%1$lld)";
 "Staged" = "Đã stage";
 "Staged and unstaged changes and untracked new files will all be lost. This can't be undone." = "Mọi thay đổi đã stage, chưa stage và các tệp mới chưa theo dõi đều sẽ bị mất. Không thể hoàn tác thao tác này.";
-"Staged files" = "Tệp đã stage";
 "Stages only the selected lines" = "Chỉ stage các dòng đã chọn";
 "Stages only this hunk (click changed lines to stage only those)" = "Chỉ stage hunk này (nhấp vào các dòng thay đổi để chỉ stage những dòng đó)";
 "Staging…" = "Đang stage…";
@@ -975,7 +968,6 @@
 "Subject line only, no body" = "Chỉ dòng tiêu đề, không có phần thân";
 "Subject within 50 characters" = "Tiêu đề không quá 50 ký tự";
 "Succeeded" = "Thành công";
-"Summary (required)" = "Tóm tắt (bắt buộc)";
 "Syncs the current branch with the remote (no commits to pull right now)." = "Đồng bộ nhánh hiện tại với remote (hiện không có commit nào để pull).";
 "System" = "Hệ thống";
 "System follows your macOS setting (light, dark or auto). The graph and terminal change with it." = "Hệ thống: theo cài đặt macOS của bạn (sáng, tối hoặc tự động). Đồ thị và terminal cũng thay đổi theo.";
@@ -1054,7 +1046,6 @@
 "Unpin" = "Bỏ ghim";
 "Unstage all" = "Unstage tất cả";
 "Unstage selected lines (%lld)" = "Unstage các dòng đã chọn (%1$lld)";
-"Unstaged files" = "Tệp chưa stage";
 "Unstages only the selected lines" = "Chỉ unstage các dòng đã chọn";
 "Unstages this hunk" = "Unstage hunk này";
 "Unstaging…" = "Đang unstage…";
@@ -1085,7 +1076,6 @@
 "Waiting for deployment approval: %@" = "Đang chờ phê duyệt triển khai: %1$@";
 "Waiting for input" = "Đang chờ nhập liệu";
 "Waiting to be run manually" = "Đang chờ chạy thủ công";
-"Warning" = "Cảnh báo";
 "What to do with this commit" = "Xử lý commit này thế nào";
 "What would you like to do?" = "Bạn muốn làm gì?";
 "What would you like to do? If there are conflicts, you can resolve them on the right." = "Bạn muốn làm gì? Nếu có xung đột, bạn có thể giải quyết ở bên phải.";
@@ -1118,9 +1108,6 @@
 "git %@ failed" = "git %1$@ thất bại";
 "git refuses to delete a branch with unmerged commits. Use 'Force delete' in that case." = "git từ chối xóa nhánh có commit chưa merge. Khi đó hãy dùng 'Buộc xóa'.";
 "gitch backups" = "Bản sao lưu của gitch";
-"gitch checks before commit and push" = "Kiểm tra của gitch trước khi commit và push";
-"gitch commands for this repository" = "Lệnh gitch cho kho này";
-"gitch doesn't know which account this repository uses. Lock it with gitch use <account>." = "gitch không biết kho này dùng tài khoản nào. Khóa nó bằng gitch use <tài khoản>.";
 "gitch found nothing to draw for %@." = "gitch không tìm thấy gì để vẽ cho %1$@.";
 "gitch graph changes: files that are often committed together, and how often each one changes." = "gitch graph changes: các tệp thường được commit cùng nhau và số lần thay đổi của từng tệp.";
 "gitch graph check reads its rules from .gitch/graph.rules in this repository. Create the file with commented-out examples (gitch graph check --init) and open it?" = "gitch graph check đọc quy tắc từ .gitch/graph.rules trong kho lưu trữ này. Tạo tệp với các ví dụ ở dạng chú thích (gitch graph check --init) rồi mở nó?";
@@ -1134,8 +1121,6 @@
 "gitch saves a backup before pull, up, sync, fix, undo and amend, and keeps the 30 most recent." = "gitch lưu một bản sao lưu trước pull, up, sync, fix, undo và amend, và giữ 30 bản gần nhất.";
 "gitch sets the commit author to %@ and points origin (and upstream) at %@'s SSH alias, then locks the repository to it." = "gitch đặt tác giả commit là %1$@, trỏ origin (và upstream) tới bí danh SSH của %2$@, rồi khóa kho với tài khoản đó.";
 "gitch stops requiring %@ for commits and pushes here. The commit author stays as it is." = "gitch sẽ không còn bắt buộc %1$@ khi commit và push ở đây. Tác giả commit vẫn giữ nguyên.";
-"gitch sync: brings this branch up to date with the original repository (upstream)." = "gitch sync: đưa nhánh này lên ngang kho gốc (upstream).";
-"gitch up: moves this branch onto the latest default branch, or merges it if the branch is already pushed. A backup is saved first." = "gitch up: đặt nhánh này lên nhánh mặc định mới nhất, hoặc gộp nếu nhánh đã được push. Trước đó sẽ lưu một bản sao lưu.";
 "gitch won't check authors, secrets or pushes in this repository until you turn it back on." = "gitch sẽ không kiểm tra tác giả, dữ liệu bí mật hay push trong kho này cho đến khi bạn bật lại.";
 "… The diff is too long; only the beginning is shown" = "… Diff quá dài; chỉ hiển thị phần đầu";
 "… show %lld more lines" = "… hiện thêm %1$lld dòng";
@@ -2219,3 +2204,22 @@
 "Unstage line" = "Bỏ stage dòng";
 "Hide changes and show the graph" = "Ẩn thay đổi và hiện đồ thị";
 "Sessions started here run in the terminal tabs below; click one to go to its terminal." = "Các phiên bắt đầu từ đây chạy trong các tab terminal bên dưới; nhấp vào một phiên để chuyển đến terminal của phiên đó.";
+"Unstaged" = "Chưa stage";
+"Untracked" = "Chưa theo dõi";
+"Summary" = "Tóm tắt";
+"Too large" = "Quá lớn";
+"copied from %@" = "sao chép từ %@";
+"Commit 1 file" = "Commit 1 tệp";
+"Commit %lld files" = "Commit %lld tệp";
+"Couldn't write the commit message" = "Không thể viết thông điệp commit";
+"gitch stopped this commit. Run gitch doctor in the terminal." = "gitch đã chặn commit này. Hãy chạy gitch doctor trong terminal.";
+"Amend previous commit" = "Amend commit trước";
+"Split into commits…" = "Chia thành nhiều commit…";
+"AI message" = "Thông điệp AI";
+"Commit summary" = "Tóm tắt commit";
+"Commit description" = "Mô tả commit";
+"Summary character count" = "Số ký tự tóm tắt";
+"Resolve conflicts before committing." = "Hãy giải quyết xung đột trước khi commit.";
+"Stage the files you want to include." = "Hãy stage các tệp bạn muốn đưa vào.";
+"Write a summary to enable commit." = "Hãy viết tóm tắt để có thể commit.";
+"Conflicted" = "Xung đột";

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { PullRequest } from "@/entities/git";
 import type { PullRequestReview, ReviewComment } from "@/entities/hosting";
 import {
-  branchLabel, checkGroups, checkJob, checksBadge, commentCount, branchSummary, mergeReason, requestSummaryCard, requestToOpen, folderLabel, headerInOneRow, isCompact, isThisBranch, linkedIssues,
+  branchLabel, checkGroups, checkJob, checksBadge, commentCount, branchSummary, mergeReason, requestSummaryCard, requestToOpen, headerInOneRow, isCompact, isThisBranch, linkedIssues,
   reviewRequestedCount, sorted, splitAllowed, threadCount, treeWidth, viewedKey, withViewed,
 } from "@/widgets/inspector/lib/pull-request-page";
 
@@ -84,13 +84,6 @@ describe("Pull requests page", () => {
     expect(branchLabel(request(1, { source: "fix/terminal-focus" }), "topic")).toBe("fix/terminal-focus → main");
     expect(branchLabel(request(1, { fromFork: true }), "topic")).toBe("topic → main (fork)");
     expect(branchLabel(request(1), null)).toBe("topic → main");
-  });
-
-  it("shortens a folder from the start by whole segments", () => {
-    expect(folderLabel("README.md")).toBe("");
-    expect(folderLabel("docs/search.md")).toBe("docs");
-    expect(folderLabel("windows/tests/search.test.ts")).toBe("windows/tests");
-    expect(folderLabel("macos/Sources/Views/Search/SearchPanel.swift")).toBe("…/Views/Search");
   });
 
   it("groups checks and counts only what needs attention on the tab", () => {

@@ -53,7 +53,7 @@ export async function sharedStackSelfTest(): Promise<[boolean, string]> {
   } finally { root.unmount(); host.remove(); }
 }
 
-/** Exercise pane cleanup alongside the real composer, impact card and empty state. */
+/** Exercise pane cleanup alongside the real composer and empty state. */
 async function workingChangesTransitions(host: HTMLElement, root: Root): Promise<[boolean, unknown]> {
   const store = new RepoStore();
   store.selection = { kind: "wip" };
@@ -81,10 +81,12 @@ async function workingChangesTransitions(host: HTMLElement, root: Root): Promise
       store.changed();
       const expected = Number(status.staged.length > 0) + Number(status.unstaged.length > 0);
       const panes = () => [...host.querySelectorAll<HTMLElement>(".shared-pane")];
-      if (!await until(() => panes().length === expected && !!host.querySelector(".panel-scroll")))
+      // a clean tree draws the empty state where the lists were
+      const body = expected ? ".panel-scroll" : ".working-changes > .hosted-empty";
+      if (!await until(() => panes().length === expected && !!host.querySelector(body)))
         return [false, `Working Changes did not survive ${mode} ${width}×${height}, panes=${expected}`];
       await pause();
-      const measured = host.querySelector<HTMLElement>(".panel-scroll")!;
+      const measured = host.querySelector<HTMLElement>(body)!;
       const before = measured.getBoundingClientRect().height;
       const heights = panes().map((pane) => pane.clientHeight);
       if (expected === 2 && heights.some((value) => value < 96)) return [false, `Pane floors were lost: ${heights}`];
@@ -92,7 +94,7 @@ async function workingChangesTransitions(host: HTMLElement, root: Root): Promise
         return [false, `Bounded panes did not share the column: ${heights}`];
       if (mode === "natural" && panes().some((pane) => pane.scrollHeight > pane.clientHeight + 1))
         return [false, `Natural panes were constrained: ${heights}`];
-      if (!expected && !host.querySelector(".card")) return [false, "The clean working tree card did not render"];
+      if (!expected && (host.querySelector(".card") || !host.querySelector(".hosted-empty-title"))) return [false, "The clean working tree must be the empty state, not a card"];
       await pause();
       if (!measured.isConnected || Math.abs(measured.getBoundingClientRect().height - before) > 1)
         return [false, `Working Changes height did not settle: ${mode} ${width}×${height}, panes=${expected}`];

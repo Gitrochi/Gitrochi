@@ -49,19 +49,6 @@ enum RepositoryCodeHistory {
         count > limit ? "\(limit)+" : String(count)
     }
 
-    /// A folder shortened from its start by whole segments ("…/Views/Search"), and nothing when even its last
-    /// segment does not fit (docs/design.md, Text)
-    static func shortFolder(_ folder: String, limit: Int = 20) -> String {
-        if folder.count <= limit { return folder }
-        var parts = folder.split(separator: "/")
-        while !parts.isEmpty {
-            parts.removeFirst()
-            let short = "…/" + parts.joined(separator: "/")
-            if !parts.isEmpty && short.count <= limit { return short }
-        }
-        return ""
-    }
-
     /// The name beside the short hash on the revision button: the branch for HEAD, what was typed otherwise, and
     /// nothing when a hash was typed
     static func revisionName(input: String, revision: String, branch: String?) -> String? {

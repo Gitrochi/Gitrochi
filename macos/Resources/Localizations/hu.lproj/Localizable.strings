@@ -267,7 +267,6 @@
 "%@\nThe folder is deleted; the branch and commits stay. git refuses if there are uncommitted changes." = "%1$@\nA mappa törlődik; az ág és a commitok megmaradnak. Nem commitolt módosítások esetén a git megtagadja a műveletet.";
 "%@\nUncommitted changes are deleted too." = "%1$@\nA nem commitolt módosítások is törlődnek.";
 "%@  (opened here)" = "%1$@  (itt megnyitva)";
-"%@ (chosen by a gitch rule)" = "%1$@ (gitch-szabály választotta)";
 "%@ (current)" = "%1$@ (aktuális)";
 "%@ (none)" = "%1$@ (nincs)";
 "%@ declined this request. Try changing the content and try again." = "%1$@ elutasította ezt a kérést. Módosítsa a tartalmat, és próbálja újra.";
@@ -324,7 +323,6 @@
 "Allow writing to the working folder" = "Írás engedélyezése a munkamappába";
 "Allowed to fail" = "Sikertelenség megengedett";
 "Amend commit" = "Commit módosítása";
-"Amend previous commit" = "Előző commit módosítása";
 "Amend: combine into the last commit" = "Amend: beolvasztás az utolsó commitba";
 "An app for viewing and working with Git repositories as a graph · MIT" = "Alkalmazás Git-tárolók gráfként való megtekintéséhez és kezeléséhez · MIT";
 "An empty file was deleted" = "Üres fájl törölve";
@@ -364,7 +362,6 @@
 "Branch to check out" = "Ág, amelyre átvált";
 "Check again with fetch" = "Újraellenőrzés fetch-csel";
 "Check this repository with gitch again" = "A tároló újbóli ellenőrzése gitch-csel";
-"Click to use another gitch account for this repository." = "Kattintson, ha másik gitch-fiókot használna ehhez a tárolóhoz.";
 "Commit authors are fine" = "A commitok szerzője rendben van";
 "Couldn't find gitch inside Gitrochi." = "A gitch nem található a Gitrochiben.";
 "Couldn't move Gitrochi to the Applications folder" = "Nem sikerült áthelyezni a Gitrochit az Alkalmazások mappába";
@@ -443,7 +440,6 @@
 "Clear search (Esc)" = "Keresés törlése (Esc)";
 "Clears the path you chose and finds it automatically again" = "Törli a kiválasztott útvonalat, és újra automatikusan keresi meg";
 "Clears the staging area, then stages and commits each group from the top." = "Kiüríti az előkészítési területet, majd felülről kezdve csoportonként előkészíti és commitolja a fájlokat.";
-"Click to see the diff in the center" = "Kattintással középen megtekintheti a diffet";
 "Click to select this line (Shift: range) — you can stage only the selected lines" = "Kattintással kijelölheti a sort (Shift: tartomány) — csak a kijelölt sorokat is előkészítheti";
 "Clone" = "Klónozás";
 "Clone repository" = "Tároló klónozása";
@@ -698,6 +694,7 @@
 "Locate" = "Tallózás";
 "Locate…" = "Tallózás…";
 "Location" = "Hely";
+"Locked worktree" = "Zárolt worktree";
 "Locked to %@" = "Zárolva: %1$@";
 "Looks for a GitHub profile, then a connected self-hosted GitLab profile, then Gravatar, and uses initials if none is found. An email hash is sent to Gravatar." = "Először GitHub-profilt keres, majd egy csatlakoztatott saját üzemeltetésű GitLab-profilt, végül a Gravatarban; ha egyik sem található, monogramot használ. A Gravatar az e-mail-cím hash-ét kapja meg.";
 "Manual" = "Kézi";
@@ -741,7 +738,6 @@
 "New branch name" = "Új ág neve";
 "New branch…" = "Új ág…";
 "New file" = "Új fájl";
-"New file (untracked)" = "Új fájl (nem követett)";
 "New pull/merge request…" = "Új pull/merge request…";
 "New session in the same place" = "Új munkamenet ugyanott";
 "New tab" = "Új lap";
@@ -784,7 +780,6 @@
 "Not found (404). Check that the token has access to the repository." = "Nem található (404). Ellenőrizze, hogy a token hozzáfér-e a tárolóhoz.";
 "Not found — locate it in the Tools tab" = "Nem található — válassza ki az Eszközök lapon";
 "Not installed" = "Nincs telepítve";
-"Not managed by gitch" = "Nem a gitch kezeli";
 "Nothing to draw" = "Nincs mit megrajzolni";
 "Off" = "Ki";
 "On" = "Be";
@@ -843,7 +838,6 @@
 "Pulling…" = "Pull folyamatban…";
 "Push tag" = "Címke feltöltése";
 "Pushes %lld unpushed commits to the remote." = "Feltölti a még fel nem töltött commitokat (%1$lld) a távoli tárolóba.";
-"Pushes as %@" = "Push mint %1$@";
 "Pushes the current branch to %@ before creating." = "Létrehozás előtt feltölti az aktuális ágat ide: %1$@.";
 "Pushes the current branch to the remote (no commits to push right now)." = "Feltölti az aktuális ágat a távoli tárolóba (jelenleg nincs feltöltendő commit).";
 "Pushes the current branch to the remote for the first time and sets up tracking." = "Első alkalommal feltölti az aktuális ágat a távoli tárolóba, és beállítja a követést.";
@@ -977,7 +971,6 @@
 "Stage selected lines (%lld)" = "Kijelölt sorok előkészítése (%1$lld)";
 "Staged" = "Előkészítve";
 "Staged and unstaged changes and untracked new files will all be lost. This can't be undone." = "Az előkészített és nem előkészített módosítások, valamint a nem követett új fájlok mind elvesznek. Ez nem vonható vissza.";
-"Staged files" = "Előkészített fájlok";
 "Stages only the selected lines" = "Csak a kijelölt sorokat készíti elő";
 "Stages only this hunk (click changed lines to stage only those)" = "Csak ezt a blokkot készíti elő (a módosított sorokra kattintva csak azokat)";
 "Staging…" = "Előkészítés…";
@@ -995,7 +988,6 @@
 "Subject line only, no body" = "Csak tárgysor, törzs nélkül";
 "Subject within 50 characters" = "A tárgy legfeljebb 50 karakter";
 "Succeeded" = "Sikeres";
-"Summary (required)" = "Összefoglaló (kötelező)";
 "Syncs the current branch with the remote (no commits to pull right now)." = "Szinkronizálja az aktuális ágat a távoli tárolóval (jelenleg nincs lehúzandó commit).";
 "System" = "Rendszer";
 "System follows your macOS setting (light, dark or auto). The graph and terminal change with it." = "A Rendszer beállítás a macOS beállítását követi (világos, sötét vagy automatikus). A gráf és a terminál is ennek megfelelően változik.";
@@ -1078,7 +1070,6 @@
 "Unstage all" = "Összes előkészítés visszavonása";
 "Unstage hunk" = "Blokk előkészítésének visszavonása";
 "Unstage selected lines (%lld)" = "Kijelölt sorok előkészítésének visszavonása (%1$lld)";
-"Unstaged files" = "Nem előkészített fájlok";
 "Unstages only the selected lines" = "Csak a kijelölt sorok előkészítését vonja vissza";
 "Unstages this hunk" = "Visszavonja a blokk előkészítését";
 "Unstaging…" = "Előkészítés visszavonása…";
@@ -1109,7 +1100,6 @@
 "Waiting for deployment approval: %@" = "Üzembe helyezés jóváhagyására vár: %1$@";
 "Waiting for input" = "Bemenetre vár";
 "Waiting to be run manually" = "Kézi futtatásra vár";
-"Warning" = "Figyelmeztetés";
 "What to do with this commit" = "Mi történjen ezzel a committal";
 "What would you like to do?" = "Mit szeretne tenni?";
 "What would you like to do? If there are conflicts, you can resolve them on the right." = "Mit szeretne tenni? Ha ütközések vannak, a jobb oldalon feloldhatja őket.";
@@ -1143,9 +1133,6 @@
 "git %@ failed" = "Sikertelen: git %1$@";
 "git refuses to delete a branch with unmerged commits. Use 'Force delete' in that case." = "A git nem töröl olyan ágat, amelyben nem egyesített commitok vannak. Ilyenkor használja a 'Kényszerített törlés' lehetőséget.";
 "gitch backups" = "gitch biztonsági mentések";
-"gitch checks before commit and push" = "gitch-ellenőrzések commit és push előtt";
-"gitch commands for this repository" = "gitch-parancsok ehhez a tárolóhoz";
-"gitch doesn't know which account this repository uses. Lock it with gitch use <account>." = "A gitch nem tudja, melyik fiókot használja ez a tároló. Zárolja a gitch use <fiók> paranccsal.";
 "gitch found nothing to draw for %@." = "%1$@: a gitch nem talált megrajzolnivalót.";
 "gitch graph changes: files that are often committed together, and how often each one changes." = "gitch graph changes: a gyakran együtt commitolt fájlok, és hogy az egyes fájlok milyen gyakran változnak.";
 "gitch graph check reads its rules from .gitch/graph.rules in this repository. Create the file with commented-out examples (gitch graph check --init) and open it?" = "A gitch graph check a tároló .gitch/graph.rules fájljából olvassa a szabályokat. Létrehozza a fájlt kikommentezett példákkal (gitch graph check --init), és megnyitja?";
@@ -1159,8 +1146,6 @@
 "gitch saves a backup before pull, up, sync, fix, undo and amend, and keeps the 30 most recent." = "A gitch a pull, up, sync, fix, undo és amend előtt biztonsági mentést készít, és a 30 legutóbbit megtartja.";
 "gitch sets the commit author to %@ and points origin (and upstream) at %@'s SSH alias, then locks the repository to it." = "A gitch a commitok szerzőjét %1$@ értékre állítja, az origin (és upstream) címet a(z) %2$@ SSH-aliasára irányítja, majd a tárolót ehhez a fiókhoz zárolja.";
 "gitch stops requiring %@ for commits and pushes here. The commit author stays as it is." = "A gitch itt többé nem követeli meg a(z) %1$@ fiókot a commitokhoz és a pushhoz. A commitok szerzője nem változik.";
-"gitch sync: brings this branch up to date with the original repository (upstream)." = "gitch sync: az ágat az eredeti tároló (upstream) legfrissebb állapotára hozza.";
-"gitch up: moves this branch onto the latest default branch, or merges it if the branch is already pushed. A backup is saved first." = "gitch up: ezt az ágat a legfrissebb alapértelmezett ágra helyezi, vagy összefésüli, ha már pusholva van. Előtte biztonsági mentést készít.";
 "gitch won't check authors, secrets or pushes in this repository until you turn it back on." = "A gitch nem ellenőrzi a szerzőt, a titkos adatokat és a pusht ebben a tárolóban, amíg vissza nem kapcsolja.";
 "tag" = "címke";
 "… The diff is too long; only the beginning is shown" = "… A diff túl hosszú; csak az eleje látható";
@@ -2243,3 +2228,22 @@
 "Unstage line" = "Sor előkészítésének visszavonása";
 "Hide changes and show the graph" = "Módosítások elrejtése és a gráf megjelenítése";
 "Sessions started here run in the terminal tabs below; click one to go to its terminal." = "Az itt indított munkamenetek az alsó terminál lapjain futnak; kattintson egyre, hogy a termináljára ugorjon.";
+"Unstaged" = "Nincs előkészítve";
+"Untracked" = "Nem követett";
+"Summary" = "Összefoglaló";
+"Too large" = "Túl nagy";
+"copied from %@" = "másolva innen: %@";
+"Commit 1 file" = "1 fájl commitolása";
+"Commit %lld files" = "%lld fájl commitolása";
+"Couldn't write the commit message" = "Nem sikerült megírni a commit üzenetét";
+"gitch stopped this commit. Run gitch doctor in the terminal." = "A gitch leállította ezt a commitot. Futtassa a gitch doctor parancsot a terminálban.";
+"Amend previous commit" = "Előző commit módosítása";
+"Split into commits…" = "Commitokra bontás…";
+"AI message" = "AI-üzenet";
+"Commit summary" = "Commit összefoglalója";
+"Commit description" = "Commit leírása";
+"Summary character count" = "Az összefoglaló karakterszáma";
+"Resolve conflicts before committing." = "Commitolás előtt oldja fel az ütközéseket.";
+"Stage the files you want to include." = "Készítse elő a belefoglalandó fájlokat.";
+"Write a summary to enable commit." = "Írjon összefoglalót a commitoláshoz.";
+"Conflicted" = "Ütköző";

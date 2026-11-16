@@ -1,6 +1,6 @@
 /** 브라우저 점검: npm run dev 후 /tests/commit-impact-preview.html. 저장소나 네이티브 호출은 실행하지 않는다. */
 import "../src/app/styles/global.css";
-import "../src/widgets/inspector/ui/inspector.css";
+import "../src/features/work-validation/ui/work-validation.css";
 import { createRoot } from "react-dom/client";
 import { useState } from "react";
 import { gitch, type GraphReview } from "../src/entities/gitch";
@@ -8,7 +8,7 @@ import { RepoStore } from "../src/entities/repo";
 import { ipc } from "../src/shared/api";
 import { loadLanguage } from "../src/shared/i18n";
 import { useObserve } from "../src/shared/lib";
-import { CommitImpactPanel } from "../src/widgets/inspector/ui/CommitImpactPanel";
+import { CommitImpactPanel } from "../src/features/work-validation/ui/CommitImpactPanel";
 
 await loadLanguage("ko");
 const store = new RepoStore();

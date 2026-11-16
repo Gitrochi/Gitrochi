@@ -268,7 +268,6 @@
 "%@\nThe folder is deleted; the branch and commits stay. git refuses if there are uncommitted changes." = "%1$@\nПапку буде видалено; гілка й коміти залишаться. Якщо є незакомічені зміни, git відмовиться це робити.";
 "%@\nUncommitted changes are deleted too." = "%1$@\nНезакомічені зміни теж буде видалено.";
 "%@  (opened here)" = "%1$@  (відкрито тут)";
-"%@ (chosen by a gitch rule)" = "%1$@ (вибрано правилом gitch)";
 "%@ (current)" = "%1$@ (поточна)";
 "%@ (none)" = "%1$@ (немає)";
 "%@ declined this request. Try changing the content and try again." = "%1$@ відхилив цей запит. Змініть вміст і спробуйте ще раз.";
@@ -326,7 +325,6 @@
 "Allow writing to the working folder" = "Дозволити запис у робочу папку";
 "Allowed to fail" = "Збій допустимий";
 "Amend commit" = "Доповнити коміт";
-"Amend previous commit" = "Доповнити попередній коміт";
 "Amend: combine into the last commit" = "Amend: додати до останнього коміту";
 "An app for viewing and working with Git repositories as a graph · MIT" = "Застосунок, щоб переглядати репозиторії Git у вигляді графа й працювати з ними · MIT";
 "An empty file was deleted" = "Видалено порожній файл";
@@ -367,7 +365,6 @@
 "Branch to check out" = "Гілка для переходу";
 "Check again with fetch" = "Перевірити знову з fetch";
 "Check this repository with gitch again" = "Знову перевіряти цей репозиторій через gitch";
-"Click to use another gitch account for this repository." = "Натисніть, щоб вибрати для цього репозиторію інший обліковий запис gitch.";
 "Commit authors are fine" = "Автори комітів правильні";
 "Couldn't find gitch inside Gitrochi." = "Не вдалося знайти gitch у Gitrochi.";
 "Couldn't move Gitrochi to the Applications folder" = "Не вдалося перемістити Gitrochi в папку «Програми»";
@@ -446,7 +443,6 @@
 "Clear search (Esc)" = "Очистити пошук (Esc)";
 "Clears the path you chose and finds it automatically again" = "Скидає вибраний шлях і знову шукає автоматично";
 "Clears the staging area, then stages and commits each group from the top." = "Очищає індекс, а потім по черзі згори індексує й комітить кожну групу.";
-"Click to see the diff in the center" = "Клацніть, щоб побачити зміни в центрі";
 "Click to select this line (Shift: range) — you can stage only the selected lines" = "Клацніть, щоб вибрати цей рядок (Shift — діапазон): можна індексувати лише вибрані рядки";
 "Clone" = "Клонувати";
 "Clone repository" = "Клонувати репозиторій";
@@ -707,6 +703,7 @@
 "Locate" = "Вказати";
 "Locate…" = "Вказати…";
 "Location" = "Розташування";
+"Locked worktree" = "Заблоковане робоче дерево";
 "Locked to %@" = "Закріплено за %1$@";
 "Looks for a GitHub profile, then a connected self-hosted GitLab profile, then Gravatar, and uses initials if none is found. An email hash is sent to Gravatar." = "Шукає профіль GitHub, потім профіль у підключеному GitLab на власному сервері, потім Gravatar; якщо нічого не знайдено, показує ініціали. До Gravatar надсилається хеш email.";
 "Manual" = "Вручну";
@@ -750,7 +747,6 @@
 "New branch name" = "Назва нової гілки";
 "New branch…" = "Нова гілка…";
 "New file" = "Новий файл";
-"New file (untracked)" = "Новий файл (невідстежуваний)";
 "New pull/merge request…" = "Новий pull/merge request…";
 "New session in the same place" = "Новий сеанс у тому самому місці";
 "New tab" = "Нова вкладка";
@@ -793,7 +789,6 @@
 "Not found (404). Check that the token has access to the repository." = "Не знайдено (404). Переконайтеся, що токен має доступ до репозиторію.";
 "Not found — locate it in the Tools tab" = "Не знайдено — вкажіть його на вкладці «Інструменти»";
 "Not installed" = "Не встановлено";
-"Not managed by gitch" = "Не керується gitch";
 "Nothing to draw" = "Нічого малювати";
 "Off" = "Вимк.";
 "On" = "Увімк.";
@@ -855,7 +850,6 @@
 "Push" = "Надіслати";
 "Push tag" = "Надіслати тег";
 "Pushes %lld unpushed commits to the remote." = "Надсилає до віддаленого репозиторію ще не надіслані коміти (кількість: %1$lld).";
-"Pushes as %@" = "Push від імені %1$@";
 "Pushes the current branch to %@ before creating." = "Перед створенням надсилає поточну гілку до %1$@.";
 "Pushes the current branch to the remote (no commits to push right now)." = "Надсилає поточну гілку до віддаленого репозиторію (зараз немає комітів для надсилання).";
 "Pushes the current branch to the remote for the first time and sets up tracking." = "Уперше надсилає поточну гілку до віддаленого репозиторію й налаштовує відстеження.";
@@ -989,7 +983,6 @@
 "Stage selected lines (%lld)" = "Індексувати вибрані рядки (%1$lld)";
 "Staged" = "Індексовано";
 "Staged and unstaged changes and untracked new files will all be lost. This can't be undone." = "Індексовані й неіндексовані зміни, а також нові невідстежувані файли буде втрачено. Цю дію не можна відмінити.";
-"Staged files" = "Індексовані файли";
 "Stages only the selected lines" = "Індексує лише вибрані рядки";
 "Stages only this hunk (click changed lines to stage only those)" = "Індексує лише цей фрагмент (клацніть змінені рядки, щоб індексувати лише їх)";
 "Staging…" = "Індексування…";
@@ -1009,7 +1002,6 @@
 "Subject line only, no body" = "Лише рядок теми, без тіла";
 "Subject within 50 characters" = "Тема — до 50 символів";
 "Succeeded" = "Успішно";
-"Summary (required)" = "Короткий опис (обов’язково)";
 "Syncs the current branch with the remote (no commits to pull right now)." = "Синхронізує поточну гілку з віддаленим репозиторієм (зараз немає комітів для підтягування).";
 "System" = "Системна";
 "System follows your macOS setting (light, dark or auto). The graph and terminal change with it." = "«Системна» відповідає налаштуванню macOS (світле, темне або автоматично). Граф і термінал змінюються разом із ним.";
@@ -1092,7 +1084,6 @@
 "Unstage all" = "Зняти все з індексу";
 "Unstage hunk" = "Зняти фрагмент з індексу";
 "Unstage selected lines (%lld)" = "Зняти вибрані рядки з індексу (%1$lld)";
-"Unstaged files" = "Неіндексовані файли";
 "Unstages only the selected lines" = "Знімає з індексу лише вибрані рядки";
 "Unstages this hunk" = "Знімає цей фрагмент з індексу";
 "Unstaging…" = "Зняття з індексу…";
@@ -1123,7 +1114,6 @@
 "Waiting for deployment approval: %@" = "Очікує схвалення розгортання: %1$@";
 "Waiting for input" = "Очікує введення";
 "Waiting to be run manually" = "Очікує ручного запуску";
-"Warning" = "Попередження";
 "What to do with this commit" = "Що зробити з цим комітом";
 "What would you like to do?" = "Що ви хочете зробити?";
 "What would you like to do? If there are conflicts, you can resolve them on the right." = "Що ви хочете зробити? Якщо виникнуть конфлікти, їх можна розв’язати праворуч.";
@@ -1158,9 +1148,6 @@
 "git %@ failed" = "Помилка git %1$@";
 "git refuses to delete a branch with unmerged commits. Use 'Force delete' in that case." = "git відмовляється видаляти гілку з незлитими комітами. У такому разі скористайтеся «Примусово видалити».";
 "gitch backups" = "Резервні копії gitch";
-"gitch checks before commit and push" = "Перевірки gitch перед комітом і push";
-"gitch commands for this repository" = "Команди gitch для цього репозиторію";
-"gitch doesn't know which account this repository uses. Lock it with gitch use <account>." = "gitch не знає, який обліковий запис використовує цей репозиторій. Закріпіть його командою gitch use <обліковий запис>.";
 "gitch found nothing to draw for %@." = "%1$@: gitch не знайшов, що намалювати.";
 "gitch graph changes: files that are often committed together, and how often each one changes." = "gitch graph changes: файли, які часто комітять разом, і як часто змінюється кожен із них.";
 "gitch graph check reads its rules from .gitch/graph.rules in this repository. Create the file with commented-out examples (gitch graph check --init) and open it?" = "gitch graph check читає правила з .gitch/graph.rules у цьому репозиторії. Створити файл із закоментованими прикладами (gitch graph check --init) і відкрити його?";
@@ -1174,8 +1161,6 @@
 "gitch saves a backup before pull, up, sync, fix, undo and amend, and keeps the 30 most recent." = "gitch зберігає копію перед pull, up, sync, fix, undo та amend і зберігає 30 останніх.";
 "gitch sets the commit author to %@ and points origin (and upstream) at %@'s SSH alias, then locks the repository to it." = "gitch зробить автором комітів %1$@, спрямує origin (і upstream) на SSH-псевдонім %2$@ і закріпить репозиторій за цим обліковим записом.";
 "gitch stops requiring %@ for commits and pushes here. The commit author stays as it is." = "gitch більше не вимагатиме %1$@ для комітів і push тут. Автор комітів не зміниться.";
-"gitch sync: brings this branch up to date with the original repository (upstream)." = "gitch sync: підтягує цю гілку до стану початкового репозиторію (upstream).";
-"gitch up: moves this branch onto the latest default branch, or merges it if the branch is already pushed. A backup is saved first." = "gitch up: переносить цю гілку на свіжу гілку за замовчуванням або зливає її, якщо гілку вже надіслано. Спершу зберігає резервну копію.";
 "gitch won't check authors, secrets or pushes in this repository until you turn it back on." = "gitch не перевірятиме авторів, секрети й push у цьому репозиторії, доки ви знову це не ввімкнете.";
 "tag" = "тег";
 "… The diff is too long; only the beginning is shown" = "… Зміни задовгі; показано лише початок";
@@ -2257,3 +2242,22 @@
 "Unstage line" = "Зняти рядок з індексу";
 "Hide changes and show the graph" = "Приховати зміни й показати граф";
 "Sessions started here run in the terminal tabs below; click one to go to its terminal." = "Сеанси, запущені тут, працюють у вкладках термінала внизу; клацніть сеанс, щоб перейти до його термінала.";
+"Unstaged" = "Неіндексовано";
+"Untracked" = "Невідстежуваний";
+"Summary" = "Короткий опис";
+"Too large" = "Завеликий";
+"copied from %@" = "скопійовано з %@";
+"Commit 1 file" = "Закомітити 1 файл";
+"Commit %lld files" = "Закомітити файли (%lld)";
+"Couldn't write the commit message" = "Не вдалося написати повідомлення коміту";
+"gitch stopped this commit. Run gitch doctor in the terminal." = "gitch зупинив цей коміт. Запустіть gitch doctor у терміналі.";
+"Amend previous commit" = "Доповнити попередній коміт";
+"Split into commits…" = "Розбити на коміти…";
+"AI message" = "Повідомлення від ШІ";
+"Commit summary" = "Короткий опис коміту";
+"Commit description" = "Опис коміту";
+"Summary character count" = "Кількість символів опису";
+"Resolve conflicts before committing." = "Розв’яжіть конфлікти перед комітом.";
+"Stage the files you want to include." = "Додайте до індексу файли, які треба включити.";
+"Write a summary to enable commit." = "Напишіть короткий опис, щоб зробити коміт.";
+"Conflicted" = "Конфлікт";

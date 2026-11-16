@@ -116,8 +116,6 @@ enum Git {
         precondition(History.blameArgs(revision: "abc", path: "a.ts", lines: 33) == ["blame", "--porcelain", "-L", "1,33", "abc", "--", "a.ts"])
         precondition(History.blameArgs(revision: "abc", path: "a.ts", lines: 0)[3] == "1,1" && History.blameArgs(revision: "abc", path: "a.ts", lines: 90_000)[3] == "1,5000")
         precondition(History.countLabel(8) == "8" && History.countLabel(200) == "200" && History.countLabel(201) == "200+")
-        precondition(History.shortFolder("macos/Sources/Views/Search") == "…/Views/Search" && History.shortFolder("src/components") == "src/components" && History.shortFolder("") == "")
-        precondition(History.shortFolder("a/b/tests", limit: 8) == "…/tests" && History.shortFolder("packages/an-extremely-long-folder-name") == "" && History.shortFolder("an-extremely-long-folder-name") == "")
         let shown = "c4d5e6f" + String(repeating: "0", count: 33)
         precondition(History.revisionName(input: "HEAD", revision: shown, branch: "feature/workspace-search") == "feature/workspace-search" && History.revisionName(input: "HEAD", revision: shown, branch: nil) == nil)
         precondition(History.revisionName(input: "v1.0", revision: shown, branch: "main") == "v1.0" && History.revisionName(input: "C4D5E6F", revision: shown, branch: "main") == nil)

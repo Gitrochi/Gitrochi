@@ -30,6 +30,12 @@ struct FileTreeRow: Identifiable {
 }
 
 enum FileTree {
+    /// One level of the tree
+    static let indent: CGFloat = 14
+
+    /// Where a file's badge starts at a depth: past the folder's chevron slot, under its glyph
+    static func fileIndent(depth: Int) -> CGFloat { 6 + CGFloat(depth) * indent + 18 }
+
     private final class Node {
         var dirs: [String: Node] = [:]
         var files: [FileChange] = []
@@ -74,11 +80,14 @@ enum FileTree {
 
 /// 변경 파일 목록. 트리 모드에서는 폴더를 접고 펼 수 있고, 폴더 단위로 스테이지·언스테이지할 수 있다.
 struct ChangeList<MenuContent: View>: View {
+    @Environment(RepoStore.self) private var store
     let changes: [FileChange]
     let isSelected: (FileChange) -> Bool
     var stats: [String: LineStat] = [:]
     var actionIcon: String? = nil
     var actionHelp: String = ""
+    /// The action as words on every row (Mark as resolved) instead of an icon on hover
+    var actionTitle: String? = nil
     var onAction: ([FileChange]) -> Void = { _ in }
     let onOpen: (FileChange) -> Void
     @ViewBuilder let menu: (FileChange) -> MenuContent
@@ -86,45 +95,39 @@ struct ChangeList<MenuContent: View>: View {
     @AppStorage(fileViewModeKey) private var mode = "list"
     @ViewState private var collapsed: Set<String> = []
 
-    private let indent: CGFloat = 14
-
     var body: some View {
-        // 수백 개의 미추적 파일이 있어도 현재 보이는 행부터 만든다.
-        LazyVStack(alignment: .leading, spacing: 0) {
+        // 수백 개의 미추적 파일이 있어도 현재 보이는 행부터 만든다. Rows keep the board's 4 pt between them.
+        LazyVStack(alignment: .leading, spacing: 4) {
             if mode == "tree" {
                 ForEach(FileTree.rows(changes, collapsed: collapsed)) { row in
                     switch row.kind {
                     case .folder(let path, let name, let files):
-                        FolderRow(path: path, name: name, count: files.count, expanded: !collapsed.contains(path),
-                                  actionIcon: actionIcon, actionHelp: actionHelp,
-                                  action: { onAction(files) },
-                                  toggle: { toggle(path) })
-                            .padding(.leading, CGFloat(row.depth) * indent)
+                        FileFolderRow(name: name, count: files.count, depth: row.depth, expanded: !collapsed.contains(path),
+                                      actionIcon: actionIcon,
+                                      actionHelp: actionHelp + String(localized: " — whole folder"),
+                                      action: { onAction(files) },
+                                      toggle: { toggle(path) })
+                            .contextMenu {
+                                Button("Show in Finder") { store.revealInFinder(path: path) }
+                                Button("Copy path") { store.copy(path) }
+                            }
                     case .file(let c):
-                        fileRow(c, showDirectory: false)
-                            .padding(.leading, CGFloat(row.depth) * indent + indent)
+                        fileRow(c, showDirectory: false, indent: FileTree.fileIndent(depth: row.depth))
                     }
                 }
             } else {
-                ForEach(changes) { c in fileRow(c, showDirectory: true) }
+                ForEach(changes) { c in fileRow(c, showDirectory: true, indent: 8) }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private func fileRow(_ c: FileChange, showDirectory: Bool) -> some View {
-        FileRow(change: c, selected: isSelected(c), showDirectory: showDirectory, stat: stats[c.path],
-                actionIcon: actionIcon, actionHelp: actionHelp, action: { onAction([c]) })
-            .onTapGesture { onOpen(c) }
-            .focusable()
-            .onKeyPress(.return) { onOpen(c); return .handled }
-            .onKeyPress(.space) { onOpen(c); return .handled }
-            .accessibilityElement(children: .combine)
-            .accessibilityAddTraits(.isButton)
-            .accessibilityAction { onOpen(c) }
-            .accessibilityActions {
-                if actionIcon != nil, !actionHelp.isEmpty { Button(actionHelp) { onAction([c]) } }
-            }
+    private func fileRow(_ c: FileChange, showDirectory: Bool, indent: CGFloat) -> some View {
+        FileRow(change: c, selected: isSelected(c), showDirectory: showDirectory, stat: stats[c.path], indent: indent,
+                actionIcon: actionIcon, actionHelp: actionHelp, actionTitle: actionTitle, action: { onAction([c]) },
+                open: { onOpen(c) },
+                // Space stages or unstages where the list has that action, and opens the file elsewhere
+                space: actionIcon == nil ? nil : { onAction([c]) })
             .contextMenu { menu(c) }
     }
 
@@ -133,48 +136,56 @@ struct ChangeList<MenuContent: View>: View {
     }
 }
 
-private struct FolderRow: View {
-    @Environment(RepoStore.self) private var store
-    let path: String
+/// A folder of the tree every file list shares: 28 pt, a chevron in a 10 pt slot, the folder glyph and the name in
+/// medium, all neutral, then a count pill when it holds more than one file. (Windows: FileFolderRow)
+struct FileFolderRow: View {
     let name: String
     let count: Int
+    let depth: Int
     let expanded: Bool
-    var actionIcon: String?
-    var actionHelp: String
-    var action: () -> Void
+    var actionIcon: String? = nil
+    var actionHelp: String = ""
+    var action: () -> Void = {}
     let toggle: () -> Void
 
     @ViewState private var hover = false
 
     var body: some View {
-        HStack(spacing: 5) {
-            SymbolIcon(expanded ? "chevron.down" : "chevron.right")
-                .font(.system(size: 9, weight: .semibold))
-                .foregroundStyle(.secondary)
-                .frame(width: 10)
-            SymbolIcon(expanded ? "folder.fill" : "folder")
-                .foregroundStyle(Color.accentColor.opacity(0.85))
-            Text(name)
-                .lineLimit(1)
-                .truncationMode(.middle)
-            Text("\(count)")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            Spacer(minLength: 4)
+        HStack(spacing: 6) {
+            Button(action: toggle) {
+                HStack(spacing: 6) {
+                    SymbolIcon(expanded ? "chevron.down" : "chevron.right")
+                        .font(.system(size: 9, weight: .semibold))
+                        .frame(width: 10)
+                    DesignIconImage(icon: .repository, size: 13)
+                    Text(verbatim: name).font(.system(size: 13, weight: .medium)).foregroundStyle(.primary)
+                        .lineLimit(1).truncationMode(.head)
+                    // a folder holding a single file needs no count
+                    if count > 1 {
+                        Text(verbatim: String(count)).font(.system(size: 11, weight: .semibold)).monospacedDigit()
+                            .foregroundStyle(StudioStyle.Tone.neutral.text)
+                            .padding(.horizontal, 8).frame(height: 18)
+                            .background(Capsule().fill(StudioStyle.Tone.neutral.fill))
+                            .fixedSize()
+                    }
+                    Spacer(minLength: 0)
+                }
+                .foregroundStyle(StudioStyle.Rail.icon)
+                .frame(maxHeight: .infinity)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(Text(verbatim: name))
             if let actionIcon, hover {
-                Button(action: action) { SymbolIcon(actionIcon) }
-                    .buttonStyle(.borderless)
-                    .help(actionHelp + String(localized: " — whole folder"))
+                Button(action: action) { SymbolIcon(actionIcon).font(.system(size: 14)) }
+                    .buttonStyle(PullRequestIconButtonStyle())
+                    .help(actionHelp)
+                    .accessibilityLabel(actionHelp)
             }
         }
-        .padding(.vertical, 3)
-        .padding(.horizontal, 6)
-        .contentShape(Rectangle())
-        .onTapGesture(perform: toggle)
+        .padding(.leading, 6 + CGFloat(depth) * FileTree.indent).padding(.trailing, 8)
+        .frame(height: StudioStyle.FileList.rowHeight)
+        .background(RoundedRectangle(cornerRadius: 6).fill(hover ? StudioStyle.FileList.hover : Color.clear))
         .onHover { hover = $0 }
-        .contextMenu {
-            Button("Show in Finder") { store.revealInFinder(path: path) }
-            Button("Copy path") { store.copy(path) }
-        }
     }
 }
