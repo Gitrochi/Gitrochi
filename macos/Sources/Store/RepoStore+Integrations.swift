@@ -287,6 +287,7 @@ extension RepoStore {
         guard let url, aiWorking == nil else { return }
         aiWorking = String(localized: "\(AIStore.shared.short(for: .commit)) is writing the commit message…")
         aiNotice = nil
+        commitMessageFailure = nil
         defer { aiWorking = nil }
         do {
             let diff = try await Git.run(["diff", "--cached", "--no-ext-diff", "-M", "--stat", "--patch"], in: url).output
@@ -311,7 +312,8 @@ extension RepoStore {
             message = parts.1
             if clipped.omitted > 0 { aiNotice = String(localized: "The diff was long, so only the beginning was sent to \(AIStore.shared.short(for: .commit)) (\(clipped.omitted / 1000)K characters omitted).") }
         } catch {
-            errorMessage = describe(error)
+            // beside the composer while it is on screen; a dialog when the command came from the menu elsewhere
+            if selection == .wip { commitMessageFailure = describe(error) } else { errorMessage = describe(error) }
         }
     }
 

@@ -294,6 +294,15 @@ export abstract class RepoActions extends RepoPushReview {
     );
   }
 
+  /** Why Commit can't be used now, for the line beside the disabled button; null when it can. macOS: commitGuidance */
+  get commitBlockedReason(): string | null {
+    if (this.canCommit) return null;
+    if (this.busy != null) return this.busy;
+    if (this.status.conflicted.length > 0) return t("Resolve conflicts before committing.");
+    if (!this.status.staged.length && !this.amend && this.repoState !== "merging") return t("Stage the files you want to include.");
+    return t("Write a summary to enable commit.");
+  }
+
   setSummary(v: string) {
     this.summary = v;
     this.emit();

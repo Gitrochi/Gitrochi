@@ -206,6 +206,8 @@ export abstract class RepoCore extends Observable implements AgentHost {
   aiWorking: string | null = null;
   splitPlan: SplitGroup[] | null = null;
   aiNotice: string | null = null;
+  /** Why the last commit message could not be written; shown in the composer, not as a dialog */
+  commitMessageFailure: string | null = null;
   explanations: Record<string, string> = {};
   explaining = new Set<string>();
   /** Why the last explanation of a commit failed; shown beside that commit, not as a dialog */
@@ -537,6 +539,7 @@ export abstract class RepoCore extends Observable implements AgentHost {
     this.ci.reset();
     this.aiWorking = null;
     this.aiNotice = null;
+    this.commitMessageFailure = null;
     this.explanations = {};
     this.explaining = new Set();
     this.explainFailures = {};
