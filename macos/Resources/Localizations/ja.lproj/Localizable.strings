@@ -54,6 +54,7 @@
 "Create pull request…" = "プルリクエストを作成…";
 "Development" = "開発";
 "Diff layout" = "差分のレイアウト";
+"File list layout" = "ファイル一覧のレイアウト";
 "Fast-forward only" = "早送りのみ";
 "Filter repositories" = "リポジトリを絞り込む";
 "From" = "比較元";

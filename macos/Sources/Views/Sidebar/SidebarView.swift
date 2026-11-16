@@ -28,7 +28,7 @@ struct SidebarView: View {
     private var list: some View {
         VStack(spacing: 0) {
             // the board's 28 pt control; a saved "ci" mode from before the Actions page falls through to the branch list
-            PullRequestSegmented(label: "Repository tools", items: [
+            Segmented(label: "Repository tools", items: [
                 .init(value: "list", title: String(localized: "Branches")),
                 .init(value: "agents", title: activeAgents > 0 ? String(localized: "Agents \(activeAgents)") : String(localized: "Agents")),
             ], selection: mode == "agents" ? "agents" : "list", fill: true) { mode = $0 }

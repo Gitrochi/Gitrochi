@@ -378,7 +378,7 @@ struct PullRequestReviewForm: View {
         let revoke = provider == .gitlab && state?.approvedByMe == true
         let reason = blocked(text: text, pending: pending.count, approved: state?.approvedByMe == true, revoke: revoke)
         VStack(alignment: .leading, spacing: 10) {
-            PullRequestSegmented(label: "Review type", items: types(revoke: revoke), selection: verdict) { verdict = $0 }
+            Segmented(label: "Review type", items: types(revoke: revoke), selection: verdict) { verdict = $0 }
             TextEditor(text: $draft)
                 .font(.system(size: 13))
                 .disabled(store.reviewBusy)
@@ -407,8 +407,8 @@ struct PullRequestReviewForm: View {
         .frame(width: 440)
     }
 
-    private func types(revoke: Bool) -> [PullRequestSegmented<ReviewVerdict>.Item] {
-        var items: [PullRequestSegmented<ReviewVerdict>.Item] = [
+    private func types(revoke: Bool) -> [Segmented<ReviewVerdict>.Item] {
+        var items: [Segmented<ReviewVerdict>.Item] = [
             .init(value: .comment, title: String(localized: "Comment")),
             .init(value: .approve, title: revoke ? String(localized: "Revoke approval") : String(localized: "Approve")),
         ]

@@ -93,7 +93,7 @@ struct RepositoryCodeChangesView: View {
                         .help("Next file (J)").accessibilityLabel("Next file (J)")
                 }
             }
-            PullRequestSegmented(label: "Diff layout", items: [
+            Segmented(label: "Diff layout", items: [
                 .init(value: false, title: String(localized: "Unified")),
                 .init(value: true, title: String(localized: "Split")),
             ], selection: store.diffSplit) { store.diffSplit = $0 }

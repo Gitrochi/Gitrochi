@@ -52,6 +52,7 @@
 "Create merge request…" = "머지 리퀘스트 만들기…";
 "Create pull request…" = "풀 리퀘스트 만들기…";
 "Diff layout" = "diff 표시 방식";
+"File list layout" = "파일 표시 방식";
 "Fast-forward only" = "fast-forward만";
 "Filter repositories" = "저장소 필터";
 "From" = "기준";
@@ -1433,7 +1434,6 @@
 "Close diff" = "diff 닫기";
 "Close diff (Esc)" = "diff 닫기 (Esc)";
 "File actions" = "파일 작업";
-"File display" = "파일 표시 방식";
 
 "Checking the Git account and repository…" = "Git 계정과 저장소를 점검하는 중…";
 "Resolve the gitch checks below before committing." = "아래 gitch 점검의 차단 사유를 해결한 뒤 커밋하세요.";

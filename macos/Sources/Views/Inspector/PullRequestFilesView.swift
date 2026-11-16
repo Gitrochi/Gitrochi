@@ -242,7 +242,7 @@ struct PullRequestFilesView: View {
                     .buttonStyle(PullRequestIconButtonStyle()).disabled(index + 1 >= count)
                     .help("Next file (J)").accessibilityLabel("Next file (J)")
             }
-            PullRequestSegmented(label: "Diff layout", items: [
+            Segmented(label: "Diff layout", items: [
                 .init(value: false, title: String(localized: "Unified")),
                 .init(value: true, title: String(localized: "Split"), disabledReason: splitAllowed ? nil : String(localized: "Split needs a diff at least 1000 px wide")),
             ], selection: store.diffSplit && splitAllowed) { store.diffSplit = $0 }

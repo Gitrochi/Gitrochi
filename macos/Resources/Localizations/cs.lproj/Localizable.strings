@@ -54,6 +54,7 @@
 "Create merge request…" = "Vytvořit merge request…";
 "Create pull request…" = "Vytvořit pull request…";
 "Diff layout" = "Rozvržení rozdílů";
+"File list layout" = "Rozvržení seznamu souborů";
 "Fast-forward only" = "Pouze fast-forward";
 "Filter repositories" = "Filtrovat repozitáře";
 "Find in file" = "Hledat v souboru";

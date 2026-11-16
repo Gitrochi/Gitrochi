@@ -31,7 +31,7 @@ struct PullRequestList: View {
                     .help("Hide list")
                     .accessibilityLabel(gitlab ? "Hide merge request list" : "Hide pull request list")
             }
-            PullRequestSegmented(label: "Filter", items: filters, selection: scope, fill: true) { value in
+            Segmented(label: "Filter", items: filters, selection: scope, fill: true) { value in
                 Task { await store.filterPullRequests(scope: value, search: search) }
             }
             ScrollView {
@@ -115,7 +115,7 @@ struct PullRequestList: View {
         Button(action: action) { if on { Label(title, symbol: "checkmark") } else { Text(verbatim: title) } }
     }
 
-    private var filters: [PullRequestSegmented<String>.Item] {
+    private var filters: [Segmented<String>.Item] {
         // the count sits inside the label
         return [
             .init(value: "open", title: WorkState.title("open")),

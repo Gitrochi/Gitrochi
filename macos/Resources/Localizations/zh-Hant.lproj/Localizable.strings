@@ -54,6 +54,7 @@
 "Create merge request…" = "建立合併請求…";
 "Create pull request…" = "建立拉取請求…";
 "Diff layout" = "差異版面";
+"File list layout" = "檔案列表版面";
 "Fast-forward only" = "僅快轉";
 "Filter repositories" = "篩選存放庫";
 "Find in file" = "在檔案中尋找";

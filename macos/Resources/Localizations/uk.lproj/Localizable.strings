@@ -54,6 +54,7 @@
 "Create merge request…" = "Створити merge request…";
 "Create pull request…" = "Створити pull request…";
 "Diff layout" = "Макет змін";
+"File list layout" = "Макет списку файлів";
 "Fast-forward only" = "Лише перемотуванням";
 "Filter repositories" = "Фільтр репозиторіїв";
 "Find in file" = "Знайти у файлі";

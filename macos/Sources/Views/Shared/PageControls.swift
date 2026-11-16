@@ -41,12 +41,14 @@ struct PullRequestIconButtonStyle: ButtonStyle {
     }
 }
 
-/// The neutral segmented control for filters and modes: a white thumb on a grey track, labels that never change weight
-struct PullRequestSegmented<Value: Hashable>: View {
+/// The one segmented control for filters and modes: 28 pt tall on a grey track with a 6 pt radius, a white thumb with
+/// a 4 pt radius, labels 12 pt medium that never change weight. An icon segment is 28 pt wide around a 13 pt glyph.
+/// (Windows: Segmented in shared/ui/ui.tsx)
+struct Segmented<Value: Hashable>: View {
     struct Item {
         let value: Value
         var title: String = ""
-        var symbol: String?
+        var icon: DesignIcon?
         var label: String?
         var disabledReason: String?
     }
@@ -64,13 +66,12 @@ struct PullRequestSegmented<Value: Hashable>: View {
                 let on = item.value == selection, disabled = item.disabledReason != nil
                 Button { select(item.value) } label: {
                     Group {
-                        if let symbol = item.symbol { SymbolIcon(symbol).font(.system(size: 11, weight: .medium)) }
+                        if let icon = item.icon { DesignIconImage(icon: icon, size: 13).frame(width: 28) }
                         // a label is never cut: segments grow from their own width
-                        else { Text(verbatim: item.title).lineLimit(1).fixedSize() }
+                        else { Text(verbatim: item.title).lineLimit(1).fixedSize().padding(.horizontal, 8) }
                     }
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(disabled ? AnyShapeStyle(.tertiary) : on ? AnyShapeStyle(.primary) : AnyShapeStyle(StudioStyle.Tone.neutral.text))
-                    .padding(.horizontal, 8)
                     .frame(maxWidth: fill ? .infinity : nil).frame(height: 24)
                     .background(RoundedRectangle(cornerRadius: 4).fill(on ? StudioStyle.surface : Color.clear).shadow(color: .black.opacity(on ? 0.12 : 0), radius: 1, y: 1))
                     .contentShape(Rectangle())

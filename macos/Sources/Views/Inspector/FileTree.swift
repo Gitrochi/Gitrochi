@@ -5,19 +5,17 @@ let fileViewModeKey = "fileViewMode"
 /// Requests open as a tree (the Changed files board); the choice is apart from the repository's changes
 let requestFileViewModeKey = "requestFileViewMode"
 
+/// The list/tree toggle every file list shares: the icon form of `Segmented`. (Windows: FileViewToggle)
 struct FileViewToggle: View {
     @AppStorage private var mode: String
 
     init(key: String = fileViewModeKey, fallback: String = "list") { _mode = AppStorage(wrappedValue: fallback, key) }
 
     var body: some View {
-        Picker("File display", selection: $mode) {
-            SymbolIcon("list.bullet").tag("list").help("Show as list").accessibilityLabel("Show as list")
-            SymbolIcon("list.bullet.indent").tag("tree").help("Show as folder tree").accessibilityLabel("Show as folder tree")
-        }
-        .pickerStyle(.segmented)
-        .labelsHidden()
-        .fixedSize()
+        Segmented(label: "File list layout", items: [
+            .init(value: "list", icon: .fileList, label: String(localized: "Show as list")),
+            .init(value: "tree", icon: .fileTree, label: String(localized: "Show as folder tree")),
+        ], selection: mode == "tree" ? "tree" : "list") { mode = $0 }
     }
 }
 

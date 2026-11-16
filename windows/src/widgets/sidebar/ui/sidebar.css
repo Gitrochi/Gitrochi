@@ -51,19 +51,6 @@
   padding: 12px 10px 0;
 }
 
-.side-modes .segmented {
-  border-radius: 6px;
-}
-
-.side-modes .segmented button {
-  height: 24px;
-  padding: 0 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
 .side-modes .icon-btn.small {
   width: 24px;
   height: 24px;
