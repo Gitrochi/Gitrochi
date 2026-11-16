@@ -284,7 +284,6 @@
 "%@ (none)" = "%1$@ (ninguno)";
 "%@ declined this request. Try changing the content and try again." = "%1$@ rechazó esta solicitud. Cambia el contenido e inténtalo de nuevo.";
 "%@ didn't respond correctly (exit code %d). Check that it's the %@ executable." = "%1$@ no respondió correctamente (código de salida %2$d). Comprueba que sea el ejecutable de %3$@.";
-"%@ explanation" = "Explicación de %1$@";
 "%@ groups the changed files by topic and splits them into several commits. Review and edit the result, then commit. Rules are in Settings > Rules." = "%1$@ agrupa los archivos cambiados por tema y los divide en varios commits. Revisa y edita el resultado, y luego haz commit. Las reglas están en Ajustes > Reglas.";
 "%@ is splitting the changes by topic…" = "%1$@ está dividiendo los cambios por tema…";
 "%@ is writing the commit message…" = "%1$@ está redactando el mensaje de commit…";
@@ -2287,6 +2286,11 @@
 "Copy commit SHA" = "Copiar SHA del commit";
 "Parent" = "Padre";
 "Parents" = "Padres";
+"Closes" = "Cierra";
+"Fixes" = "Corrige";
+"Resolves" = "Resuelve";
+"Co-author" = "Coautor";
+"Trailers" = "Trailers";
 "Couldn't explain this commit" = "No se pudo explicar este commit";
 "More commit actions" = "Más acciones del commit";
 "Needs you" = "Requieren tu atención";

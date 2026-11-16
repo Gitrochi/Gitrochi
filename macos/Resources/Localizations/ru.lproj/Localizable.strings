@@ -273,7 +273,6 @@
 "%@ (none)" = "%1$@ (нет)";
 "%@ declined this request. Try changing the content and try again." = "%1$@ отклонил этот запрос. Измените содержимое и повторите попытку.";
 "%@ didn't respond correctly (exit code %d). Check that it's the %@ executable." = "%1$@ ответил некорректно (код выхода %2$d). Проверьте, что это исполняемый файл %3$@.";
-"%@ explanation" = "Объяснение от %1$@";
 "%@ groups the changed files by topic and splits them into several commits. Review and edit the result, then commit. Rules are in Settings > Rules." = "%1$@ группирует изменённые файлы по темам и разбивает их на несколько коммитов. Проверьте и отредактируйте результат, затем закоммитьте. Правила — в разделе Настройки > Правила.";
 "%@ is splitting the changes by topic…" = "%1$@ разбивает изменения по темам…";
 "%@ is writing the commit message…" = "%1$@ пишет сообщение коммита…";
@@ -2251,6 +2250,11 @@
 "Copy commit SHA" = "Копировать SHA коммита";
 "Parent" = "Родитель";
 "Parents" = "Родители";
+"Closes" = "Закрывает";
+"Fixes" = "Исправляет";
+"Resolves" = "Решает";
+"Co-author" = "Соавтор";
+"Trailers" = "Трейлеры";
 "Couldn't explain this commit" = "Не удалось объяснить этот коммит";
 "More commit actions" = "Другие действия с коммитом";
 "Needs you" = "Ждут вас";

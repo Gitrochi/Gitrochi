@@ -272,7 +272,6 @@
 "%@ (none)" = "%1$@ (nincs)";
 "%@ declined this request. Try changing the content and try again." = "%1$@ elutasította ezt a kérést. Módosítsa a tartalmat, és próbálja újra.";
 "%@ didn't respond correctly (exit code %d). Check that it's the %@ executable." = "%1$@ nem válaszolt megfelelően (kilépési kód: %2$d). Ellenőrizze, hogy valóban ez-e a futtatható fájl (%3$@).";
-"%@ explanation" = "Magyarázat (%1$@)";
 "%@ groups the changed files by topic and splits them into several commits. Review and edit the result, then commit. Rules are in Settings > Rules." = "%1$@ téma szerint csoportosítja a módosított fájlokat, és több commitra bontja őket. Nézze át és szerkessze az eredményt, majd commitoljon. A szabályok a Beállítások > Szabályok alatt találhatók.";
 "%@ is splitting the changes by topic…" = "%1$@ téma szerint bontja a módosításokat…";
 "%@ is writing the commit message…" = "%1$@ írja a commitüzenetet…";
@@ -2237,6 +2236,11 @@
 "Copy commit SHA" = "Commit SHA másolása";
 "Parent" = "Szülő";
 "Parents" = "Szülők";
+"Closes" = "Lezárja";
+"Fixes" = "Javítja";
+"Resolves" = "Megoldja";
+"Co-author" = "Társszerző";
+"Trailers" = "Trailerek";
 "Couldn't explain this commit" = "Nem sikerült elmagyarázni a commitot";
 "More commit actions" = "További commitműveletek";
 "Needs you" = "Önre vár";

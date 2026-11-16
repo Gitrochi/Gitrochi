@@ -272,7 +272,6 @@
 "%@ (none)" = "%1$@ (yok)";
 "%@ declined this request. Try changing the content and try again." = "%1$@ bu isteği reddetti. İçeriği değiştirip tekrar deneyin.";
 "%@ didn't respond correctly (exit code %d). Check that it's the %@ executable." = "%1$@ doğru yanıt vermedi (çıkış kodu %2$d). Bunun %3$@ çalıştırılabilir dosyası olduğunu kontrol edin.";
-"%@ explanation" = "%1$@ açıklaması";
 "%@ groups the changed files by topic and splits them into several commits. Review and edit the result, then commit. Rules are in Settings > Rules." = "%1$@, değişen dosyaları konularına göre gruplayıp birkaç commit'e böler. Sonucu gözden geçirip düzenleyin, ardından commit edin. Kurallar Ayarlar > Kurallar bölümündedir.";
 "%@ is splitting the changes by topic…" = "%1$@ değişiklikleri konulara göre bölüyor…";
 "%@ is writing the commit message…" = "%1$@ commit mesajını yazıyor…";
@@ -2239,6 +2238,11 @@
 "Copy commit SHA" = "Commit SHA'sını kopyala";
 "Parent" = "Üst commit";
 "Parents" = "Üst commit'ler";
+"Closes" = "Kapatır";
+"Fixes" = "Düzeltir";
+"Resolves" = "Çözer";
+"Co-author" = "Ortak yazar";
+"Trailers" = "Trailer satırları";
 "Couldn't explain this commit" = "Bu commit açıklanamadı";
 "More commit actions" = "Diğer commit işlemleri";
 "Needs you" = "Sizi bekliyor";

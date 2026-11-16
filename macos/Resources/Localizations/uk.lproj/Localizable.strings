@@ -273,7 +273,6 @@
 "%@ (none)" = "%1$@ (немає)";
 "%@ declined this request. Try changing the content and try again." = "%1$@ відхилив цей запит. Змініть вміст і спробуйте ще раз.";
 "%@ didn't respond correctly (exit code %d). Check that it's the %@ executable." = "%1$@ відповів некоректно (код виходу %2$d). Переконайтеся, що це виконуваний файл %3$@.";
-"%@ explanation" = "Пояснення від %1$@";
 "%@ groups the changed files by topic and splits them into several commits. Review and edit the result, then commit. Rules are in Settings > Rules." = "%1$@ групує змінені файли за темами й розбиває їх на кілька комітів. Перегляньте й відредагуйте результат, а потім закомітьте. Правила — в Налаштуваннях > Правила.";
 "%@ is splitting the changes by topic…" = "%1$@ розбиває зміни за темами…";
 "%@ is writing the commit message…" = "%1$@ пише повідомлення коміту…";
@@ -2251,6 +2250,11 @@
 "Copy commit SHA" = "Копіювати SHA коміту";
 "Parent" = "Батьківський";
 "Parents" = "Батьківські";
+"Closes" = "Закриває";
+"Fixes" = "Виправляє";
+"Resolves" = "Вирішує";
+"Co-author" = "Співавтор";
+"Trailers" = "Трейлери";
 "Couldn't explain this commit" = "Не вдалося пояснити цей коміт";
 "More commit actions" = "Інші дії з комітом";
 "Needs you" = "Чекають на вас";

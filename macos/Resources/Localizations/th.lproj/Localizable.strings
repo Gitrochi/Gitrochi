@@ -273,7 +273,6 @@
 "%@ (none)" = "%1$@ (ไม่มี)";
 "%@ declined this request. Try changing the content and try again." = "%1$@ ปฏิเสธคำขอนี้ ลองเปลี่ยนเนื้อหาแล้วลองอีกครั้ง";
 "%@ didn't respond correctly (exit code %d). Check that it's the %@ executable." = "%1$@ ตอบกลับไม่ถูกต้อง (exit code %2$d) ตรวจสอบว่าเป็นไฟล์ปฏิบัติการของ %3$@";
-"%@ explanation" = "คำอธิบายจาก %1$@";
 "%@ groups the changed files by topic and splits them into several commits. Review and edit the result, then commit. Rules are in Settings > Rules." = "%1$@ จะจัดกลุ่มไฟล์ที่เปลี่ยนแปลงตามหัวข้อและแบ่งเป็นหลายคอมมิต ตรวจทานและแก้ไขผลลัพธ์ แล้วจึงคอมมิต กฎอยู่ในการตั้งค่า > กฎ";
 "%@ is splitting the changes by topic…" = "%1$@ กำลังแบ่งการเปลี่ยนแปลงตามหัวข้อ…";
 "%@ is writing the commit message…" = "%1$@ กำลังเขียนข้อความคอมมิต…";
@@ -2246,6 +2245,11 @@
 "Copy commit SHA" = "คัดลอก SHA ของคอมมิต";
 "Parent" = "คอมมิตแม่";
 "Parents" = "คอมมิตแม่";
+"Closes" = "ปิด";
+"Fixes" = "แก้ไข";
+"Resolves" = "แก้ปัญหา";
+"Co-author" = "ผู้เขียนร่วม";
+"Trailers" = "ส่วนท้าย";
 "Couldn't explain this commit" = "อธิบายคอมมิตนี้ไม่ได้";
 "More commit actions" = "การดำเนินการกับคอมมิตเพิ่มเติม";
 "Needs you" = "รอคุณดำเนินการ";

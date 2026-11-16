@@ -272,7 +272,6 @@
 "%@ (none)" = "%1$@ (không có)";
 "%@ declined this request. Try changing the content and try again." = "%1$@ đã từ chối yêu cầu này. Hãy thử thay đổi nội dung rồi thử lại.";
 "%@ didn't respond correctly (exit code %d). Check that it's the %@ executable." = "%1$@ không phản hồi đúng (mã thoát %2$d). Hãy kiểm tra xem đó có phải tệp thực thi %3$@ không.";
-"%@ explanation" = "Giải thích của %1$@";
 "%@ groups the changed files by topic and splits them into several commits. Review and edit the result, then commit. Rules are in Settings > Rules." = "%1$@ nhóm các tệp đã thay đổi theo chủ đề và chia thành nhiều commit. Hãy xem lại và chỉnh sửa kết quả, rồi commit. Quy tắc nằm trong Cài đặt > Quy tắc.";
 "%@ is splitting the changes by topic…" = "%1$@ đang chia thay đổi theo chủ đề…";
 "%@ is writing the commit message…" = "%1$@ đang viết thông điệp commit…";
@@ -2213,6 +2212,11 @@
 "Copy commit SHA" = "Sao chép SHA của commit";
 "Parent" = "Cha";
 "Parents" = "Cha";
+"Closes" = "Đóng";
+"Fixes" = "Sửa";
+"Resolves" = "Giải quyết";
+"Co-author" = "Đồng tác giả";
+"Trailers" = "Trailer";
 "Couldn't explain this commit" = "Không thể giải thích commit này";
 "More commit actions" = "Thao tác khác với commit";
 "Needs you" = "Đang chờ bạn";
