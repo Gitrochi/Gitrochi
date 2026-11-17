@@ -2247,3 +2247,4 @@
 "Stage the files you want to include." = "Przygotuj pliki, które chcesz uwzględnić.";
 "Write a summary to enable commit." = "Napisz podsumowanie, aby móc zatwierdzić.";
 "Conflicted" = "Konflikt";
+"Not pushed yet" = "Jeszcze nie wypchnięto";

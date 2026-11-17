@@ -2259,5 +2259,6 @@
   "Resolve conflicts before committing.": "Risolvi i conflitti prima del commit.",
   "Stage the files you want to include.": "Metti in stage i file da includere.",
   "Write a summary to enable commit.": "Scrivi un riepilogo per poter fare il commit.",
-  "Conflicted": "In conflitto"
+  "Conflicted": "In conflitto",
+  "Not pushed yet": "Non ancora inviato"
 }

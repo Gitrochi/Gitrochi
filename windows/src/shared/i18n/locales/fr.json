@@ -2318,5 +2318,6 @@
   "Resolve conflicts before committing.": "Résolvez les conflits avant de valider.",
   "Stage the files you want to include.": "Indexez les fichiers à inclure.",
   "Write a summary to enable commit.": "Rédigez un résumé pour pouvoir valider.",
-  "Conflicted": "En conflit"
+  "Conflicted": "En conflit",
+  "Not pushed yet": "Pas encore poussé"
 }

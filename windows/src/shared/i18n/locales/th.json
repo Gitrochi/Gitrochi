@@ -2276,5 +2276,6 @@
   "Resolve conflicts before committing.": "แก้ความขัดแย้งก่อนคอมมิต",
   "Stage the files you want to include.": "สเตจไฟล์ที่ต้องการรวม",
   "Write a summary to enable commit.": "เขียนสรุปเพื่อให้คอมมิตได้",
-  "Conflicted": "ขัดแย้ง"
+  "Conflicted": "ขัดแย้ง",
+  "Not pushed yet": "ยังไม่ได้พุช"
 }

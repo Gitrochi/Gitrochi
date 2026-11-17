@@ -2255,3 +2255,4 @@
 "Stage the files you want to include." = "Stagen Sie die Dateien, die enthalten sein sollen.";
 "Write a summary to enable commit." = "Schreiben Sie eine Zusammenfassung, um zu committen.";
 "Conflicted" = "Konflikt";
+"Not pushed yet" = "Noch nicht gepusht";

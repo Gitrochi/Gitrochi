@@ -2245,3 +2245,4 @@
 "Stage the files you want to include." = "Připravte soubory, které chcete zahrnout.";
 "Write a summary to enable commit." = "Napište shrnutí a commit bude možný.";
 "Conflicted" = "V konfliktu";
+"Not pushed yet" = "Zatím neodesláno";

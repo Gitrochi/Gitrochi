@@ -2221,3 +2221,4 @@
 "Stage the files you want to include." = "Stage file yang ingin disertakan.";
 "Write a summary to enable commit." = "Tulis ringkasan untuk dapat commit.";
 "Conflicted" = "Berkonflik";
+"Not pushed yet" = "Belum di-push";

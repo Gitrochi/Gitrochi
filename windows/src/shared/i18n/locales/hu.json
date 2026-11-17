@@ -2265,5 +2265,6 @@
   "Resolve conflicts before committing.": "Commitolás előtt oldja fel az ütközéseket.",
   "Stage the files you want to include.": "Készítse elő a belefoglalandó fájlokat.",
   "Write a summary to enable commit.": "Írjon összefoglalót a commitoláshoz.",
-  "Conflicted": "Ütköző"
+  "Conflicted": "Ütköző",
+  "Not pushed yet": "Még nincs feltöltve"
 }
