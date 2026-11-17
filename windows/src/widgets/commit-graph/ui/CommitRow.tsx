@@ -348,8 +348,8 @@ const GraphCell = memo(function GraphCell({
         ) : (
           <circle cx={cx} cy={cy} r={AVATAR / 2 + 2} fill={color} />
         )}
-        {/* a 2px ring, 2px clear of the node */}
-        {isHead && <circle cx={cx} cy={cy} r={isMerge ? 9 : AVATAR / 2 + 5} fill="none" stroke={color} strokeWidth={2} />}
+        {/* the current marker: a 2px accent ring, 2px clear of the node (lanes never take the accent) */}
+        {isHead && <circle cx={cx} cy={cy} r={isMerge ? 9 : AVATAR / 2 + 5} fill="none" stroke="var(--accent)" strokeWidth={2} />}
       </svg>
       {avatarNode && <AvatarNode name={author} email={email} x={cx} lane={row.color} />}
     </span>

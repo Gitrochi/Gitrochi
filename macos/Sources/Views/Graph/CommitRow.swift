@@ -381,8 +381,8 @@ struct GraphCell: View {
                     ctx.fill(circle(GraphMetrics.avatar / 2 + 2), with: .color(color))
                 }
                 if isHead {
-                    // a 2pt ring, 2pt clear of the node
-                    ctx.stroke(circle(isMerge ? 9 : GraphMetrics.avatar / 2 + 5), with: .color(color), lineWidth: 2)
+                    // the current marker: a 2pt accent ring, 2pt clear of the node (lanes never take the accent)
+                    ctx.stroke(circle(isMerge ? 9 : GraphMetrics.avatar / 2 + 5), with: .color(.accentColor), lineWidth: 2)
                 }
             }
             if !isWIP && !isMerge {
