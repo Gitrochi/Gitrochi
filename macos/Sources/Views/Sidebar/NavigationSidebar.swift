@@ -2,7 +2,7 @@ import SwiftUI
 
 /// The window's pages as the native source list (docs/design.md › App shell, Sidebar). The OS lays out the rows, the
 /// sections; the app draws the current page's fill, so it stays neutral with or without keyboard
-/// focus, as in the rail. While no repository is open, a page that needs one is disabled and its section says why.
+/// focus, as in the rail. While no repository is open, a page that needs one is disabled and one line under Home says why.
 /// Once the repository screen opens, this folds into the icon rail.
 struct NavigationSidebar: View {
     @Environment(RepoStore.self) private var store
@@ -17,6 +17,15 @@ struct NavigationSidebar: View {
         // the page's own filled button.
         List {
             row(.home)
+            // one line under Home says why the dimmed pages can't be opened; a line under every section repeated it
+            // (macOS shows no tip on a disabled row)
+            if store.url == nil {
+                Text("Open a repository to use the dimmed pages").font(.system(size: 12))
+                    .foregroundStyle(StudioStyle.Rail.icon)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, 10).padding(.top, 2).padding(.bottom, 4)
+                    .listRowInsets(EdgeInsets())
+            }
             section(String(localized: "Repository"), [.repository, .compare, .rebase, .code])
             section(gitlab ? "GitLab" : "GitHub", [.pullRequests, .issues, .actions, .releases, .projects, .account])
             section(String(localized: "Tools"), [.flows].filter(\.isShown))
@@ -51,13 +60,7 @@ struct NavigationSidebar: View {
         Section {
             ForEach(pages) { row($0) }
         } header: {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(.system(size: 11, weight: .semibold))
-                // the reason sits under the section, not in a tip: macOS shows no tip on a disabled row
-                if store.url == nil, pages.contains(where: \.needsRepository) {
-                    Text("Open a repository to use these").font(.system(size: 12, weight: .regular))
-                }
-            }
+            Text(title).font(.system(size: 11, weight: .semibold))
             // the OS draws sidebar section titles at about 2.2:1 on the sidebar grey; the design's grey reaches 4.8:1
             .foregroundStyle(StudioStyle.Rail.icon)
         }

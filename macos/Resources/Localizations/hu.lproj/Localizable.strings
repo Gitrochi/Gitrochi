@@ -100,7 +100,7 @@
 "Nothing to push" = "Nincs mit feltölteni";
 "Nothing unreleased" = "Nincs kiadatlan commit";
 "Open Projects" = "Projektek megnyitása";
-"Open a repository to use these" = "Ezek használatához nyisson meg egy tárolót";
+"Open a repository to use the dimmed pages" = "A halványított oldalak használatához nyisson meg egy tárolót";
 "Open a repository to use this page." = "Az oldal használatához nyisson meg egy tárolót.";
 "Open changes" = "Módosítások megnyitása";
 "Opens %@ … %@ in Compare" = "Megnyitja a(z) %1$@ … %2$@ tartományt az Összehasonlításban";

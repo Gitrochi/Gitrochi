@@ -100,7 +100,7 @@
 "Nothing to push" = "没有可推送的内容";
 "Nothing unreleased" = "没有未发布的提交";
 "Open Projects" = "打开项目";
-"Open a repository to use these" = "打开仓库后才能使用这些";
+"Open a repository to use the dimmed pages" = "打开仓库后才能使用灰显的页面";
 "Open a repository to use this page." = "打开仓库以使用此页面。";
 "Open changes" = "打开更改";
 "Opens %@ … %@ in Compare" = "在比较中打开 %1$@ … %2$@";

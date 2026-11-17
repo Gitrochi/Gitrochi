@@ -100,7 +100,7 @@
 "Nothing to push" = "Rien à pousser";
 "Nothing unreleased" = "Rien de non publié";
 "Open Projects" = "Ouvrir Projets";
-"Open a repository to use these" = "Ouvrez un dépôt pour les utiliser";
+"Open a repository to use the dimmed pages" = "Ouvrez un dépôt pour utiliser les pages grisées";
 "Open a repository to use this page." = "Ouvrez un dépôt pour utiliser cette page.";
 "Open changes" = "Ouvrir les modifications";
 "Opens %@ … %@ in Compare" = "Ouvre %1$@ … %2$@ dans Comparer";

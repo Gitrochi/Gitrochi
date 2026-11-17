@@ -36,7 +36,7 @@ export async function navigationSelfTest(): Promise<[boolean, string]> {
       if (repositoryDestinations.has(page)) ensure(!row(page)?.dataset.tip, `A disabled row must not carry a tip of its own: ${page}`);
       else { row(page)!.click(); await pause(); ensure(store.destination === page, `The initial menu did not select ${page}`); }
     }
-    ensure([...host.querySelectorAll(".workspace-nav-why")].map((line) => line.textContent).join("|") === Array(3).fill(t("Open a repository to use these")).join("|"), "Each section with a blocked page must say why");
+    ensure([...host.querySelectorAll(".workspace-nav-why")].map((line) => line.textContent).join("|") === t("Open a repository to use the dimmed pages"), "One line under Home must say why the dimmed pages are blocked");
     row("issues")!.click(); await pause(); ensure(store.destination === "issues" && row("issues")?.getAttribute("aria-current") === "page", "Issues must open without a repository");
     row("releases")!.click(); await pause(); ensure(store.destination === "releases", "Releases must open without a repository");
     row("projects")!.click(); await pause(); ensure(store.destination === "projects", "Projects must open without a repository");

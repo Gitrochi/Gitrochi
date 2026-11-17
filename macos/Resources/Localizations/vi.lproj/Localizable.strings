@@ -100,7 +100,7 @@
 "Nothing to push" = "Không có gì để đẩy";
 "Nothing unreleased" = "Không có gì chưa phát hành";
 "Open Projects" = "Mở Dự án";
-"Open a repository to use these" = "Mở một kho lưu trữ để dùng các mục này";
+"Open a repository to use the dimmed pages" = "Mở một kho lưu trữ để dùng các trang bị làm mờ";
 "Open a repository to use this page." = "Mở kho lưu trữ để sử dụng trang này.";
 "Open changes" = "Mở thay đổi";
 "Opens %@ … %@ in Compare" = "Mở %1$@ … %2$@ trong So sánh";
