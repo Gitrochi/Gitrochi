@@ -117,6 +117,7 @@ Run the matching macOS feature checks when those areas change (commands below st
 | Accounts, hosting hub and operations | `bash macos/Tools/test-hosting-target.sh`, `bash macos/Tools/test-hosting-hub.sh`, `bash macos/Tools/test-workspace-operations.sh`, `bash macos/Tools/test-confirmation-guard.sh` |
 | Account button, popover and Settings › Accounts | `bash macos/Tools/test-account-layout.sh`; Windows: `tests/account-presentation.test.ts` and the account self-tests |
 | Large lists and responsive layout | `bash macos/Tools/test-inspector-layout.sh`, `bash macos/Tools/test-large-changes.sh`, `bash macos/Tools/test-adaptive-workbench-identity.sh` |
+| Graph lane and people colours | `bash macos/Tools/test-graph-palette.sh`; Windows: `tests/palette.test.ts` and the graph look self-test |
 | Sidebar tree and titlebar safe areas | `bash macos/Tools/test-sidebar-tree-layout.sh`, `bash macos/Tools/test-sidebar-visibility.sh`, `bash macos/Tools/test-window-content-layout.sh`; on an interactive Mac, add `--fullscreen` to the latter for a real transition |
 | Browser login | `bash tools/gitch/tests/run.sh test_login.sh test_cli_contract.sh`, `bash macos/Tools/test-github-login-identity.sh`, `bash macos/Tools/test-browser-login-progress.sh` |
 | Credential access | `bash macos/Tools/test-keychain.sh`, `bash macos/Tools/test-credential-access.sh` |

@@ -23,7 +23,34 @@ The accent is the **operating system's accent colour** (`Color.accentColor` / `N
 - **Hover** is `#f7f7f8`, lighter than any selection tint, so the two never look alike.
 - **Keyboard focus on a row moves the selection**: the focused row gets the tint. Focus rings (2px accent at 40%) are only for inputs and buttons. With a low-chroma accent, add a 1px `#767676` border so focus stays visible.
 - **A tinted background means selection, nothing else.** Banners and strips are white with a 1px `#e3e3e6` border, a 14px icon and dark-toned lead text. Status lives in icons and pills.
-- In the commit graph, rows are 32px with a 24px lane band, under a 34px column header in 12px regular text (the boards draw the header at 44 and at 34; 34 is the one to follow). The selected commit gets the tint on its message, and its lane band turns 40% of the lane colour; graph rows have no hover colour. A ref chip is 18px tall with radius 6: the lane colour on a tint of it inside a 1px border in the full colour, filled for the checked-out branch and neutral grey for a tag, and a local branch that is not checked out shows how far it is behind (`main ↓5`). The uncommitted row is neutral and never takes the accent or a lane colour: an 18px node with a 2px dashed `#c9c9ce` ring, a dashed `#c9c9ce` line to its parent, a 3px `#c9c9ce` bar (one board draws the row without a bar; the grey bar is the one to follow), a neutral "N files" pill and italic text. It has no lane band; selecting it tints its message like any other row.
+- In the commit graph, rows are 32px with a 24px lane band in the lane's tint, under a 34px column header in 12px regular text (the boards draw the header at 44 and at 34; 34 is the one to follow). The selected commit gets the tint on its message, and its lane band turns 40% of the lane colour; graph rows have no hover colour. A commit node is 22px: the author's photo, or their initial (11px semibold, white on the person's node colour), inside a 2px ring in the lane colour; a merge commit is an 8px dot in the lane colour with a 2px gap around it. HEAD adds the current marker's 2px accent ring, 2px clear of its node, never the lane colour. A ref chip is 18px tall with radius 6: the lane colour on the lane's tint inside a 1px border in the full colour, filled for the checked-out branch and neutral grey for a tag, and a local branch that is not checked out shows how far it is behind (`main ↓5`). The uncommitted row is neutral and never takes the accent or a lane colour: an 18px node with a 2px dashed `#c9c9ce` ring, a dashed `#c9c9ce` line to its parent, a 3px `#c9c9ce` bar (one board draws the row without a bar; the grey bar is the one to follow), a neutral "N files" pill and italic text. It has no lane band; selecting it tints its message like any other row.
+
+## Fixed palettes
+
+Graph lanes and people without a photo have fixed colours from the Foundations board, the same on both platforms (macOS `Palette` in `Views/Shared/Theme.swift`; Windows `shared/lib/palette.ts` with the `--lane-*` and `--person-*` tokens in `global.css`). They are identity, not status, and never the accent: a green or amber lane does not mean passed or waiting. The boards are light only; a dark line keeps its lane's hue and chroma (OKLCH) at lightness 0.70, and a dark tint keeps the hue at 0.29 with little chroma.
+
+| Lane | Line | Tint | Dark line | Dark tint |
+|---|---|---|---|---|
+| 1 | `#1f5a9e` | `#eaf0fa` | `#66a1eb` | `#1f2c3d` |
+| 2 | `#1f7a7a` | `#e7f4f4` | `#5baeae` | `#193030` |
+| 3 | `#a3560f` | `#f9ece0` | `#da884b` | `#39271a` |
+| 4 | `#5f6b12` | `#f0f2e0` | `#99a755` | `#2a2e19` |
+| 5 | `#2b6d8f` | `#e6f0f5` | `#67a7cc` | `#1c2e38` |
+| 6 | `#5c6068` | `#eeeff1` | `#9a9ea6` | `#2a2b2f` |
+| 7 | `#6b4f2a` | `#f3ede5` | `#b89872` | `#322a1f` |
+
+- Lanes take the colours in this order and start again after the seventh. The band, a chip's fill and the "+N" chip are the tint; the selected band is the line at 40%. A filled chip's text is white in light and the lane's own tint in dark.
+- Contrast: a line is at least 5.1:1 on white and 5.6:1 on the dark graph (`#1e1e1e`, `#242427`); a chip's text is at least 4.5:1 on its tint (5.1:1 in dark) and on a filled chip. The board's teal tint `#e5f2f2` gave its text 4.44:1, so it is lifted to `#e7f4f4` (4.52:1). On the 40% selected band a line keeps about 3:1 (2.9 for teal and amber); the message's tint carries the selection.
+
+| Person | Avatar, light | Avatar, dark | Graph node |
+|---|---|---|---|
+| 1 | `#e6e8fa` / `#3f4bb8` | `#2c3054` / `#b4bbff` | `#4f5bd5` |
+| 2 | `#e0f1ec` / `#1f6b52` | `#113c33` / `#a5ccbb` | `#2a7d5f` |
+| 3 | `#e8eaed` / `#3a3f47` | `#30343a` / `#bec1c7` | `#4b5563` |
+| 4 | `#f7e4eb` / `#9b3a5f` | `#4b2636` / `#ebadc0` | `#b4466e` |
+
+- A profile photo always wins; the people palette is only for an author or a hosting profile without one (an organization's square too). Your own accounts (the toolbar's account, its popover and Settings) keep the Accounts board's one tint, the first person's. The person comes from the lower-cased e-mail or login through the same string hash on both platforms, so an author keeps one colour everywhere. An avatar is the letter on its fill (at least 5.4:1, 6.9:1 in dark); a graph node is the node colour under a white letter (at least 5:1) in both themes.
+- Where a node's colour is within 0.07 of its lane ring in OKLab, a 2px surface gap separates them and the initial sits on a 14px fill: in light, the second person on lane 2 and the third on lane 6; the dark lanes are far enough from every node.
 
 ## Badges
 
