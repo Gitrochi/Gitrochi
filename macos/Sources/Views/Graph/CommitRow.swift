@@ -386,7 +386,7 @@ struct GraphCell: View {
                 }
             }
             if !isWIP && !isMerge {
-                AuthorAvatar(name: author, email: email, size: GraphMetrics.avatar)
+                AuthorAvatar(name: author, email: email, size: GraphMetrics.avatar, lane: row.color)
                     .help(author)
                     .position(x: cx, y: GraphMetrics.rowHeight / 2)
             }

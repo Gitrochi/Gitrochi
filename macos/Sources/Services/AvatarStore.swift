@@ -197,6 +197,8 @@ struct AuthorAvatar: View {
     let name: String
     let email: String
     var size: CGFloat = 20
+    /// On a graph node, the lane whose ring it sits in: an initial then takes the person's node colour
+    var lane: Int? = nil
 
     var body: some View {
         if let img = AvatarStore.shared.image(for: email, name: name) {
@@ -207,7 +209,7 @@ struct AuthorAvatar: View {
                 .frame(width: size, height: size)
                 .clipShape(Circle())
         } else {
-            Avatar(name: name, email: email, size: size)
+            Avatar(name: name, email: email, size: size, lane: lane)
         }
     }
 }

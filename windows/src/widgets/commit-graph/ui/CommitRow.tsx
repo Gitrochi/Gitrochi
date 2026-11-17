@@ -273,8 +273,8 @@ function RefPill({ store, group, lane }: { store: RepoStore; group: RefGroup; la
   );
 }
 
-/** 커밋 동그라미: 작성자 프로필 사진(없으면 이니셜) */
-function AvatarNode({ name, email, x }: { name: string; email: string; x: number }) {
+/** 커밋 동그라미: 작성자 프로필 사진(없으면 이니셜), inside the lane's ring */
+function AvatarNode({ name, email, x, lane }: { name: string; email: string; x: number; lane: number }) {
   useObserve(avatars);
   const url = avatars.url(email, name);
   const ok = url && !avatars.failed.has(url);
@@ -283,7 +283,7 @@ function AvatarNode({ name, email, x }: { name: string; email: string; x: number
       {ok ? (
         <img src={url} width={AVATAR} height={AVATAR} alt="" draggable={false} onError={() => avatars.markFailed(url)} />
       ) : (
-        <Avatar name={name} email={email} size={AVATAR} />
+        <Avatar name={name} email={email} size={AVATAR} lane={lane} />
       )}
     </span>
   );
@@ -351,7 +351,7 @@ const GraphCell = memo(function GraphCell({
         {/* a 2px ring, 2px clear of the node */}
         {isHead && <circle cx={cx} cy={cy} r={isMerge ? 9 : AVATAR / 2 + 5} fill="none" stroke={color} strokeWidth={2} />}
       </svg>
-      {avatarNode && <AvatarNode name={author} email={email} x={cx} />}
+      {avatarNode && <AvatarNode name={author} email={email} x={cx} lane={row.color} />}
     </span>
   );
 });

@@ -41,9 +41,9 @@
   --term-bg: #fcfcfc;
   --shadow: 0 8px 28px rgba(0, 0, 0, 0.16), 0 1px 3px rgba(0, 0, 0, 0.08);
   --radius: 6px;
-  /* the fixed lane palette (docs/design.md, Commit graph; shared/lib/palette.ts; macOS: Palette in Theme.swift): each
-     lane's line, its tint and the text on a filled chip. The board's values; the teal tint is lifted from #e5f2f2 so the
-     lane's text reaches 4.5:1 on it */
+  /* the fixed palettes (docs/design.md, Commit graph; shared/lib/palette.ts; macOS: Palette in Theme.swift): graph
+     lanes with their tints and the text on a filled chip, and people without a photo (avatar fill and letter, graph
+     node). The board's values; the teal tint is lifted from #e5f2f2 so the lane's text reaches 4.5:1 on it */
   --lane-0: #1f5a9e;
   --lane-0-tint: #eaf0fa;
   --lane-0-on: #ffffff;
@@ -65,6 +65,18 @@
   --lane-6: #6b4f2a;
   --lane-6-tint: #f3ede5;
   --lane-6-on: #ffffff;
+  --person-0-fill: #e6e8fa;
+  --person-0-letter: #3f4bb8;
+  --person-0-node: #4f5bd5;
+  --person-1-fill: #e0f1ec;
+  --person-1-letter: #1f6b52;
+  --person-1-node: #2a7d5f;
+  --person-2-fill: #e8eaed;
+  --person-2-letter: #3a3f47;
+  --person-2-node: #4b5563;
+  --person-3-fill: #f7e4eb;
+  --person-3-letter: #9b3a5f;
+  --person-3-node: #b4466e;
   color-scheme: light;
 }
 
@@ -102,7 +114,7 @@
   --term-bg: #1c1c1f;
   --shadow: 0 10px 32px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.4);
   /* derived: each lane's hue lifted so its line keeps 3:1 on the graph and a chip's text 4.5:1 on the tint, which is
-     also the text on a filled chip */
+     also the text on a filled chip; people keep their node colours under the white letter */
   --lane-0: #66a1eb;
   --lane-0-tint: #1f2c3d;
   --lane-0-on: var(--lane-0-tint);
@@ -124,6 +136,14 @@
   --lane-6: #b89872;
   --lane-6-tint: #322a1f;
   --lane-6-on: var(--lane-6-tint);
+  --person-0-fill: #2c3054;
+  --person-0-letter: #b4bbff;
+  --person-1-fill: #113c33;
+  --person-1-letter: #a5ccbb;
+  --person-2-fill: #30343a;
+  --person-2-letter: #bec1c7;
+  --person-3-fill: #4b2636;
+  --person-3-letter: #ebadc0;
   color-scheme: dark;
 }
 

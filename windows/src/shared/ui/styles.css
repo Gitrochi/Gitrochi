@@ -280,6 +280,12 @@
   overflow: hidden;
 }
 
+/* a graph node's initial, 2px clear of a lane ring too close to its colour (shared/lib/palette.ts nodeGap) */
+:root:not([data-theme="dark"]) .avatar[data-gap~="light"],
+:root[data-theme="dark"] .avatar[data-gap~="dark"] {
+  box-shadow: inset 0 0 0 2px var(--surface);
+}
+
 .spinner {
   border-radius: 50%;
   border: 2px solid color-mix(in srgb, var(--text) 18%, transparent);

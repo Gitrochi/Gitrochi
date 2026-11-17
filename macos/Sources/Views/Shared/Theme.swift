@@ -1,9 +1,10 @@
 import SwiftUI
 
-/// The redesign board's fixed lane palette (ComponentsFoundations), never the accent. Light values are the board's; the
-/// dark ones keep each hue with more lightness, so a line keeps 3:1 on the dark graph and a chip's text 4.5:1 on its
-/// tint (docs/design.md, Commit graph). Views look colours up in these tables; nothing is worked out per row.
-/// (Windows: shared/lib/palette.ts and the --lane-* tokens in app/styles/global.css)
+/// The redesign board's fixed palettes (ComponentsFoundations): the graph's lanes and the colours of a person without a
+/// photo, never the accent. Light values are the board's; the dark ones keep each hue with more lightness, so a line keeps
+/// 3:1 on the dark graph and a chip's text 4.5:1 on its tint (docs/design.md, Commit graph). Views look colours up in
+/// these tables; nothing is worked out per row. (Windows: shared/lib/palette.ts and the --lane-* and --person-* tokens
+/// in app/styles/global.css)
 enum Palette {
     /// A lane: its line, the tint behind it (the band, a chip), the text on a chip filled with the line, and the
     /// selected commit's band (the line at 40%)
@@ -12,6 +13,13 @@ enum Palette {
         let tint: Color
         let onLine: Color
         let selected: Color
+    }
+
+    /// A person without a photo: the avatar's fill and letter, and a graph node's fill under a white letter
+    struct Person {
+        let fill: Color
+        let letter: Color
+        let node: Color
     }
 
     /// Lane lines, light and dark, in the board's order
@@ -26,16 +34,53 @@ enum Palette {
         (0xe6f0f5, 0x1c2e38), (0xeeeff1, 0x2a2b2f), (0xf3ede5, 0x322a1f),
     ]
 
+    /// People: the avatar's fill and letter, light and dark, and the node, which keeps its white letter in both
+    static let personValues: [(fill: (light: UInt32, dark: UInt32), letter: (light: UInt32, dark: UInt32), node: UInt32)] = [
+        ((0xe6e8fa, 0x2c3054), (0x3f4bb8, 0xb4bbff), 0x4f5bd5),
+        ((0xe0f1ec, 0x113c33), (0x1f6b52, 0xa5ccbb), 0x2a7d5f),
+        ((0xe8eaed, 0x30343a), (0x3a3f47, 0xbec1c7), 0x4b5563),
+        ((0xf7e4eb, 0x4b2636), (0x9b3a5f, 0xebadc0), 0xb4466e),
+    ]
+
+    /// The lanes where a person's node colour is within 0.07 of the lane in OKLab, too close to tell fill and ring
+    /// apart, so a 2pt surface gap separates them (the board shows Sam on the teal lane). The dark lanes are far enough.
+    static let nodeGapLanes: [(light: Set<Int>, dark: Set<Int>)] = [([], []), ([1], []), ([5], []), ([], [])]
+
     static let lanes: [Lane] = zip(lineValues, tintValues).map { line, tint in
         let color = Color(nsColor: dynamic(line.light, line.dark))
         return Lane(line: color, tint: Color(nsColor: dynamic(tint.light, tint.dark)),
                     onLine: Color(nsColor: dynamic(0xffffff, tint.dark)), selected: color.opacity(0.4))
     }
 
+    static let people: [Person] = personValues.map {
+        Person(fill: Color(nsColor: dynamic($0.fill.light, $0.fill.dark)), letter: Color(nsColor: dynamic($0.letter.light, $0.letter.dark)),
+               node: Color(nsColor: dynamic($0.node, $0.node)))
+    }
+
+    /// [person][lane]: the ring between a node's fill and its lane ring, the surface where the two are too close
+    static let nodeGaps: [[Color]] = nodeGapLanes.map { gap in
+        lineValues.indices.map { lane in
+            Color(nsColor: NSColor(name: nil) { appearance in
+                let dark = appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+                guard (dark ? gap.dark : gap.light).contains(lane) else { return .clear }
+                var surface = NSColor.textBackgroundColor
+                appearance.performAsCurrentDrawingAppearance { surface = NSColor.textBackgroundColor.usingColorSpace(.sRGB) ?? surface }
+                return surface
+            })
+        }
+    }
+
     /// A lane's colours; the layout numbers lanes on, so they wrap round the palette
     static func lane(_ i: Int) -> Lane { lanes[laneIndex(i)] }
 
     static func laneIndex(_ i: Int) -> Int { ((i % lanes.count) + lanes.count) % lanes.count }
+
+    /// The person an e-mail (or a login) is drawn as: the same on every run and on both platforms
+    static func personIndex(_ email: String) -> Int { stableHash(email.lowercased()) % people.count }
+
+    static func person(_ email: String) -> Person { people[personIndex(email)] }
+
+    static func nodeGap(person: Int, lane: Int) -> Color { nodeGaps[person][laneIndex(lane)] }
 
     /// 실행마다 바뀌지 않는 문자열 해시(색 고정용)
     static func stableHash(_ s: String) -> Int {
@@ -83,21 +128,30 @@ enum Fmt {
     static func long(_ d: Date) -> String { full.string(from: d) }
 }
 
-/// 작성자 이니셜 원형 아바타(네트워크 없이 이메일로 색을 고정)
+/// An initial without a photo, in the person's fixed colours picked from the e-mail (no network). On a graph node
+/// (`lane`) it is the person's node colour under a white letter, 2pt clear of a lane ring too close to it.
+/// (Windows: Avatar in shared/ui/ui.tsx)
 struct Avatar: View {
     let name: String
     let email: String
     var size: CGFloat = 28
+    /// The graph lane whose ring the node sits in
+    var lane: Int? = nil
 
     var body: some View {
-        Circle()
-            .fill(Palette.lane(Palette.stableHash(email.lowercased())).line)
-            .overlay(
-                Text(name.first.map { String($0).uppercased() } ?? "?")
-                    .font(.system(size: size * 0.45, weight: .semibold))
-                    .foregroundStyle(.white)
-            )
-            .frame(width: size, height: size)
+        let index = Palette.personIndex(email)
+        let person = Palette.people[index]
+        let letter = Text(name.first.map { String($0).uppercased() } ?? "?")
+        if let lane {
+            Circle().fill(person.node)
+                .overlay(Circle().strokeBorder(Palette.nodeGap(person: index, lane: lane), lineWidth: 2))
+                .overlay(letter.font(.system(size: 11, weight: .semibold)).foregroundStyle(.white))
+                .frame(width: size, height: size)
+        } else {
+            Circle().fill(person.fill)
+                .overlay(letter.font(.system(size: size * 0.45, weight: .semibold)).foregroundStyle(person.letter))
+                .frame(width: size, height: size)
+        }
     }
 }
 
