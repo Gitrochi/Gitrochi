@@ -101,6 +101,7 @@
 "Nothing unreleased" = "Yayımlanmamış bir şey yok";
 "Open Projects" = "Projeleri aç";
 "Open a repository to use these" = "Bunları kullanmak için bir depo açın";
+"Open a repository to use this page." = "Bu sayfayı kullanmak için bir depo açın.";
 "Open changes" = "Değişiklikleri aç";
 "Opens %@ … %@ in Compare" = "Karşılaştır'da %1$@ … %2$@ açar";
 "Open…" = "Aç…";

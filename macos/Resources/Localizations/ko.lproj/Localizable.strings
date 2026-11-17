@@ -1849,7 +1849,7 @@
 "Only members visible to this account are returned by the server." = "서버가 이 계정에 공개한 구성원만 표시됩니다.";
 "Open a local repository or clone one to get started." = "로컬 저장소를 열거나 서버의 저장소를 복제해서 시작하세요.";
 "Open a repository on the selected account's server to use releases and projects." = "릴리스와 프로젝트를 사용하려면 선택한 계정 서버의 저장소를 여세요.";
-"Open a repository to use this page." = "이 화면을 사용하려면 리포지터리를 여세요.";
+"Open a repository to use this page." = "이 화면을 쓰려면 저장소를 여세요.";
 "Open a repository with a GitHub or GitLab remote to use this workspace." = "이 작업 화면을 사용하려면 GitHub 또는 GitLab 원격이 있는 저장소를 여세요.";
 "Organizations" = "조직";
 "Parent folder" = "상위 폴더";

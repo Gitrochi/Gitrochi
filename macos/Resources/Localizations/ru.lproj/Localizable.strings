@@ -101,6 +101,7 @@
 "Nothing unreleased" = "Всё выпущено";
 "Open Projects" = "Открыть проекты";
 "Open a repository to use these" = "Откройте репозиторий, чтобы ими пользоваться";
+"Open a repository to use this page." = "Откройте репозиторий, чтобы использовать эту страницу.";
 "Open changes" = "Открыть изменения";
 "Opens %@ … %@ in Compare" = "Открывает %1$@ … %2$@ в сравнении";
 "Open…" = "Открыть…";
