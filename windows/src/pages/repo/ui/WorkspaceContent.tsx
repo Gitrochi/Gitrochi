@@ -3,7 +3,6 @@ import { RepositoryCodePanel, RevisionComparisonPanel, RebaseWorkbenchPanel } fr
 import { HostingHubPanel, projectBranchName } from "@/widgets/hosting-hub";
 import { WorkspaceHomePanel, ActionsWorkspacePanel } from "@/widgets/workspace-panels";
 import type { RepoStore } from "@/entities/repo";
-import { repositoryDestinations } from "@/entities/git";
 import { useObserve } from "@/shared/lib";
 import { AccountWorkspacePanel } from "./AccountWorkspacePanel";
 import { PullRequestsWorkspace } from "./PullRequestsWorkspace";
@@ -23,9 +22,9 @@ export function WorkspaceContent({ store, openSettings }: { store: RepoStore; op
   );
 }
 
+/** A page that needs a repository is never the destination while none is open (RepoStore.navigate), so each page here is its own and Home is the only one that lists repositories */
 function WorkspacePage({ store, openSettings }: { store: RepoStore; openSettings: () => void }) {
   const props = { store, openSettings };
-  if (!store.path && (repositoryDestinations.has(store.destination) || store.destination === "issues" || store.destination === "releases")) return <WorkspaceHomePanel {...props} repositoryOnly />;
   switch (store.destination) {
     case "home": return <WorkspaceHomePanel {...props} />;
     case "compare": return <RevisionComparisonPanel store={store} />;

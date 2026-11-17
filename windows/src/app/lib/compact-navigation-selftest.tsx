@@ -49,6 +49,16 @@ export async function compactNavigationSelfTest(): Promise<[boolean, string]> {
       ensure(!store.navigate(destination), `${destination} must be refused without a repository`); await settle();
       ensure(store.destination === "home" && row("home")?.getAttribute("aria-current") === "page" && !!host.querySelector(".home-page") && !host.querySelector(".repository-screen"), `Asking for ${destination} without a repository must keep Home`);
     }
+    // Issues and Releases stay open without a repository; each says what it needs and offers to open one, with no copy of Home
+    for (const page of ["issues", "releases"] as const) {
+      row(page)!.click(); await settle();
+      for (let i = 0; i < 40 && !host.querySelector(".workspace-page .hosted-empty"); i++) await pause();
+      const empty = host.querySelector(".workspace-page .hosted-empty");
+      ensure(store.destination === page && row(page)?.getAttribute("aria-current") === "page" && !host.querySelector(".home-page")
+        && empty?.querySelector(".hosted-empty-title")?.textContent === t("No hosting remote") && [...empty.querySelectorAll("button")].some((button) => button.textContent === t("Open repository…")),
+        `${page} without a repository must say what it needs and offer to open one`);
+    }
+    row("home")!.click(); await settle();
     store.path = "C:/fixture/compact-navigation"; store.headBranch = "main"; store.navigate("repository"); await settle();
     ensure(isCompact() && frame().getBoundingClientRect().width === 52, "Opening the repository screen must fold the page list into a 52px rail");
     ensure(host.querySelector(".repository-screen > .sidebar") && host.querySelector(".repository-screen > .center") && host.querySelector(".repository-screen > .inspector"), "The repository screen must show its three columns");
@@ -88,7 +98,7 @@ export async function compactNavigationSelfTest(): Promise<[boolean, string]> {
     nav().querySelector<HTMLButtonElement>(".workspace-nav-footer button")!.click();
     ensure(opened === 1, "The rail's Settings button did not open preferences");
     ensure(unexpected.length === 0, `Navigation triggered external work: ${unexpected.join(", ")}`);
-    return [true, "Welcome without a toolbar; the repository screen folds the page list into a 52px rail with three columns, an icon toolbar and no tab strip; rail and Ctrl+B animate without replacing controls or losing focus, respect reduced motion, and restore a dragged width without resize lag; branch list folds into its rail; full-width pages with the terminal below, the repository screen with it under the graph; no network, processes or writes"];
+    return [true, "Welcome without a toolbar; without a repository the pages that need one keep Home, and Issues and Releases say what they need; the repository screen folds the page list into a 52px rail with three columns, an icon toolbar and no tab strip; rail and Ctrl+B animate without replacing controls or losing focus, respect reduced motion, and restore a dragged width without resize lag; branch list folds into its rail; full-width pages with the terminal below, the repository screen with it under the graph; no network, processes or writes"];
   } catch (error) { return [false, error instanceof Error ? error.message : String(error)]; }
   finally {
     root.unmount(); host.remove();

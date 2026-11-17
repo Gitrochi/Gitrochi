@@ -85,6 +85,10 @@ export function ReleaseWorkspace({ source, openSettings }: { source: HubSource; 
   const groups = detail ? releaseAssetGroups(detail.assets, tag) : { primary: [], other: [] };
   const tagged = detail && releaseTaggedOn(source.tags?.find(value => value.name === tag)?.target, String(detail.item.data.target_commitish ?? ""));
   const target = source.target;
+  // no repository yet: the same words and way forward as Issues
+  if (!target && !source.path)
+    return <HostedListPage className="release-workspace"><HostedListEmpty icon={<Globe size={24}/>} title={t("No hosting remote")} caption={t("Open a repository with a GitHub or GitLab remote to use this workspace.")}
+      action={source.pickAndOpen ? { label: t("Open repository…"), filled: true, onClick: () => void source.pickAndOpen?.() } : undefined}/></HostedListPage>;
   if (!target)
     return <HostedListPage className="release-workspace"><HostedListEmpty icon={<Globe size={24}/>} title={t("This repository has no GitHub or GitLab remote")} caption={t("Releases, pull requests and runs need a hosting remote.")}/></HostedListPage>;
   const settingsOpener = openSettings ?? (() => window.dispatchEvent(new CustomEvent("gitrochi-open-settings", { detail: "accounts" })));

@@ -309,7 +309,8 @@ final class RepoStore: Identifiable {
     @discardableResult
     /// quick: switching worktrees, so skip the minimum loading animation
     func open(_ folder: URL, quick: Bool = false) async -> OpenResult {
-        let requestedPage = url == nil && (destination.needsRepository || [.issues, .releases].contains(destination)) ? destination : nil
+        // Issues and Releases offer "Open repository…" without one; the repository opens on the page it was asked from
+        let requestedPage = url == nil && [.issues, .releases].contains(destination) ? destination : nil
         let started = Date()
         loading = LoadingInfo(title: String(localized: "Opening \(folder.lastPathComponent)"), step: String(localized: "Checking repository…"))
         defer { if url == nil { loading = nil } }

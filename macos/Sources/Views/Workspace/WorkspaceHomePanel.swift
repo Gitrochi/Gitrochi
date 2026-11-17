@@ -5,8 +5,6 @@ import SwiftUI
 /// the recent ones), then the few tasks due today. (Windows: WorkspaceHomePanel.tsx)
 struct WorkspaceHomePanel: View {
     @Environment(RepoStore.self) private var store
-    /// Shown in place of a page that needs a repository while none is open
-    var repositoryOnly = false
     @ViewState private var dropping = false
     @ViewState private var filter = ""
     /// Branch, sync state and changed files of each recent repository, by path, read when Home appears
@@ -28,7 +26,7 @@ struct WorkspaceHomePanel: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 32) {
                 repositories
-                if !repositoryOnly { WorkspacePlanningDashboard(todayOnly: true) }
+                WorkspacePlanningDashboard(todayOnly: true)
             }
             .padding(EdgeInsets(top: 16, leading: 20, bottom: 32, trailing: 20))
             // as wide as the window: the board's 1280 is the size it was drawn at, not a limit
@@ -47,9 +45,6 @@ struct WorkspaceHomePanel: View {
 
     private var repositories: some View {
         VStack(alignment: .leading, spacing: 12) {
-            if repositoryOnly {
-                Text("Open a repository to use this page.").font(.system(size: 13)).foregroundStyle(StudioStyle.Rail.icon)
-            }
             Text("Repositories").font(.system(size: 15, weight: .semibold))
             HStack(spacing: 8) {
                 Button { store.presentOpenPanel() } label: { Label("Open…", symbol: "folder") }

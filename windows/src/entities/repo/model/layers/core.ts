@@ -1,6 +1,6 @@
 import { RepositoryConfirmationGuard } from "../../lib/confirmation-guard";
 import type { AgentHost } from "@/entities/agent";
-import { destinationAvailable, isWorkspaceDestination, repositoryDestinations, restoredDestination, returnsToRepository, type WorkspaceDestination } from "@/entities/git";
+import { destinationAvailable, isWorkspaceDestination, restoredDestination, returnsToRepository, type WorkspaceDestination } from "@/entities/git";
 import { avatars } from "@/entities/avatar";
 import { type CIPipeline, CIStore } from "@/entities/ci";
 import * as P from "@/entities/git";
@@ -363,7 +363,8 @@ export abstract class RepoCore extends Observable implements AgentHost {
       this.emit();
       return { kind: "failed", message: t("Couldn't verify the repository path.") };
     }
-    const requestedPage = !this.path && (repositoryDestinations.has(this.destination) || this.destination === "issues" || this.destination === "releases") ? this.destination : null;
+    // Issues and Releases offer "Open repository…" without one; the repository opens on the page it was asked from
+    const requestedPage = !this.path && (this.destination === "issues" || this.destination === "releases") ? this.destination : null;
     this.stopWatching();
     this.resetState();
     const top = lines[0].trim();
