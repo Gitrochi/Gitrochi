@@ -163,13 +163,19 @@ struct AccountPopover: View {
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Group {
                         if let identity = repository.identity, !(identity.name.isEmpty && identity.email.isEmpty) {
-                            Text(verbatim: identity.name) + Text(verbatim: identity.email.isEmpty ? "" : " <\(identity.email)>").foregroundStyle(Self.strong)
+                            Text(verbatim: identity.name)
                         } else {
                             Text("Not configured")
                         }
                     }
                     .font(.system(size: 13)).fixedSize(horizontal: false, vertical: true).textSelection(.enabled)
                     if repository.locked { DesignIconImage(icon: .lock, size: 12).foregroundStyle(Self.strong) }
+                }
+                // a long address (a GitHub noreply one) broke mid-word across two lines; it gets a line of its own, cut
+                // in the middle, whole on hover
+                if let email = repository.identity?.email, !email.isEmpty {
+                    Text(verbatim: "<\(email)>").font(.system(size: 13)).foregroundStyle(Self.strong)
+                        .lineLimit(1).truncationMode(.middle).help(email).textSelection(.enabled)
                 }
                 if repository.locked {
                     HStack(alignment: .firstTextBaseline, spacing: 4) {
