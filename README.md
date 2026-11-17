@@ -54,7 +54,7 @@ Gitrochi 0.3.14 brings Git history, connected project work and AI sessions into 
 3. **Review and commit.** Select uncommitted changes, inspect the diff, stage files or lines, and write a commit. Push shows the account, destination and outgoing changes before confirmation.
 4. **Choose a workspace.** Use Projects for boards and planning and Flows for repository checks.
 
-The menu is available from the start. Pages that need a repository offer a chooser until one is open. Collapse or expand it with the sidebar button or **⌘B / Ctrl+B**; the transition follows your system's reduced-motion preference and preserves the selected page.
+The menu is available from the start. Pages that need a repository are disabled until one is open. Collapse or expand it with the sidebar button or **⌘B / Ctrl+B**; the transition follows your system's reduced-motion preference and preserves the selected page.
 
 ## Download and install
 
