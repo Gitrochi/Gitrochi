@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { branchFilterMatches, branchFilterQuery, filterFolders, folderCount, groupFolders, leaf, type BranchFolders } from "../src/widgets/sidebar/lib/branch-filter";
+import { PinnedRefs } from "../src/entities/repo/lib/pinned-refs";
+import { branchFilterMatches, branchFilterQuery, filterFolders, folderCount, groupFolders, leaf, pinnedFirst, type BranchFolders } from "../src/widgets/sidebar/lib/branch-filter";
 
 const names = ["main", "feature/workspace-search", "feature/ci-groups", "fix/terminal-focus", "fix/flaky-tests", "release/1.10", "Develop"];
 const key = (name: string) => name;
@@ -62,6 +63,70 @@ describe("pinned branches", () => {
       loose: ["develop", "release/1.10"],
       folders: ["feature: reviews search"],
     });
+  });
+});
+
+// a remote's branches are grouped by their names within the remote, as the sidebar does with branchShort
+describe("pinned remote branches", () => {
+  const remote = ["origin/main", "origin/feature/checkout", "origin/feature/reviews", "origin/feature/search", "origin/fix/flaky", "origin/fix/focus"];
+  const short = (name: string) => name.slice(name.indexOf("/") + 1);
+  const remoteShape = (groups: BranchFolders<string>) => ({
+    pinned: groups.pinned.map(short),
+    loose: groups.loose.map(short),
+    folders: groups.folders.map((f) => `${f.name}: ${f.branches.map((b) => leaf(short(b))).join(" ")}`),
+  });
+
+  it("lead their remote by their names there, out of their folders, and an emptied folder goes", () => {
+    const groups = groupFolders(remote, short, (b) => ["origin/feature/search", "origin/fix/flaky", "origin/fix/focus"].includes(b));
+    expect(remoteShape(groups)).toEqual({ pinned: ["feature/search", "fix/flaky", "fix/focus"], loose: ["main"], folders: ["feature: checkout reviews"] });
+    // the folder counts what it holds, the remote every branch
+    expect(groups.folders[0].branches).toHaveLength(2);
+    expect(folderCount(groups)).toBe(remote.length);
+  });
+
+  it("are narrowed by their whole names, and a match stays first in its remote", () => {
+    const groups = groupFolders(remote, short, (b) => b === "origin/feature/search");
+    expect(remoteShape(filterFolders(groups, key, "origin/feature/s"))).toEqual({ pinned: ["feature/search"], loose: [], folders: [] });
+    expect(remoteShape(filterFolders(groups, key, "e"))).toEqual({ pinned: ["feature/search"], loose: [], folders: ["feature: checkout reviews"] });
+  });
+});
+
+describe("pinned tags", () => {
+  const tags = ["v2.0.0", "v1.10.0", "v1.9.0", "nightly"];
+  const pinned = new Set(["v1.9.0", "nightly", "v1.10.0"]);
+
+  it("lead Tags in name order, and the rest keep their order", () => {
+    expect(pinnedFirst(tags, key, (t) => pinned.has(t))).toEqual(["nightly", "v1.9.0", "v1.10.0", "v2.0.0"]);
+    expect(pinnedFirst(tags, key, () => false)).toEqual(tags);
+  });
+
+  it("are narrowed by name, and a match stays first", () => {
+    const shown = (query: string) => pinnedFirst(tags.filter((t) => branchFilterMatches(t, query)), key, (t) => pinned.has(t));
+    expect(shown("v1.1")).toEqual(["v1.10.0"]);
+    expect(shown("v")).toEqual(["v1.9.0", "v1.10.0", "v2.0.0"]);
+  });
+});
+
+// macOS: PinnedRefs in Core/BranchFilter.swift, checked by Tools/fixtures/SidebarTreeLayout.swift
+describe("pinned refs", () => {
+  it("keep the pins stored before remotes and tags could be pinned as local branches", () => {
+    expect([...PinnedRefs.load(["main", "feature/search"], [])].sort()).toEqual(["refs/heads/feature/search", "refs/heads/main"]);
+    expect(PinnedRefs.load([], []).size).toBe(0);
+  });
+
+  it("never share a pin between a local branch, a remote branch and a tag of one name", () => {
+    // a local branch may even be called origin/main
+    const pins = PinnedRefs.load(["v1.0", "origin/main"], ["refs/tags/main"]);
+    expect(pins.has("refs/heads/v1.0") && !pins.has("refs/tags/v1.0")).toBe(true);
+    expect(pins.has("refs/heads/origin/main") && !pins.has("refs/remotes/origin/main")).toBe(true);
+    expect(pins.has("refs/tags/main") && !pins.has("refs/heads/main")).toBe(true);
+  });
+
+  it("store local branches by name and the rest as full refs, and read back what they stored", () => {
+    const pins = new Set(["refs/tags/v1.0", "refs/heads/main", "refs/remotes/origin/main", "refs/heads/v1.0"]);
+    const stored = PinnedRefs.split(pins);
+    expect(stored).toEqual({ branches: ["main", "v1.0"], refs: ["refs/remotes/origin/main", "refs/tags/v1.0"] });
+    expect(PinnedRefs.load(stored.branches, stored.refs)).toEqual(pins);
   });
 });
 

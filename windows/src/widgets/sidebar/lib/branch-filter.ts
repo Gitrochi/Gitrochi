@@ -54,6 +54,12 @@ export function groupFolders<T>(branches: T[], key: (b: T) => string, isPinned: 
 /** The name without its folder (feature/auth-jwt → auth-jwt) */
 export const leaf = (name: string) => (name.includes("/") ? name.slice(name.indexOf("/") + 1) : name);
 
+/** Tags, which have no folders: the pinned ones ahead of the rest in name order, the rest in the order given */
+export function pinnedFirst<T>(items: T[], name: (t: T) => string, isPinned: (t: T) => boolean): T[] {
+  const nat = (a: string, b: string) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" });
+  return [...items.filter(isPinned).sort((a, b) => nat(name(a), name(b))), ...items.filter((t) => !isPinned(t))];
+}
+
 /** What the field's text matches with: trimmed, in lower case; "" filters nothing */
 export const branchFilterQuery = (text: string) => text.trim().toLowerCase();
 

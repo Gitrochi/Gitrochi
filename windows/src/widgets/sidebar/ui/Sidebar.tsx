@@ -3,13 +3,13 @@ import { ChevronDown, Cloud, Folder, GitBranch, Search, Tag as TagIcon } from "@
 import { type ReactNode, useState } from "react";
 import { localBranchMenu, remoteBranchMenu } from "@/features/git-menus";
 import { agents, isActiveStatus } from "@/entities/agent";
-import { type Branch, branchRemote, branchShort } from "@/entities/git";
+import { type Branch, branchRemote, branchShort, type Tag } from "@/entities/git";
 import { branchPayload, type RepoStore } from "@/entities/repo";
 import { samePath, settings } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { drag, useObserve } from "@/shared/lib";
 import { HostedListEmpty, IconButton, Segmented, SharedStack, showContextMenu, StatusPill, tip } from "@/shared/ui";
-import { branchFilterMatches, branchFilterQuery, filterFolders, folderCount, groupFolders, leaf } from "../lib/branch-filter";
+import { branchFilterMatches, branchFilterQuery, filterFolders, folderCount, groupFolders, leaf, pinnedFirst } from "../lib/branch-filter";
 import { AgentsPanel } from "./AgentsPanel";
 import { Section, SectionFlyout } from "./Section";
 import "./sidebar.css";
@@ -96,9 +96,10 @@ function BranchList({ store, only, flyout = false }: { store: RepoStore; only?: 
   }
   const remotes = [...byRemote.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([remote, list]) => ({ remote, groups: filterFolders(groupFolders(list, branchShort), (b) => b.name, query) }))
+    .map(([remote, list]) => ({ remote, groups: filterFolders(groupFolders(list, branchShort, (b) => store.isPinned(b)), (b) => b.name, query) }))
     .filter((r) => folderCount(r.groups) > 0);
-  const tags = store.tags.filter((tag) => branchFilterMatches(tag.name, query));
+  // pinned tags lead in name order
+  const tags = pinnedFirst(store.tags.filter((tag) => branchFilterMatches(tag.name, query)), (tag) => tag.name, (tag) => store.isTagPinned(tag));
   const localCount = folderCount(locals);
   // a section's own fold is left alone too: it opens for a match and goes back when the field is cleared
   const forced = filtering ? { open: true, onToggle: () => {} } : {};
@@ -160,6 +161,10 @@ function BranchList({ store, only, flyout = false }: { store: RepoStore; only?: 
               remote,
               folderCount(g),
               <>
+                {/* pinned remote branches lead their remote under their names there, out of their folders */}
+                {g.pinned.map((b) => (
+                  <BranchRow key={b.name} store={store} branch={b} label={branchShort(b)} />
+                ))}
                 {g.loose.map((b) => (
                   <BranchRow key={b.name} store={store} branch={b} label={branchShort(b)} />
                 ))}
@@ -181,27 +186,7 @@ function BranchList({ store, only, flyout = false }: { store: RepoStore; only?: 
       {show("tags") && tags.length > 0 && (
         <Section id="tags" title={t("Tags")} count={tags.length} {...forced}>
           {tags.map((tag) => (
-            <div
-              key={tag.name}
-              className="side-row side-tree-row"
-              onClick={() => store.reveal(tag.target)}
-              onContextMenu={(e) =>
-                showContextMenu(e, [
-                  { label: t("Go to this tag"), onClick: () => store.reveal(tag.target) },
-                  { label: t("Push tag"), onClick: () => void store.pushTag(tag) },
-                  ...(store.target ? [{ label: t("Open in Releases"), onClick: () => store.navigate("releases") }] : []),
-                  "divider",
-                  { label: t("Delete tag…"), danger: true, onClick: () => store.deleteTag(tag) },
-                ])
-              }
-            >
-              {/* the branch rows' disclosure column, so the names line up */}
-              <span className="side-tree-disclosure" aria-hidden="true" />
-              <span className="lead">
-                <TagIcon size={13} />
-              </span>
-              <span className="ellipsis side-tree-label">{tag.name}</span>
-            </div>
+            <TagRow key={tag.name} store={store} tag={tag} />
           ))}
         </Section>
       )}
@@ -266,29 +251,13 @@ function BranchRow({ store, branch: b, label }: { store: RepoStore; branch: Bran
       <span className="ellipsis grow side-tree-label" style={hidden ? { color: "var(--text-2)" } : undefined}>
         {label}
       </span>
-      {store.isPinned(b) && (
-        <span className="muted" data-tip={t("Pinned")} role="img" aria-label={t("Pinned")} style={{ display: "inline-flex" }}>
-          <Pin size={11} />
-        </span>
-      )}
+      {store.isPinned(b) && <PinnedMark />}
       {!b.isRemote && store.gitchProtected.has(b.name) && (
         <span className="muted" data-tip={t("Protected by gitch: no direct pushes, merge through a pull request")} style={{ display: "inline-flex" }}>
           <ShieldCheck size={12} />
         </span>
       )}
-      {hidden && (
-        // only a hidden branch carries the eye: it says so and shows the branch again (hiding is in the row's menu)
-        <IconButton
-          small
-          icon={<EyeOff size={12} />}
-          tip={t("Show in graph again")}
-          onClick={(e) => {
-            e.stopPropagation();
-            void store.setHidden(b, false);
-          }}
-          onDoubleClick={(e) => e.stopPropagation()}
-        />
-      )}
+      {hidden && <ShowAgainButton onClick={() => void store.setHidden(b, false)} />}
       {b.upstreamGone && (
         <span style={{ color: "var(--orange)", display: "inline-flex" }} data-tip={t("The tracked remote branch was deleted")}>
           <CloudAlert size={13} />
@@ -297,5 +266,66 @@ function BranchRow({ store, branch: b, label }: { store: RepoStore; branch: Bran
       {b.ahead > 0 && <span className="side-ab">↑{b.ahead}</span>}
       {b.behind > 0 && <span className="side-ab">↓{b.behind}</span>}
     </div>
+  );
+}
+
+/**
+ * A tag row, in the branch rows' disclosure and icon columns so the names line up, with their pinned and hidden marks.
+ * (macOS: TagRow)
+ */
+function TagRow({ store, tag }: { store: RepoStore; tag: Tag }) {
+  const hidden = store.isTagHidden(tag), pinned = store.isTagPinned(tag);
+  return (
+    <div
+      className="side-row side-tree-row"
+      onClick={() => store.reveal(tag.target)}
+      onContextMenu={(e) =>
+        showContextMenu(e, [
+          { label: t("Go to this tag"), onClick: () => store.reveal(tag.target) },
+          { label: t("Push tag"), onClick: () => void store.pushTag(tag) },
+          ...(store.target ? [{ label: t("Open in Releases"), onClick: () => store.navigate("releases") }] : []),
+          "divider",
+          { label: pinned ? t("Unpin") : t("Pin to top"), onClick: () => store.setTagPinned(tag, !pinned) },
+          { label: hidden ? t("Show in graph again") : t("Hide from graph"), onClick: () => void store.setTagHidden(tag, !hidden) },
+          "divider",
+          { label: t("Delete tag…"), danger: true, onClick: () => store.deleteTag(tag) },
+        ])
+      }
+    >
+      <span className="side-tree-disclosure" aria-hidden="true" />
+      <span className="lead">
+        <TagIcon size={13} />
+      </span>
+      <span className="ellipsis grow side-tree-label" style={hidden ? { color: "var(--text-2)" } : undefined}>
+        {tag.name}
+      </span>
+      {pinned && <PinnedMark />}
+      {hidden && <ShowAgainButton onClick={() => void store.setTagHidden(tag, false)} />}
+    </div>
+  );
+}
+
+/** The mark of a branch or tag pinned to the top ("Pin to top") */
+function PinnedMark() {
+  return (
+    <span className="muted" data-tip={t("Pinned")} role="img" aria-label={t("Pinned")} style={{ display: "inline-flex" }}>
+      <Pin size={11} />
+    </span>
+  );
+}
+
+/** Only a hidden branch or tag carries the eye: it says so and shows it in the graph again (hiding is in the row's menu) */
+function ShowAgainButton({ onClick }: { onClick: () => void }) {
+  return (
+    <IconButton
+      small
+      icon={<EyeOff size={12} />}
+      tip={t("Show in graph again")}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
+      onDoubleClick={(e) => e.stopPropagation()}
+    />
   );
 }

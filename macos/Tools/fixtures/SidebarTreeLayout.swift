@@ -34,6 +34,10 @@ struct TreeLayoutProbe: NSViewRepresentable {
     /// The pinned local branches ("Pin to top") and the checked-out one
     var pinned: Set<String> = []
     var current = "main"
+    /// The pinned remote branches and tags, and the tags hidden from the graph, by name
+    var pinnedRemotes: Set<String> = []
+    var pinnedTags: Set<String> = []
+    var hiddenTags: Set<String> = []
 }
 
 /// The Branches tab as SidebarView lays it out, from the production field, rows, groups and filter and fixture branches
@@ -50,14 +54,14 @@ private struct TreeLayoutFixture: View {
     private var remotes: [Branch] {
         ["origin/main", "origin/feature/checkout", "origin/feature/reviews", "origin/feature/search"].map { branch($0, remote: true) }
     }
-    private var tags: [String] { ["v1.10.0", "v1.9.0"] + (state.long ? [Self.longTag] : []) }
+    private var tags: [Tag] { (["v2.0.0", "v1.10.0", "v1.9.0"] + (state.long ? [Self.longTag] : [])).map { Tag(name: $0, target: "fixture") } }
 
     var body: some View {
         let query = BranchFilter.query(state.filter)
         let filtering = !query.isEmpty
         let local = BranchFolders(locals, key: { $0.name }, pinned: { state.pinned.contains($0.name) }).filtered(query)
-        let remote = BranchFolders(remotes) { $0.shortName }.filtered(query)
-        let shownTags = tags.filter { BranchFilter.matches($0, query) }
+        let remote = BranchFolders(remotes, key: { $0.shortName }, pinned: { state.pinnedRemotes.contains($0.name) }).filtered(query)
+        let shownTags = BranchFolders.pinnedFirst(tags.filter { BranchFilter.matches($0.name, query) }, name: \.name) { state.pinnedTags.contains($0.name) }
         VStack(alignment: .leading, spacing: 0) {
             // the switch and the field with SidebarView's own paddings
             Segmented(label: "Repository tools", items: [.init(value: "list", title: String(localized: "Branches")), .init(value: "agents", title: String(localized: "Agents"))],
@@ -92,6 +96,7 @@ private struct TreeLayoutFixture: View {
                     if remote.count > 0 {
                         section("Remotes") {
                             DisclosureGroup(isExpanded: expansion("r:origin", forced: filtering)) {
+                                ForEach(remote.pinned) { row($0, label: $0.shortName) }
                                 ForEach(remote.loose) { row($0, label: $0.shortName) }
                                 ForEach(remote.folders) { f in
                                     DisclosureGroup(isExpanded: expansion("r:origin/" + f.name, forced: filtering)) {
@@ -109,15 +114,10 @@ private struct TreeLayoutFixture: View {
                     }
                     if !shownTags.isEmpty {
                         section("Tags", count: shownTags.count) {
-                            ForEach(shownTags, id: \.self) { name in
-                                HStack(spacing: 6) {
-                                    Color.clear.frame(width: 10, height: 16)
-                                    DesignIconImage(icon: .releases, size: 13).foregroundStyle(StudioStyle.Rail.icon)
-                                        .background(TreeLayoutProbe(identifier: "icon:tag:" + name))
-                                    Text(name).lineLimit(1).truncationMode(.tail)
-                                }
-                                .sidebarTreeRow()
-                                .background(TreeLayoutProbe(identifier: "row:tag:" + name))
+                            ForEach(shownTags) { t in
+                                TagRow(tag: t, pinned: state.pinnedTags.contains(t.name), hidden: state.hiddenTags.contains(t.name))
+                                    .sidebarTreeRow()
+                                    .background(TreeLayoutProbe(identifier: "row:tag:" + t.name))
                             }
                         }
                     }
@@ -181,7 +181,8 @@ private struct TreeLayoutFixture: View {
     private func row(_ branch: Branch, label: String) -> some View {
         // the long branch carries every mark a row can have
         let marked = branch.name == Self.longBranch
-        return BranchRow(branch: branch, label: label, hidden: marked, pinned: marked || state.pinned.contains(branch.name), protected: marked)
+        let pinned = (branch.isRemote ? state.pinnedRemotes : state.pinned).contains(branch.name)
+        return BranchRow(branch: branch, label: label, hidden: marked, pinned: marked || pinned, protected: marked)
             .sidebarTreeRow()
             .background(TreeLayoutProbe(identifier: "row:" + branch.name))
     }
@@ -189,7 +190,8 @@ private struct TreeLayoutFixture: View {
 
 /// The pure grouping behind the pinned rows, as tests/branch-filter.test.ts checks it on Windows: pinned branches lead in
 /// name order and leave their folders (an emptied one goes, one with a branch left keeps its form), the filter keeps a
-/// pinned match first, and unpinning puts the branch back in its folder
+/// pinned match first, and unpinning puts the branch back in its folder; the same for a remote's branches, pinned tags
+/// lead Tags, and pins are full refs that keep the local names stored before
 private func checkPinnedGrouping() {
     let names = ["develop", "feature/checkout", "feature/reviews", "feature/search", "fix/flaky", "fix/focus", "main", "release/1.10"]
     let branches = names.map { Branch(name: $0, target: $0, upstream: nil, ahead: 0, behind: 0, upstreamGone: false, isCurrent: $0 == "feature/checkout", isRemote: false) }
@@ -209,6 +211,42 @@ private func checkPinnedGrouping() {
     expect(pinned.filtered("e"), "pinned: feature/checkout feature/search | loose: develop release/1.10 | feature: reviews", "The filter must keep pinned matches first")
     expect(group(pins.subtracting(["feature/search"])), "pinned: feature/checkout fix/flaky fix/focus main | loose: develop release/1.10 | feature: reviews search",
            "Unpinning must put the branch back in its folder")
+
+    // a remote's branches by their names there: a pinned one leads its remote, out of its folder
+    let remote = ["origin/main", "origin/feature/checkout", "origin/feature/reviews", "origin/feature/search", "origin/fix/flaky", "origin/fix/focus"]
+        .map { Branch(name: $0, target: $0, upstream: nil, ahead: 0, behind: 0, upstreamGone: false, isCurrent: false, isRemote: true) }
+    func remoteShape(_ groups: BranchFolders) -> String {
+        (["pinned: " + groups.pinned.map(\.shortName).joined(separator: " "), "loose: " + groups.loose.map(\.shortName).joined(separator: " ")]
+            + groups.folders.map { "\($0.name): " + $0.branches.map { BranchFolders.leaf($0.shortName) }.joined(separator: " ") }).joined(separator: " | ")
+    }
+    let remotePins: Set<String> = ["origin/feature/search", "origin/fix/flaky", "origin/fix/focus"]
+    let remoteGroups = BranchFolders(remote, key: { $0.shortName }, pinned: { remotePins.contains($0.name) })
+    let remoteGrouped = remoteShape(remoteGroups)
+    precondition(remoteGrouped == "pinned: feature/search fix/flaky fix/focus | loose: main | feature: checkout reviews",
+                 "Pinned remote branches must lead their remote by their names there, out of their folders: \(remoteGrouped)")
+    precondition(remoteGroups.count == remote.count, "The remote's count must hold every branch")
+    let searchPinned = BranchFolders(remote, key: { $0.shortName }, pinned: { $0.name == "origin/feature/search" })
+    precondition(remoteShape(searchPinned.filtered("origin/feature/s")) == "pinned: feature/search | loose: ", "The filter must narrow pinned remote branches by their whole names")
+    precondition(remoteShape(searchPinned.filtered("e")) == "pinned: feature/search | loose:  | feature: checkout reviews", "The filter must keep a pinned remote match first")
+
+    // tags have no folders: the pinned ones lead in name order, the rest keep their order
+    let tagNames = ["v2.0.0", "v1.10.0", "v1.9.0", "nightly"]
+    let tagPins: Set<String> = ["v1.9.0", "nightly", "v1.10.0"]
+    precondition(BranchFolders.pinnedFirst(tagNames, name: { $0 }) { tagPins.contains($0) } == ["nightly", "v1.9.0", "v1.10.0", "v2.0.0"], "Pinned tags must lead in name order")
+    precondition(BranchFolders.pinnedFirst(tagNames, name: { $0 }) { _ in false } == tagNames, "Nothing pinned must leave the tags as they were")
+    precondition(BranchFolders.pinnedFirst(tagNames.filter { BranchFilter.matches($0, "v") }, name: { $0 }) { tagPins.contains($0) } == ["v1.9.0", "v1.10.0", "v2.0.0"],
+                 "The filter must keep pinned tag matches first")
+
+    // pins as full refs: the local names stored before keep pinning local branches, and nothing of one name shares a pin
+    precondition(PinnedRefs.load(branches: ["main", "feature/search"], refs: []) == ["refs/heads/main", "refs/heads/feature/search"], "Stored local pins must carry over")
+    let named = PinnedRefs.load(branches: ["v1.0", "origin/main"], refs: ["refs/tags/main"])
+    precondition(named.contains("refs/heads/v1.0") && !named.contains("refs/tags/v1.0") && named.contains("refs/heads/origin/main")
+                 && !named.contains("refs/remotes/origin/main") && named.contains("refs/tags/main") && !named.contains("refs/heads/main"),
+                 "A local branch, a remote branch and a tag of one name must not share a pin")
+    let all: Set<String> = ["refs/tags/v1.0", "refs/heads/main", "refs/remotes/origin/main", "refs/heads/v1.0"]
+    let stored = PinnedRefs.split(all)
+    precondition(stored.branches == ["main", "v1.0"] && stored.refs == ["refs/remotes/origin/main", "refs/tags/v1.0"], "Local pins must be stored by name, the rest as refs")
+    precondition(PinnedRefs.load(branches: stored.branches, refs: stored.refs) == all, "Stored pins must read back")
 }
 
 @main private struct SidebarTreeLayoutTest {
@@ -222,7 +260,7 @@ private func checkPinnedGrouping() {
                 treeLayoutViews.removeAll()
                 let state = TreeLayoutState()
                 let host = NSHostingView(rootView: TreeLayoutFixture(state: state).preferredColorScheme(dark ? .dark : .light))
-                let bounds = NSRect(x: 0, y: 0, width: width, height: 560)
+                let bounds = NSRect(x: 0, y: 0, width: width, height: 640)
                 let window = NSWindow(contentRect: NSRect(x: -4000, y: 0, width: width, height: bounds.height),
                                       styleMask: [.borderless], backing: .buffered, defer: false)
                 window.contentView = host
@@ -384,15 +422,72 @@ private func checkPinnedGrouping() {
                 settle()
                 precondition(!shown("pin:feature/search") && top("row:feature/search") > top("label:local-feature"), "Unpinning must put the branch back in its folder")
                 close(frame("label:feature/search").minX - frame("label:local-feature").minX, 18, "An unpinned branch must sit one level in, in its folder")
+
+                // a remote branch pinned out of its folder leads its remote under its name there, beside a pinned local
+                // branch of the same name; pinned tags lead Tags in name order; a hidden tag keeps its row, greyed, with
+                // the eye that shows it again
+                state.pinned.insert("feature/search")
+                state.pinnedRemotes = ["origin/feature/search"]
+                state.pinnedTags = ["v1.9.0", "v2.0.0"]
+                state.hiddenTags = ["v1.10.0"]
+                settle()
+                func mid(_ id: String) -> CGFloat { top(id) + frame(id).height / 2 }
+                close(mid("row:origin/feature/search") - mid("label:origin"), 26, "The pinned remote branch must lead its remote")
+                close(mid("row:origin/main") - mid("row:origin/feature/search"), 26, "The remote's other branches must follow its pinned one")
+                close(mid("label:remote-feature") - mid("row:origin/main"), 26, "The remote's folders must follow its branches")
+                close(frame("label:origin/feature/search").minX, frame("label:origin/main").minX, "A pinned remote row must align with its remote's rows, out of its folder")
+                close(frame("label:origin/feature/reviews").minX - frame("label:remote-feature").minX, 18, "The folder must keep the remote branches that are not pinned")
+                precondition(shown("pin:origin/feature/search") && shown("pin:feature/search") && !shown("pin:origin/main") && !shown("pin:origin/feature/reviews"),
+                             "The pinned remote and local branches of one name must carry their own pin marks, and no other remote row")
+                let tagOrder = ["v1.9.0", "v2.0.0", "v1.10.0"]
+                close(top("row:tag:" + tagOrder[0]), top("head:Tags") + 26, "The first pinned tag must stand right under the head")
+                for (above, below) in zip(tagOrder, tagOrder.dropFirst()) {
+                    close(top("row:tag:" + below) - top("row:tag:" + above), 26, "Pinned tags must lead in name order, then the rest")
+                }
+                precondition(shown("pin:tag:v1.9.0") && shown("pin:tag:v2.0.0") && !shown("pin:tag:v1.10.0"), "Only pinned tags carry the pin mark")
+                precondition(shown("eye:tag:v1.10.0") && !shown("eye:tag:v1.9.0") && !shown("eye:tag:v2.0.0"), "Only the hidden tag carries the eye")
+                close(frame("label:tag:v1.9.0").minX, frame("label:main").minX, "Tag names must align with the branch names")
+                for (rowID, labelID, mark, name) in [("row:origin/feature/search", "label:origin/feature/search", "pin:origin/feature/search", "feature/search"),
+                                                     ("row:tag:v1.9.0", "label:tag:v1.9.0", "pin:tag:v1.9.0", "v1.9.0"),
+                                                     ("row:tag:v2.0.0", "label:tag:v2.0.0", "pin:tag:v2.0.0", "v2.0.0"),
+                                                     ("row:tag:v1.10.0", "label:tag:v1.10.0", "eye:tag:v1.10.0", "v1.10.0")] {
+                    let row = frame(rowID), label = frame(labelID), markFrame = frame(mark)
+                    let natural = (name as NSString).size(withAttributes: [.font: NSFont.systemFont(ofSize: 13)]).width
+                    close(row.height, 26, "Pinned and hidden row height")
+                    precondition(label.width >= natural - 1 && row.maxX <= width && markFrame.minX >= label.maxX && markFrame.maxX <= row.maxX,
+                                 "\(name) must show its whole name and keep its mark inside: row \(row), label \(label), mark \(markFrame)")
+                }
+                _ = try shot("pinned-all")
+                // the filter keeps a pinned match at the top of its own group
+                state.filter = "search"
+                settle()
+                close(mid("row:origin/feature/search") - mid("label:origin"), 26, "A pinned remote match must stay first in its remote")
+                precondition(!shown("row:origin/main") && !shown("label:remote-feature") && !shown("head:Tags"), "The filter must leave out what does not match")
+                state.filter = "V1"
+                settle()
+                precondition(!shown("head:Local branches") && !shown("head:Remotes") && !shown("row:tag:v2.0.0"), "Only the matching tags must stay")
+                close(top("row:tag:v1.9.0"), top("head:Tags") + 26, "A pinned tag match must stay first")
+                close(top("row:tag:v1.10.0") - top("row:tag:v1.9.0"), 26, "The hidden tag must follow the pinned one")
+                state.filter = ""
+                // unpinning puts the remote branch back in its folder and the tags in their order; shown again, the tag
+                // loses the eye
+                state.pinnedRemotes = []
+                state.pinnedTags = []
+                state.hiddenTags = []
+                settle()
+                close(frame("label:origin/feature/search").minX - frame("label:remote-feature").minX, 18, "An unpinned remote branch must go back to its folder")
+                close(top("row:tag:v1.10.0") - top("row:tag:v2.0.0"), 26, "Unpinned tags must go back to their order")
+                close(top("row:tag:v1.9.0") - top("row:tag:v1.10.0"), 26, "Unpinned tags must go back to their order")
+                precondition(!shown("pin:tag:v1.9.0") && !shown("eye:tag:v1.10.0") && !shown("pin:origin/feature/search"), "Unpinned and shown rows must lose their marks")
                 checks.append(["width": width, "theme": dark ? "dark" : "light", "childIndent": 18,
                                "rowHeight": 26, "siblingsAligned": true, "headHeight": 26, "countPills": true, "collapseReopen": true,
                                "field": "28 pt, 10 pt above and below", "filter": true, "emptyForm": true, "longName": true,
-                               "pinnedFirst": true, "screenshot": screenshot])
+                               "pinnedFirst": true, "pinnedRemotesAndTags": true, "hiddenTag": true, "screenshot": screenshot])
                 window.orderOut(nil)
             }
         }
         try JSONSerialization.data(withJSONObject: checks, options: [.prettyPrinted, .sortedKeys])
             .write(to: output.appendingPathComponent("result.json"))
-        print("PASS: the Filter branches field, production branch rows and tree groups align at 240/280/320 points in light/dark, with 18-point nesting, compact 26-point rows, 26-point heads and count pills at the right edge; pinned branches lead Local branches under their whole names and go back to their folder when unpinned; the filter opens folded folders, hides what does not match, keeps pinned matches first, shows the empty form and restores the folds. \(output.path)")
+        print("PASS: the Filter branches field, production branch rows and tree groups align at 240/280/320 points in light/dark, with 18-point nesting, compact 26-point rows, 26-point heads and count pills at the right edge; pinned branches lead Local branches under their whole names and go back to their folder when unpinned, a pinned remote branch leads its remote and pinned tags lead Tags, a hidden tag keeps its row with the eye; the filter opens folded folders, hides what does not match, keeps pinned matches first, shows the empty form and restores the folds. \(output.path)")
     }
 }

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Check the Branches tab's field, production branch rows, disclosure spacing, pinned branches and filter without account or
-# repository access.
+# Check the Branches tab's field, production branch and tag rows, disclosure spacing, pinned branches, remotes and tags,
+# hidden tags and the filter without account or repository access.
 # GITROCHI_SIDEBAR_TREE_LANGUAGE=ko renders the screenshots in that language.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -15,23 +15,29 @@ import sys
 root, target = map(Path, sys.argv[1:])
 source = (root / 'Sources/Views/Sidebar/SidebarView.swift').read_text()
 start = source.index('private struct BranchRow: View {')
+middle = source.index('/// A tag row,', start)
 end = source.index('/// A sidebar section:', start)
-row = source[start:end].replace('private struct BranchRow:', 'struct BranchRow:', 1)
-icon = '                .frame(width: 13)\n'
-assert row.count(icon) == 1, 'Branch icon measurement attachment changed'
-row = row.replace(icon, icon + '                .background(TreeLayoutProbe(identifier: "icon:" + branch.name))\n')
-label = '                .help(branch.name)\n'
-assert row.count(label) == 1, 'Branch label measurement attachment changed'
-row = row.replace(label, label + '                .background(TreeLayoutProbe(identifier: "label:" + branch.name))\n')
-current = 'if branch.isCurrent { CurrentMarker() }'
-assert row.count(current) == 1, 'Current marker measurement attachment changed'
-row = row.replace(current, 'if branch.isCurrent { CurrentMarker().background(TreeLayoutProbe(identifier: "current:" + branch.name)) }')
-pin = '.help("Pinned").accessibilityLabel("Pinned")\n'
-assert row.count(pin) == 1, 'Pin mark measurement attachment changed'
-row = row.replace(pin, '.help("Pinned").accessibilityLabel("Pinned")\n                    .background(TreeLayoutProbe(identifier: "pin:" + branch.name))\n')
+
+def attach(text, anchor, probe, what):
+    """Puts a probe after the one line that matches, so a change to the row fails here rather than measuring nothing"""
+    assert text.count(anchor) == 1, what + ' measurement attachment changed'
+    return text.replace(anchor, anchor.rstrip('\n') + probe + ('\n' if anchor.endswith('\n') else ''))
+
+row = source[start:middle].replace('private struct BranchRow:', 'struct BranchRow:', 1)
+row = attach(row, '                .frame(width: 13)\n', '\n                .background(TreeLayoutProbe(identifier: "icon:" + branch.name))', 'Branch icon')
+row = attach(row, '                .help(branch.name)\n', '\n                .background(TreeLayoutProbe(identifier: "label:" + branch.name))', 'Branch label')
+row = attach(row, 'CurrentMarker()', '.background(TreeLayoutProbe(identifier: "current:" + branch.name))', 'Current marker')
+row = attach(row, 'PinnedMark()', '.background(TreeLayoutProbe(identifier: "pin:" + branch.name))', 'Pin mark')
+row = attach(row, 'ShowAgainButton(action: showAgain)', '.background(TreeLayoutProbe(identifier: "eye:" + branch.name))', 'Eye')
+# the production tag row and the marks both rows share
+tag = source[middle:end].replace('private struct TagRow:', 'struct TagRow:', 1)
+tag = attach(tag, '            DesignIconImage(icon: .releases, size: 13).foregroundStyle(StudioStyle.Rail.icon)\n', '\n                .background(TreeLayoutProbe(identifier: "icon:tag:" + tag.name))', 'Tag icon')
+tag = attach(tag, '                .truncationMode(.tail)\n', '\n                .background(TreeLayoutProbe(identifier: "label:tag:" + tag.name))', 'Tag label')
+tag = attach(tag, 'PinnedMark()', '.background(TreeLayoutProbe(identifier: "pin:tag:" + tag.name))', 'Tag pin')
+tag = attach(tag, 'ShowAgainButton(action: showAgain)', '.background(TreeLayoutProbe(identifier: "eye:tag:" + tag.name))', 'Tag eye')
 models = (root / 'Sources/Core/Models.swift').read_text()
-branch = models[models.index('struct Branch: Identifiable, Hashable {'):models.index('\nstruct Tag:')]
-(target / 'BranchRow.swift').write_text('import SwiftUI\ntypealias ViewState<Value> = SwiftUI.State<Value>\n' + branch + '\n' + row)
+branch = models[models.index('struct Branch: Identifiable, Hashable {'):models.index('\nstruct Stash:')]
+(target / 'BranchRow.swift').write_text('import SwiftUI\ntypealias ViewState<Value> = SwiftUI.State<Value>\n' + branch + '\n' + row + tag)
 # The empty form and the buttons it draws, without the rest of the hosted pages' parts.
 hosted = (root / 'Sources/Views/Shared/HostedList.swift').read_text()
 parts = hosted[hosted.index('enum HostedList {'):hosted.index('/// The row above the page:')]

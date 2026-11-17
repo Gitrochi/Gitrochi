@@ -64,6 +64,30 @@ struct BranchFolders {
         guard let slash = name.firstIndex(of: "/") else { return name }
         return String(name[name.index(after: slash)...])
     }
+
+    /// Tags, which have no folders: the pinned ones ahead of the rest in name order, the rest in the order given
+    static func pinnedFirst<T>(_ items: [T], name: (T) -> String, pinned isPinned: (T) -> Bool) -> [T] {
+        items.filter(isPinned).sorted { name($0).localizedStandardCompare(name($1)) == .orderedAscending } + items.filter { !isPinned($0) }
+    }
+}
+
+/// "Pin to top" by full ref (refs/heads/x, refs/remotes/origin/x, refs/tags/x), so a local branch, a remote branch and
+/// a tag of one name never share a pin. Local branches stay stored by name under "pinnedBranches", as they were before
+/// remotes and tags could be pinned, so those pins carry over; remote branches and tags are full refs under
+/// "pinnedRefs". (Windows: PinnedRefs in entities/repo/lib/pinned-refs.ts)
+enum PinnedRefs {
+    private static let heads = "refs/heads/"
+
+    /// The pins of a repository from its two stored lists
+    static func load(branches: [String], refs: [String]) -> Set<String> {
+        Set(branches.map { heads + $0 }).union(refs)
+    }
+
+    /// The two lists to store, in name order
+    static func split(_ pins: Set<String>) -> (branches: [String], refs: [String]) {
+        let local = pins.filter { $0.hasPrefix(heads) }
+        return (local.map { String($0.dropFirst(heads.count)) }.sorted(), pins.subtracting(local).sorted())
+    }
 }
 
 /// The Filter branches field's matching

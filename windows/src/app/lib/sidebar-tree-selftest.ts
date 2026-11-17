@@ -54,7 +54,7 @@ export async function sidebarTreeSelfTest(): Promise<[boolean, string]> {
     // a hosting remote, a second worktree and a pinned branch used to add sections; the board has none of them
     store.target = { provider: "github", host: "github.com", path: "fixture/shop-web", remote: "origin" };
     store.worktrees = [worktree("C:/fixture/shop-web", "feature/checkout"), worktree("C:/fixture/shop-web-search", "feature/search")];
-    store.pinnedBranches = new Set(["main"]);
+    store.pinnedRefs = new Set(["refs/heads/main"]);
     store.tags = [{ name: "v1.10.0", target: "v1.10.0" }];
     store.stashes = [{ ref: "stash@{0}", hash: "stash-0", message: "WIP on main" }];
     store.reveal = (target) => { revealed.push(target); };
@@ -218,12 +218,64 @@ export async function sidebarTreeSelfTest(): Promise<[boolean, string]> {
     ensure(await until(() => shown() === "main,feature,checkout,reviews,search"), `Unpinning the current branch must put it back in its folder: ${shown()}`);
     store.localBranches = before;
 
+    // a pinned remote branch leads its own remote under its name there, out of its folder (which keeps the rest), and
+    // pins nothing else of its name; pinned tags lead Tags in name order; a hidden tag keeps its row, greyed, and the
+    // eye that shows it again. The fixture has no repository to read again.
+    store.reload = async () => {};
+    const originRows = () => [...(group("r:origin")?.querySelectorAll<HTMLElement>(":scope > .side-tree-children > .side-tree-row") ?? [])];
+    const tagRows = () => [...host.querySelectorAll<HTMLElement>('[data-section="tags"] .side-tree-row')];
+    const names = (rows: HTMLElement[]) => rows.map((element) => element.querySelector(".side-tree-label")?.textContent ?? "").join();
+    const pinMark = (element: HTMLElement) => !!element.querySelector(`[aria-label="${t("Pinned")}"]`);
+    const remoteCheckout = store.remoteBranches.find((b) => b.name === "origin/feature/checkout")!;
+    const tags = ["v2.0.0", "v1.10.0", "v1.9.0"].map((name) => ({ name, target: name }));
+    store.tags = tags;
+    settings.set("collapsedSections", []);
+    if (toggle("r:origin")?.getAttribute("aria-expanded") === "false") toggle("r:origin")!.click();
+    store.setPinned(remoteCheckout, true);
+    store.setTagPinned(tags[2], true);
+    store.setTagPinned(tags[0], true);
+    await store.setTagHidden(tags[1], true);
+    ensure(await until(() => names(originRows()) === "feature/checkout,main" && names(tagRows()) === "v1.9.0,v2.0.0,v1.10.0"), `The pinned remote branch and tags must lead their groups: origin ${names(originRows())}, tags ${names(tagRows())}`);
+    // origin/main stays unpinned beside the pinned local main
+    ensure(pinMark(originRows()[0]) && !pinMark(originRows()[1]) && !label(group("r:origin/feature")!, "checkout") && !!label(group("r:origin/feature")!, longLeaf), "The pinned remote branch must carry the pin mark, out of its folder, which keeps the rest");
+    ensure(count(toggle("r:origin"))?.textContent === "3" && count(toggle("r:origin/feature"))?.textContent === "1", "The remote must count every branch and the folder only what it holds");
+    ensure(!pinMark(row(label(group("l:feature")!, "checkout"))) && !store.isPinned(branch("feature/checkout")), "Pinning the remote branch must not pin the local one of its name");
+    ensure(originRows()[0].draggable && originRows()[0].dataset.tip?.startsWith("origin/feature/checkout|"), "The pinned remote row must drag and hover like any branch row");
+    const eye = () => tagRows()[2]?.querySelector<HTMLButtonElement>("button.icon-btn");
+    const tagColor = (element: HTMLElement) => getComputedStyle(element.querySelector<HTMLElement>(".side-tree-label")!).color;
+    ensure(tagRows().slice(0, 2).every(pinMark) && !pinMark(tagRows()[2]) && !!eye() && tagColor(tagRows()[2]) !== tagColor(tagRows()[0]), "Pinned tags must carry the pin mark and the hidden tag, greyed, the eye");
+    ensure(!tagRows().slice(0, 2).some((element) => element.querySelector("button.icon-btn")), "Only the hidden tag carries the eye");
+    for (const width of [240, 280]) {
+      host.style.width = `${width}px`;
+      await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+      const bounds = host.getBoundingClientRect();
+      ensure([originRows()[0], ...tagRows()].every((element) => { const rect = element.getBoundingClientRect(), text = element.querySelector<HTMLElement>(".side-tree-label")!; return near(rect.height, 26) && rect.left >= bounds.left - 1 && rect.right <= bounds.right + 1 && text.scrollWidth <= text.clientWidth; }), `A pinned or hidden row was cut or left the ${width}px sidebar`);
+      ensure(near(left(label(originRows()[0], "feature/checkout"), ".lead"), left(label(group("r:origin")!, "main"), ".lead")) && near(left(label(tagRows()[0], "v1.9.0"), ".lead"), left(label(host.querySelector<HTMLElement>('[data-section="local"]'), "main"), ".lead")), `Pinned rows left their columns at ${width}px`);
+    }
+    // a pinned tag reveals its commit like any tag row
+    tagRows()[0].click();
+    ensure(revealed.at(-1) === "v1.9.0", "Clicking a pinned tag did not reveal its commit");
+    // the field narrows them by name, and a pinned match keeps its place at the top of its group
+    type(input, "checkout");
+    ensure(await until(() => names(originRows()) === "feature/checkout" && !group("r:origin/feature") && !group("r:upstream")), `A pinned remote match must stay first in its remote: ${names(originRows())}`);
+    type(input, "v1.");
+    ensure(await until(() => sections() === "tags" && names(tagRows()) === "v1.9.0,v1.10.0"), `A pinned tag match must stay first: ${names(tagRows())}`);
+    type(input, "");
+    // the eye shows the tag in the graph again; unpinning puts the branch back in its folder and the tags in their order
+    ensure(await until(() => !!eye()), "The hidden tag lost its eye after the filter");
+    eye()!.click();
+    ensure(await until(() => !store.isTagHidden(tags[1]) && !tagRows().some((element) => element.querySelector("button.icon-btn"))), "The eye did not show the tag again");
+    store.setPinned(remoteCheckout, false);
+    store.setTagPinned(tags[2], false);
+    store.setTagPinned(tags[0], false);
+    ensure(await until(() => names(originRows()) === "main" && !!label(group("r:origin/feature")!, "checkout") && names(tagRows()) === "v2.0.0,v1.10.0,v1.9.0" && !tagRows().some(pinMark)), `Unpinning must put the remote branch back in its folder and the tags in their order: ${names(originRows())} / ${names(tagRows())}`);
+
     // the rail's flyout has no field and is not filtered
     store.setBranchFilter("zzz");
     root.render(createElement(Sidebar, { store, flyout: "remote" }));
     ensure(await until(() => sections() === "remote" && !!toggle("r:origin") && !!toggle("r:upstream")), `The rail's flyout must list its section whatever the filter says: ${sections()}`);
     ensure(!host.querySelector(".side-filter") && !host.querySelector(".hosted-empty"), "The rail's flyout must not show the field or the empty form");
-    return [true, JSON.stringify({ widths, sections: "local,remote,tags,stashes", field: "28px, 10px above and below", disclosureFocus: true, collapseAndReopen: true, retainedNestedExpansion: true, filter: "matches open folded folders and sections, no match shows the empty form, clearing restores the remembered state", pinned: "first in name order under whole names, out of their folders, filtered in place, back in the folder when unpinned", revealed: revealed.length })];
+    return [true, JSON.stringify({ widths, sections: "local,remote,tags,stashes", field: "28px, 10px above and below", disclosureFocus: true, collapseAndReopen: true, retainedNestedExpansion: true, filter: "matches open folded folders and sections, no match shows the empty form, clearing restores the remembered state", pinned: "first in name order under whole names, out of their folders, filtered in place, back in the folder when unpinned", pinnedRemotesAndTags: "first in their remote and in Tags, apart from the local branch of their name", hiddenTag: "greyed with the eye that shows it again", revealed: revealed.length })];
   } catch (error) { return [false, error instanceof Error ? error.message : String(error)]; }
   finally {
     root.unmount(); host.remove();

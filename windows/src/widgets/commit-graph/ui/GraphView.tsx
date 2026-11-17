@@ -413,6 +413,7 @@ function SearchBar({ store }: { store: RepoStore }) {
 /** 그래프 거르기: 현재 브랜치만 보기, 숨긴 브랜치 다시 보이기 */
 function GraphFilterButton({ store }: { store: RepoStore }) {
   const hidden = store.hiddenRefs.size;
+  const tags = [...store.hiddenRefs].some((r) => r.startsWith("refs/tags/"));
   const active = store.graphCurrentOnly || hidden > 0;
   return (
     <IconButton
@@ -424,7 +425,12 @@ function GraphFilterButton({ store }: { store: RepoStore }) {
         showMenuBelow(e.currentTarget, [
           { label: t("Show only the current branch"), checked: store.graphCurrentOnly, onClick: () => void store.setCurrentOnly(!store.graphCurrentOnly) },
           "divider",
-          { label: hidden ? t("Show all {0} hidden branches", hidden) : t("No hidden branches"), disabled: !hidden, onClick: () => void store.showAllBranches() },
+          // hidden tags come back with the branches
+          {
+            label: !hidden ? t("No hidden branches") : tags ? t("Show all {0} hidden branches and tags", hidden) : t("Show all {0} hidden branches", hidden),
+            disabled: !hidden,
+            onClick: () => void store.showAllBranches(),
+          },
         ])
       }
       // icon only, so the header's right end keeps a fixed width; what is filtered is in the tip and the menu

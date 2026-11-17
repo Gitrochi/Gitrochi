@@ -127,6 +127,8 @@ struct SidebarView: View {
             SidebarSection("remotes", open: forced) {
                 ForEach(remotes, id: \.0) { remote, groups in
                     DisclosureGroup(isExpanded: expansion("r:" + remote, forced: filtering)) {
+                        // pinned remote branches lead their remote under their names there, out of their folders
+                        ForEach(groups.pinned) { b in remoteRow(b, label: b.shortName) }
                         ForEach(groups.loose) { b in remoteRow(b, label: b.shortName) }
                         ForEach(groups.folders) { f in
                             DisclosureGroup(isExpanded: expansion("r:\(remote)/\(f.name)", forced: filtering)) {
@@ -147,26 +149,17 @@ struct SidebarView: View {
             }
         }
 
-        let tags = store.tags.filter { BranchFilter.matches($0.name, query) }
+        // pinned tags lead in name order
+        let tags = BranchFolders.pinnedFirst(store.tags.filter { BranchFilter.matches($0.name, query) }, name: \.name) { store.isTagPinned($0) }
         if show("tags"), !tags.isEmpty {
             SidebarSection("tags", open: forced) {
                 ForEach(tags) { t in
-                    // the branch rows' disclosure and icon columns, so the names line up
-                    HStack(spacing: 6) {
-                        Color.clear.frame(width: 10, height: 16).accessibilityHidden(true)
-                        DesignIconImage(icon: .releases, size: 13).foregroundStyle(StudioStyle.Rail.icon)
-                        Text(t.name).lineLimit(1).truncationMode(.tail)
-                    }
+                    TagRow(tag: t, pinned: store.isTagPinned(t), hidden: store.isTagHidden(t),
+                           showAgain: { Task { await store.setTagHidden(t, false) } })
                         .sidebarTreeRow()
                         .contentShape(Rectangle())
                         .onTapGesture { store.reveal(t.target) }
-                        .contextMenu {
-                            Button("Go to this tag") { store.reveal(t.target) }
-                            Button("Push tag") { Task { await store.pushTag(t) } }
-                            if store.target != nil { Button("Open in Releases") { store.navigate(.releases) } }
-                            Divider()
-                            Button("Delete tag…", role: .destructive) { store.deleteTag(t) }
-                        }
+                        .contextMenu { tagMenu(t) }
                 }
             } header: {
                 Text("Tags")
@@ -248,7 +241,7 @@ struct SidebarView: View {
     }
 
     private func remoteRow(_ b: Branch, label: String) -> some View {
-        BranchRow(branch: b, label: label, hidden: store.isHidden(b), showAgain: { Task { await store.setHidden(b, false) } })
+        BranchRow(branch: b, label: label, hidden: store.isHidden(b), pinned: store.isPinned(b), showAgain: { Task { await store.setHidden(b, false) } })
             .sidebarTreeRow()
             .contentShape(Rectangle())
             .draggable(RepoStore.branchPayload + b.name) { Label(b.name, symbol: "cloud").padding(6) }
@@ -261,7 +254,7 @@ struct SidebarView: View {
     private func remoteGroups(_ query: String) -> [(String, BranchFolders)] {
         Dictionary(grouping: store.remoteBranches) { $0.remote ?? "" }
             .sorted { $0.key < $1.key }
-            .map { ($0.key, BranchFolders($0.value) { $0.shortName }.filtered(query)) }
+            .map { ($0.key, BranchFolders($0.value, key: { $0.shortName }, pinned: { store.isPinned($0) }).filtered(query)) }
             .filter { $0.1.count > 0 }
     }
 
@@ -312,9 +305,23 @@ struct SidebarView: View {
         Divider()
         Button("New branch from here…") { store.requestNewBranch(from: b.target, label: b.name) }
         Button("Copy name") { store.copy(b.name) }
+        Divider()
+        Button(store.isPinned(b) ? "Unpin" : "Pin to top") { store.setPinned(b, !store.isPinned(b)) }
         Button(store.isHidden(b) ? "Show in graph again" : "Hide from graph") { Task { await store.setHidden(b, !store.isHidden(b)) } }
         Divider()
         Button("Delete from remote…", role: .destructive) { store.confirmDelete(b) }
+    }
+
+    @ViewBuilder
+    private func tagMenu(_ t: Tag) -> some View {
+        Button("Go to this tag") { store.reveal(t.target) }
+        Button("Push tag") { Task { await store.pushTag(t) } }
+        if store.target != nil { Button("Open in Releases") { store.navigate(.releases) } }
+        Divider()
+        Button(store.isTagPinned(t) ? "Unpin" : "Pin to top") { store.setTagPinned(t, !store.isTagPinned(t)) }
+        Button(store.isTagHidden(t) ? "Show in graph again" : "Hide from graph") { Task { await store.setTagHidden(t, !store.isTagHidden(t)) } }
+        Divider()
+        Button("Delete tag…", role: .destructive) { store.deleteTag(t) }
     }
 }
 
@@ -345,24 +352,12 @@ private struct BranchRow: View {
                 .truncationMode(.tail)
                 .help(branch.name)
             Spacer(minLength: 4)
-            if pinned {
-                SymbolIcon("pin.fill").font(.caption2).foregroundStyle(.secondary).help("Pinned").accessibilityLabel("Pinned")
-            }
+            if pinned { PinnedMark() }
             if protected {
                 SymbolIcon("lock.shield").font(.caption2).foregroundStyle(.secondary)
                     .help("Protected by gitch: no direct pushes, merge through a pull request")
             }
-            if hidden {
-                // only a hidden branch carries the eye: it says so and shows the branch again (hiding is in the row's menu)
-                Button(action: showAgain) {
-                    SymbolIcon("eye.slash")
-                        .foregroundStyle(.secondary)
-                        .frame(width: 16, height: 16)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .help("Show in graph again").accessibilityLabel("Show in graph again")
-            }
+            if hidden { ShowAgainButton(action: showAgain) }
             if branch.upstreamGone {
                 SymbolIcon("exclamationmark.icloud").foregroundStyle(.orange)
                     .help("The tracked remote branch was deleted")
@@ -378,6 +373,54 @@ private struct BranchRow: View {
             .font(.system(size: 11, design: .monospaced))
             .foregroundStyle(StudioStyle.Rail.icon)
             .fixedSize()
+    }
+}
+
+/// A tag row, in the branch rows' disclosure and icon columns so the names line up, with their pinned and hidden
+/// marks. (Windows: TagRow in Sidebar.tsx)
+private struct TagRow: View {
+    let tag: Tag
+    var pinned = false
+    var hidden = false
+    /// Shows a hidden tag in the graph again
+    var showAgain: () -> Void = {}
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Color.clear.frame(width: 10, height: 16)
+                .accessibilityHidden(true)
+            DesignIconImage(icon: .releases, size: 13).foregroundStyle(StudioStyle.Rail.icon)
+            Text(tag.name)
+                .foregroundStyle(hidden ? .secondary : .primary)
+                .lineLimit(1)
+                .truncationMode(.tail)
+            Spacer(minLength: 4)
+            if pinned { PinnedMark() }
+            if hidden { ShowAgainButton(action: showAgain) }
+        }
+    }
+}
+
+/// The mark of a branch or tag pinned to the top ("Pin to top")
+private struct PinnedMark: View {
+    var body: some View {
+        SymbolIcon("pin.fill").font(.caption2).foregroundStyle(.secondary).help("Pinned").accessibilityLabel("Pinned")
+    }
+}
+
+/// Only a hidden branch or tag carries the eye: it says so and shows it in the graph again (hiding is in the row's menu)
+private struct ShowAgainButton: View {
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            SymbolIcon("eye.slash")
+                .foregroundStyle(.secondary)
+                .frame(width: 16, height: 16)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .help("Show in graph again").accessibilityLabel("Show in graph again")
     }
 }
 

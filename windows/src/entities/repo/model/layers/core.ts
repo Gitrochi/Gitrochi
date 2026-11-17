@@ -1,4 +1,5 @@
 import { RepositoryConfirmationGuard } from "../../lib/confirmation-guard";
+import { PinnedRefs } from "../../lib/pinned-refs";
 import type { AgentHost } from "@/entities/agent";
 import { destinationAvailable, isWorkspaceDestination, restoredDestination, returnsToRepository, type WorkspaceDestination } from "@/entities/git";
 import { avatars } from "@/entities/avatar";
@@ -234,8 +235,9 @@ export abstract class RepoCore extends Observable implements AgentHost {
   blameLines: BlameLine[] = [];
   fileInspectLoading = false;
   fileInspectError: string | null = null;
+  /** The branches and tags hidden from the graph and the ones pinned to the top of the sidebar, as full refs (macOS: RepoStore.hiddenRefs) */
   hiddenRefs = new Set<string>();
-  pinnedBranches = new Set<string>();
+  pinnedRefs = new Set<string>();
   /** The text in the sidebar's Filter branches field: view state, not saved (macOS: RepoStore.branchFilter) */
   branchFilter = "";
   graphCurrentOnly = false;
@@ -845,7 +847,7 @@ export abstract class RepoCore extends Observable implements AgentHost {
     const p = this.path;
     if (!p) return;
     this.hiddenRefs = new Set(settings.get<Record<string, string[]>>("graphHiddenRefs", {})[p] ?? []);
-    this.pinnedBranches = new Set(settings.get<Record<string, string[]>>("pinnedBranches", {})[p] ?? []);
+    this.pinnedRefs = PinnedRefs.load(settings.get<Record<string, string[]>>("pinnedBranches", {})[p] ?? [], settings.get<Record<string, string[]>>("pinnedRefs", {})[p] ?? []);
     this.graphCurrentOnly = settings.get<Record<string, boolean>>("graphCurrentOnly", {})[p] ?? false;
   }
 
@@ -859,7 +861,7 @@ export abstract class RepoCore extends Observable implements AgentHost {
     if (!this.headBranch && head) add(head, { name: "HEAD", kind: "head", isCurrent: true });
     for (const b of this.localBranches) if (b.isCurrent || !this.hiddenRefs.has(`refs/heads/${b.name}`)) add(b.target, { name: b.name, kind: "local", isCurrent: b.isCurrent, behind: b.behind });
     for (const b of this.remoteBranches) if (!this.hiddenRefs.has(`refs/remotes/${b.name}`)) add(b.target, { name: b.name, kind: "remote", isCurrent: false });
-    for (const tag of this.tags) add(tag.target, { name: tag.name, kind: "tag", isCurrent: false });
+    for (const tag of this.tags) if (!this.hiddenRefs.has(`refs/tags/${tag.name}`)) add(tag.target, { name: tag.name, kind: "tag", isCurrent: false });
     for (const l of map.values()) l.sort((a, b) => (a.isCurrent ? 0 : 1) - (b.isCurrent ? 0 : 1) || refOrder[a.kind] - refOrder[b.kind]);
     return map;
   }

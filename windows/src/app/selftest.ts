@@ -956,7 +956,59 @@ export async function runSelfTest(): Promise<boolean> {
     const eyeHid = await until(() => s.isHidden(b) && !!sideRow()?.querySelector("button.icon-btn"), 5000);
     sideRow()?.querySelector<HTMLButtonElement>("button.icon-btn")?.click();
     const eyeShown = await until(() => !s.isHidden(b) && has(), 5000);
-    return [before && hidden && back && current && pinned && unpinned && noEye && eyeHid && eyeShown, `before=${before} hidden=${hidden} back=${back} current=${current} pinned=${pinned}/${unpinned} rows=${localRows().map(labelOf).join()} eye=${noEye}/${eyeHid}/${eyeShown}`];
+    // Remote branches and tags: a remote branch pinned out of its folder leads its remote under its name there; the tag
+    // row's menu pins a tag to the top of Tags and hides one from the graph, which then leaves out its chip and the
+    // commit only it reaches, and the row's eye shows it again. The refs are made for the step and removed after it.
+    const made = { "refs/remotes/selftest/feature/pinned": s.headHash!, "refs/remotes/selftest/feature/other": s.headHash!, "refs/tags/selftest-only": b.target };
+    const tagRows = () => [...document.querySelectorAll<HTMLElement>('.side-branches [data-section="tags"] .side-tree-row')];
+    const tagRow = (name: string) => tagRows().find((r) => labelOf(r) === name);
+    const remoteRows = () => [...document.querySelectorAll<HTMLElement>('.side-branches [data-tree-id="r:selftest"] > .side-tree-children > .side-tree-row')];
+    const remoteFolder = () => document.querySelector<HTMLElement>('.side-branches [data-tree-id="r:selftest/feature"] > .side-tree-toggle .side-count')?.textContent ?? "";
+    const chip = (target: string, name: string) => (s.refsByCommit.get(target) ?? []).some((r) => r.name === name);
+    const choose = async (row: HTMLElement | undefined, label: string) => {
+      row?.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 60, clientY: 60 }));
+      const item = () => [...document.querySelectorAll<HTMLElement>(".menu-item")].find((m) => m.querySelector(".label")?.textContent === label);
+      if (!(await until(() => !!item(), 3000))) return false;
+      item()!.click();
+      return true;
+    };
+    const folds = settings.get<string[]>("collapsedSections", []);
+    let remotePinned = false, tagPinned = false, tagHid = false, tagShown = false, remotes = "", tags = "";
+    try {
+      settings.set("collapsedSections", folds.filter((id) => id !== "remote" && id !== "tags"));
+      for (const [ref, target] of Object.entries(made)) await gitRaw(["update-ref", ref, target], repo);
+      await s.reload();
+      const remote = s.remoteBranches.find((x) => x.name === "selftest/feature/pinned");
+      const only = s.tags.find((x) => x.name === "selftest-only"), v01 = s.tags.find((x) => x.name === "v0.1");
+      if (remote && only && v01) {
+        // remotes start folded
+        if (await until(() => !!document.querySelector('.side-branches [data-tree-id="r:selftest"]'), 5000)) document.querySelector<HTMLElement>('.side-branches [data-tree-id="r:selftest"] > .side-tree-toggle')?.click();
+        s.setPinned(remote, true);
+        remotePinned = await until(() => remoteRows().map(labelOf).join() === "feature/pinned" && pinMark(remoteRows()[0]) && remoteFolder() === "1", 5000);
+        remotes = remoteRows().map(labelOf).join();
+        // selftest-only comes before v0.1 by name; pinned, v0.1 leads
+        tagPinned = (await choose(tagRow("v0.1"), t("Pin to top"))) && (await until(() => s.isTagPinned(v01) && tagRows().map(labelOf).join() === "v0.1,selftest-only" && pinMark(tagRows()[0]) && !pinMark(tagRows()[1]), 5000));
+        // with image-v2 hidden only the tag reaches its commit
+        await s.setHidden(b, true);
+        const reached = has() && chip(only.target, "selftest-only");
+        tagHid = reached && (await choose(tagRow("selftest-only"), t("Hide from graph"))) && (await until(() => s.isTagHidden(only) && !has() && !chip(only.target, "selftest-only") && !!tagRow("selftest-only")?.querySelector("button.icon-btn"), 8000));
+        tagRow("selftest-only")?.querySelector<HTMLButtonElement>("button.icon-btn")?.click();
+        tagShown = await until(() => !s.isTagHidden(only) && has() && chip(only.target, "selftest-only") && !tagRow("selftest-only")?.querySelector("button.icon-btn"), 8000);
+        tags = tagRows().map(labelOf).join();
+      }
+    } finally {
+      for (const x of s.remoteBranches) if (s.isPinned(x)) s.setPinned(x, false);
+      for (const x of s.tags) if (s.isTagPinned(x)) s.setTagPinned(x, false);
+      await s.showAllBranches();
+      for (const ref of Object.keys(made)) await gitRaw(["update-ref", "-d", ref], repo).catch(() => undefined);
+      settings.set("collapsedSections", folds);
+      await s.reload();
+    }
+    const cleaned = !s.remoteBranches.some((x) => x.name.startsWith("selftest/")) && !s.tags.some((x) => x.name === "selftest-only") && s.hiddenRefs.size === 0 && ![...s.pinnedRefs].some((r) => r.includes("selftest") || r === "refs/tags/v0.1") && has();
+    return [
+      before && hidden && back && current && pinned && unpinned && noEye && eyeHid && eyeShown && remotePinned && tagPinned && tagHid && tagShown && cleaned,
+      `before=${before} hidden=${hidden} back=${back} current=${current} pinned=${pinned}/${unpinned} rows=${localRows().map(labelOf).join()} eye=${noEye}/${eyeHid}/${eyeShown} remote=${remotePinned} (${remotes}) tag=${tagPinned}/${tagHid}/${tagShown} (${tags}) cleaned=${cleaned}`,
+    ];
   });
 
   // The sidebar's Filter branches field in the real window: typing narrows the tree, and Escape, through the app's
@@ -974,6 +1026,23 @@ export async function runSelfTest(): Promise<boolean> {
     Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(input, "IMAGE-v2");
     input.dispatchEvent(new Event("input", { bubbles: true }));
     const narrowed = await until(() => s.branchFilter === "IMAGE-v2" && names().length > 0 && names().length < all && names().every((n) => n.includes("image-v2")), 5000);
+    // a pinned tag is narrowed by its name like any other row and keeps its pin mark
+    const tag = s.tags.find((x) => x.name === "v0.1");
+    let pinnedTag = false;
+    if (tag) {
+      try {
+        s.setTagPinned(tag, true);
+        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(input, "V0.1");
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+        const pinnedRows = () => [...document.querySelectorAll<HTMLElement>(".side-branches .side-tree-row:not(.side-tree-toggle)")];
+        pinnedTag = await until(() => names().join() === "v0.1" && !!pinnedRows()[0]?.querySelector(`[aria-label="${t("Pinned")}"]`), 5000);
+      } finally {
+        s.setTagPinned(tag, false);
+        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(input, "IMAGE-v2");
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+      }
+    }
+    const back = await until(() => s.branchFilter === "IMAGE-v2" && names().every((n) => n.includes("image-v2")), 5000);
     const selection = JSON.stringify(s.selection), page = s.destination;
     const escape = () => input.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", code: "Escape", bubbles: true, cancelable: true }));
     const taken = !escape();
@@ -983,7 +1052,7 @@ export async function runSelfTest(): Promise<boolean> {
     await sleep(150);
     const untouched = JSON.stringify(s.selection) === selection && s.destination === page && names().length === all;
     input.blur();
-    return [narrowed && taken && cleared && left && untouched, `rows=${all} narrowed=${narrowed} taken=${taken} cleared=${cleared} left=${left} untouched=${untouched}`];
+    return [narrowed && pinnedTag && back && taken && cleared && left && untouched, `rows=${all} narrowed=${narrowed} pinnedTag=${pinnedTag}/${back} taken=${taken} cleared=${cleared} left=${left} untouched=${untouched}`];
   });
 
   // 충돌 해결: 두 브랜치에서 같은 줄을 고쳐 머지 → 화면의 충돌 블록에서 '상대 것'을 눌러 고르고 저장 → 머지 마침

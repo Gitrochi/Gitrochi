@@ -638,11 +638,15 @@ private struct GraphFilterMenu: View {
 
     var body: some View {
         let hidden = store.hiddenRefs.count
+        let tags = store.hiddenRefs.contains { $0.hasPrefix("refs/tags/") }
         let active = store.graphCurrentOnly || hidden > 0
         Menu {
             Toggle("Show only the current branch", isOn: Binding(get: { store.graphCurrentOnly }, set: { on in Task { await store.setCurrentOnly(on) } }))
             Divider()
-            Button(hidden > 0 ? "Show all \(hidden) hidden branches" : "No hidden branches") { Task { await store.showAllBranches() } }
+            // hidden tags come back with the branches
+            Button(hidden == 0 ? "No hidden branches" : tags ? "Show all \(hidden) hidden branches and tags" : "Show all \(hidden) hidden branches") {
+                Task { await store.showAllBranches() }
+            }
                 .disabled(hidden == 0)
         } label: {
             // icon only, so the header's right end keeps a fixed width; what is filtered is in the tip and the menu

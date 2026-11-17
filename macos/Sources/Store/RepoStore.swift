@@ -193,9 +193,10 @@ final class RepoStore: Identifiable {
     var splitPlan: [SplitGroup]?
     /// 되돌릴 수 있는 작업(마지막이 맨 뒤)
     var undoStack: [UndoPoint] = []
-    /// 그래프에서 숨긴 브랜치(refs/heads/x · refs/remotes/o/x), 사이드바 맨 위에 고정한 로컬 브랜치, 현재 브랜치만 보기
+    /// The branches and tags hidden from the graph and the ones pinned to the top of the sidebar, as full refs
+    /// (refs/heads/x, refs/remotes/origin/x, refs/tags/x), and whether the graph shows only the current branch
     var hiddenRefs: Set<String> = []
-    var pinnedBranches: Set<String> = []
+    var pinnedRefs: Set<String> = []
     var graphCurrentOnly = false
     /// The text in the sidebar's Filter branches field, and whether the keys are in it: view state, not saved
     /// (Windows: RepoStore.branchFilter)
@@ -767,7 +768,7 @@ final class RepoStore: Identifiable {
         for b in remoteBranches where !hiddenRefs.contains("refs/remotes/" + b.name) {
             map[b.target, default: []].append(RefLabel(name: b.name, kind: .remote, isCurrent: false))
         }
-        for t in tags {
+        for t in tags where !hiddenRefs.contains(Self.tagRef(t)) {
             map[t.target, default: []].append(RefLabel(name: t.name, kind: .tag, isCurrent: false))
         }
         for k in map.keys {
