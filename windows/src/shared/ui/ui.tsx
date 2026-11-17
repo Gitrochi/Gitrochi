@@ -1,7 +1,7 @@
 import { Check, ChevronRight } from "@/shared/icons";
 import { type ReactNode, type RefObject, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { keyLabel, settings } from "@/shared/config";
-import { laneColor, Observable, stableHash, useObserve } from "@/shared/lib";
+import { laneColors, Observable, stableHash, useObserve } from "@/shared/lib";
 import "./styles.css";
 // MARK: 기본 컨트롤
 
@@ -100,7 +100,7 @@ export function Avatar({ name, email, size = 28, url }: { name: string; email: s
   const source = settings.get("avatarFetch", true) && url && brokenURL !== url ? url : null;
   const letter = (Array.from(name.trim())[0] ?? "?").toUpperCase();
   return (
-    <span className="avatar" style={{ width: size, height: size, background: laneColor(stableHash(email.toLowerCase())), fontSize: size * 0.45 }}>
+    <span className="avatar" style={{ width: size, height: size, background: laneColors(stableHash(email.toLowerCase())).line, fontSize: size * 0.45 }}>
       {source ? <img src={source} width={size} height={size} onError={() => setBrokenURL(source)} alt="" /> : letter}
     </span>
   );

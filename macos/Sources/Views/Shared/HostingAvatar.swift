@@ -22,7 +22,7 @@ struct HostingAvatar: View {
                 image.resizable().interpolation(.high).aspectRatio(contentMode: .fill)
             } else {
                 if style == .organization {
-                    shape.fill(Palette.lane(Palette.stableHash((username.isEmpty ? name : username).lowercased())))
+                    shape.fill(Palette.lane(Palette.stableHash((username.isEmpty ? name : username).lowercased())).line)
                         .overlay(Text((name.isEmpty ? username : name).first.map { String($0).uppercased() } ?? "?")
                             .font(.system(size: size * 0.45, weight: .semibold)).foregroundStyle(.white))
                 } else {

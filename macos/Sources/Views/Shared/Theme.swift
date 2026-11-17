@@ -1,25 +1,53 @@
 import SwiftUI
 
+/// The redesign board's fixed lane palette (ComponentsFoundations), never the accent. Light values are the board's; the
+/// dark ones keep each hue with more lightness, so a line keeps 3:1 on the dark graph and a chip's text 4.5:1 on its
+/// tint (docs/design.md, Commit graph). Views look colours up in these tables; nothing is worked out per row.
+/// (Windows: shared/lib/palette.ts and the --lane-* tokens in app/styles/global.css)
 enum Palette {
-    /// 레인 색. 흰 글자를 올려도 읽히도록 채도·명도를 맞췄다.
-    static let lanes: [Color] = [
-        Color(red: 0.16, green: 0.52, blue: 0.96),   // 파랑
-        Color(red: 0.93, green: 0.42, blue: 0.16),   // 주황
-        Color(red: 0.18, green: 0.62, blue: 0.36),   // 초록
-        Color(red: 0.78, green: 0.30, blue: 0.80),   // 자주
-        Color(red: 0.80, green: 0.58, blue: 0.08),   // 황토
-        Color(red: 0.08, green: 0.60, blue: 0.66),   // 청록
-        Color(red: 0.88, green: 0.27, blue: 0.40),   // 빨강
-        Color(red: 0.48, green: 0.40, blue: 0.92),   // 보라
+    /// A lane: its line, the tint behind it (the band, a chip), the text on a chip filled with the line, and the
+    /// selected commit's band (the line at 40%)
+    struct Lane {
+        let line: Color
+        let tint: Color
+        let onLine: Color
+        let selected: Color
+    }
+
+    /// Lane lines, light and dark, in the board's order
+    static let lineValues: [(light: UInt32, dark: UInt32)] = [
+        (0x1f5a9e, 0x66a1eb), (0x1f7a7a, 0x5baeae), (0xa3560f, 0xda884b), (0x5f6b12, 0x99a755),
+        (0x2b6d8f, 0x67a7cc), (0x5c6068, 0x9a9ea6), (0x6b4f2a, 0xb89872),
     ]
 
-    static func lane(_ i: Int) -> Color {
-        lanes[((i % lanes.count) + lanes.count) % lanes.count]
+    /// Lane tints; the teal one is lifted from the board's #e5f2f2 so the lane's text reaches 4.5:1 on it
+    static let tintValues: [(light: UInt32, dark: UInt32)] = [
+        (0xeaf0fa, 0x1f2c3d), (0xe7f4f4, 0x193030), (0xf9ece0, 0x39271a), (0xf0f2e0, 0x2a2e19),
+        (0xe6f0f5, 0x1c2e38), (0xeeeff1, 0x2a2b2f), (0xf3ede5, 0x322a1f),
+    ]
+
+    static let lanes: [Lane] = zip(lineValues, tintValues).map { line, tint in
+        let color = Color(nsColor: dynamic(line.light, line.dark))
+        return Lane(line: color, tint: Color(nsColor: dynamic(tint.light, tint.dark)),
+                    onLine: Color(nsColor: dynamic(0xffffff, tint.dark)), selected: color.opacity(0.4))
     }
+
+    /// A lane's colours; the layout numbers lanes on, so they wrap round the palette
+    static func lane(_ i: Int) -> Lane { lanes[laneIndex(i)] }
+
+    static func laneIndex(_ i: Int) -> Int { ((i % lanes.count) + lanes.count) % lanes.count }
 
     /// 실행마다 바뀌지 않는 문자열 해시(색 고정용)
     static func stableHash(_ s: String) -> Int {
         s.unicodeScalars.reduce(5381) { ($0 &* 33 &+ Int($1.value)) & 0x7fffffff }
+    }
+
+    private static func dynamic(_ light: UInt32, _ dark: UInt32) -> NSColor {
+        func srgb(_ rgb: UInt32) -> NSColor {
+            NSColor(srgbRed: CGFloat(rgb >> 16 & 0xff) / 255, green: CGFloat(rgb >> 8 & 0xff) / 255, blue: CGFloat(rgb & 0xff) / 255, alpha: 1)
+        }
+        if light == dark { return srgb(light) }
+        return NSColor(name: nil) { $0.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? srgb(dark) : srgb(light) }
     }
 }
 
@@ -63,7 +91,7 @@ struct Avatar: View {
 
     var body: some View {
         Circle()
-            .fill(Palette.lane(Palette.stableHash(email.lowercased())))
+            .fill(Palette.lane(Palette.stableHash(email.lowercased())).line)
             .overlay(
                 Text(name.first.map { String($0).uppercased() } ?? "?")
                     .font(.system(size: size * 0.45, weight: .semibold))
@@ -124,9 +152,11 @@ struct StatusBadge: View {
     }
 }
 
+/// A ref as a badge (a branch's drag preview): a branch is its lane colour on the lane's tint, filled when it is local.
+/// (Windows: RefBadge in entities/git/ui/badges.tsx)
 struct RefBadge: View {
     let label: RefLabel
-    let color: Color
+    let lane: Palette.Lane
     var constrained = false
 
     var body: some View {
@@ -143,20 +173,28 @@ struct RefBadge: View {
         }
         .padding(.horizontal, 6)
         .padding(.vertical, 2)
-        .foregroundStyle(outlined ? tint : .white)
-        .background(RoundedRectangle(cornerRadius: 4).fill(outlined ? tint.opacity(0.12) : tint))
-        .overlay(RoundedRectangle(cornerRadius: 4).strokeBorder(tint, lineWidth: outlined ? 1 : 0))
+        .foregroundStyle(text)
+        .background(RoundedRectangle(cornerRadius: 4).fill(fill))
+        .overlay(RoundedRectangle(cornerRadius: 4).strokeBorder(lane.line, lineWidth: label.kind == .remote ? 1 : 0))
         .fixedSize(horizontal: !constrained, vertical: true)
         .help(label.name)
     }
 
-    private var outlined: Bool { label.kind == .remote }
+    private var text: Color {
+        switch label.kind {
+        case .tag: return .white
+        case .head: return Color(nsColor: .textBackgroundColor)
+        case .local: return lane.onLine
+        case .remote: return lane.line
+        }
+    }
 
-    private var tint: Color {
+    private var fill: Color {
         switch label.kind {
         case .tag: return Color(nsColor: .systemGray)
         case .head: return Color(nsColor: .labelColor)
-        default: return color
+        case .local: return lane.line
+        case .remote: return lane.tint
         }
     }
 

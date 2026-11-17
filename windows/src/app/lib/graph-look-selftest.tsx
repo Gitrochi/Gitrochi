@@ -1,7 +1,7 @@
 import { createRoot } from "react-dom/client";
 import { emptyStatus, type GraphEntry, type RefLabel, wipCommit } from "@/entities/git";
 import { RepoStore } from "@/entities/repo";
-import { laneColor } from "@/shared/lib";
+import { laneColors } from "@/shared/lib";
 import { GraphView } from "@/widgets/commit-graph";
 
 const pause = (ms = 60) => new Promise<void>((resolve) => setTimeout(resolve, ms));
@@ -49,6 +49,11 @@ export async function graphLookSelfTest(): Promise<[boolean, string]> {
   const q = (selector: string, within: ParentNode = host) => within.querySelector<HTMLElement>(selector);
   const css = (el: Element | null | undefined) => getComputedStyle(el ?? host);
   const same = (a: string, b: string) => a.replace(/\s/g, "") === b.replace(/\s/g, "");
+  // a palette value (a CSS variable or a mix of one) as the theme resolves it
+  const resolve = (value: string) => {
+    const probe = document.createElement("span"); probe.style.background = value; host.append(probe);
+    const color = css(probe).backgroundColor; probe.remove(); return color;
+  };
   try {
     const store = lookFixture();
     root.render(<GraphView store={store} />); await pause(); await pause();
@@ -69,8 +74,9 @@ export async function graphLookSelfTest(): Promise<[boolean, string]> {
       const style = css(chip);
       ensure(chip.offsetHeight === 18 && style.borderTopLeftRadius === "6px" && style.fontSize === "11px" && style.fontWeight === "600" && style.borderTopWidth === "1px", `A chip must be 18 high with radius 6, 11px semibold and a 1px border: ${chip.textContent} ${chip.offsetHeight} ${style.borderTopLeftRadius} ${style.fontWeight}`);
     }
-    ensure(current.classList.contains("solid") && same(css(current).backgroundColor, laneColor(2)) && !current.textContent?.includes("↓"), `The checked-out branch must be filled with its lane colour, without a behind count: ${css(current).backgroundColor} ${current.textContent}`);
-    ensure(same(css(remote).borderTopColor, laneColor(0)) && same(css(remote).color, laneColor(0)) && !same(css(remote).backgroundColor, laneColor(0)), `Another branch must be its lane colour on a tint inside a full-colour border: ${css(remote).borderTopColor} ${css(remote).backgroundColor}`);
+    ensure(current.classList.contains("solid") && same(css(current).backgroundColor, resolve(laneColors(2).line)) && same(css(current).color, resolve(laneColors(2).onLine)) && !current.textContent?.includes("↓"), `The checked-out branch must be filled with its lane colour, without a behind count: ${css(current).backgroundColor} ${current.textContent}`);
+    ensure(same(css(remote).borderTopColor, resolve(laneColors(0).line)) && same(css(remote).color, resolve(laneColors(0).line)) && same(css(remote).backgroundColor, resolve(laneColors(0).tint)), `Another branch must be its lane colour on the lane's tint inside a full-colour border: ${css(remote).borderTopColor} ${css(remote).backgroundColor}`);
+    ensure(same(css(q(".ref-more", rows[2])).backgroundColor, resolve(laneColors(0).tint)) && same(q(".ref-line", rows[2])!.style.background, laneColors(0).line), "The +N chip must sit on the lane's tint and the connector be the lane's line");
     ensure(q(".ref-more", rows[2])?.textContent === "+1" && q(".ref-more", rows[2])?.offsetHeight === 18, `More refs on a commit must fold into a +N chip: ${q(".ref-more", rows[2])?.textContent}`);
     ensure(q(".ref-behind", behind)?.textContent === "↓5", `A branch that is not checked out must show how far it is behind: ${behind.textContent}`);
     // the uncommitted row and the tag chip are neutral: a probe resolves the theme's grey
@@ -81,13 +87,13 @@ export async function graphLookSelfTest(): Promise<[boolean, string]> {
     ensure(!q(".lane-band", rows[0]) && css(q(".msg-bar", rows[0])).backgroundColor === neutral && wipStrokes.length === 2 && wipStrokes.every((stroke) => stroke === "var(--graph-neutral)"),
       `The uncommitted row must have no band and a neutral bar, node and line: ${css(q(".msg-bar", rows[0])).backgroundColor} ${wipStrokes}`);
     const files = q(".wip-chip", rows[0])!;
-    ensure(files.classList.contains("status-pill") && files.offsetHeight === 18 && !same(css(files).backgroundColor, laneColor(2)), `The "N files" pill must be a neutral pill: ${files.offsetHeight} ${css(files).backgroundColor}`);
-    ensure(rows[1].querySelector('svg path[stroke="var(--graph-neutral)"]') && same(q(".msg-bar", rows[1])!.style.background, laneColor(2)), "The dashed line must reach the parent's node in grey, and a commit's bar must be its lane colour");
+    ensure(files.classList.contains("status-pill") && files.offsetHeight === 18 && !same(css(files).backgroundColor, resolve(laneColors(2).line)), `The "N files" pill must be a neutral pill: ${files.offsetHeight} ${css(files).backgroundColor}`);
+    ensure(rows[1].querySelector('svg path[stroke="var(--graph-neutral)"]') && same(q(".msg-bar", rows[1])!.style.background, laneColors(2).line), "The dashed line must reach the parent's node in grey, and a commit's bar must be its lane colour");
     // no commits: the shared empty form with its one action
     store.entries = []; store.commitIndex.clear(); store.changed(); await pause();
     const empty = q(".graph-scroll .hosted-empty");
     ensure(empty && q(".hosted-empty-icon svg", empty)?.getAttribute("width") === "24" && css(q(".hosted-empty-title", empty)).fontSize === "15px" && empty.querySelectorAll("button").length === 1, "A repository without commits must show the shared empty state with one action");
-    return [true, "34 header in regular text with 24px menus, 32 rows with a 24 band and 13px text, a 210 branch column, the message under its label, 18px chips with radius 6 and a full lane border, the behind count on a branch that is not checked out, a neutral tag chip and uncommitted row, and the shared empty state"];
+    return [true, "34 header in regular text with 24px menus, 32 rows with a 24 band and 13px text, a 210 branch column, the message under its label, 18px chips with radius 6 and a full lane border on the lane's tint, the behind count on a branch that is not checked out, a neutral tag chip and uncommitted row, and the shared empty state"];
   } catch (error) { return [false, error instanceof Error ? error.message : String(error)]; }
   finally { root.unmount(); host.remove(); }
 }

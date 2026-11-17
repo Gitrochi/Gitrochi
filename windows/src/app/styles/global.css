@@ -41,6 +41,30 @@
   --term-bg: #fcfcfc;
   --shadow: 0 8px 28px rgba(0, 0, 0, 0.16), 0 1px 3px rgba(0, 0, 0, 0.08);
   --radius: 6px;
+  /* the fixed lane palette (docs/design.md, Commit graph; shared/lib/palette.ts; macOS: Palette in Theme.swift): each
+     lane's line, its tint and the text on a filled chip. The board's values; the teal tint is lifted from #e5f2f2 so the
+     lane's text reaches 4.5:1 on it */
+  --lane-0: #1f5a9e;
+  --lane-0-tint: #eaf0fa;
+  --lane-0-on: #ffffff;
+  --lane-1: #1f7a7a;
+  --lane-1-tint: #e7f4f4;
+  --lane-1-on: #ffffff;
+  --lane-2: #a3560f;
+  --lane-2-tint: #f9ece0;
+  --lane-2-on: #ffffff;
+  --lane-3: #5f6b12;
+  --lane-3-tint: #f0f2e0;
+  --lane-3-on: #ffffff;
+  --lane-4: #2b6d8f;
+  --lane-4-tint: #e6f0f5;
+  --lane-4-on: #ffffff;
+  --lane-5: #5c6068;
+  --lane-5-tint: #eeeff1;
+  --lane-5-on: #ffffff;
+  --lane-6: #6b4f2a;
+  --lane-6-tint: #f3ede5;
+  --lane-6-on: #ffffff;
   color-scheme: light;
 }
 
@@ -77,6 +101,29 @@
   --hit: rgba(255, 200, 0, 0.14);
   --term-bg: #1c1c1f;
   --shadow: 0 10px 32px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.4);
+  /* derived: each lane's hue lifted so its line keeps 3:1 on the graph and a chip's text 4.5:1 on the tint, which is
+     also the text on a filled chip */
+  --lane-0: #66a1eb;
+  --lane-0-tint: #1f2c3d;
+  --lane-0-on: var(--lane-0-tint);
+  --lane-1: #5baeae;
+  --lane-1-tint: #193030;
+  --lane-1-on: var(--lane-1-tint);
+  --lane-2: #da884b;
+  --lane-2-tint: #39271a;
+  --lane-2-on: var(--lane-2-tint);
+  --lane-3: #99a755;
+  --lane-3-tint: #2a2e19;
+  --lane-3-on: var(--lane-3-tint);
+  --lane-4: #67a7cc;
+  --lane-4-tint: #1c2e38;
+  --lane-4-on: var(--lane-4-tint);
+  --lane-5: #9a9ea6;
+  --lane-5-tint: #2a2b2f;
+  --lane-5-on: var(--lane-5-tint);
+  --lane-6: #b89872;
+  --lane-6-tint: #322a1f;
+  --lane-6-on: var(--lane-6-tint);
   color-scheme: dark;
 }
 
