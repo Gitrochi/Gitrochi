@@ -1,9 +1,10 @@
 import { createElement } from "react";
 import { createRoot } from "react-dom/client";
 import type { Branch, Worktree } from "@/entities/git";
-import { RepoStore } from "@/entities/repo";
+import { branchPayload, RepoStore } from "@/entities/repo";
 import { settings } from "@/shared/config";
 import { t } from "@/shared/i18n";
+import { drag } from "@/shared/lib";
 import { Sidebar } from "@/widgets/sidebar";
 
 const pause = () => new Promise<void>((resolve) => setTimeout(resolve, 30));
@@ -166,12 +167,63 @@ export async function sidebarTreeSelfTest(): Promise<[boolean, string]> {
     clear.click();
     ensure(await until(() => input.value === "" && sections() === "local,remote,tags,stashes"), `Clear filter did not bring every section back: ${sections()}`);
     ensure(store.branchFilter === "" && toggle("r:origin")!.getAttribute("aria-expanded") === "false" && toggle("l:feature")!.getAttribute("aria-expanded") === "true" && !label(host.querySelector<HTMLElement>('[data-section="tags"]'), "v1.10.0"), "Clearing the filter must restore the folders' and sections' remembered state");
+
+    // "Pin to top": the loose main, feature/search from its folder and the current feature/checkout lead Local branches
+    // in name order under their whole names; the folder keeps the rest, and the head still counts every branch
+    const localRows = () => [...host.querySelectorAll<HTMLElement>('[data-section="local"] .side-tree-row')];
+    const shown = () => localRows().map((element) => element.querySelector(".side-tree-label")?.textContent ?? "").join();
+    const checkedOut: string[] = [];
+    store.checkout = async (b) => { checkedOut.push(b.name); };
+    const before = store.localBranches, reviews = branch("feature/reviews"), search = branch("feature/search");
+    store.localBranches = [...before, reviews].sort((a, b) => a.name.localeCompare(b.name));
+    store.setPinned(search, true);
+    store.setPinned(branch("feature/checkout"), true);
+    ensure(await until(() => shown() === "feature/checkout,feature/search,main,feature,reviews"), `Pinned branches must lead Local branches in name order, out of their folder: ${shown()}`);
+    ensure(count(head("local"))?.textContent === "4" && count(toggle("l:feature"))?.textContent === "1", "The head must count every local branch and the folder only what it holds");
+    const pinnedRows = localRows().slice(0, 3), folderLead = toggle("l:feature")!.querySelector<HTMLElement>(".lead")!.getBoundingClientRect().left;
+    for (const element of pinnedRows) {
+      const name = element.querySelector(".side-tree-label")!.textContent!;
+      ensure(element.querySelector(`[aria-label="${t("Pinned")}"]`) && !element.closest(".side-tree-children") && element.draggable && element.dataset.tip?.startsWith(name + "|"), `The pinned row ${name} must carry the pin mark, stand outside its folder and drag and hover like any branch row`);
+      ensure(near(element.querySelector<HTMLElement>(".lead")!.getBoundingClientRect().left, folderLead), `The pinned row ${name} must line up with the folders`);
+    }
+    ensure(!!pinnedRows[0].querySelector(".lead > .side-current") && Number(getComputedStyle(pinnedRows[0].querySelector<HTMLElement>(".side-tree-label")!).fontWeight) === 600 && host.querySelectorAll(".side-branches .side-current").length === 1, "The pinned current branch must keep its marker and its semibold name");
+    for (const width of [240, 280]) {
+      host.style.width = `${width}px`;
+      await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+      const bounds = host.getBoundingClientRect();
+      ensure(pinnedRows.every((element) => { const rect = element.getBoundingClientRect(), text = element.querySelector<HTMLElement>(".side-tree-label")!; return near(rect.height, 26) && rect.left >= bounds.left - 1 && rect.right <= bounds.right + 1 && text.scrollWidth <= text.clientWidth; }), `A pinned row was cut or left the ${width}px sidebar`);
+    }
+    // a pinned row is an ordinary branch row: click reveals, double-click checks out, dragging carries the branch
+    pinnedRows[1].click();
+    pinnedRows[1].dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
+    const carried = new DataTransfer();
+    pinnedRows[1].dispatchEvent(new DragEvent("dragstart", { bubbles: true, dataTransfer: carried }));
+    const dragged = drag.payload === branchPayload + "feature/search" && carried.getData("text/plain") === branchPayload + "feature/search";
+    pinnedRows[1].dispatchEvent(new DragEvent("dragend", { bubbles: true }));
+    ensure(revealed.at(-1) === "feature/search" && checkedOut.at(-1) === "feature/search" && dragged && drag.payload === null, "A pinned row must reveal, check out and drag like any branch row");
+    // the field narrows pinned rows by name, and a pinned match keeps its place at the top
+    type(input, "search");
+    ensure(await until(() => shown() === "feature/search" && count(head("local"))?.textContent === "1"), `A pinned match must stay at the top on its own: ${shown()}`);
+    type(input, "e");
+    ensure(await until(() => shown() === "feature/checkout,feature/search,feature,reviews"), `Pinned matches must stay ahead of the folders: ${shown()}`);
+    type(input, "");
+    // a folder left empty goes; unpinning puts the branches back in their folder at once, its fold remembered
+    store.setPinned(reviews, true);
+    ensure(await until(() => shown() === "feature/checkout,feature/reviews,feature/search,main" && !group("l:feature")), `A folder left empty must go: ${shown()}`);
+    store.setPinned(reviews, false);
+    store.setPinned(search, false);
+    ensure(await until(() => shown() === "feature/checkout,main,feature,reviews,search" && count(toggle("l:feature"))?.textContent === "2"), `Unpinning must put the branches back in their folder: ${shown()}`);
+    ensure(!localRows().slice(2).some((element) => element.querySelector(`[aria-label="${t("Pinned")}"]`)), "Unpinned rows must lose the pin mark");
+    store.setPinned(branch("feature/checkout"), false);
+    ensure(await until(() => shown() === "main,feature,checkout,reviews,search"), `Unpinning the current branch must put it back in its folder: ${shown()}`);
+    store.localBranches = before;
+
     // the rail's flyout has no field and is not filtered
     store.setBranchFilter("zzz");
     root.render(createElement(Sidebar, { store, flyout: "remote" }));
     ensure(await until(() => sections() === "remote" && !!toggle("r:origin") && !!toggle("r:upstream")), `The rail's flyout must list its section whatever the filter says: ${sections()}`);
     ensure(!host.querySelector(".side-filter") && !host.querySelector(".hosted-empty"), "The rail's flyout must not show the field or the empty form");
-    return [true, JSON.stringify({ widths, sections: "local,remote,tags,stashes", field: "28px, 10px above and below", disclosureFocus: true, collapseAndReopen: true, retainedNestedExpansion: true, filter: "matches open folded folders and sections, no match shows the empty form, clearing restores the remembered state", revealed: revealed.length })];
+    return [true, JSON.stringify({ widths, sections: "local,remote,tags,stashes", field: "28px, 10px above and below", disclosureFocus: true, collapseAndReopen: true, retainedNestedExpansion: true, filter: "matches open folded folders and sections, no match shows the empty form, clearing restores the remembered state", pinned: "first in name order under whole names, out of their folders, filtered in place, back in the folder when unpinned", revealed: revealed.length })];
   } catch (error) { return [false, error instanceof Error ? error.message : String(error)]; }
   finally {
     root.unmount(); host.remove();

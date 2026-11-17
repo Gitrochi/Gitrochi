@@ -2,19 +2,26 @@ import AppKit
 import Observation
 import SwiftUI
 
-@MainActor private var treeLayoutViews: [String: NSView] = [:]
+/// Every probe view per id: a pinned row moves between the top of the section and its folder, and the view it left can
+/// still be updated after the new one is made, so the one to measure is the one in the window
+@MainActor private var treeLayoutViews: [String: [NSView]] = [:]
 
 struct TreeLayoutProbe: NSViewRepresentable {
     let identifier: String
 
     func makeNSView(context: Context) -> NSView {
         let view = NSView()
-        treeLayoutViews[identifier] = view
+        register(view)
         return view
     }
 
     func updateNSView(_ view: NSView, context: Context) {
-        treeLayoutViews[identifier] = view
+        register(view)
+    }
+
+    private func register(_ view: NSView) {
+        treeLayoutViews[identifier, default: []].removeAll { $0 === view }
+        treeLayoutViews[identifier, default: []].append(view)
     }
 }
 
@@ -24,6 +31,9 @@ struct TreeLayoutProbe: NSViewRepresentable {
     var filter = ""
     /// Adds a branch and a tag whose names do not fit
     var long = false
+    /// The pinned local branches ("Pin to top") and the checked-out one
+    var pinned: Set<String> = []
+    var current = "main"
 }
 
 /// The Branches tab as SidebarView lays it out, from the production field, rows, groups and filter and fixture branches
@@ -45,7 +55,7 @@ private struct TreeLayoutFixture: View {
     var body: some View {
         let query = BranchFilter.query(state.filter)
         let filtering = !query.isEmpty
-        let local = BranchFolders(locals) { $0.name }.filtered(query)
+        let local = BranchFolders(locals, key: { $0.name }, pinned: { state.pinned.contains($0.name) }).filtered(query)
         let remote = BranchFolders(remotes) { $0.shortName }.filtered(query)
         let shownTags = tags.filter { BranchFilter.matches($0, query) }
         VStack(alignment: .leading, spacing: 0) {
@@ -67,6 +77,7 @@ private struct TreeLayoutFixture: View {
                 VStack(alignment: .leading, spacing: 6) {
                     if !filtering || local.count > 0 {
                         section("Local branches", count: local.count) {
+                            ForEach(local.pinned) { row($0, label: $0.name) }
                             ForEach(local.loose) { row($0, label: $0.name) }
                             ForEach(local.folders) { f in
                                 DisclosureGroup(isExpanded: expansion("l:" + f.name, forced: filtering)) {
@@ -164,22 +175,47 @@ private struct TreeLayoutFixture: View {
     private func branch(_ name: String, remote: Bool = false) -> Branch {
         let long = name == Self.longBranch
         return Branch(name: name, target: "fixture", upstream: nil, ahead: name == "main" || name == "feature/search" || long ? 1 : 0,
-                      behind: name == "feature/search" ? 2 : long ? 12 : 0, upstreamGone: long, isCurrent: name == "main", isRemote: remote)
+                      behind: name == "feature/search" ? 2 : long ? 12 : 0, upstreamGone: long, isCurrent: !remote && name == state.current, isRemote: remote)
     }
 
     private func row(_ branch: Branch, label: String) -> some View {
         // the long branch carries every mark a row can have
         let marked = branch.name == Self.longBranch
-        return BranchRow(branch: branch, label: label, hidden: marked, pinned: marked, protected: marked)
+        return BranchRow(branch: branch, label: label, hidden: marked, pinned: marked || state.pinned.contains(branch.name), protected: marked)
             .sidebarTreeRow()
             .background(TreeLayoutProbe(identifier: "row:" + branch.name))
     }
+}
+
+/// The pure grouping behind the pinned rows, as tests/branch-filter.test.ts checks it on Windows: pinned branches lead in
+/// name order and leave their folders (an emptied one goes, one with a branch left keeps its form), the filter keeps a
+/// pinned match first, and unpinning puts the branch back in its folder
+private func checkPinnedGrouping() {
+    let names = ["develop", "feature/checkout", "feature/reviews", "feature/search", "fix/flaky", "fix/focus", "main", "release/1.10"]
+    let branches = names.map { Branch(name: $0, target: $0, upstream: nil, ahead: 0, behind: 0, upstreamGone: false, isCurrent: $0 == "feature/checkout", isRemote: false) }
+    func group(_ pins: Set<String>) -> BranchFolders { BranchFolders(branches, key: { $0.name }, pinned: { pins.contains($0.name) }) }
+    func expect(_ groups: BranchFolders, _ expected: String, _ message: String) {
+        let shape = (["pinned: " + groups.pinned.map(\.name).joined(separator: " "), "loose: " + groups.loose.map(\.name).joined(separator: " ")]
+            + groups.folders.map { "\($0.name): " + $0.branches.map { BranchFolders.leaf($0.name) }.joined(separator: " ") }).joined(separator: " | ")
+        precondition(shape == expected, "\(message): \(shape)")
+    }
+    let pins: Set<String> = ["main", "feature/search", "feature/checkout", "fix/flaky", "fix/focus"]
+    expect(group([]), "pinned:  | loose: develop main release/1.10 | feature: checkout reviews search | fix: flaky focus", "Nothing pinned must leave the tree as it was")
+    let pinned = group(pins)
+    expect(pinned, "pinned: feature/checkout feature/search fix/flaky fix/focus main | loose: develop release/1.10 | feature: reviews",
+           "Pinned branches must lead in name order, out of their folders, and an emptied folder must go")
+    precondition(pinned.count == names.count, "The section's count must hold every local branch")
+    expect(pinned.filtered("search"), "pinned: feature/search | loose: ", "The filter must narrow pinned branches by name")
+    expect(pinned.filtered("e"), "pinned: feature/checkout feature/search | loose: develop release/1.10 | feature: reviews", "The filter must keep pinned matches first")
+    expect(group(pins.subtracting(["feature/search"])), "pinned: feature/checkout fix/flaky fix/focus main | loose: develop release/1.10 | feature: reviews search",
+           "Unpinning must put the branch back in its folder")
 }
 
 @main private struct SidebarTreeLayoutTest {
     @MainActor static func main() throws {
         NSApplication.shared.setActivationPolicy(.prohibited)
         let output = URL(fileURLWithPath: CommandLine.arguments[1], isDirectory: true)
+        checkPinnedGrouping()
         var checks: [[String: Any]] = []
         for width: CGFloat in [240, 280, 320] {
             for dark in [false, true] {
@@ -200,10 +236,10 @@ private struct TreeLayoutFixture: View {
                     host.layoutSubtreeIfNeeded()
                 }
 
-                func shown(_ id: String) -> Bool { treeLayoutViews[id]?.window === window }
+                func shown(_ id: String) -> Bool { treeLayoutViews[id]?.contains { $0.window === window } ?? false }
 
                 func frame(_ id: String) -> NSRect {
-                    guard let view = treeLayoutViews[id], view.window === window else { fatalError("Missing measurement: \(id)") }
+                    guard let view = treeLayoutViews[id]?.last(where: { $0.window === window }) else { fatalError("Missing measurement: \(id)") }
                     return view.convert(view.bounds, to: host)
                 }
 
@@ -303,14 +339,60 @@ private struct TreeLayoutFixture: View {
                 // with every mark and both counts the name is down to its ellipsis at 240 pt; nothing leaves the row
                 precondition(long.maxX <= width && label.width >= 8 && label.maxX < width - 60, "A long name must be cut, not push the marks out: row \(long), label \(label)")
                 precondition(frame("row:tag:" + TreeLayoutFixture.longTag).maxX <= width, "A long tag must stay inside the sidebar")
+
+                // "Pin to top": a loose branch, one from a folder and the current one lead Local branches in name order,
+                // under their whole names and with the pin mark; the folder keeps the rest
+                state.long = false
+                state.current = "feature/checkout"
+                state.pinned = ["main", "feature/search", "feature/checkout"]
+                settle()
+                func top(_ id: String) -> CGFloat { let r = frame(id); return host.isFlipped ? r.minY : host.bounds.height - r.maxY }
+                let pinnedNames = ["feature/checkout", "feature/search", "main"]
+                close(top("row:" + pinnedNames[0]), top("head:Local branches") + 26, "The first pinned row must stand right under the head")
+                for (above, below) in zip(pinnedNames, pinnedNames.dropFirst()) {
+                    close(top("row:" + below) - top("row:" + above), 26, "Pinned rows must follow each other in name order")
+                }
+                precondition(top("label:local-feature") > top("row:main") + 20 && top("row:feature/reviews") > top("label:local-feature"),
+                             "The folders must follow the pinned rows, holding what is not pinned")
+                for name in pinnedNames {
+                    let row = frame("row:" + name), label = frame("label:" + name), pin = frame("pin:" + name)
+                    close(row.height, 26, "Pinned row height")
+                    close(label.minX, frame("label:local-feature").minX, "A pinned row must align with the folders, out of its own")
+                    // the whole name fits at 240 pt in either language: nothing is cut or pushed out
+                    let weight: NSFont.Weight = name == state.current ? .semibold : .regular
+                    let natural = (name as NSString).size(withAttributes: [.font: NSFont.systemFont(ofSize: 13, weight: weight)]).width
+                    precondition(label.width >= natural - 1 && pin.minX >= label.maxX && pin.maxX <= row.maxX && row.maxX <= width,
+                                 "A pinned row must show its whole name and keep its pin mark inside: row \(row), label \(label), pin \(pin)")
+                }
+                precondition(shown("current:feature/checkout") && !shown("current:main"), "The pinned current branch must keep its marker")
+                precondition(!shown("pin:feature/reviews"), "Only pinned rows carry the pin mark")
+                close(frame("label:feature/reviews").minX - frame("label:local-feature").minX, 18, "The folder must keep its unpinned branch")
+                _ = try shot("pinned")
+                // the filter keeps a pinned match at the top and leaves the other pinned rows out
+                state.filter = "search"
+                settle()
+                precondition(shown("row:feature/search") && !shown("row:main") && !shown("row:feature/checkout") && !shown("label:local-feature"),
+                             "The filter must narrow pinned rows by name like any other row")
+                close(top("row:feature/search"), top("head:Local branches") + 26, "A pinned match must keep its place at the top")
+                state.filter = "e"
+                settle()
+                precondition(shown("row:feature/checkout") && !shown("row:main") && top("row:feature/search") < top("label:local-feature"),
+                             "Pinned matches must stay ahead of the folders")
+                state.filter = ""
+                // unpinning puts the branch back in its folder at once
+                state.pinned.remove("feature/search")
+                settle()
+                precondition(!shown("pin:feature/search") && top("row:feature/search") > top("label:local-feature"), "Unpinning must put the branch back in its folder")
+                close(frame("label:feature/search").minX - frame("label:local-feature").minX, 18, "An unpinned branch must sit one level in, in its folder")
                 checks.append(["width": width, "theme": dark ? "dark" : "light", "childIndent": 18,
                                "rowHeight": 26, "siblingsAligned": true, "headHeight": 26, "countPills": true, "collapseReopen": true,
-                               "field": "28 pt, 10 pt above and below", "filter": true, "emptyForm": true, "longName": true, "screenshot": screenshot])
+                               "field": "28 pt, 10 pt above and below", "filter": true, "emptyForm": true, "longName": true,
+                               "pinnedFirst": true, "screenshot": screenshot])
                 window.orderOut(nil)
             }
         }
         try JSONSerialization.data(withJSONObject: checks, options: [.prettyPrinted, .sortedKeys])
             .write(to: output.appendingPathComponent("result.json"))
-        print("PASS: the Filter branches field, production branch rows and tree groups align at 240/280/320 points in light/dark, with 18-point nesting, compact 26-point rows, 26-point heads and count pills at the right edge; the filter opens folded folders, hides what does not match, shows the empty form and restores the folds. \(output.path)")
+        print("PASS: the Filter branches field, production branch rows and tree groups align at 240/280/320 points in light/dark, with 18-point nesting, compact 26-point rows, 26-point heads and count pills at the right edge; pinned branches lead Local branches under their whole names and go back to their folder when unpinned; the filter opens folded folders, hides what does not match, keeps pinned matches first, shows the empty form and restores the folds. \(output.path)")
     }
 }

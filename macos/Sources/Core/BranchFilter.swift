@@ -11,12 +11,15 @@ struct BranchFolder: Identifiable {
 }
 
 struct BranchFolders {
+    /// Pinned branches ("Pin to top"), ahead of the rest under their whole names, in name order
+    let pinned: [Branch]
     /// Branches outside a folder, a folder's only branch among them
     let loose: [Branch]
     let folders: [BranchFolder]
 
-    /// Groups by the first "/" of `key`; a folder of one stays a loose branch under its whole name
-    init(_ branches: [Branch], key: (Branch) -> String) {
+    /// Groups by the first "/" of `key`; a folder of one stays a loose branch under its whole name. Pinned branches
+    /// leave their folders after the grouping, so pinning one never regroups the others; a folder left empty goes.
+    init(_ branches: [Branch], key: (Branch) -> String, pinned isPinned: (Branch) -> Bool = { _ in false }) {
         var loose: [Branch] = []
         var byFolder: [String: [Branch]] = [:]
         for b in branches {
@@ -31,24 +34,28 @@ struct BranchFolders {
         for (name, list) in byFolder {
             if list.count == 1 { loose.append(list[0]) } else { folders.append(BranchFolder(name: name, branches: list)) }
         }
-        self.loose = loose.sorted { key($0).localizedStandardCompare(key($1)) == .orderedAscending }
-        self.folders = folders.sorted { $0.name < $1.name }
+        self.pinned = branches.filter(isPinned).sorted { key($0).localizedStandardCompare(key($1)) == .orderedAscending }
+        self.loose = loose.filter { !isPinned($0) }.sorted { key($0).localizedStandardCompare(key($1)) == .orderedAscending }
+        self.folders = folders.map { f in BranchFolder(name: f.name, branches: f.branches.filter { !isPinned($0) }) }
+            .filter { !$0.branches.isEmpty }
+            .sorted { $0.name < $1.name }
     }
 
-    private init(loose: [Branch], folders: [BranchFolder]) {
+    private init(pinned: [Branch], loose: [Branch], folders: [BranchFolder]) {
+        self.pinned = pinned
         self.loose = loose
         self.folders = folders
     }
 
-    /// How many branches the folders hold
-    var count: Int { loose.count + folders.reduce(0) { $0 + $1.branches.count } }
+    /// How many branches the section holds, pinned ones included
+    var count: Int { pinned.count + loose.count + folders.reduce(0) { $0 + $1.branches.count } }
 
     /// The folders narrowed to the names that match. A folder keeps its place and its form even with one match left,
-    /// so the tree does not regroup while typing; a folder without a match is left out.
+    /// so the tree does not regroup while typing; a folder without a match is left out. A pinned match stays first.
     func filtered(_ query: String) -> BranchFolders {
         guard !query.isEmpty else { return self }
         let keep = { (b: Branch) in BranchFilter.matches(b.name, query) }
-        return BranchFolders(loose: loose.filter(keep),
+        return BranchFolders(pinned: pinned.filter(keep), loose: loose.filter(keep),
                              folders: folders.map { BranchFolder(name: $0.name, branches: $0.branches.filter(keep)) }.filter { !$0.branches.isEmpty })
     }
 

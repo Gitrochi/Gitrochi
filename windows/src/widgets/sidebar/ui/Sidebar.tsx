@@ -88,7 +88,7 @@ function BranchList({ store, only, flyout = false }: { store: RepoStore; only?: 
     else s.add(id);
     setExpanded(s);
   };
-  const locals = filterFolders(groupFolders(store.localBranches, (b) => b.name), (b) => b.name, query);
+  const locals = filterFolders(groupFolders(store.localBranches, (b) => b.name, (b) => store.isPinned(b)), (b) => b.name, query);
   const byRemote = new Map<string, Branch[]>();
   for (const b of store.remoteBranches) {
     const r = branchRemote(b) ?? "";
@@ -134,6 +134,10 @@ function BranchList({ store, only, flyout = false }: { store: RepoStore; only?: 
   return (
     <SharedStack className="side-scroll side-branches">
       {show("local") && (!filtering || localCount > 0) && <Section id="local" title={t("Local branches")} count={localCount} {...forced}>
+        {/* "Pin to top": pinned branches lead under their whole names, out of their folders */}
+        {locals.pinned.map((b) => (
+          <BranchRow key={b.name} store={store} branch={b} label={b.name} />
+        ))}
         {locals.loose.map((b) => (
           <BranchRow key={b.name} store={store} branch={b} label={b.name} />
         ))}

@@ -101,9 +101,11 @@ struct SidebarView: View {
         let filtering = !query.isEmpty
         let forced: Binding<Bool>? = filtering ? .constant(true) : nil
 
-        let locals = BranchFolders(store.localBranches) { $0.name }.filtered(query)
+        let locals = BranchFolders(store.localBranches, key: { $0.name }, pinned: { store.isPinned($0) }).filtered(query)
         if show("local"), !filtering || locals.count > 0 {
             SidebarSection("local", open: forced) {
+                // "Pin to top": pinned branches lead under their whole names, out of their folders
+                ForEach(locals.pinned) { b in localRow(b, label: b.name) }
                 ForEach(locals.loose) { b in localRow(b, label: b.name) }
                 ForEach(locals.folders) { f in
                     DisclosureGroup(isExpanded: expansion("l:" + f.name, forced: filtering)) {

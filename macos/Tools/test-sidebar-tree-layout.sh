@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Check the Branches tab's field, production branch rows, disclosure spacing and filter without account or repository access.
+# Check the Branches tab's field, production branch rows, disclosure spacing, pinned branches and filter without account or
+# repository access.
 # GITROCHI_SIDEBAR_TREE_LANGUAGE=ko renders the screenshots in that language.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -22,6 +23,12 @@ row = row.replace(icon, icon + '                .background(TreeLayoutProbe(iden
 label = '                .help(branch.name)\n'
 assert row.count(label) == 1, 'Branch label measurement attachment changed'
 row = row.replace(label, label + '                .background(TreeLayoutProbe(identifier: "label:" + branch.name))\n')
+current = 'if branch.isCurrent { CurrentMarker() }'
+assert row.count(current) == 1, 'Current marker measurement attachment changed'
+row = row.replace(current, 'if branch.isCurrent { CurrentMarker().background(TreeLayoutProbe(identifier: "current:" + branch.name)) }')
+pin = '.help("Pinned").accessibilityLabel("Pinned")\n'
+assert row.count(pin) == 1, 'Pin mark measurement attachment changed'
+row = row.replace(pin, '.help("Pinned").accessibilityLabel("Pinned")\n                    .background(TreeLayoutProbe(identifier: "pin:" + branch.name))\n')
 models = (root / 'Sources/Core/Models.swift').read_text()
 branch = models[models.index('struct Branch: Identifiable, Hashable {'):models.index('\nstruct Tag:')]
 (target / 'BranchRow.swift').write_text('import SwiftUI\ntypealias ViewState<Value> = SwiftUI.State<Value>\n' + branch + '\n' + row)

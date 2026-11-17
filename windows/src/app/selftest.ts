@@ -928,17 +928,35 @@ export async function runSelfTest(): Promise<boolean> {
     settings.set("sidebarCollapsed", false);
     settings.set("sidebarMode", "list");
     const sideRow = () => [...document.querySelectorAll<HTMLElement>(".side-branches .side-row")].find((r) => r.textContent?.includes("image-v2"));
-    s.setPinned(b, true);
-    // a pinned branch keeps its place in the list and carries the pin mark; there is no Pinned section
-    const pinned = await until(() => !!sideRow()?.querySelector(`[aria-label="${t("Pinned")}"]`), 3000) && !document.querySelector('.side-section[data-section="pinned"]');
-    s.setPinned(b, false);
+    // "Pin to top": image-v2 and feature/login (out of the feature folder) lead Local branches in name order under their
+    // whole names with the pin mark; there is no Pinned section, and unpinning puts feature/login back in its folder
+    const login = s.localBranches.find((x) => x.name === "feature/login");
+    if (!login) return [false, "no feature/login branch"];
+    const features = s.localBranches.filter((x) => x.name.startsWith("feature/")).length;
+    const localRows = () => [...document.querySelectorAll<HTMLElement>('.side-branches [data-section="local"] .side-tree-row')];
+    const labelOf = (r: HTMLElement) => r.querySelector(".side-tree-label")?.textContent ?? "";
+    const pinMark = (r: HTMLElement) => !!r.querySelector(`[aria-label="${t("Pinned")}"]`);
+    const featureCount = () => document.querySelector<HTMLElement>('.side-branches [data-tree-id="l:feature"] > .side-tree-toggle .side-count')?.textContent ?? "";
+    let pinned = false;
+    try {
+      s.setPinned(b, true);
+      s.setPinned(login, true);
+      pinned = await until(() => {
+        const top = localRows().slice(0, 2);
+        return top.map(labelOf).join() === "feature/login,image-v2" && top.every((r) => pinMark(r) && !r.closest(".side-tree-children")) && featureCount() === (features > 1 ? String(features - 1) : "");
+      }, 3000) && !document.querySelector('.side-section[data-section="pinned"]');
+    } finally {
+      s.setPinned(b, false);
+      s.setPinned(login, false);
+    }
+    const unpinned = await until(() => !localRows().some(pinMark) && featureCount() === (features > 1 ? String(features) : "") && (features < 2 || !localRows().some((r) => labelOf(r) === "feature/login")), 3000);
     // a row has no eye until its branch is hidden; then the eye says so and shows the branch again
     const noEye = !sideRow()?.querySelector("button.icon-btn");
     await s.setHidden(b, true);
     const eyeHid = await until(() => s.isHidden(b) && !!sideRow()?.querySelector("button.icon-btn"), 5000);
     sideRow()?.querySelector<HTMLButtonElement>("button.icon-btn")?.click();
     const eyeShown = await until(() => !s.isHidden(b) && has(), 5000);
-    return [before && hidden && back && current && pinned && noEye && eyeHid && eyeShown, `before=${before} hidden=${hidden} back=${back} current=${current} pinned=${pinned} eye=${noEye}/${eyeHid}/${eyeShown}`];
+    return [before && hidden && back && current && pinned && unpinned && noEye && eyeHid && eyeShown, `before=${before} hidden=${hidden} back=${back} current=${current} pinned=${pinned}/${unpinned} rows=${localRows().map(labelOf).join()} eye=${noEye}/${eyeHid}/${eyeShown}`];
   });
 
   // The sidebar's Filter branches field in the real window: typing narrows the tree, and Escape, through the app's
