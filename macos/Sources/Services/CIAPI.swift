@@ -47,11 +47,11 @@ enum CIAPI {
     }
 
     /// 최근 파이프라인·실행(ref 가 있으면 그 브랜치만)
-    static func pipelines(_ t: RepoTarget, token: String, apiBase: String, ref: String?) async throws -> [CIPipeline] {
+    static func pipelines(_ t: RepoTarget, token: String, apiBase: String, ref: String?, perPage: Int = 30) async throws -> [CIPipeline] {
         switch t.provider {
         case .gitlab:
             let filter = ref.map { "&ref=\(q($0))" } ?? ""
-            let req = try Hosting.request(.gitlab, project(t, apiBase) + "/pipelines?per_page=30\(filter)", token: token)
+            let req = try Hosting.request(.gitlab, project(t, apiBase) + "/pipelines?per_page=\(perPage)\(filter)", token: token)
             return try await Hosting.send([GLPipeline].self, req).map {
                 CIPipeline(id: $0.id, number: $0.iid ?? $0.id, name: $0.name ?? "", title: "", ref: $0.ref, sha: $0.sha,
                            status: CIStatus(gitlab: $0.status), url: $0.webUrl, created: Hosting.date($0.createdAt),
@@ -60,15 +60,46 @@ enum CIAPI {
             }
         case .github:
             let filter = ref.map { "&branch=\(q($0))" } ?? ""
-            let req = try Hosting.request(.github, repo(t, apiBase) + "/actions/runs?per_page=30\(filter)", token: token)
-            return try await Hosting.send(GHRuns.self, req).workflowRuns.map {
-                CIPipeline(id: $0.id, number: $0.runNumber, name: $0.name ?? "", title: $0.displayTitle ?? "",
-                           ref: $0.headBranch ?? "", sha: $0.headSha, status: CIStatus(github: $0.status, conclusion: $0.conclusion),
-                           url: $0.htmlUrl, created: Hosting.date($0.createdAt), event: $0.event, actor: $0.actor?.login,
-                           started: Hosting.date($0.runStartedAt ?? $0.createdAt), updated: Hosting.date($0.updatedAt),
-                           request: $0.pullRequests?.first?.number)
-            }
+            let req = try Hosting.request(.github, repo(t, apiBase) + "/actions/runs?per_page=\(perPage)\(filter)", token: token)
+            return try await Hosting.send(GHRuns.self, req).workflowRuns.map(githubRun)
         }
+    }
+
+    private static func githubRun(_ r: GHRun) -> CIPipeline {
+        CIPipeline(id: r.id, number: r.runNumber, name: r.name ?? "", title: r.displayTitle ?? "",
+                   ref: r.headBranch ?? "", sha: r.headSha, status: CIStatus(github: r.status, conclusion: r.conclusion),
+                   url: r.htmlUrl, created: Hosting.date(r.createdAt), event: r.event, actor: r.actor?.login,
+                   started: Hosting.date(r.runStartedAt ?? r.createdAt), updated: Hosting.date(r.updatedAt),
+                   request: r.pullRequests?.first?.number)
+    }
+
+    /// Starts a chosen commit's run again, as it is now: GitLab presses the job (found again by name, since a retried
+    /// job gets a new id) or retries it once finished; GitHub re-runs the workflow run with its original inputs. One
+    /// still running is left alone. (Windows: CIAPI.startCommitRun)
+    static func startCommitRun(_ t: RepoTarget, token: String, apiBase: String, run: CommitRun) async throws {
+        switch t.provider {
+        case .gitlab:
+            let name = run.jobName ?? ""
+            guard let job = try await jobs(t, token: token, apiBase: apiBase, pipeline: run.runID).last(where: { $0.name == name }) else {
+                throw CommitRunError(errorDescription: String(localized: "The job '\(name)' is no longer in this pipeline."))
+            }
+            switch RunCommits.jobAction(job.status) {
+            case .play: try await play(t, token: token, apiBase: apiBase, job: job.id)
+            case .retry: try await retry(t, token: token, apiBase: apiBase, job: job.id)
+            case .busy: throw CommitRunError(errorDescription: String(localized: "This job is already running."))
+            case .unavailable: throw CommitRunError(errorDescription: String(localized: "This job can't be started now."))
+            }
+        case .github:
+            let req = try Hosting.request(.github, repo(t, apiBase) + "/actions/runs/\(run.runID)", token: token)
+            let current = githubRun(try await Hosting.send(GHRun.self, req))
+            if RunCommits.runBusy(current.status) { throw CommitRunError(errorDescription: String(localized: "This run is still running.")) }
+            // GitHub refuses runs older than 30 days; its message says so
+            try await retry(t, token: token, apiBase: apiBase, pipeline: run.runID, failedOnly: false)
+        }
+    }
+
+    private struct CommitRunError: LocalizedError {
+        let errorDescription: String?
     }
 
     static func jobs(_ t: RepoTarget, token: String, apiBase: String, pipeline id: Int) async throws -> [CIJob] {

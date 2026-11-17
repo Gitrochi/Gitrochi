@@ -7,8 +7,8 @@ import { useObserve } from "@/shared/lib";
 import { HostedListChip, HostedListTextButton, Spinner } from "@/shared/ui";
 
 /**
- * The repository's runs scheduled for later, above the run list: which workflow (or pipeline) runs on which branch and
- * when, with Cancel, or Run now and Remove once it was missed or failed. Nothing is drawn without any.
+ * The repository's runs scheduled for later, above the run list: which workflow (or pipeline) runs on which branch (and
+ * commit) and when, with Cancel, or Run now and Remove once it was missed or failed. Nothing is drawn without any.
  * (macOS: Views/Sidebar/ScheduledRunsGroup.swift)
  */
 export function ScheduledRunsGroup({ store }: { store: RepoStore }) {
@@ -23,11 +23,12 @@ export function ScheduledRunsGroup({ store }: { store: RepoStore }) {
   }, [runs.length]);
   if (!runs.length) return null;
   const now = schedule.now();
-  const title = (run: ScheduledRun) => run.workflowName ?? t("Pipeline");
+  // a run on a chosen GitLab commit presses one job of its pipeline
+  const title = (run: ScheduledRun) => run.workflowName ?? run.jobName ?? t("Pipeline");
   // starting a run that did not start on time asks once: it may be a deployment, and its moment has passed
   const runNow = (run: ScheduledRun) => store.ask({
     title: t("Start this run now?"),
-    message: `${title(run)} · ${run.ref}`,
+    message: [title(run), run.ref, run.sha?.slice(0, 7)].filter(Boolean).join(" · "),
     actionTitle: t("Run"),
     destructive: false,
     action: () => schedule.runNow(run.id),
@@ -41,6 +42,8 @@ export function ScheduledRunsGroup({ store }: { store: RepoStore }) {
             <span className="ci-scheduled-title ellipsis">{title(run)}</span>
             {/* the branch gives way first, from the front */}
             <span className="ci-scheduled-ref">{run.ref}</span>
+            {/* the commit it was scheduled with, when not the branch's tip */}
+            {run.sha && <span className="ci-scheduled-sha mono" title={run.sha}>{run.sha.slice(0, 7)}</span>}
             <span className="spacer" />
             {schedule.starting.has(run.id) ? (
               <Spinner size={11} />

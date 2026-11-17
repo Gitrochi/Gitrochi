@@ -15,7 +15,7 @@ final class ScheduledRunStore {
     @ObservationIgnored private var wakeObserver: NSObjectProtocol?
 
     private init() {
-        runs = UserDefaults.standard.data(forKey: Self.key).flatMap { try? JSONDecoder().decode([ScheduledRun].self, from: $0) } ?? []
+        runs = ScheduledRuns.decode(UserDefaults.standard.data(forKey: Self.key))
     }
 
     /// Called once at launch
@@ -78,7 +78,8 @@ final class ScheduledRunStore {
         }
     }
 
-    /// The same calls as the run sheet, with the saved account's token read now
+    /// The same calls as the run sheet, with the saved account's token read now. A run on a chosen commit starts that
+    /// commit's run again as it is then (CIAPI.startCommitRun).
     private static func dispatch(_ run: ScheduledRun) async throws {
         let accounts = AccountStore.shared
         guard let account = accounts.accounts.first(where: { $0.id == run.accountID }) else {
@@ -86,6 +87,9 @@ final class ScheduledRunStore {
         }
         guard let token = await accounts.loadToken(for: account) else {
             throw Failure(errorDescription: String(localized: "Couldn't read the account's token."))
+        }
+        if let commitRun = run.commitRun {
+            return try await CIAPI.startCommitRun(run.target, token: token, apiBase: account.apiBase, run: commitRun)
         }
         switch run.provider {
         case .gitlab:

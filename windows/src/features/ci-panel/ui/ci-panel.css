@@ -24,6 +24,7 @@
 .ci-scheduled-title { flex: 0 0 auto; max-width: 65%; font-size: 13px; font-weight: 500; }
 /* the branch gives way first, from the front */
 .ci-scheduled-ref { flex: 0 1 auto; min-width: 0; font-size: 12px; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; direction: rtl; text-align: left; }
+.ci-scheduled-sha { flex: none; font-size: 11px; color: var(--text-2); }
 .ci-scheduled-meta { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 11px; color: var(--text-2); }
 .ci-scheduled-meta > .hosted-chip { flex: none; }
 .ci-scheduled-when { flex: 0 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

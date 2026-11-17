@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// The repository's runs scheduled for later, above the run list: which workflow (or pipeline) runs on which branch
-/// and when, with Cancel, or Run now and Remove once it was missed or failed. Nothing is drawn without any.
+/// (and commit) and when, with Cancel, or Run now and Remove once it was missed or failed. Nothing is drawn without any.
 /// (Windows: features/ci-panel/ui/ScheduledRunsGroup.tsx)
 struct ScheduledRunsGroup: View {
     @Environment(RepoStore.self) private var store
@@ -34,7 +34,8 @@ struct ScheduledRunsGroup: View {
     }
 
     private func title(_ run: ScheduledRun) -> String {
-        run.workflowName ?? String(localized: "Pipeline")
+        // a run on a chosen GitLab commit presses one job of its pipeline
+        run.workflowName ?? run.jobName ?? String(localized: "Pipeline")
     }
 
     private func row(_ run: ScheduledRun, now: Date) -> some View {
@@ -43,6 +44,11 @@ struct ScheduledRunsGroup: View {
                 Text(verbatim: title(run)).font(.system(size: 13, weight: .medium)).lineLimit(1).layoutPriority(1)
                 // the branch gives way first, from the front
                 Text(verbatim: run.ref).font(.system(size: 12)).foregroundStyle(HostedList.caption).lineLimit(1).truncationMode(.head)
+                // the commit it was scheduled with, when not the branch's tip
+                if let sha = run.sha {
+                    Text(verbatim: String(sha.prefix(7))).font(.system(size: 11).monospaced()).foregroundStyle(HostedList.caption)
+                        .fixedSize().help(sha)
+                }
                 Spacer(minLength: 6)
                 // the commands are never cut
                 HStack(spacing: 8) {
@@ -79,7 +85,7 @@ struct ScheduledRunsGroup: View {
 
     /// Starting a run that did not start on time asks once: it may be a deployment, and its moment has passed
     private func confirmRun(_ run: ScheduledRun) {
-        store.confirm = ConfirmRequest(title: String(localized: "Start this run now?"), message: "\(title(run)) · \(run.ref)",
+        store.confirm = ConfirmRequest(title: String(localized: "Start this run now?"), message: [title(run), run.ref, run.sha.map { String($0.prefix(7)) }].compactMap { $0 }.joined(separator: " · "),
                                        actionTitle: String(localized: "Run"), destructive: false) {
             schedule.runNow(run.id)
         }

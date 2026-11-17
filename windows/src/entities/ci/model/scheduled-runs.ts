@@ -1,6 +1,7 @@
 import type { Provider } from "@/entities/git";
 import { language, t } from "@/shared/i18n";
 import { listWhen } from "@/shared/lib";
+import type { CommitRun } from "./run-commits";
 
 /**
  * A workflow (GitHub) or pipeline (GitLab) run the app starts once, later. It keeps enough to find the saved account
@@ -21,6 +22,15 @@ export interface ScheduledRun {
   workflowID: number | null;
   workflowName: string | null;
   ref: string;
+  /**
+   * The commit chosen in the sheet, which runs again through its own run (run-commits.ts). null runs on the branch's
+   * tip; runs saved before there was a choice read these three as null.
+   */
+  sha: string | null;
+  /** GitLab: the commit's pipeline; GitHub: the workflow run to re-run */
+  runID: number | null;
+  /** GitLab: the job to press, found again by name since a retried job gets a new id */
+  jobName: string | null;
   inputs: Record<string, string>;
   /** GitLab: the pipeline variables, in the order given */
   variables: [string, string][];
@@ -98,7 +108,10 @@ export function parseDateTimeInput(value: string): number | null {
   return date.getMonth() === month - 1 && date.getDate() === day ? date.getTime() : null;
 }
 
-/** The saved list, without entries a damaged or older settings file may hold */
+/**
+ * The saved list, without entries a damaged or older settings file may hold; a run saved before the commit choice runs
+ * on its branch (macOS: ScheduledRuns.decode)
+ */
 export function decodeScheduledRuns(value: unknown): ScheduledRun[] {
   if (!Array.isArray(value)) return [];
   return value.filter((run): run is ScheduledRun =>
@@ -106,5 +119,15 @@ export function decodeScheduledRuns(value: unknown): ScheduledRun[] {
     && typeof run.id === "string" && typeof run.repoPath === "string" && typeof run.accountID === "string" && typeof run.ref === "string"
     && (run.provider === "github" || run.provider === "gitlab")
     && typeof run.runAt === "number" && Number.isFinite(run.runAt)
-    && (run.state === "scheduled" || run.state === "missed" || run.state === "failed"));
+    && (run.state === "scheduled" || run.state === "missed" || run.state === "failed"))
+    .map((run) => ({
+      ...run,
+      sha: typeof run.sha === "string" && run.sha ? run.sha : null,
+      runID: typeof run.runID === "number" && Number.isFinite(run.runID) ? run.runID : null,
+      jobName: typeof run.jobName === "string" && run.jobName ? run.jobName : null,
+    }));
 }
+
+/** The run of the chosen commit a scheduled run starts again, or null to run on the branch (macOS: ScheduledRun.commitRun) */
+export const scheduledCommitRun = (run: Pick<ScheduledRun, "sha" | "runID" | "jobName">): CommitRun | null =>
+  run.sha && run.runID !== null ? { runID: run.runID, jobName: run.jobName } : null;
