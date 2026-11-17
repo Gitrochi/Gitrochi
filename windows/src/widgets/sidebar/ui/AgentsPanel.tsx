@@ -1,4 +1,4 @@
-import { CirclePause, ShieldAlert, Zap } from "lucide-react";
+import { CirclePause, ShieldAlert, TriangleAlert, Zap } from "lucide-react";
 import { CircleAlert, CircleX, Ellipsis, GitBranch, Pencil, Plus, Sparkles, SquareArrowOutUpRight } from "@/shared/icons";
 import { type MouseEvent, type ReactNode, useEffect } from "react";
 import { agentKind, agents, type AgentSession, appDisplayName, containingRoot, type ExternalAgent, relativeFolder, skipsPermissions, type TerminalAgent } from "@/entities/agent";
@@ -52,7 +52,12 @@ export function AgentsPanel({ store }: { store: RepoStore }) {
     store.sheet = s;
     store.changed();
   };
-  const more = (): MenuItem[] => [{ label: t("Clear ended sessions"), onClick: () => void agents.clearEnded() }];
+  const hasEnded = agents.sessions.some((s) => s.status === "ended");
+  const prunable = store.worktrees.some((w) => w.prunable);
+  const more = (): MenuItem[] => [
+    ...(prunable ? [{ label: t("Clean up"), onClick: () => void store.pruneWorktrees() }] : []),
+    ...(hasEnded ? [{ label: t("Clear ended sessions"), onClick: () => void agents.clearEnded() }] : []),
+  ];
   return (
     <div className="side-scroll agents-panel">
       <div className="agents-start">
@@ -81,7 +86,7 @@ export function AgentsPanel({ store }: { store: RepoStore }) {
         actions={
           <>
             <IconButton small icon={<Plus size={13} />} aria-label={t("New worktree…")} tip={t("New worktree…")} onClick={() => sheet({ kind: "addWorktree", branch: null, start: null })} />
-            {agents.sessions.some((s) => s.status === "ended") && (
+            {(hasEnded || prunable) && (
               <IconButton small className="agents-more" icon={<Ellipsis size={14} />} aria-haspopup="menu" aria-label={t("More agent actions")} tip={t("More agent actions")} onClick={(e) => showMenuBelow(e.currentTarget, more())} />
             )}
           </>
@@ -154,20 +159,24 @@ function WorktreeGroup({ store, worktree: w, stats, sessions, typed, isCurrent, 
             { label: t("Show in Explorer"), onClick: () => void ipc.reveal(w.path) },
             { label: t("Open in the terminal below"), onClick: () => store.newTerminal(w.path) },
             { label: t("Open in external terminal"), onClick: () => void ipc.openTerminal(w.path) },
+            { label: t("Copy path"), onClick: () => store.copy(displayPath(w.path)) },
             "divider",
             { label: t("Remove worktree…"), danger: true, disabled: w.isMain || isCurrent, onClick: () => store.confirmRemove(w) },
+            { label: t("Force remove…"), danger: true, disabled: w.isMain || isCurrent, onClick: () => store.confirmRemove(w, true) },
           ])
         }
       >
         <span className="agent-worktree-line">
           {isCurrent ? (
-            <span className="agent-current" role="img" aria-label={t("Current")}><span /></span>
+            <span className="side-current" role="img" aria-label={t("Current")}><span /></span>
           ) : (
             <span className="agent-worktree-icon" aria-hidden="true"><GitBranch size={13} /></span>
           )}
           <span className="ellipsis agent-worktree-name">{w.branch ?? t("Detached HEAD")}</span>
-          {/* one state icon: a conflict outranks plain uncommitted files */}
-          {stats && stats.conflicted > 0 ? (
+          {/* one state icon: a folder that is gone outranks a conflict, which outranks plain uncommitted files */}
+          {w.prunable ? (
+            <span className="agent-state status-tone" data-tone="waiting" data-state="prunable" role="img" aria-label={t("Worktree whose folder is gone — remove it with 'Clean up'")} data-tip={t("Worktree whose folder is gone — remove it with 'Clean up'")}><TriangleAlert size={12} /></span>
+          ) : stats && stats.conflicted > 0 ? (
             <span className="agent-state status-tone" data-tone="failed" data-state="conflict" role="img" aria-label={`${t("Conflict")} ${stats.conflicted}`} data-tip={`${t("Conflict")} ${stats.conflicted}`}><CircleX size={12} /></span>
           ) : stats && !statsClean(stats) && changed > 0 ? (
             <span className="agent-state" data-state="changed" role="img" aria-label={`${t("Uncommitted changes")} ${changed}`} data-tip={`${t("Uncommitted changes")} ${changed}`}><Pencil size={12} /></span>

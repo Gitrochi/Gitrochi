@@ -2,13 +2,14 @@ import { ChevronDown } from "@/shared/icons";
 import { createContext, type ReactNode, useContext } from "react";
 import { settings } from "@/shared/config";
 import { useObserve } from "@/shared/lib";
-import { SharedPane } from "@/shared/ui";
+import { SharedPane, StatusPill } from "@/shared/ui";
 
 export const SectionFlyout = createContext(false);
 
 /**
  * A sidebar list with a header; `collapsible={false}` keeps it open without a chevron (a page's own list).
  * `open` with `onToggle` lets the caller keep the state, for a section that starts folded.
+ * The count is a neutral pill: at the right edge, or beside the title when the head has buttons there.
  */
 export function Section({ id, title, count, actions, children, defaultOpen = true, collapsible = true, open, onToggle }: { id: string; title: string; count?: number; actions?: ReactNode; children: ReactNode; defaultOpen?: boolean; collapsible?: boolean; open?: boolean; onToggle?: () => void }) {
   useObserve(settings);
@@ -18,11 +19,11 @@ export function Section({ id, title, count, actions, children, defaultOpen = tru
   const toggle = onToggle ?? (() => settings.set("collapsedSections", isCollapsed ? collapsed.filter((x) => x !== id) : [...collapsed, id]));
   return (
     <div className="side-section" data-section={id}>
-      <div className={`side-head ${isCollapsed ? "collapsed" : ""}`}>
+      <div className={`side-head ${isCollapsed ? "collapsed" : ""} ${actions ? "with-actions" : ""}`}>
         <span className="row grow" onClick={fixed ? undefined : toggle}>
-          {!fixed && <ChevronDown size={12} className="chev" />}
+          {!fixed && <ChevronDown size={10} className="chev" />}
           <span className="ellipsis">{title}</span>
-          {count !== undefined && <span className="side-count" style={{ fontWeight: 500 }}>{count}</span>}
+          {count !== undefined && <StatusPill tone="neutral" className={`side-count ${actions ? "" : "end"}`}>{count}</StatusPill>}
         </span>
         {actions}
       </div>

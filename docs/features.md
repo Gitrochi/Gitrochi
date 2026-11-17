@@ -15,7 +15,7 @@ The current Windows interface is rendered from production components in a browse
 
 ### First time
 
-You can browse the navigation before connecting an account; repository tools offer a chooser until a repository is open. Local history, staging and commits use system Git and do not require a GitHub/GitLab API login. To configure Git author and SSH details, open **Get started with a Git account** on the welcome screen (Windows: **Set up a Git account · Get started with gitch**) or **Settings › CLI**. gitch ships with the app; there is nothing extra to download.
+You can browse the navigation before connecting an account; the pages that need a repository are disabled until one is open, and Home opens, clones or creates one. Local history, staging and commits use system Git and do not require a GitHub/GitLab API login. To configure Git author and SSH details, open **Get started with a Git account** on the welcome screen (Windows: **Set up a Git account · Get started with gitch**) or **Settings › CLI**. gitch ships with the app; there is nothing extra to download.
 
 1. **Sign in to GitHub in the browser** connects the account you approve in your default browser and fills in your user name and email. It needs the official [GitHub CLI](https://cli.github.com/); if it is missing, the app opens the download instructions. For a company GitLab, enter the server address and account details yourself.
 2. Check and save the account details, then prepare an SSH key: create a dedicated key in the app or use an existing one. On GitHub, **Register the public key and connect** registers it and checks the connection in one go. The **?** next to the SSH port explains the default 22 and company server settings.
@@ -122,7 +122,7 @@ These additions are implemented in both clients. Earlier fixture-based checks an
 
 ### Navigation and account access
 
-The page list includes **Home**, **Repository**, **Compare**, **Rebase**, **Code**, **Pull requests**, **Issues**, **Actions**, **Releases**, **Projects**, **Account** and **Flows**. GitLab uses **Merge requests** and **Pipelines**. All pages are navigable from the start; tools that need a repository show a chooser until one is open. Home opens or clones repositories, lists recent work, searches connected servers and presents project planning.
+The page list includes **Home**, **Repository**, **Compare**, **Rebase**, **Code**, **Pull requests**, **Issues**, **Actions**, **Releases**, **Projects**, **Account** and **Flows**. GitLab uses **Merge requests** and **Pipelines**. Home, Issues, Releases, Projects and Account are available from the start; the pages that need a repository are disabled until one is open. Home opens or clones repositories, lists recent work, searches connected servers and presents project planning.
 
 Repository is the three-column screen: branches, tags, stashes and worktrees on the left; the graph, diff or file history with its terminal in the middle; changes and commit details on the right. Its page list folds into an icon rail. The sidebar control and **⌘B / Ctrl+B** expand or collapse it smoothly, preserve page selection and keyboard focus, and respect the system's reduced-motion setting. Dragging the expanded sidebar edge resizes it directly; reopening restores its saved width. Each repository remembers its last page.
 

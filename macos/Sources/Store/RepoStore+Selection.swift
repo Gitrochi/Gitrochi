@@ -20,18 +20,37 @@ extension RepoStore {
         destination == .repository && area == .changes && diffSource == nil && fileInspect == nil
     }
 
+    /// What Escape does right now, from who has the keys (RepositoryEscape has the order)
+    private var escapeAction: RepositoryEscape {
+        let window = NSApp.keyWindow, responder = window?.firstResponder
+        return RepositoryEscape(overlay: window?.attachedSheet != nil, terminal: responder is ShellView, typing: responder is NSText,
+                                repositoryScreen: destination == .repository, fileInspect: fileInspect != nil,
+                                diff: diffSource != nil, filter: branchFilterFocused && !branchFilter.isEmpty, changes: area == .changes)
+    }
+
     /// Changes off: back to the graph and the commit that was selected there. From Esc it checks who has the keys
-    /// first, so a sheet, the terminal and a text field keep their Escape. (Windows: hideChanges and shortcuts.ts)
+    /// first, so a sheet, the terminal and a text field keep their Escape; the Filter branches field is cleared
+    /// instead. (Windows: hideChanges and shortcuts.ts)
     func hideChanges(fromEscape: Bool = false) {
         if fromEscape {
-            let window = NSApp.keyWindow, responder = window?.firstResponder
-            let action = RepositoryEscape(overlay: window?.attachedSheet != nil, terminal: responder is ShellView, typing: responder is NSText,
-                                          repositoryScreen: destination == .repository, fileInspect: fileInspect != nil,
-                                          diff: diffSource != nil, changes: area == .changes)
+            let action = escapeAction
+            if action == .clearFilter { branchFilter = "" }
             guard action == .showGraph else { return }
         }
         guard area == .changes else { return }
         showArea(.history)
+    }
+
+    /// Escape pressed in the sidebar's Filter branches field. The field gets the key before the toolbar's and the diff
+    /// header's shortcuts do, so it runs the same order itself. false: the key is not taken.
+    func escapeInBranchFilter() -> Bool {
+        switch escapeAction {
+        case .closeFileInspect: closeFileInspect()
+        case .closeDiff: closeDiff()
+        case .clearFilter: branchFilter = ""
+        case .showGraph, .none: return false
+        }
+        return true
     }
 
     func select(_ sel: Selection?, restoringContext: Bool = false) {
@@ -74,7 +93,7 @@ extension RepoStore {
         detailTask = Task {
             do {
                 let show = try await Git.run(["show", "-s", "--format=" + Parsers.detailFormat, sha], in: url)
-                let d = Parsers.commitDetail(show.output)
+                let d = Parsers.commitDetail(show.output, issueBase: self.target?.webURL ?? "")
                 let base = d?.parents.first ?? empty
                 async let filesR = Git.run(["diff-tree", "-r", "-M", "--name-status", "-z", base, sha], in: url)
                 async let numR = Git.run(["diff-tree", "-r", "-M", "--numstat", "-z", base, sha], in: url)
@@ -83,6 +102,7 @@ extension RepoStore {
                 self.detail = d
                 self.detailFiles = Parsers.nameStatus(files.data)
                 self.detailStats = Parsers.numstat(num.data)
+                if let d { self.loadTrailerIssues(d.trailers.issues.map(\.number)) }
             } catch {
                 guard !Task.isCancelled else { return }
                 self.errorMessage = describe(error)

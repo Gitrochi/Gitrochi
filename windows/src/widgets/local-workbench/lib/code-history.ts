@@ -37,21 +37,6 @@ export const fileAtCommitArgs = (commit: string, path: string): string[] => ["ca
 export const historyCountLabel = (count: number): string => (count > fileHistoryLimit ? `${fileHistoryLimit}+` : String(count));
 
 /**
- * A folder shortened from its start by whole segments ("…/Views/Search"), and nothing when even its last segment does
- * not fit (docs/design.md, Text)
- */
-export function shortFolder(folder: string, limit = 20): string {
-  if ([...folder].length <= limit) return folder;
-  const parts = folder.split("/").filter(Boolean);
-  while (parts.length > 1) {
-    parts.shift();
-    const short = "…/" + parts.join("/");
-    if ([...short].length <= limit) return short;
-  }
-  return "";
-}
-
-/**
  * How many leading folders the path bar leaves out so that the rest fits `room` characters; the file name always
  * stays. An estimate from character counts: macOS lays the candidates out and takes the first that fits.
  */

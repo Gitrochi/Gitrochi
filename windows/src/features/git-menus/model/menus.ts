@@ -19,6 +19,7 @@ export function refMenu(store: RepoStore, ref: RefLabel): MenuItem[] {
       { label: t("Go to this tag"), onClick: () => store.reveal(tag.target) },
       { label: t("Push tag"), onClick: () => void store.pushTag(tag) },
       { label: t("Copy name"), onClick: () => store.copy(tag.name) },
+      { label: t("Hide from graph"), onClick: () => void store.setTagHidden(tag, true) },
       "divider",
       { label: t("Delete tag…"), danger: true, onClick: () => store.deleteTag(tag) },
     ];
@@ -104,6 +105,8 @@ export function remoteBranchMenu(store: RepoStore, b: Branch): MenuItem[] {
     "divider",
     { label: t("New branch from here…"), onClick: () => store.requestNewBranch(b.target, b.name) },
     { label: t("Copy name"), onClick: () => store.copy(b.name) },
+    "divider",
+    { label: store.isPinned(b) ? t("Unpin") : t("Pin to top"), onClick: () => store.setPinned(b, !store.isPinned(b)) },
     { label: store.isHidden(b) ? t("Show in graph again") : t("Hide from graph"), onClick: () => void store.setHidden(b, !store.isHidden(b)) },
     "divider",
     { label: t("Delete from remote…"), danger: true, onClick: () => store.confirmDelete(b) },

@@ -90,6 +90,10 @@ final class RepoStore: Identifiable {
     var collaboration = CollaborationState()
     /// The repository's issues, shared by the sidebar section and the Issues page
     let issueList = WorkspaceIssueModel()
+    /// The issues commit trailers name, as far as they were read (RepoStore+Issues)
+    var trailerIssues: [Int: CollaborationInboxItem] = [:]
+    @ObservationIgnored var trailerIssuesKey = ""
+    @ObservationIgnored var trailerIssuesAsked: Set<Int> = []
     var localWorkflows = LocalWorkflowState()
     var repositoryAssistant = RepositoryAssistantState()
     var hostingHub = HostingHubState()
@@ -180,15 +184,24 @@ final class RepoStore: Identifiable {
     var prState: LoadState = .idle
     var aiWorking: String?
     var aiNotice: String?
+    /// Why the last commit message could not be written; shown in the composer, not as a dialog
+    var commitMessageFailure: String?
     var explanations: [String: String] = [:]
     var explaining: Set<String> = []
+    /// Why the last explanation of a commit failed; shown beside that commit, not as an alert
+    var explainFailures: [String: String] = [:]
     var splitPlan: [SplitGroup]?
     /// 되돌릴 수 있는 작업(마지막이 맨 뒤)
     var undoStack: [UndoPoint] = []
-    /// 그래프에서 숨긴 브랜치(refs/heads/x · refs/remotes/o/x), 사이드바 맨 위에 고정한 로컬 브랜치, 현재 브랜치만 보기
+    /// The branches and tags hidden from the graph and the ones pinned to the top of the sidebar, as full refs
+    /// (refs/heads/x, refs/remotes/origin/x, refs/tags/x), and whether the graph shows only the current branch
     var hiddenRefs: Set<String> = []
-    var pinnedBranches: Set<String> = []
+    var pinnedRefs: Set<String> = []
     var graphCurrentOnly = false
+    /// The text in the sidebar's Filter branches field, and whether the keys are in it: view state, not saved
+    /// (Windows: RepoStore.branchFilter)
+    var branchFilter = ""
+    var branchFilterFocused = false
     /// 충돌 해결 중인 파일과 블록마다 고른 것
     var conflictDoc: ConflictDocument?
     var conflictChoices: [Int: ConflictDocument.Choice] = [:]
@@ -297,7 +310,8 @@ final class RepoStore: Identifiable {
     @discardableResult
     /// quick: switching worktrees, so skip the minimum loading animation
     func open(_ folder: URL, quick: Bool = false) async -> OpenResult {
-        let requestedPage = url == nil && (destination.needsRepository || [.issues, .releases].contains(destination)) ? destination : nil
+        // Issues and Releases offer "Open repository…" without one; the repository opens on the page it was asked from
+        let requestedPage = url == nil && [.issues, .releases].contains(destination) ? destination : nil
         let started = Date()
         loading = LoadingInfo(title: String(localized: "Opening \(folder.lastPathComponent)"), step: String(localized: "Checking repository…"))
         defer { if url == nil { loading = nil } }
@@ -478,6 +492,7 @@ final class RepoStore: Identifiable {
         pullRequestSelection = nil; pullRequestDiff = nil; pullRequestInspect = nil
         worktreeDiffs = [:]; worktreeInspects = [:]
         showCommandPalette = false; selectedBranchID = nil
+        branchFilter = ""
         resetCommitImpact()
         closeFileInspect()
         entries = []; maxLanes = 1; commitIndex = [:]; refsByCommit = [:]
@@ -490,7 +505,7 @@ final class RepoStore: Identifiable {
         changesInspect = nil; historyInspect = nil; operationNotice = nil
         summary = ""; message = ""; amend = false; mergeMessageFilled = false
         worktrees = []; worktreeStats = [:]; worktreeStatus = [:]; remoteURLs = [:]; target = nil; pullRequests = []; prState = .idle
-        aiWorking = nil; aiNotice = nil; explanations = [:]; explaining = []; undoStack = []
+        aiWorking = nil; aiNotice = nil; commitMessageFailure = nil; explanations = [:]; explaining = []; explainFailures = [:]; undoStack = []
         ciBadgeTask?.cancel(); ciBadgeTask = nil
         detailTask?.cancel(); diffTask?.cancel(); watchTask?.cancel()
     }
@@ -748,12 +763,12 @@ final class RepoStore: Identifiable {
             map[head, default: []].append(RefLabel(name: "HEAD", kind: .head, isCurrent: true))
         }
         for b in localBranches where b.isCurrent || !hiddenRefs.contains("refs/heads/" + b.name) {
-            map[b.target, default: []].append(RefLabel(name: b.name, kind: .local, isCurrent: b.isCurrent))
+            map[b.target, default: []].append(RefLabel(name: b.name, kind: .local, isCurrent: b.isCurrent, behind: b.behind))
         }
         for b in remoteBranches where !hiddenRefs.contains("refs/remotes/" + b.name) {
             map[b.target, default: []].append(RefLabel(name: b.name, kind: .remote, isCurrent: false))
         }
-        for t in tags {
+        for t in tags where !hiddenRefs.contains(Self.tagRef(t)) {
             map[t.target, default: []].append(RefLabel(name: t.name, kind: .tag, isCurrent: false))
         }
         for k in map.keys {

@@ -47,20 +47,20 @@ const none = { author: 0, time: 0, sha: 0 };
 
 describe("그래프 칸", () => {
   it("shows branches, graph and message, without author, time and SHA by default", () => {
-    expect(graphColumns(1100, graphWidth(5))).toEqual({ ref: 190, graph: graphWidth(5), ...none });
+    expect(graphColumns(1100, graphWidth(5))).toEqual({ ref: 210, graph: graphWidth(5), ...none });
   });
   it("shows author, time and SHA only when turned on, at their widths", () => {
-    expect(graphColumns(1100, graphWidth(5), new Set(), both)).toEqual({ ref: 190, graph: graphWidth(5), author: 120, time: 84, sha: 0 });
-    expect(graphColumns(1100, graphWidth(5), new Set(), new Set(["sha"]))).toEqual({ ref: 190, graph: graphWidth(5), author: 0, time: 0, sha: 72 });
+    expect(graphColumns(1100, graphWidth(5), new Set(), both)).toEqual({ ref: 210, graph: graphWidth(5), author: 120, time: 84, sha: 0 });
+    expect(graphColumns(1100, graphWidth(5), new Set(), new Set(["sha"]))).toEqual({ ref: 210, graph: graphWidth(5), author: 0, time: 0, sha: 72 });
     expect(graphColumns(1400, graphWidth(5), new Set(), all, { author: 200, time: 90, sha: 60 })).toMatchObject({ author: 200, time: 90, sha: 60 });
   });
   it("drops SHA, then time, then author, before shrinking the branch column", () => {
     const g = graphWidth(5);
-    // the branch column (190), the graph, 32 around the message, 200 for it, the columns and the header's 60 for its menus
-    expect(graphColumns(890, g, new Set(), all)).toMatchObject({ ref: 190, author: 120, time: 84, sha: 72 });
-    expect(graphColumns(889, g, new Set(), all)).toMatchObject({ ref: 190, author: 120, time: 84, sha: 0 });
-    expect(graphColumns(817, g, new Set(), all)).toMatchObject({ ref: 190, author: 120, time: 0, sha: 0 });
-    expect(graphColumns(733, g, new Set(), all)).toMatchObject({ ref: 190, ...none });
+    // the branch column (210), the graph, 32 around the message, 200 for it, the columns and the header's 60 for its menus
+    expect(graphColumns(910, g, new Set(), all)).toMatchObject({ ref: 210, author: 120, time: 84, sha: 72 });
+    expect(graphColumns(909, g, new Set(), all)).toMatchObject({ ref: 210, author: 120, time: 84, sha: 0 });
+    expect(graphColumns(837, g, new Set(), all)).toMatchObject({ ref: 210, author: 120, time: 0, sha: 0 });
+    expect(graphColumns(753, g, new Set(), all)).toMatchObject({ ref: 210, ...none });
     expect(graphColumns(500, g, new Set(), all)).toEqual({ ref: 136, graph: g, ...none });
   });
   it("keeps dragged widths inside each column's range and ignores anything else stored", () => {
@@ -84,20 +84,20 @@ describe("그래프 칸", () => {
     expect(clampColumnWidth("ref", 30)).toBe(80);
     expect(clampColumnWidth("graph", 500, 300)).toBe(300);
     expect(clampColumnWidth("graph", 10, 20)).toBe(44);
-    expect(isDefaultWidth("ref", 190) && isDefaultWidth("author", 120)).toBe(true);
-    expect(isDefaultWidth("ref", 200) || isDefaultWidth("graph", 120) || isDefaultWidth("message", 300)).toBe(false);
+    expect(isDefaultWidth("ref", 210) && isDefaultWidth("author", 120)).toBe(true);
+    expect(isDefaultWidth("ref", 190) || isDefaultWidth("graph", 120) || isDefaultWidth("message", 300)).toBe(false);
   });
   it("lays the rows out at the window's width until the message is dragged past it, then wider without shrinking a column", () => {
     const g = graphWidth(5);
     expect(tableWidth(1100, g)).toBe(1100);
-    // 190 + the graph + 300 + the menus' 60 + 12 fits 1100, so nothing scrolls
+    // 210 + the graph + 300 + the menus' 60 + 12 fits 1100, so nothing scrolls
     expect(tableWidth(1100, g, new Set(), new Set(), { ...DEFAULT_WIDTHS, message: 300 })).toBe(1100);
-    expect(tableWidth(1100, g, new Set(), new Set(), { ...DEFAULT_WIDTHS, message: 1200 })).toBe(190 + g + 1200 + 72);
+    expect(tableWidth(1100, g, new Set(), new Set(), { ...DEFAULT_WIDTHS, message: 1200 })).toBe(210 + g + 1200 + 72);
     expect(tableWidth(900, g, new Set(["ref"]), all, { ...DEFAULT_WIDTHS, message: 900 })).toBe(g + 900 + 120 + 84 + 72 + 72);
     // a narrow window does not drop the optional columns once the rows scroll
     const wide = tableWidth(600, g, new Set(), all, { ...DEFAULT_WIDTHS, message: 400 });
     const c = graphColumns(wide, g, new Set(), all);
-    expect(c).toMatchObject({ ref: 190, author: 120, time: 84, sha: 72 });
+    expect(c).toMatchObject({ ref: 210, author: 120, time: 84, sha: 72 });
     expect(messageWidth(wide, c)).toBe(400);
     expect(columnWidths({ message: 50 }).message).toBe(200);
   });

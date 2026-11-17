@@ -15,11 +15,17 @@ enum Parsers {
     }
     static func log(_ data: Data) -> [Commit] { RustCore.objects(read("log", String(decoding: data, as: UTF8.self))).map(commit) }
     static func bodyPreview(_ text: String) -> String { RustCore.string(read("bodyPreview", text)) }
-    static func commitDetail(_ text: String) -> CommitDetail? {
-        guard let v = read("detail", text) as? [String: Any] else { return nil }
+    /// `issueBase` is the repository's web address, so that an issue's full address in a trailer is read like `#42`
+    static func commitDetail(_ text: String, issueBase: String = "") -> CommitDetail? {
+        guard let v = RustCore.call("detail", ["text": text, "issueBase": issueBase]) as? [String: Any] else { return nil }
+        let found = RustCore.object(v["trailers"])
+        let trailers = CommitTrailers(
+            issues: RustCore.objects(found["issues"]).map { .init(keyword: RustCore.string($0["keyword"]), number: RustCore.integer($0["number"])) },
+            coAuthors: RustCore.objects(found["coAuthors"]).map { .init(name: RustCore.string($0["name"]), email: RustCore.string($0["email"]), line: RustCore.string($0["line"])) })
         return CommitDetail(sha: RustCore.string(v["sha"]), parents: RustCore.strings(v["parents"]), author: RustCore.string(v["author"]), email: RustCore.string(v["email"]),
                             date: date(v["date"]), committer: RustCore.string(v["committer"]), committerEmail: RustCore.string(v["committerEmail"]),
-                            commitDate: date(v["commitDate"]), summary: RustCore.string(v["summary"]), body: RustCore.string(v["body"]))
+                            commitDate: date(v["commitDate"]), summary: RustCore.string(v["summary"]), body: RustCore.string(v["body"]),
+                            prose: v["prose"] as? String, trailers: trailers)
     }
     static func refs(_ text: String) -> (locals: [Branch], remotes: [Branch], tags: [Tag]) {
         let v = RustCore.object(read("refs", text))

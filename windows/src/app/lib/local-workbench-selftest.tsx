@@ -47,14 +47,14 @@ export async function localWorkbenchSelfTest(): Promise<[boolean, string]> {
     host.querySelector<HTMLButtonElement>('.compare-ref[data-ref="origin/topic"]')!.click();
     await waitFor(() => comparisons === 2, "Choosing a branch did not compare it with the current branch");
     check(store.historyTools.left === "origin/topic" && store.historyTools.right === "main" && !host.querySelector('[role="dialog"]'), "The row did not make the branch From and the current branch To");
-    await waitFor(() => host.querySelector(".code-changes-count")?.textContent === "1 / 2", "The first file's diff did not open with its position");
+    await waitFor(() => host.querySelector(".code-changes .diff-header-count")?.textContent === "1 / 2", "The first file's diff did not open with its position");
     // comparisons list files as a tree, so src/a.ts (renamed from src/old.ts) opens first;
     // the diff and the working-tree check are read in effects that can run after the position shows
     await waitFor(() => compareReads.some((args) => args[0] === "diff" && args.includes(b) && args.includes(a) && args.at(-2) === "src/old.ts" && args.at(-1) === "src/a.ts"), "The diff was not read between the base and To, with a rename's old path");
     await waitFor(() => workingChecks.includes("src/a.ts"), "Open in editor did not check the open file in the working tree");
     check([...host.querySelectorAll(".compare-tab")].map((tab) => tab.textContent).join("|") === `${t("Files")}2|${t("Commits")}1`, "The tabs do not own their counts");
     document.body.dispatchEvent(new KeyboardEvent("keydown", { key: "j", bubbles: true }));
-    await waitFor(() => host.querySelector(".code-changes-count")?.textContent === "2 / 2", "J did not step to the next file");
+    await waitFor(() => host.querySelector(".code-changes .diff-header-count")?.textContent === "2 / 2", "J did not step to the next file");
     await waitFor(() => compareReads.some((args) => args[0] === "diff" && args.includes(b) && args.includes(a) && args.at(-1) === "src/b.ts"), "J did not read the next file's diff");
     host.querySelectorAll<HTMLButtonElement>(".compare-tab")[1].click(); await pause(); check(host.querySelectorAll(".compare-commit").length === 1 && host.textContent?.includes("Fixture commit"), "The Commits tab did not list To's commits");
     host.querySelector<HTMLButtonElement>(`button[aria-label="${t("Swap From and To")}"]`)!.click();
@@ -91,7 +91,7 @@ export async function localWorkbenchSelfTest(): Promise<[boolean, string]> {
     await waitFor(() => host.querySelector('.code-view-tabs [data-view="History"] .status-pill')?.textContent === "2", "The History tab did not show its count");
     await tab("History");
     await waitFor(() => host.querySelectorAll(".code-history-row").length === 2 && host.querySelector(".code-diff-line.added .code")?.textContent === "const fixture = 1;", "History did not list the commits and the first one's change");
-    check(host.querySelector(".code-history-row.on")?.textContent?.includes("Reword the fixture") && host.querySelectorAll(".code-changes-head").length === 1, "History must select the newest commit and show one header over its change");
+    check(host.querySelector(".code-history-row.on")?.textContent?.includes("Reword the fixture") && host.querySelectorAll(".code-changes > .diff-header").length === 1, "History must select the newest commit and show one header over its change");
     await waitFor(() => host.querySelector(".code-diff-fold"), "The unchanged lines after the hunk were not folded");
     check(status().includes(t("Changes in {0} against its parent", a.slice(0, 7))) && status().includes(t("{0} lines", "6")) && status().includes(t("Read only")), `History status bar: ${status()}`);
     const rows = host.querySelectorAll(".code-diff-line").length;

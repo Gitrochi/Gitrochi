@@ -1,7 +1,8 @@
 
 
 export const LANE_W = 22;
-export const ROW_H = 30;
+/** A row's height; the lane band and the message behind it are 24, so rows stay 8px apart (commit-graph.css .commit-row, .lane-band, .row-tail) */
+export const ROW_H = 32;
 export const LEFT_PAD = 6;
 /** Room between the last lane's avatar and the message bar; the lane band runs through it */
 const RIGHT_PAD = 16;
@@ -10,9 +11,9 @@ const MAX_LANES = 8;
 /** The filter and column menus at the header's right end; rows keep this much room when right-hand columns show (macOS: headerToolsWidth) */
 export const HEADER_TOOLS_W = 60;
 /** 왼쪽 브랜치·태그 칸 너비 */
-export const REF_W = 190;
-/** 커밋 동그라미(프로필) 지름 */
-export const AVATAR = 20;
+export const REF_W = 210;
+/** The author photo inside a commit node; with its 2px lane ring the node is 22 (macOS: GraphMetrics.avatar) */
+export const AVATAR = 18;
 
 export const graphWidth = (lanes: number) => Math.max(44, Math.min(lanes, MAX_LANES) * LANE_W + LEFT_PAD + RIGHT_PAD);
 

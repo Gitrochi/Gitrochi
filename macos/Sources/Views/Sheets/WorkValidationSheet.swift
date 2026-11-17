@@ -18,6 +18,8 @@ struct WorkValidationSheet: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     if tab == "verification", let url = store.url {
+                        // Review staged changes: the analysis that finds the test candidates below
+                        CommitImpactView().environment(store)
                         VerificationPanel(store: store, flows: FlowCenter.shared.store(for: url), stamp: $stamp, evidence: $evidence)
                     } else if tab == "team" { TeamHubPanel(store: store) }
                     else { AgentHandoffPanel(store: store, stamp: stamp, evidence: evidence) }

@@ -73,16 +73,18 @@ struct Avatar: View {
     }
 }
 
+/// A changed file's status, as the boards draw it: one letter in its tone on that tone's fill, 18 pt square with a
+/// 4 pt radius, 11 pt semibold, no border. Untracked is U, a conflict is C, a copy shares the rename's R and a type
+/// change the modification's M. (Windows: StatusBadge in entities/git/ui/badges.tsx)
 struct StatusBadge: View {
     let kind: ChangeKind
 
     var body: some View {
-        Text(letter)
-            .font(.system(size: 10, weight: .semibold, design: .rounded))
-            .foregroundStyle(.primary)
+        Text(verbatim: letter)
+            .font(.system(size: 11, weight: .semibold))
+            .foregroundStyle(tone.text)
             .frame(width: 18, height: 18)
-            .background(RoundedRectangle(cornerRadius: 5).fill(color.opacity(0.14)))
-            .overlay(RoundedRectangle(cornerRadius: 5).strokeBorder(color.opacity(0.25)))
+            .background(RoundedRectangle(cornerRadius: 4).fill(tone.fill))
             .help(help)
             .accessibilityLabel(help)
     }
@@ -90,22 +92,21 @@ struct StatusBadge: View {
     private var letter: String {
         switch kind {
         case .added: return "A"
-        case .modified: return "M"
+        case .modified, .typeChanged: return "M"
         case .deleted: return "D"
-        case .renamed: return "R"
-        case .copied: return "C"
-        case .typeChanged: return "T"
-        case .untracked: return "N"
-        case .conflicted: return "!"
+        case .renamed, .copied: return "R"
+        case .untracked: return "U"
+        case .conflicted: return "C"
         }
     }
 
-    private var color: Color {
+    private var tone: StudioStyle.Tone {
         switch kind {
-        case .added, .untracked: return StudioStyle.added
-        case .modified, .typeChanged: return Color(nsColor: .systemOrange)
-        case .deleted, .conflicted: return StudioStyle.deleted
-        case .renamed, .copied: return Color(nsColor: .systemBlue)
+        case .added: return .passed
+        case .modified, .typeChanged: return .waiting
+        case .deleted, .conflicted: return .failed
+        case .renamed, .copied: return .info
+        case .untracked: return .neutral
         }
     }
 
@@ -117,8 +118,8 @@ struct StatusBadge: View {
         case .renamed: return String(localized: "Renamed")
         case .copied: return String(localized: "Copied")
         case .typeChanged: return String(localized: "Type changed")
-        case .untracked: return String(localized: "New file (untracked)")
-        case .conflicted: return String(localized: "Conflict")
+        case .untracked: return String(localized: "Untracked")
+        case .conflicted: return String(localized: "Conflicted")
         }
     }
 }
@@ -185,14 +186,16 @@ struct Card<Content: View>: View {
 
 /// 세로 스크롤의 내용 폭을 패널에 고정해 긴 배지나 문장이 전체 카드를 밀어내지 않게 한다.
 struct InspectorScrollView<Content: View>: View {
+    /// The room around the content; a flat panel whose sections carry their own padding passes 0
+    var inset: CGFloat = 12
     @ViewBuilder let content: Content
 
     var body: some View {
         GeometryReader { geometry in
             ScrollView {
                 content
-                    .frame(width: max(0, geometry.size.width - 24), alignment: .topLeading)
-                    .padding(12)
+                    .frame(width: max(0, geometry.size.width - inset * 2), alignment: .topLeading)
+                    .padding(inset)
             }
         }
         .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
@@ -200,16 +203,19 @@ struct InspectorScrollView<Content: View>: View {
 }
 
 /// +12 −3
+/// Monospaced 11 pt in the diff's green and red. A file row passes `zeros` and shows both sides, the empty one in grey.
 struct LineStatText: View {
     let added: Int
     let deleted: Int
+    var zeros = false
 
     var body: some View {
         HStack(spacing: 4) {
-            if added > 0 { Text("+\(added)").foregroundStyle(Color(red: 0.16, green: 0.6, blue: 0.32)) }
-            if deleted > 0 { Text("−\(deleted)").foregroundStyle(Color(red: 0.85, green: 0.25, blue: 0.28)) }
+            if zeros || added > 0 { Text(verbatim: "+\(added)").foregroundStyle(added > 0 ? StudioStyle.FileList.added : StudioStyle.Rail.icon) }
+            if zeros || deleted > 0 { Text(verbatim: "−\(deleted)").foregroundStyle(deleted > 0 ? StudioStyle.FileList.deleted : StudioStyle.Rail.icon) }
         }
-        .font(.system(size: 11, weight: .medium, design: .monospaced))
+        .font(.system(size: 11, design: .monospaced))
+        .lineLimit(1)
     }
 }
 
@@ -231,76 +237,177 @@ struct ChangeBar: View {
     }
 }
 
-/// 변경 파일 한 줄(작업 영역·커밋 상세 공용)
+/// What a file row still shows as it narrows. The name is never cut while anything else can give way: the rename
+/// caption goes first, then the folder shortens by whole segments and goes, then the counts; only a name wider than
+/// the row itself is cut. (Windows: fileRowFolds in shared/ui/file-row-folds.ts)
+struct FileRowFold: Hashable {
+    var folder = ""
+    var rename = false
+    var stats = false
+    var cut = false
+
+    /// A folder and its shorter forms, each cut at a path separator and never inside a name: "a/b/c/d", "…/b/c/d",
+    /// "…/c/d", "…/d". No more than the last three segments are tried.
+    static func folders(_ directory: String) -> [String] {
+        let parts = directory.split(separator: "/").map(String.init)
+        guard !parts.isEmpty else { return [] }
+        return [directory] + (max(1, parts.count - 3)..<parts.count).map { "…/" + parts[$0...].joined(separator: "/") }
+    }
+
+    /// The forms to try, widest first
+    static func all(directory: String, rename: Bool, stats: Bool) -> [FileRowFold] {
+        let folders = folders(directory)
+        var result: [FileRowFold] = []
+        if rename { result.append(FileRowFold(folder: folders.first ?? "", rename: true, stats: stats)) }
+        result += folders.map { FileRowFold(folder: $0, stats: stats) }
+        result.append(FileRowFold(stats: stats))
+        if stats { result.append(FileRowFold()) }
+        result.append(FileRowFold(cut: true))
+        return result
+    }
+}
+
+/// The one changed-file row (docs/design.md, Shared components): working changes, a commit's files, a pull request's
+/// files and Compare all draw this. 28 pt tall with a 6 pt radius; the status badge, the name at 13 pt, the folder and
+/// the rename caption at 11 pt, then the counts or a neutral pill, the review marks and the row's own action.
+/// (Windows: FileRow in shared/ui/FileRow.tsx)
 struct FileRow: View {
     let change: FileChange
     let selected: Bool
     var showDirectory = true
     var stat: LineStat? = nil
+    /// A neutral pill in place of the counts ("Too large")
+    var note: String? = nil
+    /// Reviewed already: the name steps back
+    var dimmed = false
+    var threads = 0
+    /// The room before the badge; a tree passes its depth
+    var indent: CGFloat = 8
     var actionIcon: String? = nil
     var actionHelp: String = ""
+    /// The action as words that are always there (Mark as resolved); an icon action shows on hover or focus only
+    var actionTitle: String? = nil
     var action: () -> Void = {}
+    /// The review's Viewed box; nil where nothing is reviewed
+    var viewed: Bool? = nil
+    var setViewed: (Bool) -> Void = { _ in }
+    var open: (() -> Void)? = nil
+    /// What Space does on the focused row: stage, or tick Viewed; opening when the row has neither
+    var space: (() -> Void)? = nil
+    /// The hover tip, when the path alone does not say enough
+    var tip: String? = nil
 
     @ViewState private var hover = false
+    @FocusState private var focused: Bool
 
     var body: some View {
-        ViewThatFits(in: .horizontal) {
-            row(showMetadata: true)
-            row(showMetadata: false)
+        HStack(spacing: 6) {
+            ViewThatFits(in: .horizontal) {
+                ForEach(FileRowFold.all(directory: showDirectory ? change.directory : "", rename: rename != nil, stats: note != nil || stat != nil), id: \.self) {
+                    words($0)
+                }
+            }
+            if threads > 0 {
+                HStack(spacing: 4) {
+                    SymbolIcon("bubble.left").font(.system(size: 11))
+                    Text(verbatim: String(threads)).font(.system(size: 11))
+                }
+                .foregroundStyle(secondary).fixedSize()
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(threads == 1 ? String(localized: "1 thread") : String(localized: "\(threads) threads"))
+            }
+            if let actionTitle {
+                Button(actionTitle, action: action).buttonStyle(PullRequestTextButtonStyle()).fixedSize()
+            }
+            if let viewed {
+                Button { setViewed(!viewed) } label: {
+                    SymbolIcon(viewed ? "checkmark.square.fill" : "square").font(.system(size: 16))
+                        .foregroundStyle(viewed ? Color.accentColor : StudioStyle.FileList.box)
+                        .frame(width: 24, height: 24).contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .help("Viewed \(change.fileName)")
+                .accessibilityLabel("Viewed \(change.fileName)")
+                .accessibilityValue(viewed ? "On" : "Off")
+            }
+            if let actionIcon, actionTitle == nil, hover || focused {
+                Button(action: action) { SymbolIcon(actionIcon).font(.system(size: 14)) }
+                    .buttonStyle(PullRequestIconButtonStyle())
+                    .help(actionHelp)
+                    .accessibilityLabel(actionHelp)
+            }
         }
-        .frame(minHeight: StudioStyle.rowHeight)
-        .padding(.horizontal, 8)
-        .background(RoundedRectangle(cornerRadius: 6).fill(selected ? StudioStyle.selection : hover ? StudioStyle.hover : Color.clear))
+        .padding(.leading, indent).padding(.trailing, viewed == nil ? 8 : 2)
+        .frame(height: StudioStyle.FileList.rowHeight)
+        .background(RoundedRectangle(cornerRadius: 6).fill(selected ? StudioStyle.FileList.selection : hover ? StudioStyle.FileList.hover : Color.clear))
         .contentShape(Rectangle())
         .onHover { hover = $0 }
-        .help(change.path)
+        .onTapGesture { open?() }
+        .focusable(open != nil)
+        .focused($focused)
+        .onKeyPress(.return) { open?(); return open == nil ? .ignored : .handled }
+        .onKeyPress(.space) { (space ?? open)?(); return space == nil && open == nil ? .ignored : .handled }
+        .help(Text(verbatim: tip ?? change.oldPath.map { $0 + " → " + change.path } ?? change.path))
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(open == nil ? [] : .isButton)
+        .accessibilityAddTraits(selected ? .isSelected : [])
+        .accessibilityAction { open?() }
+        .accessibilityActions {
+            if !actionHelp.isEmpty || actionTitle != nil { Button(actionTitle ?? actionHelp, action: action) }
+            if let viewed { Button("Viewed \(change.fileName)") { setViewed(!viewed) } }
+        }
     }
 
-    // Keep the filename readable before allocating space to secondary metadata.
-    private func row(showMetadata: Bool) -> some View {
+    private var secondary: Color { selected ? StudioStyle.FileList.onSelection : StudioStyle.Rail.icon }
+
+    /// "find.md → search.md" for a rename, "copied from find.md" for a copy; the old folder too when only that changed
+    private var rename: String? {
+        guard let old = change.oldPath, old != change.path else { return nil }
+        let name = (old as NSString).lastPathComponent
+        if change.kind == .copied { return String(localized: "copied from \(name)") }
+        return (name == change.fileName ? old : name) + " → " + change.fileName
+    }
+
+    private func words(_ fold: FileRowFold) -> some View {
         HStack(spacing: 8) {
             StatusBadge(kind: change.kind)
-            Text(change.fileName)
-                .font(.system(size: 13, weight: selected ? .medium : .regular))
-                .lineLimit(1)
-                .truncationMode(.middle)
-                .fixedSize(horizontal: showMetadata, vertical: false)
-                .layoutPriority(1)
-            if showMetadata, let old = change.oldPath {
-                Text("← \(showDirectory ? old : (old as NSString).lastPathComponent)")
-                    .foregroundStyle(.secondary)
-                    .font(.caption)
-                    .lineLimit(1)
-                    .truncationMode(.head)
-            } else if showMetadata && showDirectory {
-                Text(change.directory)
-                    .foregroundStyle(.secondary)
-                    .font(.caption)
-                    .lineLimit(1)
-                    .truncationMode(.head)
+            // the semibold width is kept either way, so selecting a row never moves what follows the name
+            Text(verbatim: change.fileName).font(.system(size: 13, weight: .semibold)).lineLimit(1)
+                .fixedSize(horizontal: !fold.cut, vertical: false)
+                .hidden()
+                .overlay(alignment: .leading) {
+                    Text(verbatim: change.fileName).font(.system(size: 13, weight: selected ? .semibold : .regular))
+                        .foregroundStyle(dimmed ? AnyShapeStyle(secondary) : AnyShapeStyle(.primary))
+                        .lineLimit(1).truncationMode(.tail)
+                        .fixedSize(horizontal: !fold.cut, vertical: false)
+                }
+            if !fold.folder.isEmpty {
+                Text(verbatim: fold.folder).font(.system(size: 11)).foregroundStyle(secondary).lineLimit(1).fixedSize()
             }
-            Spacer(minLength: 4)
-            if showMetadata, let stat {
-                Group {
-                    if let a = stat.added, let d = stat.deleted {
-                        LineStatText(added: a, deleted: d)
+            if fold.rename, let rename {
+                Text(verbatim: rename).font(.system(size: 11)).foregroundStyle(secondary).lineLimit(1).fixedSize()
+            }
+            Spacer(minLength: 0)
+            if fold.stats {
+                if let note {
+                    pill(note)
+                } else if let stat {
+                    if let added = stat.added, let deleted = stat.deleted {
+                        LineStatText(added: added, deleted: deleted, zeros: true).fixedSize()
                     } else {
-                        Text("Binary").font(.caption2).foregroundStyle(.tertiary)
+                        pill(String(localized: "Binary"))
                     }
                 }
-                .fixedSize()
-                .layoutPriority(2)
-            }
-            if let actionIcon {
-                Button(action: action) {
-                    SymbolIcon(actionIcon)
-                }
-                .buttonStyle(.borderless)
-                .foregroundStyle(selected ? StudioStyle.accent : Color.secondary)
-                .help(actionHelp)
-                .accessibilityLabel(actionHelp)
             }
         }
+    }
+
+    /// The neutral pill that stands where the counts would be; white on the selection tint
+    private func pill(_ title: String) -> some View {
+        Text(verbatim: title).font(.system(size: 11, weight: .semibold)).foregroundStyle(StudioStyle.Tone.neutral.text)
+            .lineLimit(1).padding(.horizontal, 8).frame(height: 18)
+            .background(Capsule().fill(selected ? StudioStyle.surface : StudioStyle.Tone.neutral.fill))
+            .fixedSize()
     }
 }
 

@@ -70,6 +70,11 @@ struct ReleaseWorkspace: View {
                         columns
                     }
                 }
+            } else if store.url == nil {
+                // no repository yet: the same words and way forward as Issues
+                HostedListEmpty(symbol: "globe", title: String(localized: "No hosting remote"),
+                                caption: String(localized: "Open a repository with a GitHub or GitLab remote to use this workspace."),
+                                actionTitle: String(localized: "Open repository…"), filled: true) { store.presentOpenPanel() }
             } else {
                 HostedListEmpty(symbol: "globe", title: String(localized: "This repository has no GitHub or GitLab remote"),
                                 caption: String(localized: "Releases, pull requests and runs need a hosting remote."))

@@ -35,7 +35,7 @@ export function SplitCommitsSheet({ store, close }: { store: RepoStore; close: (
   const fileRow = (p: string, current: string | null) => {
     const c = changes.get(p);
     return (
-      <div key={p} className="file-row" style={{ paddingLeft: 2 }}>
+      <div key={p} className="side-row" style={{ paddingLeft: 2 }}>
         {c && <StatusBadge kind={c.kind} />}
         <span className="ellipsis grow" data-tip={p}>
           {p}

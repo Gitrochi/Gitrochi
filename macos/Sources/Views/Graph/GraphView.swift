@@ -2,16 +2,18 @@ import SwiftUI
 
 enum GraphMetrics {
     static let laneWidth: CGFloat = 22
-    static let rowHeight: CGFloat = 30
+    static let rowHeight: CGFloat = 32
+    /// The lane band and the message behind it; rows stay 8pt apart (Windows: .lane-band, .row-tail)
+    static let bandHeight: CGFloat = 24
     static let leftPad: CGFloat = 6
     /// Room between the last lane's avatar and the message bar; the lane band runs through it
     static let rightPad: CGFloat = 16
     /// Eight lanes wide at most; more lanes scroll sideways inside the column
     static let maxVisibleLanes = 8
     /// 왼쪽 브랜치·태그 칸 너비
-    static let refWidth: CGFloat = 190
-    /// 커밋 동그라미(프로필) 지름
-    static let avatar: CGFloat = 20
+    static let refWidth: CGFloat = 210
+    /// The author photo inside a commit node; with its 2pt lane ring the node is 22
+    static let avatar: CGFloat = 18
 
     static func width(lanes: Int) -> CGFloat {
         max(44, CGFloat(min(lanes, maxVisibleLanes)) * laneWidth + leftPad + rightPad)
@@ -73,7 +75,7 @@ enum GraphMetrics {
     static let columnInset: CGFloat = 8
 
     /// The column header and the commit detail header share this height so their dividers line up
-    static let headerHeight: CGFloat = 32
+    static let headerHeight: CGFloat = 34
     /// The filter and column menus at the right end of the header; rows keep this much room when right-hand columns show
     static let headerToolsWidth: CGFloat = 60
 
@@ -252,8 +254,10 @@ struct GraphView: View {
         })
         .overlay {
             if store.entries.isEmpty {
-                ContentUnavailableView("No commits yet", symbol: "circle.dotted",
-                                       description: Text("Create a file and make your first commit on the right."))
+                // the shared empty form (docs/design.md, Controls); the action is plain, as nothing is blocked
+                HostedListEmpty(symbol: "circle.dotted", title: String(localized: "No commits yet"),
+                                caption: String(localized: "Create a file and make your first commit on the right."),
+                                actionTitle: String(localized: "Show in Finder")) { store.revealInFinder(path: "") }
             }
         }
         .confirmationDialog(store.dropRequest?.title ?? "",
@@ -418,7 +422,8 @@ private struct GraphHeader: View {
                 .overlay(alignment: .trailing) { trailingResizer("graph", width: columns.graph, range: 44...max(44, contentWidth)) }
                 .zIndex(1)
             }
-            Text("Commit message").padding(.leading, 20).frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+            // over the row's text: its 3pt lane bar and the 12 after it
+            Text("Commit message").padding(.leading, 15).frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
                 // dragged past the window, the message gets longer and the rows scroll sideways; an optional column's
                 // handle already sits on this edge when one follows
                 .overlay(alignment: .trailing) {
@@ -446,10 +451,10 @@ private struct GraphHeader: View {
         .clipped()
         .overlay(alignment: .trailing) {
             // the graph filter lives here so it stays reachable while the search bar is hidden
-            HStack(spacing: 10) {
+            HStack(spacing: 0) {
                 GraphFilterMenu()
-                Menu { toggles } label: { SymbolIcon("gearshape") }
-                    .menuStyle(.borderlessButton)
+                Menu { toggles } label: { GraphHeaderIcon(symbol: "gearshape").foregroundStyle(HostedList.caption) }
+                    .menuStyle(.button).buttonStyle(.plain)
                     .menuIndicator(.hidden)
                     .fixedSize()
                     .help("Columns")
@@ -463,8 +468,8 @@ private struct GraphHeader: View {
             .offset(x: -overhang)
         }
         .lineLimit(1)
-        .font(.caption.weight(.semibold))
-        .foregroundStyle(.secondary)
+        .font(.system(size: 12))
+        .foregroundStyle(HostedList.caption)
         .frame(height: GraphMetrics.headerHeight)
         .background(.bar)
     }
@@ -618,24 +623,37 @@ private struct SideScrollMonitor: NSViewRepresentable {
     }
 }
 
+/// A header menu's label: a 14pt icon in a 24pt click target (Windows: .graph-head-tools .icon-btn)
+private struct GraphHeaderIcon: View {
+    let symbol: String
+
+    var body: some View {
+        SymbolIcon(symbol).font(.system(size: 14)).frame(width: 24, height: 24).contentShape(Rectangle())
+    }
+}
+
 /// 그래프 거르기: 현재 브랜치만 보기, 숨긴 브랜치 다시 보이기
 private struct GraphFilterMenu: View {
     @Environment(RepoStore.self) private var store
 
     var body: some View {
         let hidden = store.hiddenRefs.count
+        let tags = store.hiddenRefs.contains { $0.hasPrefix("refs/tags/") }
         let active = store.graphCurrentOnly || hidden > 0
         Menu {
             Toggle("Show only the current branch", isOn: Binding(get: { store.graphCurrentOnly }, set: { on in Task { await store.setCurrentOnly(on) } }))
             Divider()
-            Button(hidden > 0 ? "Show all \(hidden) hidden branches" : "No hidden branches") { Task { await store.showAllBranches() } }
+            // hidden tags come back with the branches
+            Button(hidden == 0 ? "No hidden branches" : tags ? "Show all \(hidden) hidden branches and tags" : "Show all \(hidden) hidden branches") {
+                Task { await store.showAllBranches() }
+            }
                 .disabled(hidden == 0)
         } label: {
             // icon only, so the header's right end keeps a fixed width; what is filtered is in the tip and the menu
-            SymbolIcon(active ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
-                .foregroundStyle(active ? Color.accentColor : .secondary)
+            GraphHeaderIcon(symbol: active ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
+                .foregroundStyle(active ? Color.accentColor : HostedList.caption)
         }
-        .menuStyle(.borderlessButton)
+        .menuStyle(.button).buttonStyle(.plain)
         .menuIndicator(.hidden)
         .fixedSize()
         .help(store.graphCurrentOnly ? String(localized: "Current branch only") :

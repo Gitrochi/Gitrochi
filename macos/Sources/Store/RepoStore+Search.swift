@@ -11,7 +11,7 @@ extension RepoStore {
     }
 
     func requestSearchFocus() {
-        navigate(.repository)
+        guard navigate(.repository) else { return }
         closeFileInspect()
         closeDiff()
         showSearchBar = true

@@ -69,6 +69,9 @@ struct AccountQuickControls: View {
                                manageAccounts: { showing = false; SettingsRoute.shared.tab = .accounts; openSettings() }))
         }
         .frame(maxHeight: 600)
+        // the board's popover is a white panel; on the system's translucent material the notice's white card stood
+        // out as a box of its own
+        .presentationBackground(StudioStyle.surface)
     }
 
     /// A new or renewed account becomes this repository's when the repository has none, or it is the one in use

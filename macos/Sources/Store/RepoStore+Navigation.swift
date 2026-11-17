@@ -1,8 +1,10 @@
 import Foundation
 
 extension RepoStore {
-    /// Pages without a repository show the repository chooser. Remember the page once a repository is open.
+    /// Opens a page and remembers it for the repository. A page that needs a repository is refused while none is open,
+    /// so the window stays where it is (Home, as a rule).
     @discardableResult func navigate(_ page: WorkspaceDestination, prepare: Bool = true) -> Bool {
+        guard page.isAvailable(hasRepository: url != nil) else { return false }
         let from = destination
         if from != page { cameFromRepository = from == .repository && page.returnsToRepository }
         destination = page
@@ -28,7 +30,7 @@ extension RepoStore {
     func restoreWorkspaceDestination() {
         let saved = UserDefaults.standard.dictionary(forKey: "workspaceDestinations") as? [String: String] ?? [:]
         let page = url.flatMap { saved[$0.path] }.flatMap(WorkspaceDestination.init(rawValue:)) ?? (url == nil ? .home : .repository)
-        navigate(page.needsRepository && url == nil ? .home : page, prepare: true)
+        navigate(page.isAvailable(hasRepository: url != nil) ? page : .home, prepare: true)
     }
 
     /// A graph selection made from the Pull requests page (keyboard, routes) belongs to the repository screen

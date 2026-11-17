@@ -7,38 +7,22 @@ struct FileInspectView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack(spacing: 8) {
-                GraphBackButton(title: "Graph", help: "Back to graph (Esc)") { store.closeFileInspect() }
-                SymbolIcon(inspect.mode == .history ? "clock.arrow.circlepath" : "person.text.rectangle")
-                    .foregroundStyle(.secondary)
-                VStack(alignment: .leading, spacing: 0) {
-                    Text((inspect.path as NSString).lastPathComponent).font(.headline).lineLimit(1)
-                    Text(subtitle).font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
-                }
-                Spacer()
-            }
-            .padding(.horizontal, 12).padding(.vertical, 8)
-            .background(.bar)
-            Divider()
-            WorkbenchFlow(spacing: 10) {
-                Button("Trace lines…") { store.openLineHistory(path: inspect.path, revision: inspect.rev, start: store.fileInspectLine ?? 1) }
-                if store.fileInspectLoading { ProgressView().controlSize(.small) }
-                Button { store.revealInFinder(path: inspect.path) } label: { DesignIconImage(icon: .repository) }
-                    .buttonStyle(.borderless)
-                    .help("Show in Finder")
-                    .accessibilityLabel("Show in Finder")
-                Picker("", selection: Binding(get: { inspect.mode }, set: { store.setFileInspectMode($0) })) {
-                    Text("History").tag(FileInspect.Mode.history)
-                    Text("Blame").tag(FileInspect.Mode.blame)
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .fixedSize()
-                .help("Commits that changed this file / who changed each line and when")
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(.bar)
+            // the diff header's row without a file position: History | Blame stands before the layout
+            DiffHeader(back: .init(title: "Graph", help: "Back to graph (Esc)") { store.closeFileInspect() },
+                       path: inspect.path, help: subtitle, layout: inspect.mode == .history, whitespace: false,
+                       accessory: {
+                           if store.fileInspectLoading { ProgressView().controlSize(.small) }
+                           Segmented(label: "Commits that changed this file / who changed each line and when", items: [
+                               .init(value: FileInspect.Mode.history, title: String(localized: "History")),
+                               .init(value: FileInspect.Mode.blame, title: String(localized: "Blame")),
+                           ], selection: inspect.mode) { store.setFileInspectMode($0) }
+                           .help("Commits that changed this file / who changed each line and when")
+                       }, more: {
+                           Button("Trace lines…") { store.openLineHistory(path: inspect.path, revision: inspect.rev, start: store.fileInspectLine ?? 1) }
+                           Divider()
+                           Button("Show in Finder") { store.revealInFinder(path: inspect.path) }
+                           Button("Copy path") { store.copy(inspect.path) }
+                       })
             Divider()
 
             if let error = store.fileInspectError {

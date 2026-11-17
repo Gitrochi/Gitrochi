@@ -25,15 +25,17 @@ enum RecommendedSync: Equatable {
 }
 
 /// What Escape does on the repository screen; the first match wins. Whatever takes keys of its own keeps Escape (a
-/// sheet, a menu or a popover, the terminal); then an open file history or blame closes, then an open diff; only then,
-/// and never from a text field, Changes turns off and the graph is back. (Windows: repositoryEscape)
+/// sheet, a menu or a popover, the terminal); then an open file history or blame closes, then an open diff; then the
+/// sidebar's Filter branches field, when the keys are in it and it has text, is cleared; and last, never from a text
+/// field, Changes turns off and the graph is back. (Windows: repositoryEscape)
 enum RepositoryEscape: Equatable {
-    case none, closeFileInspect, closeDiff, showGraph
+    case none, closeFileInspect, closeDiff, clearFilter, showGraph
 
-    init(overlay: Bool, terminal: Bool, typing: Bool, repositoryScreen: Bool, fileInspect: Bool, diff: Bool, changes: Bool) {
+    init(overlay: Bool, terminal: Bool, typing: Bool, repositoryScreen: Bool, fileInspect: Bool, diff: Bool, filter: Bool, changes: Bool) {
         if overlay || terminal || !repositoryScreen { self = .none }
         else if fileInspect { self = .closeFileInspect }
         else if diff { self = .closeDiff }
+        else if filter { self = .clearFilter }
         else { self = changes && !typing ? .showGraph : .none }
     }
 }
@@ -79,6 +81,9 @@ enum WorkspaceDestination: String, CaseIterable, Identifiable {
     /// they offer the way back
     var returnsToRepository: Bool { [.pullRequests, .issues, .actions, .releases].contains(self) }
     var needsRepository: Bool { [.repository, .compare, .rebase, .code, .pullRequests, .actions, .flows].contains(self) }
+    /// Whether the page can be opened: one that needs a repository is disabled until one is open, so a window without
+    /// a repository never shows it (docs/design.md › App shell, Sidebar). (Windows: destinationAvailable)
+    func isAvailable(hasRepository: Bool) -> Bool { hasRepository || !needsRepository }
     /// The Go menu's shortcut, ⌘1–⌘8 in the sidebar's order (docs/design.md › App shell, Sidebar). Home is ⇧⌘H;
     /// Releases, Projects and Account have none. (Windows: destinationShortcut)
     var shortcutDigit: Int? {

@@ -42,11 +42,11 @@ export async function graphColumnsSelfTest(): Promise<[boolean, string]> {
     ensure(cellAuthor?.textContent === "Author 0" && cellTime?.textContent, `Turning them on must show the row cells: ${cellAuthor?.textContent} · ${cellTime?.textContent}`);
     const [ha, hb, ca, cb] = [headAuthor!, headTime!, cellAuthor!, cellTime!].map((el) => el.getBoundingClientRect());
     ensure(near(ha.left, ca.left) && near(ha.right, ca.right) && near(hb.left, cb.left) && near(hb.right, cb.right), `The header labels must line up with the row cells: author ${ha.left}/${ca.left}, time ${hb.right}/${cb.right}`);
-    // the graph column is 198 wide here (eight lanes): 884 fits both, 800 only the author
+    // the graph column is 198 wide here (eight lanes): 904 fits both, 820 only the author
     host.style.width = "860px"; await pause(); await pause();
     ensure(q(".head-author") && !q(".head-time") && q(".commit-row .col-author") && !q(".commit-row .col-time"), "A narrower window must drop the time first");
     host.style.width = "780px"; await pause(); await pause();
-    ensure(!q(".head-author") && !q(".commit-row .col-author") && q(".commit-row .ref-col")?.offsetWidth === 190, "Then the author, before the branch column shrinks");
+    ensure(!q(".head-author") && !q(".commit-row .col-author") && q(".commit-row .ref-col")?.offsetWidth === 210, "Then the author, before the branch column shrinks");
     host.style.width = "1100px"; await pause(); await pause();
     await openMenu();
     menuItem(t("SHA"))!.click(); await pause();
@@ -68,7 +68,7 @@ export async function graphColumnsSelfTest(): Promise<[boolean, string]> {
     const message = () => q(".graph-head-message")!.offsetWidth;
     const before = message();
     await dragRight(".head-ref .col-resizer", 30);
-    ensure(q(".head-ref")?.offsetWidth === 220 && q(".commit-row .ref-col")?.offsetWidth === 220 && settings.get<Record<string, number>>("graphColumnWidths", {}).ref === 220,
+    ensure(q(".head-ref")?.offsetWidth === 240 && q(".commit-row .ref-col")?.offsetWidth === 240 && settings.get<Record<string, number>>("graphColumnWidths", {}).ref === 240,
       `Dragging the branch column's right edge must widen it in the header and rows and store it: ${q(".head-ref")?.offsetWidth} ${q(".commit-row .ref-col")?.offsetWidth}`);
     const graph = q(".graph-head-cell")!.offsetWidth;
     await dragRight(".graph-head-cell .col-resizer", -60);

@@ -1,4 +1,4 @@
-import { destinationEnabled, destinationForDigit, repositoryEscape } from "@/entities/git";
+import { destinationAvailable, destinationEnabled, destinationForDigit, repositoryEscape } from "@/entities/git";
 import { workspace } from "@/entities/workspace";
 import { isMac, settings } from "@/shared/config";
 
@@ -21,16 +21,19 @@ export function handleShortcut(e: KeyboardEvent, openSettings: () => void) {
   if (e.key === "Escape" && !mod && !e.ctrlKey && !e.altKey && !e.shiftKey) {
     // the repository screen's one Escape order; the dialog check above already left dialogs alone
     const action = repositoryEscape({
-      overlay: !!document.querySelector(".menu, .gitch-popover, .account-quick-popover"),
+      overlay: !!document.querySelector(".menu, .account-quick-popover"),
       terminal: !!target?.closest?.(".xterm"),
       typing: inText || !!target?.isContentEditable,
       repositoryScreen: s.destination === "repository",
       fileInspect: !!s.fileInspect,
       diff: !!s.diffSource,
+      // the sidebar's Filter branches field, while the keys are in it and it has text
+      filter: !!target?.closest?.(".side-filter") && s.branchFilter !== "",
       changes: s.changesShown,
     });
     if (action === "closeFileInspect") return run(() => s.closeFileInspect());
     if (action === "closeDiff") return run(() => s.closeDiff());
+    if (action === "clearFilter") return run(() => s.setBranchFilter(""));
     if (action === "showGraph") return run(() => s.hideChanges());
     return;
   }
@@ -65,9 +68,10 @@ export function handleShortcut(e: KeyboardEvent, openSettings: () => void) {
       case ",":
         return run(openSettings);
       default: {
-        // the pages, numbered in the sidebar's order as in the macOS Go menu (docs/design.md › App shell)
+        // the pages, numbered in the sidebar's order as in the macOS Go menu (docs/design.md › App shell); like a
+        // disabled menu item, a page that needs a repository leaves the key alone while none is open
         const page = /^[1-9]$/.test(k) ? destinationForDigit(Number(k)) : null;
-        if (page && destinationEnabled(page)) return run(() => s.navigate(page));
+        if (page && destinationEnabled(page) && destinationAvailable(page, !!s.path)) return run(() => s.navigate(page));
       }
     }
   }

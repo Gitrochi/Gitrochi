@@ -4,7 +4,7 @@ vi.mock("@/entities/terminal", () => ({ TerminalSession: class {} }));
 import { handleShortcut } from "@/app/lib/shortcuts";
 import { RepoStore } from "@/entities/repo";
 import { workspace } from "@/entities/workspace";
-import { destinationForDigit, destinationShortcut, isWorkspaceDestination, recommendedSync, repositoryDestinations, repositoryEscape, restoredDestination, toolbarSet, workspaceDestinations, type FileChange, type Selection } from "@/entities/git";
+import { destinationAvailable, destinationForDigit, destinationShortcut, isWorkspaceDestination, recommendedSync, repositoryDestinations, repositoryEscape, restoredDestination, toolbarSet, workspaceDestinations, type FileChange, type Selection } from "@/entities/git";
 import { env, settings } from "@/shared/config";
 import { ipc } from "@/shared/api";
 
@@ -95,6 +95,28 @@ describe("workspace navigation", () => {
       vi.unstubAllGlobals();
     }
   });
+  it("leaves the numbered shortcuts of pages that need a repository alone while none is open, like a disabled menu item", () => {
+    const original = { os: env.os };
+    try {
+      env.os = "windows";
+      for (const path of [null, "C:/fixture/first"]) {
+        const store = fixture(); store.path = path; store.destination = "home";
+        vi.spyOn(workspace, "active", "get").mockReturnValue(store);
+        vi.stubGlobal("document", { querySelector: () => null });
+        for (const key of ["1", "2", "3", "4", "5", "7", "8"]) {
+          const event = { key, ctrlKey: true, metaKey: false, altKey: false, shiftKey: false, defaultPrevented: false, target: null, preventDefault: vi.fn(), stopPropagation: vi.fn() };
+          handleShortcut(event as unknown as KeyboardEvent, () => {});
+          const page = destinationForDigit(Number(key))!;
+          expect(store.destination).toBe(path ? page : "home");
+          expect(event.preventDefault).toHaveBeenCalledTimes(path ? 1 : 0);
+          store.destination = "home";
+        }
+      }
+    } finally {
+      env.os = original.os;
+      vi.unstubAllGlobals();
+    }
+  });
   it("opens Home with Ctrl+Shift+H with or without a repository (macOS ⇧⌘H)", () => {
     const original = { os: env.os };
     try {
@@ -140,13 +162,19 @@ describe("workspace navigation", () => {
     for (const value of workspaceDestinations) expect(isWorkspaceDestination(value)).toBe(true);
     for (const value of [null, undefined, 3, {}, [], "", "settings", "__proto__", "Code", "../../code", "changes", "commits", "branches", "repositories", "gists", "worktrees", "assistant", "operations", "inbox", "myWork"]) expect(isWorkspaceDestination(value)).toBe(false);
   });
-  it("allows navigation to the repository chooser without changing saved repository pages", () => {
+  it("refuses the pages that need a repository while none is open and stays on Home (macOS: isAvailable(hasRepository:))", () => {
     expect([...repositoryDestinations].sort()).toEqual(["actions", "code", "compare", "flows", "pullRequests", "rebase", "repository"]);
     for (const page of workspaceDestinations) {
+      expect(destinationAvailable(page, true)).toBe(true);
+      expect(destinationAvailable(page, false)).toBe(!repositoryDestinations.has(page));
       const store = new RepoStore();
-      expect(store.navigate(page)).toBe(true);
-      expect(store.destination).toBe(page);
+      expect(store.navigate(page)).toBe(!repositoryDestinations.has(page));
+      expect(store.destination).toBe(repositoryDestinations.has(page) ? "home" : page);
     }
+    // a refused page leaves the page that was open, and asking for search does not reach the repository screen
+    const store = new RepoStore(); store.navigate("issues");
+    expect(store.navigate("compare")).toBe(false); expect(store.destination).toBe("issues");
+    store.requestSearchFocus(); expect(store.destination).toBe("issues"); expect(store.showSearchBar).toBe(false);
     expect(settings.set).not.toHaveBeenCalled();
   });
   it("reaches every page in an open repository and remembers the last one per repository", () => {
@@ -263,7 +291,7 @@ describe("workspace navigation", () => {
 });
 
 describe("Escape on the repository screen", () => {
-  const graph = { overlay: false, terminal: false, typing: false, repositoryScreen: true, fileInspect: false, diff: false, changes: true };
+  const graph = { overlay: false, terminal: false, typing: false, repositoryScreen: true, fileInspect: false, diff: false, filter: false, changes: true };
   it("closes the file history first, then the diff, and only then turns Changes off", () => {
     expect(repositoryEscape({ ...graph, fileInspect: true, diff: true })).toBe("closeFileInspect");
     expect(repositoryEscape({ ...graph, diff: true })).toBe("closeDiff");
@@ -278,6 +306,16 @@ describe("Escape on the repository screen", () => {
     // a text field keeps Escape from turning Changes off; a diff still closes, as it did before
     expect(repositoryEscape({ ...graph, typing: true })).toBe("none");
     expect(repositoryEscape({ ...graph, typing: true, diff: true })).toBe("closeDiff");
+  });
+  it("clears the Filter branches field after the diff and before Changes, and only while it has text", () => {
+    const typed = { ...graph, typing: true, filter: true };
+    expect(repositoryEscape(typed)).toBe("clearFilter");
+    expect(repositoryEscape({ ...typed, changes: false })).toBe("clearFilter");
+    expect(repositoryEscape({ ...typed, diff: true })).toBe("closeDiff");
+    expect(repositoryEscape({ ...typed, fileInspect: true })).toBe("closeFileInspect");
+    for (const taken of [{ overlay: true }, { terminal: true }, { repositoryScreen: false }]) expect(repositoryEscape({ ...typed, ...taken })).toBe("none");
+    // an empty field is a text field like any other: Escape does nothing
+    expect(repositoryEscape({ ...typed, filter: false })).toBe("none");
   });
   it("is the app's one Escape handler: diff, then Changes, never from the terminal, a menu or a text field", () => {
     const store = fixture();
@@ -305,6 +343,18 @@ describe("Escape on the repository screen", () => {
       // first press: the diff closes and Changes stays on; the second goes back to the graph
       expect(press()).toBe(true); expect(store.diffSource).toBeNull(); expect(store.changesShown).toBe(true);
       press(field); expect(store.changesShown).toBe(true);
+      // the Filter branches field: Escape clears its text and leaves Changes on; empty, it does nothing
+      const filterField = { tagName: "INPUT", closest: (s: string) => (s === ".side-filter" ? {} : null) };
+      store.setBranchFilter("sea");
+      open = [".menu"]; expect(press(filterField)).toBe(false); expect(store.branchFilter).toBe("sea");
+      open = [];
+      expect(press(filterField)).toBe(true); expect(store.branchFilter).toBe(""); expect(store.changesShown).toBe(true);
+      expect(press(filterField)).toBe(false); expect(store.changesShown).toBe(true);
+      // typed text elsewhere does not make another field clear it, and an open diff closes first
+      store.setBranchFilter("sea"); press(field); expect(store.branchFilter).toBe("sea");
+      store.openDiff({ kind: "working", change: file });
+      expect(press(filterField)).toBe(true); expect(store.diffSource).toBeNull(); expect(store.branchFilter).toBe("sea");
+      store.setBranchFilter("");
       press(null, true); expect(store.changesShown).toBe(true);
       expect(press()).toBe(true); expect(store.changesShown).toBe(false); expect(store.selection).toEqual({ kind: "commit", sha: head });
       // nothing left to leave: Escape is not taken

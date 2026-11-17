@@ -54,7 +54,7 @@ export const CommitRow = memo(function CommitRow({
   return (
     <div
       className={`commit-row ${selected ? "selected" : ""} ${match === 1 ? "hit" : match === 2 ? "miss" : ""} ${dropOn ? "drop" : ""}`}
-      style={{ top, gap: 0 }}
+      style={{ top }}
       onMouseDown={() => store.select(rowSelection(c))}
       onDoubleClick={worktree !== null ? () => void store.switchWorktree(worktree) : undefined}
       onContextMenu={(e) => showContextMenu(e, commitMenu(store, c))}
@@ -89,7 +89,7 @@ export const CommitRow = memo(function CommitRow({
               {groups.length > 1 && (
                 <span
                   className="ref-more"
-                  style={{ color: tint, background: `color-mix(in srgb, ${tint} 15%, transparent)` }}
+                  style={{ color: tint, background: `color-mix(in srgb, ${tint} ${CHIP_TINT}%, transparent)` }}
                   data-tip={groups.slice(1).map((g) => g.name).join("\n")}
                   onContextMenu={(e) =>
                     showContextMenu(
@@ -111,8 +111,9 @@ export const CommitRow = memo(function CommitRow({
           className={`graph-cell${laneOffset > 0 ? " fade-left" : ""}${laneOffset < gw - cols.graph ? " fade-right" : ""}`}
           style={{ position: "relative", display: "flex", width: cols.graph, flex: "none", overflow: "hidden" }}
         >
-          {/* like GitKraken: a band from the node to the message, a little shorter than the row so rows stay apart */}
-          <span className="lane-band" style={{ left: Math.max(0, LEFT_PAD + LANE_W * (entry.row.column + 0.5) - laneOffset), background: `color-mix(in srgb, ${tint} ${selected ? 40 : 10}%, transparent)` }} />
+          {/* like GitKraken: a band from the node to the message, a little shorter than the row so rows stay apart;
+              the uncommitted row has none, as it never takes a lane colour */}
+          {!wip && <span className="lane-band" style={{ left: Math.max(0, LEFT_PAD + LANE_W * (entry.row.column + 0.5) - laneOffset), background: `color-mix(in srgb, ${tint} ${selected ? 40 : 10}%, transparent)` }} />}
           {/* the lanes move together with the header's scrollbar; the line from the labels follows the node */}
           <span className="lane-shift" style={{ marginLeft: -laneOffset }}>
             <GraphCell row={entry.row} width={gw} isWIP={wip} isHead={isHead} isMerge={isMerge(c)} hasRefs={groups.length > 0} author={c.author} email={c.email} />
@@ -124,13 +125,12 @@ export const CommitRow = memo(function CommitRow({
       <div className="row-tail" style={{ paddingRight: 12 + (cols.author + cols.time + cols.sha > 0 ? HEADER_TOOLS_W : 0) }}>
         {/* the message: lane-coloured bar, subject, first body line dimmed; author, time and SHA in the tip or their columns */}
         <div className="msg" data-tip={wip ? undefined : `${c.author} <${c.email}>\n${longDate(c.date)} · ${short(c.id)}`}>
-          <span className="msg-bar" style={{ background: tint, opacity: wip ? 0.5 : 0.9 }} />
+          <span className="msg-bar" style={{ background: wip ? "var(--graph-neutral)" : tint }} />
           {wip ? (
             <>
               <i className="muted">{worktree !== null ? t("// Uncommitted changes in {0}", wipLabel ?? "") : t("// Uncommitted changes")}</i>
-              <span className="wip-chip" style={{ background: `color-mix(in srgb, ${tint} 18%, transparent)` }}>
-                {t("{0} files", wipCount)}
-              </span>
+              {/* a neutral pill, white on the selection tint */}
+              <span className="wip-chip status-pill status-tone">{t("{0} files", wipCount)}</span>
             </>
           ) : (
             <>
@@ -184,38 +184,44 @@ interface RefGroup {
   remotes: string[];
   isTag: boolean;
   isHead: boolean;
+  /** Commits the local branch is behind its upstream */
+  behind: number;
   primary: RefLabel;
   all: RefLabel[];
 }
 
+/** A chip's fill: the lane colour as faint as the row's band, under a border in the full colour (macOS: RefPill.tintOpacity) */
+const CHIP_TINT = 10;
+
 export function groupRefs(refs: RefLabel[]): RefGroup[] {
   const order: string[] = [];
-  const by = new Map<string, { local: string | null; remotes: string[]; current: boolean }>();
+  const by = new Map<string, { local: string | null; remotes: string[]; current: boolean; behind: number }>();
   const heads: RefGroup[] = [];
   const tags: RefGroup[] = [];
   for (const r of refs) {
     if (r.kind === "head") {
       const l: RefLabel = { name: "HEAD", kind: "head", isCurrent: true };
-      heads.push({ name: "HEAD", isCurrent: true, local: null, remotes: [], isTag: false, isHead: true, primary: l, all: [l] });
+      heads.push({ name: "HEAD", isCurrent: true, local: null, remotes: [], isTag: false, isHead: true, behind: 0, primary: l, all: [l] });
     } else if (r.kind === "tag") {
-      tags.push({ name: r.name, isCurrent: false, local: null, remotes: [], isTag: true, isHead: false, primary: r, all: [r] });
+      tags.push({ name: r.name, isCurrent: false, local: null, remotes: [], isTag: true, isHead: false, behind: 0, primary: r, all: [r] });
     } else {
       const key = r.kind === "remote" ? r.name.slice(r.name.indexOf("/") + 1) : r.name;
       if (!by.has(key)) {
         order.push(key);
-        by.set(key, { local: null, remotes: [], current: false });
+        by.set(key, { local: null, remotes: [], current: false, behind: 0 });
       }
       const g = by.get(key)!;
       if (r.kind === "local") {
         g.local = r.name;
         g.current = r.isCurrent;
+        g.behind = r.behind ?? 0;
       } else g.remotes.push(r.name);
     }
   }
   const branches: RefGroup[] = order.map((name) => {
     const g = by.get(name)!;
     const all: RefLabel[] = [...(g.local ? [{ name: g.local, kind: "local" as const, isCurrent: g.current }] : []), ...g.remotes.map((n) => ({ name: n, kind: "remote" as const, isCurrent: false }))];
-    return { name, isCurrent: g.current, local: g.local, remotes: g.remotes, isTag: false, isHead: false, primary: all[0], all };
+    return { name, isCurrent: g.current, local: g.local, remotes: g.remotes, isTag: false, isHead: false, behind: g.behind, primary: all[0], all };
   });
   const rank = (g: RefGroup) => (g.isCurrent ? 0 : g.local ? 1 : 2);
   branches.sort((a, b) => rank(a) - rank(b));
@@ -225,7 +231,6 @@ export function groupRefs(refs: RefLabel[]): RefGroup[] {
 /** 브랜치 라벨: 더블클릭 체크아웃, 우클릭 메뉴, 끌어서 다른 브랜치에 놓기 */
 function RefPill({ store, group, tint }: { store: RepoStore; group: RefGroup; tint: string }) {
   const branch = !group.isTag && !group.isHead;
-  const color = group.isTag ? "#8e8e93" : group.isHead ? "var(--text)" : tint;
   const solid = group.isCurrent;
   const target = group.local ?? group.remotes[0] ?? group.name;
   const tipText = [
@@ -238,12 +243,10 @@ function RefPill({ store, group, tint }: { store: RepoStore; group: RefGroup; ti
     .join("\n");
   return (
     <span
-      className={`ref-pill ${solid ? "solid" : ""}`}
-      style={{
-        color: solid ? "#fff" : color,
-        background: solid ? color : `color-mix(in srgb, ${color} 18%, transparent)`,
-        boxShadow: solid ? undefined : `inset 0 0 0 1px color-mix(in srgb, ${color} 50%, transparent)`,
-      }}
+      // the current branch is filled with its lane colour; a detached HEAD and tags are neutral (commit-graph.css),
+      // and every other branch is its lane colour on a tint of it
+      className={`ref-pill${group.isHead ? " head" : group.isTag ? " tag" : solid ? " solid" : ""}`}
+      style={branch ? { color: solid ? "#fff" : tint, background: solid ? tint : `color-mix(in srgb, ${tint} ${CHIP_TINT}%, transparent)`, borderColor: tint } : undefined}
       draggable={branch}
       onDragStart={(e) => {
         e.stopPropagation();
@@ -261,12 +264,14 @@ function RefPill({ store, group, tint }: { store: RepoStore; group: RefGroup; ti
       }
       data-tip={tip(group.name, tipText)}
     >
-      {solid && <Check size={9} strokeWidth={3.5} />}
-      {group.isTag && <TagIcon size={10} strokeWidth={2.5} />}
-      {group.isHead && <Crosshair size={10} strokeWidth={2.5} />}
+      {solid && <Check size={10} strokeWidth={2.4} />}
+      {group.isTag && <TagIcon size={11} strokeWidth={1.6} />}
+      {group.isHead && <Crosshair size={11} strokeWidth={2} />}
       <span className="name">{group.name}</span>
-      {group.local && <Laptop size={10} strokeWidth={2.2} />}
-      {group.remotes.length > 0 && <Cloud size={10} strokeWidth={2.2} />}
+      {/* the current branch's count is the toolbar's (docs/design.md, Text) */}
+      {group.behind > 0 && !solid && <span className="ref-behind mono">↓{group.behind}</span>}
+      {group.local && <Laptop size={11} strokeWidth={1.6} />}
+      {group.remotes.length > 0 && <Cloud size={11} strokeWidth={1.6} />}
     </span>
   );
 }
@@ -324,19 +329,30 @@ const GraphCell = memo(function GraphCell({
             by = h * s.y2;
           const mid = (ay + by) / 2;
           const d = s.x1 === s.x2 ? `M${ax},${ay}L${bx},${by}` : `M${ax},${ay}C${ax},${mid} ${bx},${mid} ${bx},${by}`;
-          return <path key={i} d={d} fill="none" stroke={laneColor(s.color)} strokeWidth={2} strokeLinecap="round" strokeDasharray={s.dashed ? "3 3" : undefined} />;
+          // only the line from uncommitted changes to their parent is dashed, and it is neutral like their node
+          return s.dashed ? (
+            <path key={i} d={d} fill="none" stroke="var(--graph-neutral)" strokeWidth={2} strokeDasharray="3 3" />
+          ) : (
+            <path key={i} d={d} fill="none" stroke={laneColor(s.color)} strokeWidth={2} strokeLinecap="round" />
+          );
         })}
         {isWIP ? (
-          <circle cx={cx} cy={cy} r={7} fill="var(--surface)" stroke={color} strokeWidth={2} strokeDasharray="2.5 2" />
+          // an 18px node with a 2px dashed ring in eight even dashes; never the accent or a lane colour
+          <>
+            <circle cx={cx} cy={cy} r={9} fill="var(--surface)" />
+            <circle cx={cx} cy={cy} r={8} fill="none" stroke="var(--graph-neutral)" strokeWidth={2} strokeDasharray={`${Math.PI} ${Math.PI}`} />
+          </>
         ) : isMerge ? (
           <>
-            <circle cx={cx} cy={cy} r={5.5} fill="var(--surface)" />
+            {/* a merge commit is an 8px dot with a 2px gap around it */}
+            <circle cx={cx} cy={cy} r={6} fill="var(--surface)" />
             <circle cx={cx} cy={cy} r={4} fill={color} />
           </>
         ) : (
           <circle cx={cx} cy={cy} r={AVATAR / 2 + 2} fill={color} />
         )}
-        {isHead && <circle cx={cx} cy={cy} r={isMerge ? 8 : AVATAR / 2 + 5} fill="none" stroke={color} strokeWidth={1.5} />}
+        {/* a 2px ring, 2px clear of the node */}
+        {isHead && <circle cx={cx} cy={cy} r={isMerge ? 9 : AVATAR / 2 + 5} fill="none" stroke={color} strokeWidth={2} />}
       </svg>
       {avatarNode && <AvatarNode name={author} email={email} x={cx} />}
     </span>

@@ -4,6 +4,7 @@ mod diff;
 mod graph;
 mod parsers;
 pub mod records;
+mod trailers;
 
 // Re-exported so the symbols land in libgitrochi_core.a next to the core's own.
 #[cfg(not(target_arch = "wasm32"))]
@@ -35,7 +36,7 @@ pub fn compute(request: Value) -> Result<Value, String> {
     Ok(match op {
         "log" => parsers::log(text),
         "bodyPreview" => json!(parsers::body_preview(text)),
-        "detail" => parsers::detail(text),
+        "detail" => parsers::detail(text, request["issueBase"].as_str().unwrap_or("")),
         "track" => parsers::track(text),
         "refs" => parsers::refs(text),
         "stashes" => parsers::stashes(text),

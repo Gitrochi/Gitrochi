@@ -1,26 +1,33 @@
 import { describe, expect, it } from "vitest";
-import { authorFillsIdentityColumn } from "../src/app/lib/inspector-layout-geometry";
+import { authorLineFits } from "../src/app/lib/inspector-layout-geometry";
 
-describe("compact inspector author column", () => {
-  it.each([0, 10, 17])("fills the available card width with a %i px scrollbar gutter", (gutter) => {
-    for (const width of [240, 280, 320]) {
-      const identity = { left: -9975, right: -10000 + width - gutter - 25 };
-      const avatar = { left: identity.left, right: identity.left + 34 };
-      const author = { left: avatar.right + 10, right: identity.right };
-      expect(authorFillsIdentityColumn(identity, avatar, author, 10)).toBe(true);
+describe("commit inspector author line", () => {
+  it.each([0, 10, 17])("keeps the name and the time inside the column with a %i px scrollbar gutter", (gutter) => {
+    for (const width of [240, 280, 340]) {
+      const content = { left: 16, right: width - gutter - 16 };
+      const avatar = { left: content.left, right: content.left + 20 };
+      const when = { left: content.right - 44, right: content.right };
+      const name = { left: avatar.right + 6, right: when.left - 6 };
+      expect(authorLineFits(content, avatar, name, when, 6)).toBe(true);
     }
   });
 
-  it("rejects a date or other sibling stealing width from the author", () => {
-    expect(authorFillsIdentityColumn({ left: 25, right: 205 }, { left: 25, right: 59 }, { left: 69, right: 165 }, 10)).toBe(false);
+  it("accepts a short name that leaves room after the time", () => {
+    expect(authorLineFits({ left: 16, right: 324 }, { left: 16, right: 36 }, { left: 42, right: 100 }, { left: 106, right: 150 }, 6)).toBe(true);
   });
 
-  it("rejects overflow, overlap and collapsed author columns", () => {
-    const identity = { left: 25, right: 205 }, avatar = { left: 25, right: 59 };
-    expect(authorFillsIdentityColumn(identity, avatar, { left: 69, right: 215 }, 10)).toBe(false);
-    expect(authorFillsIdentityColumn(identity, avatar, { left: 59, right: 205 }, 10)).toBe(false);
-    expect(authorFillsIdentityColumn(identity, avatar, { left: 69, right: 69 }, 10)).toBe(false);
-    expect(authorFillsIdentityColumn(identity, avatar, { left: 69, right: Number.NaN }, 10)).toBe(false);
-    expect(authorFillsIdentityColumn(identity, { left: 45, right: 79 }, { left: 89, right: 205 }, 10)).toBe(false);
+  it("rejects a time pushed out of the column or under the name", () => {
+    const content = { left: 16, right: 264 }, avatar = { left: 16, right: 36 };
+    expect(authorLineFits(content, avatar, { left: 42, right: 260 }, { left: 266, right: 310 }, 6)).toBe(false);
+    expect(authorLineFits(content, avatar, { left: 42, right: 240 }, { left: 220, right: 264 }, 6)).toBe(false);
+  });
+
+  it("rejects a misplaced avatar, a collapsed name or time, and unmeasured boxes", () => {
+    const content = { left: 16, right: 264 }, avatar = { left: 16, right: 36 }, when = { left: 220, right: 264 };
+    expect(authorLineFits(content, { left: 30, right: 50 }, { left: 56, right: 214 }, when, 6)).toBe(false);
+    expect(authorLineFits(content, avatar, { left: 36, right: 214 }, when, 6)).toBe(false);
+    expect(authorLineFits(content, avatar, { left: 42, right: 42 }, when, 6)).toBe(false);
+    expect(authorLineFits(content, avatar, { left: 42, right: 214 }, { left: 264, right: 264 }, 6)).toBe(false);
+    expect(authorLineFits(content, avatar, { left: 42, right: Number.NaN }, when, 6)).toBe(false);
   });
 });

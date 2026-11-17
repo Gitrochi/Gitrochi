@@ -50,8 +50,8 @@ export async function changesPerformanceSelfTest(): Promise<[boolean, string]> {
     if (!tree) return [false, "Tree toggle did not mount"];
     tree.click();
     if (!await until(() => host.querySelector(".repository-screen > .inspector .file-list-virtual")?.getAttribute("data-total-rows") === "1051")) return [false, "Tree rows did not preserve every file"];
-    const treeRows = host.querySelectorAll(".repository-screen > .inspector .file-row").length;
-    const firstFolder = [...host.querySelectorAll<HTMLElement>(".repository-screen > .inspector .file-row")].find((row) => row.querySelector(".ellipsis")?.textContent === "folder-0")!;
+    const treeRows = host.querySelectorAll(".repository-screen > .inspector .file-row, .repository-screen > .inspector .file-folder-row").length;
+    const firstFolder = [...host.querySelectorAll<HTMLElement>(".repository-screen > .inspector .file-folder-row")].find((row) => row.querySelector(".file-folder-name")?.textContent === "folder-0")!;
     firstFolder.click();
     if (!await until(() => host.querySelector(".repository-screen > .inspector .file-list-virtual")?.getAttribute("data-total-rows") === "1031")) return [false, "Virtual folder could not be collapsed"];
     store.status = { ...store.status, staged: Array.from({ length: 200 }, (_, index) => ({ path: `staged/ready-${index}.tsx`, oldPath: null, staged: true, kind: "modified" })) };

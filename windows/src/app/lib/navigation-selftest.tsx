@@ -30,12 +30,13 @@ export async function navigationSelfTest(): Promise<[boolean, string]> {
     root.render(<Fixture compact={false} />); await pause();
     ensure(rows().map((button) => button.dataset.page).join(",") === "home,repository,compare,rebase,code,pullRequests,issues,actions,releases,projects,account,flows", `The sidebar must list every page: ${rows().map((button) => button.dataset.page).join(",")}`);
     ensure(!host.querySelector("input"), "The sidebar must not have a search box");
-    // without a repository the page list disables the pages that need one and says why under their section
+    // without a repository the page list disables the pages that need one and says why under their section, not in a tip
     for (const page of workspaceDestinations) {
       ensure(row(page)?.disabled === repositoryDestinations.has(page), `Only pages that need a repository may be disabled before opening one: ${page}`);
-      if (!repositoryDestinations.has(page)) { row(page)!.click(); await pause(); ensure(store.destination === page, `The initial menu did not select ${page}`); }
+      if (repositoryDestinations.has(page)) ensure(!row(page)?.dataset.tip, `A disabled row must not carry a tip of its own: ${page}`);
+      else { row(page)!.click(); await pause(); ensure(store.destination === page, `The initial menu did not select ${page}`); }
     }
-    ensure(host.querySelectorAll(".workspace-nav-why").length === 3, "Each section with a blocked page must say why");
+    ensure([...host.querySelectorAll(".workspace-nav-why")].map((line) => line.textContent).join("|") === t("Open a repository to use the dimmed pages"), "One line under Home must say why the dimmed pages are blocked");
     row("issues")!.click(); await pause(); ensure(store.destination === "issues" && row("issues")?.getAttribute("aria-current") === "page", "Issues must open without a repository");
     row("releases")!.click(); await pause(); ensure(store.destination === "releases", "Releases must open without a repository");
     row("projects")!.click(); await pause(); ensure(store.destination === "projects", "Projects must open without a repository");
@@ -57,7 +58,16 @@ export async function navigationSelfTest(): Promise<[boolean, string]> {
     ensure(rows().every((button) => !!button.getAttribute("aria-label") && !!button.dataset.tip && button.querySelector("svg")!.getBoundingClientRect().width > 0), "Rail icons lost their labels, tooltips or visible symbols");
     ensure(row("flows")?.getAttribute("aria-current") === "page", "The rail lost the current page");
     row("home")!.click(); await pause(); ensure(store.destination === "home", "Rail icons did not route to their pages");
-    return [true, "All twelve pages, blocked pages disabled with a reason before a repository opens, group titles, settings without a toggle of its own, GitLab names, 52px rail with labels, tooltips, current page and routing"];
+    // without a repository the rail dims the pages that need one; each keeps a tip that says why and does nothing
+    store.path = null; store.changed(); await pause();
+    for (const page of repositoryDestinations) {
+      const button = row(page)!;
+      ensure(!button.disabled && button.getAttribute("aria-disabled") === "true" && button.dataset.tip === t("Open a repository to use this page."), `The rail must dim ${page} and say why in its tip`);
+      button.click(); await pause();
+      ensure(store.destination === "home" && row("home")?.getAttribute("aria-current") === "page", `The rail must not open ${page} without a repository`);
+    }
+    ensure(!row("issues")?.getAttribute("aria-disabled"), "Issues must stay enabled in the rail without a repository");
+    return [true, "All twelve pages, blocked pages disabled with the reason under their sections before a repository opens, group titles, settings without a toggle of its own, GitLab names, 52px rail with labels, tooltips, current page and routing, blocked rail icons dimmed with their reason and inert"];
   } catch (error) { return [false, error instanceof Error ? error.message : String(error)]; }
   finally {
     root.unmount(); host.remove();

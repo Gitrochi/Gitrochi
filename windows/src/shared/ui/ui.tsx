@@ -41,24 +41,37 @@ export function IconButton({
   );
 }
 
+/**
+ * The one segmented control for filters and modes: 28px tall on a grey track with a 6px radius, a white thumb with a
+ * 4px radius, labels 12px medium that never change weight. An icon segment is 28px wide around a 13px glyph and takes
+ * its name from `name`; a segment that cannot be chosen says why. macOS: Segmented in Shared/PageControls.swift.
+ */
 export function Segmented<T extends string>({
   value,
   options,
   onChange,
   stretch,
+  label,
 }: {
   value: T;
-  options: { value: T; label: ReactNode; tip?: string }[];
+  options: { value: T; label: ReactNode; tip?: string; name?: string; icon?: boolean; disabledReason?: string }[];
   onChange: (v: T) => void;
   stretch?: boolean;
+  /** what the group chooses, for assistive technology */
+  label?: string;
 }) {
   return (
-    <div className={`segmented ${stretch ? "stretch" : ""}`}>
-      {options.map((o) => (
-        <button key={o.value} type="button" data-tip={o.tip} className={o.value === value ? "on" : ""} onClick={() => onChange(o.value)}>
-          {o.label}
-        </button>
-      ))}
+    <div className={`segmented ${stretch ? "stretch" : ""}`} role="group" aria-label={label}>
+      {options.map((o) => {
+        const button = (
+          <button key={o.value} type="button" data-tip={o.disabledReason ? undefined : o.tip ?? o.name} aria-label={o.name} aria-pressed={o.value === value} disabled={!!o.disabledReason}
+            className={`${o.value === value ? "on" : ""} ${o.icon ? "icon" : ""}`} onClick={() => onChange(o.value)}>
+            {o.label}
+          </button>
+        );
+        // a disabled button shows no tip of its own, so the reason sits on its wrapper
+        return o.disabledReason ? <span key={o.value} className="segmented-off" data-tip={o.disabledReason}>{button}</span> : button;
+      })}
     </div>
   );
 }
@@ -94,11 +107,12 @@ export function Avatar({ name, email, size = 28, url }: { name: string; email: s
 }
 
 
-export function LineStatText({ added, deleted }: { added: number; deleted: number }) {
+/** +12 −3. A file row passes `zeros` and shows both sides, the empty one in grey. macOS: LineStatText */
+export function LineStatText({ added, deleted, zeros = false }: { added: number; deleted: number; zeros?: boolean }) {
   return (
     <span className="linestat">
-      {added > 0 && <span className="a">+{added}</span>}
-      {deleted > 0 && <span className="d">−{deleted}</span>}
+      {(zeros || added > 0) && <span className={added > 0 ? "a" : "z"}>+{added}</span>}
+      {(zeros || deleted > 0) && <span className={deleted > 0 ? "d" : "z"}>−{deleted}</span>}
     </span>
   );
 }

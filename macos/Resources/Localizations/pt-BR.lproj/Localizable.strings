@@ -54,6 +54,7 @@
 "Create merge request…" = "Criar merge request…";
 "Create pull request…" = "Criar pull request…";
 "Diff layout" = "Layout do diff";
+"File list layout" = "Layout da lista de arquivos";
 "Fast-forward only" = "Só fast-forward";
 "Filter repositories" = "Filtrar repositórios";
 "Find in file" = "Buscar no arquivo";
@@ -99,7 +100,8 @@
 "Nothing to push" = "Nada para enviar";
 "Nothing unreleased" = "Nada a lançar";
 "Open Projects" = "Abrir Projetos";
-"Open a repository to use these" = "Abra um repositório para usá-las";
+"Open a repository to use the dimmed pages" = "Abra um repositório para usar as páginas esmaecidas";
+"Open a repository to use this page." = "Abra um repositório para usar esta página.";
 "Open changes" = "Abrir alterações";
 "Opens %@ … %@ in Compare" = "Abre %1$@ … %2$@ em Comparar";
 "Open…" = "Abrir…";
@@ -252,7 +254,6 @@
 "\n\n[... %lld more characters omitted ...]" = "\n\n[... caracteres omitidos: %1$lld ...]";
 " %lld files that aren't committed stay as they are." = " Os arquivos que ficarem fora do commit (%1$lld) permanecem como estão.";
 " (current)" = " (atual)";
-" (on)" = " (ativado)";
 " · %@ stages" = " · estágio %1$@";
 " · %lld outside the graph" = " · %1$lld fora do grafo";
 " · %lld%% similar" = " · %1$lld%% semelhante";
@@ -267,12 +268,10 @@
 "%@\nThe folder is deleted; the branch and commits stay. git refuses if there are uncommitted changes." = "%1$@\nA pasta é excluída; o branch e os commits permanecem. O git recusa se houver alterações sem commit.";
 "%@\nUncommitted changes are deleted too." = "%1$@\nAs alterações sem commit também são excluídas.";
 "%@  (opened here)" = "%1$@  (aberto aqui)";
-"%@ (chosen by a gitch rule)" = "%1$@ (escolhida por uma regra do gitch)";
 "%@ (current)" = "%1$@ (atual)";
 "%@ (none)" = "%1$@ (nenhum)";
 "%@ declined this request. Try changing the content and try again." = "%1$@ recusou esta solicitação. Altere o conteúdo e tente novamente.";
 "%@ didn't respond correctly (exit code %d). Check that it's the %@ executable." = "%1$@ não respondeu corretamente (código de saída %2$d). Verifique se é o executável do %3$@.";
-"%@ explanation" = "Explicação (%1$@)";
 "%@ groups the changed files by topic and splits them into several commits. Review and edit the result, then commit. Rules are in Settings > Rules." = "%1$@ agrupa os arquivos alterados por assunto e os divide em vários commits. Revise e edite o resultado e depois faça o commit. As regras ficam em Configurações > Regras.";
 "%@ is splitting the changes by topic…" = "%1$@ está dividindo as alterações por assunto…";
 "%@ is writing the commit message…" = "%1$@ está escrevendo a mensagem de commit…";
@@ -323,7 +322,6 @@
 "Allow writing to the working folder" = "Permitir gravação na pasta de trabalho";
 "Allowed to fail" = "Falha permitida";
 "Amend commit" = "Corrigir commit (amend)";
-"Amend previous commit" = "Corrigir o commit anterior (amend)";
 "Amend: combine into the last commit" = "Amend: juntar ao último commit";
 "An app for viewing and working with Git repositories as a graph · MIT" = "Um app para visualizar e trabalhar com repositórios Git em forma de grafo · MIT";
 "An empty file was deleted" = "Um arquivo vazio foi excluído";
@@ -351,7 +349,6 @@
 "Binary" = "Binário";
 "Binary file" = "Arquivo binário";
 "Binary or too large — view it in the browser" = "Binário ou grande demais — veja no navegador";
-"Blame — who changed each line and when" = "Blame — quem alterou cada linha e quando";
 "Blocked" = "Bloqueado";
 "Both" = "Ambos";
 "Both (mine first)" = "Ambos (meu primeiro)";
@@ -359,10 +356,8 @@
 "Branch being merged" = "Branch em merge";
 "Branch name" = "Nome do branch";
 "Branch to check out" = "Branch para checkout";
-"Branches pinned to the top" = "Branches fixados no topo";
 "Check again with fetch" = "Verificar de novo com fetch";
 "Check this repository with gitch again" = "Verificar este repositório com o gitch de novo";
-"Click to use another gitch account for this repository." = "Clique para usar outra conta do gitch neste repositório.";
 "Commit authors are fine" = "Os autores dos commits estão corretos";
 "Couldn't find gitch inside Gitrochi." = "Não foi possível encontrar o gitch dentro do Gitrochi.";
 "Couldn't move Gitrochi to the Applications folder" = "Não foi possível mover o Gitrochi para a pasta Aplicativos";
@@ -441,7 +436,6 @@
 "Clear search (Esc)" = "Limpar pesquisa (Esc)";
 "Clears the path you chose and finds it automatically again" = "Apaga o caminho escolhido e volta a localizar automaticamente";
 "Clears the staging area, then stages and commits each group from the top." = "Esvazia a área de stage e, de cima para baixo, adiciona cada grupo ao stage e faz o commit.";
-"Click to see the diff in the center" = "Clique para ver o diff no centro";
 "Click to select this line (Shift: range) — you can stage only the selected lines" = "Clique para selecionar esta linha (Shift: intervalo) — é possível adicionar ao stage só as linhas selecionadas";
 "Clone" = "Clonar";
 "Clone repository" = "Clonar repositório";
@@ -486,7 +480,6 @@
 "Conversation %lld" = "Conversa %1$lld";
 "Copied" = "Copiado";
 "Copy SHA" = "Copiar SHA";
-"Copy full SHA" = "Copiar SHA completo";
 "Copy link" = "Copiar link";
 "Copy message" = "Copiar mensagem";
 "Copy name" = "Copiar nome";
@@ -610,7 +603,6 @@
 "Executable" = "Executável";
 "Existing branch" = "Branch existente";
 "Explain again" = "Explicar novamente";
-"Explain this commit" = "Explicar este commit";
 "Failed" = "Falhou";
 "Fast-forward '%@' (current) to '%@'" = "Fast-forward de '%1$@' (atual) até '%2$@'";
 "Fast-forward '%@' to '%@'" = "Fast-forward de '%1$@' até '%2$@'";
@@ -619,7 +611,6 @@
 "Fetches new commits and branches from all remotes. Your branches aren't changed." = "Busca novos commits e branches de todos os remotos. Seus branches não são alterados.";
 "Fetching…" = "Fazendo fetch…";
 "File history" = "Histórico do arquivo";
-"File history — commits that changed this file" = "Histórico do arquivo — commits que alteraram este arquivo";
 "File imports" = "Imports de arquivos";
 "File path" = "Caminho do arquivo";
 "Files that change together" = "Arquivos que mudam juntos";
@@ -660,11 +651,8 @@
 "History" = "Histórico";
 "If a request is blocked by the safety classifier, the server retries once with the recommended model (fallbacks)." = "Se uma solicitação for bloqueada pelo classificador de segurança, o servidor tenta novamente uma vez com o modelo recomendado (fallbacks).";
 "If the same server is used under another address, an account you've already connected works there too" = "Se o mesmo servidor for usado com outro endereço, uma conta já conectada também funciona nele";
-"Ignore whitespace" = "Ignorar espaços em branco";
-"Ignore whitespace%@ — lines that only changed indentation or spaces are treated as unchanged (line staging is unavailable while on)" = "Ignorar espaços em branco%1$@ — linhas em que só mudaram a indentação ou os espaços são tratadas como inalteradas (o stage por linha fica indisponível enquanto estiver ativado)";
 "Import gh CLI login" = "Importar login da CLI gh";
 "In use" = "Em uso";
-"In use by a worktree: %@" = "Em uso por um worktree: %1$@";
 "Include how to test" = "Incluir como testar";
 "Include the affected areas" = "Incluir as áreas afetadas";
 "Include the issue number" = "Incluir o número da issue";
@@ -696,12 +684,11 @@
 "Loading" = "Carregando";
 "Loading earlier history…" = "Carregando histórico anterior…";
 "Local branches" = "Branches locais";
-"Local branches %lld" = "Branches locais %1$lld";
 "Locate" = "Localizar";
 "Locate…" = "Localizar…";
 "Location" = "Local";
-"Locked to %@" = "Travado em %1$@";
 "Locked worktree" = "Worktree bloqueado";
+"Locked to %@" = "Travado em %1$@";
 "Looks for a GitHub profile, then a connected self-hosted GitLab profile, then Gravatar, and uses initials if none is found. An email hash is sent to Gravatar." = "Procura um perfil do GitHub, depois um perfil de GitLab auto-hospedado conectado e então o Gravatar; se nada for encontrado, usa as iniciais. Um hash do e-mail é enviado ao Gravatar.";
 "Mark all as resolved" = "Marcar tudo como resolvido";
 "Mark as resolved" = "Marcar como resolvido";
@@ -743,7 +730,6 @@
 "New branch name" = "Nome do novo branch";
 "New branch…" = "Novo branch…";
 "New file" = "Arquivo novo";
-"New file (untracked)" = "Arquivo novo (não rastreado)";
 "New pull/merge request…" = "Novo pull/merge request…";
 "New session in the same place" = "Nova sessão no mesmo local";
 "New tab" = "Nova aba";
@@ -786,7 +772,6 @@
 "Not found (404). Check that the token has access to the repository." = "Não encontrado (404). Verifique se o token tem acesso ao repositório.";
 "Not found — locate it in the Tools tab" = "Não encontrado — localize-o na aba Ferramentas";
 "Not installed" = "Não instalado";
-"Not managed by gitch" = "Não gerenciado pelo gitch";
 "Nothing to draw" = "Nada para desenhar";
 "Off" = "Desativado";
 "On" = "Ativado";
@@ -844,7 +829,6 @@
 "Pulling…" = "Fazendo pull…";
 "Push tag" = "Fazer push da tag";
 "Pushes %lld unpushed commits to the remote." = "Envia ao remoto os commits ainda não enviados (%1$lld).";
-"Pushes as %@" = "Faz push como %1$@";
 "Pushes the current branch to %@ before creating." = "Envia o branch atual para %1$@ antes de criar.";
 "Pushes the current branch to the remote (no commits to push right now)." = "Envia o branch atual para o remoto (não há commits para enviar agora).";
 "Pushes the current branch to the remote for the first time and sets up tracking." = "Envia o branch atual para o remoto pela primeira vez e configura o rastreamento.";
@@ -874,13 +858,11 @@
 "Release notes" = "Notas da versão";
 "Remote: " = "Remoto: ";
 "Remotes" = "Remotos";
-"Remotes %lld" = "Remotos %1$lld";
 "Remove" = "Remover";
 "Remove from list" = "Remover da lista";
 "Remove this variable" = "Remover esta variável";
 "Remove worktree '%@'?" = "Remover o worktree '%1$@'?";
 "Remove worktree…" = "Remover worktree…";
-"Remove…" = "Remover…";
 "Removing worktree…" = "Removendo worktree…";
 "Renamed" = "Renomeado";
 "Renamed  %@ → %@" = "Renomeado  %1$@ → %2$@";
@@ -917,7 +899,6 @@
 "Run" = "Executar";
 "Run %@ after creating" = "Executar %1$@ após criar";
 "Run again" = "Executar novamente";
-"Run agent (%@)" = "Executar agente (%1$@)";
 "Run an agent in a worktree" = "Executar um agente em um worktree";
 "Run doctor in Terminal" = "Executar doctor no Terminal";
 "Run manual job" = "Executar job manual";
@@ -953,6 +934,7 @@
 "Shell opened in the terminal panel below (zsh, bash, fish, etc.)" = "Shell aberto no painel do terminal abaixo (zsh, bash, fish etc.)";
 "Show all" = "Mostrar tudo";
 "Show all %lld hidden branches" = "Mostrar todos os branches ocultos (%1$lld)";
+"Show all %lld hidden branches and tags" = "Mostrar todos os branches e tags ocultos (%1$lld)";
 "Show all branches" = "Mostrar todos os branches";
 "Show as folder tree" = "Mostrar como árvore de pastas";
 "Show as list" = "Mostrar como lista";
@@ -967,7 +949,6 @@
 "Show this commit in the graph" = "Mostrar este commit no grafo";
 "Show uncommitted changes" = "Mostrar alterações sem commit";
 "Side by side" = "Lado a lado";
-"Side by side (old on the left · new on the right)" = "Lado a lado (antigo à esquerda · novo à direita)";
 "Skip this version" = "Pular esta versão";
 "Skipped" = "Ignorado";
 "Soft — keep changes staged" = "Soft — manter as alterações no stage";
@@ -982,7 +963,6 @@
 "Stage selected lines (%lld)" = "Adicionar linhas selecionadas ao stage (%1$lld)";
 "Staged" = "No stage";
 "Staged and unstaged changes and untracked new files will all be lost. This can't be undone." = "As alterações no stage e fora dele e os arquivos novos não rastreados serão todos perdidos. Não é possível desfazer.";
-"Staged files" = "Arquivos no stage";
 "Stages only the selected lines" = "Adiciona ao stage só as linhas selecionadas";
 "Stages only this hunk (click changed lines to stage only those)" = "Adiciona ao stage só este hunk (clique nas linhas alteradas para adicionar só elas)";
 "Staging…" = "Adicionando ao stage…";
@@ -1000,7 +980,6 @@
 "Subject line only, no body" = "Só a linha de assunto, sem corpo";
 "Subject within 50 characters" = "Assunto com até 50 caracteres";
 "Succeeded" = "Sucesso";
-"Summary (required)" = "Resumo (obrigatório)";
 "Syncs the current branch with the remote (no commits to pull right now)." = "Sincroniza o branch atual com o remoto (não há commits para receber agora).";
 "System" = "Sistema";
 "System follows your macOS setting (light, dark or auto). The graph and terminal change with it." = "A opção Sistema segue a configuração do macOS (claro, escuro ou automático). O grafo e o terminal acompanham a mudança.";
@@ -1009,7 +988,6 @@
 "Task for the agent (optional)" = "Tarefa para o agente (opcional)";
 "Technical tone" = "Tom técnico";
 "Tells you when a new version is available; click to download, replace and restart. A downloaded file is installed only if its SHA-256 and signature match the release." = "Avisa quando houver uma nova versão; clique para baixar, substituir e reiniciar. O arquivo baixado só é instalado se o SHA-256 e a assinatura corresponderem aos da release.";
-"Temporary" = "Temporário";
 "Terminal shell" = "Shell do terminal";
 "Test connection" = "Testar conexão";
 "That backup no longer exists." = "Esse backup não existe mais.";
@@ -1081,7 +1059,6 @@
 "Unstage all" = "Remover tudo do stage";
 "Unstage hunk" = "Remover hunk do stage";
 "Unstage selected lines (%lld)" = "Remover linhas selecionadas do stage (%1$lld)";
-"Unstaged files" = "Arquivos fora do stage";
 "Unstages only the selected lines" = "Remove do stage só as linhas selecionadas";
 "Unstages this hunk" = "Remove este hunk do stage";
 "Unstaging…" = "Removendo do stage…";
@@ -1112,7 +1089,6 @@
 "Waiting for deployment approval: %@" = "Aguardando aprovação do deploy: %1$@";
 "Waiting for input" = "Aguardando entrada";
 "Waiting to be run manually" = "Aguardando execução manual";
-"Warning" = "Aviso";
 "What to do with this commit" = "O que fazer com este commit";
 "What would you like to do?" = "O que você deseja fazer?";
 "What would you like to do? If there are conflicts, you can resolve them on the right." = "O que você deseja fazer? Se houver conflitos, você pode resolvê-los à direita.";
@@ -1121,7 +1097,6 @@
 "Whole file" = "Arquivo inteiro";
 "Working directory is clean" = "O diretório de trabalho está limpo";
 "Working tree" = "Árvore de trabalho";
-"Worktree in a temporary folder — it may break when the folder is deleted on restart" = "Worktree em uma pasta temporária — pode quebrar quando a pasta for excluída ao reiniciar";
 "Worktree whose folder is gone — remove it with 'Clean up'" = "Worktree cuja pasta não existe mais — remova-o com 'Limpar'";
 "Write commit message with AI" = "Gerar mensagem de commit com IA";
 "Write in English" = "Redigir em inglês";
@@ -1145,9 +1120,6 @@
 "git %@ failed" = "git %1$@ falhou";
 "git refuses to delete a branch with unmerged commits. Use 'Force delete' in that case." = "O git se recusa a excluir um branch com commits sem merge. Nesse caso, use 'Forçar exclusão'.";
 "gitch backups" = "Backups do gitch";
-"gitch checks before commit and push" = "Verificações do gitch antes de commit e push";
-"gitch commands for this repository" = "Comandos do gitch para este repositório";
-"gitch doesn't know which account this repository uses. Lock it with gitch use <account>." = "O gitch não sabe qual conta este repositório usa. Trave-o com gitch use <conta>.";
 "gitch found nothing to draw for %@." = "O gitch não encontrou nada para desenhar em %1$@.";
 "gitch graph changes: files that are often committed together, and how often each one changes." = "gitch graph changes: arquivos que costumam entrar juntos no mesmo commit e quantas vezes cada um muda.";
 "gitch graph check reads its rules from .gitch/graph.rules in this repository. Create the file with commented-out examples (gitch graph check --init) and open it?" = "O gitch graph check lê as regras de .gitch/graph.rules neste repositório. Criar o arquivo com exemplos comentados (gitch graph check --init) e abri-lo?";
@@ -1161,8 +1133,6 @@
 "gitch saves a backup before pull, up, sync, fix, undo and amend, and keeps the 30 most recent." = "O gitch salva um backup antes de pull, up, sync, fix, undo e amend, e mantém os 30 mais recentes.";
 "gitch sets the commit author to %@ and points origin (and upstream) at %@'s SSH alias, then locks the repository to it." = "O gitch define %1$@ como autor dos commits, aponta origin (e upstream) para o alias SSH de %2$@ e depois trava o repositório nessa conta.";
 "gitch stops requiring %@ for commits and pushes here. The commit author stays as it is." = "O gitch deixa de exigir %1$@ para commits e push aqui. O autor dos commits continua o mesmo.";
-"gitch sync: brings this branch up to date with the original repository (upstream)." = "gitch sync: deixa este branch em dia com o repositório original (upstream).";
-"gitch up: moves this branch onto the latest default branch, or merges it if the branch is already pushed. A backup is saved first." = "gitch up: move este branch para cima do branch padrão mais recente, ou faz merge se o branch já foi enviado. Um backup é salvo antes.";
 "gitch won't check authors, secrets or pushes in this repository until you turn it back on." = "O gitch não vai verificar autores, segredos nem push neste repositório até você ativar de novo.";
 "… The diff is too long; only the beginning is shown" = "… O diff é longo demais; só o início é exibido";
 "… show %lld more lines" = "… mostrar mais linhas (%1$lld)";
@@ -1275,6 +1245,8 @@
 "Search filters loaded pages. Load more to search older items." = "A busca filtra as páginas carregadas. Carregue mais para buscar itens mais antigos.";
 "Compare with the current branch" = "Comparar com o branch atual";
 "Filter branches and tags" = "Filtrar branches e tags";
+"Filter branches" = "Filtrar branches";
+"No branch or tag name contains “%@”." = "Nenhum nome de branch ou tag contém “%@”.";
 "Comparing…" = "Comparando…";
 "Use branches, tags or commit IDs, or pick a branch on the left." = "Use branches, tags ou IDs de commit, ou escolha um branch à esquerda.";
 "Clear search" = "Limpar pesquisa";
@@ -1283,12 +1255,9 @@
 "Search merge requests" = "Pesquisar merge requests";
 "No pull requests match this filter." = "Nenhum pull request corresponde a este filtro.";
 "No merge requests match this filter." = "Nenhum merge request corresponde a este filtro.";
-"No issues match this filter." = "Nenhuma issue corresponde a este filtro.";
 "Open in Pull requests" = "Abrir em Pull requests";
-"Open in Merge requests" = "Abrir em Merge requests";
 "Open in Issues" = "Abrir em Issues";
 "Merge request" = "Merge request";
-"Issues %lld" = "Issues %1$lld";
 "Edit issue #%lld" = "Editar issue #%1$lld";
 "State" = "Estado";
 "Refresh conversation" = "Atualizar conversa";
@@ -1303,7 +1272,6 @@
 "Icons only" = "Somente ícones";
 "Icons and text" = "Ícones e texto";
 "With text, each button's name sits to the right of its icon." = "Com texto, o nome de cada botão fica à direita do ícone.";
-"Filtered: %@" = "Filtrado: %1$@";
 "Clear filter" = "Limpar filtro";
 "Close search (Esc)" = "Fechar pesquisa (Esc)";
 "Close search" = "Fechar pesquisa";
@@ -2226,6 +2194,18 @@
 "Saved sign-in can't be read" = "Não foi possível ler o login salvo";
 "Couldn't use the saved sign-in" = "Não foi possível usar o login salvo";
 "Refresh account status" = "Atualizar status da conta";
+"Tag…" = "Tag…";
+"Explain with AI…" = "Explicar com IA…";
+"Copy commit SHA" = "Copiar SHA do commit";
+"Parent" = "Pai";
+"Parents" = "Pais";
+"Closes" = "Fecha";
+"Fixes" = "Corrige";
+"Resolves" = "Resolve";
+"Co-author" = "Coautor";
+"Trailers" = "Trailers";
+"Couldn't explain this commit" = "Não foi possível explicar este commit";
+"More commit actions" = "Mais ações do commit";
 "Needs you" = "Aguardando você";
 "Respond" = "Responder";
 "Elsewhere" = "Em outro lugar";
@@ -2234,3 +2214,22 @@
 "Unstage line" = "Remover linha do stage";
 "Hide changes and show the graph" = "Ocultar alterações e mostrar o grafo";
 "Sessions started here run in the terminal tabs below; click one to go to its terminal." = "As sessões iniciadas aqui são executadas nas abas do terminal abaixo; clique em uma para ir ao terminal dela.";
+"Unstaged" = "Fora do stage";
+"Untracked" = "Não rastreado";
+"Summary" = "Resumo";
+"Too large" = "Grande demais";
+"copied from %@" = "copiado de %@";
+"Commit 1 file" = "Fazer commit de 1 arquivo";
+"Commit %lld files" = "Fazer commit de %lld arquivos";
+"Couldn't write the commit message" = "Não foi possível escrever a mensagem do commit";
+"gitch stopped this commit. Run gitch doctor in the terminal." = "O gitch bloqueou este commit. Execute gitch doctor no terminal.";
+"Amend previous commit" = "Corrigir o commit anterior (amend)";
+"Split into commits…" = "Dividir em commits…";
+"AI message" = "Mensagem por IA";
+"Commit summary" = "Resumo do commit";
+"Commit description" = "Descrição do commit";
+"Summary character count" = "Caracteres do resumo";
+"Resolve conflicts before committing." = "Resolva os conflitos antes de fazer commit.";
+"Stage the files you want to include." = "Coloque no stage os arquivos que deseja incluir.";
+"Write a summary to enable commit." = "Escreva um resumo para poder fazer commit.";
+"Conflicted" = "Em conflito";

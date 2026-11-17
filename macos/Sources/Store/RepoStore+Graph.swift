@@ -225,6 +225,7 @@ struct RefMenu: View {
             if let t = store.tags.first(where: { $0.name == ref.name }) {
                 Button("Push tag") { Task { await store.pushTag(t) } }
                 Button("Copy name") { store.copy(t.name) }
+                Button("Hide from graph") { Task { await store.setTagHidden(t, true) } }
                 Divider()
                 Button("Delete tag…", role: .destructive) { store.deleteTag(t) }
             }

@@ -102,7 +102,7 @@ export function CloneSheet({ store, close, initialURL = "" }: { store: RepoStore
               filtered.map((r) => (
                 <div
                   key={r.fullName}
-                  className="file-row"
+                  className="side-row"
                   style={{ background: r.cloneURL === remote ? "var(--select)" : undefined, alignItems: "flex-start" }}
                   onClick={() => setURL(r.cloneURL)}
                 >

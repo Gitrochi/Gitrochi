@@ -54,6 +54,7 @@
 "Create merge request…" = "Merge request maken…";
 "Create pull request…" = "Pull request maken…";
 "Diff layout" = "Diff-indeling";
+"File list layout" = "Indeling van de bestandenlijst";
 "Fast-forward only" = "Alleen fast-forward";
 "Filter repositories" = "Repository's filteren";
 "Find in file" = "Zoeken in bestand";
@@ -99,7 +100,8 @@
 "Nothing to push" = "Niets te pushen";
 "Nothing unreleased" = "Niets onuitgebracht";
 "Open Projects" = "Projecten openen";
-"Open a repository to use these" = "Open een repository om deze te gebruiken";
+"Open a repository to use the dimmed pages" = "Open een repository om de gedimde pagina's te gebruiken";
+"Open a repository to use this page." = "Open een repository om deze pagina te gebruiken.";
 "Open changes" = "Wijzigingen openen";
 "Opens %@ … %@ in Compare" = "Opent %1$@ … %2$@ in Vergelijken";
 "Open…" = "Openen…";
@@ -252,7 +254,6 @@
 "\n\n[... %lld more characters omitted ...]" = "\n\n[... nog %1$lld tekens weggelaten ...]";
 " %lld files that aren't committed stay as they are." = " Bestanden die niet gecommit worden (%1$lld), blijven ongewijzigd.";
 " (current)" = " (huidige)";
-" (on)" = " (aan)";
 " · %@ stages" = " · fase %1$@";
 " · %lld outside the graph" = " · %1$lld buiten de graaf";
 " · %lld%% similar" = " · %1$lld%% gelijk";
@@ -267,12 +268,10 @@
 "%@\nThe folder is deleted; the branch and commits stay. git refuses if there are uncommitted changes." = "%1$@\nDe map wordt verwijderd; de branch en commits blijven bestaan. git weigert als er niet-gecommitte wijzigingen zijn.";
 "%@\nUncommitted changes are deleted too." = "%1$@\nNiet-gecommitte wijzigingen worden ook verwijderd.";
 "%@  (opened here)" = "%1$@  (hier geopend)";
-"%@ (chosen by a gitch rule)" = "%1$@ (gekozen via een gitch-regel)";
 "%@ (current)" = "%1$@ (huidige)";
 "%@ (none)" = "%1$@ (geen)";
 "%@ declined this request. Try changing the content and try again." = "%1$@ heeft dit verzoek geweigerd. Pas de inhoud aan en probeer het opnieuw.";
 "%@ didn't respond correctly (exit code %d). Check that it's the %@ executable." = "%1$@ reageerde niet correct (exitcode %2$d). Controleer of het het uitvoerbare bestand van %3$@ is.";
-"%@ explanation" = "Uitleg van %1$@";
 "%@ groups the changed files by topic and splits them into several commits. Review and edit the result, then commit. Rules are in Settings > Rules." = "%1$@ groepeert de gewijzigde bestanden per onderwerp en splitst ze op in meerdere commits. Controleer en bewerk het resultaat en commit daarna. Regels staan in Instellingen > Regels.";
 "%@ is splitting the changes by topic…" = "%1$@ splitst de wijzigingen op per onderwerp…";
 "%@ is writing the commit message…" = "%1$@ schrijft het commitbericht…";
@@ -320,7 +319,6 @@
 "Allow writing to the working folder" = "Schrijven in de werkmap toestaan";
 "Allowed to fail" = "Mag mislukken";
 "Amend commit" = "Commit aanpassen";
-"Amend previous commit" = "Vorige commit aanpassen";
 "Amend: combine into the last commit" = "Amend: samenvoegen met de laatste commit";
 "An app for viewing and working with Git repositories as a graph · MIT" = "Een app om Git-repository's als graaf te bekijken en ermee te werken · MIT";
 "An empty file was deleted" = "Er is een leeg bestand verwijderd";
@@ -348,7 +346,6 @@
 "Binary" = "Binair";
 "Binary file" = "Binair bestand";
 "Binary or too large — view it in the browser" = "Binair of te groot — bekijk het in de browser";
-"Blame — who changed each line and when" = "Blame — wie elke regel wanneer heeft gewijzigd";
 "Blocked" = "Geblokkeerd";
 "Both" = "Beide";
 "Both (mine first)" = "Beide (eerst mijn versie)";
@@ -357,10 +354,8 @@
 "Branch being merged" = "Branch die wordt gemerged";
 "Branch name" = "Branchnaam";
 "Branch to check out" = "Uit te checken branch";
-"Branches pinned to the top" = "Bovenaan vastgezette branches";
 "Check again with fetch" = "Opnieuw controleren met fetch";
 "Check this repository with gitch again" = "Deze repository weer met gitch controleren";
-"Click to use another gitch account for this repository." = "Klik om een ander gitch-account voor deze repository te gebruiken.";
 "Commit authors are fine" = "De commit-auteurs kloppen";
 "Couldn't find gitch inside Gitrochi." = "gitch niet gevonden in Gitrochi.";
 "Couldn't move Gitrochi to the Applications folder" = "Kan Gitrochi niet naar de map Apps verplaatsen";
@@ -437,7 +432,6 @@
 "Clear search (Esc)" = "Zoekopdracht wissen (Esc)";
 "Clears the path you chose and finds it automatically again" = "Wist het gekozen pad en zoekt het weer automatisch";
 "Clears the staging area, then stages and commits each group from the top." = "Maakt de staging area leeg en voert daarna voor elke groep, van boven naar beneden, een stage en commit uit.";
-"Click to see the diff in the center" = "Klik om de diff in het midden te zien";
 "Click to select this line (Shift: range) — you can stage only the selected lines" = "Klik om deze regel te selecteren (Shift: bereik) — je kunt alleen de geselecteerde regels stagen";
 "Clone" = "Klonen";
 "Clone repository" = "Repository klonen";
@@ -481,7 +475,6 @@
 "Conversation %lld" = "Gesprek %1$lld";
 "Copied" = "Gekopieerd";
 "Copy SHA" = "SHA kopiëren";
-"Copy full SHA" = "Volledige SHA kopiëren";
 "Copy link" = "Link kopiëren";
 "Copy message" = "Bericht kopiëren";
 "Copy name" = "Naam kopiëren";
@@ -602,7 +595,6 @@
 "Executable" = "Uitvoerbaar bestand";
 "Existing branch" = "Bestaande branch";
 "Explain again" = "Opnieuw uitleggen";
-"Explain this commit" = "Deze commit uitleggen";
 "Failed" = "Mislukt";
 "Fast-forward '%@' (current) to '%@'" = "'%1$@' (huidige) fast-forwarden naar '%2$@'";
 "Fast-forward '%@' to '%@'" = "'%1$@' fast-forwarden naar '%2$@'";
@@ -611,7 +603,6 @@
 "Fetches new commits and branches from all remotes. Your branches aren't changed." = "Haalt nieuwe commits en branches op van alle remotes. Je eigen branches blijven ongewijzigd.";
 "Fetching…" = "Bezig met fetchen…";
 "File history" = "Bestandsgeschiedenis";
-"File history — commits that changed this file" = "Bestandsgeschiedenis — commits die dit bestand hebben gewijzigd";
 "File imports" = "Bestandsimports";
 "File path" = "Bestandspad";
 "Files that change together" = "Bestanden die samen veranderen";
@@ -651,11 +642,8 @@
 "History" = "Geschiedenis";
 "If a request is blocked by the safety classifier, the server retries once with the recommended model (fallbacks)." = "Als een verzoek door de veiligheidsclassificatie wordt geblokkeerd, probeert de server het één keer opnieuw met het aanbevolen model (fallbacks).";
 "If the same server is used under another address, an account you've already connected works there too" = "Als dezelfde server onder een ander adres wordt gebruikt, werkt een al gekoppeld account daar ook";
-"Ignore whitespace" = "Witruimte negeren";
-"Ignore whitespace%@ — lines that only changed indentation or spaces are treated as unchanged (line staging is unavailable while on)" = "Witruimte negeren%1$@ — regels waarin alleen inspringing of spaties zijn gewijzigd, gelden als ongewijzigd (regels stagen is dan niet beschikbaar)";
 "Import gh CLI login" = "Login van gh CLI importeren";
 "In use" = "In gebruik";
-"In use by a worktree: %@" = "In gebruik door een worktree: %1$@";
 "Include how to test" = "Beschrijf hoe je kunt testen";
 "Include the affected areas" = "Vermeld de betrokken onderdelen";
 "Include the issue number" = "Vermeld het issuenummer";
@@ -686,13 +674,12 @@
 "Loading" = "Laden";
 "Loading earlier history…" = "Eerdere geschiedenis wordt geladen…";
 "Local branches" = "Lokale branches";
-"Local branches %lld" = "Lokale branches %1$lld";
 "Local: %@" = "Lokaal: %1$@";
 "Locate" = "Aanwijzen";
 "Locate…" = "Aanwijzen…";
 "Location" = "Locatie";
-"Locked to %@" = "Vergrendeld op %1$@";
 "Locked worktree" = "Vergrendelde worktree";
+"Locked to %@" = "Vergrendeld op %1$@";
 "Looks for a GitHub profile, then a connected self-hosted GitLab profile, then Gravatar, and uses initials if none is found. An email hash is sent to Gravatar." = "Zoekt eerst een GitHub-profiel, dan een profiel op een gekoppelde self-hosted GitLab, dan Gravatar, en gebruikt initialen als er niets wordt gevonden. Er wordt een hash van het e-mailadres naar Gravatar gestuurd.";
 "Manual" = "Handmatig";
 "Mark all as resolved" = "Alles markeren als opgelost";
@@ -734,7 +721,6 @@
 "New branch name" = "Nieuwe branchnaam";
 "New branch…" = "Nieuwe branch…";
 "New file" = "Nieuw bestand";
-"New file (untracked)" = "Nieuw bestand (niet bijgehouden)";
 "New pull/merge request…" = "Nieuwe pull/merge request…";
 "New session in the same place" = "Nieuwe sessie op dezelfde plek";
 "New tab" = "Nieuw tabblad";
@@ -777,7 +763,6 @@
 "Not found (404). Check that the token has access to the repository." = "Niet gevonden (404). Controleer of het token toegang heeft tot de repository.";
 "Not found — locate it in the Tools tab" = "Niet gevonden — wijs het aan op het tabblad Tools";
 "Not installed" = "Niet geïnstalleerd";
-"Not managed by gitch" = "Niet beheerd door gitch";
 "Nothing to draw" = "Niets om te tekenen";
 "Off" = "Uit";
 "On" = "Aan";
@@ -835,7 +820,6 @@
 "Pulling…" = "Bezig met pullen…";
 "Push tag" = "Tag pushen";
 "Pushes %lld unpushed commits to the remote." = "Pusht nog niet gepushte commits (%1$lld) naar de remote.";
-"Pushes as %@" = "Pusht als %1$@";
 "Pushes the current branch to %@ before creating." = "Pusht de huidige branch eerst naar %1$@.";
 "Pushes the current branch to the remote (no commits to push right now)." = "Pusht de huidige branch naar de remote (er zijn nu geen commits om te pushen).";
 "Pushes the current branch to the remote for the first time and sets up tracking." = "Pusht de huidige branch voor het eerst naar de remote en stelt tracking in.";
@@ -868,7 +852,6 @@
 "Remove this variable" = "Deze variabele verwijderen";
 "Remove worktree '%@'?" = "Worktree '%1$@' verwijderen?";
 "Remove worktree…" = "Worktree verwijderen…";
-"Remove…" = "Verwijderen…";
 "Removing worktree…" = "Worktree wordt verwijderd…";
 "Renamed" = "Hernoemd";
 "Renamed  %@ → %@" = "Hernoemd  %1$@ → %2$@";
@@ -904,7 +887,6 @@
 "Run" = "Uitvoeren";
 "Run %@ after creating" = "%1$@ starten na het maken";
 "Run again" = "Opnieuw uitvoeren";
-"Run agent (%@)" = "Agent starten (%1$@)";
 "Run an agent in a worktree" = "Een agent starten in een worktree";
 "Run doctor in Terminal" = "doctor uitvoeren in Terminal";
 "Run manual job" = "Handmatige job uitvoeren";
@@ -939,6 +921,7 @@
 "Shell opened in the terminal panel below (zsh, bash, fish, etc.)" = "Shell die in het terminalpaneel onderaan wordt geopend (zsh, bash, fish, enz.)";
 "Show all" = "Alles tonen";
 "Show all %lld hidden branches" = "Alle verborgen branches tonen (%1$lld)";
+"Show all %lld hidden branches and tags" = "Alle verborgen branches en tags tonen (%1$lld)";
 "Show all branches" = "Alle branches tonen";
 "Show as folder tree" = "Als mappenstructuur tonen";
 "Show as list" = "Als lijst tonen";
@@ -953,7 +936,6 @@
 "Show this commit in the graph" = "Deze commit tonen in de graaf";
 "Show uncommitted changes" = "Niet-gecommitte wijzigingen tonen";
 "Side by side" = "Naast elkaar";
-"Side by side (old on the left · new on the right)" = "Naast elkaar (oud links · nieuw rechts)";
 "Skip this version" = "Deze versie overslaan";
 "Skipped" = "Overgeslagen";
 "Soft — keep changes staged" = "Soft — wijzigingen gestaged houden";
@@ -968,7 +950,6 @@
 "Stage selected lines (%lld)" = "Geselecteerde regels stagen (%1$lld)";
 "Staged" = "Gestaged";
 "Staged and unstaged changes and untracked new files will all be lost. This can't be undone." = "Gestagede en niet-gestagede wijzigingen en nieuwe niet-bijgehouden bestanden gaan allemaal verloren. Dit kan niet ongedaan worden gemaakt.";
-"Staged files" = "Gestagede bestanden";
 "Stages only the selected lines" = "Alleen de geselecteerde regels stagen";
 "Stages only this hunk (click changed lines to stage only those)" = "Alleen deze hunk stagen (klik op gewijzigde regels om alleen die te stagen)";
 "Staging…" = "Bezig met stagen…";
@@ -986,7 +967,6 @@
 "Subject line only, no body" = "Alleen een onderwerpregel, geen berichttekst";
 "Subject within 50 characters" = "Onderwerp van maximaal 50 tekens";
 "Succeeded" = "Geslaagd";
-"Summary (required)" = "Samenvatting (verplicht)";
 "Syncs the current branch with the remote (no commits to pull right now)." = "Synchroniseert de huidige branch met de remote (er zijn nu geen commits om te pullen).";
 "System" = "Systeem";
 "System follows your macOS setting (light, dark or auto). The graph and terminal change with it." = "Systeem volgt je macOS-instelling (licht, donker of automatisch). De graaf en de terminal passen zich daaraan aan.";
@@ -995,7 +975,6 @@
 "Task for the agent (optional)" = "Taak voor de agent (optioneel)";
 "Technical tone" = "Technische toon";
 "Tells you when a new version is available; click to download, replace and restart. A downloaded file is installed only if its SHA-256 and signature match the release." = "Laat weten wanneer er een nieuwe versie is; klik om te downloaden, te vervangen en opnieuw te starten. Een gedownload bestand wordt alleen geïnstalleerd als de SHA-256 en de handtekening overeenkomen met de release.";
-"Temporary" = "Tijdelijk";
 "Terminal shell" = "Terminalshell";
 "Test connection" = "Verbinding testen";
 "That backup no longer exists." = "Die back-up bestaat niet meer.";
@@ -1065,7 +1044,6 @@
 "Unstage all" = "Alles unstagen";
 "Unstage hunk" = "Hunk unstagen";
 "Unstage selected lines (%lld)" = "Geselecteerde regels unstagen (%1$lld)";
-"Unstaged files" = "Niet-gestagede bestanden";
 "Unstages only the selected lines" = "Alleen de geselecteerde regels unstagen";
 "Unstages this hunk" = "Deze hunk unstagen";
 "Unstaging…" = "Bezig met unstagen…";
@@ -1095,7 +1073,6 @@
 "Waiting for deployment approval: %@" = "Wacht op goedkeuring van deployment: %1$@";
 "Waiting for input" = "Wacht op invoer";
 "Waiting to be run manually" = "Wacht op handmatige uitvoering";
-"Warning" = "Waarschuwing";
 "What to do with this commit" = "Wat te doen met deze commit";
 "What would you like to do?" = "Wat wil je doen?";
 "What would you like to do? If there are conflicts, you can resolve them on the right." = "Wat wil je doen? Als er conflicten zijn, kun je die rechts oplossen.";
@@ -1104,7 +1081,6 @@
 "Whole file" = "Hele bestand";
 "Working directory is clean" = "Werkmap is schoon";
 "Working tree" = "Werkmap";
-"Worktree in a temporary folder — it may break when the folder is deleted on restart" = "Worktree in een tijdelijke map — kan stukgaan als de map bij een herstart wordt verwijderd";
 "Worktree whose folder is gone — remove it with 'Clean up'" = "Worktree waarvan de map verdwenen is — verwijder hem met 'Opschonen'";
 "Write commit message with AI" = "Commitbericht schrijven met AI";
 "Write in English" = "Schrijf in het Engels";
@@ -1128,9 +1104,6 @@
 "git %@ failed" = "git %1$@ mislukt";
 "git refuses to delete a branch with unmerged commits. Use 'Force delete' in that case." = "git weigert een branch met niet-gemergede commits te verwijderen. Gebruik in dat geval 'Geforceerd verwijderen'.";
 "gitch backups" = "gitch-back-ups";
-"gitch checks before commit and push" = "gitch-controles vóór commit en push";
-"gitch commands for this repository" = "gitch-opdrachten voor deze repository";
-"gitch doesn't know which account this repository uses. Lock it with gitch use <account>." = "gitch weet niet welk account deze repository gebruikt. Vergrendel het met gitch use <account>.";
 "gitch found nothing to draw for %@." = "gitch heeft niets gevonden om te tekenen voor %1$@.";
 "gitch graph changes: files that are often committed together, and how often each one changes." = "gitch graph changes: bestanden die vaak samen gecommit worden, en hoe vaak elk bestand verandert.";
 "gitch graph check reads its rules from .gitch/graph.rules in this repository. Create the file with commented-out examples (gitch graph check --init) and open it?" = "gitch graph check leest de regels uit .gitch/graph.rules in deze repository. Het bestand met uitgecommentarieerde voorbeelden aanmaken (gitch graph check --init) en openen?";
@@ -1144,8 +1117,6 @@
 "gitch saves a backup before pull, up, sync, fix, undo and amend, and keeps the 30 most recent." = "gitch maakt een back-up vóór pull, up, sync, fix, undo en amend en bewaart de 30 nieuwste.";
 "gitch sets the commit author to %@ and points origin (and upstream) at %@'s SSH alias, then locks the repository to it." = "gitch stelt de commit-auteur in op %1$@, laat origin (en upstream) naar de SSH-alias van %2$@ wijzen en vergrendelt de repository daarna op dat account.";
 "gitch stops requiring %@ for commits and pushes here. The commit author stays as it is." = "gitch vereist hier niet langer %1$@ voor commits en pushes. De commit-auteur blijft ongewijzigd.";
-"gitch sync: brings this branch up to date with the original repository (upstream)." = "gitch sync: brengt deze branch bij met de oorspronkelijke repository (upstream).";
-"gitch up: moves this branch onto the latest default branch, or merges it if the branch is already pushed. A backup is saved first." = "gitch up: zet deze branch op de nieuwste standaardbranch, of voegt hem samen als hij al gepusht is. Eerst wordt een back-up gemaakt.";
 "gitch won't check authors, secrets or pushes in this repository until you turn it back on." = "gitch controleert in deze repository geen auteurs, geheimen of pushes meer totdat je het weer aanzet.";
 "… The diff is too long; only the beginning is shown" = "… De diff is te lang; alleen het begin wordt getoond";
 "… show %lld more lines" = "… nog %1$lld regel(s) tonen";
@@ -1258,6 +1229,8 @@
 "Search filters loaded pages. Load more to search older items." = "Zoeken filtert de geladen pagina's. Laad meer om oudere items te doorzoeken.";
 "Compare with the current branch" = "Vergelijken met de huidige branch";
 "Filter branches and tags" = "Branches en tags filteren";
+"Filter branches" = "Branches filteren";
+"No branch or tag name contains “%@”." = "Geen branch- of tagnaam bevat “%@”.";
 "Comparing…" = "Vergelijken…";
 "Use branches, tags or commit IDs, or pick a branch on the left." = "Gebruik branches, tags of commit-ID's, of kies links een branch.";
 "Clear search" = "Zoekopdracht wissen";
@@ -1266,12 +1239,9 @@
 "Search merge requests" = "Merge requests zoeken";
 "No pull requests match this filter." = "Geen pull requests voldoen aan dit filter.";
 "No merge requests match this filter." = "Geen merge requests voldoen aan dit filter.";
-"No issues match this filter." = "Geen issues voldoen aan dit filter.";
 "Open in Pull requests" = "Openen in Pull requests";
-"Open in Merge requests" = "Openen in Merge requests";
 "Open in Issues" = "Openen in Issues";
 "Merge request" = "Merge request";
-"Issues %lld" = "Issues %1$lld";
 "Edit issue #%lld" = "Issue #%1$lld bewerken";
 "State" = "Status";
 "Refresh conversation" = "Gesprek vernieuwen";
@@ -1286,7 +1256,6 @@
 "Icons only" = "Alleen symbolen";
 "Icons and text" = "Symbolen en tekst";
 "With text, each button's name sits to the right of its icon." = "Met tekst staat de naam van elke knop rechts van het symbool.";
-"Filtered: %@" = "Gefilterd: %1$@";
 "Clear filter" = "Filter wissen";
 "Close search (Esc)" = "Zoeken sluiten (Esc)";
 "Close search" = "Zoeken sluiten";
@@ -2210,6 +2179,18 @@
 "Saved sign-in can't be read" = "Opgeslagen aanmelding kan niet worden gelezen";
 "Couldn't use the saved sign-in" = "Opgeslagen aanmelding kon niet worden gebruikt";
 "Refresh account status" = "Accountstatus vernieuwen";
+"Tag…" = "Tag…";
+"Explain with AI…" = "Uitleggen met AI…";
+"Copy commit SHA" = "Commit-SHA kopiëren";
+"Parent" = "Bovenliggend";
+"Parents" = "Bovenliggend";
+"Closes" = "Sluit";
+"Fixes" = "Verhelpt";
+"Resolves" = "Lost op";
+"Co-author" = "Co-auteur";
+"Trailers" = "Trailers";
+"Couldn't explain this commit" = "Kan deze commit niet uitleggen";
+"More commit actions" = "Meer commitacties";
 "Needs you" = "Wacht op jou";
 "Respond" = "Reageren";
 "Elsewhere" = "Elders";
@@ -2218,3 +2199,22 @@
 "Unstage line" = "Regel unstagen";
 "Hide changes and show the graph" = "Wijzigingen verbergen en graaf tonen";
 "Sessions started here run in the terminal tabs below; click one to go to its terminal." = "Sessies die hier worden gestart, draaien in de terminaltabbladen onderaan; klik op een sessie om naar de bijbehorende terminal te gaan.";
+"Unstaged" = "Niet gestaged";
+"Untracked" = "Niet bijgehouden";
+"Summary" = "Samenvatting";
+"Too large" = "Te groot";
+"copied from %@" = "gekopieerd van %@";
+"Commit 1 file" = "1 bestand committen";
+"Commit %lld files" = "%lld bestanden committen";
+"Couldn't write the commit message" = "Kan het commitbericht niet schrijven";
+"gitch stopped this commit. Run gitch doctor in the terminal." = "gitch heeft deze commit tegengehouden. Voer gitch doctor uit in de terminal.";
+"Amend previous commit" = "Vorige commit aanpassen";
+"Split into commits…" = "Opsplitsen in commits…";
+"AI message" = "AI-bericht";
+"Commit summary" = "Commitsamenvatting";
+"Commit description" = "Commitbeschrijving";
+"Summary character count" = "Aantal tekens van samenvatting";
+"Resolve conflicts before committing." = "Los de conflicten op voordat je commit.";
+"Stage the files you want to include." = "Stage de bestanden die je wilt opnemen.";
+"Write a summary to enable commit." = "Schrijf een samenvatting om te kunnen committen.";
+"Conflicted" = "Conflict";
