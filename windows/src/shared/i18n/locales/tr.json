@@ -2268,5 +2268,16 @@
   "Resolve conflicts before committing.": "Commit etmeden önce çakışmaları çözün.",
   "Stage the files you want to include.": "Eklemek istediğiniz dosyaları hazırlayın.",
   "Write a summary to enable commit.": "Commit için bir özet yazın.",
-  "Conflicted": "Çakışmalı"
+  "Conflicted": "Çakışmalı",
+  "Latest on {0}": "{0} üzerindeki en son commit",
+  "Workflow run": "İş akışı çalıştırması",
+  "Reading the jobs…": "İşler okunuyor…",
+  "This pipeline has no jobs.": "Bu pipeline’da iş yok.",
+  "Presses this job in the pipeline of {0} on {1}.": "Bu işi {1} üzerindeki {0} pipeline’ında başlatır.",
+  "Runs this job again in the pipeline of {0} on {1}.": "Bu işi {1} üzerindeki {0} pipeline’ında yeniden çalıştırır.",
+  "Re-runs this run of {0} on {1} with its original inputs.": "{1} üzerindeki {0} çalıştırmasını özgün girdileriyle yeniden çalıştırır.",
+  "The job '{0}' is no longer in this pipeline.": "'{0}' işi artık bu pipeline’da yok.",
+  "This job is already running.": "Bu iş zaten çalışıyor.",
+  "This job can't be started now.": "Bu iş şu anda başlatılamaz.",
+  "This run is still running.": "Bu çalıştırma hâlâ sürüyor."
 }

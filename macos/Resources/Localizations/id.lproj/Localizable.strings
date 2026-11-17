@@ -2221,3 +2221,14 @@
 "Stage the files you want to include." = "Stage file yang ingin disertakan.";
 "Write a summary to enable commit." = "Tulis ringkasan untuk dapat commit.";
 "Conflicted" = "Berkonflik";
+"Latest on %@" = "Commit terbaru di %@";
+"Workflow run" = "Run workflow";
+"Reading the jobs…" = "Membaca job…";
+"This pipeline has no jobs." = "Pipeline ini tidak punya job.";
+"Presses this job in the pipeline of %@ on %@." = "Menjalankan job ini di pipeline %1$@ pada %2$@.";
+"Runs this job again in the pipeline of %@ on %@." = "Menjalankan ulang job ini di pipeline %1$@ pada %2$@.";
+"Re-runs this run of %@ on %@ with its original inputs." = "Menjalankan ulang run %1$@ pada %2$@ ini dengan input aslinya.";
+"The job '%@' is no longer in this pipeline." = "Job '%@' sudah tidak ada di pipeline ini.";
+"This job is already running." = "Job ini sudah berjalan.";
+"This job can't be started now." = "Job ini tidak bisa dimulai sekarang.";
+"This run is still running." = "Run ini masih berjalan.";

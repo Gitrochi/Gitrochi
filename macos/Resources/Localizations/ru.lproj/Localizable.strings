@@ -2263,3 +2263,14 @@
 "Stage the files you want to include." = "Добавьте в индекс файлы, которые нужно включить.";
 "Write a summary to enable commit." = "Введите краткое описание, чтобы сделать коммит.";
 "Conflicted" = "Конфликт";
+"Latest on %@" = "Последний коммит в %@";
+"Workflow run" = "Запуск рабочего процесса";
+"Reading the jobs…" = "Чтение заданий…";
+"This pipeline has no jobs." = "В этом конвейере нет заданий.";
+"Presses this job in the pipeline of %@ on %@." = "Запускает это задание в конвейере %1$@ в %2$@.";
+"Runs this job again in the pipeline of %@ on %@." = "Перезапускает это задание в конвейере %1$@ в %2$@.";
+"Re-runs this run of %@ on %@ with its original inputs." = "Перезапускает этот запуск %1$@ в %2$@ с исходными входными данными.";
+"The job '%@' is no longer in this pipeline." = "Задания «%@» больше нет в этом конвейере.";
+"This job is already running." = "Это задание уже выполняется.";
+"This job can't be started now." = "Сейчас это задание нельзя запустить.";
+"This run is still running." = "Этот запуск ещё выполняется.";

@@ -3975,5 +3975,16 @@
   "Summary character count": "요약 글자 수",
   "AI message": "AI로 작성",
   "Amend previous commit": "이전 커밋 수정",
-  "Split into commits…": "나눠서 커밋…"
+  "Split into commits…": "나눠서 커밋…",
+  "Latest on {0}": "{0}의 최신 커밋",
+  "Workflow run": "워크플로 실행",
+  "Reading the jobs…": "작업을 읽는 중…",
+  "This pipeline has no jobs.": "이 파이프라인에는 작업이 없습니다.",
+  "Presses this job in the pipeline of {0} on {1}.": "{1}의 {0} 파이프라인에서 이 작업을 실행합니다.",
+  "Runs this job again in the pipeline of {0} on {1}.": "{1}의 {0} 파이프라인에서 이 작업을 다시 실행합니다.",
+  "Re-runs this run of {0} on {1} with its original inputs.": "{1}의 {0} 실행을 원래 입력값으로 다시 실행합니다.",
+  "The job '{0}' is no longer in this pipeline.": "'{0}' 작업이 이 파이프라인에 더 이상 없습니다.",
+  "This job is already running.": "이 작업은 이미 실행 중입니다.",
+  "This job can't be started now.": "지금은 이 작업을 시작할 수 없습니다.",
+  "This run is still running.": "이 실행은 아직 진행 중입니다."
 }

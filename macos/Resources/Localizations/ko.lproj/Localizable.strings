@@ -3997,3 +3997,14 @@
 "gitch stopped this commit. Run gitch doctor in the terminal." = "gitch가 이 커밋을 막았습니다. 터미널에서 gitch doctor를 실행하세요.";
 "Amend previous commit" = "이전 커밋 수정";
 "Split into commits…" = "나눠서 커밋…";
+"Latest on %@" = "%@의 최신 커밋";
+"Workflow run" = "워크플로 실행";
+"Reading the jobs…" = "작업을 읽는 중…";
+"This pipeline has no jobs." = "이 파이프라인에는 작업이 없습니다.";
+"Presses this job in the pipeline of %@ on %@." = "%2$@의 %1$@ 파이프라인에서 이 작업을 실행합니다.";
+"Runs this job again in the pipeline of %@ on %@." = "%2$@의 %1$@ 파이프라인에서 이 작업을 다시 실행합니다.";
+"Re-runs this run of %@ on %@ with its original inputs." = "%2$@의 %1$@ 실행을 원래 입력값으로 다시 실행합니다.";
+"The job '%@' is no longer in this pipeline." = "'%@' 작업이 이 파이프라인에 더 이상 없습니다.";
+"This job is already running." = "이 작업은 이미 실행 중입니다.";
+"This job can't be started now." = "지금은 이 작업을 시작할 수 없습니다.";
+"This run is still running." = "이 실행은 아직 진행 중입니다.";

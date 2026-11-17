@@ -2249,3 +2249,14 @@
 "Stage the files you want to include." = "Készítse elő a belefoglalandó fájlokat.";
 "Write a summary to enable commit." = "Írjon összefoglalót a commitoláshoz.";
 "Conflicted" = "Ütköző";
+"Latest on %@" = "Legújabb commit itt: %@";
+"Workflow run" = "Workflow-futás";
+"Reading the jobs…" = "Feladatok beolvasása…";
+"This pipeline has no jobs." = "Ebben a pipeline-ban nincsenek feladatok.";
+"Presses this job in the pipeline of %@ on %@." = "Elindítja ezt a feladatot a(z) %1$@ pipeline-jában itt: %2$@.";
+"Runs this job again in the pipeline of %@ on %@." = "Újra lefuttatja ezt a feladatot a(z) %1$@ pipeline-jában itt: %2$@.";
+"Re-runs this run of %@ on %@ with its original inputs." = "Újra lefuttatja a(z) %1$@ futását itt: %2$@, az eredeti bemenetekkel.";
+"The job '%@' is no longer in this pipeline." = "A(z) „%@” feladat már nincs ebben a pipeline-ban.";
+"This job is already running." = "Ez a feladat már fut.";
+"This job can't be started now." = "Ez a feladat most nem indítható.";
+"This run is still running." = "Ez a futás még tart.";

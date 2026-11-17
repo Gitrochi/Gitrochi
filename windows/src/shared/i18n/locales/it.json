@@ -2259,5 +2259,16 @@
   "Resolve conflicts before committing.": "Risolvi i conflitti prima del commit.",
   "Stage the files you want to include.": "Metti in stage i file da includere.",
   "Write a summary to enable commit.": "Scrivi un riepilogo per poter fare il commit.",
-  "Conflicted": "In conflitto"
+  "Conflicted": "In conflitto",
+  "Latest on {0}": "Ultimo commit su {0}",
+  "Workflow run": "Esecuzione del workflow",
+  "Reading the jobs…": "Lettura dei job…",
+  "This pipeline has no jobs.": "Questa pipeline non ha job.",
+  "Presses this job in the pipeline of {0} on {1}.": "Avvia questo job nella pipeline di {0} su {1}.",
+  "Runs this job again in the pipeline of {0} on {1}.": "Riesegue questo job nella pipeline di {0} su {1}.",
+  "Re-runs this run of {0} on {1} with its original inputs.": "Riesegue questa esecuzione di {0} su {1} con i suoi input originali.",
+  "The job '{0}' is no longer in this pipeline.": "Il job '{0}' non è più in questa pipeline.",
+  "This job is already running.": "Questo job è già in esecuzione.",
+  "This job can't be started now.": "Questo job non può essere avviato ora.",
+  "This run is still running.": "Questa esecuzione è ancora in corso."
 }

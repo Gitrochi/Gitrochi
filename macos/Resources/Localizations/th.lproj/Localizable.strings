@@ -2258,3 +2258,14 @@
 "Stage the files you want to include." = "สเตจไฟล์ที่ต้องการรวม";
 "Write a summary to enable commit." = "เขียนสรุปเพื่อให้คอมมิตได้";
 "Conflicted" = "ขัดแย้ง";
+"Latest on %@" = "คอมมิตล่าสุดบน %@";
+"Workflow run" = "การรันเวิร์กโฟลว์";
+"Reading the jobs…" = "กำลังอ่านงาน…";
+"This pipeline has no jobs." = "ไปป์ไลน์นี้ไม่มีงาน";
+"Presses this job in the pipeline of %@ on %@." = "เริ่มงานนี้ในไปป์ไลน์ของ %1$@ บน %2$@";
+"Runs this job again in the pipeline of %@ on %@." = "รันงานนี้อีกครั้งในไปป์ไลน์ของ %1$@ บน %2$@";
+"Re-runs this run of %@ on %@ with its original inputs." = "รันการรันนี้ของ %1$@ บน %2$@ อีกครั้งด้วยอินพุตเดิม";
+"The job '%@' is no longer in this pipeline." = "งาน '%@' ไม่อยู่ในไปป์ไลน์นี้แล้ว";
+"This job is already running." = "งานนี้กำลังรันอยู่แล้ว";
+"This job can't be started now." = "ยังเริ่มงานนี้ไม่ได้ในตอนนี้";
+"This run is still running." = "การรันนี้ยังดำเนินอยู่";

@@ -2225,3 +2225,14 @@
 "Stage the files you want to include." = "Hãy stage các tệp bạn muốn đưa vào.";
 "Write a summary to enable commit." = "Hãy viết tóm tắt để có thể commit.";
 "Conflicted" = "Xung đột";
+"Latest on %@" = "Commit mới nhất trên %@";
+"Workflow run" = "Lượt chạy workflow";
+"Reading the jobs…" = "Đang đọc các job…";
+"This pipeline has no jobs." = "Pipeline này không có job nào.";
+"Presses this job in the pipeline of %@ on %@." = "Chạy job này trong pipeline của %1$@ trên %2$@.";
+"Runs this job again in the pipeline of %@ on %@." = "Chạy lại job này trong pipeline của %1$@ trên %2$@.";
+"Re-runs this run of %@ on %@ with its original inputs." = "Chạy lại lượt chạy này của %1$@ trên %2$@ với đầu vào ban đầu.";
+"The job '%@' is no longer in this pipeline." = "Job '%@' không còn trong pipeline này.";
+"This job is already running." = "Job này đang chạy.";
+"This job can't be started now." = "Hiện không thể bắt đầu job này.";
+"This run is still running." = "Lượt chạy này vẫn đang diễn ra.";

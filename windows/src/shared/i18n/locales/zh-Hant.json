@@ -2285,5 +2285,16 @@
   "Resolve conflicts before committing.": "提交前請先解決衝突。",
   "Stage the files you want to include.": "請暫存要包含的檔案。",
   "Write a summary to enable commit.": "填寫摘要後即可提交。",
-  "Conflicted": "衝突"
+  "Conflicted": "衝突",
+  "Latest on {0}": "{0} 上的最新提交",
+  "Workflow run": "工作流程執行",
+  "Reading the jobs…": "正在讀取作業…",
+  "This pipeline has no jobs.": "此管線沒有作業。",
+  "Presses this job in the pipeline of {0} on {1}.": "在 {1} 上 {0} 的管線中執行此作業。",
+  "Runs this job again in the pipeline of {0} on {1}.": "在 {1} 上 {0} 的管線中重新執行此作業。",
+  "Re-runs this run of {0} on {1} with its original inputs.": "以原始輸入重新執行 {1} 上 {0} 的這次執行。",
+  "The job '{0}' is no longer in this pipeline.": "作業「{0}」已不在此管線中。",
+  "This job is already running.": "此作業已在執行。",
+  "This job can't be started now.": "現在無法啟動此作業。",
+  "This run is still running.": "此執行仍在進行中。"
 }

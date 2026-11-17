@@ -2276,5 +2276,16 @@
   "Resolve conflicts before committing.": "แก้ความขัดแย้งก่อนคอมมิต",
   "Stage the files you want to include.": "สเตจไฟล์ที่ต้องการรวม",
   "Write a summary to enable commit.": "เขียนสรุปเพื่อให้คอมมิตได้",
-  "Conflicted": "ขัดแย้ง"
+  "Conflicted": "ขัดแย้ง",
+  "Latest on {0}": "คอมมิตล่าสุดบน {0}",
+  "Workflow run": "การรันเวิร์กโฟลว์",
+  "Reading the jobs…": "กำลังอ่านงาน…",
+  "This pipeline has no jobs.": "ไปป์ไลน์นี้ไม่มีงาน",
+  "Presses this job in the pipeline of {0} on {1}.": "เริ่มงานนี้ในไปป์ไลน์ของ {0} บน {1}",
+  "Runs this job again in the pipeline of {0} on {1}.": "รันงานนี้อีกครั้งในไปป์ไลน์ของ {0} บน {1}",
+  "Re-runs this run of {0} on {1} with its original inputs.": "รันการรันนี้ของ {0} บน {1} อีกครั้งด้วยอินพุตเดิม",
+  "The job '{0}' is no longer in this pipeline.": "งาน '{0}' ไม่อยู่ในไปป์ไลน์นี้แล้ว",
+  "This job is already running.": "งานนี้กำลังรันอยู่แล้ว",
+  "This job can't be started now.": "ยังเริ่มงานนี้ไม่ได้ในตอนนี้",
+  "This run is still running.": "การรันนี้ยังดำเนินอยู่"
 }

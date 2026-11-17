@@ -2280,5 +2280,16 @@
   "Resolve conflicts before committing.": "Розв’яжіть конфлікти перед комітом.",
   "Stage the files you want to include.": "Додайте до індексу файли, які треба включити.",
   "Write a summary to enable commit.": "Напишіть короткий опис, щоб зробити коміт.",
-  "Conflicted": "Конфлікт"
+  "Conflicted": "Конфлікт",
+  "Latest on {0}": "Останній коміт у {0}",
+  "Workflow run": "Запуск робочого процесу",
+  "Reading the jobs…": "Читання завдань…",
+  "This pipeline has no jobs.": "У цьому конвеєрі немає завдань.",
+  "Presses this job in the pipeline of {0} on {1}.": "Запускає це завдання в конвеєрі {0} у {1}.",
+  "Runs this job again in the pipeline of {0} on {1}.": "Перезапускає це завдання в конвеєрі {0} у {1}.",
+  "Re-runs this run of {0} on {1} with its original inputs.": "Перезапускає цей запуск {0} у {1} з початковими вхідними даними.",
+  "The job '{0}' is no longer in this pipeline.": "Завдання «{0}» більше немає в цьому конвеєрі.",
+  "This job is already running.": "Це завдання вже виконується.",
+  "This job can't be started now.": "Зараз це завдання не можна запустити.",
+  "This run is still running.": "Цей запуск ще триває."
 }

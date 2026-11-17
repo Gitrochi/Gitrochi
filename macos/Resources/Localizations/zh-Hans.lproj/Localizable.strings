@@ -2406,3 +2406,14 @@
 "Stage the files you want to include." = "请暂存要包含的文件。";
 "Write a summary to enable commit." = "填写摘要后即可提交。";
 "Conflicted" = "冲突";
+"Latest on %@" = "%@ 上的最新提交";
+"Workflow run" = "工作流运行";
+"Reading the jobs…" = "正在读取作业…";
+"This pipeline has no jobs." = "此流水线没有作业。";
+"Presses this job in the pipeline of %@ on %@." = "在 %2$@ 上 %1$@ 的流水线中运行此作业。";
+"Runs this job again in the pipeline of %@ on %@." = "在 %2$@ 上 %1$@ 的流水线中重新运行此作业。";
+"Re-runs this run of %@ on %@ with its original inputs." = "以原始输入重新运行 %2$@ 上 %1$@ 的这次运行。";
+"The job '%@' is no longer in this pipeline." = "作业“%@”已不在此流水线中。";
+"This job is already running." = "此作业已在运行。";
+"This job can't be started now." = "现在无法启动此作业。";
+"This run is still running." = "此运行仍在进行中。";

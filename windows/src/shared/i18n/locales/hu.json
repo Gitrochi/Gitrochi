@@ -2265,5 +2265,16 @@
   "Resolve conflicts before committing.": "Commitolás előtt oldja fel az ütközéseket.",
   "Stage the files you want to include.": "Készítse elő a belefoglalandó fájlokat.",
   "Write a summary to enable commit.": "Írjon összefoglalót a commitoláshoz.",
-  "Conflicted": "Ütköző"
+  "Conflicted": "Ütköző",
+  "Latest on {0}": "Legújabb commit itt: {0}",
+  "Workflow run": "Workflow-futás",
+  "Reading the jobs…": "Feladatok beolvasása…",
+  "This pipeline has no jobs.": "Ebben a pipeline-ban nincsenek feladatok.",
+  "Presses this job in the pipeline of {0} on {1}.": "Elindítja ezt a feladatot a(z) {0} pipeline-jában itt: {1}.",
+  "Runs this job again in the pipeline of {0} on {1}.": "Újra lefuttatja ezt a feladatot a(z) {0} pipeline-jában itt: {1}.",
+  "Re-runs this run of {0} on {1} with its original inputs.": "Újra lefuttatja a(z) {0} futását itt: {1}, az eredeti bemenetekkel.",
+  "The job '{0}' is no longer in this pipeline.": "A(z) „{0}” feladat már nincs ebben a pipeline-ban.",
+  "This job is already running.": "Ez a feladat már fut.",
+  "This job can't be started now.": "Ez a feladat most nem indítható.",
+  "This run is still running.": "Ez a futás még tart."
 }

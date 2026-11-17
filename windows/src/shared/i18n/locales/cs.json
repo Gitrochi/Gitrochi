@@ -2263,5 +2263,16 @@
   "Resolve conflicts before committing.": "Před commitem vyřešte konflikty.",
   "Stage the files you want to include.": "Připravte soubory, které chcete zahrnout.",
   "Write a summary to enable commit.": "Napište shrnutí a commit bude možný.",
-  "Conflicted": "V konfliktu"
+  "Conflicted": "V konfliktu",
+  "Latest on {0}": "Nejnovější commit na {0}",
+  "Workflow run": "Běh workflow",
+  "Reading the jobs…": "Načítání úloh…",
+  "This pipeline has no jobs.": "Tato pipeline nemá žádné úlohy.",
+  "Presses this job in the pipeline of {0} on {1}.": "Spustí tuto úlohu v pipeline {0} na {1}.",
+  "Runs this job again in the pipeline of {0} on {1}.": "Spustí tuto úlohu znovu v pipeline {0} na {1}.",
+  "Re-runs this run of {0} on {1} with its original inputs.": "Spustí znovu tento běh {0} na {1} s původními vstupy.",
+  "The job '{0}' is no longer in this pipeline.": "Úloha „{0}“ už v této pipeline není.",
+  "This job is already running.": "Tato úloha už běží.",
+  "This job can't be started now.": "Tuto úlohu teď nelze spustit.",
+  "This run is still running.": "Tento běh stále probíhá."
 }

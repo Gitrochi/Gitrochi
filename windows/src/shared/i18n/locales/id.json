@@ -2236,5 +2236,16 @@
   "Resolve conflicts before committing.": "Selesaikan konflik sebelum commit.",
   "Stage the files you want to include.": "Stage file yang ingin disertakan.",
   "Write a summary to enable commit.": "Tulis ringkasan untuk dapat commit.",
-  "Conflicted": "Berkonflik"
+  "Conflicted": "Berkonflik",
+  "Latest on {0}": "Commit terbaru di {0}",
+  "Workflow run": "Run workflow",
+  "Reading the jobs…": "Membaca job…",
+  "This pipeline has no jobs.": "Pipeline ini tidak punya job.",
+  "Presses this job in the pipeline of {0} on {1}.": "Menjalankan job ini di pipeline {0} pada {1}.",
+  "Runs this job again in the pipeline of {0} on {1}.": "Menjalankan ulang job ini di pipeline {0} pada {1}.",
+  "Re-runs this run of {0} on {1} with its original inputs.": "Menjalankan ulang run {0} pada {1} ini dengan input aslinya.",
+  "The job '{0}' is no longer in this pipeline.": "Job '{0}' sudah tidak ada di pipeline ini.",
+  "This job is already running.": "Job ini sudah berjalan.",
+  "This job can't be started now.": "Job ini tidak bisa dimulai sekarang.",
+  "This run is still running.": "Run ini masih berjalan."
 }

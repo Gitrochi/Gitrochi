@@ -2237,5 +2237,16 @@
   "Resolve conflicts before committing.": "Los de conflicten op voordat je commit.",
   "Stage the files you want to include.": "Stage de bestanden die je wilt opnemen.",
   "Write a summary to enable commit.": "Schrijf een samenvatting om te kunnen committen.",
-  "Conflicted": "Conflict"
+  "Conflicted": "Conflict",
+  "Latest on {0}": "Nieuwste commit op {0}",
+  "Workflow run": "Workflow-run",
+  "Reading the jobs…": "Jobs lezen…",
+  "This pipeline has no jobs.": "Deze pipeline heeft geen jobs.",
+  "Presses this job in the pipeline of {0} on {1}.": "Start deze job in de pipeline van {0} op {1}.",
+  "Runs this job again in the pipeline of {0} on {1}.": "Voert deze job opnieuw uit in de pipeline van {0} op {1}.",
+  "Re-runs this run of {0} on {1} with its original inputs.": "Voert deze run van {0} op {1} opnieuw uit met de oorspronkelijke invoer.",
+  "The job '{0}' is no longer in this pipeline.": "De job '{0}' staat niet meer in deze pipeline.",
+  "This job is already running.": "Deze job draait al.",
+  "This job can't be started now.": "Deze job kan nu niet worden gestart.",
+  "This run is still running.": "Deze run is nog bezig."
 }
