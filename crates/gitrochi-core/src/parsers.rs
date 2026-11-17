@@ -53,7 +53,7 @@ pub fn log(text: &str) -> Value {
     )
 }
 
-pub fn detail(text: &str) -> Value {
+pub fn detail(text: &str, issue_base: &str) -> Value {
     let f: Vec<_> = text.split('\u{1f}').collect();
     if f.len() < 9 {
         return Value::Null;
@@ -61,7 +61,10 @@ pub fn detail(text: &str) -> Value {
     let message = f[8..].join("\u{1f}");
     let message = message.trim();
     let (summary, body) = message.split_once('\n').unwrap_or((message, ""));
-    json!({"sha":f[0],"parents":words(f[1]),"author":f[2],"email":f[3],"date":number(f[4]),"committer":f[5],"committerEmail":f[6],"commitDate":number(f[7]),"summary":summary,"body":body.trim()})
+    let body = body.trim();
+    // `body` stays whole for menus and copying; `prose` is what the inspector reads above the trailer rows
+    let (trailers, prose) = crate::trailers::parse(body, issue_base);
+    json!({"sha":f[0],"parents":words(f[1]),"author":f[2],"email":f[3],"date":number(f[4]),"committer":f[5],"committerEmail":f[6],"commitDate":number(f[7]),"summary":summary,"body":body,"prose":prose,"trailers":trailers})
 }
 
 pub fn track(text: &str) -> Value {

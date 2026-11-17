@@ -141,10 +141,11 @@ struct WorkspaceCommandPalette: View {
         let pages = WorkspaceDestination.shown
         let shortcuts: [WorkspaceDestination: String] = [.home: "0", .repository: "2", .compare: "3", .pullRequests: "4", .actions: "5", .flows: "6"]
         var result = pages.map { page in
-            WorkspaceCommand(id: "view-\(page.rawValue)", title: page.title(gitlab: store.target?.provider == .gitlab),
-                             subtitle: page == .repository ? store.name : "", icon: page.symbol,
-                             group: go, shortcut: shortcuts[page].map { "⌘" + $0 } ?? "",
-                             enabled: true) { store.navigate(page) }
+            let open = page.isAvailable(hasRepository: store.url != nil)
+            return WorkspaceCommand(id: "view-\(page.rawValue)", title: page.title(gitlab: store.target?.provider == .gitlab),
+                                    subtitle: !open ? String(localized: "Open a repository to use this page.") : page == .repository ? store.name : "",
+                                    icon: page.symbol, group: go, shortcut: shortcuts[page].map { "⌘" + $0 } ?? "",
+                                    enabled: open) { store.navigate(page) }
         }
         let available = store.url != nil && store.busy == nil
         let waiting = String(localized: "Wait for the current operation to finish.")

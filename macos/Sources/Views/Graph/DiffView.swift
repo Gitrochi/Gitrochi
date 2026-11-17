@@ -11,37 +11,31 @@ struct DiffView: View {
     /// false where the diff is too narrow for two columns: it renders unified and the stored preference stays
     var splitAllowed = true
 
+    @AppStorage(fileViewModeKey) private var fileViewMode = "list"
+    @ViewState private var keys = FileKeys()
+
     var body: some View {
         let change = source.change
         let _ = store.diffSettingsVersion
-        if chrome { framed(change) } else { content.frame(maxWidth: .infinity, maxHeight: .infinity) }
+        if chrome {
+            framed(change)
+                // J and K step through the files the diff was opened from, as the header's buttons say
+                .onAppear { keys.start { step($0 ? 1 : -1) } }
+                .onChange(of: source) { keys.start { step($0 ? 1 : -1) } }
+                .onDisappear { keys.stop() }
+        } else {
+            content.frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
     }
 
     private func framed(_ change: FileChange) -> some View {
         VStack(spacing: 0) {
-            HStack(spacing: 8) {
-                GraphBackButton(title: backLabel, help: isReview ? "Close diff (Esc)" : "Back to graph (Esc)") { store.closeDiff() }
-
-                StatusBadge(kind: change.kind)
-                VStack(alignment: .leading, spacing: 0) {
-                    Text(change.fileName).font(.headline).lineLimit(1)
-                    Text(subtitle).font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
-                }
-                Spacer()
+            DiffHeader(back: .init(title: backLabel, help: isReview ? "Close diff (Esc)" : "Back to graph (Esc)") { store.closeDiff() },
+                       kind: change.kind, path: change.path, help: subtitle, position: position,
+                       splitDisabledReason: splitAllowed ? nil : String(localized: "Split needs a diff at least 1000 px wide"),
+                       ask: .init(disabled: store.diffLoading || store.diff?.isBinary == true) { Task { await store.openChangeQuestion() } }) {
+                more(change)
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(.bar)
-            Divider()
-            WorkbenchFlow(spacing: 10) {
-                viewOptions
-                fileButtons(change)
-                questionButtons(change)
-                actions(change)
-            }
-            .controlSize(.small)
-            .padding(.horizontal, 12).padding(.vertical, 7)
-            .disabled(store.busy != nil)
             Divider()
 
             // 안내 화면(바이너리·빈 파일 등)도 남은 자리를 다 채워 머리줄이 가운데로 내려오지 않게
@@ -53,6 +47,34 @@ struct DiffView: View {
     private var backLabel: LocalizedStringKey {
         if case .review = source { return "Back to conversation" }
         return "Graph"
+    }
+
+    /// The files the open one was opened among, in the order their list draws them: the working changes (conflicts,
+    /// unstaged, staged) or the selected commit's files. Other diffs have no list beside them.
+    private var siblings: [DiffSource] {
+        let ordered: ([FileChange]) -> [FileChange] = { files in
+            fileViewMode == "tree" ? FileTree.rows(files, collapsed: []).compactMap { if case .file(let change) = $0.kind { return change } else { return nil } } : files
+        }
+        switch source {
+        case .working:
+            return (ordered(store.status.conflicted) + ordered(store.status.unstaged) + ordered(store.status.staged)).map { .working($0) }
+        case .commit(let sha, _, let parent):
+            return store.detail?.sha == sha ? ordered(store.detailFiles).map { .commit(sha: sha, change: $0, parent: parent) } : []
+        case .review, .worktree:
+            return []
+        }
+    }
+
+    private var position: CodeFilePosition? {
+        let files = siblings
+        guard let index = files.firstIndex(of: source) else { return nil }
+        return CodeFilePosition(index: index, count: files.count, step: step)
+    }
+
+    private func step(_ offset: Int) {
+        let files = siblings
+        guard let index = files.firstIndex(of: source), files.indices.contains(index + offset) else { return }
+        store.openDiff(files[index + offset])
     }
 
     @ViewBuilder
@@ -94,120 +116,45 @@ struct DiffView: View {
         }
     }
 
-    @ViewBuilder private func questionButtons(_ change: FileChange) -> some View {
-        if !isReview && !isWorktree && change.kind != .untracked {
-            Button("Trace lines…") { store.openSelectedLineHistory() }.disabled(store.diffLoading || store.diff?.isBinary == true)
-        }
-        Button { Task { await store.openChangeQuestion() } } label: { Label("Ask AI…", symbol: "sparkles") }
-            .help("Ask questions about the selected changes")
-            .disabled(store.diffLoading || store.diff?.isBinary == true)
-    }
+    private var isReview: Bool { if case .review = source { return true } else { return false } }
+    private var isWorktree: Bool { if case .worktree = source { return true } else { return false } }
 
-    /// 이 파일의 히스토리·blame 열기
+    /// More: what the header does not draw. Staging first, the file's history tools, where the file is, and
+    /// discarding last.
     @ViewBuilder
-    private func fileButtons(_ c: FileChange) -> some View {
-        if c.kind != .untracked, !isReview, !isWorktree {
-            Button { store.openFileHistory(c.path) } label: { SymbolIcon("clock.arrow.circlepath") }
-                .buttonStyle(.borderless)
-                .help("File history — commits that changed this file")
-                .accessibilityLabel("File history")
-            if c.kind != .deleted {
-                Button {
-                    if case .commit(let sha, _, _) = source { store.openBlame(c.path, rev: sha) } else { store.openBlame(c.path) }
-                } label: { SymbolIcon("person.text.rectangle") }
-                    .buttonStyle(.borderless)
-                    .help("Blame — who changed each line and when")
-                    .accessibilityLabel("Blame")
+    private func more(_ c: FileChange) -> some View {
+        let busy = store.busy != nil
+        if case .working = source {
+            if c.kind == .conflicted {
+                Button("Mark as resolved") { Task { await store.stage([c]) } }.disabled(busy)
+            } else if c.staged {
+                Button("Unstage") { Task { await store.unstage([c]) } }.disabled(busy)
+            } else {
+                Button("Stage") { Task { await store.stage([c]) } }.disabled(busy)
             }
+            Divider()
         }
-        Button {
+        if c.kind != .untracked, !isReview, !isWorktree {
+            Button("File history") { store.openFileHistory(c.path) }
+            if c.kind != .deleted {
+                Button("Show blame") {
+                    if case .commit(let sha, _, _) = source { store.openBlame(c.path, rev: sha) } else { store.openBlame(c.path) }
+                }
+            }
+            Button("Trace lines…") { store.openSelectedLineHistory() }.disabled(store.diffLoading || store.diff?.isBinary == true)
+            Divider()
+        }
+        Button("Show in Finder") {
             if case .worktree(let path, _) = source {
                 NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path).appendingPathComponent(c.path)])
             } else {
                 store.revealInFinder(c)
             }
-        } label: { DesignIconImage(icon: .repository) }
-            .buttonStyle(.borderless)
-            .help("Show in Finder")
-            .accessibilityLabel("Show in Finder")
-    }
-
-    private var isReview: Bool { if case .review = source { return true } else { return false } }
-    private var isWorktree: Bool { if case .worktree = source { return true } else { return false } }
-
-    /// 보기: 한 줄로 / 나란히, 공백 무시
-    private var viewOptions: some View {
-        HStack(spacing: 6) {
-            Picker("", selection: Binding(get: { store.diffSplit }, set: { store.diffSplit = $0 })) {
-                SymbolIcon("list.bullet").help("Unified view").accessibilityLabel("Unified view").tag(false)
-                SymbolIcon("rectangle.split.2x1").help("Side by side (old on the left · new on the right)").accessibilityLabel("Side by side").tag(true)
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            .fixedSize()
-            let on = store.diffIgnoreWhitespace
-            Button { store.diffIgnoreWhitespace.toggle() } label: {
-                SymbolIcon("text.word.spacing")
-                    .foregroundStyle(on ? Color.accentColor : .secondary)
-                    .frame(width: 26, height: 20)
-                    .background(RoundedRectangle(cornerRadius: 5).fill(on ? Color.accentColor.opacity(0.18) : .clear))
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.borderless)
-            .accessibilityLabel("Ignore whitespace")
-            .accessibilityValue(on ? "On" : "Off")
-            .help("Ignore whitespace\(on ? String(localized: " (on)") : "") — lines that only changed indentation or spaces are treated as unchanged (line staging is unavailable while on)")
         }
-    }
-
-    @ViewBuilder
-    private func actions(_ c: FileChange) -> some View {
-        if case .working = source {
-            if c.kind == .conflicted {
-                Button("Mark as resolved") { Task { await store.stage([c]) } }
-            } else if c.staged {
-                Button("Unstage") { Task { await store.unstage([c]) } }
-            } else {
-                Menu {
-                    Button("Discard changes…", role: .destructive) { store.confirmDiscard(c) }
-                } label: { SymbolIcon("ellipsis.circle") }
-                .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
-                .accessibilityLabel("File actions")
-                Button("Stage") { Task { await store.stage([c]) } }
-                    .buttonStyle(.borderedProminent)
-            }
-        }
-    }
-}
-
-/// "‹ Graph" in a diff or file history header: a text button, then a hairline before the file (the Changes board's
-/// diff header). Esc presses it.
-struct GraphBackButton: View {
-    let title: LocalizedStringKey
-    let help: LocalizedStringKey
-    let action: () -> Void
-    @ViewState private var hovered = false
-
-    var body: some View {
-        HStack(spacing: 8) {
-            Button(action: action) {
-                HStack(spacing: 4) {
-                    DesignIconImage(icon: .chevronLeft, size: 12)
-                    Text(title).lineLimit(1).fixedSize()
-                }
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(StudioStyle.Tone.neutral.text)
-                .padding(.leading, 4).padding(.trailing, 8)
-                .frame(height: 28)
-                .background(RoundedRectangle(cornerRadius: 6).fill(hovered ? StudioStyle.hover : Color.clear))
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .onHover { hovered = $0 }
-            .keyboardShortcut(.escape, modifiers: [])
-            .help(help)
-            .padding(.leading, -4)
-            Rectangle().fill(StudioStyle.border).frame(width: 1, height: 16).accessibilityHidden(true)
+        Button("Copy path") { store.copy(c.path) }
+        if case .working = source, !c.staged, c.kind != .conflicted {
+            Divider()
+            Button("Discard changes…", role: .destructive) { store.confirmDiscard(c) }.disabled(busy)
         }
     }
 }

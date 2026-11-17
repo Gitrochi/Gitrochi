@@ -8,11 +8,10 @@ struct SidebarTreeGroup: DisclosureGroupStyle {
                 configuration.isExpanded.toggle()
             } label: {
                 HStack(spacing: 6) {
-                    DesignIconImage(icon: .chevronRight)
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(.secondary)
+                    DesignIconImage(icon: .chevronRight, size: 10)
+                        .foregroundStyle(StudioStyle.Rail.icon)
                         .rotationEffect(.degrees(configuration.isExpanded ? 90 : 0))
-                        .frame(width: 12, height: 16)
+                        .frame(width: 10, height: 16)
                     configuration.label
                 }
                 .sidebarTreeRow()
@@ -39,9 +38,24 @@ struct SidebarTreeGroup: DisclosureGroupStyle {
 
 extension View {
     /// Leaves reserve the same disclosure column as their sibling folders.
+    /// The board's row: 26 pt, 8 pt at each side (Windows: `.side-branches .side-row`).
     func sidebarTreeRow() -> some View {
         padding(.vertical, 3)
-            .padding(.horizontal, 4)
+            .padding(.horizontal, 8)
             .frame(maxWidth: .infinity, minHeight: 26, alignment: .leading)
+            .sidebarRowHover()
+    }
+
+    /// The hover fill of a row that answers a click, on the rows' 6 pt radius.
+    func sidebarRowHover() -> some View { modifier(SidebarRowHover()) }
+}
+
+private struct SidebarRowHover: ViewModifier {
+    @ViewState private var hovering = false
+
+    func body(content: Content) -> some View {
+        content
+            .background(RoundedRectangle(cornerRadius: 6).fill(hovering ? StudioStyle.hover : Color.clear))
+            .onHover { hovering = $0 }
     }
 }

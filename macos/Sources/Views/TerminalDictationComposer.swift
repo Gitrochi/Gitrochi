@@ -286,7 +286,7 @@ struct TerminalDictationComposer: View {
     private var destinationSection: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text("Send to").font(.system(size: 13, weight: .semibold)).frame(height: 20)
-            PullRequestSegmented(label: "Send to", items: TerminalVoiceDestination.allCases.map { value in
+            Segmented(label: "Send to", items: TerminalVoiceDestination.allCases.map { value in
                 .init(value: value, title: value.title, disabledReason: dictation.isBusy ? String(localized: "Stop listening first") : nil)
             }, selection: destination, fill: true) { destination = $0 }
                 .disabled(submitting || refreshingContext)

@@ -16,7 +16,9 @@ const until = async (test: () => boolean) => {
 /**
  * The Agents sidebar from fixture sessions, at the sidebar's narrowest width: Needs you lists every session waiting for
  * the user, worktree rows show their state icon and right-aligned ahead/behind, every session row has one structure
- * with the terminal tab's marks, and an agent at work is "Running".
+ * with the terminal tab's marks, and an agent at work is "Running". The Worktrees section also carries what the Branches
+ * tab's worktree list offered: a worktree whose folder is gone is marked, "Clean up" is in the head's ⋯ menu, and a
+ * row's menu copies the path and force-removes.
  */
 export async function agentsSidebarSelfTest(): Promise<[boolean, string]> {
   const original = { get: settings.get, set: settings.set, scan: ipc.externalAgents, sessions: agents.sessions, external: agents.external, canFocus: agents.canFocus, focus: agents.focus };
@@ -50,14 +52,17 @@ export async function agentsSidebarSelfTest(): Promise<[boolean, string]> {
     store.worktrees = [
       { path: "C:/fixture/agents", head: null, branch: "feature/workspace-search-with-a-long-name", isMain: true, locked: false, prunable: false },
       { path: "C:/fixture/agents-topic", head: null, branch: "fix/flaky-tests", isMain: false, locked: false, prunable: false },
+      { path: "C:/fixture/agents-gone", head: null, branch: "fix/gone", isMain: false, locked: false, prunable: true },
     ];
+    let pruned = 0;
+    store.pruneWorktrees = async () => { pruned++; return true; };
     store.worktreeStats = {
       "C:/fixture/agents": { added: 1, modified: 2, deleted: 0, conflicted: 0, ahead: 12, behind: 0, hasUpstream: true },
       "C:/fixture/agents-topic": { added: 0, modified: 1, deleted: 0, conflicted: 1, ahead: 1, behind: 2, hasUpstream: true },
     };
     store.refreshWorktreeStats = async () => {};
     root.render(<AgentsPanel store={store} />);
-    ensure(await until(() => host.querySelectorAll(".agent-worktree").length === 2), "The worktree rows did not mount");
+    ensure(await until(() => host.querySelectorAll(".agent-worktree").length === 3), "The worktree rows did not mount");
     const all = <T extends HTMLElement = HTMLElement>(selector: string) => [...host.querySelectorAll<T>(selector)];
     const text = (el: Element | null | undefined) => el?.textContent ?? "";
 
@@ -71,9 +76,9 @@ export async function agentsSidebarSelfTest(): Promise<[boolean, string]> {
     ensure(focused.join() === "permission", `Respond must go to the session's terminal: ${focused}`);
 
     // worktree rows: the current marker, one state icon, ahead and behind at the right edge
-    const [main, topic] = all(".agent-worktree");
-    ensure(main.querySelector(".agent-current") && !topic.querySelector(".agent-current"), "Only the open worktree has the current marker");
-    ensure(main.querySelector('.agent-state[data-state="changed"]') && topic.querySelector('.agent-state[data-state="conflict"]') && all(".agent-state").length === 2, "Each worktree shows one state icon: uncommitted files, or a conflict");
+    const [main, topic, gone] = all(".agent-worktree");
+    ensure(main.querySelector(".side-current") && !topic.querySelector(".side-current"), "Only the open worktree has the current marker");
+    ensure(main.querySelector('.agent-state[data-state="changed"]') && topic.querySelector('.agent-state[data-state="conflict"]') && gone.querySelector('.agent-state[data-state="prunable"]') && all(".agent-state").length === 3, "Each worktree shows one state icon: uncommitted files, a conflict, or a folder that is gone");
     for (const row of [main, topic]) {
       const line = row.querySelector<HTMLElement>(".agent-worktree-line2")!.getBoundingClientRect();
       const pills = [...row.querySelectorAll<HTMLElement>(".agent-ab")].map((pill) => pill.getBoundingClientRect());
@@ -107,6 +112,20 @@ export async function agentsSidebarSelfTest(): Promise<[boolean, string]> {
     ensure(await until(() => mark(byStatus("ended")) === "hollow"), "An ended session shows the hollow mark");
     ensure(host.querySelector(".agents-more"), "The ⋯ menu shows while there are ended sessions");
 
+    // what the Branches tab's worktree list offered: Clean up in the ⋯ menu, Copy path and Force remove… in a row's menu
+    const menuItems = () => [...document.querySelectorAll<HTMLElement>(".menu .menu-item")];
+    const labelOf = (item: HTMLElement) => item.querySelector(".label")?.textContent ?? item.textContent?.trim() ?? "";
+    const closeMenu = async () => { if (document.querySelector(".menu")) { window.dispatchEvent(new MouseEvent("mousedown")); await until(() => !document.querySelector(".menu")); } };
+    gone.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 8, clientY: 8 }));
+    ensure(await until(() => menuItems().length > 0), "A worktree row's menu did not open");
+    const rowMenu = menuItems().map(labelOf);
+    await closeMenu();
+    ensure(rowMenu.includes(t("Copy path")) && rowMenu.at(-1) === t("Force remove…") && rowMenu.at(-2) === t("Remove worktree…"), `A worktree row's menu must copy the path and end with the two removals: ${rowMenu}`);
+    host.querySelector<HTMLElement>(".agents-more")!.click();
+    ensure(await until(() => menuItems().some((item) => labelOf(item) === t("Clean up"))), `The ⋯ menu must offer Clean up while a worktree's folder is gone: ${menuItems().map(labelOf)}`);
+    menuItems().find((item) => labelOf(item) === t("Clean up"))!.click();
+    ensure(await until(() => pruned === 1 && !document.querySelector(".menu")), "Clean up did not prune the worktrees and close the menu");
+
     // nothing clips or squeezes at the sidebar's narrowest width
     const panel = host.querySelector<HTMLElement>(".agents-panel")!, box = panel.getBoundingClientRect();
     ensure(panel.scrollWidth <= panel.clientWidth, `The panel scrolls sideways at 240px: ${panel.scrollWidth} > ${panel.clientWidth}`);
@@ -116,9 +135,11 @@ export async function agentsSidebarSelfTest(): Promise<[boolean, string]> {
     }
     const start = all<HTMLButtonElement>(".agents-start > button");
     ensure(start.length === 2 && start.every((b) => Math.round(b.getBoundingClientRect().height) === 28) && text(start[0]).includes(t("Start agent session…")), "Start agent session… and the quick start are 28px buttons");
-    return [true, "Needs you lists the three waiting sessions; worktree rows show a state icon and right-aligned ahead/behind; five session rows share one structure with the tab marks; Running, not Working; ended sessions fold away; nothing clips at 240px"];
+    return [true, "Needs you lists the three waiting sessions; worktree rows show a state icon and right-aligned ahead/behind; five session rows share one structure with the tab marks; Running, not Working; ended sessions fold away; a gone folder is marked and Clean up, Copy path and Force remove… are at hand; nothing clips at 240px"];
   } catch (error) { return [false, error instanceof Error ? error.message : String(error)]; }
   finally {
+    // a menu left open would take the keys of every later step
+    if (document.querySelector(".menu")) window.dispatchEvent(new MouseEvent("mousedown"));
     root.unmount(); host.remove();
     settings.get = original.get; settings.set = original.set; ipc.externalAgents = original.scan;
     agents.sessions = original.sessions; agents.external = original.external; agents.canFocus = original.canFocus; agents.focus = original.focus;

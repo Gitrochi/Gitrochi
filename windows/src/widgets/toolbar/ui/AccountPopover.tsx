@@ -128,8 +128,11 @@ function IdentityRow({ store, menu }: { store: RepoStore; menu: MenuItem[] }) {
     <div className="account-popover-row identity" onContextMenu={menu.length ? (event) => showContextMenu(event, menu) : undefined}>
       <span className="account-popover-glyph"><Identity size={16} strokeWidth={1.4} /></span>
       <span className="account-popover-text">
-        <span className="account-popover-title selectable">
-          {identity?.name || identity?.email ? <><span>{identity.name}</span>{identity.email && <span className="account-popover-email">&lt;{identity.email}&gt;</span>}</> : t("Not configured")}
+        {/* one line as the board draws it: a long address (a GitHub noreply one) is cut, never broken mid-word, and is
+            whole on hover (macOS: AccountPopover) */}
+        <span className="account-popover-title identity-title selectable">
+          {identity?.name || identity?.email ? <><span className="account-popover-identity-name">{identity.name}</span>
+            {identity.email && <span className="account-popover-email" title={identity.email}>&lt;{identity.email}&gt;</span>}</> : t("Not configured")}
           {locked && <Lock className="account-popover-lock" size={12} strokeWidth={1.6} />}
         </span>
         {locked

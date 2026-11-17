@@ -1,6 +1,7 @@
 import { RepositoryConfirmationGuard } from "../../lib/confirmation-guard";
+import { PinnedRefs } from "../../lib/pinned-refs";
 import type { AgentHost } from "@/entities/agent";
-import { isWorkspaceDestination, repositoryDestinations, restoredDestination, returnsToRepository, type WorkspaceDestination } from "@/entities/git";
+import { destinationAvailable, isWorkspaceDestination, restoredDestination, returnsToRepository, type WorkspaceDestination } from "@/entities/git";
 import { avatars } from "@/entities/avatar";
 import { type CIPipeline, CIStore } from "@/entities/ci";
 import * as P from "@/entities/git";
@@ -41,6 +42,7 @@ export abstract class RepoCore extends Observable implements AgentHost {
   protected abstract loadDiff(keepCurrent: boolean): void;
   abstract get repoStateTitle(): string;
   abstract loadPullRequests(): Promise<void>;
+  abstract loadTrailerIssues(numbers: number[]): void;
   abstract newTerminal(path?: string, spec?: Partial<TerminalSpec>): TerminalSession;
   abstract focusTerminal(s: TerminalSession): void;
   abstract closeAllTerminals(): void;
@@ -71,9 +73,12 @@ export abstract class RepoCore extends Observable implements AgentHost {
     return this.path ? basename(this.path) : "Gitrochi";
   }
 
-  /** Pages without a repository show the chooser; remember the page once a repository is open. */
+  /**
+   * Opens a page and remembers it for the repository. A page that needs a repository is refused while none is open, so
+   * the window stays where it is (Home, as a rule).
+   */
   navigate(page: WorkspaceDestination, prepare = true) {
-    if (!isWorkspaceDestination(page)) return false;
+    if (!isWorkspaceDestination(page) || !destinationAvailable(page, !!this.path)) return false;
     // the Pull requests and Issues pages offer a way back when the repository screen opened them
     if (this.destination !== page) this.cameFromRepository = this.destination === "repository" && returnsToRepository.has(page);
     this.destination = page;
@@ -206,8 +211,12 @@ export abstract class RepoCore extends Observable implements AgentHost {
   aiWorking: string | null = null;
   splitPlan: SplitGroup[] | null = null;
   aiNotice: string | null = null;
+  /** Why the last commit message could not be written; shown in the composer, not as a dialog */
+  commitMessageFailure: string | null = null;
   explanations: Record<string, string> = {};
   explaining = new Set<string>();
+  /** Why the last explanation of a commit failed; shown beside that commit, not as a dialog */
+  explainFailures: Record<string, string> = {};
 
   /** 되돌릴 수 있는 작업(마지막이 맨 뒤) */
   undoStack: UndoPoint[] = [];
@@ -226,8 +235,11 @@ export abstract class RepoCore extends Observable implements AgentHost {
   blameLines: BlameLine[] = [];
   fileInspectLoading = false;
   fileInspectError: string | null = null;
+  /** The branches and tags hidden from the graph and the ones pinned to the top of the sidebar, as full refs (macOS: RepoStore.hiddenRefs) */
   hiddenRefs = new Set<string>();
-  pinnedBranches = new Set<string>();
+  pinnedRefs = new Set<string>();
+  /** The text in the sidebar's Filter branches field: view state, not saved (macOS: RepoStore.branchFilter) */
+  branchFilter = "";
   graphCurrentOnly = false;
   /** 충돌 해결 중인 파일과 블록마다 고른 것 */
   conflictDoc: ConflictDocument | null = null;
@@ -353,7 +365,8 @@ export abstract class RepoCore extends Observable implements AgentHost {
       this.emit();
       return { kind: "failed", message: t("Couldn't verify the repository path.") };
     }
-    const requestedPage = !this.path && (repositoryDestinations.has(this.destination) || this.destination === "issues" || this.destination === "releases") ? this.destination : null;
+    // Issues and Releases offer "Open repository…" without one; the repository opens on the page it was asked from
+    const requestedPage = !this.path && (this.destination === "issues" || this.destination === "releases") ? this.destination : null;
     this.stopWatching();
     this.resetState();
     const top = lines[0].trim();
@@ -474,6 +487,7 @@ export abstract class RepoCore extends Observable implements AgentHost {
     this.ciFocus = null;
     this.ciSelected = null;
     this.showSearchBar = false;
+    this.branchFilter = "";
     this.cancelPushReview();
     this.cancelChangeQuestion();
     this.cancelRepositoryAssistant();
@@ -535,8 +549,10 @@ export abstract class RepoCore extends Observable implements AgentHost {
     this.ci.reset();
     this.aiWorking = null;
     this.aiNotice = null;
+    this.commitMessageFailure = null;
     this.explanations = {};
     this.explaining = new Set();
+    this.explainFailures = {};
     this.detailGen++;
     this.diffGen++;
   }
@@ -831,7 +847,7 @@ export abstract class RepoCore extends Observable implements AgentHost {
     const p = this.path;
     if (!p) return;
     this.hiddenRefs = new Set(settings.get<Record<string, string[]>>("graphHiddenRefs", {})[p] ?? []);
-    this.pinnedBranches = new Set(settings.get<Record<string, string[]>>("pinnedBranches", {})[p] ?? []);
+    this.pinnedRefs = PinnedRefs.load(settings.get<Record<string, string[]>>("pinnedBranches", {})[p] ?? [], settings.get<Record<string, string[]>>("pinnedRefs", {})[p] ?? []);
     this.graphCurrentOnly = settings.get<Record<string, boolean>>("graphCurrentOnly", {})[p] ?? false;
   }
 
@@ -843,9 +859,9 @@ export abstract class RepoCore extends Observable implements AgentHost {
       else map.set(k, [r]);
     };
     if (!this.headBranch && head) add(head, { name: "HEAD", kind: "head", isCurrent: true });
-    for (const b of this.localBranches) if (b.isCurrent || !this.hiddenRefs.has(`refs/heads/${b.name}`)) add(b.target, { name: b.name, kind: "local", isCurrent: b.isCurrent });
+    for (const b of this.localBranches) if (b.isCurrent || !this.hiddenRefs.has(`refs/heads/${b.name}`)) add(b.target, { name: b.name, kind: "local", isCurrent: b.isCurrent, behind: b.behind });
     for (const b of this.remoteBranches) if (!this.hiddenRefs.has(`refs/remotes/${b.name}`)) add(b.target, { name: b.name, kind: "remote", isCurrent: false });
-    for (const tag of this.tags) add(tag.target, { name: tag.name, kind: "tag", isCurrent: false });
+    for (const tag of this.tags) if (!this.hiddenRefs.has(`refs/tags/${tag.name}`)) add(tag.target, { name: tag.name, kind: "tag", isCurrent: false });
     for (const l of map.values()) l.sort((a, b) => (a.isCurrent ? 0 : 1) - (b.isCurrent ? 0 : 1) || refOrder[a.kind] - refOrder[b.kind]);
     return map;
   }

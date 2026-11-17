@@ -50,8 +50,7 @@
 .hosted-search-field:focus-within { border-color: var(--accent); }
 .hosted-search-clear { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; margin-right: -6px; border: 0; background: transparent; color: var(--text-2); cursor: pointer; }
 .hosted-segments { flex: none; }
-.hosted-segments .segmented { display: flex; border-radius: 6px; }
-.hosted-segments .segmented button { flex: 1 1 auto; justify-content: center; height: 24px; padding: 0 6px; border-radius: 4px; font-size: 12px; font-weight: 500; white-space: nowrap; }
+.hosted-segments .segmented button { flex: 1 1 auto; padding: 0 6px; }
 .hosted-segments .segmented button.on { font-weight: 600; }
 
 .hosted-rows { flex: 1 1 auto; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 4px; }

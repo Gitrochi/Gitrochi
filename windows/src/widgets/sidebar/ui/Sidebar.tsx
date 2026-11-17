@@ -1,35 +1,32 @@
 import { Archive, CloudAlert, EyeOff, PanelLeftClose, Pin, ShieldCheck } from "lucide-react";
-import { CircleCheck, FolderOpen } from "@/shared/icons";
-import { ChevronDown, Cloud, Eye, Folder, GitBranch, SquareArrowOutUpRight, Tag as TagIcon } from "@/shared/icons";
+import { ChevronDown, Cloud, Folder, GitBranch, Search, Tag as TagIcon } from "@/shared/icons";
 import { type ReactNode, useState } from "react";
 import { localBranchMenu, remoteBranchMenu } from "@/features/git-menus";
 import { agents, isActiveStatus } from "@/entities/agent";
-import { type Branch, branchRemote, branchShort } from "@/entities/git";
+import { type Branch, branchRemote, branchShort, type Tag } from "@/entities/git";
 import { branchPayload, type RepoStore } from "@/entities/repo";
-import { displayPath, samePath, settings } from "@/shared/config";
+import { samePath, settings } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { drag, useObserve } from "@/shared/lib";
-import { IconButton, Segmented, SharedStack, showContextMenu, tip } from "@/shared/ui";
+import { HostedListEmpty, IconButton, Segmented, SharedStack, showContextMenu, StatusPill, tip } from "@/shared/ui";
+import { branchFilterMatches, branchFilterQuery, filterFolders, folderCount, groupFolders, leaf, pinnedFirst } from "../lib/branch-filter";
 import { AgentsPanel } from "./AgentsPanel";
-import { IssueListSection } from "./IssueListSection";
-import { PullRequestSection } from "./PullRequestSection";
 import { Section, SectionFlyout } from "./Section";
-import { WorktreeSection } from "./WorktreeSection";
 import "./sidebar.css";
 
-export type SidebarSectionID = "repository" | "pinned" | "local" | "worktrees" | "remote" | "tags" | "stashes" | "prs" | "issues";
+export type SidebarSectionID = "repository" | "local" | "remote" | "tags" | "stashes";
 
-export function Sidebar({ store, openSettings, flyout }: { store: RepoStore; openSettings: () => void; flyout?: SidebarSectionID }) {
+export function Sidebar({ store, flyout }: { store: RepoStore; flyout?: SidebarSectionID }) {
   useObserve(store);
   useObserve(settings);
   useObserve(agents);
   // CI moved to the Actions page; a saved "ci" mode falls through to the branch list (macOS: SidebarView.swift)
   const mode = settings.get<string>("sidebarMode", "list") === "agents" ? "agents" : "list";
   const active = agents.sessions.filter((s) => isActiveStatus(s.status) && store.worktrees.some((w) => samePath(w.path, s.path))).length;
-  if (flyout) return <SectionFlyout.Provider value={true}><BranchList store={store} openSettings={openSettings} only={flyout === "repository" ? undefined : flyout} /></SectionFlyout.Provider>;
+  if (flyout) return <SectionFlyout.Provider value={true}><BranchList store={store} only={flyout === "repository" ? undefined : flyout} flyout /></SectionFlyout.Provider>;
   return (
     <>
-      <div className="row" style={{ padding: "8px 6px 4px 10px", gap: 4 }}>
+      <div className="row side-modes">
         <div style={{ flex: 1, minWidth: 0 }}>
           <Segmented
             stretch
@@ -43,87 +40,105 @@ export function Sidebar({ store, openSettings, flyout }: { store: RepoStore; ope
         </div>
         <IconButton small icon={<PanelLeftClose size={15} />} tip={tip(t("Hide sidebar"), t("The sections stay at hand as a rail of icons; hover one to open it."))} onClick={() => settings.set("sidebarCollapsed", true)} />
       </div>
-      {mode === "agents" ? <AgentsPanel store={store} /> : <BranchList store={store} openSettings={openSettings} />}
+      {mode === "agents" ? <AgentsPanel store={store} /> : (
+        <>
+          <BranchFilterField store={store} />
+          <BranchList store={store} />
+        </>
+      )}
     </>
   );
 }
 
-/** 브랜치 이름의 첫 '/' 앞부분(feature, fix …)으로 묶은 폴더 */
-function groupFolders(branches: Branch[], key: (b: Branch) => string) {
-  const loose: Branch[] = [];
-  const by = new Map<string, Branch[]>();
-  for (const b of branches) {
-    const k = key(b);
-    const i = k.indexOf("/");
-    if (i < 0) loose.push(b);
-    else {
-      const f = k.slice(0, i);
-      by.set(f, [...(by.get(f) ?? []), b]);
-    }
-  }
-  const folders: { name: string; branches: Branch[] }[] = [];
-  for (const [name, list] of by) {
-    if (list.length === 1) loose.push(list[0]);
-    else folders.push({ name, branches: list });
-  }
-  const nat = (a: string, b: string) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" });
-  loose.sort((a, b) => nat(key(a), key(b)));
-  folders.sort((a, b) => nat(a.name, b.name));
-  return { loose, folders };
+/**
+ * The board's Filter branches field. Its text is the tab's view state on the store, so Escape can clear it through
+ * the repository screen's one Escape order (app/lib/shortcuts.ts). (macOS: SidebarFilterField)
+ */
+function BranchFilterField({ store }: { store: RepoStore }) {
+  return (
+    <label className="side-filter">
+      <Search size={13} />
+      <input
+        aria-label={t("Filter branches")}
+        placeholder={t("Filter branches")}
+        value={store.branchFilter}
+        spellCheck={false}
+        autoComplete="off"
+        onChange={(e) => store.setBranchFilter(e.target.value)}
+      />
+    </label>
+  );
 }
 
-const leaf = (n: string) => (n.includes("/") ? n.slice(n.indexOf("/") + 1) : n);
-
-function BranchList({ store, openSettings, only }: { store: RepoStore; openSettings: () => void; only?: string }) {
+function BranchList({ store, only, flyout = false }: { store: RepoStore; only?: string; flyout?: boolean }) {
   const show = (id: string) => !only || only === id;
   const [expanded, setExpanded] = useState<Set<string>>(() => {
     const h = store.headBranch;
     return new Set(h && h.includes("/") ? ["l:" + h.slice(0, h.indexOf("/"))] : []);
   });
+  // the rail's flyouts have no field, so they list everything
+  const query = flyout ? "" : branchFilterQuery(store.branchFilter);
+  const filtering = query !== "";
+  // while the filter is on, every folder left holds a match and stands open; the remembered state is not touched
+  const isOpen = (id: string) => filtering || expanded.has(id);
   const toggle = (id: string) => {
+    if (filtering) return;
     const s = new Set(expanded);
     if (s.has(id)) s.delete(id);
     else s.add(id);
     setExpanded(s);
   };
-  const locals = groupFolders(store.localBranches, (b) => b.name);
-  const remoteGroups = new Map<string, Branch[]>();
+  const locals = filterFolders(groupFolders(store.localBranches, (b) => b.name, (b) => store.isPinned(b)), (b) => b.name, query);
+  const byRemote = new Map<string, Branch[]>();
   for (const b of store.remoteBranches) {
     const r = branchRemote(b) ?? "";
-    remoteGroups.set(r, [...(remoteGroups.get(r) ?? []), b]);
+    byRemote.set(r, [...(byRemote.get(r) ?? []), b]);
+  }
+  const remotes = [...byRemote.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([remote, list]) => ({ remote, groups: filterFolders(groupFolders(list, branchShort, (b) => store.isPinned(b)), (b) => b.name, query) }))
+    .filter((r) => folderCount(r.groups) > 0);
+  // pinned tags lead in name order
+  const tags = pinnedFirst(store.tags.filter((tag) => branchFilterMatches(tag.name, query)), (tag) => tag.name, (tag) => store.isTagPinned(tag));
+  const localCount = folderCount(locals);
+  // a section's own fold is left alone too: it opens for a match and goes back when the field is cleared
+  const forced = filtering ? { open: true, onToggle: () => {} } : {};
+
+  if (filtering && !localCount && !remotes.length && !tags.length) {
+    return (
+      <div className="side-scroll side-branches side-filter-empty">
+        <HostedListEmpty
+          icon={<Search size={24} />}
+          title={t("No matching branches")}
+          caption={t("No branch or tag name contains “{0}”.", store.branchFilter.trim())}
+          action={{ label: t("Clear filter"), onClick: () => store.setBranchFilter("") }}
+        />
+      </div>
+    );
   }
 
-  const folder = (id: string, name: string, count: number, current: boolean, body: ReactNode, icon?: ReactNode) => (
+  // a folder is plain grey even when it holds the current branch: the branch's own marker says so
+  const folder = (id: string, name: string, count: number, body: ReactNode, icon?: ReactNode) => (
     <div key={id} className="side-tree-group" data-tree-id={id}>
-      <button type="button" className="side-row side-tree-row side-tree-toggle" aria-expanded={expanded.has(id)} onClick={() => toggle(id)}>
+      <button type="button" className="side-row side-tree-row side-tree-toggle" aria-expanded={isOpen(id)} onClick={() => toggle(id)}>
         <span className="side-tree-disclosure" aria-hidden="true">
-          <ChevronDown size={12} className="muted" style={{ transform: expanded.has(id) ? undefined : "rotate(-90deg)" }} />
+          <ChevronDown size={10} className="muted" style={{ transform: isOpen(id) ? undefined : "rotate(-90deg)" }} />
         </span>
-        <span className="lead" style={{ color: current ? "var(--accent)" : undefined }}>
-          {icon ?? (current || expanded.has(id) ? <FolderOpen size={14} /> : <Folder size={14} />)}
-        </span>
+        <span className="lead">{icon ?? <Folder size={13} />}</span>
         <span className="ellipsis grow side-tree-label">{name}</span>
-        <span className="faint side-tree-count">
-          {count}
-        </span>
+        <StatusPill tone="neutral" className="side-count end">{count}</StatusPill>
       </button>
-      {expanded.has(id) && <div className="side-tree-children">{body}</div>}
+      {isOpen(id) && <div className="side-tree-children">{body}</div>}
     </div>
   );
 
   return (
-    <SharedStack className="side-scroll">
-      {show("pinned") && store.localBranches.some((b) => store.isPinned(b)) && (
-        <Section id="pinned" title={t("Pinned")}>
-          {store.localBranches
-            .filter((b) => store.isPinned(b))
-            .map((b) => (
-              <BranchRow key={"pin:" + b.name} store={store} branch={b} label={b.name} />
-            ))}
-        </Section>
-      )}
-
-      {show("local") && <Section id="local" title={t("Local branches")} count={store.localBranches.length}>
+    <SharedStack className="side-scroll side-branches">
+      {show("local") && (!filtering || localCount > 0) && <Section id="local" title={t("Local branches")} count={localCount} {...forced}>
+        {/* "Pin to top": pinned branches lead under their whole names, out of their folders */}
+        {locals.pinned.map((b) => (
+          <BranchRow key={b.name} store={store} branch={b} label={b.name} />
+        ))}
         {locals.loose.map((b) => (
           <BranchRow key={b.name} store={store} branch={b} label={b.name} />
         ))}
@@ -132,89 +147,57 @@ function BranchList({ store, openSettings, only }: { store: RepoStore; openSetti
             "l:" + f.name,
             f.name,
             f.branches.length,
-            f.branches.some((b) => b.isCurrent),
             f.branches.map((b) => <BranchRow key={b.name} store={store} branch={b} label={leaf(b.name)} />),
           ),
         )}
       </Section>}
 
-      {show("worktrees") && store.worktrees.length > 1 && <WorktreeSection store={store} />}
-
-      {show("remote") && store.remoteBranches.length > 0 && (
-        <Section id="remote" title={t("Remotes")} count={store.remoteBranches.length}>
-          {[...remoteGroups.entries()]
-            .sort(([a], [b]) => a.localeCompare(b))
-            .map(([remote, list]) => {
-              const g = groupFolders(list, branchShort);
-              return folder(
-                "r:" + remote,
-                remote,
-                list.length,
-                false,
-                <>
-                  {g.loose.map((b) => (
-                    <BranchRow key={b.name} store={store} branch={b} label={branchShort(b)} />
-                  ))}
-                  {g.folders.map((f) =>
-                    folder(
-                      `r:${remote}/${f.name}`,
-                      f.name,
-                      f.branches.length,
-                      false,
-                      f.branches.map((b) => <BranchRow key={b.name} store={store} branch={b} label={leaf(branchShort(b))} />),
-                    ),
-                  )}
-                </>,
-                <Cloud size={14} />,
-              );
-            })}
+      {show("remote") && remotes.length > 0 && (
+        // each remote's own row carries its count
+        <Section id="remote" title={t("Remotes")} {...forced}>
+          {remotes.map(({ remote, groups: g }) =>
+            folder(
+              "r:" + remote,
+              remote,
+              folderCount(g),
+              <>
+                {/* pinned remote branches lead their remote under their names there, out of their folders */}
+                {g.pinned.map((b) => (
+                  <BranchRow key={b.name} store={store} branch={b} label={branchShort(b)} />
+                ))}
+                {g.loose.map((b) => (
+                  <BranchRow key={b.name} store={store} branch={b} label={branchShort(b)} />
+                ))}
+                {g.folders.map((f) =>
+                  folder(
+                    `r:${remote}/${f.name}`,
+                    f.name,
+                    f.branches.length,
+                    f.branches.map((b) => <BranchRow key={b.name} store={store} branch={b} label={leaf(branchShort(b))} />),
+                  ),
+                )}
+              </>,
+              <Cloud size={13} />,
+            ),
+          )}
         </Section>
       )}
 
-      {/* the hosting lists sit between the branches and the tags (macOS: SidebarView) */}
-      {show("prs") && store.target && <PullRequestSection store={store} target={store.target} openSettings={openSettings} />}
-
-      {show("issues") && store.target && <IssueListSection store={store} openSettings={openSettings} />}
-
-      {/* with a hosting remote the section stays, even without tags, for its way to the Releases page */}
-      {show("tags") && (store.tags.length > 0 || !!store.target) && (
-        <Section
-          id="tags"
-          title={t("Tags")}
-          count={store.tags.length}
-          defaultOpen={false}
-          actions={store.target && <IconButton small icon={<SquareArrowOutUpRight size={12} />} tip={t("Open in Releases")} aria-label={t("Open in Releases")} onClick={() => store.navigate("releases")} />}
-        >
-          {store.tags.map((tag) => (
-            <div
-              key={tag.name}
-              className="side-row"
-              onClick={() => store.reveal(tag.target)}
-              onContextMenu={(e) =>
-                showContextMenu(e, [
-                  { label: t("Go to this tag"), onClick: () => store.reveal(tag.target) },
-                  { label: t("Push tag"), onClick: () => void store.pushTag(tag) },
-                  ...(store.target ? [{ label: t("Open in Releases"), onClick: () => store.navigate("releases") }] : []),
-                  "divider",
-                  { label: t("Delete tag…"), danger: true, onClick: () => store.deleteTag(tag) },
-                ])
-              }
-            >
-              <span className="lead">
-                <TagIcon size={13} />
-              </span>
-              <span className="ellipsis">{tag.name}</span>
-            </div>
+      {show("tags") && tags.length > 0 && (
+        <Section id="tags" title={t("Tags")} count={tags.length} {...forced}>
+          {tags.map((tag) => (
+            <TagRow key={tag.name} store={store} tag={tag} />
           ))}
         </Section>
       )}
 
-      {show("stashes") && store.stashes.length > 0 && (
+      {/* no board draws stashes; the list stays because nothing else shows it. The field filters names, so it is hidden meanwhile */}
+      {show("stashes") && !filtering && store.stashes.length > 0 && (
         <Section id="stashes" title={t("Stashes")} count={store.stashes.length}>
           {store.stashes.map((s) => (
             <div
               key={s.ref}
-              className="side-row"
+              className="side-row side-tree-row"
               style={{ alignItems: "flex-start" }}
               onClick={() => store.reveal(s.hash)}
               onContextMenu={(e) =>
@@ -226,6 +209,7 @@ function BranchList({ store, openSettings, only }: { store: RepoStore; openSetti
                 ])
               }
             >
+              <span className="side-tree-disclosure" aria-hidden="true" />
               <span className="lead" style={{ marginTop: 3 }}>
                 <Archive size={13} />
               </span>
@@ -241,8 +225,11 @@ function BranchList({ store, openSettings, only }: { store: RepoStore; openSetti
   );
 }
 
+/**
+ * A branch row. After the name come only the marks whose state shows nowhere else (pinned, protected by gitch, hidden
+ * from the graph, upstream gone), then ahead and behind. (macOS: BranchRow)
+ */
 function BranchRow({ store, branch: b, label }: { store: RepoStore; branch: Branch; label: string }) {
-  const w = !b.isRemote ? store.worktreeUsing(b.name) : null;
   const hidden = store.isHidden(b);
   return (
     <div
@@ -260,46 +247,85 @@ function BranchRow({ store, branch: b, label }: { store: RepoStore; branch: Bran
       data-tip={tip(b.name, t("Click: show in graph · Double-click: check out · Drag onto another branch in the graph: merge or rebase"))}
     >
       <span className="side-tree-disclosure" aria-hidden="true" />
-      <span className="lead">{b.isCurrent ? <CircleCheck size={14} /> : <GitBranch size={14} />}</span>
+      <span className="lead">{b.isCurrent ? <span className="side-current" role="img" aria-label={t("Current")}><span /></span> : <GitBranch size={13} />}</span>
       <span className="ellipsis grow side-tree-label" style={hidden ? { color: "var(--text-2)" } : undefined}>
         {label}
       </span>
-      {store.isPinned(b) && (
-        <span className="muted" data-tip={t("Branches pinned to the top")} style={{ display: "inline-flex" }}>
-          <Pin size={11} />
-        </span>
-      )}
+      {store.isPinned(b) && <PinnedMark />}
       {!b.isRemote && store.gitchProtected.has(b.name) && (
         <span className="muted" data-tip={t("Protected by gitch: no direct pushes, merge through a pull request")} style={{ display: "inline-flex" }}>
           <ShieldCheck size={12} />
         </span>
       )}
-      {(hidden || !b.isCurrent) && (
-        // the eye shows on hover; a hidden branch keeps it so the state stays visible (the current branch always shows)
-        <IconButton
-          small
-          className={hidden ? "" : "hover-only"}
-          icon={hidden ? <EyeOff size={12} /> : <Eye size={12} />}
-          tip={hidden ? t("Show in graph again") : t("Hide from graph")}
-          onClick={(e) => {
-            e.stopPropagation();
-            void store.setHidden(b, !hidden);
-          }}
-          onDoubleClick={(e) => e.stopPropagation()}
-        />
-      )}
-      {w && (
-        <span className="muted" data-tip={t("In use by a worktree: {0}", displayPath(w.path))} style={{ display: "inline-flex" }}>
-          <Folder size={12} />
-        </span>
-      )}
+      {hidden && <ShowAgainButton onClick={() => void store.setHidden(b, false)} />}
       {b.upstreamGone && (
         <span style={{ color: "var(--orange)", display: "inline-flex" }} data-tip={t("The tracked remote branch was deleted")}>
           <CloudAlert size={13} />
         </span>
       )}
-      {b.ahead > 0 && <span className="counter">↑{b.ahead}</span>}
-      {b.behind > 0 && <span className="counter">↓{b.behind}</span>}
+      {b.ahead > 0 && <span className="side-ab">↑{b.ahead}</span>}
+      {b.behind > 0 && <span className="side-ab">↓{b.behind}</span>}
     </div>
+  );
+}
+
+/**
+ * A tag row, in the branch rows' disclosure and icon columns so the names line up, with their pinned and hidden marks.
+ * (macOS: TagRow)
+ */
+function TagRow({ store, tag }: { store: RepoStore; tag: Tag }) {
+  const hidden = store.isTagHidden(tag), pinned = store.isTagPinned(tag);
+  return (
+    <div
+      className="side-row side-tree-row"
+      onClick={() => store.reveal(tag.target)}
+      onContextMenu={(e) =>
+        showContextMenu(e, [
+          { label: t("Go to this tag"), onClick: () => store.reveal(tag.target) },
+          { label: t("Push tag"), onClick: () => void store.pushTag(tag) },
+          ...(store.target ? [{ label: t("Open in Releases"), onClick: () => store.navigate("releases") }] : []),
+          "divider",
+          { label: pinned ? t("Unpin") : t("Pin to top"), onClick: () => store.setTagPinned(tag, !pinned) },
+          { label: hidden ? t("Show in graph again") : t("Hide from graph"), onClick: () => void store.setTagHidden(tag, !hidden) },
+          "divider",
+          { label: t("Delete tag…"), danger: true, onClick: () => store.deleteTag(tag) },
+        ])
+      }
+    >
+      <span className="side-tree-disclosure" aria-hidden="true" />
+      <span className="lead">
+        <TagIcon size={13} />
+      </span>
+      <span className="ellipsis grow side-tree-label" style={hidden ? { color: "var(--text-2)" } : undefined}>
+        {tag.name}
+      </span>
+      {pinned && <PinnedMark />}
+      {hidden && <ShowAgainButton onClick={() => void store.setTagHidden(tag, false)} />}
+    </div>
+  );
+}
+
+/** The mark of a branch or tag pinned to the top ("Pin to top") */
+function PinnedMark() {
+  return (
+    <span className="muted" data-tip={t("Pinned")} role="img" aria-label={t("Pinned")} style={{ display: "inline-flex" }}>
+      <Pin size={11} />
+    </span>
+  );
+}
+
+/** Only a hidden branch or tag carries the eye: it says so and shows it in the graph again (hiding is in the row's menu) */
+function ShowAgainButton({ onClick }: { onClick: () => void }) {
+  return (
+    <IconButton
+      small
+      icon={<EyeOff size={12} />}
+      tip={t("Show in graph again")}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
+      onDoubleClick={(e) => e.stopPropagation()}
+    />
   );
 }

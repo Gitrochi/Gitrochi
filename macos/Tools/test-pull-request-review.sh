@@ -53,8 +53,6 @@ struct PullRequest { var number: Int; var source = "feature"; var target = "main
         precondition(PullRequestPage.threadCount(review.comments, path: "a.swift") == 2 && PullRequestPage.threadCount(review.comments, path: "b.swift") == 0)
         precondition(PullRequestPage.branchLabel(requests[0], currentBranch: "feature", thisBranch: "This branch") == "This branch → main")
         precondition(PullRequestPage.branchLabel(PullRequest(number: 1, fromFork: true), currentBranch: "feature", thisBranch: "This branch") == "feature → main")
-        precondition(PullRequestPage.folderLabel("macos/Sources/Views/Search/SearchPanel.swift") == "…/Views/Search" && PullRequestPage.folderLabel("docs/search.md") == "docs" && PullRequestPage.folderLabel("README.md") == "")
-        precondition(PullRequestPage.folderLabels("macos/Sources/Views/Search/SearchPanel.swift") == ["…/Views/Search", "…/Search"] && PullRequestPage.folderLabels("docs/search.md") == ["docs"] && PullRequestPage.folderLabels("README.md").isEmpty)
         let checks = [RequestCheck(id: "1", name: "build", status: .success), RequestCheck(id: "2", name: "test", status: .failed), RequestCheck(id: "3", name: "lint", status: .running), RequestCheck(id: "4", name: "docs", status: .skipped)]
         let groups = PullRequestPage.checkGroups(checks)
         precondition(groups.failed.map(\.id) == ["2"] && groups.running.map(\.id) == ["3"] && groups.passed.map(\.id) == ["1", "4"])

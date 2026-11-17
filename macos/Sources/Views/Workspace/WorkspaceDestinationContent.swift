@@ -11,11 +11,10 @@ struct WorkspaceDestinationContent: View {
             .accessibilityLabel(Text(store.destination.title(gitlab: store.target?.provider == .gitlab)))
     }
 
+    /// A page that needs a repository is never the destination while none is open (RepoStore.navigate), so each page
+    /// here is its own and Home is the only one that lists repositories.
     @ViewBuilder private var page: some View {
         Group {
-            if store.url == nil && (store.destination.needsRepository || [.issues, .releases].contains(store.destination)) {
-                WorkspaceHomePanel(repositoryOnly: true)
-            } else {
             switch store.destination {
             case .home: WorkspaceHomePanel()
             case .repository: RepositoryScreen()
@@ -31,7 +30,6 @@ struct WorkspaceDestinationContent: View {
             case .account: AccountWorkspacePanel()
             case .flows: FlowPanel()
             }
-            }
         }
         .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .topLeading)
     }
@@ -40,7 +38,7 @@ struct WorkspaceDestinationContent: View {
 /// The repository screen: branches and refs | graph or diff with the terminal below | uncommitted changes or details
 struct RepositoryScreen: View {
     @AppStorage("repositorySidebarWidth") private var sidebarWidth = 250.0
-    @AppStorage("repositoryInspectorWidth") private var inspectorWidth = 380.0
+    @AppStorage("repositoryInspectorWidth") private var inspectorWidth = 340.0
     @AppStorage("repositoryInspectorCollapsed") private var inspectorCollapsed = false
     /// While the page list slides, the side columns keep their widths and the centre one is cut off (PageListFold)
     @Environment(\.pageListOverhang) private var overhang

@@ -52,6 +52,7 @@
 "Create merge request…" = "머지 리퀘스트 만들기…";
 "Create pull request…" = "풀 리퀘스트 만들기…";
 "Diff layout" = "diff 표시 방식";
+"File list layout" = "파일 표시 방식";
 "Fast-forward only" = "fast-forward만";
 "Filter repositories" = "저장소 필터";
 "From" = "기준";
@@ -95,7 +96,7 @@
 "Nothing to push" = "푸시할 내용 없음";
 "Nothing unreleased" = "릴리스되지 않은 커밋 없음";
 "Open Projects" = "프로젝트 열기";
-"Open a repository to use these" = "이 항목을 쓰려면 저장소를 여세요";
+"Open a repository to use the dimmed pages" = "흐린 페이지를 쓰려면 저장소를 여세요";
 "Opens %@ … %@ in Compare" = "비교에서 %1$@ … %2$@ 열기";
 "Open…" = "열기…";
 "Overdue · %@" = "기한 지남 · %1$@";
@@ -439,7 +440,6 @@
 "  (fork)" = "  (포크)";
 " %lld files that aren't committed stay as they are." = " 커밋하지 않는 %1$lld개 파일은 그대로 남습니다.";
 " (current)" = " (현재)";
-" (on)" = "(켜짐)";
 " · %@ stages" = " · %1$@ 단계";
 " · %lld outside the graph" = " · 그래프 밖 %1$lld";
 " · %lld%% similar" = " · %1$lld%% 같음";
@@ -454,12 +454,10 @@
 "%@\nThe folder is deleted; the branch and commits stay. git refuses if there are uncommitted changes." = "%1$@\n폴더가 지워지고, 브랜치와 커밋은 그대로 남습니다. 커밋하지 않은 변경이 있으면 git 이 거부합니다.";
 "%@\nUncommitted changes are deleted too." = "%1$@\n커밋하지 않은 변경도 함께 지워집니다.";
 "%@  (opened here)" = "%1$@  (지금 연 곳)";
-"%@ (chosen by a gitch rule)" = "%1$@ (gitch 규칙으로 고름)";
 "%@ (current)" = "%1$@ (현재)";
 "%@ (none)" = "%1$@ (없음)";
 "%@ declined this request. Try changing the content and try again." = "%1$@ 가 이 요청을 거절했습니다. 내용을 바꿔 다시 시도해 보세요.";
 "%@ didn't respond correctly (exit code %d). Check that it's the %@ executable." = "%1$@ 이(가) 정상적으로 응답하지 않았습니다(종료 코드 %2$d). %3$@ 실행 파일이 맞는지 확인하세요.";
-"%@ explanation" = "%1$@ 설명";
 "%@ groups the changed files by topic and splits them into several commits. Review and edit the result, then commit. Rules are in Settings > Rules." = "%1$@ 가 바뀐 파일을 주요 내용별로 묶어 여러 커밋으로 나눕니다. 나눈 결과를 확인·수정한 뒤 커밋합니다. 규칙은 설정 > 규칙에서.";
 "%@ is splitting the changes by topic…" = "%1$@ 가 변경을 주요 내용별로 나누는 중…";
 "%@ is writing the commit message…" = "%1$@ 가 커밋 메시지를 쓰는 중…";
@@ -513,7 +511,6 @@
 "Allow writing to the working folder" = "작업 폴더 쓰기 허용";
 "Allowed to fail" = "실패해도 되는 작업";
 "Amend commit" = "커밋 고치기";
-"Amend previous commit" = "이전 커밋 수정";
 "Amend: combine into the last commit" = "Amend: 마지막 커밋에 합칩니다";
 "An app for viewing and working with Git repositories as a graph · MIT" = "Git 저장소를 그래프로 보고 다루는 앱 · MIT";
 "An empty file was deleted" = "빈 파일을 지웠습니다";
@@ -542,7 +539,6 @@
 "Binary file" = "바이너리 파일";
 "Binary or too large — view it in the browser" = "바이너리이거나 너무 커서 브라우저에서 보세요";
 "Blame" = "줄별 작성자";
-"Blame — who changed each line and when" = "줄별 작성자(blame) — 줄마다 누가 언제 바꿨는지";
 "Blocked" = "막힘";
 "Both" = "둘 다";
 "Both (mine first)" = "둘 다(내 것 먼저)";
@@ -553,10 +549,8 @@
 "Branch being merged" = "머지하는 브랜치";
 "Branch name" = "브랜치 이름";
 "Branch to check out" = "체크아웃할 브랜치";
-"Branches pinned to the top" = "맨 위에 고정한 브랜치";
 "Check again with fetch" = "fetch 하고 다시 점검";
 "Check this repository with gitch again" = "이 저장소를 다시 gitch 로 검사";
-"Click to use another gitch account for this repository." = "눌러서 이 저장소에 쓸 gitch 계정을 바꿉니다.";
 "Commit authors are fine" = "커밋 작성자가 모두 맞습니다";
 "Couldn't find gitch inside Gitrochi." = "Gitrochi 안에서 gitch 를 찾지 못했습니다.";
 "Couldn't move Gitrochi to the Applications folder" = "Gitrochi 를 응용 프로그램 폴더로 옮기지 못했습니다";
@@ -635,7 +629,6 @@
 "Clear search (Esc)" = "검색 지우기 (Esc)";
 "Clears the path you chose and finds it automatically again" = "직접 고른 경로를 지우고 다시 자동으로 찾습니다";
 "Clears the staging area, then stages and commits each group from the top." = "스테이지 상태를 비우고 위에서부터 차례로 스테이지 → 커밋합니다.";
-"Click to see the diff in the center" = "눌러서 가운데에 diff 보기";
 "Click to select this line (Shift: range) — you can stage only the selected lines" = "눌러서 이 줄 고르기(Shift: 범위) — 고른 줄만 스테이지할 수 있습니다";
 "Clone" = "복제";
 "Clone repository" = "저장소 복제";
@@ -686,7 +679,6 @@
 "Conversation %lld" = "대화 %1$lld";
 "Copied" = "복사됨";
 "Copy SHA" = "SHA 복사";
-"Copy full SHA" = "전체 SHA 복사";
 "Copy link" = "링크 복사";
 "Copy message" = "메시지 복사";
 "Copy name" = "이름 복사";
@@ -809,7 +801,6 @@
 "Executable" = "실행 파일";
 "Existing branch" = "기존 브랜치";
 "Explain again" = "다시 설명";
-"Explain this commit" = "이 커밋 설명 듣기";
 "Failed" = "실패";
 "Fast-forward" = "빨리 감기";
 "Fast-forward '%@' (current) to '%@'" = "'%1$@'(현재)을(를) '%2$@'까지 빨리 감기 (fast-forward)";
@@ -819,7 +810,6 @@
 "Fetches new commits and branches from all remotes. Your branches aren't changed." = "모든 원격에서 새 커밋과 브랜치를 가져옵니다. 내 브랜치는 바꾸지 않습니다.";
 "Fetching…" = "가져오는 중…";
 "File history" = "파일 히스토리";
-"File history — commits that changed this file" = "파일 히스토리 — 이 파일을 바꾼 커밋들";
 "File imports" = "파일 import";
 "File path" = "파일 경로";
 "Files that change together" = "같이 바뀌는 파일";
@@ -859,11 +849,8 @@
 "History" = "히스토리";
 "If a request is blocked by the safety classifier, the server retries once with the recommended model (fallbacks)." = "요청이 안전 분류기에 막히면 서버가 권장 모델로 한 번 더 시도하도록(fallbacks) 켜 두었습니다.";
 "If the same server is used under another address, an account you've already connected works there too" = "같은 서버가 다른 주소로 쓰이는 경우, 이미 연결한 계정이 그대로 통합니다";
-"Ignore whitespace" = "공백 무시";
-"Ignore whitespace%@ — lines that only changed indentation or spaces are treated as unchanged (line staging is unavailable while on)" = "공백 무시%1$@ — 들여쓰기·공백만 바뀐 줄은 같은 것으로 봅니다(켜 두면 줄 단위 스테이지는 쓸 수 없습니다)";
 "Import gh CLI login" = "gh CLI 로그인 가져오기";
 "In use" = "사용 중";
-"In use by a worktree: %@" = "워크트리에서 사용 중: %1$@";
 "Include how to test" = "테스트 방법 포함";
 "Include the affected areas" = "영향받는 부분 포함";
 "Include the issue number" = "이슈 번호 포함";
@@ -895,13 +882,12 @@
 "Loading" = "읽는 중";
 "Loading earlier history…" = "이전 기록 불러오는 중…";
 "Local branches" = "로컬 브랜치";
-"Local branches %lld" = "로컬 브랜치 %1$lld";
 "Local: %@" = "로컬: %1$@";
 "Locate" = "불러오기";
 "Locate…" = "불러오기…";
 "Location" = "위치";
-"Locked to %@" = "%1$@ 계정으로 잠김";
 "Locked worktree" = "잠긴 워크트리";
+"Locked to %@" = "%1$@ 계정으로 잠김";
 "Looks for a GitHub profile, then a connected self-hosted GitLab profile, then Gravatar, and uses initials if none is found. An email hash is sent to Gravatar." = "GitHub 프로필 → 연결한 사내 GitLab 프로필 → Gravatar 순으로 찾고, 없으면 이니셜을 씁니다. Gravatar 에는 이메일 해시가 전송됩니다.";
 "Manual" = "수동";
 "Mark all as resolved" = "모두 해결됨으로 표시";
@@ -944,7 +930,6 @@
 "New branch name" = "새 브랜치 이름";
 "New branch…" = "새 브랜치…";
 "New file" = "새 파일";
-"New file (untracked)" = "새 파일(추적 안 됨)";
 "New pull/merge request…" = "새 Pull/Merge Request…";
 "New session in the same place" = "같은 곳에서 새 세션";
 "New tab" = "새 탭";
@@ -987,7 +972,6 @@
 "Not found (404). Check that the token has access to the repository." = "찾을 수 없습니다(404). 저장소에 접근할 권한이 있는 토큰인지 확인하세요.";
 "Not found — locate it in the Tools tab" = "찾지 못함 — 도구 탭에서 불러오세요";
 "Not installed" = "설치 안 됨";
-"Not managed by gitch" = "gitch 관리 제외";
 "Nothing to draw" = "그릴 것이 없습니다";
 "OK" = "확인";
 "Off" = "꺼짐";
@@ -1047,7 +1031,6 @@
 "Pulling…" = "Pull 중…";
 "Push tag" = "태그 Push";
 "Pushes %lld unpushed commits to the remote." = "올리지 않은 커밋 %1$lld개를 원격에 올립니다.";
-"Pushes as %@" = "push 계정: %1$@";
 "Pushes the current branch to %@ before creating." = "만들기 전에 현재 브랜치를 %1$@에 Push 합니다.";
 "Pushes the current branch to the remote (no commits to push right now)." = "현재 브랜치를 원격에 올립니다(지금은 올릴 커밋 없음).";
 "Pushes the current branch to the remote for the first time and sets up tracking." = "현재 브랜치를 원격에 처음 올리고 추적을 연결합니다.";
@@ -1077,13 +1060,11 @@
 "Release notes" = "릴리스 노트";
 "Remote: " = "원격: ";
 "Remotes" = "원격";
-"Remotes %lld" = "원격 %1$lld";
 "Remove" = "제거";
 "Remove from list" = "목록에서 제거";
 "Remove this variable" = "이 변수 빼기";
 "Remove worktree '%@'?" = "워크트리 '%1$@'을(를) 제거할까요?";
 "Remove worktree…" = "워크트리 제거…";
-"Remove…" = "제거…";
 "Removing worktree…" = "워크트리 제거 중…";
 "Renamed" = "이름 변경";
 "Renamed  %@ → %@" = "이름 바뀜  %1$@ → %2$@";
@@ -1120,7 +1101,6 @@
 "Run" = "실행";
 "Run %@ after creating" = "만든 뒤 %1$@ 실행";
 "Run again" = "다시 실행";
-"Run agent (%@)" = "에이전트 실행 (%1$@)";
 "Run an agent in a worktree" = "워크트리에서 에이전트 실행";
 "Run doctor in Terminal" = "Terminal 에서 진단(doctor)";
 "Run manual job" = "수동 작업 실행";
@@ -1156,6 +1136,7 @@
 "Shell opened in the terminal panel below (zsh, bash, fish, etc.)" = "아래 터미널 패널에서 여는 셸(zsh·bash·fish 등)";
 "Show all" = "전체 보기";
 "Show all %lld hidden branches" = "숨긴 브랜치 %1$lld개 모두 보이기";
+"Show all %lld hidden branches and tags" = "숨긴 브랜치·태그 %1$lld개 모두 보이기";
 "Show all branches" = "모든 브랜치 보기";
 "Show as folder tree" = "폴더 트리로 보기";
 "Show as list" = "목록으로 보기";
@@ -1170,7 +1151,6 @@
 "Show this commit in the graph" = "그래프에서 이 커밋 보기";
 "Show uncommitted changes" = "작업 중인 변경 보기";
 "Side by side" = "나란히 보기";
-"Side by side (old on the left · new on the right)" = "나란히 보기(왼쪽 이전 · 오른쪽 이후)";
 "Skip this version" = "이 버전 건너뛰기";
 "Skipped" = "건너뜀";
 "Soft — keep changes staged" = "Soft — 변경은 스테이지된 상태로 유지";
@@ -1185,7 +1165,6 @@
 "Stage selected lines (%lld)" = "고른 줄 스테이지 (%1$lld)";
 "Staged" = "스테이지됨";
 "Staged and unstaged changes and untracked new files will all be lost. This can't be undone." = "스테이지된 것과 안 된 것, 추적하지 않는 새 파일까지 모두 사라집니다. 되돌릴 수 없습니다.";
-"Staged files" = "스테이지된 파일";
 "Stages only the selected lines" = "고른 줄만 스테이지합니다";
 "Stages only this hunk (click changed lines to stage only those)" = "이 덩어리만 스테이지합니다(바뀐 줄을 눌러 고르면 그 줄만)";
 "Staging…" = "스테이지 중…";
@@ -1197,7 +1176,6 @@
 "Start point" = "시작 위치";
 "Start with the reason for the change" = "변경 이유를 먼저";
 "Stash changes" = "변경 사항 Stash";
-"Stashes %lld" = "스태시 %1$lld";
 "Stashing…" = "Stash 중…";
 "Structure graph" = "구조 그래프";
 "Structure graph needs gitch %@ or later, but the gitch inside Gitrochi is %@." = "구조 그래프에는 gitch %1$@ 이상이 필요한데, Gitrochi 안의 gitch 는 %2$@ 입니다.";
@@ -1205,19 +1183,16 @@
 "Subject line only, no body" = "본문 없이 제목만";
 "Subject within 50 characters" = "제목 50자 이내";
 "Succeeded" = "성공";
-"Summary (required)" = "요약 (필수)";
 "Syncs the current branch with the remote (no commits to pull right now)." = "현재 브랜치를 원격과 맞춥니다(지금은 받을 커밋 없음).";
 "System" = "시스템";
 "System follows your macOS setting (light, dark or auto). The graph and terminal change with it." = "시스템은 macOS 설정(라이트·다크·자동)을 따릅니다. 그래프·터미널까지 함께 바뀝니다.";
 "Tag here…" = "여기에 태그…";
 "Tag: %@" = "태그: %1$@";
 "Tags" = "태그";
-"Tags %lld" = "태그 %1$lld";
 "Task" = "작업";
 "Task for the agent (optional)" = "에이전트에게 맡길 작업 (선택)";
 "Technical tone" = "기술적인 말투";
 "Tells you when a new version is available; click to download, replace and restart. A downloaded file is installed only if its SHA-256 and signature match the release." = "새 버전이 있으면 알려 주고, 누르면 받아서 바꿔 넣은 뒤 다시 시작합니다. 받은 파일은 릴리스의 SHA-256 과 서명이 맞을 때만 설치됩니다.";
-"Temporary" = "임시";
 "Terminal" = "터미널";
 "Terminal shell" = "터미널 셸";
 "Test connection" = "연결 테스트";
@@ -1290,7 +1265,6 @@
 "Unstage all" = "모두 언스테이지";
 "Unstage hunk" = "덩어리 언스테이지";
 "Unstage selected lines (%lld)" = "고른 줄 언스테이지 (%1$lld)";
-"Unstaged files" = "스테이지 안 된 파일";
 "Unstages only the selected lines" = "고른 줄만 스테이지에서 뺍니다";
 "Unstages this hunk" = "이 덩어리를 스테이지에서 뺍니다";
 "Unstaging…" = "언스테이지 중…";
@@ -1321,7 +1295,6 @@
 "Waiting for deployment approval: %@" = "배포 승인 대기: %1$@";
 "Waiting for input" = "입력 대기";
 "Waiting to be run manually" = "수동 실행 대기";
-"Warning" = "경고";
 "What to do with this commit" = "이 커밋을 어떻게 할지";
 "What would you like to do?" = "무엇을 할까요?";
 "What would you like to do? If there are conflicts, you can resolve them on the right." = "무엇을 할까요? 충돌이 나면 오른쪽에서 해결할 수 있습니다.";
@@ -1331,10 +1304,8 @@
 "Workflow" = "워크플로";
 "Working directory is clean" = "작업 디렉터리가 깨끗합니다";
 "Working tree" = "작업 트리";
-"Worktree in a temporary folder — it may break when the folder is deleted on restart" = "임시 폴더 안의 워크트리 — 재부팅하면 폴더가 지워져 깨질 수 있습니다";
 "Worktree whose folder is gone — remove it with 'Clean up'" = "폴더가 사라진 워크트리 — '정리'로 지울 수 있습니다";
 "Worktrees" = "워크트리";
-"Worktrees %lld" = "워크트리 %1$lld";
 "Write commit message with AI" = "AI 로 커밋 메시지 작성";
 "Write in English" = "영어로 작성";
 "Write in Korean" = "한국어로 작성";
@@ -1361,9 +1332,6 @@
 "git %@ failed" = "git %1$@ 실패";
 "git refuses to delete a branch with unmerged commits. Use 'Force delete' in that case." = "머지되지 않은 커밋이 있으면 git 이 삭제를 거부합니다. 그때는 '강제 삭제'를 쓰세요.";
 "gitch backups" = "gitch 백업";
-"gitch checks before commit and push" = "커밋·push 전 gitch 점검";
-"gitch commands for this repository" = "이 저장소의 gitch 명령";
-"gitch doesn't know which account this repository uses. Lock it with gitch use <account>." = "gitch 가 이 저장소의 계정을 모릅니다. gitch use <계정> 으로 잠그세요.";
 "gitch found nothing to draw for %@." = "%1$@: gitch 가 그릴 것을 찾지 못했습니다.";
 "gitch graph changes: files that are often committed together, and how often each one changes." = "gitch graph changes: 자주 같이 커밋되는 파일과 파일마다 바뀐 횟수.";
 "gitch graph check reads its rules from .gitch/graph.rules in this repository. Create the file with commented-out examples (gitch graph check --init) and open it?" = "gitch graph check 는 이 저장소의 .gitch/graph.rules 에서 규칙을 읽습니다. 주석으로 둔 예시가 든 파일을 만들고(gitch graph check --init) 열까요?";
@@ -1377,8 +1345,6 @@
 "gitch saves a backup before pull, up, sync, fix, undo and amend, and keeps the 30 most recent." = "gitch 는 pull·up·sync·fix·undo·amend 전에 백업을 남기고, 최근 30개를 보관합니다.";
 "gitch sets the commit author to %@ and points origin (and upstream) at %@'s SSH alias, then locks the repository to it." = "gitch 가 커밋 작성자를 %1$@ 로 바꾸고, origin(과 upstream)을 %2$@ 의 SSH 별칭 주소로 바꾼 뒤 저장소를 그 계정으로 잠급니다.";
 "gitch stops requiring %@ for commits and pushes here. The commit author stays as it is." = "이 저장소에서 커밋·push 할 때 더는 %1$@ 계정을 요구하지 않습니다. 커밋 작성자 설정은 그대로입니다.";
-"gitch sync: brings this branch up to date with the original repository (upstream)." = "gitch sync: 이 브랜치를 원본 저장소(upstream)의 최신으로 맞춥니다.";
-"gitch up: moves this branch onto the latest default branch, or merges it if the branch is already pushed. A backup is saved first." = "gitch up: 이 브랜치를 최신 기본 브랜치 위로 옮깁니다. 이미 push 한 브랜치면 합칩니다. 먼저 백업합니다.";
 "gitch won't check authors, secrets or pushes in this repository until you turn it back on." = "다시 켤 때까지 이 저장소에서는 작성자·비밀값·push 를 검사하지 않습니다.";
 "tag" = "태그";
 "… The diff is too long; only the beginning is shown" = "… 변경이 너무 길어 앞부분만 표시합니다";
@@ -1423,7 +1389,6 @@
 "Repository tools" = "저장소 도구";
 "Branches" = "브랜치";
 "Actions" = "작업";
-"Options" = "옵션";
 "Dismiss notification" = "알림 닫기";
 "Operation completed" = "작업을 완료했습니다";
 "Select a file to review" = "확인할 파일을 선택하세요";
@@ -1431,7 +1396,6 @@
 "Stage the files you want to include." = "커밋에 넣을 파일을 스테이지하세요.";
 "Write a summary to enable commit." = "요약을 입력하면 커밋할 수 있습니다.";
 "Ready to commit staged changes." = "스테이지된 변경을 커밋할 준비가 되었습니다.";
-"%lld staged files" = "스테이지된 파일 %lld개";
 "AI message" = "AI로 작성";
 "AI writes a message from the staged changes. (⌥⌘M)" = "스테이지된 변경을 바탕으로 AI가 메시지를 작성합니다. (⌥⌘M)";
 "Commit summary" = "커밋 요약";
@@ -1439,11 +1403,8 @@
 "Commit description" = "커밋 설명";
 "Close diff" = "diff 닫기";
 "Close diff (Esc)" = "diff 닫기 (Esc)";
-"File actions" = "파일 작업";
-"File display" = "파일 표시 방식";
 
 "Checking the Git account and repository…" = "Git 계정과 저장소를 점검하는 중…";
-"Resolve the gitch checks below before committing." = "아래 gitch 점검의 차단 사유를 해결한 뒤 커밋하세요.";
 
 "Resize file and detail columns" = "파일 목록과 상세 영역 너비 조절";
 
@@ -1588,7 +1549,6 @@
 "Copy this entry into your AI client's MCP settings. Only this repository is exposed, using read-only local tools." = "이 항목을 AI 앱의 MCP 설정에 복사하세요. 이 저장소만 읽기 전용 로컬 도구로 제공합니다.";
 "Couldn't resolve this commit." = "이 커밋을 확인하지 못했습니다.";
 "Create recovery branch" = "복구 브랜치 만들기";
-"Created by me" = "내가 만든 요청";
 "Creating recovery branch…" = "복구 브랜치 생성 중…";
 "Different commit" = "기록된 커밋과 다름";
 "Discarded changes are saved locally before removal. Copies keep binary files, new files, symlinks, and the index. Restore at the original commit with a clean working tree." = "변경을 버리기 전에 로컬에 보관합니다. 바이너리·새 파일·심볼릭 링크와 스테이지 상태도 포함합니다. 원래 커밋으로 돌아가 작업 폴더를 비운 뒤 복원하세요.";
@@ -1890,7 +1850,7 @@
 "Only members visible to this account are returned by the server." = "서버가 이 계정에 공개한 구성원만 표시됩니다.";
 "Open a local repository or clone one to get started." = "로컬 저장소를 열거나 서버의 저장소를 복제해서 시작하세요.";
 "Open a repository on the selected account's server to use releases and projects." = "릴리스와 프로젝트를 사용하려면 선택한 계정 서버의 저장소를 여세요.";
-"Open a repository to use this page." = "이 화면을 사용하려면 리포지터리를 여세요.";
+"Open a repository to use this page." = "이 화면을 쓰려면 저장소를 여세요.";
 "Open a repository with a GitHub or GitLab remote to use this workspace." = "이 작업 화면을 사용하려면 GitHub 또는 GitLab 원격이 있는 저장소를 여세요.";
 "Organizations" = "조직";
 "Parent folder" = "상위 폴더";
@@ -2199,6 +2159,8 @@
 "(current)" = "(현재)";
 "Compare with the current branch" = "현재 브랜치와 비교";
 "Filter branches and tags" = "브랜치·태그 검색";
+"Filter branches" = "브랜치 필터";
+"No branch or tag name contains “%@”." = "“%@”에 맞는 브랜치·태그 이름이 없습니다.";
 "Comparing…" = "비교하는 중…";
 "Use branches, tags or commit IDs, or pick a branch on the left." = "브랜치·태그·커밋 ID를 입력하거나 왼쪽 목록에서 브랜치를 고르세요.";
 "Clear search" = "검색어 지우기";
@@ -2207,12 +2169,9 @@
 "Search merge requests" = "머지 리퀘스트 검색";
 "No pull requests match this filter." = "이 조건에 맞는 풀 리퀘스트가 없습니다.";
 "No merge requests match this filter." = "이 조건에 맞는 머지 리퀘스트가 없습니다.";
-"No issues match this filter." = "이 조건에 맞는 이슈가 없습니다.";
 "Open in Pull requests" = "풀 리퀘스트 페이지에서 열기";
-"Open in Merge requests" = "머지 리퀘스트 페이지에서 열기";
 "Open in Issues" = "이슈 페이지에서 열기";
 "Merge request" = "머지 리퀘스트";
-"Issues %lld" = "이슈 %1$lld";
 "Edit issue #%lld" = "이슈 #%1$lld 편집";
 
 "Refresh conversation" = "대화 새로 고침";
@@ -2224,7 +2183,6 @@
 "Icons only" = "아이콘만";
 "Icons and text" = "아이콘과 텍스트";
 "With text, each button's name sits to the right of its icon." = "텍스트를 켜면 각 버튼 이름이 아이콘 오른쪽에 표시됩니다.";
-"Filtered: %@" = "필터: %1$@";
 
 "Close search (Esc)" = "검색 닫기 (Esc)";
 "Close search" = "검색 닫기";
@@ -4009,6 +3967,17 @@
 "This repository" = "이 리포지터리";
 "Saved sign-in can't be read" = "저장된 로그인을 읽을 수 없음";
 "Couldn't use the saved sign-in" = "저장된 로그인을 쓰지 못했습니다";
+"Tag…" = "태그…";
+"Explain with AI…" = "AI로 설명…";
+"Copy commit SHA" = "커밋 SHA 복사";
+"Parent" = "부모";
+"Parents" = "부모";
+"Closes" = "닫음";
+"Fixes" = "수정";
+"Resolves" = "해결";
+"Co-author" = "공동 작성자";
+"Trailers" = "트레일러";
+"Couldn't explain this commit" = "이 커밋을 설명하지 못했습니다";
 "Needs you" = "응답 필요";
 "Respond" = "응답하기";
 "Elsewhere" = "다른 곳";
@@ -4017,3 +3986,14 @@
 "Unstage line" = "줄 언스테이지";
 "Hide changes and show the graph" = "변경 숨기고 그래프 보기";
 "Sessions started here run in the terminal tabs below; click one to go to its terminal." = "여기서 시작한 세션은 아래 터미널 탭에서 돕니다. 세션을 누르면 그 터미널로 이동합니다.";
+"Unstaged" = "스테이지 안 됨";
+"Untracked" = "추적 안 됨";
+"Summary" = "요약";
+"Too large" = "너무 큼";
+"copied from %@" = "%@에서 복사";
+"Commit 1 file" = "1개 파일 커밋";
+"Commit %lld files" = "%lld개 파일 커밋";
+"Couldn't write the commit message" = "커밋 메시지를 쓰지 못했습니다";
+"gitch stopped this commit. Run gitch doctor in the terminal." = "gitch가 이 커밋을 막았습니다. 터미널에서 gitch doctor를 실행하세요.";
+"Amend previous commit" = "이전 커밋 수정";
+"Split into commits…" = "나눠서 커밋…";

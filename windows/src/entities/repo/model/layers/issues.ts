@@ -33,6 +33,10 @@ export abstract class RepoIssues extends RepoHosting {
   issueState: LoadState = { kind: "idle" };
   private issueContext = "";
   private issueListToken = 0;
+  /** The issues commit trailers name, as far as they were read */
+  private trailerIssues = new Map<number, InboxItem>();
+  private trailerIssuesAsked = new Set<number>();
+  private trailerIssuesContext = "";
 
   /** Which repository, server and account the list belongs to; the filter is not part of it */
   get issueContextKey() {
@@ -146,6 +150,52 @@ export abstract class RepoIssues extends RepoHosting {
     void this.openInboxItem(item);
   }
 
+  // MARK: Issues named by a commit's trailers (macOS: RepoStore+Issues, trailerIssue)
+
+  /** What is known of the issue a trailer names. Never asks the server. */
+  trailerIssue(number: number): InboxItem | null {
+    return this.trailerIssuesContext === this.issueContextKey ? this.trailerIssues.get(number) ?? null : null;
+  }
+
+  /**
+   * Reads the titles of the issues a commit closes, once each per repository and account, and only with a connected
+   * account. Answers are kept by issue number, so one never lands under another commit.
+   */
+  loadTrailerIssues(numbers: number[]) {
+    const key = this.issueContextKey;
+    if (this.trailerIssuesContext !== key) { this.trailerIssues.clear(); this.trailerIssuesAsked.clear(); this.trailerIssuesContext = key; }
+    if (!numbers.length || !this.target || !this.hostingAccount) return;
+    for (const item of [...this.issues, ...(this.issueAssigned ?? [])]) if (numbers.includes(item.number) && !this.trailerIssues.has(item.number)) this.trailerIssues.set(item.number, item);
+    // a message that names dozens of issues is not worth dozens of requests
+    const wanted = numbers.slice(0, 6).filter((number) => !this.trailerIssues.has(number) && !this.trailerIssuesAsked.has(number));
+    if (!wanted.length) return;
+    for (const number of wanted) this.trailerIssuesAsked.add(number);
+    void (async () => {
+      const current = () => key === this.issueContextKey && key === this.trailerIssuesContext;
+      const access = await this.workspaceAccess().catch(() => null);
+      await Promise.all(wanted.map(async (number) => {
+        const found = access && current() ? await Hosting.trailerIssue(access, number).catch(() => null) : null;
+        if (!current()) return;
+        // a failure may be asked again the next time a commit names the issue
+        if (found) this.trailerIssues.set(number, found); else this.trailerIssuesAsked.delete(number);
+      }));
+      if (current()) this.emit();
+    })();
+  }
+
+  /** Opens the issue a trailer names: its page in the app when an account is connected, else the server's page */
+  openTrailerIssue(number: number) {
+    const target = this.target;
+    if (!target) return;
+    const url = `https://${target.host}/${target.path}/${target.provider === "gitlab" ? "-/" : ""}issues/${number}`;
+    if (!this.hostingAccount) { this.openUrl(url); return; }
+    const item = this.trailerIssue(number) ?? { id: `issue-${number}`, kind: "issue" as const, number, title: "", url, body: "", state: "", updated: null, author: "", unread: false };
+    if (item.isRequest) {
+      this.navigate("pullRequests");
+      this.select({ kind: "pullRequest", number });
+    } else this.openIssue(item);
+  }
+
   /** Closing or reopening asks once, then refreshes the issue and the list */
   confirmIssueState(item: InboxItem) {
     const key = this.issueContextKey, open = ["open", "opened"].includes(item.state);
@@ -218,6 +268,7 @@ export abstract class RepoIssues extends RepoHosting {
     this.clearIssueList();
     this.issueContext = ""; this.issueScope = "open"; this.issueSort = "updated"; this.issueSearch = ""; this.issueLoadedSearch = "";
     this.issueAssigned = null; this.issueAssignedMore = false; this.issueAssignedFailed = false; this.issueAssignedContext = "";
+    this.trailerIssues.clear(); this.trailerIssuesAsked.clear(); this.trailerIssuesContext = "";
     super.resetState();
   }
 }

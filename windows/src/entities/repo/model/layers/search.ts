@@ -15,7 +15,7 @@ export abstract class RepoSearch extends RepoSelection {
   }
 
   requestSearchFocus() {
-    this.navigate("repository");
+    if (!this.navigate("repository")) return;
     this.closeFileInspect();
     this.closeDiff();
     this.showSearchBar = true;

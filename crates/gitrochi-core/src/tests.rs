@@ -197,3 +197,107 @@ fn impact_uses_nearest_owner_per_ecosystem_and_base_dependencies() {
     assert_eq!(summary["modules"], json!(["npm:lib", "other:root"]));
     assert!(out.contains("D\tlib/deleted.ts\n"));
 }
+
+fn detail_of(message: &str, base: &str) -> Value {
+    run(
+        json!({"op":"detail","issueBase":base,"text":format!("a\u{1f}b\u{1f}Alex Kim\u{1f}alex@example.com\u{1f}1\u{1f}Alex Kim\u{1f}alex@example.com\u{1f}1\u{1f}{message}")}),
+    )
+}
+
+#[test]
+fn trailers_are_the_last_paragraph_and_leave_the_prose_whole() {
+    let base = "https://github.com/o/r";
+    let out = detail_of(
+        "Subject\n\nThe list jumped.\n\n- one\n- two\n\nCloses #42\nCo-authored-by: Sam Lee <sam@example.com>\n",
+        base,
+    );
+    assert_eq!(out["summary"], "Subject");
+    assert_eq!(out["prose"], "The list jumped.\n\n- one\n- two");
+    assert_eq!(
+        out["body"],
+        "The list jumped.\n\n- one\n- two\n\nCloses #42\nCo-authored-by: Sam Lee <sam@example.com>"
+    );
+    assert_eq!(
+        out["trailers"],
+        json!({"issues":[{"keyword":"closes","number":42}],"coAuthors":[{"name":"Sam Lee","email":"sam@example.com","line":"Co-authored-by: Sam Lee <sam@example.com>"}]})
+    );
+
+    // every verb form, a colon, several per line, this repository's own address, and one row per issue
+    let out = detail_of(
+        "S\n\nFIXED: #1, #2 and resolves #3\nclose https://GitHub.com/o/r/issues/4 #1\nResolved https://github.com/o/r/-/issues/5",
+        base,
+    );
+    assert_eq!(
+        out["trailers"]["issues"],
+        json!([{"keyword":"fixes","number":1},{"keyword":"fixes","number":2},{"keyword":"resolves","number":3},{"keyword":"closes","number":4},{"keyword":"resolves","number":5}])
+    );
+    assert_eq!(out["prose"], "");
+
+    // a reference in the prose, or in a paragraph that is not the last, is text
+    for message in [
+        "S\n\nCloses #3\n\nMore words after it.",
+        "S\n\nThis closes #3 for good.",
+        "S\n\nCloses #3 by reworking the list",
+        "S\n\nWords first\nCloses #3",
+        "S\n\nCloses and #3",
+        "S\n\nCloses #3 and",
+        "S\n\nCloses fixes #3",
+    ] {
+        let out = detail_of(message, base);
+        assert_eq!(
+            out["trailers"],
+            json!({"issues":[],"coAuthors":[]}),
+            "{message}"
+        );
+        assert_eq!(out["prose"], out["body"], "{message}");
+    }
+
+    // what is not recognised stays: other trailers, another repository's issue, a malformed co-author
+    let out = detail_of(
+        "S\n\nWords.\n\nCloses https://github.com/o/other/issues/9\nReviewed-by: Kim <kim@example.com>\nCo-authored-by: No Email\nCo-Authored-By: dependabot[bot] <bot@example.com>\nSigned-off-by: Alex Kim <alex@example.com>\ncloses #0\nFixes #7",
+        base,
+    );
+    assert_eq!(
+        out["trailers"]["issues"],
+        json!([{"keyword":"fixes","number":7}])
+    );
+    assert_eq!(out["trailers"]["coAuthors"][0]["name"], "dependabot[bot]");
+    assert_eq!(
+        out["prose"],
+        "Words.\n\nCloses https://github.com/o/other/issues/9\nReviewed-by: Kim <kim@example.com>\nCo-authored-by: No Email\nSigned-off-by: Alex Kim <alex@example.com>\ncloses #0"
+    );
+
+    // an address is an issue only when the repository's own is known
+    let out = detail_of("S\n\nCloses https://github.com/o/r/issues/4", "");
+    assert_eq!(out["trailers"]["issues"], json!([]));
+    assert_eq!(out["prose"], "Closes https://github.com/o/r/issues/4");
+
+    // the same co-author twice is one row; a folded trailer stays text; CRLF bodies read the same
+    let out = detail_of(
+        "S\r\n\r\nCo-authored-by: Sam Lee <sam@example.com>\r\nCo-authored-by: Sam <SAM@example.com>\r\nCo-authored-by: Pat Doe\r\n <pat@example.com>\r\n",
+        base,
+    );
+    assert_eq!(out["trailers"]["coAuthors"].as_array().unwrap().len(), 1);
+    assert_eq!(out["prose"], "Co-authored-by: Pat Doe\n <pat@example.com>");
+
+    // a mixed last paragraph counts only beside a line written by the tool itself, with a quarter trailers
+    let out = detail_of(
+        "S\n\nBody.\n\nnot a trailer\nSigned-off-by: Alex Kim <alex@example.com>\nFixes #8",
+        base,
+    );
+    assert_eq!(
+        out["trailers"]["issues"],
+        json!([{"keyword":"fixes","number":8}])
+    );
+    assert_eq!(
+        out["prose"],
+        "Body.\n\nnot a trailer\nSigned-off-by: Alex Kim <alex@example.com>"
+    );
+
+    // no body, and a body without trailers
+    assert_eq!(detail_of("S", base)["prose"], "");
+    assert_eq!(
+        detail_of("S\n\nJust words.", base)["trailers"]["issues"],
+        json!([])
+    );
+}

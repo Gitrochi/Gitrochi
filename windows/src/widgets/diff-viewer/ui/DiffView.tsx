@@ -1,15 +1,14 @@
-import { Columns2, CornerDownLeft, Equal, FileArchive, History, ImageOff, LockOpen, Rows3, ScanText, Space, TriangleAlert } from "lucide-react";
-import { FolderOpen } from "@/shared/icons";
-import { ChevronLeft, FileText, Minus, Pencil, Plus, Sparkles, Trash2 } from "@/shared/icons";
-import { type ReactNode, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { CornerDownLeft, Equal, FileArchive, ImageOff, LockOpen, TriangleAlert } from "lucide-react";
+import { FileText, Minus, Pencil, Plus, Trash2 } from "@/shared/icons";
+import { type ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ConflictView } from "@/features/resolve-conflict";
-import { type DiffDocument, type DiffLine, diffSides, modeSummary, short, type SplitRow, splitRows, StatusBadge } from "@/entities/git";
+import { type DiffDocument, type DiffLine, diffSiblings, diffSides, modeSummary, sameDiffSource, short, type SplitRow, splitRows, StatusBadge } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
 import { ipc } from "@/shared/api";
-import { basename, joinPath, samePath } from "@/shared/config";
+import { basename, joinPath, samePath, settings } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
-import { Button, Empty, IconButton, Spinner } from "@/shared/ui";
+import { Button, DiffHeader, Empty, type MenuItem, Spinner, useFileViewMode } from "@/shared/ui";
 import "./diff-viewer.css";
 
 const LINE_H = 18;
@@ -42,71 +41,57 @@ export function DiffView({ store, chrome = true, split }: {
   const doc = store.diff;
   // a diff on the repository screen stands where the graph was, so its way back names the graph
   const backLabel = source.kind === "review" ? t("Back to conversation") : t("Graph");
+  useObserve(settings);
+  const tree = useFileViewMode() === "tree";
+  // the files this one was opened among: the header's "2 / 6", and J and K
+  const siblings = chrome ? diffSiblings(source, { status: store.status, detailSha: store.detail?.sha ?? null, detailFiles: store.detailFiles, tree }) : [];
+  const index = siblings.findIndex((item) => sameDiffSource(item, source));
+  const step = (by: number) => { const next = siblings[index + by]; if (next) store.openDiff(next); };
+  // J and K walk the files, as the header's buttons say, unless the keys belong to a field, the terminal or a dialog
+  useEffect(() => {
+    if (index < 0) return;
+    const onKey = (event: KeyboardEvent) => {
+      const element = event.target as HTMLElement | null;
+      if (event.ctrlKey || event.metaKey || event.altKey || element?.closest?.("input, textarea, select, [contenteditable], .xterm") || document.querySelector(".modal-backdrop")) return;
+      const key = event.key.toLowerCase();
+      if (key === "j") { event.preventDefault(); step(1); } else if (key === "k") { event.preventDefault(); step(-1); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
+  const busy = !!store.busy, tools = c.kind !== "untracked" && source.kind !== "review" && source.kind !== "worktree";
+  // More: what the header does not draw. Staging first, the file's history tools, where the file is, discarding last
+  const more = (): MenuItem[] => [
+    ...(source.kind === "working" ? [
+      c.kind === "conflicted" ? { label: t("Mark as resolved"), disabled: busy, onClick: () => void store.stage([c]) }
+        : c.staged ? { label: t("Unstage"), disabled: busy, onClick: () => void store.unstage([c]) }
+        : { label: t("Stage"), disabled: busy, onClick: () => void store.stage([c]) },
+      "divider" as const,
+    ] : []),
+    ...(tools ? [
+      { label: t("File history"), onClick: () => store.openFileHistory(c.path) },
+      ...(c.kind !== "deleted" ? [{ label: t("Show blame"), onClick: () => store.openBlame(c.path, source.kind === "commit" ? source.sha : null) }] : []),
+      { label: t("Trace lines…"), disabled: store.diffLoading || !!doc?.isBinary, onClick: () => store.openSelectedLineHistory() },
+      "divider" as const,
+    ] : []),
+    { label: t("Show in Explorer"), onClick: () => (source.kind === "worktree" ? void ipc.reveal(joinPath(source.path, c.path)) : store.revealFile(c)) },
+    { label: t("Copy path"), onClick: () => store.copy(c.path) },
+    ...(source.kind === "working" && !c.staged && c.kind !== "conflicted" ? ["divider" as const, { label: t("Discard changes…"), danger: true, disabled: busy, onClick: () => store.confirmDiscard(c) }] : []),
+  ];
 
   return (
     <div className="col grow">
-      {chrome && <div className="diff-head">
-        <button type="button" className="diff-back status-tone" aria-keyshortcuts="Escape" data-tip={source.kind === "review" ? `${backLabel} (Esc)` : t("Back to graph (Esc)")} onClick={() => store.closeDiff()}>
-          <ChevronLeft size={12} />
-          {backLabel}
-        </button>
-        <span className="diff-back-sep" aria-hidden="true" />
-        <StatusBadge kind={c.kind} />
-        <div className="col grow">
-          <span className="ellipsis" style={{ fontWeight: 600 }}>
-            {c.path.split("/").pop()}
-          </span>
-          <span className="ellipsis muted" style={{ fontSize: 11.5 }}>
-            {subtitle}
-          </span>
-        </div>
-        {c.kind !== "untracked" && source.kind !== "review" && source.kind !== "worktree" && (
-          <>
-            <IconButton icon={<History size={15} />} aria-label={t("File history")} tip={t("File history|Commits that changed this file")} onClick={() => store.openFileHistory(c.path)} />
-            {c.kind !== "deleted" && (
-              <IconButton
-                icon={<ScanText size={15} />}
-                aria-label={t("Blame")}
-                tip={t("Blame|Who changed each line and when")}
-                onClick={() => store.openBlame(c.path, source.kind === "commit" ? source.sha : null)}
-              />
-            )}
-          </>
-        )}
-        <IconButton icon={<FolderOpen size={15} />} aria-label={t("Show in Explorer")} tip={t("Show in Explorer")} onClick={() => (source.kind === "worktree" ? void ipc.reveal(joinPath(source.path, c.path)) : store.revealFile(c))} />
-        {source.kind !== "review" && source.kind !== "worktree" && c.kind !== "untracked" && <Button size="small" disabled={store.diffLoading || doc?.isBinary} onClick={() => store.openSelectedLineHistory()}>{t("Trace lines…")}</Button>}
-        <Button size="small" disabled={store.diffLoading || doc?.isBinary} onClick={() => void store.openChangeQuestion()} tip={t("Ask questions about the selected changes")}>
-          <Sparkles size={13} /> {t("Ask AI…")}
-        </Button>
-        <div className="segmented" style={{ flex: "none" }}>
-          <button type="button" className={!store.diffSplit ? "on" : ""} data-tip={t("Unified view")} aria-label={t("Unified view")} onClick={() => store.setDiffSplit(false)}>
-            <Rows3 size={14} />
-          </button>
-          <button type="button" className={store.diffSplit ? "on" : ""} data-tip={t("Side by side (old on the left · new on the right)")} aria-label={t("Side by side")} onClick={() => store.setDiffSplit(true)}>
-            <Columns2 size={14} />
-          </button>
-        </div>
-        <IconButton
-          className={store.diffIgnoreWhitespace ? "on" : ""}
-          icon={<Space size={15} />}
-          aria-label={t("Ignore whitespace")}
-          tip={t("Ignore whitespace|Lines that only changed indentation or spaces are treated as unchanged (line staging is unavailable while on)")}
-          onClick={() => store.setDiffIgnoreWhitespace(!store.diffIgnoreWhitespace)}
-        />
-        {source.kind === "working" &&
-          (c.kind === "conflicted" ? (
-            <Button onClick={() => void store.stage([c])}>{t("Mark as resolved")}</Button>
-          ) : c.staged ? (
-            <Button onClick={() => void store.unstage([c])}>{t("Unstage")}</Button>
-          ) : (
-            <>
-              <Button kind="danger" onClick={() => store.confirmDiscard(c)}>
-                {t("Discard changes…")}</Button>
-              <Button kind="primary" onClick={() => void store.stage([c])}>
-                {t("Stage")}</Button>
-            </>
-          ))}
-      </div>}
+      {chrome && <DiffHeader
+        back={{ label: backLabel, tip: source.kind === "review" ? `${backLabel} (Esc)` : t("Back to graph (Esc)"), onClick: () => store.closeDiff() }}
+        badge={<StatusBadge kind={c.kind} />}
+        path={c.path}
+        help={subtitle}
+        position={index < 0 ? null : { index, count: siblings.length, step }}
+        layout={{ split: split ?? store.diffSplit, set: (value) => store.setDiffSplit(value) }}
+        whitespace={{ hidden: store.diffIgnoreWhitespace, set: (value) => store.setDiffIgnoreWhitespace(value) }}
+        ask={{ disabled: store.diffLoading || !!doc?.isBinary, run: () => void store.openChangeQuestion() }}
+        more={more}
+      />}
       {source.kind === "working" && c.kind === "conflicted" ? (
         <ConflictView store={store} change={c} />
       ) : !doc ? (

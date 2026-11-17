@@ -18,7 +18,7 @@ import "./workspace-panels.css";
  * Home, as the redesign's Home board draws it: repositories first (open, clone or create one, the one opened last and
  * the recent ones), then the few tasks due today. (macOS: WorkspaceHomePanel)
  */
-export function WorkspaceHomePanel({ store, repositoryOnly = false }: { store: RepoStore; openSettings?: () => void; repositoryOnly?: boolean }) {
+export function WorkspaceHomePanel({ store }: { store: RepoStore; openSettings?: () => void }) {
   useObserve(settings);
   useObserve(tools);
   const gitMissing = !tools.path("git");
@@ -56,7 +56,6 @@ export function WorkspaceHomePanel({ store, repositoryOnly = false }: { store: R
     <div className="workspace-home">
       <main className="home-page">
         <section className="home-section" aria-labelledby="home-repositories-title">
-          {repositoryOnly && <p className="workspace-repository-required">{t("Open a repository to use this page.")}</p>}
           {gitMissing && (
             <div className="card" style={{ maxWidth: 420, borderColor: "var(--orange)" }}>
               <span className="row" style={{ color: "var(--orange)", fontWeight: 600 }}>
@@ -142,7 +141,7 @@ export function WorkspaceHomePanel({ store, repositoryOnly = false }: { store: R
             </div>
           ) : (!list.length || filtering) && <span className="home-cap">{t("No repositories opened yet")}</span>}
         </section>
-        {!repositoryOnly && <WorkspacePlanningDashboard store={store} todayOnly />}
+        <WorkspacePlanningDashboard store={store} todayOnly />
       </main>
     </div>
   );

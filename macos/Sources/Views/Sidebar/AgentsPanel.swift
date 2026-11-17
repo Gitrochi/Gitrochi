@@ -67,9 +67,12 @@ struct AgentsPanel: View {
                     Button { store.sheet = .addWorktree(branch: nil, start: nil) } label: { DesignIconImage(icon: .plus, size: 13) }
                         .buttonStyle(PullRequestIconButtonStyle())
                         .help("New worktree…").accessibilityLabel("New worktree…")
-                    if agents.sessions.contains(where: { $0.status == .ended }) {
+                    // what the Branches tab's worktree list offered stays here: Clean up for folders that are gone
+                    let hasEnded = agents.sessions.contains(where: { $0.status == .ended }), prunable = store.worktrees.contains(where: \.prunable)
+                    if hasEnded || prunable {
                         Menu {
-                            Button("Clear ended sessions") { agents.clearEnded() }
+                            if prunable { Button("Clean up") { Task { await store.pruneWorktrees() } } }
+                            if hasEnded { Button("Clear ended sessions") { agents.clearEnded() } }
                         } label: {
                             DesignIconImage(icon: .more, size: 14).foregroundStyle(StudioStyle.Tone.neutral.text)
                                 .frame(width: 24, height: 24).contentShape(Rectangle())
@@ -172,11 +175,7 @@ private struct WorktreeGroup: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 6) {
                 if isCurrent {
-                    // the current marker of docs/design.md: a 12 pt dot in an 18 pt halo, in the accent
-                    Circle().fill(Color.accentColor).frame(width: 12, height: 12)
-                        .background(Circle().fill(Color.accentColor.opacity(0.18)).frame(width: 18, height: 18))
-                        .frame(width: 13, height: 18)
-                        .accessibilityLabel("Current")
+                    CurrentMarker()
                 } else {
                     DesignIconImage(icon: .branch, size: 13).foregroundStyle(HostedList.caption)
                 }
@@ -218,17 +217,24 @@ private struct WorktreeGroup: View {
             Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: worktree.path)]) }
             Button("Open in the terminal below") { store.newTerminal(in: worktree.path) }
             Button("Open in Terminal") { Launcher.openTerminal(at: worktree.path) }
+            Button("Copy path") { store.copy(worktree.path) }
             Divider()
             Button("Remove worktree…", role: .destructive) { store.confirmRemove(worktree) }
+                .disabled(worktree.isMain || isCurrent)
+            Button("Force remove…", role: .destructive) { store.confirmRemove(worktree, force: true) }
                 .disabled(worktree.isMain || isCurrent)
         }
         ForEach(sessions) { s in SessionRow(session: s) }
         ForEach(typed) { a in TerminalAgentRow(agent: a, root: worktree.path) }
     }
 
-    /// One state icon: a conflict outranks plain uncommitted files
+    /// One state icon: a folder that is gone outranks a conflict, which outranks plain uncommitted files
     @ViewBuilder private var stateIcon: some View {
-        if let stats, stats.conflicted > 0 {
+        if worktree.prunable {
+            SymbolIcon("exclamationmark.triangle").font(.system(size: 12)).foregroundStyle(StudioStyle.Tone.waiting.text)
+                .help("Worktree whose folder is gone — remove it with 'Clean up'")
+                .accessibilityLabel("Worktree whose folder is gone — remove it with 'Clean up'")
+        } else if let stats, stats.conflicted > 0 {
             SymbolIcon("xmark.circle.fill").font(.system(size: 12)).foregroundStyle(StudioStyle.Tone.failed.text)
                 .help(String(localized: "Conflict") + " \(stats.conflicted)")
                 .accessibilityLabel(String(localized: "Conflict") + " \(stats.conflicted)")

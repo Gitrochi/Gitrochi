@@ -85,6 +85,19 @@ extension RepoStore {
 
     func gitchFix() async { await runGitch(["fix", "--yes"]) }
 
+    /// ⋯ › gitch › Fix authors of unpushed commits…: gitch's list first, the fix only once it is confirmed.
+    /// (Windows: confirmGitchFix in entities/repo/model/layers/gitch.ts)
+    func confirmGitchFix() async {
+        guard let r = await gitchFixPreview() else { return }
+        if r.needsFix {
+            confirm = ConfirmRequest(title: String(localized: "Fix commit authors?"), message: r.text, actionTitle: String(localized: "Fix"), destructive: false) { [weak self] in
+                await self?.gitchFix()
+            }
+        } else {
+            confirm = ConfirmRequest(title: String(localized: "Commit authors are fine"), message: r.text, actionTitle: String(localized: "OK"), destructive: false) {}
+        }
+    }
+
     func gitchBackups() async -> [Gitch.Backup] {
         guard let url else { return [] }
         return await Gitch.backups(in: url)

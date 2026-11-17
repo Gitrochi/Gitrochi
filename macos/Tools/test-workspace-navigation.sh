@@ -113,9 +113,11 @@ import SwiftUI
         precondition(mainPages.allSatisfy { WorkspaceDestination(rawValue: $0.rawValue) == $0 && $0.isShown }, "Existing pages restore as before")
         let nav = RepoStore()
         for page in WorkspaceDestination.allCases {
+            nav.navigate(.home, prepare: false)
             let allowed = nav.navigate(page, prepare: false)
-            precondition(allowed, "Every page must remain reachable before opening a repository")
-            precondition(nav.destination == page, "Repository tools show the chooser for the requested page")
+            precondition(allowed == !page.needsRepository && page.isAvailable(hasRepository: false) == allowed && page.isAvailable(hasRepository: true),
+                         "Without a repository only the pages that need one are refused")
+            precondition(nav.destination == (allowed ? page : .home), "A refused page leaves the window on Home")
         }
         let firstPath = NSTemporaryDirectory() + "gitrochi-navigation-first", secondPath = NSTemporaryDirectory() + "gitrochi-navigation-second"
         nav.fixtureRepository(firstPath)
@@ -185,7 +187,9 @@ import SwiftUI
         nav.resetNavigationFixture(); nav.fixtureRepository(nil)
         workspaceNavigationFixtureDefaults.set([secondPath: "code"], forKey: "workspaceDestinations")
         nav.restoreWorkspaceDestination(); precondition(nav.destination == .home, "Without a repository the window shows Home")
-        precondition(nav.navigate(.repository) && nav.destination == .repository, "The repository menu must reach its chooser")
+        precondition(!nav.navigate(.repository) && nav.destination == .home, "Without a repository the repository screen is refused and Home stays")
+        nav.navigate(.issues); nav.requestSearchFocus()
+        precondition(nav.destination == .issues && !nav.showSearchBar, "Search without a repository must not reach the repository screen")
         do {
         let contexts = RepoStore()
         contexts.fixtureRepository(firstPath)
@@ -280,7 +284,7 @@ import SwiftUI
         precondition(SharedHeights.share([1000, 1000], available: 300, floor: 96) == [150, 150])
         precondition(SharedHeights.share([1000, 1000], available: 100, floor: 96) == [96, 96])
         }
-        print("PASS: independent documents, selection and background reload; initial repository chooser navigation; all 12 pages; account host normalization and profile URLs; isolated per-repository restore")
+        print("PASS: independent documents, selection and background reload; pages that need a repository refused without one; all 12 pages; account host normalization and profile URLs; isolated per-repository restore")
     }
 }
 SWIFT

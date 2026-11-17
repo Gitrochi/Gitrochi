@@ -54,6 +54,8 @@ enum DesignIcon: String {
     case more
     case identity
     case people
+    case fileList
+    case fileTree
 
     fileprivate var drawing: String {
         switch self {
@@ -106,6 +108,8 @@ enum DesignIcon: String {
         case .minus: return #"<path d="M3.5 8h9"/>"#
         case .identity: return #"<rect x="1.8" y="3.2" width="12.4" height="9.6" rx="1.6"/><circle cx="5.6" cy="7.2" r="1.4"/><path d="M3.6 10.6c.4-1 1.1-1.5 2-1.5s1.6.5 2 1.5M9.4 6.6h3M9.4 9h2.2"/>"#
         case .people: return #"<circle cx="6" cy="5.5" r="2.2"/><path d="M2 13c.4-2.3 1.9-3.6 4-3.6s3.6 1.3 4 3.6"/><circle cx="11.2" cy="6.2" r="1.7"/><path d="M11.2 9.6c1.6 0 2.6 1 2.9 2.8"/>"#
+        case .fileList: return #"<path d="M5.5 4h8M5.5 8h8M5.5 12h8"/><circle cx="2.5" cy="4" r="0.6" fill="black"/><circle cx="2.5" cy="8" r="0.6" fill="black"/><circle cx="2.5" cy="12" r="0.6" fill="black"/>"#
+        case .fileTree: return #"<path d="M2.5 3.5h7M7 8h6.5M7 12.5h6.5M4 4v8.5h1.5M4 8h1.5"/>"#
         case .more: return #"<circle cx="3.5" cy="8" r="1.3" fill="black" stroke="none"/><circle cx="8" cy="8" r="1.3" fill="black" stroke="none"/><circle cx="12.5" cy="8" r="1.3" fill="black" stroke="none"/>"#
         }
     }

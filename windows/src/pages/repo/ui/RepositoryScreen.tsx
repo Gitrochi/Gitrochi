@@ -13,12 +13,12 @@ import { resizeColumn } from "../lib/resize-column";
  * The repository screen: branches and refs | graph or diff with the terminal below | uncommitted changes or details
  * (macOS: RepositoryScreen in WorkspaceDestinationContent.swift)
  */
-export function RepositoryScreen({ store, openSettings }: { store: RepoStore; openSettings: () => void }) {
+export function RepositoryScreen({ store }: { store: RepoStore }) {
   useObserve(store);
   useObserve(settings);
-  const sidebarW = settings.get("sidebarWidth", 250);
+  const sidebarW = settings.get("sidebarWidth", 240);
   const sidebarCollapsed = settings.get("sidebarCollapsed", false);
-  const inspectorW = settings.get("inspectorWidth", 380);
+  const inspectorW = settings.get("inspectorWidth", 340);
   const inspectorCollapsed = settings.get("inspectorCollapsed", false);
   const centerRef = useRef<HTMLDivElement>(null);
   const [centerH, setCenterH] = useState(800);
@@ -32,11 +32,11 @@ export function RepositoryScreen({ store, openSettings }: { store: RepoStore; op
   return (
     <div className="repository-screen">
       {sidebarCollapsed ? (
-        <SidebarRail store={store} openSettings={openSettings} />
+        <SidebarRail store={store} />
       ) : (
         <>
           <div className="sidebar" style={{ width: sidebarW }}>
-            <Sidebar store={store} openSettings={openSettings} />
+            <Sidebar store={store} />
           </div>
           <div className="splitter" onMouseDown={resizeColumn("sidebarWidth", sidebarW, 200, 420, 1)} />
         </>

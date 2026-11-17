@@ -9,8 +9,6 @@
 .account-search input { border: 0; outline: 0; font: inherit; flex: 1; min-width: 0; background: transparent; color: var(--text); }
 .account-search:focus-within { border-color: var(--accent); }
 .btn.account-icon-button { flex: none; width: 28px; padding: 0; }
-/* the filter's labels as the board sets them: 12px medium in 24px segments */
-.account-list .segmented button { height: 24px; font-size: 12px; font-weight: 500; white-space: nowrap; }
 .account-list-controls > .select { width: 100%; }
 .account-rows { flex: 1 1 auto; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 4px; }
 .account-group { flex: none; font-size: 12px; font-weight: 600; color: var(--text-2); padding: 10px 8px 4px; }

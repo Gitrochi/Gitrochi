@@ -71,6 +71,8 @@ const drawings = {
   squareCheck: "<rect x=\"2\" y=\"2\" width=\"12\" height=\"12\" rx=\"3\"/><path d=\"m5 8.2 2 2 4-4.4\"/>",
   edit: "<path d=\"M13 9v3.5a1 1 0 0 1-1 1H3.5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1H7\"/><path d=\"M11.5 2.5l2 2L8 10H6V8z\"/>",
   image: "<rect x=\"2\" y=\"3\" width=\"12\" height=\"10\" rx=\"1.5\"/><circle cx=\"5.8\" cy=\"6.4\" r=\"1.1\"/><path d=\"m2.5 12 3.8-3.6 2.4 2.2 2-1.8 2.8 2.7\"/>",
+  fileList: "<path d=\"M5.5 4h8M5.5 8h8M5.5 12h8\"/><circle cx=\"2.5\" cy=\"4\" r=\"0.6\" fill=\"currentColor\"/><circle cx=\"2.5\" cy=\"8\" r=\"0.6\" fill=\"currentColor\"/><circle cx=\"2.5\" cy=\"12\" r=\"0.6\" fill=\"currentColor\"/>",
+  fileTree: "<path d=\"M2.5 3.5h7M7 8h6.5M7 12.5h6.5M4 4v8.5h1.5M4 8h1.5\"/>",
 } as const;
 
 export type DesignIconName = keyof typeof drawings;

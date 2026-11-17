@@ -1,13 +1,12 @@
-import { FileArchive, History, ScanText, TriangleAlert } from "lucide-react";
-import { FolderOpen } from "@/shared/icons";
-import { ChevronLeft, Clock } from "@/shared/icons";
+import { FileArchive, ScanText, TriangleAlert } from "lucide-react";
+import { Clock } from "@/shared/icons";
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { avatars } from "@/entities/avatar";
 import { type BlameLine, isUncommittedLine, short } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
 import { longDate, shortDate, useObserve } from "@/shared/lib";
-import { Avatar, Button, Empty, IconButton, Segmented, Spinner, tip } from "@/shared/ui";
+import { Avatar, DiffHeader, Empty, Segmented, Spinner, tip } from "@/shared/ui";
 import { DiffBody, DiffEmptyState } from "./DiffView";
 import "./diff-viewer.css";
 
@@ -22,35 +21,31 @@ export function FileInspectView({ store }: { store: RepoStore }) {
 
   return (
     <div className="col grow" style={{ minHeight: 0 }}>
-      <div className="diff-head">
-        <button type="button" className="diff-back status-tone" aria-keyshortcuts="Escape" data-tip={t("Back to graph (Esc)")} onClick={() => store.closeFileInspect()}>
-          <ChevronLeft size={12} />
-          {t("Graph")}
-        </button>
-        <span className="diff-back-sep" aria-hidden="true" />
-        <span className="muted" style={{ display: "inline-flex" }}>
-          {f.mode === "history" ? <History size={16} /> : <ScanText size={16} />}
-        </span>
-        <div className="col grow">
-          <span className="ellipsis" style={{ fontWeight: 600 }}>
-            {f.path.split("/").pop()}
-          </span>
-          <span className="ellipsis muted" style={{ fontSize: 11.5 }}>
-            {subtitle}
-          </span>
-        </div>
-        <Button size="small" onClick={() => store.openLineHistory(f.path, f.rev ?? undefined, store.fileInspectLine ?? 1)}>{t("Trace lines…")}</Button>
-        {store.fileInspectLoading && <Spinner size={13} />}
-        <IconButton icon={<FolderOpen size={15} />} aria-label={t("Show in Explorer")} tip={t("Show in Explorer")} onClick={() => void store.revealPath(f.path)} />
-        <Segmented
-          value={f.mode}
-          onChange={(m) => store.setFileInspectMode(m)}
-          options={[
-            { value: "history", label: t("History"), tip: t("Commits that changed this file") },
-            { value: "blame", label: t("Blame"), tip: t("Who changed each line and when") },
-          ]}
-        />
-      </div>
+      {/* the diff header's row without a file position: History | Blame stands before the layout */}
+      <DiffHeader
+        back={{ label: t("Graph"), tip: t("Back to graph (Esc)"), onClick: () => store.closeFileInspect() }}
+        path={f.path}
+        help={subtitle}
+        layout={f.mode === "history" ? { split: store.diffSplit, set: (value) => store.setDiffSplit(value) } : undefined}
+        accessory={<>
+          {store.fileInspectLoading && <Spinner size={13} />}
+          <Segmented
+            label={t("File history")}
+            value={f.mode}
+            onChange={(m) => store.setFileInspectMode(m)}
+            options={[
+              { value: "history", label: t("History"), tip: t("Commits that changed this file") },
+              { value: "blame", label: t("Blame"), tip: t("Who changed each line and when") },
+            ]}
+          />
+        </>}
+        more={() => [
+          { label: t("Trace lines…"), onClick: () => store.openLineHistory(f.path, f.rev ?? undefined, store.fileInspectLine ?? 1) },
+          "divider",
+          { label: t("Show in Explorer"), onClick: () => void store.revealPath(f.path) },
+          { label: t("Copy path"), onClick: () => store.copy(f.path) },
+        ]}
+      />
       {store.fileInspectError ? (
         <Empty icon={<TriangleAlert size={30} />} title={t("Couldn't read")} detail={store.fileInspectError} />
       ) : f.mode === "history" ? (

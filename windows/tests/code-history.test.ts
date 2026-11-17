@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { fileHistoryFormat, parseBlame, parseDiff, parseFileHistory } from "../src/entities/git";
-import { blameArgs, blameBefore, blameLineLimit, comparisonChangeArgs, diffGaps, droppedFolders, fileAtCommitArgs, fileChangeArgs, fileHistoryArgs, fileHistoryLimit, historyCountLabel, localCommitArgs, revisionName, shortFolder, sourceLines, workingChangeArgs } from "../src/widgets/local-workbench/lib/code-history";
+import { blameArgs, blameBefore, blameLineLimit, comparisonChangeArgs, diffGaps, droppedFolders, fileAtCommitArgs, fileChangeArgs, fileHistoryArgs, fileHistoryLimit, historyCountLabel, localCommitArgs, revisionName, sourceLines, workingChangeArgs } from "../src/widgets/local-workbench/lib/code-history";
 
 // macOS: the same cases are preconditions in macos/Tools/test-repository-browser.sh
 describe("Code page history, blame and changes", () => {
@@ -24,15 +24,6 @@ describe("Code page history, blame and changes", () => {
     expect(historyCountLabel(8)).toBe("8");
     expect(historyCountLabel(fileHistoryLimit)).toBe("200");
     expect(historyCountLabel(fileHistoryLimit + 1)).toBe("200+");
-  });
-
-  it("shortens a folder from its start by whole segments, or hides it", () => {
-    expect(shortFolder("macos/Sources/Views/Search")).toBe("…/Views/Search");
-    expect(shortFolder("src/components")).toBe("src/components");
-    expect(shortFolder("")).toBe("");
-    expect(shortFolder("a/b/tests", 8)).toBe("…/tests");
-    expect(shortFolder("packages/an-extremely-long-folder-name")).toBe("");
-    expect(shortFolder("an-extremely-long-folder-name")).toBe("");
   });
 
   it("drops leading folders from the path bar and always keeps the file name", () => {

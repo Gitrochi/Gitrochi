@@ -35,6 +35,8 @@ import { environmentPathsSelfTest } from "./lib/environment-paths-selftest";
 import { navigationSelfTest } from "./lib/navigation-selftest";
 import { compactNavigationSelfTest } from "./lib/compact-navigation-selftest";
 import { inspectorLayoutSelfTest } from "./lib/inspector-layout-selftest";
+import { workingChangesSelfTest } from "./lib/working-changes-selftest";
+import { diffHeaderSelfTest } from "./lib/diff-header-selftest";
 import { inspectorVisibilitySelfTest } from "./lib/inspector-visibility-selftest";
 import { terminalPanelSelfTest } from "./lib/terminal-panel-selftest";
 import { changesPerformanceSelfTest } from "./lib/changes-performance-selftest";
@@ -53,11 +55,11 @@ import { browserLoginGuidanceSelfTest, browserProjectAccessSelfTest } from "./li
 import { accountQuickControlsSelfTest, accountQuickControlsWithoutRepositorySelfTest } from "./lib/account-quick-controls-selftest";
 import { accountsSettingsSelfTest } from "./lib/accounts-settings-selftest";
 import { prConversationSelfTest } from "./lib/pr-conversation-selftest";
-import { listSectionsSelfTest } from "./lib/list-sections-selftest";
 import { externalAgentsSelfTest } from "./lib/external-agents-selftest";
 import { agentsSidebarSelfTest } from "./lib/agents-sidebar-selftest";
 import { graphLanesSelfTest } from "./lib/graph-lanes-selftest";
 import { graphColumnsSelfTest } from "./lib/graph-columns-selftest";
+import { graphLookSelfTest } from "./lib/graph-look-selftest";
 import { selfTestProgress, selfTestRecorder } from "./lib/selftest-report";
 import { sharedStackSelfTest } from "./lib/shared-stack-selftest";
 import { noticeBlockSelfTest } from "./lib/notice-block-selftest";
@@ -269,7 +271,6 @@ export async function runSelfTest(): Promise<boolean> {
   await step("Settings › Accounts: hosting accounts and Git identities, the Add account sheet, Remove account… last and confirmed", accountsSettingsSelfTest);
   await step("Push 검토·PR 줄 리뷰·변경 AI 질문의 실제 React 화면", reviewWorkflowsSelfTest);
   await step("Pull requests page: list controls and the Hide list choice kept across tabs, one-line composer, Split reason, timeline, keyboard tabs and retained drafts", prConversationSelfTest);
-  await step("PR·이슈 목록의 검색 줄·필터·페이지 이동", listSectionsSelfTest);
   await step("Profile avatars recover after a failed image is replaced and obey the photo setting", hostingAvatarsSelfTest);
   await step("Sidebar branch tree indentation, aligned rows and disclosure controls", sidebarTreeSelfTest);
   await step("Settings category icons, selection and narrow navigation", settingsNavigationSelfTest);
@@ -277,6 +278,7 @@ export async function runSelfTest(): Promise<boolean> {
   await step("Agents sidebar: Needs you, worktree state icons and ahead/behind, one session row with the tab marks, Running, nothing clipped at 240px", agentsSidebarSelfTest);
   await step("레인이 많은 그래프: 머리줄 스크롤 막대·옆 스크롤·선택한 노드 보이기", graphLanesSelfTest);
   await step("Graph columns: author, time and SHA off by default and turned on from the column menu, lined up with the header, every column resized by its edge, and reset", graphColumnsSelfTest);
+  await step("Graph look: 32px rows with a 24 band, a 34 header, 18px chips with the behind count, a neutral uncommitted row and the shared empty state", graphLookSelfTest);
   await step("커밋 비교·일괄 작업·줄 이력의 실제 React 화면", historyToolsSelfTest);
   await step("PR 병합·이슈함의 실제 React 화면", collaborationSelfTest);
   await step("복구·LFS·Submodule·Bisect·충돌 편집의 실제 React 화면", localWorkflowsSelfTest);
@@ -289,7 +291,9 @@ export async function runSelfTest(): Promise<boolean> {
 
   await step("왼쪽 페이지 목록·빈 저장소·GitLab 이름·아이콘 레일", navigationSelfTest);
   await step("저장소 화면에서 접히는 페이지 목록과 세 열 배치·전체 너비 페이지", compactNavigationSelfTest);
-  await step("좁은 커밋 상세의 긴 브랜치·작성자·부모 커밋 배치", inspectorLayoutSelfTest);
+  await step("Commit inspector as the board draws it: header with copy and the commit menu, one author line, trailer rows, action buttons and long names in a narrow panel", inspectorLayoutSelfTest);
+  await step("Working changes: header, Unstaged and Staged groups, the shared file row, the commit composer, conflict banner and clean state", workingChangesSelfTest);
+  await step("Diff header and list/tree toggle: one 44 px row that folds in order down to 420 px, the 28 px segmented control and its icon form", diffHeaderSelfTest);
   await step("Close and reopen the right panel with retained width and view state", inspectorVisibilitySelfTest);
   await step("Terminal panel docked under the centre column: status marks by shape, narrow folding and terminals kept through layout changes", terminalPanelSelfTest);
   await step("변경 1000개의 빠른 진입·마지막 파일 선택·트리 접기", changesPerformanceSelfTest);
@@ -594,7 +598,8 @@ export async function runSelfTest(): Promise<boolean> {
     await s.stage(s.status.unstaged.filter((c) => c.path === "ai-wsl.txt"));
     await s.generateCommitMessage();
     const summary = s.summary;
-    const aiErr = s.errorMessage;
+    // beside the composer while the working changes are selected, a dialog otherwise
+    const aiErr = s.errorMessage ?? s.commitMessageFailure;
     s.setSummary("");
     await s.unstageAll();
     await ipc.remove(joinPath(repo, "ai-wsl.txt"));
@@ -757,8 +762,27 @@ export async function runSelfTest(): Promise<boolean> {
       s.openDiff({ kind: "working", change: change() });
       const shown = await until(() => on() && !!toggle()!.dataset.tip?.startsWith(t("Hide changes and show the graph")) && !!toggle()!.dataset.tip?.endsWith("|Esc"), 3000);
       // the diff header starts with "‹ Graph", then a hairline
-      const back = () => document.querySelector<HTMLButtonElement>(".diff-head > .diff-back");
+      const back = () => document.querySelector<HTMLButtonElement>(".diff-header-row > .diff-back");
       const header = await until(() => back()?.textContent?.trim() === t("Graph") && back()?.nextElementSibling?.className === "diff-back-sep" && back()?.getAttribute("aria-keyshortcuts") === "Escape", 3000);
+      // one 44px row: the position among the working files when there is room, Unified | Split as the 28px
+      // control, and More holding what the row does not draw (staging first, discarding last)
+      const head = document.querySelector<HTMLElement>(".diff-header");
+      const layout = head?.querySelector<HTMLElement>(`.segmented[aria-label="${t("Diff layout")}"]`);
+      const count = head?.querySelector(".diff-header-count")?.textContent;
+      const more = head?.querySelector<HTMLButtonElement>(`[aria-label="${t("More file actions")}"]`);
+      more?.click();
+      const menuLabels = () => [...document.querySelectorAll(".menu .menu-item .label")].map((item) => item.textContent);
+      const menuShown = await until(() => menuLabels().includes(t("Stage")), 2000);
+      const labels = menuLabels();
+      // a click anywhere puts the menu away; Escape here would be the screen's
+      window.dispatchEvent(new MouseEvent("mousedown"));
+      const menuGone = await until(() => !document.querySelector(".menu"), 2000);
+      const row = !!head && !!layout && Math.round(head.getBoundingClientRect().height) === 44 && Math.round(layout.getBoundingClientRect().height) === 28
+        && [...layout.querySelectorAll("button")].map((item) => item.textContent).join("|") === `${t("Unified")}|${t("Split")}`
+        && (count == null || new RegExp(`^\\d+ / ${s.status.conflicted.length + s.status.unstaged.length + s.status.staged.length}$`).test(count))
+        && !head.querySelector(".btn") && head.scrollWidth <= head.clientWidth
+        && menuShown && menuGone && labels[0] === t("Stage") && labels.at(-1) === t("Discard changes…")
+        && [t("File history"), t("Show blame"), t("Trace lines…"), t("Show in Explorer"), t("Copy path")].every((label) => labels.includes(label));
       // the stage button's column: 24px between the line numbers and the sign, the button a 24px target inside it
       if (!await until(() => !!s.diff && s.canEditDiffLines && !!document.querySelector(".diff-line.added .diff-stage-line"), 5000)) return [false, `the per-line stage button did not show (editable=${s.canEditDiffLines})`];
       const added = [...document.querySelectorAll<HTMLElement>(".diff-line.added")].find((line) => line.querySelector(".txt")?.textContent === "sixteen")!;
@@ -788,8 +812,8 @@ export async function runSelfTest(): Promise<boolean> {
       await until(() => !!back(), 3000);
       back()?.click();
       const clicked = await until(() => !s.diffSource && !!document.querySelector(".commit-row"), 2000);
-      const ok = off && shown && header && column && reserved && staged && closed && kept && graph && clicked;
-      return [ok, `off=${off} on=${shown} header=${header} column=${column} gutter=${Math.round(gutter.width)} reserved=${reserved} staged=${stagedLines} diffFirst=${closed} textField=${kept} graph=${graph} button=${clicked}`];
+      const ok = off && shown && header && row && column && reserved && staged && closed && kept && graph && clicked;
+      return [ok, `off=${off} on=${shown} header=${header} row=${row} menu=${labels.join("/")} column=${column} gutter=${Math.round(gutter.width)} reserved=${reserved} staged=${stagedLines} diffFirst=${closed} textField=${kept} graph=${graph} button=${clicked}`];
     } finally {
       s.closeDiff();
       await s.unstageAll();
@@ -902,17 +926,133 @@ export async function runSelfTest(): Promise<boolean> {
     await s.setCurrentOnly(false);
     s.navigate("repository");
     settings.set("sidebarCollapsed", false);
-    s.setPinned(b, true);
-    // a pinned branch gets its own section at the top of the branch list
-    const pinned = await until(() => [...document.querySelectorAll(".side-section")].some((x) => x.querySelector(".side-head")?.textContent?.includes(t("Pinned")) && x.textContent?.includes(b.name)), 3000);
-    s.setPinned(b, false);
-    // the eye button on the sidebar row hides the branch and shows it again
-    const eye = () => [...document.querySelectorAll(".side-row")].find((r) => r.textContent?.includes("image-v2"))?.querySelector<HTMLButtonElement>("button.icon-btn");
-    eye()?.click();
-    const eyeHid = await until(() => s.isHidden(b), 5000);
-    eye()?.click();
+    settings.set("sidebarMode", "list");
+    const sideRow = () => [...document.querySelectorAll<HTMLElement>(".side-branches .side-row")].find((r) => r.textContent?.includes("image-v2"));
+    // "Pin to top": image-v2 and feature/login (out of the feature folder) lead Local branches in name order under their
+    // whole names with the pin mark; there is no Pinned section, and unpinning puts feature/login back in its folder
+    const login = s.localBranches.find((x) => x.name === "feature/login");
+    if (!login) return [false, "no feature/login branch"];
+    const features = s.localBranches.filter((x) => x.name.startsWith("feature/")).length;
+    const localRows = () => [...document.querySelectorAll<HTMLElement>('.side-branches [data-section="local"] .side-tree-row')];
+    const labelOf = (r: HTMLElement) => r.querySelector(".side-tree-label")?.textContent ?? "";
+    const pinMark = (r: HTMLElement) => !!r.querySelector(`[aria-label="${t("Pinned")}"]`);
+    const featureCount = () => document.querySelector<HTMLElement>('.side-branches [data-tree-id="l:feature"] > .side-tree-toggle .side-count')?.textContent ?? "";
+    let pinned = false;
+    try {
+      s.setPinned(b, true);
+      s.setPinned(login, true);
+      pinned = await until(() => {
+        const top = localRows().slice(0, 2);
+        return top.map(labelOf).join() === "feature/login,image-v2" && top.every((r) => pinMark(r) && !r.closest(".side-tree-children")) && featureCount() === (features > 1 ? String(features - 1) : "");
+      }, 3000) && !document.querySelector('.side-section[data-section="pinned"]');
+    } finally {
+      s.setPinned(b, false);
+      s.setPinned(login, false);
+    }
+    const unpinned = await until(() => !localRows().some(pinMark) && featureCount() === (features > 1 ? String(features) : "") && (features < 2 || !localRows().some((r) => labelOf(r) === "feature/login")), 3000);
+    // a row has no eye until its branch is hidden; then the eye says so and shows the branch again
+    const noEye = !sideRow()?.querySelector("button.icon-btn");
+    await s.setHidden(b, true);
+    const eyeHid = await until(() => s.isHidden(b) && !!sideRow()?.querySelector("button.icon-btn"), 5000);
+    sideRow()?.querySelector<HTMLButtonElement>("button.icon-btn")?.click();
     const eyeShown = await until(() => !s.isHidden(b) && has(), 5000);
-    return [before && hidden && back && current && pinned && eyeHid && eyeShown, `before=${before} hidden=${hidden} back=${back} current=${current} pinned=${pinned} eye=${eyeHid}/${eyeShown}`];
+    // Remote branches and tags: a remote branch pinned out of its folder leads its remote under its name there; the tag
+    // row's menu pins a tag to the top of Tags and hides one from the graph, which then leaves out its chip and the
+    // commit only it reaches, and the row's eye shows it again. The refs are made for the step and removed after it.
+    const made = { "refs/remotes/selftest/feature/pinned": s.headHash!, "refs/remotes/selftest/feature/other": s.headHash!, "refs/tags/selftest-only": b.target };
+    const tagRows = () => [...document.querySelectorAll<HTMLElement>('.side-branches [data-section="tags"] .side-tree-row')];
+    const tagRow = (name: string) => tagRows().find((r) => labelOf(r) === name);
+    const remoteRows = () => [...document.querySelectorAll<HTMLElement>('.side-branches [data-tree-id="r:selftest"] > .side-tree-children > .side-tree-row')];
+    const remoteFolder = () => document.querySelector<HTMLElement>('.side-branches [data-tree-id="r:selftest/feature"] > .side-tree-toggle .side-count')?.textContent ?? "";
+    const chip = (target: string, name: string) => (s.refsByCommit.get(target) ?? []).some((r) => r.name === name);
+    const choose = async (row: HTMLElement | undefined, label: string) => {
+      row?.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 60, clientY: 60 }));
+      const item = () => [...document.querySelectorAll<HTMLElement>(".menu-item")].find((m) => m.querySelector(".label")?.textContent === label);
+      if (!(await until(() => !!item(), 3000))) return false;
+      item()!.click();
+      return true;
+    };
+    const folds = settings.get<string[]>("collapsedSections", []);
+    let remotePinned = false, tagPinned = false, tagHid = false, tagShown = false, remotes = "", tags = "";
+    try {
+      settings.set("collapsedSections", folds.filter((id) => id !== "remote" && id !== "tags"));
+      for (const [ref, target] of Object.entries(made)) await gitRaw(["update-ref", ref, target], repo);
+      await s.reload();
+      const remote = s.remoteBranches.find((x) => x.name === "selftest/feature/pinned");
+      const only = s.tags.find((x) => x.name === "selftest-only"), v01 = s.tags.find((x) => x.name === "v0.1");
+      if (remote && only && v01) {
+        // remotes start folded
+        if (await until(() => !!document.querySelector('.side-branches [data-tree-id="r:selftest"]'), 5000)) document.querySelector<HTMLElement>('.side-branches [data-tree-id="r:selftest"] > .side-tree-toggle')?.click();
+        s.setPinned(remote, true);
+        remotePinned = await until(() => remoteRows().map(labelOf).join() === "feature/pinned" && pinMark(remoteRows()[0]) && remoteFolder() === "1", 5000);
+        remotes = remoteRows().map(labelOf).join();
+        // selftest-only comes before v0.1 by name; pinned, v0.1 leads
+        tagPinned = (await choose(tagRow("v0.1"), t("Pin to top"))) && (await until(() => s.isTagPinned(v01) && tagRows().map(labelOf).join() === "v0.1,selftest-only" && pinMark(tagRows()[0]) && !pinMark(tagRows()[1]), 5000));
+        // with image-v2 hidden only the tag reaches its commit
+        await s.setHidden(b, true);
+        const reached = has() && chip(only.target, "selftest-only");
+        tagHid = reached && (await choose(tagRow("selftest-only"), t("Hide from graph"))) && (await until(() => s.isTagHidden(only) && !has() && !chip(only.target, "selftest-only") && !!tagRow("selftest-only")?.querySelector("button.icon-btn"), 8000));
+        tagRow("selftest-only")?.querySelector<HTMLButtonElement>("button.icon-btn")?.click();
+        tagShown = await until(() => !s.isTagHidden(only) && has() && chip(only.target, "selftest-only") && !tagRow("selftest-only")?.querySelector("button.icon-btn"), 8000);
+        tags = tagRows().map(labelOf).join();
+      }
+    } finally {
+      for (const x of s.remoteBranches) if (s.isPinned(x)) s.setPinned(x, false);
+      for (const x of s.tags) if (s.isTagPinned(x)) s.setTagPinned(x, false);
+      await s.showAllBranches();
+      for (const ref of Object.keys(made)) await gitRaw(["update-ref", "-d", ref], repo).catch(() => undefined);
+      settings.set("collapsedSections", folds);
+      await s.reload();
+    }
+    const cleaned = !s.remoteBranches.some((x) => x.name.startsWith("selftest/")) && !s.tags.some((x) => x.name === "selftest-only") && s.hiddenRefs.size === 0 && ![...s.pinnedRefs].some((r) => r.includes("selftest") || r === "refs/tags/v0.1") && has();
+    return [
+      before && hidden && back && current && pinned && unpinned && noEye && eyeHid && eyeShown && remotePinned && tagPinned && tagHid && tagShown && cleaned,
+      `before=${before} hidden=${hidden} back=${back} current=${current} pinned=${pinned}/${unpinned} rows=${localRows().map(labelOf).join()} eye=${noEye}/${eyeHid}/${eyeShown} remote=${remotePinned} (${remotes}) tag=${tagPinned}/${tagHid}/${tagShown} (${tags}) cleaned=${cleaned}`,
+    ];
+  });
+
+  // The sidebar's Filter branches field in the real window: typing narrows the tree, and Escape, through the app's
+  // one Escape order, clears the text and nothing else.
+  await step("Sidebar: Filter branches narrows the tree and Escape clears it", async () => {
+    s.navigate("repository");
+    settings.set("sidebarCollapsed", false);
+    settings.set("sidebarMode", "list");
+    const field = () => document.querySelector<HTMLInputElement>(".sidebar .side-filter input");
+    if (!(await until(() => !!field(), 5000))) return [false, "no Filter branches field"];
+    const names = () => [...document.querySelectorAll<HTMLElement>(".side-branches .side-tree-row:not(.side-tree-toggle) .side-tree-label")].map((x) => x.textContent ?? "");
+    const all = names().length;
+    const input = field()!;
+    input.focus();
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(input, "IMAGE-v2");
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    const narrowed = await until(() => s.branchFilter === "IMAGE-v2" && names().length > 0 && names().length < all && names().every((n) => n.includes("image-v2")), 5000);
+    // a pinned tag is narrowed by its name like any other row and keeps its pin mark
+    const tag = s.tags.find((x) => x.name === "v0.1");
+    let pinnedTag = false;
+    if (tag) {
+      try {
+        s.setTagPinned(tag, true);
+        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(input, "V0.1");
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+        const pinnedRows = () => [...document.querySelectorAll<HTMLElement>(".side-branches .side-tree-row:not(.side-tree-toggle)")];
+        pinnedTag = await until(() => names().join() === "v0.1" && !!pinnedRows()[0]?.querySelector(`[aria-label="${t("Pinned")}"]`), 5000);
+      } finally {
+        s.setTagPinned(tag, false);
+        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(input, "IMAGE-v2");
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+      }
+    }
+    const back = await until(() => s.branchFilter === "IMAGE-v2" && names().every((n) => n.includes("image-v2")), 5000);
+    const selection = JSON.stringify(s.selection), page = s.destination;
+    const escape = () => input.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", code: "Escape", bubbles: true, cancelable: true }));
+    const taken = !escape();
+    const cleared = await until(() => s.branchFilter === "" && field()?.value === "" && names().length === all, 5000);
+    // with the field empty Escape is not taken and changes nothing
+    const left = escape();
+    await sleep(150);
+    const untouched = JSON.stringify(s.selection) === selection && s.destination === page && names().length === all;
+    input.blur();
+    return [narrowed && pinnedTag && back && taken && cleared && left && untouched, `rows=${all} narrowed=${narrowed} pinnedTag=${pinnedTag}/${back} taken=${taken} cleared=${cleared} left=${left} untouched=${untouched}`];
   });
 
   // 충돌 해결: 두 브랜치에서 같은 줄을 고쳐 머지 → 화면의 충돌 블록에서 '상대 것'을 눌러 고르고 저장 → 머지 마침

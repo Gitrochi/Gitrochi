@@ -39,12 +39,12 @@
 .graph-header {
   display: flex;
   align-items: center;
-  /* the same height as the commit detail header (inspector .panel-head.commit-head) so the dividers line up */
-  height: 32px;
+  /* 34 and its 1px divider (macOS: GraphMetrics.headerHeight); the same height as the commit detail header
+     (inspector .panel-head.commit-head) so the dividers line up */
+  height: 35px;
   box-sizing: border-box;
   padding-right: 12px;
-  font-size: 11.5px;
-  font-weight: 600;
+  font-size: 12px;
   color: var(--text-2);
   background: var(--bar);
   border-bottom: 1px solid var(--border);
@@ -127,22 +127,19 @@
   min-height: 0;
 }
 
+/* a row is ROW_H high (lib/metrics.ts); the band and the message are 24, so rows stay 8px apart */
 .commit-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  height: 28px;
-  font-size: 12.5px;
+  height: 32px;
+  font-size: 13px;
   position: absolute;
   left: 0;
   right: 0;
 }
 
-/* Hover, selection and search hits tint the message and the columns after it to the row's end, at the band's height (rows stay apart) */
-.commit-row:hover .row-tail {
-  background: var(--hover);
-}
-
+/* Selection and search hits tint the message and the columns after it to the row's end, at the band's height (rows stay apart).
+   Rows have no hover colour, as on macOS and on the board: the lane bands already tell them apart. */
 .commit-row.selected .row-tail,
 .commit-row.selected.hit .row-tail {
   background: var(--select);
@@ -165,6 +162,12 @@
   transform: translateY(-50%);
 }
 
+/* the empty state sits in the middle of the list's room, as on macOS */
+.graph-scroll > .hosted-empty {
+  min-height: 100%;
+  box-sizing: border-box;
+}
+
 .commit-row.miss {
   opacity: 0.32;
 }
@@ -180,24 +183,45 @@
   align-items: center;
   gap: 4px;
   height: 100%;
-  padding-left: 6px;
+  padding-left: 8px;
   flex: none;
   min-width: 0;
 }
 
+/* the graph's neutral parts, which never take a lane colour or the accent; the dark values are derived, the boards
+   being light only (macOS: StudioStyle.Graph) */
+.commit-row {
+  --graph-neutral: #c9c9ce;
+  --graph-tag-fill: #f6f6f7;
+  --graph-tag-text: #3a3a3c;
+}
+
+:root[data-theme="dark"] .commit-row {
+  --graph-neutral: #58585d;
+  --graph-tag-fill: #2c2c30;
+  --graph-tag-text: #d1d1d6;
+}
+
+/* a branch or tag chip: the lane colour on a tint of it, inside a 1px border in the full colour */
 .ref-pill {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  padding: 1px 6px;
-  border-radius: 4px;
+  gap: 4px;
+  height: 18px;
+  padding: 0 6px;
+  box-sizing: border-box;
+  border: 1px solid transparent;
+  border-radius: 6px;
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
   white-space: nowrap;
-  max-width: 150px;
-  line-height: 16px;
   flex: 0 1 auto;
   min-width: 0;
+}
+
+.ref-pill > svg,
+.ref-pill .ref-behind {
+  flex: none;
 }
 
 .ref-pill .name {
@@ -206,14 +230,26 @@
   min-width: 0;
 }
 
-.ref-pill.solid {
-  font-weight: 700;
+.ref-pill.tag {
+  color: var(--graph-tag-text);
+  background: var(--graph-tag-fill);
+  border-color: var(--graph-neutral);
+}
+
+/* a detached HEAD is the current marker without a branch: filled with the text colour */
+.ref-pill.head {
+  color: var(--surface);
+  background: var(--text);
+  border-color: var(--text);
 }
 
 .ref-more {
-  font-size: 10.5px;
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  font-size: 11px;
   font-weight: 600;
-  padding: 0 4px;
+  padding: 0 6px;
   border-radius: 999px;
   flex: none;
 }
@@ -226,8 +262,8 @@
 
 .avatar-node {
   position: absolute;
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   overflow: hidden;
   display: flex;
@@ -246,8 +282,6 @@
   display: flex;
   align-items: center;
   box-sizing: border-box;
-  /* the bar meets the band: cancel the row's gap */
-  margin-left: -8px;
 }
 
 .commit-row .msg {
@@ -265,7 +299,8 @@
   width: 3px;
   height: 100%;
   flex: none;
-  margin-right: 4px;
+  /* 12 between the bar and the text, with the message's gap */
+  margin-right: 6px;
 }
 
 /* 제목은 끝까지 보이게 먼저, 본문 첫 줄은 남는 자리에 흐리게 */
@@ -311,7 +346,7 @@
 .commit-row .col-opt {
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--text-2);
 }
 
@@ -323,8 +358,18 @@
   overflow: visible;
 }
 
+/* as tall as the header, so their resize handles and the 14px lines on them are too (macOS: ColumnResizer) */
+.graph-header > .head-opt,
+.graph-header > .head-ref,
+.graph-header > .graph-head-message {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
 .graph-header .head-opt-label {
   display: block;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -350,8 +395,8 @@
 .graph-header .col-resizer::before {
   content: "";
   position: absolute;
-  top: 9px;
-  bottom: 9px;
+  top: 10px;
+  bottom: 10px;
   left: 3.5px;
   width: 1px;
   background: var(--border-strong);
@@ -362,7 +407,13 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px;
+}
+
+/* 24px click targets with 14px icons (macOS: GraphHeaderIcon) */
+.graph-head-tools > .icon-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
 }
 
 /* rows wider than the window: the header scrolls with the list, and its menus stay at its right end */
@@ -385,7 +436,8 @@
   gap: 4px;
   flex: 1;
   min-width: 0;
-  padding-left: 20px;
+  /* over the row's text: its 3px lane bar and the 12 after it */
+  padding-left: 15px;
 }
 
 .graph-head-message > .graph-head-label {
@@ -397,11 +449,9 @@
   flex: none;
 }
 
-.wip-chip {
-  font-size: 11.5px;
-  font-weight: 600;
-  padding: 0 6px;
-  border-radius: 999px;
+/* the uncommitted row's "N files": a neutral status pill; pills on the selection tint turn white (docs/design.md) */
+.commit-row.selected .wip-chip {
+  background: var(--surface);
 }
 
 .searchbar .search-close {

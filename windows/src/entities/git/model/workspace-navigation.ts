@@ -6,8 +6,13 @@ export const workspaceDestinations = ["home", "repository", "compare", "rebase",
 export type WorkspaceDestination = (typeof workspaceDestinations)[number];
 /** All known pages are available without changing optional background agent tracking. */
 export const destinationEnabled = (_page: WorkspaceDestination) => true;
-/** Pages whose tools need a repository; navigation shows a chooser until one is open. */
+/** Pages whose tools need a repository; they are disabled until one is open. */
 export const repositoryDestinations: ReadonlySet<WorkspaceDestination> = new Set<WorkspaceDestination>(["repository", "compare", "rebase", "code", "pullRequests", "actions", "flows"]);
+/**
+ * Whether the page can be opened: one that needs a repository is disabled until one is open, so a window without a
+ * repository never shows it (docs/design.md › App shell, Sidebar). (macOS: isAvailable(hasRepository:))
+ */
+export const destinationAvailable = (page: WorkspaceDestination, hasRepository: boolean) => hasRepository || !repositoryDestinations.has(page);
 /** The pages Ctrl+1–Ctrl+8 open, in the sidebar's order (docs/design.md › App shell, Sidebar). (macOS: shortcutDigit) */
 const numberedDestinations: readonly WorkspaceDestination[] = ["repository", "compare", "rebase", "code", "pullRequests", "issues", "actions", "flows"];
 /** The page's shortcut as menus and the sidebar show it; Home is Ctrl+Shift+H, Releases, Projects and Account have none */
@@ -33,13 +38,15 @@ export function recommendedSync(ahead: number, behind: number, hasUpstream: bool
 /**
  * What Escape does on the repository screen; the first match wins. Whatever takes keys of its own keeps Escape (a
  * dialog, a menu or a popover, the terminal); then an open file history or blame closes, then an open diff; only
- * then, and never from a text field, Changes turns off and the graph is back. (macOS: RepositoryEscape)
+ * then the sidebar's Filter branches field, when the keys are in it and it has text, is cleared; and last, never from
+ * a text field, Changes turns off and the graph is back. (macOS: RepositoryEscape)
  */
-export type RepositoryEscape = "none" | "closeFileInspect" | "closeDiff" | "showGraph";
-export function repositoryEscape(s: { overlay: boolean; terminal: boolean; typing: boolean; repositoryScreen: boolean; fileInspect: boolean; diff: boolean; changes: boolean }): RepositoryEscape {
+export type RepositoryEscape = "none" | "closeFileInspect" | "closeDiff" | "clearFilter" | "showGraph";
+export function repositoryEscape(s: { overlay: boolean; terminal: boolean; typing: boolean; repositoryScreen: boolean; fileInspect: boolean; diff: boolean; filter: boolean; changes: boolean }): RepositoryEscape {
   if (s.overlay || s.terminal || !s.repositoryScreen) return "none";
   if (s.fileInspect) return "closeFileInspect";
   if (s.diff) return "closeDiff";
+  if (s.filter) return "clearFilter";
   return s.changes && !s.typing ? "showGraph" : "none";
 }
 export function isWorkspaceDestination(value: unknown): value is WorkspaceDestination {

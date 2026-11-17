@@ -1,0 +1,212 @@
+/* shared/ui — the one changed-file row and its tree folder, as the boards draw them (.frow): 28px, 0 8px, radius 6.
+   macOS: FileRow and FileFolderRow. */
+
+.file-row,
+.file-folder-row {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  box-sizing: border-box;
+  padding: 0 8px;
+  border-radius: 6px;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.file-row:hover,
+.file-row:focus-within,
+.file-folder-row:hover {
+  background: var(--row-hover);
+}
+
+/* selection is the tint alone: no bar, border or ring */
+.file-row.selected {
+  background: var(--row-select);
+}
+
+.file-row-open,
+.file-folder-open {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  /* what does not fit is measured here, and the row folds until nothing is cut */
+  overflow: hidden;
+}
+
+.file-row-open:focus-visible,
+.file-folder-open:focus-visible,
+.file-row-viewed:focus-visible,
+.file-row-act:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  outline-offset: -2px;
+  border-radius: 6px;
+}
+
+.file-row-open > .status-badge,
+.file-row-open > .linestat,
+.file-row-open > .status-pill {
+  flex: none;
+}
+
+/* never cut while anything else can give way; the hidden copy keeps the semibold width */
+.file-row-name {
+  flex: none;
+  display: inline-flex;
+  flex-direction: column;
+  white-space: nowrap;
+}
+
+.file-row-name::after {
+  content: attr(data-name);
+  height: 0;
+  visibility: hidden;
+  overflow: hidden;
+  font-weight: 600;
+}
+
+.file-row-name.cut {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.file-row-name.cut > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-row.selected .file-row-name {
+  font-weight: 600;
+}
+
+.file-row.viewed .file-row-name {
+  color: var(--caption);
+}
+
+.file-row-folder {
+  flex: none;
+  font-size: 11px;
+  color: var(--caption);
+  white-space: nowrap;
+}
+
+.file-row-space {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.file-row-threads {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--caption);
+}
+
+.file-row.selected .file-row-folder,
+.file-row.selected .file-row-threads {
+  color: var(--on-select);
+}
+
+/* pills on the tint turn white */
+.file-row.selected .file-row-pill {
+  background: var(--surface);
+}
+
+.file-row-text-action {
+  flex: none;
+  white-space: nowrap;
+}
+
+.file-row-act,
+.file-row-viewed {
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--status-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.file-row-act:hover {
+  background: var(--status-fill);
+}
+
+/* a folder's action waits for the pointer; a file row draws its own only while hovered or focused */
+.file-folder-row > .file-row-act {
+  display: none;
+}
+
+.file-folder-row:hover > .file-row-act,
+.file-folder-row:focus-within > .file-row-act {
+  display: inline-flex;
+}
+
+.file-row-viewed-box {
+  width: 13px;
+  height: 13px;
+  box-sizing: border-box;
+  border: 1.2px solid var(--box-border);
+  border-radius: 3.5px;
+  background: var(--input);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-text);
+}
+
+.file-row-viewed[aria-checked="true"] .file-row-viewed-box {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.file-folder-open {
+  gap: 6px;
+}
+
+.file-folder-open > svg,
+.file-folder-chevron {
+  flex: none;
+  color: var(--caption);
+}
+
+.file-folder-chevron {
+  width: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.file-folder-name {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.file-folder-open > .status-pill {
+  flex: none;
+}

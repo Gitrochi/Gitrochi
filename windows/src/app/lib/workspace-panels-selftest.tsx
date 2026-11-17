@@ -6,7 +6,6 @@ import { accounts, workStateTitle } from "@/entities/hosting";
 import { AccountWorkspacePanel, WorkspaceContent } from "@/pages/repo";
 import { WorkspaceHomePanel, ActionsWorkspacePanel, RemoteRepositorySearch } from "@/widgets/workspace-panels";
 import { HostingHubPanel } from "@/widgets/hosting-hub";
-import { IssueListSection } from "@/widgets/sidebar";
 import { Toolbar } from "@/widgets/toolbar";
 import { IssueEditorSheet } from "@/features/edit-issue";
 import { ipc } from "@/shared/api";
@@ -145,13 +144,13 @@ export async function workspacePanelsSelfTest(): Promise<[boolean, string]> {
     reset();
     store.target = repositoryTarget;
     store.path = "C:/fixture/repo";
-    // the repository sidebar's issue list: a row opens the Issues page with that issue
+    // an issue opened from the repository screen (the command palette, a commit's link) lands on the Issues page
     store.navigate("repository");
-    await mount(<IssueListSection store={store} openSettings={() => {}} />);
-    check(host.querySelector('.side-row[data-issue="7"]')?.textContent?.includes("Fixture issue"), "The sidebar issue list did not load");
-    host.querySelector<HTMLElement>('.side-row[data-issue="7"]')!.click(); await pause();
-    check(store.destination === "issues" && store.inboxDetail?.item.number === 7, "A sidebar issue did not open on the Issues page");
-    reset();
+    await store.prepareIssues();
+    const listed = store.issues.find((item) => item.number === 7);
+    check(listed, "The repository's issues did not load");
+    store.openIssue(listed!); await pause();
+    check(await until(() => store.destination === "issues" && store.inboxDetail?.item.number === 7), "An issue did not open on the Issues page");
     // the page keeps the issue that was just opened and shows it like a pull request; the way back is in the toolbar
     await mount(<><Toolbar store={store} /><WorkspaceContent store={store} openSettings={() => {}} /></>);
     const issueRow = host.querySelector('.hosted-list .hosted-row[data-issue="7"]');

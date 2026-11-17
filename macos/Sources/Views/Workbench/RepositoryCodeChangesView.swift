@@ -2,14 +2,6 @@ import SwiftUI
 import AppKit
 import CoreText
 
-/// Where the open file sits among a list of files, and the step to the one before or after it (the diff header's
-/// "2 / 6" with its previous and next buttons)
-struct CodeFilePosition {
-    let index: Int
-    let count: Int
-    let step: (Int) -> Void
-}
-
 /// One file's change on the Code page, read only: a commit against its first parent, or the working tree against
 /// HEAD; the Compare page shows a file's change from one commit to another with it. One 44 pt header, then the lines,
 /// with the unchanged lines between hunks folded until asked for. (Windows: widgets/local-workbench/ui/CodeChangesView.tsx)
@@ -59,10 +51,7 @@ struct RepositoryCodeChangesView: View {
     var body: some View {
         let _ = store.diffSettingsVersion
         VStack(spacing: 0) {
-            ViewThatFits(in: .horizontal) {
-                header(folder: RepositoryCodeHistory.shortFolder((path as NSString).deletingLastPathComponent))
-                header(folder: "")
-            }
+            header
             Divider()
             content.frame(maxWidth: .infinity, maxHeight: .infinity)
         }
@@ -72,59 +61,19 @@ struct RepositoryCodeChangesView: View {
 
     // MARK: Header
 
-    private func header(folder: String) -> some View {
-        HStack(spacing: 8) {
-            if let document, document.error == nil { StatusBadge(kind: kind(document)) }
-            Text((path as NSString).lastPathComponent).font(.system(size: 13, weight: .semibold)).lineLimit(1).fixedSize()
-            if !folder.isEmpty {
-                Text(folder).font(.system(size: 11)).foregroundStyle(StudioStyle.Rail.icon).lineLimit(1).fixedSize()
-                    .help((path as NSString).deletingLastPathComponent)
-            }
-            Spacer(minLength: 8)
-            if let position {
-                HStack(spacing: 4) {
-                    Text(verbatim: "\(position.index + 1) / \(position.count)").font(.system(size: 11, design: .monospaced))
-                        .foregroundStyle(StudioStyle.Rail.icon).padding(.trailing, 4).fixedSize()
-                    Button { position.step(-1) } label: { DesignIconImage(icon: .chevronUp) }
-                        .buttonStyle(PullRequestIconButtonStyle()).disabled(position.index == 0)
-                        .help("Previous file (K)").accessibilityLabel("Previous file (K)")
-                    Button { position.step(1) } label: { DesignIconImage(icon: .chevronDown) }
-                        .buttonStyle(PullRequestIconButtonStyle()).disabled(position.index + 1 >= position.count)
-                        .help("Next file (J)").accessibilityLabel("Next file (J)")
-                }
-            }
-            PullRequestSegmented(label: "Diff layout", items: [
-                .init(value: false, title: String(localized: "Unified")),
-                .init(value: true, title: String(localized: "Split")),
-            ], selection: store.diffSplit) { store.diffSplit = $0 }
-            let hidden = store.diffIgnoreWhitespace
-            Button { store.diffIgnoreWhitespace.toggle() } label: { DesignIconImage(icon: .whitespace) }
-                .buttonStyle(PullRequestIconButtonStyle(on: hidden))
-                .help("Hide whitespace").accessibilityLabel("Hide whitespace")
-                .accessibilityValue(hidden ? String(localized: "On") : String(localized: "Off"))
-            Button("Ask AI…") {
-                guard let document else { return }
-                let scope = base.flatMap { base in commit.map { String(localized: "Changes from \(String(base.prefix(7))) to \(String($0.prefix(7)))") } }
-                    ?? commit.map { String(localized: "Commit") + " " + $0 } ?? String(localized: "Uncommitted changes against HEAD")
-                Task { await store.openChangeQuestion(code: ChangeQuestionCode(scope: scope, path: path, document: document)) }
-            }
-            .buttonStyle(PullRequestTextButtonStyle())
-            .disabled(document == nil || document?.isBinary == true)
-            .help("Ask questions about the selected changes")
-            Menu {
-                Toggle("Wrap lines", isOn: $wraps)
-                if let commit, base == nil { Button("Show commit") { store.reveal(commit) } }
-                Button("Copy path") { store.copy(path) }
-                if opensInEditor { editorMenu }
-            } label: {
-                DesignIconImage(icon: .more, size: 12).foregroundStyle(StudioStyle.Tone.neutral.text)
-                    .frame(width: 24, height: 24).contentShape(Rectangle())
-            }
-            .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize()
-            .help("More file actions").accessibilityLabel("More file actions")
+    private var header: some View {
+        DiffHeader(kind: document.flatMap { $0.error == nil ? kind($0) : nil }, path: path, position: position,
+                   ask: .init(disabled: document == nil || document?.isBinary == true) {
+                       guard let document else { return }
+                       let scope = base.flatMap { base in commit.map { String(localized: "Changes from \(String(base.prefix(7))) to \(String($0.prefix(7)))") } }
+                           ?? commit.map { String(localized: "Commit") + " " + $0 } ?? String(localized: "Uncommitted changes against HEAD")
+                       Task { await store.openChangeQuestion(code: ChangeQuestionCode(scope: scope, path: path, document: document)) }
+                   }) {
+            Toggle("Wrap long lines", isOn: $wraps)
+            if let commit, base == nil { Button("Show commit") { store.reveal(commit) } }
+            Button("Copy path") { store.copy(path) }
+            if opensInEditor { editorMenu }
         }
-        .padding(.horizontal, 16)
-        .frame(height: 44)
     }
 
     /// The working tree's file, not the compared version; a file that is not there cannot open

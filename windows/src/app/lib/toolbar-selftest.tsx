@@ -36,6 +36,8 @@ export async function toolbarSelfTest(): Promise<[boolean, string]> {
     await pause();
     const items = [...document.querySelectorAll(".menu .menu-item")].map((item) => item.textContent ?? "");
     check(items[0]?.startsWith("Fetch") && items[1]?.startsWith("Pull") && items[2]?.startsWith("Push") && items[3]?.startsWith(t("Undo")), `More must start with Fetch, Pull, Push and Undo: ${items.join(" | ")}`);
+    // the commit options the commit form leaves out live here, and gitch's submenu only where gitch manages the repository
+    check(items.includes(t("Amend previous commit")) && items.includes(t("Split into commits…")) && !items.includes("gitch"), `More must hold Amend previous commit and Split into commits…: ${items.join(" | ")}`);
     document.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
     await pause();
 
@@ -46,7 +48,7 @@ export async function toolbarSelfTest(): Promise<[boolean, string]> {
     store.destination = "issues";
     await show();
     check(has(t("More")) && has(t("Terminal")) && !has("Fetch") && !has(t("Changes")), `Other pages show More and the terminal only: ${labels().join(" | ")}`);
-    return [true, "no repository · repository · other page; More order; prominent Push"];
+    return [true, "no repository · repository · other page; More order and commit options; prominent Push"];
   } finally {
     root.unmount();
     host.remove();

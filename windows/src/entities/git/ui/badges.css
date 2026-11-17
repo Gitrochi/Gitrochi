@@ -1,12 +1,14 @@
 /* entities/git — 상태·참조 배지 */
 
+/* a toned letter on its tint (.status-tone): the only colour in a file row */
 .status-badge {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   border-radius: 4px;
-  color: #fff;
-  font-size: 10px;
-  font-weight: 700;
+  color: var(--status-text);
+  background: var(--status-fill);
+  font-size: 11px;
+  font-weight: 600;
   display: inline-flex;
   align-items: center;
   justify-content: center;

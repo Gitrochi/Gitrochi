@@ -24,9 +24,6 @@ struct CommitRow: View {
     /// 이 커밋의 가장 최근 CI 파이프라인
     var ci: CIPipeline?
 
-    /// Rows stay 6pt apart, like GitKraken
-    static let bandHeight = GraphMetrics.rowHeight - 6
-
     var body: some View {
         let c = entry.commit
         let tint = Palette.lane(entry.row.color)
@@ -55,10 +52,11 @@ struct CommitRow: View {
                                        startPoint: .leading, endPoint: .trailing)
                     }
                     .background(alignment: .leading) {
-                        // like GitKraken: a band from the node to the message, a little shorter than the row so rows stay apart
+                        // like GitKraken: a band from the node to the message, a little shorter than the row so rows stay apart;
+                        // the uncommitted row has none, as it never takes a lane colour
                         Rectangle()
-                            .fill(tint.opacity(selected ? 0.4 : 0.1))
-                            .frame(height: Self.bandHeight)
+                            .fill(c.isPending ? Color.clear : tint.opacity(selected ? 0.4 : 0.1))
+                            .frame(height: GraphMetrics.bandHeight)
                             .padding(.leading, min(max(0, GraphMetrics.leftPad + GraphMetrics.laneWidth * (CGFloat(entry.row.column) + 0.5) - laneOffset), columns.graph))
                     }
             }
@@ -66,19 +64,18 @@ struct CommitRow: View {
                 // the message: lane-coloured bar, subject, first body line dimmed; author, date and SHA in the tip or their columns
                 HStack(spacing: 6) {
                     Rectangle()
-                        .fill(tint.opacity(c.isPending ? 0.5 : 0.9))
-                        .frame(width: 3, height: Self.bandHeight)
-                        .padding(.trailing, 4)
+                        .fill(c.isPending ? StudioStyle.Graph.neutral : tint)
+                        .frame(width: 3, height: GraphMetrics.bandHeight)
+                        // 12 between the bar and the text, with the stack's 6
+                        .padding(.trailing, 6)
                     if c.isPending {
                         if c.wipWorktree != nil {
                             Text("// Uncommitted changes in \(wipLabel ?? "")").italic().foregroundStyle(.secondary)
                         } else {
                             Text("// Uncommitted changes").italic().foregroundStyle(.secondary)
                         }
-                        Text("\(wipCount) files")
-                            .font(.caption.weight(.semibold))
-                            .padding(.horizontal, 6).padding(.vertical, 1)
-                            .background(Capsule().fill(tint.opacity(0.18)))
+                        // a neutral pill, white on the selection tint
+                        HostedListChip(title: String(localized: "\(wipCount) files"), selected: selected)
                     } else {
                         SubjectAndBody {
                             Text(c.subject)
@@ -110,11 +107,11 @@ struct CommitRow: View {
             }
             // right-hand columns line up with their labels, which sit left of the header's menus
             .padding(.trailing, 12 + (columns.trailing > 0 ? GraphMetrics.headerToolsWidth : 0))
-            .frame(height: Self.bandHeight)
+            .frame(height: GraphMetrics.bandHeight)
             // selection and search hits tint the message and the columns after it to the row's end, at the band's height
             .background(selected ? Color.accentColor.opacity(0.16) : (match == .hit ? Color.yellow.opacity(0.16) : Color.clear))
         }
-        .font(.system(size: 12.5))
+        .font(.system(size: 13))
         .frame(height: GraphMetrics.rowHeight)
         .opacity(match == .miss ? 0.32 : 1)
         .overlay(alignment: .leading) {
@@ -146,7 +143,7 @@ extension CommitRow {
     /// An optional column's text, inset from the column's left edge like its label
     fileprivate func cell(_ text: String, width: CGFloat) -> some View {
         Text(verbatim: text)
-            .font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.tail)
+            .font(.system(size: 12)).foregroundStyle(.secondary).lineLimit(1).truncationMode(.tail)
             .padding(.leading, GraphMetrics.columnInset)
             .frame(width: width, alignment: .leading)
     }
@@ -160,6 +157,8 @@ struct RefGroup: Identifiable {
     var remotes: [String] = []
     var isTag = false
     var isHead = false
+    /// Commits the local branch is behind its upstream
+    var behind = 0
     var id: String { (isTag ? "t:" : isHead ? "h:" : "b:") + name }
 
     /// 체크아웃·끌기·메뉴에 쓸 실제 참조
@@ -188,6 +187,7 @@ struct RefGroup: Identifiable {
                 if byName[r.name] == nil { order.append(r.name); byName[r.name] = RefGroup(name: r.name) }
                 byName[r.name]?.local = r.name
                 byName[r.name]?.isCurrent = r.isCurrent
+                byName[r.name]?.behind = r.behind
             case .remote:
                 let short = r.name.split(separator: "/", maxSplits: 1).last.map(String.init) ?? r.name
                 if byName[short] == nil { order.append(short); byName[short] = RefGroup(name: short) }
@@ -214,12 +214,13 @@ private struct RefColumn: View {
                 RefPill(group: g, tint: tint, store: store)
                 if groups.count > 1 {
                     Text("+\(groups.count - 1)")
-                        .font(.caption2.weight(.semibold))
+                        .font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(tint)
                         // keep the count whole; the pill truncates instead (Windows: .ref-more)
                         .fixedSize()
-                        .padding(.horizontal, 4)
-                        .background(Capsule().fill(tint.opacity(0.15)))
+                        .padding(.horizontal, 6)
+                        .frame(height: 18)
+                        .background(Capsule().fill(tint.opacity(RefPill.tintOpacity)))
                         .help(groups.dropFirst().map(\.name).joined(separator: "\n"))
                         .contextMenu {
                             ForEach(groups.dropFirst()) { g in
@@ -230,7 +231,7 @@ private struct RefColumn: View {
                 Rectangle().fill(tint).frame(height: 1.5)
             }
         }
-        .padding(.leading, 6)
+        .padding(.leading, 8)
     }
 }
 
@@ -239,25 +240,29 @@ private struct RefPill: View {
     let tint: Color
     let store: RepoStore
 
+    /// A chip's fill: the lane colour as faint as the row's band, under a border in the full colour
+    static let tintOpacity = 0.1
+
     var body: some View {
         let solid = group.isCurrent
-        let color = group.isTag ? Color(nsColor: .systemGray) : (group.isHead ? Color(nsColor: .labelColor) : tint)
-        HStack(spacing: 3) {
-            if solid { DesignIconImage(icon: .check, size: 8) }
-            if group.isTag { DesignIconImage(icon: .releases, size: 9) }
-            if group.isHead { SymbolIcon("scope").font(.system(size: 9, weight: .semibold)) }
+        HStack(spacing: 4) {
+            if solid { DesignIconImage(icon: .check, size: 10) }
+            if group.isTag { DesignIconImage(icon: .releases, size: 11) }
+            if group.isHead { SymbolIcon("scope").font(.system(size: 11, weight: .semibold)) }
             Text(group.name)
-                .font(.system(size: 11, weight: solid ? .bold : .medium))
                 .lineLimit(1)
                 .truncationMode(.middle)
-            if group.local != nil { SymbolIcon("laptopcomputer").font(.system(size: 9)) }
-            if !group.remotes.isEmpty { DesignIconImage(icon: .cloud, size: 9) }
+            // the current branch's count is the toolbar's (docs/design.md, Text)
+            if group.behind > 0 && !solid { Text(verbatim: "↓\(group.behind)").monospaced().fixedSize() }
+            if group.local != nil { SymbolIcon("laptopcomputer").font(.system(size: 11)) }
+            if !group.remotes.isEmpty { DesignIconImage(icon: .cloud, size: 11) }
         }
+        .font(.system(size: 11, weight: .semibold))
         .padding(.horizontal, 6)
-        .padding(.vertical, 2)
-        .foregroundStyle(solid ? Color.white : color)
-        .background(RoundedRectangle(cornerRadius: 4).fill(solid ? color : color.opacity(0.18)))
-        .overlay(RoundedRectangle(cornerRadius: 4).strokeBorder(color.opacity(solid ? 0 : 0.5), lineWidth: 1))
+        .frame(height: 18)
+        .foregroundStyle(text)
+        .background(RoundedRectangle(cornerRadius: 6).fill(fill))
+        .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(border, lineWidth: 1))
         .layoutPriority(1)
         .contentShape(Rectangle())
         .help(helpText)
@@ -269,6 +274,25 @@ private struct RefPill: View {
             }
         }
         .modifier(BranchInteractions(group: group, store: store, tint: tint))
+    }
+
+    // The current branch is filled with its lane colour and a detached HEAD with the text colour; tags are neutral
+    // grey, and every other branch is its lane colour on a tint of it
+    private var text: Color {
+        if group.isHead { return Color(nsColor: .textBackgroundColor) }
+        if group.isCurrent { return .white }
+        return group.isTag ? StudioStyle.Tone.neutral.text : tint
+    }
+
+    private var fill: Color {
+        if group.isHead { return Color(nsColor: .labelColor) }
+        if group.isCurrent { return tint }
+        return group.isTag ? StudioStyle.Graph.tagFill : tint.opacity(Self.tintOpacity)
+    }
+
+    private var border: Color {
+        if group.isHead { return Color(nsColor: .labelColor) }
+        return group.isTag ? StudioStyle.Graph.neutral : tint
     }
 
     private var helpText: String {
@@ -341,24 +365,27 @@ struct GraphCell: View {
                         let mid = (a.y + b.y) / 2
                         p.addCurve(to: b, control1: CGPoint(x: a.x, y: mid), control2: CGPoint(x: b.x, y: mid))
                     }
-                    ctx.stroke(p, with: .color(Palette.lane(s.color)),
-                               style: StrokeStyle(lineWidth: 2, lineCap: .round, dash: s.dashed ? [3, 3] : []))
+                    // only the line from uncommitted changes to their parent is dashed, and it is neutral like their node
+                    ctx.stroke(p, with: .color(s.dashed ? StudioStyle.Graph.neutral : Palette.lane(s.color)),
+                               style: StrokeStyle(lineWidth: 2, lineCap: s.dashed ? .butt : .round, dash: s.dashed ? [3, 3] : []))
                 }
                 let center = CGPoint(x: cx, y: h / 2)
                 func circle(_ r: CGFloat) -> Path { Circle().path(in: CGRect(x: center.x - r, y: center.y - r, width: r * 2, height: r * 2)) }
                 if isWIP {
-                    ctx.fill(circle(7), with: .color(Color(nsColor: .textBackgroundColor)))
-                    ctx.stroke(circle(7), with: .color(color), style: StrokeStyle(lineWidth: 2, dash: [2.5, 2]))
+                    // an 18pt node with a 2pt dashed ring in eight even dashes; never the accent or a lane colour
+                    ctx.fill(circle(9), with: .color(Color(nsColor: .textBackgroundColor)))
+                    ctx.stroke(circle(8), with: .color(StudioStyle.Graph.neutral), style: StrokeStyle(lineWidth: 2, dash: [.pi, .pi]))
                 } else if isMerge {
-                    // 머지 커밋은 작은 점
-                    ctx.fill(circle(5.5), with: .color(Color(nsColor: .textBackgroundColor)))
+                    // a merge commit is an 8pt dot with a 2pt gap around it
+                    ctx.fill(circle(6), with: .color(Color(nsColor: .textBackgroundColor)))
                     ctx.fill(circle(4), with: .color(color))
                 } else {
                     // 프로필 테두리(레인 색)
                     ctx.fill(circle(GraphMetrics.avatar / 2 + 2), with: .color(color))
                 }
                 if isHead {
-                    ctx.stroke(circle(isMerge ? 8 : GraphMetrics.avatar / 2 + 5), with: .color(color), lineWidth: 1.5)
+                    // a 2pt ring, 2pt clear of the node
+                    ctx.stroke(circle(isMerge ? 9 : GraphMetrics.avatar / 2 + 5), with: .color(color), lineWidth: 2)
                 }
             }
             if !isWIP && !isMerge {
