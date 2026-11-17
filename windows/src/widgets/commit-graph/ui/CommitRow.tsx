@@ -20,6 +20,7 @@ export const CommitRow = memo(function CommitRow({
   refs,
   selected,
   isHead,
+  unpushed = false,
   wipCount,
   wipLabel,
   match,
@@ -38,6 +39,8 @@ export const CommitRow = memo(function CommitRow({
   refs: RefLabel[] | undefined;
   selected: boolean;
   isHead: boolean;
+  /** On a local branch and on no remote-tracking branch */
+  unpushed?: boolean;
   wipCount: number;
   /** Branch of another worktree's row */
   wipLabel?: string;
@@ -145,6 +148,11 @@ export const CommitRow = memo(function CommitRow({
                   onClick={() => store.openCI(ci)}
                 >
                   <CIStatusIcon status={ci.status} size={12} />
+                </span>
+              )}
+              {unpushed && (
+                <span className="unpushed-chip status-pill status-tone" data-tip={t("Not pushed yet")}>
+                  {t("local")}
                 </span>
               )}
               {c.body && (

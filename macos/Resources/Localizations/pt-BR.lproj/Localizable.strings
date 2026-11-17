@@ -2233,3 +2233,4 @@
 "Stage the files you want to include." = "Coloque no stage os arquivos que deseja incluir.";
 "Write a summary to enable commit." = "Escreva um resumo para poder fazer commit.";
 "Conflicted" = "Em conflito";
+"Not pushed yet" = "Ainda não enviado";

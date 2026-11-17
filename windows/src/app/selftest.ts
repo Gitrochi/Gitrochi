@@ -278,7 +278,7 @@ export async function runSelfTest(): Promise<boolean> {
   await step("Agents sidebar: Needs you, worktree state icons and ahead/behind, one session row with the tab marks, Running, nothing clipped at 240px", agentsSidebarSelfTest);
   await step("레인이 많은 그래프: 머리줄 스크롤 막대·옆 스크롤·선택한 노드 보이기", graphLanesSelfTest);
   await step("Graph columns: author, time and SHA off by default and turned on from the column menu, lined up with the header, every column resized by its edge, and reset", graphColumnsSelfTest);
-  await step("Graph look: 32px rows with a 24 band, a 34 header, 18px chips with the behind count, a neutral uncommitted row, the lane and people palettes with an accent HEAD ring, and the shared empty state", graphLookSelfTest);
+  await step("Graph look: 32px rows with a 24 band, a 34 header, 18px chips with the behind count, a neutral uncommitted row, the local pill on unpushed commits, the lane and people palettes with an accent HEAD ring, and the shared empty state", graphLookSelfTest);
   await step("커밋 비교·일괄 작업·줄 이력의 실제 React 화면", historyToolsSelfTest);
   await step("PR 병합·이슈함의 실제 React 화면", collaborationSelfTest);
   await step("복구·LFS·Submodule·Bisect·충돌 편집의 실제 React 화면", localWorkflowsSelfTest);

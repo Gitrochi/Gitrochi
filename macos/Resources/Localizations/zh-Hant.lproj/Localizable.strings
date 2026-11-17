@@ -2268,3 +2268,4 @@
 "Stage the files you want to include." = "請暫存要包含的檔案。";
 "Write a summary to enable commit." = "填寫摘要後即可提交。";
 "Conflicted" = "衝突";
+"Not pushed yet" = "尚未推送";

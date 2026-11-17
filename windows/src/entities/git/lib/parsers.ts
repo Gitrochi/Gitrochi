@@ -21,6 +21,12 @@ export function parseRefs(text: string): { locals: Branch[]; remotes: Branch[]; 
   refs.tags.sort((a, b) => b.name.localeCompare(a.name, undefined, { numeric: true, sensitivity: "base" }));
   return refs;
 }
+/** `rev-list --branches --not --remotes`: commits no remote-tracking branch has. Without a remote nothing has a server
+ *  to be on, and every row would say "local". */
+export function parseUnpushed(text: string, hasRemotes: boolean): Set<string> {
+  if (!hasRemotes) return new Set();
+  return new Set(text.split("\n").map((l) => l.trim()).filter(Boolean));
+}
 export const parseStashes = (text: string): Stash[] => runCore({ op: "stashes", text });
 export const parseRemotes = (text: string): { names: string[]; urls: Record<string, string> } => runCore({ op: "remotes", text });
 export const parseWorktrees = (text: string): Worktree[] => runCore({ op: "worktrees", text });

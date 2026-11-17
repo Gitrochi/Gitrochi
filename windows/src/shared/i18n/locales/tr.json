@@ -2268,5 +2268,6 @@
   "Resolve conflicts before committing.": "Commit etmeden önce çakışmaları çözün.",
   "Stage the files you want to include.": "Eklemek istediğiniz dosyaları hazırlayın.",
   "Write a summary to enable commit.": "Commit için bir özet yazın.",
-  "Conflicted": "Çakışmalı"
+  "Conflicted": "Çakışmalı",
+  "Not pushed yet": "Henüz gönderilmedi"
 }

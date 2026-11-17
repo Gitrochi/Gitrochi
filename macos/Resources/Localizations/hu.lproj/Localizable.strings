@@ -2249,3 +2249,4 @@
 "Stage the files you want to include." = "Készítse elő a belefoglalandó fájlokat.";
 "Write a summary to enable commit." = "Írjon összefoglalót a commitoláshoz.";
 "Conflicted" = "Ütköző";
+"Not pushed yet" = "Még nincs feltöltve";

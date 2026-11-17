@@ -182,6 +182,7 @@ struct GraphView: View {
                                       refs: store.refsByCommit[entry.id] ?? [],
                                       selected: isSelected(entry),
                                       isHead: entry.id == store.headHash,
+                                      unpushed: store.unpushedCommits.contains(entry.id),
                                       wipCount: entry.commit.isWIP ? store.status.count
                                           : entry.commit.wipWorktree.map { store.worktreeStatus[$0]?.count ?? 0 } ?? 0,
                                       wipLabel: entry.commit.wipWorktree.map { p in store.worktrees.first { $0.path == p }?.branch ?? (p as NSString).lastPathComponent },

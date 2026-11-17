@@ -2968,5 +2968,6 @@
   "Resolve conflicts before committing.": "コミットする前に競合を解決してください。",
   "Stage the files you want to include.": "含めるファイルをステージしてください。",
   "Write a summary to enable commit.": "概要を入力するとコミットできます。",
-  "Conflicted": "競合"
+  "Conflicted": "競合",
+  "Not pushed yet": "まだプッシュしていません"
 }

@@ -2237,5 +2237,6 @@
   "Resolve conflicts before committing.": "Los de conflicten op voordat je commit.",
   "Stage the files you want to include.": "Stage de bestanden die je wilt opnemen.",
   "Write a summary to enable commit.": "Schrijf een samenvatting om te kunnen committen.",
-  "Conflicted": "Conflict"
+  "Conflicted": "Conflict",
+  "Not pushed yet": "Nog niet gepusht"
 }

@@ -2238,5 +2238,6 @@
   "Resolve conflicts before committing.": "Hãy giải quyết xung đột trước khi commit.",
   "Stage the files you want to include.": "Hãy stage các tệp bạn muốn đưa vào.",
   "Write a summary to enable commit.": "Hãy viết tóm tắt để có thể commit.",
-  "Conflicted": "Xung đột"
+  "Conflicted": "Xung đột",
+  "Not pushed yet": "Chưa đẩy lên"
 }

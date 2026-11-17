@@ -2263,3 +2263,4 @@
 "Stage the files you want to include." = "Додайте до індексу файли, які треба включити.";
 "Write a summary to enable commit." = "Напишіть короткий опис, щоб зробити коміт.";
 "Conflicted" = "Конфлікт";
+"Not pushed yet" = "Ще не надіслано";

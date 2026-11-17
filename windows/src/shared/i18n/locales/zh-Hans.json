@@ -2415,5 +2415,6 @@
   "Resolve conflicts before committing.": "提交前请先解决冲突。",
   "Stage the files you want to include.": "请暂存要包含的文件。",
   "Write a summary to enable commit.": "填写摘要后即可提交。",
-  "Conflicted": "冲突"
+  "Conflicted": "冲突",
+  "Not pushed yet": "尚未推送"
 }

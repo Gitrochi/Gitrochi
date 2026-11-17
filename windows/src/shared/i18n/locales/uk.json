@@ -2280,5 +2280,6 @@
   "Resolve conflicts before committing.": "Розв’яжіть конфлікти перед комітом.",
   "Stage the files you want to include.": "Додайте до індексу файли, які треба включити.",
   "Write a summary to enable commit.": "Напишіть короткий опис, щоб зробити коміт.",
-  "Conflicted": "Конфлікт"
+  "Conflicted": "Конфлікт",
+  "Not pushed yet": "Ще не надіслано"
 }
