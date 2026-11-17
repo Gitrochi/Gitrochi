@@ -861,6 +861,7 @@
  "Show all": "全部顯示",
  "Show all branches": "顯示所有分支",
  "Show all {0} hidden branches": "顯示全部 {0} 個隱藏的分支",
+ "Show all {0} hidden branches and tags": "顯示全部 {0} 個隱藏的分支和標籤",
  "Show as folder tree": "以資料夾樹狀結構顯示",
  "Show as list": "以清單顯示",
  "Show author profile pictures": "顯示作者的大頭貼",

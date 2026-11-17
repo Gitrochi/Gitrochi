@@ -870,6 +870,7 @@
  "Show all": "全部显示",
  "Show all branches": "显示所有分支",
  "Show all {0} hidden branches": "显示全部 {0} 个已隐藏的分支",
+ "Show all {0} hidden branches and tags": "显示全部 {0} 个已隐藏的分支和标签",
  "Show as folder tree": "以文件夹树显示",
  "Show as list": "以列表显示",
  "Show author profile pictures": "显示作者头像",

@@ -847,6 +847,7 @@
  "Show all": "Összes megjelenítése",
  "Show all branches": "Összes ág megjelenítése",
  "Show all {0} hidden branches": "Összes rejtett ág megjelenítése ({0})",
+ "Show all {0} hidden branches and tags": "Összes rejtett ág és címke megjelenítése ({0})",
  "Show as folder tree": "Megjelenítés mappafaként",
  "Show as list": "Megjelenítés listaként",
  "Show author profile pictures": "Szerzők profilképeinek megjelenítése",

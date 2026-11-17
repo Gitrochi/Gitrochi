@@ -950,6 +950,7 @@
 "Shell opened in the terminal panel below (zsh, bash, fish, etc.)" = "Shell que se abre en el panel de terminal de abajo (zsh, bash, fish, etc.)";
 "Show all" = "Mostrar todo";
 "Show all %lld hidden branches" = "Mostrar todas las ramas ocultas (%1$lld)";
+"Show all %lld hidden branches and tags" = "Mostrar todas las ramas y etiquetas ocultas (%1$lld)";
 "Show all branches" = "Mostrar todas las ramas";
 "Show as folder tree" = "Mostrar como árbol de carpetas";
 "Show as list" = "Mostrar como lista";

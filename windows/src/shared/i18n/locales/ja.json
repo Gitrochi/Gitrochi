@@ -1323,6 +1323,7 @@
   "Show all": "すべて表示",
   "Show all branches": "すべてのブランチを表示",
   "Show all {0} hidden branches": "非表示のブランチ {0} 個をすべて表示",
+  "Show all {0} hidden branches and tags": "非表示のブランチとタグ {0} 個をすべて表示",
   "Show as folder tree": "フォルダーツリーで表示",
   "Show as list": "リストで表示",
   "Show author profile pictures": "作成者のプロフィール画像を表示",

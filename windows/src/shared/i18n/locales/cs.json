@@ -845,6 +845,7 @@
  "Show all": "Zobrazit vše",
  "Show all branches": "Zobrazit všechny větve",
  "Show all {0} hidden branches": "Zobrazit všechny skryté větve ({0})",
+ "Show all {0} hidden branches and tags": "Zobrazit všechny skryté větve a tagy ({0})",
  "Show as folder tree": "Zobrazit jako strom složek",
  "Show as list": "Zobrazit jako seznam",
  "Show author profile pictures": "Zobrazovat profilové obrázky autorů",

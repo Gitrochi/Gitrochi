@@ -851,6 +851,7 @@
  "Show all": "Tout afficher",
  "Show all branches": "Afficher toutes les branches",
  "Show all {0} hidden branches": "Afficher toutes les branches masquées ({0})",
+ "Show all {0} hidden branches and tags": "Afficher toutes les branches et tags masqués ({0})",
  "Show as folder tree": "Afficher en arborescence",
  "Show as list": "Afficher en liste",
  "Show author profile pictures": "Afficher les photos de profil des auteurs",

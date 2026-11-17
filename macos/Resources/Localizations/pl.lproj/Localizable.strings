@@ -942,6 +942,7 @@
 "Shell opened in the terminal panel below (zsh, bash, fish, etc.)" = "Powłoka otwierana w panelu terminala na dole (zsh, bash, fish itp.)";
 "Show all" = "Pokaż wszystko";
 "Show all %lld hidden branches" = "Pokaż wszystkie ukryte gałęzie (%1$lld)";
+"Show all %lld hidden branches and tags" = "Pokaż wszystkie ukryte gałęzie i tagi (%1$lld)";
 "Show all branches" = "Pokaż wszystkie gałęzie";
 "Show as folder tree" = "Pokaż jako drzewo folderów";
 "Show as list" = "Pokaż jako listę";

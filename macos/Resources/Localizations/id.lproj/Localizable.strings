@@ -919,6 +919,7 @@
 "Shell opened in the terminal panel below (zsh, bash, fish, etc.)" = "Shell yang dibuka di panel terminal di bawah (zsh, bash, fish, dll.)";
 "Show all" = "Tampilkan semua";
 "Show all %lld hidden branches" = "Tampilkan semua %1$lld branch tersembunyi";
+"Show all %lld hidden branches and tags" = "Tampilkan semua %1$lld branch dan tag tersembunyi";
 "Show all branches" = "Tampilkan semua branch";
 "Show as folder tree" = "Tampilkan sebagai pohon folder";
 "Show as list" = "Tampilkan sebagai daftar";

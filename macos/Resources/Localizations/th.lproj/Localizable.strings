@@ -952,6 +952,7 @@
 "Shell opened in the terminal panel below (zsh, bash, fish, etc.)" = "เชลล์ที่เปิดในแผงเทอร์มินัลด้านล่าง (zsh, bash, fish ฯลฯ)";
 "Show all" = "แสดงทั้งหมด";
 "Show all %lld hidden branches" = "แสดงแบรนช์ที่ซ่อนไว้ทั้งหมด %1$lld รายการ";
+"Show all %lld hidden branches and tags" = "แสดงแบรนช์และแท็กที่ซ่อนไว้ทั้งหมด %1$lld รายการ";
 "Show all branches" = "แสดงแบรนช์ทั้งหมด";
 "Show as folder tree" = "แสดงเป็นแผนผังโฟลเดอร์";
 "Show as list" = "แสดงเป็นรายการ";

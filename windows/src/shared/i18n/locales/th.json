@@ -856,6 +856,7 @@
  "Show all": "แสดงทั้งหมด",
  "Show all branches": "แสดงแบรนช์ทั้งหมด",
  "Show all {0} hidden branches": "แสดงแบรนช์ที่ซ่อนไว้ทั้งหมด {0} รายการ",
+ "Show all {0} hidden branches and tags": "แสดงแบรนช์และแท็กที่ซ่อนไว้ทั้งหมด {0} รายการ",
  "Show as folder tree": "แสดงเป็นแผนผังโฟลเดอร์",
  "Show as list": "แสดงเป็นรายการ",
  "Show author profile pictures": "แสดงรูปโปรไฟล์ของผู้เขียน",

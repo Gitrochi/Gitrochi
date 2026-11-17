@@ -838,6 +838,7 @@
  "Show all": "Mostrar tudo",
  "Show all branches": "Mostrar todos os branches",
  "Show all {0} hidden branches": "Mostrar todos os branches ocultos ({0})",
+ "Show all {0} hidden branches and tags": "Mostrar todos os branches e tags ocultos ({0})",
  "Show as folder tree": "Mostrar como árvore de pastas",
  "Show as list": "Mostrar como lista",
  "Show author profile pictures": "Mostrar fotos de perfil dos autores",

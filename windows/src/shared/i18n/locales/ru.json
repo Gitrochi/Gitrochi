@@ -859,6 +859,7 @@
  "Show all": "Показать все",
  "Show all branches": "Показать все ветки",
  "Show all {0} hidden branches": "Показать все скрытые ветки ({0})",
+ "Show all {0} hidden branches and tags": "Показать все скрытые ветки и теги ({0})",
  "Show as folder tree": "Показать деревом папок",
  "Show as list": "Показать списком",
  "Show author profile pictures": "Показывать аватары авторов",

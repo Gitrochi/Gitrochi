@@ -956,6 +956,7 @@
 "Shell opened in the terminal panel below (zsh, bash, fish, etc.)" = "Оболочка, открываемая в панели терминала внизу (zsh, bash, fish и др.)";
 "Show all" = "Показать все";
 "Show all %lld hidden branches" = "Показать все скрытые ветки (%1$lld)";
+"Show all %lld hidden branches and tags" = "Показать все скрытые ветки и теги (%1$lld)";
 "Show all branches" = "Показать все ветки";
 "Show as folder tree" = "Показать деревом папок";
 "Show as list" = "Показать списком";

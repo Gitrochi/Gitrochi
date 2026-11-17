@@ -945,6 +945,7 @@
 "Shell opened in the terminal panel below (zsh, bash, fish, etc.)" = "Alttaki terminal panelinde açılan kabuk (zsh, bash, fish vb.)";
 "Show all" = "Tümünü göster";
 "Show all %lld hidden branches" = "Gizli dalların tümünü göster (%1$lld)";
+"Show all %lld hidden branches and tags" = "Gizli dalların ve etiketlerin tümünü göster (%1$lld)";
 "Show all branches" = "Tüm dalları göster";
 "Show as folder tree" = "Klasör ağacı olarak göster";
 "Show as list" = "Liste olarak göster";

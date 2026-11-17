@@ -977,6 +977,7 @@
 "Shell opened in the terminal panel below (zsh, bash, fish, etc.)" = "下のターミナルパネルで開くシェル (zsh, bash, fish など)";
 "Show all" = "すべて表示";
 "Show all %lld hidden branches" = "非表示のブランチ %1$lld 個をすべて表示";
+"Show all %lld hidden branches and tags" = "非表示のブランチとタグ %1$lld 個をすべて表示";
 "Show all branches" = "すべてのブランチを表示";
 "Show as folder tree" = "フォルダーツリーで表示";
 "Show as list" = "リストで表示";

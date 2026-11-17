@@ -1136,6 +1136,7 @@
 "Shell opened in the terminal panel below (zsh, bash, fish, etc.)" = "아래 터미널 패널에서 여는 셸(zsh·bash·fish 등)";
 "Show all" = "전체 보기";
 "Show all %lld hidden branches" = "숨긴 브랜치 %1$lld개 모두 보이기";
+"Show all %lld hidden branches and tags" = "숨긴 브랜치·태그 %1$lld개 모두 보이기";
 "Show all branches" = "모든 브랜치 보기";
 "Show as folder tree" = "폴더 트리로 보기";
 "Show as list" = "목록으로 보기";

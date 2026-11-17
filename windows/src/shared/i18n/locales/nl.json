@@ -824,6 +824,7 @@
  "Show all": "Alles tonen",
  "Show all branches": "Alle branches tonen",
  "Show all {0} hidden branches": "Alle verborgen branches tonen ({0})",
+ "Show all {0} hidden branches and tags": "Alle verborgen branches en tags tonen ({0})",
  "Show as folder tree": "Als mappenstructuur tonen",
  "Show as list": "Als lijst tonen",
  "Show author profile pictures": "Profielfoto's van auteurs tonen",

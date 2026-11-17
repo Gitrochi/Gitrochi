@@ -926,6 +926,7 @@
 "Shell opened in the terminal panel below (zsh, bash, fish, etc.)" = "Shell được mở trong bảng terminal bên dưới (zsh, bash, fish, v.v.)";
 "Show all" = "Hiện tất cả";
 "Show all %lld hidden branches" = "Hiện tất cả %1$lld nhánh đã ẩn";
+"Show all %lld hidden branches and tags" = "Hiện tất cả %1$lld nhánh và tag đã ẩn";
 "Show all branches" = "Hiện tất cả nhánh";
 "Show as folder tree" = "Hiển thị dạng cây thư mục";
 "Show as list" = "Hiển thị dạng danh sách";

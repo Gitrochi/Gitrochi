@@ -850,6 +850,7 @@
  "Show all": "Tümünü göster",
  "Show all branches": "Tüm dalları göster",
  "Show all {0} hidden branches": "Gizli dalların tümünü göster ({0})",
+ "Show all {0} hidden branches and tags": "Gizli dalların ve etiketlerin tümünü göster ({0})",
  "Show as folder tree": "Klasör ağacı olarak göster",
  "Show as list": "Liste olarak göster",
  "Show author profile pictures": "Yazar profil resimlerini göster",

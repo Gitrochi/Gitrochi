@@ -968,6 +968,7 @@
 "Shell opened in the terminal panel below (zsh, bash, fish, etc.)" = "在下方终端面板中打开的 Shell（zsh、bash、fish 等）";
 "Show all" = "全部显示";
 "Show all %lld hidden branches" = "显示全部 %1$lld 个已隐藏的分支";
+"Show all %lld hidden branches and tags" = "显示全部 %1$lld 个已隐藏的分支和标签";
 "Show all branches" = "显示所有分支";
 "Show as folder tree" = "以文件夹树显示";
 "Show as list" = "以列表显示";

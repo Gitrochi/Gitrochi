@@ -850,6 +850,7 @@
  "Show all": "Alle anzeigen",
  "Show all branches": "Alle Branches anzeigen",
  "Show all {0} hidden branches": "Alle ausgeblendeten Branches anzeigen ({0})",
+ "Show all {0} hidden branches and tags": "Alle ausgeblendeten Branches und Tags anzeigen ({0})",
  "Show as folder tree": "Als Ordnerbaum anzeigen",
  "Show as list": "Als Liste anzeigen",
  "Show author profile pictures": "Profilbilder der Autoren anzeigen",

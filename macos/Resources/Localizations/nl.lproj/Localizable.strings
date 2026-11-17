@@ -921,6 +921,7 @@
 "Shell opened in the terminal panel below (zsh, bash, fish, etc.)" = "Shell die in het terminalpaneel onderaan wordt geopend (zsh, bash, fish, enz.)";
 "Show all" = "Alles tonen";
 "Show all %lld hidden branches" = "Alle verborgen branches tonen (%1$lld)";
+"Show all %lld hidden branches and tags" = "Alle verborgen branches en tags tonen (%1$lld)";
 "Show all branches" = "Alle branches tonen";
 "Show as folder tree" = "Als mappenstructuur tonen";
 "Show as list" = "Als lijst tonen";

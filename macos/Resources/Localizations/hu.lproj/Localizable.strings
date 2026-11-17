@@ -944,6 +944,7 @@
 "Shell opened in the terminal panel below (zsh, bash, fish, etc.)" = "Az alsó terminálpanelen megnyíló shell (zsh, bash, fish stb.)";
 "Show all" = "Összes megjelenítése";
 "Show all %lld hidden branches" = "Összes rejtett ág megjelenítése (%1$lld)";
+"Show all %lld hidden branches and tags" = "Összes rejtett ág és címke megjelenítése (%1$lld)";
 "Show all branches" = "Összes ág megjelenítése";
 "Show as folder tree" = "Megjelenítés mappafaként";
 "Show as list" = "Megjelenítés listaként";

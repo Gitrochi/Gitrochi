@@ -840,6 +840,7 @@
  "Show all": "Mostra tutto",
  "Show all branches": "Mostra tutti i branch",
  "Show all {0} hidden branches": "Mostra tutti i branch nascosti ({0})",
+ "Show all {0} hidden branches and tags": "Mostra tutti i branch e i tag nascosti ({0})",
  "Show as folder tree": "Mostra come albero di cartelle",
  "Show as list": "Mostra come elenco",
  "Show author profile pictures": "Mostra le immagini del profilo degli autori",

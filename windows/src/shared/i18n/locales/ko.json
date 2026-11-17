@@ -2027,6 +2027,7 @@
   "Show all": "전체 보기",
   "Show all branches": "모든 브랜치 보기",
   "Show all {0} hidden branches": "숨긴 브랜치 {0}개 모두 보이기",
+  "Show all {0} hidden branches and tags": "숨긴 브랜치·태그 {0}개 모두 보이기",
   "Show as folder tree": "폴더 트리로 보기",
   "Show as list": "목록으로 보기",
   "Show author profile pictures": "작성자 프로필 사진 보이기",

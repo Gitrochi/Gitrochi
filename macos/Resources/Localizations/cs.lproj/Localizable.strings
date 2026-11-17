@@ -939,6 +939,7 @@
 "Shell opened in the terminal panel below (zsh, bash, fish, etc.)" = "Shell otevřený v panelu terminálu dole (zsh, bash, fish atd.)";
 "Show all" = "Zobrazit vše";
 "Show all %lld hidden branches" = "Zobrazit všechny skryté větve (%1$lld)";
+"Show all %lld hidden branches and tags" = "Zobrazit všechny skryté větve a tagy (%1$lld)";
 "Show all branches" = "Zobrazit všechny větve";
 "Show as folder tree" = "Zobrazit jako strom složek";
 "Show as list" = "Zobrazit jako seznam";
