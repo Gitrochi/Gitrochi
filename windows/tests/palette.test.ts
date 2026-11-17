@@ -43,6 +43,8 @@ function oklab(hex: string) {
   const [l, m, s] = [0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b, 0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b, 0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b].map(Math.cbrt);
   return [0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s, 1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s, 0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s];
 }
+/** `color` at `alpha` over `under`, as #hex */
+const over = (color: string, alpha: number, under: string) => "#" + [1, 3, 5].map((i) => Math.round(parseInt(color.slice(i, i + 2), 16) * alpha + parseInt(under.slice(i, i + 2), 16) * (1 - alpha)).toString(16).padStart(2, "0")).join("");
 const distance = (a: string, b: string) => Math.hypot(...oklab(a).map((v, i) => v - oklab(b)[i]));
 
 /** Theme.swift's `(0xaaaaaa, 0xbbbbbb)` pairs after a table's name, as #hex strings */
@@ -84,6 +86,8 @@ describe("the fixed palettes", () => {
         for (const surface of SURFACES[theme]) expect(contrast(line, surface), `${theme} lane ${i} on ${surface}`).toBeGreaterThanOrEqual(3);
         expect(contrast(line, TINTS[theme][i]), `${theme} lane ${i} on its tint`).toBeGreaterThanOrEqual(4.5);
         expect(contrast(theme === "light" ? "#ffffff" : TINTS.dark[i], line), `${theme} filled chip ${i}`).toBeGreaterThanOrEqual(4.5);
+        // on the selected commit's band — the line at 35% over the graph — a line still keeps 3:1
+        for (const surface of SURFACES[theme]) expect(contrast(line, over(line, 0.35, surface)), `${theme} lane ${i} on the selected band over ${surface}`).toBeGreaterThanOrEqual(3);
       });
       FILLS[theme].forEach((fill, i) => expect(contrast(LETTERS[theme][i], fill), `${theme} initial ${i}`).toBeGreaterThanOrEqual(4.5));
     }
@@ -105,7 +109,7 @@ describe("the fixed palettes", () => {
     expect(laneIndex(7)).toBe(0);
     expect(laneIndex(-1)).toBe(6);
     expect(laneColors(9)).toBe(laneColors(2));
-    expect(laneColors(2)).toEqual({ line: "var(--lane-2)", tint: "var(--lane-2-tint)", onLine: "var(--lane-2-on)", selected: "color-mix(in srgb, var(--lane-2) 40%, transparent)" });
+    expect(laneColors(2)).toEqual({ line: "var(--lane-2)", tint: "var(--lane-2-tint)", onLine: "var(--lane-2-on)", selected: "color-mix(in srgb, var(--lane-2) 35%, transparent)" });
   });
 
   it("picks a person's colour from the e-mail, the same way on both platforms and whatever its case", () => {

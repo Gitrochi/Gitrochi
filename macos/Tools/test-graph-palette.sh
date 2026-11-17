@@ -47,7 +47,7 @@ for dark in [false, true] {
     expect(Palette.lanes.map { resolve($0.tint, dark: dark).hex }, dark ? tints.dark : tints.light, "\(theme) lane tints")
     // a filled chip: white in light, the lane's own tint in dark
     expect(Palette.lanes.map { resolve($0.onLine, dark: dark).hex }, dark ? tints.dark : tints.light.map { _ in "#ffffff" }, "\(theme) text on a filled chip")
-    expect(Palette.lanes.map { String(format: "%.2f", resolve($0.selected, dark: dark).alpha) }, Array(repeating: "0.40", count: 7), "\(theme) selected band")
+    expect(Palette.lanes.map { String(format: "%.2f", resolve($0.selected, dark: dark).alpha) }, Array(repeating: "0.35", count: 7), "\(theme) selected band")
     expect(Palette.people.map { resolve($0.fill, dark: dark).hex }, dark ? fills.dark : fills.light, "\(theme) avatar fills")
     expect(Palette.people.map { resolve($0.letter, dark: dark).hex }, dark ? letters.dark : letters.light, "\(theme) avatar letters")
     expect(Palette.people.map { resolve($0.node, dark: dark).hex }, nodes, "\(theme) node colours")

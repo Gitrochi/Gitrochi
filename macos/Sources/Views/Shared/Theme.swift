@@ -7,7 +7,7 @@ import SwiftUI
 /// in app/styles/global.css)
 enum Palette {
     /// A lane: its line, the tint behind it (the band, a chip), the text on a chip filled with the line, and the
-    /// selected commit's band (the line at 40%)
+    /// selected commit's band (the line at 35%: the board's 40% left teal and amber lines under 3:1 on it)
     struct Lane {
         let line: Color
         let tint: Color
@@ -49,7 +49,7 @@ enum Palette {
     static let lanes: [Lane] = zip(lineValues, tintValues).map { line, tint in
         let color = Color(nsColor: dynamic(line.light, line.dark))
         return Lane(line: color, tint: Color(nsColor: dynamic(tint.light, tint.dark)),
-                    onLine: Color(nsColor: dynamic(0xffffff, tint.dark)), selected: color.opacity(0.4))
+                    onLine: Color(nsColor: dynamic(0xffffff, tint.dark)), selected: color.opacity(0.35))
     }
 
     static let people: [Person] = personValues.map {
