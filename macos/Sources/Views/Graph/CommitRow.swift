@@ -26,12 +26,12 @@ struct CommitRow: View {
 
     var body: some View {
         let c = entry.commit
-        let tint = Palette.lane(entry.row.color)
+        let lane = Palette.lane(entry.row.color)
         let groups = RefGroup.group(refs)
         HStack(spacing: 0) {
             // 왼쪽: 브랜치·태그(첫 번째 + 나머지 개수), 그래프 동그라미까지 이어지는 선
             if columns.ref > 0 {
-                RefColumn(groups: groups, tint: tint, store: store)
+                RefColumn(groups: groups, lane: lane, store: store)
                     .frame(width: columns.ref, height: GraphMetrics.rowHeight)
             }
             if columns.graph > 0 {
@@ -52,10 +52,10 @@ struct CommitRow: View {
                                        startPoint: .leading, endPoint: .trailing)
                     }
                     .background(alignment: .leading) {
-                        // like GitKraken: a band from the node to the message, a little shorter than the row so rows stay apart;
-                        // the uncommitted row has none, as it never takes a lane colour
+                        // like GitKraken: a band from the node to the message in the lane's tint, a little shorter than the
+                        // row so rows stay apart; the uncommitted row has none, as it never takes a lane colour
                         Rectangle()
-                            .fill(c.isPending ? Color.clear : tint.opacity(selected ? 0.4 : 0.1))
+                            .fill(c.isPending ? Color.clear : selected ? lane.selected : lane.tint)
                             .frame(height: GraphMetrics.bandHeight)
                             .padding(.leading, min(max(0, GraphMetrics.leftPad + GraphMetrics.laneWidth * (CGFloat(entry.row.column) + 0.5) - laneOffset), columns.graph))
                     }
@@ -64,7 +64,7 @@ struct CommitRow: View {
                 // the message: lane-coloured bar, subject, first body line dimmed; author, date and SHA in the tip or their columns
                 HStack(spacing: 6) {
                     Rectangle()
-                        .fill(c.isPending ? StudioStyle.Graph.neutral : tint)
+                        .fill(c.isPending ? StudioStyle.Graph.neutral : lane.line)
                         .frame(width: 3, height: GraphMetrics.bandHeight)
                         // 12 between the bar and the text, with the stack's 6
                         .padding(.trailing, 6)
@@ -205,22 +205,22 @@ struct RefGroup: Identifiable {
 /// 왼쪽 칸: 첫 번째 브랜치(또는 태그) 라벨 + 나머지 개수, 그리고 그래프까지 이어지는 선
 private struct RefColumn: View {
     let groups: [RefGroup]
-    let tint: Color
+    let lane: Palette.Lane
     let store: RepoStore
 
     var body: some View {
         HStack(spacing: 4) {
             if let g = groups.first {
-                RefPill(group: g, tint: tint, store: store)
+                RefPill(group: g, lane: lane, store: store)
                 if groups.count > 1 {
                     Text("+\(groups.count - 1)")
                         .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(tint)
+                        .foregroundStyle(lane.line)
                         // keep the count whole; the pill truncates instead (Windows: .ref-more)
                         .fixedSize()
                         .padding(.horizontal, 6)
                         .frame(height: 18)
-                        .background(Capsule().fill(tint.opacity(RefPill.tintOpacity)))
+                        .background(Capsule().fill(lane.tint))
                         .help(groups.dropFirst().map(\.name).joined(separator: "\n"))
                         .contextMenu {
                             ForEach(groups.dropFirst()) { g in
@@ -228,7 +228,7 @@ private struct RefColumn: View {
                             }
                         }
                 }
-                Rectangle().fill(tint).frame(height: 1.5)
+                Rectangle().fill(lane.line).frame(height: 1.5)
             }
         }
         .padding(.leading, 8)
@@ -237,11 +237,8 @@ private struct RefColumn: View {
 
 private struct RefPill: View {
     let group: RefGroup
-    let tint: Color
+    let lane: Palette.Lane
     let store: RepoStore
-
-    /// A chip's fill: the lane colour as faint as the row's band, under a border in the full colour
-    static let tintOpacity = 0.1
 
     var body: some View {
         let solid = group.isCurrent
@@ -273,26 +270,26 @@ private struct RefPill: View {
                 RefMenu(ref: group.primary)
             }
         }
-        .modifier(BranchInteractions(group: group, store: store, tint: tint))
+        .modifier(BranchInteractions(group: group, store: store, lane: lane))
     }
 
     // The current branch is filled with its lane colour and a detached HEAD with the text colour; tags are neutral
-    // grey, and every other branch is its lane colour on a tint of it
+    // grey, and every other branch is its lane colour on the lane's tint
     private var text: Color {
         if group.isHead { return Color(nsColor: .textBackgroundColor) }
-        if group.isCurrent { return .white }
-        return group.isTag ? StudioStyle.Tone.neutral.text : tint
+        if group.isCurrent { return lane.onLine }
+        return group.isTag ? StudioStyle.Tone.neutral.text : lane.line
     }
 
     private var fill: Color {
         if group.isHead { return Color(nsColor: .labelColor) }
-        if group.isCurrent { return tint }
-        return group.isTag ? StudioStyle.Graph.tagFill : tint.opacity(Self.tintOpacity)
+        if group.isCurrent { return lane.line }
+        return group.isTag ? StudioStyle.Graph.tagFill : lane.tint
     }
 
     private var border: Color {
         if group.isHead { return Color(nsColor: .labelColor) }
-        return group.isTag ? StudioStyle.Graph.neutral : tint
+        return group.isTag ? StudioStyle.Graph.neutral : lane.line
     }
 
     private var helpText: String {
@@ -309,7 +306,7 @@ private struct RefPill: View {
 private struct BranchInteractions: ViewModifier {
     let group: RefGroup
     let store: RepoStore
-    let tint: Color
+    let lane: Palette.Lane
 
     func body(content: Content) -> some View {
         if group.isTag || group.isHead {
@@ -321,7 +318,7 @@ private struct BranchInteractions: ViewModifier {
                     if let b = store.branch(named: name) { Task { await store.checkout(b) } }
                 }
                 .draggable(RepoStore.branchPayload + name) {
-                    RefBadge(label: group.primary, color: tint)
+                    RefBadge(label: group.primary, lane: lane)
                 }
         }
     }
@@ -342,7 +339,7 @@ struct GraphCell: View {
     }
 
     var body: some View {
-        let color = Palette.lane(row.color)
+        let color = Palette.lane(row.color).line
         let cx = x(Double(row.column))
         ZStack(alignment: .topLeading) {
             Canvas { ctx, size in
@@ -366,7 +363,7 @@ struct GraphCell: View {
                         p.addCurve(to: b, control1: CGPoint(x: a.x, y: mid), control2: CGPoint(x: b.x, y: mid))
                     }
                     // only the line from uncommitted changes to their parent is dashed, and it is neutral like their node
-                    ctx.stroke(p, with: .color(s.dashed ? StudioStyle.Graph.neutral : Palette.lane(s.color)),
+                    ctx.stroke(p, with: .color(s.dashed ? StudioStyle.Graph.neutral : Palette.lane(s.color).line),
                                style: StrokeStyle(lineWidth: 2, lineCap: s.dashed ? .butt : .round, dash: s.dashed ? [3, 3] : []))
                 }
                 let center = CGPoint(x: cx, y: h / 2)
@@ -384,12 +381,12 @@ struct GraphCell: View {
                     ctx.fill(circle(GraphMetrics.avatar / 2 + 2), with: .color(color))
                 }
                 if isHead {
-                    // a 2pt ring, 2pt clear of the node
-                    ctx.stroke(circle(isMerge ? 9 : GraphMetrics.avatar / 2 + 5), with: .color(color), lineWidth: 2)
+                    // the current marker: a 2pt accent ring, 2pt clear of the node (lanes never take the accent)
+                    ctx.stroke(circle(isMerge ? 9 : GraphMetrics.avatar / 2 + 5), with: .color(.accentColor), lineWidth: 2)
                 }
             }
             if !isWIP && !isMerge {
-                AuthorAvatar(name: author, email: email, size: GraphMetrics.avatar)
+                AuthorAvatar(name: author, email: email, size: GraphMetrics.avatar, lane: row.color)
                     .help(author)
                     .position(x: cx, y: GraphMetrics.rowHeight / 2)
             }

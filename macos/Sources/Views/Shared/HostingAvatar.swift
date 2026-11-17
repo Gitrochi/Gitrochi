@@ -22,9 +22,10 @@ struct HostingAvatar: View {
                 image.resizable().interpolation(.high).aspectRatio(contentMode: .fill)
             } else {
                 if style == .organization {
-                    shape.fill(Palette.lane(Palette.stableHash((username.isEmpty ? name : username).lowercased())))
+                    let person = Palette.person(username.isEmpty ? name : username)
+                    shape.fill(person.fill)
                         .overlay(Text((name.isEmpty ? username : name).first.map { String($0).uppercased() } ?? "?")
-                            .font(.system(size: size * 0.45, weight: .semibold)).foregroundStyle(.white))
+                            .font(.system(size: size * 0.45, weight: .semibold)).foregroundStyle(person.letter))
                 } else {
                     Avatar(name: name.isEmpty ? username : name, email: username.isEmpty ? name : username, size: size)
                 }

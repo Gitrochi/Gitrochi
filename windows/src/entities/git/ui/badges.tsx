@@ -1,6 +1,7 @@
 import { Crosshair } from "lucide-react";
 import { Check, Cloud, GitBranch, Tag as TagIcon } from "@/shared/icons";
 import { t } from "@/shared/i18n";
+import type { LaneColors } from "@/shared/lib";
 import type { ChangeKind, RefLabel } from "../model/types";
 import "./badges.css";
 
@@ -29,9 +30,10 @@ export function StatusBadge({ kind }: { kind: ChangeKind }) {
   );
 }
 
-export function RefBadge({ label, color }: { label: RefLabel; color: string }) {
+/** A ref as a badge: a branch is its lane colour on the lane's tint, filled when it is local. macOS: RefBadge in Views/Shared/Theme.swift */
+export function RefBadge({ label, lane }: { label: RefLabel; lane: LaneColors }) {
   const outlined = label.kind === "remote";
-  const tint = label.kind === "tag" ? "#8e8e93" : label.kind === "head" ? "var(--text)" : color;
+  const fill = label.kind === "tag" ? "#8e8e93" : label.kind === "head" ? "var(--text)" : outlined ? lane.tint : lane.line;
   const Icon = label.kind === "head" ? Crosshair : label.kind === "local" ? GitBranch : label.kind === "remote" ? Cloud : TagIcon;
   return (
     <span
@@ -39,9 +41,9 @@ export function RefBadge({ label, color }: { label: RefLabel; color: string }) {
       data-tip={label.name}
       title={label.name}
       style={{
-        color: outlined ? tint : label.kind === "head" ? "var(--surface)" : "#fff",
-        background: outlined ? `color-mix(in srgb, ${tint} 12%, transparent)` : tint,
-        boxShadow: outlined ? `inset 0 0 0 1px ${tint}` : undefined,
+        color: outlined ? lane.line : label.kind === "head" ? "var(--surface)" : label.kind === "local" ? lane.onLine : "#fff",
+        background: fill,
+        boxShadow: outlined ? `inset 0 0 0 1px ${lane.line}` : undefined,
       }}
     >
       <Icon size={10} strokeWidth={2.5} />

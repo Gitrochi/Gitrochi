@@ -7,7 +7,7 @@ import { type CIPipeline, CIStatusIcon, statusInfo } from "@/entities/ci";
 import { type GraphEntry, type GraphRow, isMerge, isPending, type RefLabel, rowSelection, short, wipWorktree } from "@/entities/git";
 import { branchPayload, commitPayload, type RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
-import { drag, laneColor, longDate, shortDate, useObserve } from "@/shared/lib";
+import { drag, type LaneColors, laneColors, longDate, shortDate, useObserve } from "@/shared/lib";
 import { Avatar, showContextMenu, tip } from "@/shared/ui";
 import { AVATAR, type GraphColumns, HEADER_TOOLS_W, LANE_W, LEFT_PAD, ROW_H } from "../lib/metrics";
 
@@ -49,7 +49,7 @@ export const CommitRow = memo(function CommitRow({
   const c = entry.commit;
   const wip = isPending(c);
   const worktree = wipWorktree(c);
-  const tint = laneColor(entry.row.color);
+  const lane = laneColors(entry.row.color);
   const groups = groupRefs(refs ?? []);
   return (
     <div
@@ -85,11 +85,11 @@ export const CommitRow = memo(function CommitRow({
         <div className="ref-col" style={{ width: cols.ref }}>
           {groups.length > 0 && (
             <>
-              <RefPill store={store} group={groups[0]} tint={tint} />
+              <RefPill store={store} group={groups[0]} lane={lane} />
               {groups.length > 1 && (
                 <span
                   className="ref-more"
-                  style={{ color: tint, background: `color-mix(in srgb, ${tint} ${CHIP_TINT}%, transparent)` }}
+                  style={{ color: lane.line, background: lane.tint }}
                   data-tip={groups.slice(1).map((g) => g.name).join("\n")}
                   onContextMenu={(e) =>
                     showContextMenu(
@@ -101,7 +101,7 @@ export const CommitRow = memo(function CommitRow({
                   +{groups.length - 1}
                 </span>
               )}
-              <span className="ref-line" style={{ background: tint }} />
+              <span className="ref-line" style={{ background: lane.line }} />
             </>
           )}
         </div>
@@ -111,9 +111,9 @@ export const CommitRow = memo(function CommitRow({
           className={`graph-cell${laneOffset > 0 ? " fade-left" : ""}${laneOffset < gw - cols.graph ? " fade-right" : ""}`}
           style={{ position: "relative", display: "flex", width: cols.graph, flex: "none", overflow: "hidden" }}
         >
-          {/* like GitKraken: a band from the node to the message, a little shorter than the row so rows stay apart;
-              the uncommitted row has none, as it never takes a lane colour */}
-          {!wip && <span className="lane-band" style={{ left: Math.max(0, LEFT_PAD + LANE_W * (entry.row.column + 0.5) - laneOffset), background: `color-mix(in srgb, ${tint} ${selected ? 40 : 10}%, transparent)` }} />}
+          {/* like GitKraken: a band from the node to the message in the lane's tint, a little shorter than the row so rows
+              stay apart; the uncommitted row has none, as it never takes a lane colour */}
+          {!wip && <span className="lane-band" style={{ left: Math.max(0, LEFT_PAD + LANE_W * (entry.row.column + 0.5) - laneOffset), background: selected ? lane.selected : lane.tint }} />}
           {/* the lanes move together with the header's scrollbar; the line from the labels follows the node */}
           <span className="lane-shift" style={{ marginLeft: -laneOffset }}>
             <GraphCell row={entry.row} width={gw} isWIP={wip} isHead={isHead} isMerge={isMerge(c)} hasRefs={groups.length > 0} author={c.author} email={c.email} />
@@ -125,7 +125,7 @@ export const CommitRow = memo(function CommitRow({
       <div className="row-tail" style={{ paddingRight: 12 + (cols.author + cols.time + cols.sha > 0 ? HEADER_TOOLS_W : 0) }}>
         {/* the message: lane-coloured bar, subject, first body line dimmed; author, time and SHA in the tip or their columns */}
         <div className="msg" data-tip={wip ? undefined : `${c.author} <${c.email}>\n${longDate(c.date)} · ${short(c.id)}`}>
-          <span className="msg-bar" style={{ background: wip ? "var(--graph-neutral)" : tint }} />
+          <span className="msg-bar" style={{ background: wip ? "var(--graph-neutral)" : lane.line }} />
           {wip ? (
             <>
               <i className="muted">{worktree !== null ? t("// Uncommitted changes in {0}", wipLabel ?? "") : t("// Uncommitted changes")}</i>
@@ -190,9 +190,6 @@ interface RefGroup {
   all: RefLabel[];
 }
 
-/** A chip's fill: the lane colour as faint as the row's band, under a border in the full colour (macOS: RefPill.tintOpacity) */
-const CHIP_TINT = 10;
-
 export function groupRefs(refs: RefLabel[]): RefGroup[] {
   const order: string[] = [];
   const by = new Map<string, { local: string | null; remotes: string[]; current: boolean; behind: number }>();
@@ -229,7 +226,7 @@ export function groupRefs(refs: RefLabel[]): RefGroup[] {
 }
 
 /** 브랜치 라벨: 더블클릭 체크아웃, 우클릭 메뉴, 끌어서 다른 브랜치에 놓기 */
-function RefPill({ store, group, tint }: { store: RepoStore; group: RefGroup; tint: string }) {
+function RefPill({ store, group, lane }: { store: RepoStore; group: RefGroup; lane: LaneColors }) {
   const branch = !group.isTag && !group.isHead;
   const solid = group.isCurrent;
   const target = group.local ?? group.remotes[0] ?? group.name;
@@ -244,9 +241,9 @@ function RefPill({ store, group, tint }: { store: RepoStore; group: RefGroup; ti
   return (
     <span
       // the current branch is filled with its lane colour; a detached HEAD and tags are neutral (commit-graph.css),
-      // and every other branch is its lane colour on a tint of it
+      // and every other branch is its lane colour on the lane's tint
       className={`ref-pill${group.isHead ? " head" : group.isTag ? " tag" : solid ? " solid" : ""}`}
-      style={branch ? { color: solid ? "#fff" : tint, background: solid ? tint : `color-mix(in srgb, ${tint} ${CHIP_TINT}%, transparent)`, borderColor: tint } : undefined}
+      style={branch ? { color: solid ? lane.onLine : lane.line, background: solid ? lane.line : lane.tint, borderColor: lane.line } : undefined}
       draggable={branch}
       onDragStart={(e) => {
         e.stopPropagation();
@@ -276,8 +273,8 @@ function RefPill({ store, group, tint }: { store: RepoStore; group: RefGroup; ti
   );
 }
 
-/** 커밋 동그라미: 작성자 프로필 사진(없으면 이니셜) */
-function AvatarNode({ name, email, x }: { name: string; email: string; x: number }) {
+/** 커밋 동그라미: 작성자 프로필 사진(없으면 이니셜), inside the lane's ring */
+function AvatarNode({ name, email, x, lane }: { name: string; email: string; x: number; lane: number }) {
   useObserve(avatars);
   const url = avatars.url(email, name);
   const ok = url && !avatars.failed.has(url);
@@ -286,7 +283,7 @@ function AvatarNode({ name, email, x }: { name: string; email: string; x: number
       {ok ? (
         <img src={url} width={AVATAR} height={AVATAR} alt="" draggable={false} onError={() => avatars.markFailed(url)} />
       ) : (
-        <Avatar name={name} email={email} size={AVATAR} />
+        <Avatar name={name} email={email} size={AVATAR} lane={lane} />
       )}
     </span>
   );
@@ -314,7 +311,7 @@ const GraphCell = memo(function GraphCell({
 }) {
   const h = ROW_H;
   const x = (lane: number) => LEFT_PAD + LANE_W * (lane + 0.5);
-  const color = laneColor(row.color);
+  const color = laneColors(row.color).line;
   const cx = x(row.column),
     cy = h / 2;
   const avatarNode = !isWIP && !isMerge;
@@ -333,7 +330,7 @@ const GraphCell = memo(function GraphCell({
           return s.dashed ? (
             <path key={i} d={d} fill="none" stroke="var(--graph-neutral)" strokeWidth={2} strokeDasharray="3 3" />
           ) : (
-            <path key={i} d={d} fill="none" stroke={laneColor(s.color)} strokeWidth={2} strokeLinecap="round" />
+            <path key={i} d={d} fill="none" stroke={laneColors(s.color).line} strokeWidth={2} strokeLinecap="round" />
           );
         })}
         {isWIP ? (
@@ -351,10 +348,10 @@ const GraphCell = memo(function GraphCell({
         ) : (
           <circle cx={cx} cy={cy} r={AVATAR / 2 + 2} fill={color} />
         )}
-        {/* a 2px ring, 2px clear of the node */}
-        {isHead && <circle cx={cx} cy={cy} r={isMerge ? 9 : AVATAR / 2 + 5} fill="none" stroke={color} strokeWidth={2} />}
+        {/* the current marker: a 2px accent ring, 2px clear of the node (lanes never take the accent) */}
+        {isHead && <circle cx={cx} cy={cy} r={isMerge ? 9 : AVATAR / 2 + 5} fill="none" stroke="var(--accent)" strokeWidth={2} />}
       </svg>
-      {avatarNode && <AvatarNode name={author} email={email} x={cx} />}
+      {avatarNode && <AvatarNode name={author} email={email} x={cx} lane={row.color} />}
     </span>
   );
 });

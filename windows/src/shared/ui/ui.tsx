@@ -1,7 +1,7 @@
 import { Check, ChevronRight } from "@/shared/icons";
 import { type ReactNode, type RefObject, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { keyLabel, settings } from "@/shared/config";
-import { laneColor, Observable, stableHash, useObserve } from "@/shared/lib";
+import { nodeGap, Observable, peoplePalette, personIndex, useObserve } from "@/shared/lib";
 import "./styles.css";
 // MARK: 기본 컨트롤
 
@@ -93,14 +93,23 @@ export function Card({ children, gap, className = "" }: { children: ReactNode; g
   );
 }
 
-/** A profile photo with a deterministic initials fallback. */
-export function Avatar({ name, email, size = 28, url }: { name: string; email: string; size?: number; url?: string | null }) {
+/**
+ * A profile photo, or the initial in the person's fixed colours picked from the e-mail. On a graph node (`lane`) the
+ * initial is the person's node colour under a white letter, 2px clear of a lane ring too close to it. macOS: Avatar
+ */
+export function Avatar({ name, email, size = 28, url, lane }: { name: string; email: string; size?: number; url?: string | null; lane?: number }) {
   useObserve(settings);
   const [brokenURL, setBrokenURL] = useState<string | null>(null);
   const source = settings.get("avatarFetch", true) && url && brokenURL !== url ? url : null;
   const letter = (Array.from(name.trim())[0] ?? "?").toUpperCase();
+  const person = personIndex(email), colors = peoplePalette[person];
+  const node = lane !== undefined;
   return (
-    <span className="avatar" style={{ width: size, height: size, background: laneColor(stableHash(email.toLowerCase())), fontSize: size * 0.45 }}>
+    <span
+      className="avatar"
+      data-gap={node ? nodeGap(person, lane) || undefined : undefined}
+      style={{ width: size, height: size, background: node ? colors.node : colors.fill, color: node ? "#fff" : colors.letter, fontSize: node ? 11 : size * 0.45 }}
+    >
       {source ? <img src={source} width={size} height={size} onError={() => setBrokenURL(source)} alt="" /> : letter}
     </span>
   );

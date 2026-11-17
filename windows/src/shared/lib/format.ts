@@ -1,21 +1,4 @@
 import { language, t } from "@/shared/i18n";
-/** 레인 색. 흰 글자를 올려도 읽히도록 채도·명도를 맞췄다. (맥 버전과 같은 색) */
-export const laneColors = [
-  "rgb(41,133,245)", // 파랑
-  "rgb(237,107,41)", // 주황
-  "rgb(46,158,92)", // 초록
-  "rgb(199,77,204)", // 자주
-  "rgb(204,148,20)", // 황토
-  "rgb(20,153,168)", // 청록
-  "rgb(224,69,102)", // 빨강
-  "rgb(122,102,235)", // 보라
-];
-
-export function laneColor(i: number) {
-  const n = laneColors.length;
-  return laneColors[((i % n) + n) % n];
-}
-
 /** 실행마다 바뀌지 않는 문자열 해시(색 고정용) */
 export function stableHash(s: string) {
   let h = 5381;

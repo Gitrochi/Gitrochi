@@ -1,25 +1,98 @@
 import SwiftUI
 
+/// The redesign board's fixed palettes (ComponentsFoundations): the graph's lanes and the colours of a person without a
+/// photo, never the accent. Light values are the board's; the dark ones keep each hue with more lightness, so a line keeps
+/// 3:1 on the dark graph and a chip's text 4.5:1 on its tint (docs/design.md, Commit graph). Views look colours up in
+/// these tables; nothing is worked out per row. (Windows: shared/lib/palette.ts and the --lane-* and --person-* tokens
+/// in app/styles/global.css)
 enum Palette {
-    /// 레인 색. 흰 글자를 올려도 읽히도록 채도·명도를 맞췄다.
-    static let lanes: [Color] = [
-        Color(red: 0.16, green: 0.52, blue: 0.96),   // 파랑
-        Color(red: 0.93, green: 0.42, blue: 0.16),   // 주황
-        Color(red: 0.18, green: 0.62, blue: 0.36),   // 초록
-        Color(red: 0.78, green: 0.30, blue: 0.80),   // 자주
-        Color(red: 0.80, green: 0.58, blue: 0.08),   // 황토
-        Color(red: 0.08, green: 0.60, blue: 0.66),   // 청록
-        Color(red: 0.88, green: 0.27, blue: 0.40),   // 빨강
-        Color(red: 0.48, green: 0.40, blue: 0.92),   // 보라
+    /// A lane: its line, the tint behind it (the band, a chip), the text on a chip filled with the line, and the
+    /// selected commit's band (the line at 35%: the board's 40% left teal and amber lines under 3:1 on it)
+    struct Lane {
+        let line: Color
+        let tint: Color
+        let onLine: Color
+        let selected: Color
+    }
+
+    /// A person without a photo: the avatar's fill and letter, and a graph node's fill under a white letter
+    struct Person {
+        let fill: Color
+        let letter: Color
+        let node: Color
+    }
+
+    /// Lane lines, light and dark, in the board's order
+    static let lineValues: [(light: UInt32, dark: UInt32)] = [
+        (0x1f5a9e, 0x66a1eb), (0x1f7a7a, 0x5baeae), (0xa3560f, 0xda884b), (0x5f6b12, 0x99a755),
+        (0x2b6d8f, 0x67a7cc), (0x5c6068, 0x9a9ea6), (0x6b4f2a, 0xb89872),
     ]
 
-    static func lane(_ i: Int) -> Color {
-        lanes[((i % lanes.count) + lanes.count) % lanes.count]
+    /// Lane tints; the teal one is lifted from the board's #e5f2f2 so the lane's text reaches 4.5:1 on it
+    static let tintValues: [(light: UInt32, dark: UInt32)] = [
+        (0xeaf0fa, 0x1f2c3d), (0xe7f4f4, 0x193030), (0xf9ece0, 0x39271a), (0xf0f2e0, 0x2a2e19),
+        (0xe6f0f5, 0x1c2e38), (0xeeeff1, 0x2a2b2f), (0xf3ede5, 0x322a1f),
+    ]
+
+    /// People: the avatar's fill and letter, light and dark, and the node, which keeps its white letter in both
+    static let personValues: [(fill: (light: UInt32, dark: UInt32), letter: (light: UInt32, dark: UInt32), node: UInt32)] = [
+        ((0xe6e8fa, 0x2c3054), (0x3f4bb8, 0xb4bbff), 0x4f5bd5),
+        ((0xe0f1ec, 0x113c33), (0x1f6b52, 0xa5ccbb), 0x2a7d5f),
+        ((0xe8eaed, 0x30343a), (0x3a3f47, 0xbec1c7), 0x4b5563),
+        ((0xf7e4eb, 0x4b2636), (0x9b3a5f, 0xebadc0), 0xb4466e),
+    ]
+
+    /// The lanes where a person's node colour is within 0.07 of the lane in OKLab, too close to tell fill and ring
+    /// apart, so a 2pt surface gap separates them (the board shows Sam on the teal lane). The dark lanes are far enough.
+    static let nodeGapLanes: [(light: Set<Int>, dark: Set<Int>)] = [([], []), ([1], []), ([5], []), ([], [])]
+
+    static let lanes: [Lane] = zip(lineValues, tintValues).map { line, tint in
+        let color = Color(nsColor: dynamic(line.light, line.dark))
+        return Lane(line: color, tint: Color(nsColor: dynamic(tint.light, tint.dark)),
+                    onLine: Color(nsColor: dynamic(0xffffff, tint.dark)), selected: color.opacity(0.35))
     }
+
+    static let people: [Person] = personValues.map {
+        Person(fill: Color(nsColor: dynamic($0.fill.light, $0.fill.dark)), letter: Color(nsColor: dynamic($0.letter.light, $0.letter.dark)),
+               node: Color(nsColor: dynamic($0.node, $0.node)))
+    }
+
+    /// [person][lane]: the ring between a node's fill and its lane ring, the surface where the two are too close
+    static let nodeGaps: [[Color]] = nodeGapLanes.map { gap in
+        lineValues.indices.map { lane in
+            Color(nsColor: NSColor(name: nil) { appearance in
+                let dark = appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+                guard (dark ? gap.dark : gap.light).contains(lane) else { return .clear }
+                var surface = NSColor.textBackgroundColor
+                appearance.performAsCurrentDrawingAppearance { surface = NSColor.textBackgroundColor.usingColorSpace(.sRGB) ?? surface }
+                return surface
+            })
+        }
+    }
+
+    /// A lane's colours; the layout numbers lanes on, so they wrap round the palette
+    static func lane(_ i: Int) -> Lane { lanes[laneIndex(i)] }
+
+    static func laneIndex(_ i: Int) -> Int { ((i % lanes.count) + lanes.count) % lanes.count }
+
+    /// The person an e-mail (or a login) is drawn as: the same on every run and on both platforms
+    static func personIndex(_ email: String) -> Int { stableHash(email.lowercased()) % people.count }
+
+    static func person(_ email: String) -> Person { people[personIndex(email)] }
+
+    static func nodeGap(person: Int, lane: Int) -> Color { nodeGaps[person][laneIndex(lane)] }
 
     /// 실행마다 바뀌지 않는 문자열 해시(색 고정용)
     static func stableHash(_ s: String) -> Int {
         s.unicodeScalars.reduce(5381) { ($0 &* 33 &+ Int($1.value)) & 0x7fffffff }
+    }
+
+    private static func dynamic(_ light: UInt32, _ dark: UInt32) -> NSColor {
+        func srgb(_ rgb: UInt32) -> NSColor {
+            NSColor(srgbRed: CGFloat(rgb >> 16 & 0xff) / 255, green: CGFloat(rgb >> 8 & 0xff) / 255, blue: CGFloat(rgb & 0xff) / 255, alpha: 1)
+        }
+        if light == dark { return srgb(light) }
+        return NSColor(name: nil) { $0.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? srgb(dark) : srgb(light) }
     }
 }
 
@@ -55,21 +128,30 @@ enum Fmt {
     static func long(_ d: Date) -> String { full.string(from: d) }
 }
 
-/// 작성자 이니셜 원형 아바타(네트워크 없이 이메일로 색을 고정)
+/// An initial without a photo, in the person's fixed colours picked from the e-mail (no network). On a graph node
+/// (`lane`) it is the person's node colour under a white letter, 2pt clear of a lane ring too close to it.
+/// (Windows: Avatar in shared/ui/ui.tsx)
 struct Avatar: View {
     let name: String
     let email: String
     var size: CGFloat = 28
+    /// The graph lane whose ring the node sits in
+    var lane: Int? = nil
 
     var body: some View {
-        Circle()
-            .fill(Palette.lane(Palette.stableHash(email.lowercased())))
-            .overlay(
-                Text(name.first.map { String($0).uppercased() } ?? "?")
-                    .font(.system(size: size * 0.45, weight: .semibold))
-                    .foregroundStyle(.white)
-            )
-            .frame(width: size, height: size)
+        let index = Palette.personIndex(email)
+        let person = Palette.people[index]
+        let letter = Text(name.first.map { String($0).uppercased() } ?? "?")
+        if let lane {
+            Circle().fill(person.node)
+                .overlay(Circle().strokeBorder(Palette.nodeGap(person: index, lane: lane), lineWidth: 2))
+                .overlay(letter.font(.system(size: 11, weight: .semibold)).foregroundStyle(.white))
+                .frame(width: size, height: size)
+        } else {
+            Circle().fill(person.fill)
+                .overlay(letter.font(.system(size: size * 0.45, weight: .semibold)).foregroundStyle(person.letter))
+                .frame(width: size, height: size)
+        }
     }
 }
 
@@ -124,9 +206,11 @@ struct StatusBadge: View {
     }
 }
 
+/// A ref as a badge (a branch's drag preview): a branch is its lane colour on the lane's tint, filled when it is local.
+/// (Windows: RefBadge in entities/git/ui/badges.tsx)
 struct RefBadge: View {
     let label: RefLabel
-    let color: Color
+    let lane: Palette.Lane
     var constrained = false
 
     var body: some View {
@@ -143,20 +227,28 @@ struct RefBadge: View {
         }
         .padding(.horizontal, 6)
         .padding(.vertical, 2)
-        .foregroundStyle(outlined ? tint : .white)
-        .background(RoundedRectangle(cornerRadius: 4).fill(outlined ? tint.opacity(0.12) : tint))
-        .overlay(RoundedRectangle(cornerRadius: 4).strokeBorder(tint, lineWidth: outlined ? 1 : 0))
+        .foregroundStyle(text)
+        .background(RoundedRectangle(cornerRadius: 4).fill(fill))
+        .overlay(RoundedRectangle(cornerRadius: 4).strokeBorder(lane.line, lineWidth: label.kind == .remote ? 1 : 0))
         .fixedSize(horizontal: !constrained, vertical: true)
         .help(label.name)
     }
 
-    private var outlined: Bool { label.kind == .remote }
+    private var text: Color {
+        switch label.kind {
+        case .tag: return .white
+        case .head: return Color(nsColor: .textBackgroundColor)
+        case .local: return lane.onLine
+        case .remote: return lane.line
+        }
+    }
 
-    private var tint: Color {
+    private var fill: Color {
         switch label.kind {
         case .tag: return Color(nsColor: .systemGray)
         case .head: return Color(nsColor: .labelColor)
-        default: return color
+        case .local: return lane.line
+        case .remote: return lane.tint
         }
     }
 
