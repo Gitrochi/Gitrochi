@@ -1,5 +1,6 @@
 import { createRoot } from "react-dom/client";
 import { emptyStatus, type GraphEntry, type RefLabel, rowSelection, wipCommit } from "@/entities/git";
+import { t } from "@/shared/i18n";
 import { RepoStore } from "@/entities/repo";
 import { laneColors, peoplePalette } from "@/shared/lib";
 import { Avatar } from "@/shared/ui";
@@ -93,7 +94,7 @@ export async function graphLookSelfTest(): Promise<[boolean, string]> {
     const files = q(".wip-chip", rows[0])!;
     ensure(files.classList.contains("status-pill") && files.offsetHeight === 18 && !same(css(files).backgroundColor, resolve(laneColors(2).line)), `The "N files" pill must be a neutral pill: ${files.offsetHeight} ${css(files).backgroundColor}`);
     const local = q(".unpushed-chip", rows[1]);
-    ensure(local?.textContent === "local" && local.classList.contains("status-pill") && local.offsetHeight === 18 && same(css(local).backgroundColor, css(files).backgroundColor)
+    ensure(local?.textContent === t("local") && local.classList.contains("status-pill") && local.offsetHeight === 18 && same(css(local).backgroundColor, css(files).backgroundColor)
       && local.getBoundingClientRect().left > q(".msg-subject", rows[1])!.getBoundingClientRect().right && q(".unpushed-chip", rows[3]) && !q(".unpushed-chip", rows[2]) && !q(".unpushed-chip", rows[0]),
       `An unpushed commit must have the neutral "local" pill after its message, and only those: ${local?.textContent} ${local?.offsetHeight} ${css(local).backgroundColor}`);
     ensure(rows[1].querySelector('svg path[stroke="var(--graph-neutral)"]') && same(q(".msg-bar", rows[1])!.style.background, laneColors(2).line), "The dashed line must reach the parent's node in grey, and a commit's bar must be its lane colour");
