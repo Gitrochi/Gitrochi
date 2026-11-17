@@ -81,6 +81,9 @@ enum WorkspaceDestination: String, CaseIterable, Identifiable {
     /// they offer the way back
     var returnsToRepository: Bool { [.pullRequests, .issues, .actions, .releases].contains(self) }
     var needsRepository: Bool { [.repository, .compare, .rebase, .code, .pullRequests, .actions, .flows].contains(self) }
+    /// Whether the page can be opened: one that needs a repository is disabled until one is open, so a window without
+    /// a repository never shows it (docs/design.md › App shell, Sidebar). (Windows: destinationAvailable)
+    func isAvailable(hasRepository: Bool) -> Bool { hasRepository || !needsRepository }
     /// The Go menu's shortcut, ⌘1–⌘8 in the sidebar's order (docs/design.md › App shell, Sidebar). Home is ⇧⌘H;
     /// Releases, Projects and Account have none. (Windows: destinationShortcut)
     var shortcutDigit: Int? {

@@ -1,4 +1,4 @@
-import { destinationEnabled, destinationForDigit, repositoryEscape } from "@/entities/git";
+import { destinationAvailable, destinationEnabled, destinationForDigit, repositoryEscape } from "@/entities/git";
 import { workspace } from "@/entities/workspace";
 import { isMac, settings } from "@/shared/config";
 
@@ -68,9 +68,10 @@ export function handleShortcut(e: KeyboardEvent, openSettings: () => void) {
       case ",":
         return run(openSettings);
       default: {
-        // the pages, numbered in the sidebar's order as in the macOS Go menu (docs/design.md › App shell)
+        // the pages, numbered in the sidebar's order as in the macOS Go menu (docs/design.md › App shell); like a
+        // disabled menu item, a page that needs a repository leaves the key alone while none is open
         const page = /^[1-9]$/.test(k) ? destinationForDigit(Number(k)) : null;
-        if (page && destinationEnabled(page)) return run(() => s.navigate(page));
+        if (page && destinationEnabled(page) && destinationAvailable(page, !!s.path)) return run(() => s.navigate(page));
       }
     }
   }

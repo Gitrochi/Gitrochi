@@ -44,9 +44,10 @@ export async function compactNavigationSelfTest(): Promise<[boolean, string]> {
     ensure(!!host.querySelector(".home-page") && host.querySelector(".toolbar.no-repository .account-quick-trigger") && !host.querySelector(".toolbar .tool:not(.sidebar-toggle)"), "Home without a repository must show the Home page and, beside the sidebar toggle and the repository button, only the account control in the toolbar");
     // the page list disables pages that need a repository and says why; Issues works without one
     ensure(row("repository")?.disabled && !row("issues")?.disabled && !!host.querySelector(".workspace-nav-why"), "Without a repository the page list must disable Repository with its reason and keep Issues");
+    // what every way to a page calls (the Go shortcuts, links, routes) refuses a page that needs a repository: Home stays
     for (const destination of ["repository", "code", "pullRequests", "actions", "flows"] as const) {
-      store.navigate(destination); await settle();
-      ensure(store.destination === destination && !!host.querySelector(".workspace-repository-required") && !host.querySelector(".repository-screen"), `The ${destination} page must offer a repository chooser without starting local tools`);
+      ensure(!store.navigate(destination), `${destination} must be refused without a repository`); await settle();
+      ensure(store.destination === "home" && row("home")?.getAttribute("aria-current") === "page" && !!host.querySelector(".home-page") && !host.querySelector(".repository-screen"), `Asking for ${destination} without a repository must keep Home`);
     }
     store.path = "C:/fixture/compact-navigation"; store.headBranch = "main"; store.navigate("repository"); await settle();
     ensure(isCompact() && frame().getBoundingClientRect().width === 52, "Opening the repository screen must fold the page list into a 52px rail");

@@ -65,7 +65,7 @@ struct NavigationSidebar: View {
 
     private func row(_ page: WorkspaceDestination) -> some View {
         let title = page.title(gitlab: gitlab)
-        let blocked = store.url == nil && page.needsRepository
+        let blocked = !page.isAvailable(hasRepository: store.url != nil)
         let active = store.destination == page
         return Button { store.navigate(page) } label: {
             HStack(spacing: 8) {

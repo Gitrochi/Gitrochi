@@ -47,13 +47,15 @@ struct NavigationSidebarRail: View {
     private func rows(_ pages: [WorkspaceDestination]) -> some View {
         ForEach(pages) { page in
             let active = store.destination == page
-            let blocked = store.url == nil && page.needsRepository
+            let blocked = !page.isAvailable(hasRepository: store.url != nil)
             let title = page.title(gitlab: store.target?.provider == .gitlab)
+            // a blocked page is drawn dimmed but not disabled, so its tip can say why (macOS shows no tip on a disabled
+            // control); the store refuses it, and it takes no hover fill
             Button { store.navigate(page) } label: {
                 NavigationPageIcon(page: page, size: 18)
                     .frame(width: 36, height: 32)
                     .foregroundStyle(blocked ? StudioStyle.Rail.blocked : StudioStyle.Rail.icon)
-                    .background(active ? StudioStyle.Rail.selected : hovered == page ? StudioStyle.Rail.hover : Color.clear,
+                    .background(active ? StudioStyle.Rail.selected : hovered == page && !blocked ? StudioStyle.Rail.hover : Color.clear,
                                 in: RoundedRectangle(cornerRadius: 8))
                     .contentShape(RoundedRectangle(cornerRadius: 8))
             }

@@ -1,6 +1,6 @@
 import { RepositoryConfirmationGuard } from "../../lib/confirmation-guard";
 import type { AgentHost } from "@/entities/agent";
-import { isWorkspaceDestination, repositoryDestinations, restoredDestination, returnsToRepository, type WorkspaceDestination } from "@/entities/git";
+import { destinationAvailable, isWorkspaceDestination, repositoryDestinations, restoredDestination, returnsToRepository, type WorkspaceDestination } from "@/entities/git";
 import { avatars } from "@/entities/avatar";
 import { type CIPipeline, CIStore } from "@/entities/ci";
 import * as P from "@/entities/git";
@@ -72,9 +72,12 @@ export abstract class RepoCore extends Observable implements AgentHost {
     return this.path ? basename(this.path) : "Gitrochi";
   }
 
-  /** Pages without a repository show the chooser; remember the page once a repository is open. */
+  /**
+   * Opens a page and remembers it for the repository. A page that needs a repository is refused while none is open, so
+   * the window stays where it is (Home, as a rule).
+   */
   navigate(page: WorkspaceDestination, prepare = true) {
-    if (!isWorkspaceDestination(page)) return false;
+    if (!isWorkspaceDestination(page) || !destinationAvailable(page, !!this.path)) return false;
     // the Pull requests and Issues pages offer a way back when the repository screen opened them
     if (this.destination !== page) this.cameFromRepository = this.destination === "repository" && returnsToRepository.has(page);
     this.destination = page;

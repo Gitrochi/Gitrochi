@@ -6,8 +6,13 @@ export const workspaceDestinations = ["home", "repository", "compare", "rebase",
 export type WorkspaceDestination = (typeof workspaceDestinations)[number];
 /** All known pages are available without changing optional background agent tracking. */
 export const destinationEnabled = (_page: WorkspaceDestination) => true;
-/** Pages whose tools need a repository; navigation shows a chooser until one is open. */
+/** Pages whose tools need a repository; they are disabled until one is open. */
 export const repositoryDestinations: ReadonlySet<WorkspaceDestination> = new Set<WorkspaceDestination>(["repository", "compare", "rebase", "code", "pullRequests", "actions", "flows"]);
+/**
+ * Whether the page can be opened: one that needs a repository is disabled until one is open, so a window without a
+ * repository never shows it (docs/design.md › App shell, Sidebar). (macOS: isAvailable(hasRepository:))
+ */
+export const destinationAvailable = (page: WorkspaceDestination, hasRepository: boolean) => hasRepository || !repositoryDestinations.has(page);
 /** The pages Ctrl+1–Ctrl+8 open, in the sidebar's order (docs/design.md › App shell, Sidebar). (macOS: shortcutDigit) */
 const numberedDestinations: readonly WorkspaceDestination[] = ["repository", "compare", "rebase", "code", "pullRequests", "issues", "actions", "flows"];
 /** The page's shortcut as menus and the sidebar show it; Home is Ctrl+Shift+H, Releases, Projects and Account have none */

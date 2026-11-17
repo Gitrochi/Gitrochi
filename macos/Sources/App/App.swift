@@ -188,11 +188,12 @@ struct AppCommands: Commands {
     @AppStorage("repositoryInspectorCollapsed") private var inspectorCollapsed = false
     @Environment(\.openWindow) private var openWindow
 
-    /// One Go menu entry per page, with the shortcut the sidebar shows beside it
+    /// One Go menu entry per page, with the shortcut the sidebar shows beside it; a page that needs a repository is
+    /// disabled, shortcut and all, while none is open
     @ViewBuilder private func goButtons(_ pages: [WorkspaceDestination]) -> some View {
         ForEach(pages.filter(\.isShown)) { page in
             let button = Button(page.title(gitlab: store?.target?.provider == .gitlab)) { store?.navigate(page) }
-                .disabled(store == nil)
+                .disabled(store.map { !page.isAvailable(hasRepository: $0.url != nil) } ?? true)
             if page == .home {
                 button.keyboardShortcut("h", modifiers: [.command, .shift])
             } else if let digit = page.shortcutDigit {
@@ -256,7 +257,9 @@ struct AppCommands: Commands {
                 .keyboardShortcut("k")
             // the pages moved to the Go menu with ⌘1–⌘8; these two switch the repository screen's area
             Button("Show uncommitted changes") { store?.navigate(.repository); store?.showArea(.changes) }
+                .disabled(store?.url == nil)
             Button("Show history") { store?.navigate(.repository); store?.showArea(.history) }
+                .disabled(store?.url == nil)
             Divider()
             Button("Fetch") { Task { await store?.fetch() } }
                 .keyboardShortcut("f", modifiers: [.command, .shift])
