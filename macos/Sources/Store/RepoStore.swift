@@ -23,6 +23,8 @@ final class RepoStore: Identifiable {
     private(set) var maxLanes = 1
     private(set) var commitIndex: [String: Int] = [:]
     private(set) var refsByCommit: [String: [RefLabel]] = [:]
+    /// Commits a local branch reaches and no remote-tracking branch does, worked out once per load for the "local" pill
+    private(set) var unpushedCommits: Set<String> = []
     private(set) var localBranches: [Branch] = []
     private(set) var remoteBranches: [Branch] = []
     private(set) var remotes: [String] = []
@@ -495,7 +497,7 @@ final class RepoStore: Identifiable {
         branchFilter = ""
         resetCommitImpact()
         closeFileInspect()
-        entries = []; maxLanes = 1; commitIndex = [:]; refsByCommit = [:]
+        entries = []; maxLanes = 1; commitIndex = [:]; refsByCommit = [:]; unpushedCommits = []
         localBranches = []; remoteBranches = []; remotes = []; tags = []; stashes = []
         status = WorkingStatus(); headHash = nil; headBranch = nil; repoState = .clean
         hasMore = false; limit = 2000; lastLog = nil
@@ -567,12 +569,14 @@ final class RepoStore: Identifiable {
                                        "refs/heads", "refs/remotes", "refs/tags"], in: url)
             async let stashR = Git.run(["stash", "list", "--format=" + Parsers.stashFormat], in: url, ok: [0, 1, 128])
             async let headR = Git.run(["rev-parse", "--verify", "-q", "HEAD"], in: url, ok: [0, 1, 128])
+            // capped like the log: only loaded rows can show the pill
+            async let unpushedR = Git.run(["rev-list", "-n", String(limit), "--branches", "--not", "--remotes"], in: url, ok: [0, 128])
             async let remoteR = Git.run(["remote", "-v"], in: url)
             async let worktreeR = Git.run(["worktree", "list", "--porcelain", "-z"], in: url, ok: [0, 128])
             async let unstagedNumR = Git.run(["diff", "--no-ext-diff", "--numstat", "-z"], in: url, ok: [0, 128])
             async let stagedNumR = Git.run(["diff", "--cached", "--no-ext-diff", "-M", "--numstat", "-z"], in: url, ok: [0, 128])
             let ((st, statusTime), lg, rf, sh, hd, rm, wt) = try await (statusR, logR, refsR, stashR, headR, remoteR, worktreeR)
-            let (un, sn) = try await (unstagedNumR, stagedNumR)
+            let (un, sn, up) = try await (unstagedNumR, stagedNumR, unpushedR)
             guard gen == reloadGeneration, self.url == url else { return }
 
             let newStatus = Parsers.status(st.data)
@@ -640,6 +644,8 @@ final class RepoStore: Identifiable {
                 commitIndex = Dictionary(entries.enumerated().map { ($1.id, $0) }, uniquingKeysWith: { a, _ in a })
             }
             update(\.refsByCommit, buildRefMap(head: head))
+            // without a remote nothing has a server to be on, and every row would say so
+            update(\.unpushedCommits, parsedRemotes.names.isEmpty || up.status != 0 ? [] : Set(up.output.split(separator: "\n").map(String.init)))
             update(\.repoState, detectState())
             let key = (newStatus.branch ?? "") + "\n" + rf.output
             if key != gitchKey {

@@ -449,8 +449,14 @@
   flex: none;
 }
 
-/* the uncommitted row's "N files": a neutral status pill; pills on the selection tint turn white (docs/design.md) */
-.commit-row.selected .wip-chip {
+/* the uncommitted row's "N files" and an unpushed commit's "local": neutral status pills; pills on the selection tint
+   turn white (docs/design.md) */
+.commit-row .unpushed-chip {
+  flex: none;
+}
+
+.commit-row.selected .wip-chip,
+.commit-row.selected .unpushed-chip {
   background: var(--surface);
 }
 

@@ -17,6 +17,8 @@ struct CommitRow: View {
     let refs: [RefLabel]
     let selected: Bool
     let isHead: Bool
+    /// On a local branch and on no remote-tracking branch
+    var unpushed = false
     let wipCount: Int
     /// Branch of another worktree's row
     var wipLabel: String?
@@ -86,6 +88,10 @@ struct CommitRow: View {
                                 CIStatusIcon(status: ci.status, size: 11)
                                     .help("CI: \(ci.status.title) · \(ci.name.isEmpty ? "" : ci.name + " ")#\(ci.number) — click to open in Actions")
                                     .onTapGesture { store.openCI(ci) }
+                            }
+                            if unpushed {
+                                HostedListChip(title: String(localized: "local"), selected: selected)
+                                    .help(String(localized: "Not pushed yet"))
                             }
                             if !c.body.isEmpty {
                                 Text(c.body)
@@ -453,6 +459,7 @@ struct CommitMenu: View {
 private struct IsCommitBody: LayoutValueKey { static let defaultValue = false }
 
 /// 제목(과 CI 표시)은 먼저 다 보이게 놓고, 본문 첫 줄은 남는 자리가 넉넉할 때만(조각만 보이면 숨긴다)
+/// The marks after the subject (CI, "local") keep their width; a long subject is cut before they are.
 private struct SubjectAndBody: Layout {
     private let spacing: CGFloat = 6
     private let bodyMin: CGFloat = 70
@@ -465,9 +472,11 @@ private struct SubjectAndBody: Layout {
 
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
         var x = bounds.minX
-        for v in subviews {
+        let marks = subviews.dropFirst().filter { !$0[IsCommitBody.self] }
+            .reduce(CGFloat(0)) { $0 + $1.sizeThatFits(.unspecified).width + spacing }
+        for (i, v) in subviews.enumerated() {
             let ideal = v.sizeThatFits(.unspecified)
-            var left = max(0, bounds.maxX - x)
+            var left = max(0, bounds.maxX - x - (i == 0 ? marks : 0))
             if v[IsCommitBody.self] && left < bodyMin { left = 0 }
             let w = min(ideal.width, left)
             v.place(at: CGPoint(x: x, y: bounds.midY), anchor: .leading, proposal: ProposedViewSize(width: w, height: ideal.height))
