@@ -2274,3 +2274,4 @@
 "This job is already running." = "Это задание уже выполняется.";
 "This job can't be started now." = "Сейчас это задание нельзя запустить.";
 "This run is still running." = "Этот запуск ещё выполняется.";
+"Not pushed yet" = "Ещё не отправлено";

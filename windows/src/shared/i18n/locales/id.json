@@ -1962,7 +1962,6 @@
   "Delete project…": "Hapus proyek…",
   "Edit task date": "Edit tanggal tugas",
   "GitHub project": "Proyek GitHub",
-  "Groups": "Grup",
   "Hide done tasks": "Sembunyikan tugas selesai",
   "Load more projects": "Muat lebih banyak proyek",
   "Loading your project workspace…": "Memuat ruang kerja proyek…",
@@ -1977,7 +1976,6 @@
   "No due date": "Tanpa tenggat",
   "No open tasks in this view": "Tidak ada tugas terbuka di tampilan ini",
   "Nothing is due after the next 7 days.": "Tidak ada yang jatuh tempo setelah 7 hari ke depan.",
-  "Organizations": "Organisasi",
   "Overdue": "Terlambat",
   "Overview": "Ringkasan",
   "Progress": "Kemajuan",
@@ -2023,7 +2021,6 @@
   "In review": "Dalam tinjauan",
   "Issue list": "Daftar issue",
   "Issues assigned to you": "Issue yang ditugaskan ke Anda",
-  "Just now": "Baru saja",
   "Labels": "Label",
   "Latest run": "Run terbaru",
   "Loading issues…": "Memuat issue…",
@@ -2247,5 +2244,6 @@
   "The job '{0}' is no longer in this pipeline.": "Job '{0}' sudah tidak ada di pipeline ini.",
   "This job is already running.": "Job ini sudah berjalan.",
   "This job can't be started now.": "Job ini tidak bisa dimulai sekarang.",
-  "This run is still running.": "Run ini masih berjalan."
+  "This run is still running.": "Run ini masih berjalan.",
+  "Not pushed yet": "Belum di-push"
 }

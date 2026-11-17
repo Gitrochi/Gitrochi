@@ -1964,7 +1964,6 @@
   "Delete project…": "Xóa dự án…",
   "Edit task date": "Sửa ngày của tác vụ",
   "GitHub project": "Dự án GitHub",
-  "Groups": "Nhóm",
   "Hide done tasks": "Ẩn tác vụ đã xong",
   "Load more projects": "Tải thêm dự án",
   "Loading your project workspace…": "Đang tải không gian làm việc của dự án…",
@@ -1979,7 +1978,6 @@
   "No due date": "Không có hạn",
   "No open tasks in this view": "Không có tác vụ đang mở trong chế độ xem này",
   "Nothing is due after the next 7 days.": "Không có gì đến hạn sau 7 ngày tới.",
-  "Organizations": "Tổ chức",
   "Overdue": "Quá hạn",
   "Overview": "Tổng quan",
   "Progress": "Tiến độ",
@@ -2025,7 +2023,6 @@
   "In review": "Đang review",
   "Issue list": "Danh sách issue",
   "Issues assigned to you": "Issue được giao cho bạn",
-  "Just now": "Vừa xong",
   "Labels": "Nhãn",
   "Latest run": "Lượt chạy mới nhất",
   "Loading issues…": "Đang tải issue…",
@@ -2249,5 +2246,6 @@
   "The job '{0}' is no longer in this pipeline.": "Job '{0}' không còn trong pipeline này.",
   "This job is already running.": "Job này đang chạy.",
   "This job can't be started now.": "Hiện không thể bắt đầu job này.",
-  "This run is still running.": "Lượt chạy này vẫn đang diễn ra."
+  "This run is still running.": "Lượt chạy này vẫn đang diễn ra.",
+  "Not pushed yet": "Chưa đẩy lên"
 }

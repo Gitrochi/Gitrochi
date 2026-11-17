@@ -242,6 +242,7 @@ export function GraphView({ store }: { store: RepoStore }) {
                   refs={store.refsByCommit.get(e.commit.id)}
                   selected={selected === e.commit.id}
                   isHead={e.commit.id === store.headHash}
+                  unpushed={store.unpushedCommits.has(e.commit.id)}
                   wipCount={isWIP(e.commit) ? wipCount : worktreeRow(e.commit)?.count ?? 0}
                   wipLabel={worktreeRow(e.commit)?.label}
                   match={!searching ? 0 : store.searchMatchSet.has(e.commit.id) ? 1 : 2}

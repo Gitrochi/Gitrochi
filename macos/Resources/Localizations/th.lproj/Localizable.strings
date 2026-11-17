@@ -2269,3 +2269,4 @@
 "This job is already running." = "งานนี้กำลังรันอยู่แล้ว";
 "This job can't be started now." = "ยังเริ่มงานนี้ไม่ได้ในตอนนี้";
 "This run is still running." = "การรันนี้ยังดำเนินอยู่";
+"Not pushed yet" = "ยังไม่ได้พุช";

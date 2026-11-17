@@ -1994,7 +1994,6 @@
   "Delete project…": "Projeyi sil…",
   "Edit task date": "Görev tarihini düzenle",
   "GitHub project": "GitHub projesi",
-  "Groups": "Gruplar",
   "Hide done tasks": "Tamamlanan görevleri gizle",
   "Load more projects": "Daha fazla proje yükle",
   "Loading your project workspace…": "Proje çalışma alanı yükleniyor…",
@@ -2009,7 +2008,6 @@
   "No due date": "Son tarih yok",
   "No open tasks in this view": "Bu görünümde açık görev yok",
   "Nothing is due after the next 7 days.": "Önümüzdeki 7 günden sonra son tarihi gelen bir şey yok.",
-  "Organizations": "Kuruluşlar",
   "Overdue": "Gecikmiş",
   "Overview": "Genel bakış",
   "Progress": "İlerleme",
@@ -2055,7 +2053,6 @@
   "In review": "İncelemede",
   "Issue list": "Issue listesi",
   "Issues assigned to you": "Size atanan issue'lar",
-  "Just now": "Az önce",
   "Labels": "Etiketler",
   "Latest run": "Son çalıştırma",
   "Loading issues…": "Issue'lar yükleniyor…",
@@ -2279,5 +2276,6 @@
   "The job '{0}' is no longer in this pipeline.": "'{0}' işi artık bu pipeline’da yok.",
   "This job is already running.": "Bu iş zaten çalışıyor.",
   "This job can't be started now.": "Bu iş şu anda başlatılamaz.",
-  "This run is still running.": "Bu çalıştırma hâlâ sürüyor."
+  "This run is still running.": "Bu çalıştırma hâlâ sürüyor.",
+  "Not pushed yet": "Henüz gönderilmedi"
 }

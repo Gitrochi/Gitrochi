@@ -2262,3 +2262,4 @@
 "This job is already running." = "Bu iş zaten çalışıyor.";
 "This job can't be started now." = "Bu iş şu anda başlatılamaz.";
 "This run is still running." = "Bu çalıştırma hâlâ sürüyor.";
+"Not pushed yet" = "Henüz gönderilmedi";

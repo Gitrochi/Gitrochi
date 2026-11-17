@@ -2141,7 +2141,6 @@
   "Delete project…": "删除项目…",
   "Edit task date": "编辑任务日期",
   "GitHub project": "GitHub 项目",
-  "Groups": "群组",
   "Hide done tasks": "隐藏已完成的任务",
   "Load more projects": "加载更多项目",
   "Loading your project workspace…": "正在加载项目工作区…",
@@ -2156,7 +2155,6 @@
   "No due date": "无截止日期",
   "No open tasks in this view": "此视图中没有未完成的任务",
   "Nothing is due after the next 7 days.": "未来 7 天之后没有到期的任务。",
-  "Organizations": "组织",
   "Overdue": "已逾期",
   "Overview": "概览",
   "Progress": "进展",
@@ -2202,7 +2200,6 @@
   "In review": "评审中",
   "Issue list": "议题列表",
   "Issues assigned to you": "指派给你的议题",
-  "Just now": "刚刚",
   "Labels": "标签",
   "Latest run": "最近一次运行",
   "Loading issues…": "正在加载议题…",
@@ -2426,5 +2423,6 @@
   "The job '{0}' is no longer in this pipeline.": "作业“{0}”已不在此流水线中。",
   "This job is already running.": "此作业已在运行。",
   "This job can't be started now.": "现在无法启动此作业。",
-  "This run is still running.": "此运行仍在进行中。"
+  "This run is still running.": "此运行仍在进行中。",
+  "Not pushed yet": "尚未推送"
 }

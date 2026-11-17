@@ -2232,3 +2232,4 @@
 "This job is already running." = "Job ini sudah berjalan.";
 "This job can't be started now." = "Job ini tidak bisa dimulai sekarang.";
 "This run is still running." = "Run ini masih berjalan.";
+"Not pushed yet" = "Belum di-push";

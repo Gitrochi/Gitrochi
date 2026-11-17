@@ -2979,5 +2979,6 @@
   "The job '{0}' is no longer in this pipeline.": "ジョブ「{0}」はこのパイプラインにもうありません。",
   "This job is already running.": "このジョブはすでに実行中です。",
   "This job can't be started now.": "今はこのジョブを開始できません。",
-  "This run is still running.": "この実行はまだ進行中です。"
+  "This run is still running.": "この実行はまだ進行中です。",
+  "Not pushed yet": "まだプッシュしていません"
 }

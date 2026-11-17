@@ -2244,3 +2244,4 @@
 "This job is already running." = "Este job já está em execução.";
 "This job can't be started now." = "Este job não pode ser iniciado agora.";
 "This run is still running." = "Esta execução ainda está em andamento.";
+"Not pushed yet" = "Ainda não enviado";

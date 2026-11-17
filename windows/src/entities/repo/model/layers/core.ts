@@ -130,6 +130,8 @@ export abstract class RepoCore extends Observable implements AgentHost {
   maxLanes = 1;
   commitIndex = new Map<string, number>();
   refsByCommit = new Map<string, RefLabel[]>();
+  /** Commits a local branch reaches and no remote-tracking branch does, worked out once per load for the "local" pill */
+  unpushedCommits = new Set<string>();
   localBranches: Branch[] = [];
   remoteBranches: Branch[] = [];
   remotes: string[] = [];
@@ -510,6 +512,7 @@ export abstract class RepoCore extends Observable implements AgentHost {
     this.maxLanes = 1;
     this.commitIndex = new Map();
     this.refsByCommit = new Map();
+    this.unpushedCommits = new Set();
     this.localBranches = [];
     this.remoteBranches = [];
     this.remotes = [];
@@ -629,7 +632,7 @@ export abstract class RepoCore extends Observable implements AgentHost {
     this.statusGeneration++;
     const started = performance.now();
     try {
-      const [[st, statusMs], lg, rf, sh, hd, rm, wt, un, sn] = await Promise.all([
+      const [[st, statusMs], lg, rf, sh, hd, rm, wt, un, sn, up] = await Promise.all([
         this.timedStatus(),
         this.g(["log", ...this.logScope, "--date-order", "-n", String(this.limit + 1), "--format=" + P.logFormat], { ok: [0, 128] }),
         this.g(["for-each-ref", "--format=" + P.refFormat, "refs/heads", "refs/remotes", "refs/tags"]),
@@ -639,6 +642,8 @@ export abstract class RepoCore extends Observable implements AgentHost {
         this.g(["worktree", "list", "--porcelain", "-z"], { ok: [0, 128] }),
         this.g(["diff", "--no-ext-diff", "--numstat", "-z"], { ok: [0, 128] }),
         this.g(["diff", "--cached", "--no-ext-diff", "-M", "--numstat", "-z"], { ok: [0, 128] }),
+        // capped like the log: only loaded rows can show the pill
+        this.g(["rev-list", "-n", String(this.limit), "--branches", "--not", "--remotes"], { ok: [0, 128] }),
       ]);
       if (gen !== this.reloadGeneration || this.path !== path) return;
 
@@ -690,6 +695,7 @@ export abstract class RepoCore extends Observable implements AgentHost {
       const parsed = P.parseRemotes(rm.stdout);
       this.remotes = parsed.names;
       this.remoteURLs = parsed.urls;
+      this.unpushedCommits = P.parseUnpushed(up.status === 0 ? up.stdout : "", parsed.names.length > 0);
       this.worktrees = worktrees;
       // this worktree's card counts come from the status just read; other worktrees are polled
       const here = worktrees.find((w) => samePath(w.path, path));

@@ -2006,7 +2006,6 @@
   "Delete project…": "Удалить проект…",
   "Edit task date": "Изменить дату задачи",
   "GitHub project": "Проект GitHub",
-  "Groups": "Группы",
   "Hide done tasks": "Скрыть выполненные задачи",
   "Load more projects": "Загрузить ещё проекты",
   "Loading your project workspace…": "Загрузка рабочего пространства проекта…",
@@ -2021,7 +2020,6 @@
   "No due date": "Без срока",
   "No open tasks in this view": "В этом представлении нет открытых задач",
   "Nothing is due after the next 7 days.": "После ближайших 7 дней сроков нет.",
-  "Organizations": "Организации",
   "Overdue": "Просрочено",
   "Overview": "Обзор",
   "Progress": "Прогресс",
@@ -2067,7 +2065,6 @@
   "In review": "На ревью",
   "Issue list": "Список задач",
   "Issues assigned to you": "Назначенные вам задачи",
-  "Just now": "Только что",
   "Labels": "Метки",
   "Latest run": "Последний запуск",
   "Loading issues…": "Загрузка задач…",
@@ -2291,5 +2288,6 @@
   "The job '{0}' is no longer in this pipeline.": "Задания «{0}» больше нет в этом конвейере.",
   "This job is already running.": "Это задание уже выполняется.",
   "This job can't be started now.": "Сейчас это задание нельзя запустить.",
-  "This run is still running.": "Этот запуск ещё выполняется."
+  "This run is still running.": "Этот запуск ещё выполняется.",
+  "Not pushed yet": "Ещё не отправлено"
 }

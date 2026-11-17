@@ -2011,7 +2011,6 @@
   "Delete project…": "刪除專案…",
   "Edit task date": "編輯工作日期",
   "GitHub project": "GitHub 專案",
-  "Groups": "群組",
   "Hide done tasks": "隱藏已完成的工作",
   "Load more projects": "載入更多專案",
   "Loading your project workspace…": "正在載入專案工作區…",
@@ -2026,7 +2025,6 @@
   "No due date": "無截止日期",
   "No open tasks in this view": "此檢視中沒有未完成的工作",
   "Nothing is due after the next 7 days.": "未來 7 天之後沒有到期的工作。",
-  "Organizations": "組織",
   "Overdue": "已逾期",
   "Overview": "總覽",
   "Progress": "進展",
@@ -2072,7 +2070,6 @@
   "In review": "審查中",
   "Issue list": "議題清單",
   "Issues assigned to you": "指派給你的議題",
-  "Just now": "剛剛",
   "Labels": "標籤",
   "Latest run": "最近一次執行",
   "Loading issues…": "正在載入議題…",
@@ -2296,5 +2293,6 @@
   "The job '{0}' is no longer in this pipeline.": "作業「{0}」已不在此管線中。",
   "This job is already running.": "此作業已在執行。",
   "This job can't be started now.": "現在無法啟動此作業。",
-  "This run is still running.": "此執行仍在進行中。"
+  "This run is still running.": "此執行仍在進行中。",
+  "Not pushed yet": "尚未推送"
 }

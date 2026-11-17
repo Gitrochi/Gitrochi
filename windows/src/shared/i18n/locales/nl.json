@@ -1963,7 +1963,6 @@
   "Delete project…": "Project verwijderen…",
   "Edit task date": "Taakdatum bewerken",
   "GitHub project": "GitHub-project",
-  "Groups": "Groepen",
   "Hide done tasks": "Voltooide taken verbergen",
   "Load more projects": "Meer projecten laden",
   "Loading your project workspace…": "Projectwerkruimte laden…",
@@ -1978,7 +1977,6 @@
   "No due date": "Geen deadline",
   "No open tasks in this view": "Geen open taken in deze weergave",
   "Nothing is due after the next 7 days.": "Na de komende 7 dagen vervalt er niets.",
-  "Organizations": "Organisaties",
   "Overdue": "Te laat",
   "Overview": "Overzicht",
   "Progress": "Voortgang",
@@ -2024,7 +2022,6 @@
   "In review": "In review",
   "Issue list": "Issuelijst",
   "Issues assigned to you": "Aan jou toegewezen issues",
-  "Just now": "Zojuist",
   "Labels": "Labels",
   "Latest run": "Laatste run",
   "Loading issues…": "Issues laden…",
@@ -2248,5 +2245,6 @@
   "The job '{0}' is no longer in this pipeline.": "De job '{0}' staat niet meer in deze pipeline.",
   "This job is already running.": "Deze job draait al.",
   "This job can't be started now.": "Deze job kan nu niet worden gestart.",
-  "This run is still running.": "Deze run is nog bezig."
+  "This run is still running.": "Deze run is nog bezig.",
+  "Not pushed yet": "Nog niet gepusht"
 }

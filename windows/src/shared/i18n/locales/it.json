@@ -1985,7 +1985,6 @@
   "Delete project…": "Elimina progetto…",
   "Edit task date": "Modifica data dell’attività",
   "GitHub project": "Progetto GitHub",
-  "Groups": "Gruppi",
   "Hide done tasks": "Nascondi attività completate",
   "Load more projects": "Carica altri progetti",
   "Loading your project workspace…": "Caricamento dell’area di lavoro del progetto…",
@@ -2000,7 +1999,6 @@
   "No due date": "Nessuna scadenza",
   "No open tasks in this view": "Nessuna attività aperta in questa vista",
   "Nothing is due after the next 7 days.": "Nessuna scadenza dopo i prossimi 7 giorni.",
-  "Organizations": "Organizzazioni",
   "Overdue": "In ritardo",
   "Overview": "Panoramica",
   "Progress": "Avanzamento",
@@ -2046,7 +2044,6 @@
   "In review": "In revisione",
   "Issue list": "Elenco delle issue",
   "Issues assigned to you": "Issue assegnate a te",
-  "Just now": "Proprio ora",
   "Labels": "Etichette",
   "Latest run": "Ultima esecuzione",
   "Loading issues…": "Caricamento issue…",
@@ -2270,5 +2267,6 @@
   "The job '{0}' is no longer in this pipeline.": "Il job '{0}' non è più in questa pipeline.",
   "This job is already running.": "Questo job è già in esecuzione.",
   "This job can't be started now.": "Questo job non può essere avviato ora.",
-  "This run is still running.": "Questa esecuzione è ancora in corso."
+  "This run is still running.": "Questa esecuzione è ancora in corso.",
+  "Not pushed yet": "Non ancora inviato"
 }

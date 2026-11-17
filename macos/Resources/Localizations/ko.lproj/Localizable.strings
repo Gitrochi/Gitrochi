@@ -4008,3 +4008,4 @@
 "This job is already running." = "이 작업은 이미 실행 중입니다.";
 "This job can't be started now." = "지금은 이 작업을 시작할 수 없습니다.";
 "This run is still running." = "이 실행은 아직 진행 중입니다.";
+"Not pushed yet" = "아직 푸시하지 않음";

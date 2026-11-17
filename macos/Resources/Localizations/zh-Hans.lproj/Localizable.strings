@@ -2417,3 +2417,4 @@
 "This job is already running." = "此作业已在运行。";
 "This job can't be started now." = "现在无法启动此作业。";
 "This run is still running." = "此运行仍在进行中。";
+"Not pushed yet" = "尚未推送";

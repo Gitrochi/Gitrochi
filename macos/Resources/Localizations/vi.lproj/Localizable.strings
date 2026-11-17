@@ -2236,3 +2236,4 @@
 "This job is already running." = "Job này đang chạy.";
 "This job can't be started now." = "Hiện không thể bắt đầu job này.";
 "This run is still running." = "Lượt chạy này vẫn đang diễn ra.";
+"Not pushed yet" = "Chưa đẩy lên";

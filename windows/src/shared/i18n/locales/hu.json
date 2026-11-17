@@ -1991,7 +1991,6 @@
   "Delete project…": "Projekt törlése…",
   "Edit task date": "Feladat dátumának szerkesztése",
   "GitHub project": "GitHub-projekt",
-  "Groups": "Csoportok",
   "Hide done tasks": "Kész feladatok elrejtése",
   "Load more projects": "További projektek betöltése",
   "Loading your project workspace…": "Projekt munkaterületének betöltése…",
@@ -2006,7 +2005,6 @@
   "No due date": "Nincs határidő",
   "No open tasks in this view": "Ebben a nézetben nincs nyitott feladat",
   "Nothing is due after the next 7 days.": "A következő 7 nap után semmi sem esedékes.",
-  "Organizations": "Szervezetek",
   "Overdue": "Lejárt",
   "Overview": "Áttekintés",
   "Progress": "Előrehaladás",
@@ -2052,7 +2050,6 @@
   "In review": "Ellenőrzés alatt",
   "Issue list": "Issue-lista",
   "Issues assigned to you": "Hozzád rendelt issue-k",
-  "Just now": "Épp most",
   "Labels": "Címkék",
   "Latest run": "Legutóbbi futtatás",
   "Loading issues…": "Issue-k betöltése…",
@@ -2276,5 +2273,6 @@
   "The job '{0}' is no longer in this pipeline.": "A(z) „{0}” feladat már nincs ebben a pipeline-ban.",
   "This job is already running.": "Ez a feladat már fut.",
   "This job can't be started now.": "Ez a feladat most nem indítható.",
-  "This run is still running.": "Ez a futás még tart."
+  "This run is still running.": "Ez a futás még tart.",
+  "Not pushed yet": "Még nincs feltöltve"
 }
