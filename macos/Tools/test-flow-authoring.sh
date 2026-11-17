@@ -26,8 +26,9 @@ struct FlowGraphView {
         let message: String
         var errorDescription: String? { message }
     }
-    static var renderDelay = false
-    static var inspectDelay = false
+    /// Runs once while the next engine call is in flight: after the store sent its input, before the result returns.
+    /// Edits made here land exactly between request and result, so the checks never depend on timers.
+    static var whileInFlight: (@MainActor () async -> Void)?
     static var inspectDocument: FlowJSON = .object(["flows": .object([:])])
     static var sourceFiles = ["scripts/check.sh": "original\n"]
     static var lastCreateParents = false
@@ -36,12 +37,18 @@ struct FlowGraphView {
     static func configurationFiles(in repo: URL) -> [String] { [] }
     static func blockCatalog(in repo: URL) async throws -> FlowBlockCatalog { try JSONDecoder().decode(FlowBlockCatalog.self, from: Data("{\"blocks\":[]}".utf8)) }
     static func proposeInit(in repo: URL) async throws -> FlowInitProposal { fatalError("not used") }
+    static func inFlight() async {
+        guard let action = whileInFlight else { return }
+        whileInFlight = nil
+        await action()
+    }
     static func inspectDesign(_ yaml: String, file: String, in repo: URL) async throws -> FlowDesignInspection {
-        if inspectDelay { try await Task.sleep(for: .milliseconds(60)) }
-        return FlowDesignInspection(document: inspectDocument, yaml: yaml, format: "flow", diagnostics: [], editable: true, proposal: nil)
+        let document = inspectDocument
+        await inFlight()
+        return FlowDesignInspection(document: document, yaml: yaml, format: "flow", diagnostics: [], editable: true, proposal: nil)
     }
     static func renderDesign(_ document: FlowJSON, original: String?, in repo: URL) async throws -> FlowDesignRendered {
-        if renderDelay { try await Task.sleep(for: .milliseconds(60)) }
+        await inFlight()
         return try JSONDecoder().decode(FlowDesignRendered.self, from: Data("{\"yaml\":\"rendered old source\",\"diagnostics\":[],\"formattingChanged\":true}".utf8))
     }
     static func saveConfiguration(_ content: String, original: String?, file: String, in repo: URL) async throws { fatalError("not used") }
@@ -160,21 +167,20 @@ struct FlowGraphView {
         store.editable = true
         store.source = "source"
         store.yaml = "source"
-        FlowEngine.renderDelay = true
-        let render = Task { await store.updatePreview() }
-        try await Task.sleep(for: .milliseconds(10))
-        store.yaml = "newly typed YAML"
-        await render.value
+        FlowEngine.whileInFlight = { store.yaml = "newly typed YAML" }
+        await store.updatePreview()
         precondition(store.yaml == "newly typed YAML")
-        FlowEngine.inspectDelay = true
-        let inspection = Task { try await store.inspect() }
-        try await Task.sleep(for: .milliseconds(10))
-        store.yaml = "even newer YAML"
-        do { try await inspection.value; preconditionFailure("stale inspection accepted") } catch {}
+        FlowEngine.whileInFlight = { store.yaml = "even newer YAML" }
+        do { try await store.inspect(); preconditionFailure("stale inspection accepted") } catch {}
         precondition(store.yaml == "even newer YAML")
         precondition(store.document == frozen)
-        FlowEngine.inspectDelay = false
-        FlowEngine.inspectDocument = frozen
+        // The older result arrives after a newer inspection was applied, and must not replace it.
+        FlowEngine.whileInFlight = {
+            store.yaml = "newest YAML"; FlowEngine.inspectDocument = frozen
+            do { try await store.inspect() } catch { preconditionFailure("current inspection rejected") }
+        }
+        do { try await store.inspect(); preconditionFailure("stale inspection accepted after a newer one") } catch {}
+        precondition(store.source == "newest YAML" && store.document == frozen)
         store.yaml = "# exact code source\n"
         await store.previewCode()
         precondition(store.yaml == "# exact code source\n" && store.sourcePreviewCurrent)
