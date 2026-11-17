@@ -161,21 +161,18 @@ struct AccountPopover: View {
             AccountPopoverGlyph(icon: .identity)
             VStack(alignment: .leading, spacing: 2) {
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
-                    Group {
-                        if let identity = repository.identity, !(identity.name.isEmpty && identity.email.isEmpty) {
-                            Text(verbatim: identity.name)
-                        } else {
-                            Text("Not configured")
+                    // one line as the board draws it: a long address (a GitHub noreply one) is cut in the middle, never
+                    // broken mid-word, and is whole on hover
+                    if let identity = repository.identity, !(identity.name.isEmpty && identity.email.isEmpty) {
+                        Text(verbatim: identity.name).font(.system(size: 13)).lineLimit(1).layoutPriority(1).textSelection(.enabled)
+                        if !identity.email.isEmpty {
+                            Text(verbatim: "<\(identity.email)>").font(.system(size: 13)).foregroundStyle(Self.strong)
+                                .lineLimit(1).truncationMode(.middle).help(identity.email).textSelection(.enabled)
                         }
+                    } else {
+                        Text("Not configured").font(.system(size: 13))
                     }
-                    .font(.system(size: 13)).fixedSize(horizontal: false, vertical: true).textSelection(.enabled)
                     if repository.locked { DesignIconImage(icon: .lock, size: 12).foregroundStyle(Self.strong) }
-                }
-                // a long address (a GitHub noreply one) broke mid-word across two lines; it gets a line of its own, cut
-                // in the middle, whole on hover
-                if let email = repository.identity?.email, !email.isEmpty {
-                    Text(verbatim: "<\(email)>").font(.system(size: 13)).foregroundStyle(Self.strong)
-                        .lineLimit(1).truncationMode(.middle).help(email).textSelection(.enabled)
                 }
                 if repository.locked {
                     HStack(alignment: .firstTextBaseline, spacing: 4) {

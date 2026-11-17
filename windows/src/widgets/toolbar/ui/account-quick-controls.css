@@ -65,7 +65,9 @@
 .account-popover-title { display: flex; flex-wrap: wrap; align-items: center; gap: 0 6px; min-width: 0; font-size: 13px; line-height: 18px; overflow-wrap: anywhere; }
 .account-popover-row.own .account-popover-name { font-weight: 600; }
 .account-popover-host { color: var(--text-2); }
-.account-popover-email { min-width: 0; font-size: 13px; line-height: 18px; color: color-mix(in srgb, var(--text) 82%, var(--surface)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.account-popover-title.identity-title { flex-wrap: nowrap; white-space: nowrap; }
+.account-popover-identity-name { flex: none; }
+.account-popover-email { flex: 0 1 auto; min-width: 0; color: color-mix(in srgb, var(--text) 82%, var(--surface)); overflow: hidden; text-overflow: ellipsis; }
 .account-popover-lock { flex: none; color: color-mix(in srgb, var(--text) 82%, var(--surface)); }
 .account-popover-caption { min-width: 0; font-size: 12px; line-height: 16px; color: var(--text-2); overflow-wrap: anywhere; }
 .account-popover-caption.locked { display: flex; align-items: flex-start; gap: 4px; }
