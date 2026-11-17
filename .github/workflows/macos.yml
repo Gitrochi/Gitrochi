@@ -84,6 +84,9 @@ jobs:
       - name: Offline graph app language test
         run: bash macos/Tools/test-graph-language.sh
 
+      - name: Graph lane and people colours
+        run: bash macos/Tools/test-graph-palette.sh
+
       - name: Git 파서 · 충돌 · 줄 단위 패치 회귀 테스트
         run: bash macos/Tools/test-git-core.sh
 
