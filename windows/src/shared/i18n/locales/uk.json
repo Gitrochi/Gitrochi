@@ -2304,5 +2304,10 @@
   "This job is already running.": "Це завдання вже виконується.",
   "This job can't be started now.": "Зараз це завдання не можна запустити.",
   "This run is still running.": "Цей запуск ще триває.",
-  "Not pushed yet": "Ще не надіслано"
+  "Not pushed yet": "Ще не надіслано",
+  "New browser tab": "Нова вкладка браузера",
+  "Opens a web page next to the terminals, such as a dev server.": "Відкриває вебсторінку поруч із терміналами, наприклад сервер розробки.",
+  "Forward": "Вперед",
+  "Reload": "Перезавантажити",
+  "Search or enter address": "Пошук або введення адреси"
 }

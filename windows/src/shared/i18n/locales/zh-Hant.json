@@ -2309,5 +2309,10 @@
   "This job is already running.": "此作業已在執行。",
   "This job can't be started now.": "現在無法啟動此作業。",
   "This run is still running.": "此執行仍在進行中。",
-  "Not pushed yet": "尚未推送"
+  "Not pushed yet": "尚未推送",
+  "New browser tab": "新增瀏覽器分頁",
+  "Opens a web page next to the terminals, such as a dev server.": "在終端機旁開啟網頁，例如開發伺服器。",
+  "Forward": "前進",
+  "Reload": "重新載入",
+  "Search or enter address": "搜尋或輸入網址"
 }

@@ -2252,3 +2252,12 @@
 "This job can't be started now." = "Job ini tidak bisa dimulai sekarang.";
 "This run is still running." = "Run ini masih berjalan.";
 "Not pushed yet" = "Belum di-push";
+"New browser tab" = "Tab browser baru";
+"Forward" = "Maju";
+"Reload" = "Muat ulang";
+"Search or enter address" = "Cari atau masukkan alamat";
+"Browser" = "Browser";
+"Only the first 2 MB are shown." = "Hanya 2 MB pertama yang ditampilkan.";
+"The file is empty." = "File kosong.";
+"%lld rows · %lld columns" = "%lld baris · %lld kolom";
+"This file can't be shown as text." = "File ini tidak dapat ditampilkan sebagai teks.";

@@ -263,6 +263,41 @@ private final class Relay: NSObject, LocalProcessTerminalViewDelegate {
 /// 출력이 올 때 알려 주는 터미널 뷰
 final class ShellView: LocalProcessTerminalView {
     var onOutput: (() -> Void)?
+    /// Takes a ⌘-clicked link or word (a URL or a file path); false leaves it to the default handler
+    var onOpenLink: ((String) -> Bool)?
+    private var linkTaken = false
+
+    override func requestOpenLink(source: TerminalView, link: String, params: [String: String]) {
+        linkTaken = true
+        if onOpenLink?(link) == true { return }
+        super.requestOpenLink(source: source, link: link, params: params)
+    }
+
+    /// SwiftTerm finds paths only with a ./, ../, ~/ or / prefix; a ⌘-click on a bare name such as `schema.sql` or
+    /// `src/app.ts` (ls, git status) offers the word under the pointer instead
+    override func mouseUp(with event: NSEvent) {
+        linkTaken = false
+        super.mouseUp(with: event)
+        guard event.modifierFlags.contains(.command), !linkTaken, event.clickCount == 1, !selectionActive,
+              let word = word(at: convert(event.locationInWindow, from: nil)) else { return }
+        _ = onOpenLink?(word)
+    }
+
+    /// The run of path characters under the point, read from the visible buffer. The cell size is worked out the way
+    /// SwiftTerm does (computeFontDimensions), since its own hit test is internal to the module.
+    private func word(at point: CGPoint) -> String? {
+        let scale = window?.backingScaleFactor ?? 2
+        let ct = font as CTFont
+        let cellHeight = ceil(ceil(CTFontGetAscent(ct) + CTFontGetDescent(ct) + CTFontGetLeading(ct)) * scale) / scale
+        let cellWidth = (font.advancement(forGlyph: font.glyph(withName: "W")).width * scale).rounded() / scale
+        guard cellWidth > 0, cellHeight > 0 else { return nil }
+        let terminal = getTerminal()
+        let col = Int(point.x / cellWidth), row = Int((frame.height - point.y) / cellHeight)
+        guard col >= 0, col < terminal.cols, let line = terminal.getLine(row: row) else { return nil }
+        let before = line.translateToString(trimRight: false, startCol: 0, endCol: col)
+        let after = line.translateToString(trimRight: true, startCol: col, endCol: terminal.cols)
+        return TerminalWord.around(before: before, after: after)
+    }
 
     /// macOS treats Control-Return as "open the context menu", so the graph would take it as a key equivalent
     /// before the terminal sees it. While a terminal has focus, hand it straight to the terminal
@@ -383,7 +418,7 @@ extension RepoStore {
     func toggleTerminal() {
         if showTerminal {
             showTerminal = false
-        } else if terminals.isEmpty {
+        } else if terminals.isEmpty && browsers.isEmpty {
             newTerminal()
         } else {
             showTerminal = true
@@ -459,18 +494,24 @@ extension RepoStore {
 
     func closeTerminal(_ s: TerminalSession) {
         s.terminate()
-        let sibling = terminalLayout?.pane(of: s.id)?.sessions.first { $0 != s.id }
         terminals.removeAll { $0.id == s.id }
-        terminalLayout = terminalLayout?.removing(s.id)
-        if activeTerminalID == s.id {
+        removeTab(s.id)
+    }
+
+    /// Takes a closed terminal or browser tab out of its pane
+    func removeTab(_ id: UUID) {
+        let sibling = terminalLayout?.pane(of: id)?.sessions.first { $0 != id }
+        terminalLayout = terminalLayout?.removing(id)
+        if activeTerminalID == id {
             // stay in the same pane if it still has tabs, otherwise move to the first pane
             activeTerminalID = (terminalLayout?.pane(of: sibling) ?? terminalLayout?.panes.first)?.selected ?? terminals.last?.id
         }
-        if terminals.isEmpty { showTerminal = false }
+        if terminals.isEmpty && browsers.isEmpty { showTerminal = false }
     }
 
     func closeAllTerminals() {
         terminals.forEach { $0.terminate() }
+        browsers.forEach { $0.close() }
         releaseTerminals()
     }
 
@@ -479,22 +520,24 @@ extension RepoStore {
     func releaseTerminals() {
         terminals.forEach { $0.isVisible = false }
         terminals = []
+        browsers = []
         terminalLayout = nil
         activeTerminalID = nil
         showTerminal = false
     }
 
     /// Takes back terminals that kept running while the repository had no window, with their panes as they were
-    func adoptTerminals(_ sessions: [TerminalSession], layout: TerminalNode?, active: UUID?, shown: Bool) {
-        guard !sessions.isEmpty else { return }
+    func adoptTerminals(_ sessions: [TerminalSession], browsers kept: [BrowserSession] = [], layout: TerminalNode?, active: UUID?, shown: Bool) {
+        guard !sessions.isEmpty || !kept.isEmpty else { return }
         sessions.forEach(wire)
-        if terminals.isEmpty {
+        if terminals.isEmpty && browsers.isEmpty {
             terminalLayout = layout
         } else {
-            for s in sessions { terminalLayout = TerminalNode.adding(s.id, to: nil, in: terminalLayout) }
+            for id in sessions.map(\.id) + kept.map(\.id) { terminalLayout = TerminalNode.adding(id, to: nil, in: terminalLayout) }
         }
         terminals += sessions
-        activeTerminalID = active ?? sessions.last?.id
+        browsers += kept
+        activeTerminalID = active ?? sessions.last?.id ?? kept.last?.id
         showTerminal = showTerminal || shown
     }
 
@@ -503,6 +546,30 @@ extension RepoStore {
         s.view.onFocus = { [weak self, weak s] in
             guard let self, let s, self.activeTerminalID != s.id else { return }
             self.selectTerminal(s)
+        }
+        s.view.onOpenLink = { [weak self, weak s] link in
+            guard let self, let s else { return false }
+            if let url = URL(string: link), url.scheme == "http" || url.scheme == "https" {
+                guard BrowserAddress.opensInPanel(url) else { return false }
+                self.openInBrowserTab(url, beside: s.id)
+                return true
+            }
+            // a file the shell's folder holds opens as a preview; folders keep the default (Finder)
+            var isFolder: ObjCBool = false
+            if let path = TerminalWord.file(link, in: s.directory, exists: {
+                FileManager.default.fileExists(atPath: $0, isDirectory: &isFolder) && !isFolder.boolValue
+            }) {
+                self.previewInBrowserTab(URL(fileURLWithPath: path), beside: s.id)
+                return true
+            }
+            // a bare name from `ls sub/` and the like: look below the shell's folder, off the main thread
+            let directory = s.directory, id = s.id
+            guard link.contains(".") || link.contains("/"), !link.contains("://") else { return false }
+            Task { [weak self] in
+                guard let path = await Task.detached(priority: .userInitiated, operation: { TerminalWord.search(link, in: directory) }).value else { return }
+                self?.previewInBrowserTab(URL(fileURLWithPath: path), beside: id)
+            }
+            return true
         }
     }
 }

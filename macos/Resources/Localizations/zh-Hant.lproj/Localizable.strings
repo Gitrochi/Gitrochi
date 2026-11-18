@@ -2299,3 +2299,11 @@
 "This job can't be started now." = "現在無法啟動此作業。";
 "This run is still running." = "此執行仍在進行中。";
 "Not pushed yet" = "尚未推送";
+"New browser tab" = "新增瀏覽器分頁";
+"Forward" = "前進";
+"Reload" = "重新載入";
+"Search or enter address" = "搜尋或輸入網址";
+"Only the first 2 MB are shown." = "僅顯示前 2 MB。";
+"The file is empty." = "檔案是空的。";
+"%lld rows · %lld columns" = "%lld 列 · %lld 欄";
+"This file can't be shown as text." = "此檔案無法以文字顯示。";

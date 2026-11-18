@@ -2439,5 +2439,10 @@
   "This job is already running.": "此作业已在运行。",
   "This job can't be started now.": "现在无法启动此作业。",
   "This run is still running.": "此运行仍在进行中。",
-  "Not pushed yet": "尚未推送"
+  "Not pushed yet": "尚未推送",
+  "New browser tab": "新建浏览器标签页",
+  "Opens a web page next to the terminals, such as a dev server.": "在终端旁打开网页，例如开发服务器。",
+  "Forward": "前进",
+  "Reload": "重新加载",
+  "Search or enter address": "搜索或输入地址"
 }

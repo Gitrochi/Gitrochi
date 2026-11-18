@@ -1,4 +1,4 @@
-import { addTab, paneOf, panes, removeTab, selectTab, setRatio, shownIn, splitPane, TerminalSession, type TerminalSpec, type TermSplit } from "@/entities/terminal";
+import { addTab, BrowserSession, paneOf, panes, removeTab, selectTab, setRatio, shownIn, splitPane, TerminalSession, type TerminalSpec, type TermSplit } from "@/entities/terminal";
 import { RepoAI } from "./ai";
 
 /** 아래 터미널 패널 — split into panes of tabs (terminalLayout) */
@@ -17,7 +17,7 @@ export abstract class RepoTerminal extends RepoAI {
   /** Ctrl+` : 터미널 패널 보이기/숨기기(처음이면 저장소 폴더에서 셸을 하나 연다) */
   toggleTerminal() {
     if (this.showTerminal) this.showTerminal = false;
-    else if (!this.terminals.length) this.newTerminal();
+    else if (!this.terminals.length && !this.browsers.length) this.newTerminal();
     else this.showTerminal = true;
     this.emit();
   }
@@ -72,20 +72,65 @@ export abstract class RepoTerminal extends RepoAI {
 
   closeTerminal(s: TerminalSession) {
     s.dispose();
-    const pane = paneOf(this.terminalLayout, s.id);
     this.terminals = this.terminals.filter((t) => t !== s);
-    this.terminalLayout = this.terminalLayout && removeTab(this.terminalLayout, s.id);
-    if (this.activeTerminalID === s.id) {
+    this.removePaneTab(s.id);
+  }
+
+  /** Takes a closed terminal or browser tab out of its pane */
+  private removePaneTab(id: string) {
+    const pane = paneOf(this.terminalLayout, id);
+    this.terminalLayout = this.terminalLayout && removeTab(this.terminalLayout, id);
+    if (this.activeTerminalID === id) {
       // stay in the same pane if it still has tabs, otherwise move to the first pane
-      const next = paneOf(this.terminalLayout, pane?.sessions.find((id) => id !== s.id) ?? null) ?? (this.terminalLayout && panes(this.terminalLayout)[0]);
+      const next = paneOf(this.terminalLayout, pane?.sessions.find((x) => x !== id) ?? null) ?? (this.terminalLayout && panes(this.terminalLayout)[0]);
       this.activeTerminalID = next?.selected ?? this.terminals[this.terminals.length - 1]?.id ?? null;
     }
-    if (!this.terminals.length) this.showTerminal = false;
+    if (!this.terminals.length && !this.browsers.length) this.showTerminal = false;
     this.emit();
+  }
+
+  // Browser tabs share the panes: the layout holds their ids next to the terminals'. macOS: RepoStore+Browser.swift
+
+  browser(id: string | null): BrowserSession | null {
+    return this.browsers.find((b) => b.id === id) ?? null;
+  }
+
+  /** The browser tab a pane shows, when it shows one */
+  shownBrowser(paneId: string): BrowserSession | null {
+    const p = this.terminalLayout && panes(this.terminalLayout).find((x) => x.id === paneId);
+    return this.browser(p ? shownIn(p, this.activeTerminalID) : null);
+  }
+
+  /** A new browser tab in the focused pane, or beside the pane when one is given */
+  newBrowser(url: string | null = null, besidePane?: string): BrowserSession {
+    const b = new BrowserSession(url);
+    b.subscribe(() => this.emit());
+    this.browsers = [...this.browsers, b];
+    const layout = this.terminalLayout;
+    if (besidePane && layout && panes(layout).some((p) => p.id === besidePane)) this.terminalLayout = splitPane(layout, besidePane, "row", b.id);
+    else this.terminalLayout = addTab(layout, paneOf(layout, this.activeTerminalID)?.id ?? null, b.id);
+    this.activeTerminalID = b.id;
+    this.showTerminal = true;
+    this.emit();
+    return b;
+  }
+
+  selectBrowser(b: BrowserSession) {
+    this.activeTerminalID = b.id;
+    if (this.terminalLayout) this.terminalLayout = selectTab(this.terminalLayout, b.id);
+    this.emit();
+  }
+
+  closeBrowser(b: BrowserSession) {
+    b.dispose();
+    this.browsers = this.browsers.filter((x) => x !== b);
+    this.removePaneTab(b.id);
   }
 
   closeAllTerminals() {
     for (const t of this.terminals) t.dispose();
+    for (const b of this.browsers) b.dispose();
+    this.browsers = [];
     this.terminals = [];
     this.terminalLayout = null;
     this.activeTerminalID = null;

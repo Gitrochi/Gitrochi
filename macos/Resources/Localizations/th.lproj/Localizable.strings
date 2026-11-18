@@ -2289,3 +2289,11 @@
 "This job can't be started now." = "ยังเริ่มงานนี้ไม่ได้ในตอนนี้";
 "This run is still running." = "การรันนี้ยังดำเนินอยู่";
 "Not pushed yet" = "ยังไม่ได้พุช";
+"New browser tab" = "แท็บเบราว์เซอร์ใหม่";
+"Forward" = "ไปข้างหน้า";
+"Reload" = "โหลดซ้ำ";
+"Search or enter address" = "ค้นหาหรือป้อนที่อยู่";
+"Only the first 2 MB are shown." = "แสดงเฉพาะ 2 MB แรก";
+"The file is empty." = "ไฟล์ว่างเปล่า";
+"%lld rows · %lld columns" = "%lld แถว · %lld คอลัมน์";
+"This file can't be shown as text." = "ไม่สามารถแสดงไฟล์นี้เป็นข้อความได้";

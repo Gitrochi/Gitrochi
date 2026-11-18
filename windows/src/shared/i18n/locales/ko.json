@@ -4003,5 +4003,9 @@
   "This job is already running.": "이 작업은 이미 실행 중입니다.",
   "This job can't be started now.": "지금은 이 작업을 시작할 수 없습니다.",
   "This run is still running.": "이 실행은 아직 진행 중입니다.",
-  "Not pushed yet": "아직 푸시하지 않음"
+  "Not pushed yet": "아직 푸시하지 않음",
+  "New browser tab": "새 브라우저 탭",
+  "Opens a web page next to the terminals, such as a dev server.": "개발 서버 같은 웹 페이지를 터미널 옆에서 엽니다.",
+  "Forward": "앞으로",
+  "Search or enter address": "검색어 또는 주소 입력"
 }

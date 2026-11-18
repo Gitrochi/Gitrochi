@@ -2260,5 +2260,10 @@
   "This job is already running.": "Job ini sudah berjalan.",
   "This job can't be started now.": "Job ini tidak bisa dimulai sekarang.",
   "This run is still running.": "Run ini masih berjalan.",
-  "Not pushed yet": "Belum di-push"
+  "Not pushed yet": "Belum di-push",
+  "New browser tab": "Tab browser baru",
+  "Opens a web page next to the terminals, such as a dev server.": "Membuka halaman web di samping terminal, seperti server pengembangan.",
+  "Forward": "Maju",
+  "Reload": "Muat ulang",
+  "Search or enter address": "Cari atau masukkan alamat"
 }

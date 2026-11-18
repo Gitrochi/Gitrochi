@@ -2996,5 +2996,10 @@
   "This job is already running.": "このジョブはすでに実行中です。",
   "This job can't be started now.": "今はこのジョブを開始できません。",
   "This run is still running.": "この実行はまだ進行中です。",
-  "Not pushed yet": "まだプッシュしていません"
+  "Not pushed yet": "まだプッシュしていません",
+  "New browser tab": "新しいブラウザタブ",
+  "Opens a web page next to the terminals, such as a dev server.": "開発サーバーなどのWebページをターミナルの隣で開きます。",
+  "Forward": "進む",
+  "Reload": "再読み込み",
+  "Search or enter address": "検索またはアドレスを入力"
 }

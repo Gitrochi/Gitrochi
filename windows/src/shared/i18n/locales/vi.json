@@ -2262,5 +2262,10 @@
   "This job is already running.": "Job này đang chạy.",
   "This job can't be started now.": "Hiện không thể bắt đầu job này.",
   "This run is still running.": "Lượt chạy này vẫn đang diễn ra.",
-  "Not pushed yet": "Chưa đẩy lên"
+  "Not pushed yet": "Chưa đẩy lên",
+  "New browser tab": "Tab trình duyệt mới",
+  "Opens a web page next to the terminals, such as a dev server.": "Mở một trang web bên cạnh các terminal, chẳng hạn máy chủ phát triển.",
+  "Forward": "Tiến",
+  "Reload": "Tải lại",
+  "Search or enter address": "Tìm kiếm hoặc nhập địa chỉ"
 }

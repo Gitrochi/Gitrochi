@@ -2341,5 +2341,10 @@
   "This job is already running.": "Este job ya se está ejecutando.",
   "This job can't be started now.": "Este job no se puede iniciar ahora.",
   "This run is still running.": "Esta ejecución sigue en curso.",
-  "Not pushed yet": "Aún no enviado"
+  "Not pushed yet": "Aún no enviado",
+  "New browser tab": "Nueva pestaña de navegador",
+  "Opens a web page next to the terminals, such as a dev server.": "Abre una página web junto a los terminales, como un servidor de desarrollo.",
+  "Forward": "Adelante",
+  "Reload": "Recargar",
+  "Search or enter address": "Buscar o escribir dirección"
 }

@@ -2282,3 +2282,11 @@
 "This job can't be started now." = "Bu iş şu anda başlatılamaz.";
 "This run is still running." = "Bu çalıştırma hâlâ sürüyor.";
 "Not pushed yet" = "Henüz gönderilmedi";
+"New browser tab" = "Yeni tarayıcı sekmesi";
+"Forward" = "İleri";
+"Reload" = "Yeniden yükle";
+"Search or enter address" = "Ara veya adres gir";
+"Only the first 2 MB are shown." = "Yalnızca ilk 2 MB gösteriliyor.";
+"The file is empty." = "Dosya boş.";
+"%lld rows · %lld columns" = "%lld satır · %lld sütun";
+"This file can't be shown as text." = "Bu dosya metin olarak gösterilemez.";

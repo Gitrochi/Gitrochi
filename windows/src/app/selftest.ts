@@ -425,6 +425,17 @@ export async function runSelfTest(): Promise<boolean> {
     const merged = await until(() => document.querySelectorAll(".term-pane").length === 1, 3000);
     return [ok && merged && s.activeTerminal === first, `panes=${document.querySelectorAll(".term-pane").length} active=${s.activeTerminal?.title}`];
   });
+  await step("Open a browser tab in a terminal pane, type an address and close it", async () => {
+    const first = s.activeTerminal!;
+    const page = s.newBrowser();
+    const shown = await until(() => !!document.querySelector(".browser-pane .browser-address") && !!document.querySelector(".term-tab.browser.on"), 3000);
+    page.open("localhost:9");
+    const typed = page.url === "http://localhost:9";
+    s.closeBrowser(page);
+    const gone = await until(() => !document.querySelector(".browser-pane") && s.browsers.length === 0, 3000);
+    s.selectTerminal(first);
+    return [shown && typed && gone && s.activeTerminal === first, `shown=${shown} url=${page.url} gone=${gone}`];
+  });
   await step("Paste an image into the terminal as a file path", async () => {
     const term = s.activeTerminal!;
     const got: string[] = [];

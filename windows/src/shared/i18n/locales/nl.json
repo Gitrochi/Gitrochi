@@ -2261,5 +2261,10 @@
   "This job is already running.": "Deze job draait al.",
   "This job can't be started now.": "Deze job kan nu niet worden gestart.",
   "This run is still running.": "Deze run is nog bezig.",
-  "Not pushed yet": "Nog niet gepusht"
+  "Not pushed yet": "Nog niet gepusht",
+  "New browser tab": "Nieuw browsertabblad",
+  "Opens a web page next to the terminals, such as a dev server.": "Opent een webpagina naast de terminals, zoals een ontwikkelserver.",
+  "Forward": "Vooruit",
+  "Reload": "Opnieuw laden",
+  "Search or enter address": "Zoek of voer adres in"
 }

@@ -2332,3 +2332,11 @@
 "This job can't be started now." = "Ce job ne peut pas être lancé pour l’instant.";
 "This run is still running." = "Cette exécution est toujours en cours.";
 "Not pushed yet" = "Pas encore poussé";
+"New browser tab" = "Nouvel onglet de navigateur";
+"Forward" = "Suivant";
+"Reload" = "Actualiser";
+"Search or enter address" = "Rechercher ou saisir une adresse";
+"Only the first 2 MB are shown." = "Seuls les 2 premiers Mo sont affichés.";
+"The file is empty." = "Le fichier est vide.";
+"%lld rows · %lld columns" = "%lld lignes · %lld colonnes";
+"This file can't be shown as text." = "Ce fichier ne peut pas être affiché comme texte.";

@@ -2276,3 +2276,11 @@
 "This job can't be started now." = "Tuto úlohu teď nelze spustit.";
 "This run is still running." = "Tento běh stále probíhá.";
 "Not pushed yet" = "Zatím neodesláno";
+"New browser tab" = "Nová karta prohlížeče";
+"Forward" = "Vpřed";
+"Reload" = "Znovu načíst";
+"Search or enter address" = "Hledat nebo zadat adresu";
+"Only the first 2 MB are shown." = "Zobrazují se jen první 2 MB.";
+"The file is empty." = "Soubor je prázdný.";
+"%lld rows · %lld columns" = "Řádky: %lld · sloupce: %lld";
+"This file can't be shown as text." = "Tento soubor nelze zobrazit jako text.";

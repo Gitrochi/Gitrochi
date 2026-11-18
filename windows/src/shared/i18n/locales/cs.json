@@ -2287,5 +2287,10 @@
   "This job is already running.": "Tato úloha už běží.",
   "This job can't be started now.": "Tuto úlohu teď nelze spustit.",
   "This run is still running.": "Tento běh stále probíhá.",
-  "Not pushed yet": "Zatím neodesláno"
+  "Not pushed yet": "Zatím neodesláno",
+  "New browser tab": "Nová karta prohlížeče",
+  "Opens a web page next to the terminals, such as a dev server.": "Otevře webovou stránku vedle terminálů, například vývojový server.",
+  "Forward": "Vpřed",
+  "Reload": "Znovu načíst",
+  "Search or enter address": "Hledat nebo zadat adresu"
 }

@@ -2300,5 +2300,10 @@
   "This job is already running.": "งานนี้กำลังรันอยู่แล้ว",
   "This job can't be started now.": "ยังเริ่มงานนี้ไม่ได้ในตอนนี้",
   "This run is still running.": "การรันนี้ยังดำเนินอยู่",
-  "Not pushed yet": "ยังไม่ได้พุช"
+  "Not pushed yet": "ยังไม่ได้พุช",
+  "New browser tab": "แท็บเบราว์เซอร์ใหม่",
+  "Opens a web page next to the terminals, such as a dev server.": "เปิดหน้าเว็บข้างเทอร์มินัล เช่น เซิร์ฟเวอร์สำหรับพัฒนา",
+  "Forward": "ไปข้างหน้า",
+  "Reload": "โหลดซ้ำ",
+  "Search or enter address": "ค้นหาหรือป้อนที่อยู่"
 }

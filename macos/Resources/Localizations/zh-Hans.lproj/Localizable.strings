@@ -2437,3 +2437,11 @@
 "This job can't be started now." = "现在无法启动此作业。";
 "This run is still running." = "此运行仍在进行中。";
 "Not pushed yet" = "尚未推送";
+"New browser tab" = "新建浏览器标签页";
+"Forward" = "前进";
+"Reload" = "重新加载";
+"Search or enter address" = "搜索或输入地址";
+"Only the first 2 MB are shown." = "仅显示前 2 MB。";
+"The file is empty." = "文件为空。";
+"%lld rows · %lld columns" = "%lld 行 · %lld 列";
+"This file can't be shown as text." = "此文件无法以文本显示。";

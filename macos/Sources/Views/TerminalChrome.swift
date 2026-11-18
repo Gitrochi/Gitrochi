@@ -60,6 +60,8 @@ struct TerminalTabItem: Identifiable, Equatable {
     let mark: TerminalTabMark
     /// The mark in words, for tooltips, the » menu and VoiceOver
     let state: String
+    /// A browser tab: a globe stands before its title
+    var browser = false
 }
 
 /// The 12pt slot every tab reserves, so titles never shift when a mark appears. Status is told by shape:
@@ -195,6 +197,9 @@ struct TerminalSessionTab: View {
             Button(action: select) {
                 HStack(spacing: 6) {
                     TerminalTabMarkView(mark: tab.mark)
+                    if tab.browser {
+                        SymbolIcon("globe").font(.system(size: 10)).foregroundStyle(.secondary).accessibilityHidden(true)
+                    }
                     if let number = tab.number {
                         Text(verbatim: "\(number)").font(.system(size: 11).monospacedDigit()).foregroundStyle(.secondary)
                     }
@@ -218,7 +223,7 @@ struct TerminalSessionTab: View {
             }
             .buttonStyle(.plain).foregroundStyle(.secondary)
             .opacity(hovering || selected ? 1 : 0)
-            .help("Close terminal").accessibilityLabel("Close terminal")
+            .help(tab.browser ? "Close tab" : "Close terminal").accessibilityLabel(tab.browser ? "Close tab" : "Close terminal")
         }
         .background(Color.primary.opacity(hovering ? 0.035 : 0), in: RoundedRectangle(cornerRadius: 6))
         .padding(.horizontal, 2)

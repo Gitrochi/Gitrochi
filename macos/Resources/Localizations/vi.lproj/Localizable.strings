@@ -2256,3 +2256,11 @@
 "This job can't be started now." = "Hiện không thể bắt đầu job này.";
 "This run is still running." = "Lượt chạy này vẫn đang diễn ra.";
 "Not pushed yet" = "Chưa đẩy lên";
+"New browser tab" = "Tab trình duyệt mới";
+"Forward" = "Tiến";
+"Reload" = "Tải lại";
+"Search or enter address" = "Tìm kiếm hoặc nhập địa chỉ";
+"Only the first 2 MB are shown." = "Chỉ hiển thị 2 MB đầu tiên.";
+"The file is empty." = "Tệp trống.";
+"%lld rows · %lld columns" = "%lld hàng · %lld cột";
+"This file can't be shown as text." = "Không thể hiển thị tệp này dưới dạng văn bản.";
