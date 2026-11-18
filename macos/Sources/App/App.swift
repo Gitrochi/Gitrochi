@@ -51,7 +51,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     /// The Ledger is gone, but Claude Code and Codex may still run its hooks and MCP server: has its command take them
-    /// out, then deletes that command (LedgerCleanup). Does nothing once the command is gone.
+    /// out, then deletes that command (LedgerCleanup), and takes out what is left without it.
     private func cleanUpLedger() {
         // the tool store reads the login shell's PATH for a few seconds before it knows where the clients are
         MainActor.assumeIsolated { _ = ToolStore.shared }
@@ -59,13 +59,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             try? await Task.sleep(for: .seconds(5))
             let manager = FileManager.default
             let stable = LedgerCleanup.stableCommand(support: manager.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0])
-            await LedgerCleanup.run(stable: stable, program: { ToolPaths.shared.get($0 == .claude ? .claude : .codex) }) { executable, arguments in
+            let program: (LedgerCleanup.Client) -> String? = { ToolPaths.shared.get($0 == .claude ? .claude : .codex) }
+            let runner: LedgerCleanup.Runner = { executable, arguments in
                 // a client installed with npm starts through `env node`, and node lives next to it
                 var environment = ProcessInfo.processInfo.environment
                 environment["PATH"] = URL(fileURLWithPath: executable).deletingLastPathComponent().path + ":" + (environment["PATH"] ?? "/usr/bin:/bin")
                 guard let result = try? await Shell.run(executable, arguments, cwd: manager.homeDirectoryForCurrentUser, env: environment, timeout: 30) else { return nil }
                 return (result.status, result.output)
             }
+            await LedgerCleanup.run(stable: stable, program: program, runner: runner)
+            // hooks that ran the command inside an older app have no copy to take them out
+            await LedgerCleanup.removeOrphans(home: manager.homeDirectoryForCurrentUser, program: program, runner: runner)
         }
     }
 }

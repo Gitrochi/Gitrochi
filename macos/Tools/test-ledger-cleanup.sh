@@ -162,7 +162,53 @@ struct Fixture {
         try! Data("x".utf8).write(to: other)
         check(await shared.run() && !manager.fileExists(atPath: shared.stable.path) && manager.fileExists(atPath: other.path), "another file in the folder stays")
 
-        print("PASS: \(checks) checks — status parsing, the commands asked of the copy and the clients, and the copy deleted only once nothing names it")
+        // an older install ran the command inside the app: no copy, so the hooks and servers are taken out directly
+        let ledgerHook = #"'/Applications/Gitrochi.app/Contents/MacOS/gitrochi-ledger' --db '/x/ledger.sqlite3' observe claude Stop --managed-hook"#
+        let mine = ["type": "command", "command": "~/bin/my-hook"]
+        let settings: [String: Any] = ["model": "opus", "hooks": [
+            "Stop": [["hooks": [["type": "command", "command": ledgerHook, "timeout": 3]]]],
+            "PreToolUse": [["matcher": "Bash", "hooks": [["type": "command", "command": ledgerHook], mine]]],
+            "Notification": [["hooks": [mine]]],
+        ]]
+        let (cleaned, removed) = LedgerCleanup.withoutOwnedHooks(settings)
+        let cleanedHooks = cleaned["hooks"] as? [String: Any] ?? [:]
+        check(removed == 2 && cleanedHooks["Stop"] == nil, "the Ledger's handlers go, and an event left empty with them")
+        check(((cleanedHooks["PreToolUse"] as? [[String: Any]])?.first?["hooks"] as? [[String: String]]) == [mine]
+              && (cleanedHooks["PreToolUse"] as? [[String: Any]])?.first?["matcher"] as? String == "Bash", "another handler and the group's matcher stay")
+        check(cleanedHooks["Notification"] != nil && cleaned["model"] as? String == "opus", "other events and settings stay")
+        check(LedgerCleanup.withoutOwnedHooks(["hooks": ["Stop": [["hooks": [["command": "gitrochi-ledger observe"]]]]]]).removed == 0,
+              "only handlers marked --managed-hook are the Ledger's")
+        check(LedgerCleanup.withoutOwnedHooks(["hooks": ["Stop": [["hooks": [["command": ledgerHook]]]]]]).settings["hooks"] == nil, "an empty hooks table goes")
+        check(LedgerCleanup.mcpRegistered(.claude, text: #"{"mcpServers":{"gitrochi-ledger":{"command":"/x"}}}"#)
+              && !LedgerCleanup.mcpRegistered(.claude, text: #"{"mcpServers":{"other":{}}}"#), "Claude Code's server entry")
+        check(LedgerCleanup.mcpRegistered(.codex, text: "model = \"o3\"\n\n[mcp_servers.gitrochi-ledger]\ncommand = \"/x\"\n")
+              && !LedgerCleanup.mcpRegistered(.codex, text: "[mcp_servers.other]\n"), "Codex's server table")
+
+        let orphan = Fixture(parent, name: "orphan", copy: false)
+        let home = orphan.root.appendingPathComponent("home")
+        try! manager.createDirectory(at: home.appendingPathComponent(".claude"), withIntermediateDirectories: true)
+        try! manager.createDirectory(at: home.appendingPathComponent(".codex"), withIntermediateDirectories: true)
+        let claudeSettings = LedgerCleanup.hookFile(.claude, home: home)
+        let original = try! JSONSerialization.data(withJSONObject: settings)
+        try! original.write(to: claudeSettings)
+        try! Data(#"{"mcpServers":{"gitrochi-ledger":{"command":"/gone"}}}"#.utf8).write(to: LedgerCleanup.mcpFile(.claude, home: home))
+        try! Data("[mcp_servers.other]\n".utf8).write(to: LedgerCleanup.mcpFile(.codex, home: home))
+        var ran: [String] = []
+        await LedgerCleanup.removeOrphans(home: home, program: { $0 == .claude ? "claude" : "codex" }) { program, arguments in
+            ran.append(([program] + arguments).joined(separator: " ")); return (0, "")
+        }
+        let after = (try? JSONSerialization.jsonObject(with: Data(contentsOf: claudeSettings))) as? [String: Any]
+        check(LedgerCleanup.withoutOwnedHooks(after ?? [:]).removed == 0 && after?["model"] as? String == "opus", "the settings file lost only the Ledger's handlers")
+        check((try? Data(contentsOf: claudeSettings.deletingLastPathComponent().appendingPathComponent("settings.json.before-ledger-removal"))) == original,
+              "the bytes it had are kept next to it")
+        check(ran == ["claude mcp remove --scope user gitrochi-ledger"], "only the client still naming the server is asked to drop it: \(ran)")
+        ran = []
+        let again = try! Data(contentsOf: claudeSettings)
+        try! Data(#"{"mcpServers":{}}"#.utf8).write(to: LedgerCleanup.mcpFile(.claude, home: home))
+        await LedgerCleanup.removeOrphans(home: home, program: { _ in "x" }) { program, arguments in ran.append(program); return (0, "") }
+        check(ran.isEmpty && (try? Data(contentsOf: claudeSettings)) == again, "once nothing is left, nothing runs or changes")
+
+        print("PASS: \(checks) checks — status parsing, the commands asked of the copy and the clients, the copy deleted only once nothing names it, and hooks and servers left without a copy")
     }
 }
 SWIFT

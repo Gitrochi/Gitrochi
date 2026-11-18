@@ -4,6 +4,9 @@ import Foundation
 /// in those clients' settings, and they run the copy of the ledger command under Application Support/Gitrochi/bin. While
 /// that copy exists, this has it take out its own hooks and browser host, has each client drop the MCP server, and
 /// deletes the copy once nothing names it any more. The ledger's database is left where it is.
+/// Older installs ran the command inside the app itself, so no copy exists and nothing above runs: `removeOrphans` then
+/// takes the owned hooks out of the clients' settings files and has each client drop the MCP server, every launch, until
+/// nothing names the Ledger any more.
 /// Free of the app's own types, so macos/Tools/test-ledger-cleanup.sh runs it against a fake command.
 /// (Windows: entities/agent/lib/ledger-cleanup.ts)
 enum LedgerCleanup {
@@ -47,6 +50,92 @@ enum LedgerCleanup {
     /// every event, so a copy something still names stays, and the next launch tries again.
     static func canDelete(_ left: [Registration?]) -> Bool {
         left.allSatisfy { $0?.isEmpty == true }
+    }
+
+    // MARK: Hooks and servers left without the command
+
+    /// The settings file each client keeps its hooks in, under the home folder
+    static func hookFile(_ client: Client, home: URL) -> URL {
+        client == .claude ? home.appendingPathComponent(".claude/settings.json") : home.appendingPathComponent(".codex/hooks.json")
+    }
+
+    /// A handler the Ledger installed: its command runs the ledger command and carries the flag it marked its own with
+    static func isOwnedHook(_ handler: [String: Any]) -> Bool {
+        guard let command = handler["command"] as? String else { return false }
+        return command.contains(server) && command.contains("--managed-hook")
+    }
+
+    /// The settings without the Ledger's handlers; a group or event left empty goes too, and so does an empty `hooks`.
+    /// Everything else stays as it was.
+    static func withoutOwnedHooks(_ settings: [String: Any]) -> (settings: [String: Any], removed: Int) {
+        guard let hooks = settings["hooks"] as? [String: Any] else { return (settings, 0) }
+        var removed = 0
+        var kept: [String: Any] = [:]
+        for (event, value) in hooks {
+            guard let groups = value as? [[String: Any]] else { kept[event] = value; continue }
+            var left: [[String: Any]] = []
+            for group in groups {
+                guard let handlers = group["hooks"] as? [[String: Any]] else { left.append(group); continue }
+                let rest = handlers.filter { !isOwnedHook($0) }
+                removed += handlers.count - rest.count
+                if rest.count == handlers.count { left.append(group) } else if !rest.isEmpty {
+                    var copy = group
+                    copy["hooks"] = rest
+                    left.append(copy)
+                }
+            }
+            if !left.isEmpty { kept[event] = left }
+        }
+        guard removed > 0 else { return (settings, 0) }
+        var result = settings
+        if kept.isEmpty { result.removeValue(forKey: "hooks") } else { result["hooks"] = kept }
+        return (result, removed)
+    }
+
+    /// Whether a client's user settings still register the MCP server: Claude Code's `~/.claude.json` `mcpServers`,
+    /// Codex's `[mcp_servers.gitrochi-ledger]` table in `~/.codex/config.toml`
+    static func mcpRegistered(_ client: Client, text: String) -> Bool {
+        switch client {
+        case .claude:
+            let object = (try? JSONSerialization.jsonObject(with: Data(text.utf8))) as? [String: Any]
+            return (object?["mcpServers"] as? [String: Any])?[server] != nil
+        case .codex:
+            return text.split(separator: "\n").contains { line in
+                let trimmed = line.trimmingCharacters(in: .whitespaces)
+                return trimmed == "[mcp_servers.\(server)]" || trimmed == "[mcp_servers.\"\(server)\"]"
+            }
+        }
+    }
+
+    static func mcpFile(_ client: Client, home: URL) -> URL {
+        client == .claude ? home.appendingPathComponent(".claude.json") : home.appendingPathComponent(".codex/config.toml")
+    }
+
+    /// Takes the Ledger's handlers out of one settings file, keeping the bytes it had next to it, and writes only when
+    /// the file has not changed meanwhile. Answers how many handlers went.
+    @discardableResult
+    static func removeOwnedHooks(at file: URL) -> Int {
+        guard let before = try? Data(contentsOf: file),
+              let settings = (try? JSONSerialization.jsonObject(with: before)) as? [String: Any] else { return 0 }
+        let (cleaned, removed) = withoutOwnedHooks(settings)
+        guard removed > 0,
+              let data = try? JSONSerialization.data(withJSONObject: cleaned, options: [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]),
+              (try? Data(contentsOf: file)) == before else { return 0 }
+        let backup = file.deletingLastPathComponent().appendingPathComponent(file.lastPathComponent + ".before-ledger-removal")
+        if !FileManager.default.fileExists(atPath: backup.path) { try? before.write(to: backup, options: .atomic) }
+        guard (try? (data + Data("\n".utf8)).write(to: file, options: .atomic)) != nil else { return 0 }
+        return removed
+    }
+
+    /// Hooks and MCP servers that still name the Ledger once its command is gone. Cheap when there are none: it reads
+    /// four small files.
+    static func removeOrphans(home: URL, program: (Client) -> String?, runner: Runner) async {
+        for client in Client.allCases {
+            removeOwnedHooks(at: hookFile(client, home: home))
+            guard let text = try? String(contentsOf: mcpFile(client, home: home), encoding: .utf8),
+                  mcpRegistered(client, text: text), let program = program(client) else { continue }
+            _ = await runner(program, mcpArguments(client))
+        }
     }
 
     /// True when the copy was deleted. `program` is where a client's own command is, when it is installed.

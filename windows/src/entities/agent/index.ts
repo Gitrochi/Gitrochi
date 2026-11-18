@@ -2,4 +2,4 @@
 export { type AgentHost, type AgentKind, agentKind, agentKinds, agents, type AgentSession, type AgentStatus, isActiveStatus, type TerminalAgent } from "./model/agents";
 export { skipsPermissions } from "./lib/arguments";
 export { agentHost, appDisplayName, containingRoot, type ExternalAgent, externalAgentKind, relativeFolder, resolveExternalAgents, terminalShell } from "./lib/external-agents";
-export { type LedgerCleanupIO, ledgerStableCommand, runLedgerCleanup } from "./lib/ledger-cleanup";
+export { type LedgerCleanupIO, type LedgerOrphanIO, isLedgerHook, ledgerHookFile, ledgerMcpFile, ledgerMcpRegistered, ledgerStableCommand, removeLedgerOrphans, runLedgerCleanup, withoutLedgerHooks } from "./lib/ledger-cleanup";

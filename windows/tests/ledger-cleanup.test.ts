@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   type LedgerCleanupIO, type LedgerClient, ledgerClients, ledgerCopyCanGo, ledgerHookArguments, ledgerMcpArguments, ledgerRegistration, ledgerStableCommand, ledgerStatusArguments,
-  runLedgerCleanup,
+  ledgerHookFile, ledgerMcpRegistered, removeLedgerOrphans, runLedgerCleanup, withoutLedgerHooks,
 } from "@/entities/agent/lib/ledger-cleanup";
 
 // The one-time cleanup after the Ledger's removal: what it asks of the ledger command's copy and of the clients, and
@@ -124,5 +124,60 @@ describe("Ledger cleanup", () => {
     f.files.add(`${BIN}/other-tool.exe`);
     expect(await runLedgerCleanup(STABLE, f.io)).toBe(true);
     expect([...f.files].sort()).toEqual([`${BIN}/other-tool.exe`, DATABASE].sort());
+  });
+});
+
+describe("hooks and servers left without the ledger command", () => {
+  const ledgerHook = "'C:/Program Files/Gitrochi/gitrochi-ledger.exe' --db 'C:/x/ledger.sqlite3' observe claude Stop --managed-hook";
+  const mine = { type: "command", command: "my-hook" };
+  const settings = {
+    model: "opus",
+    hooks: {
+      Stop: [{ hooks: [{ type: "command", command: ledgerHook, timeout: 3 }] }],
+      PreToolUse: [{ matcher: "Bash", hooks: [{ type: "command", command: ledgerHook }, mine] }],
+      Notification: [{ hooks: [mine] }],
+    },
+  };
+
+  it("takes out only the Ledger's handlers and what they leave empty", () => {
+    const { settings: cleaned, removed } = withoutLedgerHooks(settings);
+    expect(removed).toBe(2);
+    expect(cleaned).toEqual({ model: "opus", hooks: { PreToolUse: [{ matcher: "Bash", hooks: [mine] }], Notification: [{ hooks: [mine] }] } });
+    expect(withoutLedgerHooks({ hooks: { Stop: [{ hooks: [{ command: "gitrochi-ledger observe" }] }] } }).removed).toBe(0);
+    expect(withoutLedgerHooks({ hooks: { Stop: [{ hooks: [{ command: ledgerHook }] }] } }).settings).toEqual({});
+  });
+
+  it("finds each client's server entry", () => {
+    expect(ledgerMcpRegistered("claude", '{"mcpServers":{"gitrochi-ledger":{"command":"x"}}}')).toBe(true);
+    expect(ledgerMcpRegistered("claude", '{"mcpServers":{"other":{}}}')).toBe(false);
+    expect(ledgerMcpRegistered("claude", "not json")).toBe(false);
+    expect(ledgerMcpRegistered("codex", 'model = "o3"\r\n\r\n[mcp_servers.gitrochi-ledger]\r\ncommand = "x"\r\n')).toBe(true);
+    expect(ledgerMcpRegistered("codex", "[mcp_servers.other]\n")).toBe(false);
+  });
+
+  it("cleans the files once, keeps the old text, and asks only the client that still names the server", async () => {
+    const files = new Map<string, string>([
+      ["C:/Users/example/.claude/settings.json", JSON.stringify(settings)],
+      ["C:/Users/example/.claude.json", '{"mcpServers":{"gitrochi-ledger":{}}}'],
+      ["C:/Users/example/.codex/config.toml", "[mcp_servers.other]\n"],
+    ]);
+    const ran: string[] = [];
+    const io = {
+      readText: async (path: string) => files.get(path) ?? null,
+      writeText: async (path: string, content: string) => void files.set(path, content),
+      run: async (program: string, args: string[]) => (ran.push([program, ...args].join(" ")), { status: 0, stdout: "" }),
+      program: (client: "claude" | "codex") => client,
+    };
+    expect(ledgerHookFile("claude", "C:\\Users\\example")).toBe("C:/Users/example/.claude/settings.json");
+    await removeLedgerOrphans("C:\\Users\\example", io);
+    expect(JSON.parse(files.get("C:/Users/example/.claude/settings.json")!)).toEqual(withoutLedgerHooks(settings).settings);
+    expect(files.get("C:/Users/example/.claude/settings.json.before-ledger-removal")).toBe(JSON.stringify(settings));
+    expect(ran).toEqual(["claude mcp remove --scope user gitrochi-ledger"]);
+    ran.length = 0;
+    files.set("C:/Users/example/.claude.json", '{"mcpServers":{}}');
+    const settled = files.get("C:/Users/example/.claude/settings.json");
+    await removeLedgerOrphans("C:\\Users\\example", io);
+    expect(ran).toEqual([]);
+    expect(files.get("C:/Users/example/.claude/settings.json")).toBe(settled);
   });
 });
