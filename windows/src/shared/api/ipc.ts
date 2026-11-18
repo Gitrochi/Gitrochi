@@ -210,4 +210,21 @@ export const ipc = {
   /** 의존 규칙 파일(.gitch/graph.rules)을 메모장으로(.rules 에 묶인 앱이 없어도) */
   openRules: (path: string) => invoke<void>("open_rules", { path }),
   appReady: () => invoke<void>("app_ready"),
+
+  /** The tray icon's menu (a line without a label is a separator), shown while visible */
+  trayUpdate: (items: TrayItem[], visible: boolean) => invoke<void>("tray_update", { items, visible }),
+  /** A tray menu line was chosen: its id */
+  onTrayAction: (fn: (id: string) => void): Promise<UnlistenFn> => listen<string>("tray-action", (e) => fn(e.payload)),
+  /** The window's close button, once the screen answers it (trayUpdate) */
+  onCloseRequested: (fn: () => void): Promise<UnlistenFn> => listen("app-close-requested", fn),
+  hideWindow: () => invoke<void>("window_hide"),
+  showWindow: () => invoke<void>("window_show"),
+  /** Quits for good, without asking again */
+  quitApp: () => invoke<void>("app_quit"),
 };
+
+export interface TrayItem {
+  id: string | null;
+  label: string | null;
+  enabled: boolean;
+}

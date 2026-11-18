@@ -14,6 +14,21 @@ final class Workspace {
     var openRepositories: [RepoStore] { stores.compactMap(\.store).filter { $0.url != nil } }
     private var restoreTaken = false
     private var terminating = false
+    var isTerminating: Bool { terminating }
+
+    /// The tabs of the last window closed while Gitrochi keeps running, in their order (see closed(_:))
+    fileprivate(set) var backgroundTabs: [BackgroundTab] = []
+    /// Tabs closing in this turn of the run loop, and the repositories open before they started closing
+    fileprivate var closingTabs: [BackgroundTab]?
+    fileprivate var closingOrder: [URL] = []
+    /// Windows still to attach while the background tabs open again
+    fileprivate var restoreWindowsLeft = 0
+    fileprivate struct Reveal {
+        let path: String
+        let action: ((RepoStore) -> Void)?
+    }
+    /// The tab the menu bar asked for, brought forward once it has opened
+    fileprivate var revealing: Reveal?
     private let launchedAt = Date()
 
     /// 복원하느라 열어 달라고 한 뒤 아직 저장소 경로를 받지 못한 창 수
@@ -111,6 +126,11 @@ final class Workspace {
         openWindow?()
     }
 
+    /// A repository window is on screen (one still invisible behind the launch splash counts)
+    var hasRepositoryWindow: Bool {
+        NSApp.windows.contains { $0.tabbingIdentifier == WindowTabbing.identifier && $0.isVisible }
+    }
+
     /// Selects the tab (other than except) already showing folder; false if there is none
     func bringForward(showing folder: URL, except: RepoStore) -> Bool {
         let path = folder.resolvingSymlinksInPath().path
@@ -154,6 +174,7 @@ final class Workspace {
             if !launching {
                 w.alphaValue = 1
                 w.makeKeyAndOrderFront(nil)
+                MainActor.assumeIsolated { self.backgroundWindowAttached() }
             }
         }
     }
@@ -215,9 +236,9 @@ final class Workspace {
         UserDefaults.standard.set(paths, forKey: Self.tabsKey)
     }
 
-    /// 첫 창만 한 번 받아 간다: 지난번 탭들의 경로
+    /// 첫 창만 한 번 받아 간다: 지난번 탭들의 경로. Later, a new window takes the tabs left in the background instead.
     func takeRestoreList() -> [URL] {
-        guard !restoreTaken else { return [] }
+        guard !restoreTaken else { return takeBackgroundTabs() }
         restoreTaken = true
         let d = UserDefaults.standard
         var paths = d.stringArray(forKey: Self.tabsKey) ?? []
@@ -225,6 +246,163 @@ final class Workspace {
         var seen = Set<String>()
         return paths.filter { FileManager.default.fileExists(atPath: $0) && seen.insert($0).inserted }
             .map { URL(fileURLWithPath: $0, isDirectory: true) }
+    }
+}
+
+// MARK: - Running in the menu bar (BackgroundMode)
+
+extension Workspace {
+    /// A tab closed with the last window while Gitrochi keeps running: its repository is listed in the menu bar and
+    /// opens again from there, and its terminals keep running until it does
+    struct BackgroundTab {
+        let url: URL
+        var terminals: [TerminalSession] = []
+        var layout: TerminalNode?
+        var activeTerminal: UUID?
+        var showTerminal = false
+        /// A window was asked to open it
+        var requested = false
+    }
+
+    /// What the menu bar lists as open: the tabs of the open windows, then the tabs left in the background
+    var menuRepositories: [(url: URL, terminals: [TerminalSession])] {
+        openRepositories.compactMap { store in store.url.map { ($0, store.terminals) } }
+            + backgroundTabs.map { ($0.url, $0.terminals) }
+    }
+
+    /// Terminals that something runs in or that wait for input, open or in the background: quitting ends them
+    var busyTerminalCount: Int {
+        (openRepositories.flatMap(\.terminals) + backgroundTabs.flatMap(\.terminals)).filter { session in
+            guard session.running else { return false }
+            let state = TerminalPanelLayout.tabActivity(agent: AgentCenter.shared.status(in: session)?.rawValue, shellBusy: session.busy)
+            return state.busy || state.waiting
+        }.count
+    }
+
+    /// A repository window (tab) closed. When the last one closes while Gitrochi keeps running, its tabs and their
+    /// terminals stay in the background; otherwise the terminals end with the tab, as they always did. Which of the two
+    /// is known once every tab of a closing window has closed, at the end of this turn of the run loop.
+    func closed(_ store: RepoStore) {
+        if BackgroundMode.keepRunning, !isTerminating {
+            if closingTabs == nil {
+                closingTabs = []
+                closingOrder = openRepositories.compactMap(\.url)
+                DispatchQueue.main.async { MainActor.assumeIsolated { self.settleClosing() } }
+            }
+            if let url = store.url {
+                closingTabs?.append(BackgroundTab(url: url, terminals: store.terminals, layout: store.terminalLayout,
+                                                  activeTerminal: store.activeTerminalID, showTerminal: store.showTerminal))
+                store.releaseTerminals()
+            }
+        }
+        unregister(store)
+        store.close()
+    }
+
+    private func settleClosing() {
+        guard let tabs = closingTabs else { return }
+        closingTabs = nil
+        let order = closingOrder
+        closingOrder = []
+        guard !hasRepositoryWindow, BackgroundMode.keepRunning, !isTerminating, !RestoreState.shared.active else {
+            tabs.forEach { $0.terminals.forEach { $0.terminate() } }
+            return
+        }
+        // the next window starts a tab group of its own rather than joining a closed one
+        hostWindow = nil
+        // only empty tabs closed (Home): nothing to keep, and the saved tabs stay as they are
+        guard !tabs.isEmpty else { return }
+        var kept: [BackgroundTab] = []
+        for url in order + tabs.map(\.url) where !kept.contains(where: { $0.url == url }) {
+            if let tab = tabs.first(where: { $0.url == url }) { kept.append(tab) }
+        }
+        backgroundTabs += kept
+        // quitting from the menu bar and opening Gitrochi again brings these tabs back
+        UserDefaults.standard.set(backgroundTabs.map(\.url.path), forKey: Self.tabsKey)
+        BackgroundMode.shared.windowsClosed()
+    }
+
+    /// The tabs left in the background that no window was asked to open yet. The window taking them restores them as
+    /// at launch; the tab the menu bar asked for comes forward once all of them have attached.
+    func takeBackgroundTabs() -> [URL] {
+        let urls = backgroundTabs.filter { !$0.requested }.map(\.url)
+        for i in backgroundTabs.indices { backgroundTabs[i].requested = true }
+        restoreWindowsLeft = max(0, urls.count - 1)
+        return urls
+    }
+
+    /// A tab opened its repository: it takes back the terminals left running in the background, and comes forward if
+    /// the menu bar asked for it
+    func storeOpened(_ store: RepoStore) {
+        guard let url = store.url else { return }
+        if let i = backgroundTabs.firstIndex(where: { RepoStore.samePath($0.url.path, url.path) }) {
+            let tab = backgroundTabs.remove(at: i)
+            store.adoptTerminals(tab.terminals, layout: tab.layout, active: tab.activeTerminal, shown: tab.showTerminal)
+        }
+        finishReveal()
+    }
+
+    /// Open Gitrochi: the windows come forward, and the tabs left in the background open again
+    func reopen() {
+        BackgroundMode.shared.windowWillOpen()
+        if hasRepositoryWindow {
+            openRemainingBackgroundTabs()
+            (hostWindow ?? NSApp.windows.first { $0.tabbingIdentifier == WindowTabbing.identifier && $0.isVisible })?.makeKeyAndOrderFront(nil)
+            return
+        }
+        // the tab that was in front when the window closed is in front again
+        if let selected = UserDefaults.standard.string(forKey: Self.selectedKey),
+           backgroundTabs.contains(where: { !$0.requested && RepoStore.samePath($0.url.path, selected) }) {
+            revealing = Reveal(path: selected, action: nil)
+        }
+        openWindow?()
+    }
+
+    /// Brings the repository's tab forward, opening it (with the tabs left in the background) when it has no window,
+    /// then runs action on it: the menu bar's repositories, terminals and scheduled runs
+    func reveal(path: String, then action: ((RepoStore) -> Void)? = nil) {
+        BackgroundMode.shared.windowWillOpen()
+        if let store = openRepositories.first(where: { $0.url.map { RepoStore.samePath($0.path, path) } == true }) {
+            bring(store)
+            action?(store)
+            return
+        }
+        revealing = Reveal(path: path, action: action)
+        let index = backgroundTabs.firstIndex { RepoStore.samePath($0.url.path, path) }
+        if hasRepositoryWindow {
+            if let index { backgroundTabs[index].requested = true }
+            routeOpener?(path)
+        } else {
+            if backgroundTabs.contains(where: { !$0.requested }) { openWindow?() }
+            if index == nil { routeOpener?(path) }
+        }
+    }
+
+    private func openRemainingBackgroundTabs() {
+        for i in backgroundTabs.indices where !backgroundTabs[i].requested {
+            backgroundTabs[i].requested = true
+            routeOpener?(backgroundTabs[i].url.path)
+        }
+    }
+
+    fileprivate func backgroundWindowAttached() {
+        guard restoreWindowsLeft > 0 else { return }
+        restoreWindowsLeft -= 1
+        finishReveal()
+    }
+
+    private func finishReveal() {
+        guard restoreWindowsLeft == 0, let reveal = revealing,
+              let store = openRepositories.first(where: { $0.url.map { RepoStore.samePath($0.path, reveal.path) } == true }) else { return }
+        revealing = nil
+        bring(store)
+        reveal.action?(store)
+    }
+
+    private func bring(_ store: RepoStore) {
+        store.window?.tabGroup?.selectedWindow = store.window
+        store.window?.makeKeyAndOrderFront(nil)
+        NSApp.activate()
     }
 }
 

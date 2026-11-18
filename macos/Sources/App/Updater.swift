@@ -173,7 +173,7 @@ final class UpdateCenter {
                 guard try await Self.replaceAsAdmin(with: newApp, at: dest) else { phase = .available; return }
                 try Self.replace(with: nil, at: dest, afterPID: pid, relaunch: true)
             }
-            NSApp.terminate(nil)
+            BackgroundMode.shared.quitToRestart()
         } catch {
             phase = .failed((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
             progress = nil

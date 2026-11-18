@@ -11,6 +11,7 @@ mod process;
 mod pty;
 mod repo_index;
 mod system;
+mod tray;
 mod update;
 mod watch;
 
@@ -22,18 +23,23 @@ pub fn run() {
         .manage(launch::Pending::default())
         .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
             launch::receive(app, args);
-            if let Some(w) = app.get_webview_window("main") {
-                let _ = w.unminimize();
-                let _ = w.show();
-                let _ = w.set_focus();
-            }
+            tray::show_main(app);
         }))
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(update::PendingUpdate::default())
+        .manage(tray::Background::default())
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                if window.label() == "main" {
+                    tray::close_requested(window, api);
+                }
+            }
+        })
         .setup(|app| {
             launch::receive(app.handle(), std::env::args().collect());
+            tray::setup(app.handle())?;
             // 배포본에서는 웹뷰의 브라우저 단축키(F5 새로 고침, Ctrl+F 찾기, Ctrl+P 인쇄 등)를 끈다 — 앱 단축키와 겹치지 않게
             #[cfg(all(windows, not(debug_assertions)))]
             if let Some(w) = app.get_webview_window("main") {
@@ -113,6 +119,10 @@ pub fn run() {
             update::update_install,
             update::update_verify,
             update::app_restart,
+            tray::tray_update,
+            tray::window_hide,
+            tray::window_show,
+            tray::app_quit,
         ])
         .run(tauri::generate_context!())
         .expect("Couldn't start Gitrochi");

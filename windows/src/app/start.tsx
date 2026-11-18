@@ -14,6 +14,7 @@ import { App } from "./ui/App";
 import { startAppLaunches } from "./lib/app-launch";
 import { startLedgerCleanup } from "./lib/ledger-cleanup";
 import { startScheduledRuns } from "./lib/scheduled-runs";
+import { startTray } from "./lib/tray";
 import { selfTestProgress } from "./lib/selftest-report";
 import { SelfTestBoundary } from "./lib/selftest-boundary";
 // 웹뷰 기본 우클릭 메뉴(새로 고침·검사 등)는 끄고, 앱 메뉴만 쓴다(입력 칸은 그대로)
@@ -42,6 +43,8 @@ export async function start() {
   if (!env.selftest) void startLedgerCleanup();
   // Actions runs scheduled for later; the self-test drives the schedule with its own clock instead
   if (!env.selftest) startScheduledRuns();
+  // the tray icon, so closing the window can leave Gitrochi running; the self-test keeps the window's own close
+  if (!env.selftest) startTray();
   // 윈도에서 못 찾은 AI CLI 는 WSL 에서 한 번 찾아 둔다(WSL 을 깨우느라 몇 초 걸릴 수 있어 뒤에서)
   if (!env.selftest) setTimeout(() => void tools.probeWsl(), 6000);
   window.addEventListener("beforeunload", () => void settings.flush());
