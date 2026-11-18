@@ -2292,5 +2292,9 @@
   "Opens a web page next to the terminals, such as a dev server.": "Otevře webovou stránku vedle terminálů, například vývojový server.",
   "Forward": "Vpřed",
   "Reload": "Znovu načíst",
-  "Search or enter address": "Hledat nebo zadat adresu"
+  "Search or enter address": "Hledat nebo zadat adresu",
+  "Only the first 2 MB are shown.": "Zobrazují se jen první 2 MB.",
+  "The file is empty.": "Soubor je prázdný.",
+  "{0} rows · {1} columns": "Řádky: {0} · sloupce: {1}",
+  "This file can't be shown as text.": "Tento soubor nelze zobrazit jako text."
 }

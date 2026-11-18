@@ -22,7 +22,7 @@ fn label(id: &str) -> String {
 fn parse(url: &str) -> Result<Url, String> {
     let parsed = Url::parse(url).map_err(|e| e.to_string())?;
     match parsed.scheme() {
-        "http" | "https" | "about" => Ok(parsed),
+        "http" | "https" | "about" | crate::preview::SCHEME => Ok(parsed),
         other => Err(format!("unsupported scheme: {other}")),
     }
 }
@@ -64,7 +64,8 @@ pub fn browser_open(
             }
         })
         .on_navigation(move |url| {
-            let allowed = matches!(url.scheme(), "http" | "https" | "about" | "blob" | "data");
+            let allowed = matches!(url.scheme(), "http" | "https" | "about" | "blob" | "data")
+                || crate::preview::is_preview(url);
             if allowed {
                 let _ = navigations.send(BrowserEvent::Url {
                     value: url.to_string(),

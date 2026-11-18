@@ -2294,5 +2294,9 @@
   "Opens a web page next to the terminals, such as a dev server.": "Weboldalt nyit meg a terminálok mellett, például egy fejlesztői szervert.",
   "Forward": "Előre",
   "Reload": "Újratöltés",
-  "Search or enter address": "Keresés vagy cím megadása"
+  "Search or enter address": "Keresés vagy cím megadása",
+  "Only the first 2 MB are shown.": "Csak az első 2 MB látható.",
+  "The file is empty.": "A fájl üres.",
+  "{0} rows · {1} columns": "{0} sor · {1} oszlop",
+  "This file can't be shown as text.": "Ez a fájl nem jeleníthető meg szövegként."
 }

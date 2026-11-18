@@ -32,6 +32,7 @@ final class BrowserSession: Identifiable {
         title = String(localized: "New tab")
         self.url = url
         view.uiDelegate = relay
+        view.navigationDelegate = relay
         observations = [
             view.observe(\.title) { [weak self] v, _ in let t = v.title; MainActor.assumeIsolated { self?.update(title: t) } },
             view.observe(\.url) { [weak self] v, _ in let u = v.url; MainActor.assumeIsolated { self?.update(url: u) } },
@@ -84,8 +85,9 @@ final class BrowserSession: Identifiable {
         if loading { view.stopLoading() } else if let builtFile { openFile(builtFile) } else { view.reload() }
     }
 
+    /// A web page opens in the system browser; a previewed file is shown in Finder
     func openExternally() {
-        if let target = file ?? url { NSWorkspace.shared.open(target) }
+        if let file { NSWorkspace.shared.activateFileViewerSelecting([file]) } else if let url { NSWorkspace.shared.open(url) }
     }
 
     func close() {
@@ -108,8 +110,16 @@ final class BrowserSession: Identifiable {
     }
 }
 
-/// Links that ask for a new window open in the same tab rather than nowhere
-private final class BrowserRelay: NSObject, WKUIDelegate {
+/// Links that ask for a new window open in the same tab rather than nowhere; a local file (a previewed HTML page)
+/// runs no script, as the built preview pages run none (Windows: the CSP in preview.rs)
+private final class BrowserRelay: NSObject, WKUIDelegate, WKNavigationDelegate {
+    func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, preferences: WKWebpagePreferences,
+                 decisionHandler: @escaping @MainActor (WKNavigationActionPolicy, WKWebpagePreferences) -> Void) {
+        let url = navigationAction.request.url
+        preferences.allowsContentJavaScript = !(url?.isFileURL == true || url?.absoluteString == "about:blank")
+        decisionHandler(.allow, preferences)
+    }
+
     func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
         if navigationAction.targetFrame == nil { webView.load(navigationAction.request) }
         return nil

@@ -2309,5 +2309,9 @@
   "Opens a web page next to the terminals, such as a dev server.": "Открывает веб-страницу рядом с терминалами, например сервер разработки.",
   "Forward": "Вперёд",
   "Reload": "Перезагрузить",
-  "Search or enter address": "Поиск или ввод адреса"
+  "Search or enter address": "Поиск или ввод адреса",
+  "Only the first 2 MB are shown.": "Показаны только первые 2 МБ.",
+  "The file is empty.": "Файл пуст.",
+  "{0} rows · {1} columns": "Строк: {0} · столбцов: {1}",
+  "This file can't be shown as text.": "Этот файл нельзя показать как текст."
 }

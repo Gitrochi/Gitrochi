@@ -2309,5 +2309,9 @@
   "Opens a web page next to the terminals, such as a dev server.": "Відкриває вебсторінку поруч із терміналами, наприклад сервер розробки.",
   "Forward": "Вперед",
   "Reload": "Перезавантажити",
-  "Search or enter address": "Пошук або введення адреси"
+  "Search or enter address": "Пошук або введення адреси",
+  "Only the first 2 MB are shown.": "Показано лише перші 2 МБ.",
+  "The file is empty.": "Файл порожній.",
+  "{0} rows · {1} columns": "Рядків: {0} · стовпців: {1}",
+  "This file can't be shown as text.": "Цей файл не можна показати як текст."
 }

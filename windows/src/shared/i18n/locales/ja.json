@@ -3001,5 +3001,9 @@
   "Opens a web page next to the terminals, such as a dev server.": "開発サーバーなどのWebページをターミナルの隣で開きます。",
   "Forward": "進む",
   "Reload": "再読み込み",
-  "Search or enter address": "検索またはアドレスを入力"
+  "Search or enter address": "検索またはアドレスを入力",
+  "Only the first 2 MB are shown.": "最初の2 MBのみ表示しています。",
+  "The file is empty.": "ファイルは空です。",
+  "{0} rows · {1} columns": "{0} 行 · {1} 列",
+  "This file can't be shown as text.": "このファイルはテキストとして表示できません。"
 }

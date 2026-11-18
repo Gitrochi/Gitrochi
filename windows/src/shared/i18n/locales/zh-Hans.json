@@ -2444,5 +2444,9 @@
   "Opens a web page next to the terminals, such as a dev server.": "在终端旁打开网页，例如开发服务器。",
   "Forward": "前进",
   "Reload": "重新加载",
-  "Search or enter address": "搜索或输入地址"
+  "Search or enter address": "搜索或输入地址",
+  "Only the first 2 MB are shown.": "仅显示前 2 MB。",
+  "The file is empty.": "文件为空。",
+  "{0} rows · {1} columns": "{0} 行 · {1} 列",
+  "This file can't be shown as text.": "此文件无法以文本显示。"
 }

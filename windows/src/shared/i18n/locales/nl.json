@@ -2266,5 +2266,9 @@
   "Opens a web page next to the terminals, such as a dev server.": "Opent een webpagina naast de terminals, zoals een ontwikkelserver.",
   "Forward": "Vooruit",
   "Reload": "Opnieuw laden",
-  "Search or enter address": "Zoek of voer adres in"
+  "Search or enter address": "Zoek of voer adres in",
+  "Only the first 2 MB are shown.": "Alleen de eerste 2 MB wordt getoond.",
+  "The file is empty.": "Het bestand is leeg.",
+  "{0} rows · {1} columns": "{0} rijen · {1} kolommen",
+  "This file can't be shown as text.": "Dit bestand kan niet als tekst worden getoond."
 }

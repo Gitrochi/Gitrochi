@@ -2265,5 +2265,9 @@
   "Opens a web page next to the terminals, such as a dev server.": "Membuka halaman web di samping terminal, seperti server pengembangan.",
   "Forward": "Maju",
   "Reload": "Muat ulang",
-  "Search or enter address": "Cari atau masukkan alamat"
+  "Search or enter address": "Cari atau masukkan alamat",
+  "Only the first 2 MB are shown.": "Hanya 2 MB pertama yang ditampilkan.",
+  "The file is empty.": "File kosong.",
+  "{0} rows · {1} columns": "{0} baris · {1} kolom",
+  "This file can't be shown as text.": "File ini tidak dapat ditampilkan sebagai teks."
 }

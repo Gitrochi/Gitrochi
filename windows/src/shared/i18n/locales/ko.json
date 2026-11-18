@@ -4007,5 +4007,9 @@
   "New browser tab": "새 브라우저 탭",
   "Opens a web page next to the terminals, such as a dev server.": "개발 서버 같은 웹 페이지를 터미널 옆에서 엽니다.",
   "Forward": "앞으로",
-  "Search or enter address": "검색어 또는 주소 입력"
+  "Search or enter address": "검색어 또는 주소 입력",
+  "Only the first 2 MB are shown.": "처음 2MB만 표시합니다.",
+  "The file is empty.": "빈 파일입니다.",
+  "{0} rows · {1} columns": "{0}행 · {1}열",
+  "This file can't be shown as text.": "이 파일은 텍스트로 표시할 수 없습니다."
 }

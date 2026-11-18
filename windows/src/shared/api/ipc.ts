@@ -176,6 +176,10 @@ export const ipc = {
   browserReload: (id: string) => invoke<void>("browser_reload", { id }),
   browserFocus: (id: string) => invoke<void>("browser_focus", { id }),
   browserClose: (id: string) => invoke<void>("browser_close", { id }),
+  /** A Ctrl-clicked word in a terminal → the file it names, from the shell's folder (or below it) */
+  previewResolve: (word: string, directory: string) => invoke<string | null>("preview_resolve", { word, directory }),
+  /** Registers a preview page (html) or a file the webview shows itself; returns the address to load */
+  previewRegister: (entry: { html: string } | { path: string; mime: string }) => invoke<string>("preview_register", { html: null, path: null, mime: null, ...entry }),
 
   watchStart: (id: string, path: string) => invoke<void>("watch_start", { id, path }),
   watchStop: (id: string) => invoke<void>("watch_stop", { id }),

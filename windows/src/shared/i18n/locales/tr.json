@@ -2297,5 +2297,9 @@
   "Opens a web page next to the terminals, such as a dev server.": "Geliştirme sunucusu gibi bir web sayfasını terminallerin yanında açar.",
   "Forward": "İleri",
   "Reload": "Yeniden yükle",
-  "Search or enter address": "Ara veya adres gir"
+  "Search or enter address": "Ara veya adres gir",
+  "Only the first 2 MB are shown.": "Yalnızca ilk 2 MB gösteriliyor.",
+  "The file is empty.": "Dosya boş.",
+  "{0} rows · {1} columns": "{0} satır · {1} sütun",
+  "This file can't be shown as text.": "Bu dosya metin olarak gösterilemez."
 }

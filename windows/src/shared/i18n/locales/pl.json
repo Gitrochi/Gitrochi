@@ -2293,5 +2293,9 @@
   "Opens a web page next to the terminals, such as a dev server.": "Otwiera stronę internetową obok terminali, np. serwer deweloperski.",
   "Forward": "Dalej",
   "Reload": "Odśwież",
-  "Search or enter address": "Wyszukaj lub wpisz adres"
+  "Search or enter address": "Wyszukaj lub wpisz adres",
+  "Only the first 2 MB are shown.": "Wyświetlane są tylko pierwsze 2 MB.",
+  "The file is empty.": "Plik jest pusty.",
+  "{0} rows · {1} columns": "Wiersze: {0} · kolumny: {1}",
+  "This file can't be shown as text.": "Tego pliku nie można wyświetlić jako tekstu."
 }

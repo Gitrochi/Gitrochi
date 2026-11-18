@@ -1,4 +1,5 @@
-import { addTab, BrowserSession, paneOf, panes, removeTab, selectTab, setRatio, shownIn, splitPane, TerminalSession, type TerminalSpec, type TermSplit } from "@/entities/terminal";
+import { addTab, BrowserSession, isLocalHost, paneOf, panes, removeTab, selectTab, setRatio, shownIn, splitPane, TerminalSession, type TerminalSpec, type TermSplit } from "@/entities/terminal";
+import { ipc } from "@/shared/api";
 import { RepoAI } from "./ai";
 
 /** 아래 터미널 패널 — split into panes of tabs (terminalLayout) */
@@ -25,6 +26,7 @@ export abstract class RepoTerminal extends RepoAI {
   private makeTerminal(dir: string, spec: Partial<TerminalSpec>) {
     const s = new TerminalSession({ ...spec, directory: dir });
     s.subscribe(() => this.emit());
+    s.onOpenLink = (text) => void this.openTerminalLink(s, text);
     this.terminals = [...this.terminals, s];
     this.activeTerminalID = s.id;
     this.showTerminal = true;
@@ -113,6 +115,45 @@ export abstract class RepoTerminal extends RepoAI {
     this.showTerminal = true;
     this.emit();
     return b;
+  }
+
+  /** The latest browser tab still in a pane, or a new one beside the terminal's pane */
+  private browserFor(beside: string): BrowserSession {
+    const b = [...this.browsers].reverse().find((x) => paneOf(this.terminalLayout, x.id));
+    return b ?? this.newBrowser(null, paneOf(this.terminalLayout, beside)?.id);
+  }
+
+  /** A web address from a terminal: dev servers open in a browser tab, other sites in the system browser */
+  openInBrowserTab(url: string, beside: string) {
+    const b = this.browserFor(beside);
+    b.open(url);
+    this.showTerminal = true;
+    this.selectBrowser(b);
+  }
+
+  /** A file Ctrl-clicked in a terminal: previewed in the latest browser tab, or a new one beside the terminal */
+  previewInBrowserTab(path: string, beside: string) {
+    const b = this.browserFor(beside);
+    void b.openFile(path);
+    this.showTerminal = true;
+    this.selectBrowser(b);
+  }
+
+  /** What a Ctrl-click on a word in the terminal does (macOS: onOpenLink in TerminalSession.swift) */
+  async openTerminalLink(s: TerminalSession, text: string) {
+    if (/^https?:\/\//i.test(text)) {
+      let host = "";
+      try {
+        host = new URL(text).host;
+      } catch {
+        return;
+      }
+      if (isLocalHost(host)) this.openInBrowserTab(text, s.id);
+      else void ipc.openUrl(text).catch(() => undefined);
+      return;
+    }
+    const path = await ipc.previewResolve(text, s.directory).catch(() => null);
+    if (path) this.previewInBrowserTab(path, s.id);
   }
 
   selectBrowser(b: BrowserSession) {

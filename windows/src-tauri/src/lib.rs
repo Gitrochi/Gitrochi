@@ -9,6 +9,7 @@ pub mod helper;
 mod launch;
 mod local_projects;
 mod net;
+mod preview;
 mod process;
 mod pty;
 mod repo_index;
@@ -69,6 +70,10 @@ pub fn run() {
             });
             Ok(())
         })
+        .manage(preview::Previews::default())
+        .register_uri_scheme_protocol(preview::SCHEME, |ctx, request| {
+            preview::serve(ctx.app_handle(), &request)
+        })
         .manage(pty::Ptys::default())
         .manage(watch::Watches::default())
         .invoke_handler(tauri::generate_handler![
@@ -79,6 +84,8 @@ pub fn run() {
             browser::browser_reload,
             browser::browser_focus,
             browser::browser_close,
+            preview::preview_register,
+            preview::preview_resolve,
             process::run_process,
             process::run_process_bytes,
             system::fs_read_base64,

@@ -17,15 +17,15 @@ export function BrowserPane({ page, store }: { page: BrowserSession; store: Repo
   useObserve(page);
   const box = useRef<HTMLDivElement>(null);
   const field = useRef<HTMLInputElement>(null);
-  const [address, setAddress] = useState(page.url ?? "");
+  const [address, setAddress] = useState(page.address);
   const [editing, setEditing] = useState(false);
 
   useEffect(() => {
-    if (!editing) setAddress(page.url ?? "");
-  }, [page.url, editing]);
+    if (!editing) setAddress(page.address);
+  }, [page.address, editing]);
 
   useEffect(() => {
-    if (!page.url) field.current?.focus();
+    if (!page.address) field.current?.focus();
   }, [page]);
 
   // Every frame: follow the box and hide while it is off screen or covered. Each change crosses to the native side once.
@@ -74,12 +74,12 @@ export function BrowserPane({ page, store }: { page: BrowserSession; store: Repo
           onKeyDown={(e) => {
             if (e.key === "Enter") go();
             else if (e.key === "Escape") {
-              setAddress(page.url ?? "");
+              setAddress(page.address);
               e.currentTarget.blur();
             }
           }}
         />
-        <IconButton small icon={<ExternalLink size={13} />} aria-label={t("Open in browser")} tip={t("Open in browser")} disabled={!page.url} onClick={() => page.openExternally()} />
+        <IconButton small icon={<ExternalLink size={13} />} aria-label={t("Open in browser")} tip={t("Open in browser")} disabled={!page.address} onClick={() => page.openExternally()} />
       </div>
       <div ref={box} className="browser-page" />
     </div>

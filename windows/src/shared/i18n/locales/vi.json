@@ -2267,5 +2267,9 @@
   "Opens a web page next to the terminals, such as a dev server.": "Mở một trang web bên cạnh các terminal, chẳng hạn máy chủ phát triển.",
   "Forward": "Tiến",
   "Reload": "Tải lại",
-  "Search or enter address": "Tìm kiếm hoặc nhập địa chỉ"
+  "Search or enter address": "Tìm kiếm hoặc nhập địa chỉ",
+  "Only the first 2 MB are shown.": "Chỉ hiển thị 2 MB đầu tiên.",
+  "The file is empty.": "Tệp trống.",
+  "{0} rows · {1} columns": "{0} hàng · {1} cột",
+  "This file can't be shown as text.": "Không thể hiển thị tệp này dưới dạng văn bản."
 }
