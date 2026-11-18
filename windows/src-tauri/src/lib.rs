@@ -2,6 +2,7 @@
 //! git 동작은 새로 구현하지 않고 시스템 git 을 그대로 실행한다.
 
 mod agents;
+mod autostart;
 mod editors;
 pub mod helper;
 mod launch;
@@ -123,6 +124,8 @@ pub fn run() {
             tray::window_hide,
             tray::window_show,
             tray::app_quit,
+            autostart::autostart_get,
+            autostart::autostart_set,
         ])
         .run(tauri::generate_context!())
         .expect("Couldn't start Gitrochi");

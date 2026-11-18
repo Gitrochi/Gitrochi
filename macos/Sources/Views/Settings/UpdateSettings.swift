@@ -30,6 +30,7 @@ struct UpdateSettings: View {
                 Text("Tells you when a new version is available; click to download, replace and restart. A downloaded file is installed only if its SHA-256 and signature match the release.")
                     .font(.caption).foregroundStyle(.secondary)
             }
+            BackgroundSettings()
         }
         .formStyle(.grouped)
     }

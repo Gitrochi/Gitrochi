@@ -221,6 +221,9 @@ export const ipc = {
   showWindow: () => invoke<void>("window_show"),
   /** Quits for good, without asking again */
   quitApp: () => invoke<void>("app_quit"),
+  /** Whether Gitrochi opens at login (Windows: the Run key) */
+  autostartGet: () => invoke<boolean>("autostart_get"),
+  autostartSet: (enabled: boolean) => invoke<void>("autostart_set", { enabled }),
 };
 
 export interface TrayItem {

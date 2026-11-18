@@ -5,6 +5,7 @@ import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { updater } from "@/shared/platform";
 import { Button, Checkbox, Spinner } from "@/shared/ui";
+import { BackgroundSettings } from "./BackgroundSettings";
 
 /** 버전과 자동 업데이트 */
 export function AboutSettings() {
@@ -44,6 +45,7 @@ export function AboutSettings() {
         </div>
         <span className="hint">{t("Tells you when a new version is available; click to download, install and restart. The installer runs only if its Gitrochi signature is valid.")}</span>
       </div>
+      <BackgroundSettings />
     </div>
   );
 }
