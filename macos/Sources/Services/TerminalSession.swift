@@ -392,10 +392,7 @@ extension RepoStore {
 
     private func makeTerminal(in dir: String, command: TerminalSession.Command?) -> TerminalSession {
         let s = TerminalSession(directory: dir, command: command)
-        s.view.onFocus = { [weak self, weak s] in
-            guard let self, let s, self.activeTerminalID != s.id else { return }
-            self.selectTerminal(s)
-        }
+        wire(s)
         terminals.append(s)
         activeTerminalID = s.id
         showTerminal = true
@@ -474,9 +471,38 @@ extension RepoStore {
 
     func closeAllTerminals() {
         terminals.forEach { $0.terminate() }
+        releaseTerminals()
+    }
+
+    /// Lets go of the terminals without ending them: the tab closed with the last window while Gitrochi keeps running
+    /// in the menu bar, and Workspace holds them until the repository opens again
+    func releaseTerminals() {
+        terminals.forEach { $0.isVisible = false }
         terminals = []
         terminalLayout = nil
         activeTerminalID = nil
         showTerminal = false
+    }
+
+    /// Takes back terminals that kept running while the repository had no window, with their panes as they were
+    func adoptTerminals(_ sessions: [TerminalSession], layout: TerminalNode?, active: UUID?, shown: Bool) {
+        guard !sessions.isEmpty else { return }
+        sessions.forEach(wire)
+        if terminals.isEmpty {
+            terminalLayout = layout
+        } else {
+            for s in sessions { terminalLayout = TerminalNode.adding(s.id, to: nil, in: terminalLayout) }
+        }
+        terminals += sessions
+        activeTerminalID = active ?? sessions.last?.id
+        showTerminal = showTerminal || shown
+    }
+
+    /// Clicking into the terminal selects its tab
+    private func wire(_ s: TerminalSession) {
+        s.view.onFocus = { [weak self, weak s] in
+            guard let self, let s, self.activeTerminalID != s.id else { return }
+            self.selectTerminal(s)
+        }
     }
 }
