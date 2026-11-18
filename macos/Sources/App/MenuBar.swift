@@ -36,12 +36,8 @@ final class BackgroundMode: NSObject, NSMenuDelegate {
     func update() {
         if Self.keepRunning {
             guard item == nil else { return }
-            let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-            if let image = DesignSymbols.image("arrow.triangle.branch")?.copy() as? NSImage {
-                image.size = NSSize(width: 16, height: 16)
-                image.isTemplate = true
-                item.button?.image = image
-            }
+            let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+            item.button?.image = MenuBarIcon.image()
             item.button?.toolTip = "Gitrochi"
             item.button?.setAccessibilityLabel("Gitrochi")
             let menu = NSMenu()
