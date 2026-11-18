@@ -19,6 +19,7 @@ final class BackgroundMode: NSObject, NSMenuDelegate {
     /// Called once at launch
     func start() {
         UserDefaults.standard.register(defaults: [Self.keepRunningKey: true])
+        AppLanguage.quitToRestart = { BackgroundMode.shared.quitToRestart() }
         update()
         // a window coming forward (Settings too) brings the Dock icon back
         NotificationCenter.default.addObserver(forName: NSWindow.didBecomeMainNotification, object: nil, queue: .main) { _ in
