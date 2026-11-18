@@ -97,7 +97,7 @@ enum InstallerDisk {
         Task {
             do {
                 try await move(source, to: dest, copying: !same, quitting: same ? [] : others)
-                NSApp.terminate(nil)
+                BackgroundMode.shared.quitToRestart()
             } catch is CancellationError {
             } catch {
                 let failed = NSAlert()

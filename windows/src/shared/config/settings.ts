@@ -70,3 +70,10 @@ export function removeRecent(path: string) {
     recents().filter((p) => p !== path),
   );
 }
+
+// MARK: Running in the background
+
+/** Closing the window keeps Gitrochi running in the tray; on unless turned off (macOS: BackgroundMode.keepRunningKey) */
+export const keepRunningInBackground = () => settings.get<boolean>("keepRunningInBackground", true);
+
+export const setKeepRunningInBackground = (on: boolean) => settings.set("keepRunningInBackground", on);

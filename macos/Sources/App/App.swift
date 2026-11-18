@@ -7,8 +7,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
     /// 마지막 창을 닫으면 종료. 단, 실행 중(스플래시)에는 여분의 빈 창을 닫는 순간 작업 창이 아직 투명하게
     /// 준비 중이라 '마지막 창'으로 잘못 판단될 수 있어 종료하지 않는다.
+    /// Keeping running in the menu bar (the default), Gitrochi stays when the last window closes.
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
-        MainActor.assumeIsolated { !RestoreState.shared.active }
+        MainActor.assumeIsolated { BackgroundMode.shared.quitsAfterLastWindow() }
+    }
+
+    /// Quitting while runs are scheduled or terminals are busy asks once
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        MainActor.assumeIsolated { BackgroundMode.shared.confirmQuit() ? .terminateNow : .terminateCancel }
+    }
+
+    /// Opening Gitrochi again while no window is open brings back the tabs left in the background
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        MainActor.assumeIsolated {
+            guard !flag, !RestoreState.shared.active else { return true }
+            Workspace.shared.reopen()
+            return false
+        }
     }
 
     /// 첫 창이 그려지기 전에 테마를 정해 둔다(잠깐 다른 테마로 번쩍이지 않게)
@@ -27,6 +42,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         cleanUpLedger()
         // Actions runs scheduled for later start while the app is open, whichever repositories are
         MainActor.assumeIsolated { ScheduledRunStore.shared.start() }
+        // the menu bar item, so the app can keep running with its windows closed
+        MainActor.assumeIsolated { BackgroundMode.shared.start() }
         // 시스템이 첫 창을 만들지 않고 넘어가는 때가 있다(백그라운드 실행 등) — 그러면 직접 하나 연다
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             MainActor.assumeIsolated { Workspace.shared.ensureWindow() }
@@ -108,8 +125,7 @@ struct RepoWindow: View {
         RepoContainer()
             .environment(store)
             .background(WindowTabbing(onAttach: { store.window = $0 }, onClose: {
-                Workspace.shared.unregister(store)
-                store.close()
+                Workspace.shared.closed(store)
             }))
             .focusedSceneValue(\.repoStore, store)
             .navigationTitle(store.windowTitle)
@@ -122,6 +138,7 @@ struct RepoWindow: View {
             .onChange(of: store.url) { _, u in
                 path = u?.path
                 Workspace.shared.persist()
+                if u != nil { Workspace.shared.storeOpened(store) }
             }
             .onChange(of: path) { _, p in
                 // 복원 탭인데 경로가 조금 늦게 들어온 경우: 그때 연다

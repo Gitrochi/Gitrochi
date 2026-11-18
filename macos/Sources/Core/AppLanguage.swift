@@ -56,12 +56,16 @@ enum AppLanguage {
         Locale(identifier: "en").localizedString(forIdentifier: current) ?? "English"
     }
 
+    /// How the app quits to restart; the app sets it so a restart skips the quit question (BackgroundMode.quitToRestart).
+    /// Core code is also built alone in tests, so it can't name the app's types.
+    @MainActor static var quitToRestart: () -> Void = { NSApp.terminate(nil) }
+
     /// 앱을 끄고 다시 연다(언어를 바꾼 뒤)
     @MainActor static func relaunch() {
         let p = Process()
         p.executableURL = URL(fileURLWithPath: "/bin/sh")
         p.arguments = ["-c", "while kill -0 \(ProcessInfo.processInfo.processIdentifier) 2>/dev/null; do sleep 0.2; done; /usr/bin/open \"$0\"", Bundle.main.bundlePath]
         try? p.run()
-        NSApp.terminate(nil)
+        quitToRestart()
     }
 }
