@@ -5,7 +5,7 @@ import { t } from "@/shared/i18n";
 import { Observable } from "@/shared/lib";
 import { describe } from "@/shared/platform";
 import { CIAPI } from "../api/ci-api";
-import { decodeScheduledRuns, type ScheduledRun, scheduledRunAction, scheduledRunsFor, scheduleInterval } from "./scheduled-runs";
+import { decodeScheduledRuns, scheduledCommitRun, type ScheduledRun, scheduledRunAction, scheduledRunsFor, scheduleInterval } from "./scheduled-runs";
 
 /** Where the runs are kept, what time it is and how a run starts; the self-test brings its own */
 export interface ScheduledRunHost {
@@ -15,14 +15,19 @@ export interface ScheduledRunHost {
   start(run: ScheduledRun): Promise<void>;
 }
 
-/** The same calls as the run sheet, with the saved account's token read now */
+/**
+ * The same calls as the run sheet, with the saved account's token read now. A run on a chosen commit starts that
+ * commit's run again as it is then (CIAPI.startCommitRun).
+ */
 async function dispatch(run: ScheduledRun) {
   const account = accounts.accounts.find((a) => a.id === run.accountID);
   if (!account) throw new Error(t("The account for this run is no longer connected."));
   const token = await accounts.token(account, { reportReadFailure: true });
   if (!token) throw new Error(t("Couldn't read the account's token."));
   const c = { target: { provider: run.provider, host: run.host, remote: run.remote, path: run.path }, token, apiBase: accountApiBase(account) };
-  if (run.provider === "gitlab") await CIAPI.runPipeline(c, run.ref, run.variables);
+  const commitRun = scheduledCommitRun(run);
+  if (commitRun) await CIAPI.startCommitRun(c, commitRun);
+  else if (run.provider === "gitlab") await CIAPI.runPipeline(c, run.ref, run.variables);
   else if (run.workflowID !== null) await CIAPI.dispatch(c, run.workflowID, run.ref, run.inputs);
   else throw new Error(t("This branch has no workflow with 'Run workflow' (workflow_dispatch)."));
 }

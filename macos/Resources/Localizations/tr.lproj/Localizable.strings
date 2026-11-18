@@ -2251,4 +2251,15 @@
 "Stage the files you want to include." = "Eklemek istediğiniz dosyaları hazırlayın.";
 "Write a summary to enable commit." = "Commit için bir özet yazın.";
 "Conflicted" = "Çakışmalı";
+"Latest on %@" = "%@ üzerindeki en son commit";
+"Workflow run" = "İş akışı çalıştırması";
+"Reading the jobs…" = "İşler okunuyor…";
+"This pipeline has no jobs." = "Bu pipeline’da iş yok.";
+"Presses this job in the pipeline of %@ on %@." = "Bu işi %2$@ üzerindeki %1$@ pipeline’ında başlatır.";
+"Runs this job again in the pipeline of %@ on %@." = "Bu işi %2$@ üzerindeki %1$@ pipeline’ında yeniden çalıştırır.";
+"Re-runs this run of %@ on %@ with its original inputs." = "%2$@ üzerindeki %1$@ çalıştırmasını özgün girdileriyle yeniden çalıştırır.";
+"The job '%@' is no longer in this pipeline." = "'%@' işi artık bu pipeline’da yok.";
+"This job is already running." = "Bu iş zaten çalışıyor.";
+"This job can't be started now." = "Bu iş şu anda başlatılamaz.";
+"This run is still running." = "Bu çalıştırma hâlâ sürüyor.";
 "Not pushed yet" = "Henüz gönderilmedi";

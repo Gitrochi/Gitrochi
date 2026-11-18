@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
-import { canSchedule, type CIInput, type CIWorkflow, dateTimeInputValue, nextFullHour, parseDateTimeInput, scheduledRuns } from "@/entities/ci";
+import {
+  canSchedule, type CIInput, type CIJob, type CIWorkflow, type CommitRun, commitWorkflowRuns, dateTimeInputValue, defaultCommitJob, nextFullHour,
+  parseDateTimeInput, type RunCommit, scheduledRuns, statusInfo,
+} from "@/entities/ci";
 import type { Provider } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
+import { listWhen } from "@/shared/lib";
 import { describe } from "@/shared/platform";
 import { Button, Checkbox, IconButton, Modal, Segmented, Spinner } from "@/shared/ui";
 
@@ -18,12 +22,24 @@ interface Variable {
 
 let nextVarID = 1;
 
-/** GitLab: 브랜치·변수로 새 파이프라인 / GitHub: workflow_dispatch 워크플로를 브랜치·입력값으로 실행 */
+/**
+ * GitLab: 브랜치·변수로 새 파이프라인 / GitHub: workflow_dispatch 워크플로를 브랜치·입력값으로 실행.
+ * With a commit of the branch chosen, that commit's own run starts again: a GitLab job is pressed, a GitHub run re-run.
+ */
 export function RunPipelineSheet({ store, close }: { store: RepoStore; close: () => void }) {
   const ci = store.ci;
   const provider: Provider = store.target?.provider ?? "gitlab";
   const branches = ci.branches;
   const [ref, setRef] = useState(() => branches[0] ?? ci.currentRef ?? "");
+  // the branch's commits with runs on it; null runs on the branch's tip as it is when the run starts
+  const [commits, setCommits] = useState<RunCommit[]>([]);
+  const [sha, setSha] = useState<string | null>(null);
+  // GitLab: the chosen commit's pipeline jobs, manual ones first, and the one to press
+  const [jobs, setJobs] = useState<CIJob[]>([]);
+  const [jobName, setJobName] = useState<string | null>(null);
+  // GitHub: the chosen commit's workflow run to re-run
+  const [runID, setRunID] = useState<number | null>(null);
+  const commit = sha ? (commits.find((c) => c.sha === sha) ?? null) : null;
   const [variables, setVariables] = useState<Variable[]>([]);
   const [workflows, setWorkflows] = useState<CIWorkflow[]>([]);
   const [workflowID, setWorkflowID] = useState<number | null>(null);
@@ -79,8 +95,55 @@ export function RunPipelineSheet({ store, close }: { store: RepoStore; close: ()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ci, provider, ref]);
 
+  useEffect(() => {
+    let cancelled = false;
+    setSha(null);
+    setCommits([]);
+    void ci.commits(ref.trim()).then((list) => { if (!cancelled) setCommits(list); }, () => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [ci, ref]);
+
+  // a chosen commit starts on its first manual job (GitLab) or its newest workflow run (GitHub)
+  useEffect(() => {
+    setJobs([]);
+    setJobName(null);
+    setRunID(null);
+    if (!commit) return;
+    if (provider === "github") {
+      setRunID(commitWorkflowRuns(commit)[0]?.id ?? null);
+      return;
+    }
+    const pipeline = commit.runs[0]?.id;
+    if (pipeline === undefined) return;
+    let cancelled = false;
+    setLoading(true);
+    ci.commitJobs(pipeline)
+      .then((list) => {
+        if (cancelled) return;
+        setJobs(list);
+        setJobName(defaultCommitJob(list)?.name ?? null);
+      }, () => {})
+      .finally(() => !cancelled && setLoading(false));
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ci, provider, commit?.sha]);
+
+  // what starts again for the chosen commit
+  const commitRun: CommitRun | null = (() => {
+    if (!commit) return null;
+    if (provider === "github") return runID === null ? null : { runID, jobName: null };
+    const pipeline = commit.runs[0]?.id;
+    return pipeline !== undefined && jobName && jobs.some((j) => j.name === jobName) ? { runID: pipeline, jobName } : null;
+  })();
+  const chosenJob = jobs.find((j) => j.name === jobName) ?? null;
+
   const canRun = (() => {
     if (!ref.trim()) return false;
+    if (commit) return !!commitRun;
     if (provider === "gitlab") return true;
     if (!workflow) return false;
     return workflow.inputs.every((i) => !i.required || i.type === "boolean" || !!(values[i.name] ?? "").trim());
@@ -88,6 +151,12 @@ export function RunPipelineSheet({ store, close }: { store: RepoStore; close: ()
 
   const run = () => {
     if (!canRun) return;
+    if (commit && commitRun) {
+      if (later) return schedule([], {}, commit, commitRun);
+      close();
+      void ci.runOnCommit(commitRun);
+      return;
+    }
     const vars = variables.map((v): [string, string] => [v.key.trim(), v.value]).filter(([k]) => !!k);
     const inputs = workflow ? Object.fromEntries(Object.entries(values).filter(([k, v]) => !!v && workflow.inputs.some((i) => i.name === k))) : {};
     if (later) return schedule(vars, inputs);
@@ -100,15 +169,18 @@ export function RunPipelineSheet({ store, close }: { store: RepoStore; close: ()
   };
 
   /** Keeps the run with this repository and its account (never the token) for the app to start at the chosen time */
-  const schedule = (vars: [string, string][], inputs: Record<string, string>) => {
+  const schedule = (vars: [string, string][], inputs: Record<string, string>, onCommit: RunCommit | null = null, target: CommitRun | null = null) => {
     const now = scheduledRuns.now(), at = parseDateTimeInput(runAt);
     setCheckedAt(now);
-    const target = store.target, account = store.hostingAccount, path = store.path;
-    if (!canSchedule(at, now) || !target || !account || !path || (provider === "github" && !workflow)) return;
+    const repo = store.target, account = store.hostingAccount, path = store.path;
+    if (!canSchedule(at, now) || !repo || !account || !path || (provider === "github" && !workflow && !target)) return;
+    const rerun = provider === "github" && target ? (onCommit?.runs.find((r) => r.id === target.runID) ?? null) : null;
     scheduledRuns.add({
-      id: crypto.randomUUID(), repoPath: path, provider, host: target.host, remote: target.remote, path: target.path, accountID: account.id,
-      workflowID: provider === "github" ? (workflow?.id ?? null) : null, workflowName: provider === "github" ? (workflow?.name ?? null) : null,
-      ref: ref.trim(), inputs: provider === "github" ? inputs : {}, variables: provider === "gitlab" ? vars : [],
+      id: crypto.randomUUID(), repoPath: path, provider, host: repo.host, remote: repo.remote, path: repo.path, accountID: account.id,
+      workflowID: provider === "github" && !target ? (workflow?.id ?? null) : null,
+      workflowName: provider === "github" ? (rerun?.name ?? (target ? null : (workflow?.name ?? null))) : null,
+      ref: ref.trim(), sha: onCommit?.sha ?? null, runID: target?.runID ?? null, jobName: target?.jobName ?? null,
+      inputs: provider === "github" ? inputs : {}, variables: provider === "gitlab" ? vars : [],
       runAt: at, createdAt: now, state: "scheduled", message: null,
     });
     close();
@@ -151,7 +223,62 @@ export function RunPipelineSheet({ store, close }: { store: RepoStore; close: ()
           </div>
         </div>
 
-        {provider === "gitlab" ? (
+        {/* the branch's tip by default, or one of its commits that already has runs on the branch */}
+        <div className="form-row">
+          <label htmlFor="run-commit">{t("Commit")}</label>
+          <div className="row">
+            <select id="run-commit" className="select grow" value={sha ?? ""} onChange={(e) => setSha(e.target.value || null)}>
+              <option value="">{t("Latest on {0}", ref.trim())}</option>
+              {commits.map((c) => (
+                <option key={c.sha} value={c.sha}>
+                  {[`${c.sha.slice(0, 7)}  ${c.subject}`, ...(c.created !== null ? [listWhen(c.created)] : [])].join(" · ")}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {commit && provider === "gitlab" ? (
+          !jobs.length ? (
+            <span className="muted">{loading ? t("Reading the jobs…") : t("This pipeline has no jobs.")}</span>
+          ) : (
+            <>
+              <div className="form-row">
+                <label htmlFor="run-commit-job">{t("Job")}</label>
+                <div className="row">
+                  <select id="run-commit-job" className="select grow" value={jobName ?? ""} onChange={(e) => setJobName(e.target.value || null)}>
+                    {jobs.map((j) => (
+                      <option key={j.id} value={j.name}>
+                        {`${j.name} · ${statusInfo[j.status].title}`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <span className="muted" data-run-commit-note>
+                {chosenJob && chosenJob.status !== "manual" && chosenJob.status !== "scheduled"
+                  ? t("Runs this job again in the pipeline of {0} on {1}.", commit.sha.slice(0, 7), ref.trim())
+                  : t("Presses this job in the pipeline of {0} on {1}.", commit.sha.slice(0, 7), ref.trim())}
+              </span>
+            </>
+          )
+        ) : commit ? (
+          <>
+            <div className="form-row">
+              <label htmlFor="run-commit-run">{t("Workflow run")}</label>
+              <div className="row">
+                <select id="run-commit-run" className="select grow" value={runID ?? ""} onChange={(e) => setRunID(e.target.value ? Number(e.target.value) : null)}>
+                  {commitWorkflowRuns(commit).map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {`${r.name} · ${t("run #{0}", String(r.number))}`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <span className="muted" data-run-commit-note>{t("Re-runs this run of {0} on {1} with its original inputs.", commit.sha.slice(0, 7), ref.trim())}</span>
+          </>
+        ) : provider === "gitlab" ? (
           <div className="col" style={{ gap: 8 }}>
             <div className="row">
               <span style={{ fontWeight: 600 }}>{t("Variables")}</span>

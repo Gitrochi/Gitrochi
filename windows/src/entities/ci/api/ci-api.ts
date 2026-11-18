@@ -2,6 +2,7 @@ import type { RepoTarget } from "@/entities/git";
 import * as Hosting from "@/entities/hosting";
 import { t } from "@/shared/i18n";
 import { dispatchInputs } from "../lib/yaml";
+import { type CommitRun, commitJobAction, commitRunBusy } from "../model/run-commits";
 import { type CIDeployment, type CIJob, type CIPipeline, type CIRequestCheck, type CIWorkflow, githubStatus, gitlabStatus } from "../model/types";
 
 interface GLPipeline { id: number; project_id?: number; iid?: number; sha: string; ref: string; status: string; source?: string; created_at?: string; updated_at?: string; web_url: string; name?: string | null; user?: { username: string } | null }
@@ -29,6 +30,22 @@ const took = (start?: string | null, end?: string | null): number | null => {
   const s = Hosting.date(start), e = Hosting.date(end);
   return s != null && e != null && e >= s ? e - s : null;
 };
+const ghRun = (p: GHRun): CIPipeline => ({
+  id: p.id,
+  number: p.run_number,
+  name: p.name ?? "",
+  title: p.display_title ?? "",
+  ref: p.head_branch ?? "",
+  sha: p.head_sha,
+  status: githubStatus(p.status, p.conclusion),
+  url: p.html_url,
+  created: Hosting.date(p.created_at),
+  event: p.event,
+  actor: p.actor?.login ?? null,
+  started: Hosting.date(p.run_started_at ?? p.created_at),
+  updated: Hosting.date(p.updated_at),
+  request: p.pull_requests?.[0]?.number ?? null,
+});
 const glPipeline = (p: GLPipeline): CIPipeline => ({ id: p.id, projectID: p.project_id, number: p.iid ?? p.id, name: p.name ?? "", title: "", ref: p.ref, sha: p.sha, status: gitlabStatus(p.status), url: p.web_url, created: Hosting.date(p.created_at), event: p.source ?? "", actor: p.user?.username ?? null, started: Hosting.date(p.created_at), updated: Hosting.date(p.updated_at) });
 
 /** base64(줄바꿈 포함) → UTF-8 글 */
@@ -39,28 +56,35 @@ function decodeBase64(b64: string): string {
 
 export const CIAPI = {
   /** 최근 파이프라인·실행(ref 가 있으면 그 브랜치만) */
-  async pipelines(c: CIAccess, ref: string | null, sha?: string): Promise<CIPipeline[]> {
+  async pipelines(c: CIAccess, ref: string | null, sha?: string, perPage = 30): Promise<CIPipeline[]> {
     if (c.target.provider === "gitlab") {
-      const list = await Hosting.send<GLPipeline[]>("gitlab", `${project(c)}/pipelines?per_page=30${ref ? `&ref=${q(ref)}` : ""}${sha ? `&sha=${q(sha)}` : ""}`, c.token);
+      const list = await Hosting.send<GLPipeline[]>("gitlab", `${project(c)}/pipelines?per_page=${perPage}${ref ? `&ref=${q(ref)}` : ""}${sha ? `&sha=${q(sha)}` : ""}`, c.token);
       return list.map(glPipeline);
     }
-    const r = await Hosting.send<{ workflow_runs: GHRun[] }>("github", `${repoBase(c)}/actions/runs?per_page=30${ref ? `&branch=${q(ref)}` : ""}${sha ? `&head_sha=${q(sha)}` : ""}`, c.token);
-    return r.workflow_runs.map((p) => ({
-      id: p.id,
-      number: p.run_number,
-      name: p.name ?? "",
-      title: p.display_title ?? "",
-      ref: p.head_branch ?? "",
-      sha: p.head_sha,
-      status: githubStatus(p.status, p.conclusion),
-      url: p.html_url,
-      created: Hosting.date(p.created_at),
-      event: p.event,
-      actor: p.actor?.login ?? null,
-      started: Hosting.date(p.run_started_at ?? p.created_at),
-      updated: Hosting.date(p.updated_at),
-      request: p.pull_requests?.[0]?.number ?? null,
-    }));
+    const r = await Hosting.send<{ workflow_runs: GHRun[] }>("github", `${repoBase(c)}/actions/runs?per_page=${perPage}${ref ? `&branch=${q(ref)}` : ""}${sha ? `&head_sha=${q(sha)}` : ""}`, c.token);
+    return r.workflow_runs.map(ghRun);
+  },
+
+  /**
+   * Starts a chosen commit's run again, as it is now: GitLab presses the job (found again by name, since a retried job
+   * gets a new id) or retries it once finished; GitHub re-runs the workflow run with its original inputs. One still
+   * running is left alone. (macOS: CIAPI.startCommitRun)
+   */
+  async startCommitRun(c: CIAccess, run: CommitRun): Promise<void> {
+    if (c.target.provider === "gitlab") {
+      const name = run.jobName ?? "";
+      const job = (await CIAPI.jobs(c, run.runID)).filter((j) => j.name === name).pop();
+      if (!job) throw new Error(t("The job '{0}' is no longer in this pipeline.", name));
+      const action = commitJobAction(job.status);
+      if (action === "play") await CIAPI.play(c, job.id);
+      else if (action === "retry") await CIAPI.retryJob(c, job.id);
+      else throw new Error(action === "busy" ? t("This job is already running.") : t("This job can't be started now."));
+      return;
+    }
+    const current = ghRun(await Hosting.send<GHRun>("github", `${repoBase(c)}/actions/runs/${run.runID}`, c.token));
+    if (commitRunBusy(current.status)) throw new Error(t("This run is still running."));
+    // GitHub refuses runs older than 30 days; its message says so
+    await CIAPI.retryPipeline(c, run.runID, false);
   },
 
   /** Merged-result pipelines can have a different SHA from the request's source commit. */

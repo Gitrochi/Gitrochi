@@ -2247,4 +2247,15 @@
 "Stage the files you want to include." = "Przygotuj pliki, które chcesz uwzględnić.";
 "Write a summary to enable commit." = "Napisz podsumowanie, aby móc zatwierdzić.";
 "Conflicted" = "Konflikt";
+"Latest on %@" = "Najnowszy commit na %@";
+"Workflow run" = "Uruchomienie workflow";
+"Reading the jobs…" = "Odczytywanie zadań…";
+"This pipeline has no jobs." = "Ten pipeline nie ma zadań.";
+"Presses this job in the pipeline of %@ on %@." = "Uruchamia to zadanie w pipelinie %1$@ na %2$@.";
+"Runs this job again in the pipeline of %@ on %@." = "Uruchamia ponownie to zadanie w pipelinie %1$@ na %2$@.";
+"Re-runs this run of %@ on %@ with its original inputs." = "Uruchamia ponownie to uruchomienie %1$@ na %2$@ z jego pierwotnymi danymi wejściowymi.";
+"The job '%@' is no longer in this pipeline." = "Zadania „%@” nie ma już w tym pipelinie.";
+"This job is already running." = "To zadanie już działa.";
+"This job can't be started now." = "Tego zadania nie można teraz uruchomić.";
+"This run is still running." = "To uruchomienie nadal trwa.";
 "Not pushed yet" = "Jeszcze nie wypchnięto";

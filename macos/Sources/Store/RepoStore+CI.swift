@@ -209,6 +209,37 @@ extension RepoStore {
         await loadCI(silent: true)
     }
 
+    /// A chosen commit's run started again: GitLab presses (or retries) the job, GitHub re-runs the workflow run
+    func runOnCommit(_ run: CommitRun) async {
+        await ciAction("run", refresh: nil) { c in
+            try await CIAPI.startCommitRun(c.target, token: c.token, apiBase: c.apiBase, run: run)
+        }
+        if target?.provider == .github {
+            try? await Task.sleep(for: .seconds(4))
+            await loadCI(silent: true)
+        }
+    }
+
+    /// The branch's commits that have runs on it, newest first, read from the server; subjects come from the local
+    /// remote-tracking branch where it has the commit
+    func ciCommits(branch: String) async throws -> [RunCommit] {
+        guard let c = ciAccess, !branch.isEmpty else { return [] }
+        // GitHub lists every workflow's run, so a page holds fewer commits
+        let runs = try await CIAPI.pipelines(c.target, token: c.token, apiBase: c.apiBase, ref: branch,
+                                             perPage: c.target.provider == .github ? 100 : 50)
+        var subjects: [String: String] = [:]
+        if let url, let r = try? await Git.run(["log", "-n", "200", "--format=%H%x1f%s", "refs/remotes/\(c.target.remote)/\(branch)", "--"], in: url) {
+            subjects = RunCommits.subjects(r.output)
+        }
+        return RunCommits.commits(runs, branch: branch, subjects: subjects)
+    }
+
+    /// GitLab: a pipeline's jobs, manual ones first
+    func ciCommitJobs(pipeline: Int) async throws -> [CIJob] {
+        guard let c = ciAccess else { return [] }
+        return RunCommits.jobs(try await CIAPI.jobs(c.target, token: c.token, apiBase: c.apiBase, pipeline: pipeline))
+    }
+
     func ciWorkflows(ref: String) async throws -> [CIWorkflow] {
         guard let c = ciAccess else { return [] }
         return try await CIAPI.workflows(c.target, token: c.token, apiBase: c.apiBase, ref: ref)

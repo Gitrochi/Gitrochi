@@ -2299,4 +2299,15 @@
 "Stage the files you want to include." = "Añade al stage los archivos que quieras incluir.";
 "Write a summary to enable commit." = "Escribe un resumen para poder hacer commit.";
 "Conflicted" = "En conflicto";
+"Latest on %@" = "Último commit de %@";
+"Workflow run" = "Ejecución de flujo de trabajo";
+"Reading the jobs…" = "Leyendo los jobs…";
+"This pipeline has no jobs." = "Este pipeline no tiene jobs.";
+"Presses this job in the pipeline of %@ on %@." = "Inicia este job en el pipeline de %1$@ en %2$@.";
+"Runs this job again in the pipeline of %@ on %@." = "Vuelve a ejecutar este job en el pipeline de %1$@ en %2$@.";
+"Re-runs this run of %@ on %@ with its original inputs." = "Vuelve a ejecutar esta ejecución de %1$@ en %2$@ con sus entradas originales.";
+"The job '%@' is no longer in this pipeline." = "El job '%@' ya no está en este pipeline.";
+"This job is already running." = "Este job ya se está ejecutando.";
+"This job can't be started now." = "Este job no se puede iniciar ahora.";
+"This run is still running." = "Esta ejecución sigue en curso.";
 "Not pushed yet" = "Aún no enviado";

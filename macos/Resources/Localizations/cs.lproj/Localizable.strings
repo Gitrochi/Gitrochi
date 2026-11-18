@@ -2245,4 +2245,15 @@
 "Stage the files you want to include." = "Připravte soubory, které chcete zahrnout.";
 "Write a summary to enable commit." = "Napište shrnutí a commit bude možný.";
 "Conflicted" = "V konfliktu";
+"Latest on %@" = "Nejnovější commit na %@";
+"Workflow run" = "Běh workflow";
+"Reading the jobs…" = "Načítání úloh…";
+"This pipeline has no jobs." = "Tato pipeline nemá žádné úlohy.";
+"Presses this job in the pipeline of %@ on %@." = "Spustí tuto úlohu v pipeline %1$@ na %2$@.";
+"Runs this job again in the pipeline of %@ on %@." = "Spustí tuto úlohu znovu v pipeline %1$@ na %2$@.";
+"Re-runs this run of %@ on %@ with its original inputs." = "Spustí znovu tento běh %1$@ na %2$@ s původními vstupy.";
+"The job '%@' is no longer in this pipeline." = "Úloha „%@“ už v této pipeline není.";
+"This job is already running." = "Tato úloha už běží.";
+"This job can't be started now." = "Tuto úlohu teď nelze spustit.";
+"This run is still running." = "Tento běh stále probíhá.";
 "Not pushed yet" = "Zatím neodesláno";

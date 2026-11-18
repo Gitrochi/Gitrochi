@@ -5,9 +5,10 @@ import { ipc } from "@/shared/api";
 import { joinPath, settings } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { Observable } from "@/shared/lib";
-import { describe } from "@/shared/platform";
+import { describe, git } from "@/shared/platform";
 import { type CIAccess, CIAPI } from "../api/ci-api";
 import { pipelineVariables } from "../lib/yaml";
+import { type CommitRun, commitJobs, parseCommitSubjects, type RunCommit, runCommits } from "./run-commits";
 import { type CIDeployment, type CIInput, type CIJob, type CIPipeline, type CIWorkflow, isActiveCI } from "./types";
 
 /** CI 가 읽는 저장소 탭 — 순환 참조를 피하려고 필요한 것만(RepoStore 가 채운다) */
@@ -252,6 +253,34 @@ export class CIStore extends Observable {
     await this.act("run", null, (c) => CIAPI.dispatch(c, w.id, ref, inputs));
     await new Promise((r) => setTimeout(r, 4000));
     await this.load(true);
+  }
+
+  /** A chosen commit's run started again: GitLab presses (or retries) the job, GitHub re-runs the workflow run */
+  async runOnCommit(run: CommitRun) {
+    await this.act("run", null, (c) => CIAPI.startCommitRun(c, run));
+    if (this.repo.target?.provider !== "github") return;
+    await new Promise((r) => setTimeout(r, 4000));
+    await this.load(true);
+  }
+
+  /**
+   * The branch's commits that have runs on it, newest first, read from the server; subjects come from the local
+   * remote-tracking branch where it has the commit
+   */
+  async commits(branch: string): Promise<RunCommit[]> {
+    const c = await this.access();
+    if (!c || !branch) return [];
+    // GitHub lists every workflow's run, so a page holds fewer commits
+    const runs = await CIAPI.pipelines(c, branch, undefined, c.target.provider === "github" ? 100 : 50);
+    const path = this.repo.path;
+    const log = path ? await git(["log", "-n", "200", "--format=%H%x1f%s", `refs/remotes/${c.target.remote}/${branch}`, "--"], path).catch(() => null) : null;
+    return runCommits(runs, branch, parseCommitSubjects(log?.stdout ?? ""));
+  }
+
+  /** GitLab: a pipeline's jobs, manual ones first */
+  async commitJobs(pipeline: number): Promise<CIJob[]> {
+    const c = await this.access();
+    return c ? commitJobs(await CIAPI.jobs(c, pipeline)) : [];
   }
 
   async workflows(ref: string): Promise<CIWorkflow[]> {

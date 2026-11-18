@@ -24,6 +24,13 @@ struct ScheduledRun: Codable, Identifiable, Hashable {
     var workflowID: Int?
     var workflowName: String?
     let ref: String
+    /// The commit chosen in the sheet, which runs again through its own run (RunCommits). nil runs on the branch's
+    /// tip; runs saved before there was a choice decode without these three.
+    var sha: String?
+    /// GitLab: the commit's pipeline; GitHub: the workflow run to re-run
+    var runID: Int?
+    /// GitLab: the job to press, found again by name since a retried job gets a new id
+    var jobName: String?
     var inputs: [String: String] = [:]
     /// GitLab: the pipeline variables, in the order given
     var variables: [Variable] = []
@@ -34,6 +41,15 @@ struct ScheduledRun: Codable, Identifiable, Hashable {
     var message: String?
 
     var target: RepoTarget { RepoTarget(provider: provider, remote: remote, host: host, path: path) }
+    /// The run of the chosen commit it starts again, or nil to run on the branch
+    var commitRun: CommitRun? { sha != nil ? runID.map { CommitRun(runID: $0, jobName: jobName) } : nil }
+}
+
+/// The run (GitHub) or pipeline job (GitLab) of a chosen commit that starts again (RunCommits)
+struct CommitRun: Hashable {
+    let runID: Int
+    /// GitLab only
+    let jobName: String?
 }
 
 /// When a scheduled run starts and how its time reads. Pure, so it mirrors the tested Windows functions.
@@ -60,6 +76,11 @@ enum ScheduledRuns {
     static func action(_ run: ScheduledRun, now: Date) -> Action {
         guard run.state == .scheduled, now >= run.runAt else { return .wait }
         return now.timeIntervalSince(run.runAt) <= grace ? .start : .miss
+    }
+
+    /// The saved list; a damaged one reads as empty (Windows: decodeScheduledRuns)
+    static func decode(_ data: Data?) -> [ScheduledRun] {
+        data.flatMap { try? JSONDecoder().decode([ScheduledRun].self, from: $0) } ?? []
     }
 
     /// "in 5m", "in 2h", "in 3d"; a time gone by reads like a list date, "12m ago" (Windows: scheduledRunRelative)

@@ -2263,4 +2263,15 @@
 "Stage the files you want to include." = "Додайте до індексу файли, які треба включити.";
 "Write a summary to enable commit." = "Напишіть короткий опис, щоб зробити коміт.";
 "Conflicted" = "Конфлікт";
+"Latest on %@" = "Останній коміт у %@";
+"Workflow run" = "Запуск робочого процесу";
+"Reading the jobs…" = "Читання завдань…";
+"This pipeline has no jobs." = "У цьому конвеєрі немає завдань.";
+"Presses this job in the pipeline of %@ on %@." = "Запускає це завдання в конвеєрі %1$@ у %2$@.";
+"Runs this job again in the pipeline of %@ on %@." = "Перезапускає це завдання в конвеєрі %1$@ у %2$@.";
+"Re-runs this run of %@ on %@ with its original inputs." = "Перезапускає цей запуск %1$@ у %2$@ з початковими вхідними даними.";
+"The job '%@' is no longer in this pipeline." = "Завдання «%@» більше немає в цьому конвеєрі.";
+"This job is already running." = "Це завдання вже виконується.";
+"This job can't be started now." = "Зараз це завдання не можна запустити.";
+"This run is still running." = "Цей запуск ще триває.";
 "Not pushed yet" = "Ще не надіслано";

@@ -1,10 +1,20 @@
 import SwiftUI
 
-/// GitLab: 브랜치·변수로 새 파이프라인 / GitHub: workflow_dispatch 워크플로를 브랜치·입력값으로 실행
+/// GitLab: 브랜치·변수로 새 파이프라인 / GitHub: workflow_dispatch 워크플로를 브랜치·입력값으로 실행.
+/// With a commit of the branch chosen, that commit's own run starts again: a GitLab job is pressed, a GitHub run re-run.
 struct RunPipelineSheet: View {
     @Environment(RepoStore.self) private var store
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.locale) private var locale
     @ViewState private var ref = ""
+    /// The branch's commits with runs on it; nil runs on the branch's tip as it is when the run starts
+    @ViewState private var commits: [RunCommit] = []
+    @ViewState private var sha: String?
+    /// GitLab: the chosen commit's pipeline jobs, manual ones first, and the one to press
+    @ViewState private var jobs: [CIJob] = []
+    @ViewState private var jobName: String?
+    /// GitHub: the chosen commit's workflow run to re-run
+    @ViewState private var runID: Int?
     @ViewState private var variables: [Variable] = []
     @ViewState private var workflows: [CIWorkflow] = []
     @ViewState private var workflowID: Int?
@@ -29,6 +39,7 @@ struct RunPipelineSheet: View {
 
     private var provider: Provider { store.target?.provider ?? .gitlab }
     private var workflow: CIWorkflow? { workflows.first { $0.id == workflowID } }
+    private var commit: RunCommit? { sha.flatMap { s in commits.first { $0.sha == s } } }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -44,7 +55,14 @@ struct RunPipelineSheet: View {
                     .labelsHidden()
                 }
             }
-            if provider == .gitlab { gitlabForm } else { githubForm }
+            commitForm
+            if let commit {
+                if provider == .gitlab { jobForm(commit) } else { rerunForm(commit) }
+            } else if provider == .gitlab {
+                gitlabForm
+            } else {
+                githubForm
+            }
             whenForm
             HStack {
                 if loading { ProgressView().controlSize(.small) }
@@ -63,7 +81,93 @@ struct RunPipelineSheet: View {
         .padding(20)
         .frame(width: 520)
         .onAppear(perform: setup)
-        .onChange(of: ref) { _, _ in if provider == .github { Task { await loadWorkflows() } } }
+        .onChange(of: ref) { _, _ in
+            sha = nil
+            Task { await loadCommits() }
+            if provider == .github { Task { await loadWorkflows() } }
+        }
+        .onChange(of: sha) { _, _ in pickCommit() }
+    }
+
+    // MARK: Commit
+
+    /// The branch's tip by default, or one of its commits that already has runs on the branch
+    private var commitForm: some View {
+        LabeledContent("Commit") {
+            Picker("", selection: $sha) {
+                Text("Latest on \(ref)").tag(String?.none)
+                if !commits.isEmpty { Divider() }
+                ForEach(commits) { c in Text(verbatim: commitLabel(c)).tag(String?.some(c.sha)) }
+            }
+            .labelsHidden()
+        }
+    }
+
+    private func commitLabel(_ c: RunCommit) -> String {
+        var parts = [c.short + "  " + c.subject]
+        if let created = c.created { parts.append(ListDate.when(created, locale: locale)) }
+        return parts.joined(separator: " · ")
+    }
+
+    /// GitLab: which job of the commit's pipeline to press
+    @ViewBuilder private func jobForm(_ commit: RunCommit) -> some View {
+        if jobs.isEmpty {
+            Text(loading ? "Reading the jobs…" : "This pipeline has no jobs.").font(.callout).foregroundStyle(.secondary)
+        } else {
+            LabeledContent("Job") {
+                Picker("", selection: $jobName) {
+                    ForEach(jobs) { job in Text(verbatim: job.name + " · " + job.status.title).tag(String?.some(job.name)) }
+                }
+                .labelsHidden()
+            }
+            let manual = jobs.first { $0.name == jobName }?.canPlay ?? true
+            Text(manual ? LocalizedStringKey("Presses this job in the pipeline of \(commit.short) on \(ref).")
+                        : LocalizedStringKey("Runs this job again in the pipeline of \(commit.short) on \(ref)."))
+                .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    /// GitHub: which of the commit's workflow runs to re-run; its inputs can't change
+    @ViewBuilder private func rerunForm(_ commit: RunCommit) -> some View {
+        LabeledContent("Workflow run") {
+            Picker("", selection: $runID) {
+                ForEach(RunCommits.workflowRuns(commit)) { r in
+                    Text(verbatim: r.name + " · " + String(localized: "run #\(String(r.number))")).tag(Int?.some(r.id))
+                }
+            }
+            .labelsHidden()
+        }
+        Text("Re-runs this run of \(commit.short) on \(ref) with its original inputs.")
+            .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+    }
+
+    private func loadCommits() async {
+        let r = ref.trimmed
+        let list = (try? await store.ciCommits(branch: r)) ?? []
+        guard r == ref.trimmed else { return }
+        commits = list
+    }
+
+    /// A chosen commit starts on its first manual job (GitLab) or its newest workflow run (GitHub)
+    private func pickCommit() {
+        jobs = []
+        jobName = nil
+        runID = nil
+        guard let commit else { return }
+        if provider == .github {
+            runID = RunCommits.workflowRuns(commit).first?.id
+            return
+        }
+        guard let pipeline = commit.runs.first?.id else { return }
+        let chosen = commit.sha
+        Task {
+            loading = true
+            defer { loading = false }
+            let list = (try? await store.ciCommitJobs(pipeline: pipeline)) ?? []
+            guard sha == chosen else { return }
+            jobs = list
+            jobName = RunCommits.defaultJob(list)?.name
+        }
     }
 
     // MARK: GitLab
@@ -190,9 +294,18 @@ struct RunPipelineSheet: View {
 
     private var canRun: Bool {
         guard !ref.trimmed.isEmpty else { return false }
+        if commit != nil { return commitRun != nil }
         if provider == .gitlab { return true }
         guard let w = workflow else { return false }
         return w.inputs.allSatisfy { !$0.required || !(values[$0.name] ?? "").trimmed.isEmpty || $0.type == "boolean" }
+    }
+
+    /// What starts again for the chosen commit
+    private var commitRun: CommitRun? {
+        guard let commit else { return nil }
+        if provider == .github { return runID.map { CommitRun(runID: $0, jobName: nil) } }
+        guard let pipeline = commit.runs.first?.id, let jobName, jobs.contains(where: { $0.name == jobName }) else { return nil }
+        return CommitRun(runID: pipeline, jobName: jobName)
     }
 
     private func setup() {
@@ -237,7 +350,15 @@ struct RunPipelineSheet: View {
             checkedAt = Date()
             guard timeOK else { return }
         }
-        if provider == .gitlab {
+        if let commit, let target = commitRun {
+            if later {
+                let name = provider == .github ? commit.runs.first(where: { $0.id == target.runID })?.name : nil
+                schedule(ref: r) { $0.sha = commit.sha; $0.runID = target.runID; $0.jobName = target.jobName; $0.workflowName = name }
+                return
+            }
+            dismiss()
+            Task { await store.runOnCommit(target) }
+        } else if provider == .gitlab {
             let vars = variables.map { ($0.key.trimmed, $0.value) }.filter { !$0.0.isEmpty }
             if later {
                 let pairs = vars.map { ScheduledRun.Variable(key: $0.0, value: $0.1) }
