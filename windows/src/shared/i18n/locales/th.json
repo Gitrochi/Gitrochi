@@ -2300,5 +2300,7 @@
   "This job is already running.": "งานนี้กำลังรันอยู่แล้ว",
   "This job can't be started now.": "ยังเริ่มงานนี้ไม่ได้ในตอนนี้",
   "This run is still running.": "การรันนี้ยังดำเนินอยู่",
-  "Not pushed yet": "ยังไม่ได้พุช"
+  "Not pushed yet": "ยังไม่ได้พุช",
+  "Receive beta updates": "รับอัปเดตเบต้า",
+  "Betas come before each release so new features can be tried early; they may have bugs. Turning this off keeps the beta until the next release.": "เบต้ามาก่อนแต่ละรุ่นเพื่อให้ลองฟีเจอร์ใหม่ได้ก่อน และอาจมีข้อบกพร่อง หากปิด จะใช้เบต้าเดิมต่อจนกว่าจะมีรุ่นถัดไป"
 }

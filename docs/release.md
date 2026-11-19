@@ -35,3 +35,29 @@ The apps' update check ignores drafts, so before publishing:
    ```
 
 3. Publish: `gh release edit v0.3.12 -R Gitrochi/Gitrochi --draft=false --latest`
+
+## Betas
+
+A beta lets people who opted in try the next version before everyone gets it. Its version adds a pre-release part to the coming release's: `0.4.2-beta.1`, `0.4.2-beta.2`, then the release `0.4.2`. Versions are ordered as semver, so `0.4.2-beta.1 < 0.4.2-beta.2 < 0.4.2`, and a beta user is offered the release when it comes out. The same rules are in `ReleaseVersion` (macOS updater), `shared/platform/release-version.ts` (Windows) and `ver_lt` (gitch).
+
+Cut a beta like a release, with the beta version in every file listed above (`bash tools/check-versions.sh` accepts `0.4.2-beta.1`):
+
+```sh
+git switch -c release/0.4.2-beta.1      # set 0.4.2-beta.1 everywhere
+git commit -m "Release 0.4.2-beta.1 (summary)"
+git push -u origin HEAD && gh pr create --fill && gh pr merge --auto --merge
+# once merged
+git switch main && git pull --ff-only
+git tag v0.4.2-beta.1 && git push origin v0.4.2-beta.1
+```
+
+The tag run creates the draft as a **pre-release** (every tag with a `-` part). Write the notes and `latest.json` as for a release, then publish it as a pre-release, never as latest:
+
+```sh
+gh release edit v0.4.2-beta.1 -R Gitrochi/Gitrochi --draft=false --prerelease --latest=false
+```
+
+Who gets it:
+
+- Settings › Update has "Receive beta updates", off by default. With it on, the update check also looks at pre-releases: macOS picks the newest release with a macOS zip, Windows reads `latest.json` from the newest release that has one. Turning it off keeps the beta until the next release, which is newer.
+- Everyone else is unaffected: the macOS check skips pre-releases, Windows reads `releases/latest/download/latest.json` (GitHub's latest is never a pre-release), and `gitch self-update` and `tools/gitch/install.sh` skip pre-releases.

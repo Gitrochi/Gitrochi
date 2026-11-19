@@ -2249,3 +2249,5 @@
 "This job can't be started now." = "Deze job kan nu niet worden gestart.";
 "This run is still running." = "Deze run is nog bezig.";
 "Not pushed yet" = "Nog niet gepusht";
+"Receive beta updates" = "Bèta-updates ontvangen";
+"Betas come before each release so new features can be tried early; they may have bugs. Turning this off keeps the beta until the next release." = "Bèta’s verschijnen vóór elke release om nieuwe functies vroeg te proberen; ze kunnen fouten bevatten. Zet je dit uit, dan blijft de bèta tot de volgende release.";

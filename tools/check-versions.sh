@@ -11,7 +11,10 @@ check() {
   fi
 }
 json_versions() { sed -n 's/^[[:space:]]*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$1"; }
-case "$expected" in ''|*[!0-9.]*) printf 'Gitrochi 앱 버전을 읽지 못했습니다.\n' >&2; exit 1 ;; esac
+# A release (0.4.2) or a beta (0.4.2-beta.1); see docs/release.md
+if ! [[ "$expected" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z]+(\.[0-9A-Za-z]+)*)?$ ]]; then
+  printf 'Gitrochi 앱 버전을 읽지 못했습니다 (0.4.2 또는 0.4.2-beta.1 형식): %s\n' "${expected:-없음}" >&2; exit 1
+fi
 check gitch "$(sed -n 's/^GITSW_VERSION="\([^"]*\)".*/\1/p' "$ROOT/tools/gitch/gitch" | head -1)"
 # The README states the current version and shows it in a sample graph output; both went stale after releases.
 check tools/gitch/README.md "$(sed -n 's/.*(현재 `\([^`]*\)`).*/\1/p' "$ROOT/tools/gitch/README.md" | head -1)"

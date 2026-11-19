@@ -2283,5 +2283,7 @@
   "This job is already running.": "Questo job è già in esecuzione.",
   "This job can't be started now.": "Questo job non può essere avviato ora.",
   "This run is still running.": "Questa esecuzione è ancora in corso.",
-  "Not pushed yet": "Non ancora inviato"
+  "Not pushed yet": "Non ancora inviato",
+  "Receive beta updates": "Ricevi aggiornamenti beta",
+  "Betas come before each release so new features can be tried early; they may have bugs. Turning this off keeps the beta until the next release.": "Le beta arrivano prima di ogni versione per provare in anticipo le novità; possono contenere errori. Disattivando l’opzione, la beta resta fino alla versione successiva."
 }

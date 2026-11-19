@@ -2252,3 +2252,5 @@
 "This job can't be started now." = "Job ini tidak bisa dimulai sekarang.";
 "This run is still running." = "Run ini masih berjalan.";
 "Not pushed yet" = "Belum di-push";
+"Receive beta updates" = "Terima pembaruan beta";
+"Betas come before each release so new features can be tried early; they may have bugs. Turning this off keeps the beta until the next release." = "Beta hadir sebelum setiap rilis agar fitur baru bisa dicoba lebih awal; mungkin ada bug. Jika dimatikan, beta tetap dipakai hingga rilis berikutnya.";
