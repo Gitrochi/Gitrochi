@@ -2261,6 +2261,15 @@
   "This job can't be started now.": "Job ini tidak bisa dimulai sekarang.",
   "This run is still running.": "Run ini masih berjalan.",
   "Not pushed yet": "Belum di-push",
+  "New browser tab": "Tab browser baru",
+  "Opens a web page next to the terminals, such as a dev server.": "Membuka halaman web di samping terminal, seperti server pengembangan.",
+  "Forward": "Maju",
+  "Reload": "Muat ulang",
+  "Search or enter address": "Cari atau masukkan alamat",
+  "Only the first 2 MB are shown.": "Hanya 2 MB pertama yang ditampilkan.",
+  "The file is empty.": "File kosong.",
+  "{0} rows · {1} columns": "{0} baris · {1} kolom",
+  "This file can't be shown as text.": "File ini tidak dapat ditampilkan sebagai teks.",
   "Receive beta updates": "Terima pembaruan beta",
   "Betas come before each release so new features can be tried early; they may have bugs. Turning this off keeps the beta until the next release.": "Beta hadir sebelum setiap rilis agar fitur baru bisa dicoba lebih awal; mungkin ada bug. Jika dimatikan, beta tetap dipakai hingga rilis berikutnya."
 }

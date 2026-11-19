@@ -7,6 +7,7 @@ import { samePath, settings } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { Button } from "@/shared/ui";
+import { BrowserPane } from "./BrowserPane";
 import { TerminalQuickActions, TerminalStatusBar } from "./TerminalChrome";
 import { tabStatus, TerminalTabBar } from "./TerminalTabBar";
 import "./terminal-panel.css";
@@ -115,7 +116,9 @@ function TermPaneView({ pane, corner, split, store, height }: NodeProps & { pane
   // the status line reads an agent session's state, as the tab does
   useObserve(agents);
   const s = store.shownTerminal(pane.id);
-  const focused = !!s && s === store.activeTerminal;
+  const page = store.shownBrowser(pane.id);
+  const shownID = s?.id ?? page?.id ?? null;
+  const focused = !!shownID && shownID === (store.activeTerminalID ?? store.activeTerminal?.id);
   // the bar, the rail and the status line fold by the pane's own size, so a split pane folds before the panel does
   const ref = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 800, height: 260 });
@@ -139,10 +142,13 @@ function TermPaneView({ pane, corner, split, store, height }: NodeProps & { pane
   };
   return (
     <div ref={ref} className={`term-pane ${split && !focused ? "unfocused" : ""}`}>
-      <TerminalTabBar pane={pane} shown={s} corner={pane.id === corner} width={size.width} store={store} />
-      <div className="term-body" onMouseDownCapture={() => s && !focused && store.selectTerminal(s)}>
-        {s && <TerminalMount key={s.id} session={s} height={height} store={store} focus={focused} />}
-      </div>
+      <TerminalTabBar pane={pane} shown={s ?? page} corner={pane.id === corner} width={size.width} store={store} />
+      {page && <BrowserPane key={page.id} page={page} store={store} />}
+      {!page && (
+        <div className="term-body" onMouseDownCapture={() => s && !focused && store.selectTerminal(s)}>
+          {s && <TerminalMount key={s.id} session={s} height={height} store={store} focus={focused} />}
+        </div>
+      )}
       {s && railShown(size.height) && <TerminalQuickActions folded={commandsFolded(size.width)} hint={commandHintShown(size.width)} enabled={s.running} insert={insert} />}
       {s && status && (
         <TerminalStatusBar

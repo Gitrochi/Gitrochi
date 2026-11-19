@@ -2263,6 +2263,15 @@
   "This job can't be started now.": "Hiện không thể bắt đầu job này.",
   "This run is still running.": "Lượt chạy này vẫn đang diễn ra.",
   "Not pushed yet": "Chưa đẩy lên",
+  "New browser tab": "Tab trình duyệt mới",
+  "Opens a web page next to the terminals, such as a dev server.": "Mở một trang web bên cạnh các terminal, chẳng hạn máy chủ phát triển.",
+  "Forward": "Tiến",
+  "Reload": "Tải lại",
+  "Search or enter address": "Tìm kiếm hoặc nhập địa chỉ",
+  "Only the first 2 MB are shown.": "Chỉ hiển thị 2 MB đầu tiên.",
+  "The file is empty.": "Tệp trống.",
+  "{0} rows · {1} columns": "{0} hàng · {1} cột",
+  "This file can't be shown as text.": "Không thể hiển thị tệp này dưới dạng văn bản.",
   "Receive beta updates": "Nhận bản cập nhật beta",
   "Betas come before each release so new features can be tried early; they may have bugs. Turning this off keeps the beta until the next release.": "Bản beta ra trước mỗi bản phát hành để dùng thử tính năng mới sớm; có thể còn lỗi. Khi tắt, bản beta được giữ đến bản phát hành tiếp theo."
 }

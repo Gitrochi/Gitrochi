@@ -4028,5 +4028,12 @@
 "This job can't be started now." = "지금은 이 작업을 시작할 수 없습니다.";
 "This run is still running." = "이 실행은 아직 진행 중입니다.";
 "Not pushed yet" = "아직 푸시하지 않음";
+"New browser tab" = "새 브라우저 탭";
+"Forward" = "앞으로";
+"Search or enter address" = "검색어 또는 주소 입력";
+"Only the first 2 MB are shown." = "처음 2MB만 표시합니다.";
+"The file is empty." = "빈 파일입니다.";
+"%lld rows · %lld columns" = "%lld행 · %lld열";
+"This file can't be shown as text." = "이 파일은 텍스트로 표시할 수 없습니다.";
 "Receive beta updates" = "베타 업데이트 받기";
 "Betas come before each release so new features can be tried early; they may have bugs. Turning this off keeps the beta until the next release." = "베타는 정식 출시 전에 새 기능을 미리 써 볼 수 있는 버전이며 버그가 있을 수 있습니다. 끄면 다음 정식 버전이 나올 때까지 지금 베타를 유지합니다.";

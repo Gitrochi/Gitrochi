@@ -353,3 +353,49 @@
   gap: 10px;
   align-items: center;
 }
+
+/* Browser tabs: the page itself is a native webview placed over .browser-page */
+.term-tab-globe {
+  flex: none;
+  color: var(--text-2);
+}
+
+.browser-pane {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.browser-bar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 34px;
+  padding: 0 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.browser-address {
+  flex: 1;
+  min-width: 0;
+  height: 24px;
+  margin: 0 4px;
+  padding: 0 8px;
+  border: none;
+  border-radius: 6px;
+  background: var(--hover);
+  color: var(--text);
+  font-size: 12px;
+  outline: none;
+}
+
+.browser-address:focus-visible {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.browser-page {
+  flex: 1;
+  min-height: 0;
+  background: var(--surface);
+}
