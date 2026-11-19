@@ -12,7 +12,7 @@ test_install_links_gitch_and_gitsw_shim() {
     grep -qx "alias gitch='noglob gitch'" "$RC_FILE" || fail "gitch alias 없음"
     grep -qx "alias gitsw='noglob gitsw'" "$RC_FILE" || fail "gitsw alias 없음"
   fi
-  [ "$(grep -c '# >>> gitsw >>>' "$RC_FILE")" -eq 1 ] || fail "zshrc 블록 중복"
+  [ "$(grep -c '# >>> gitch >>>' "$RC_FILE")" -eq 1 ] || fail "zshrc 블록 중복"
   [ "$(git config --global --get hook.gitsw-pre-commit.event)" = pre-commit ] || fail "전역 훅이 설치되지 않음"
   run gitsw status --json; assert_ok; assert_json "$OUT"
 }
@@ -23,7 +23,7 @@ test_install_without_accounts_links_command() {
   run "$GITSW_SRC" install; assert_ok "계정 없이 install"; assert_out "계정이 아직 없어"; assert_out "gitch add"
   local self; self=$(resolve_path "$GITSW_SRC")
   [ "$(resolve_path "$HOME/bin/gitch")" = "$self" ] || fail "~/bin/gitch 가 연결되지 않음"
-  [ "$(grep -c '# >>> gitsw >>>' "$RC_FILE")" -eq 1 ] || fail "터미널 연동이 없음"
+  [ "$(grep -c '# >>> gitch >>>' "$RC_FILE")" -eq 1 ] || fail "터미널 연동이 없음"
   # 계정 없이 깔면 모든 저장소의 커밋이 막히므로 useConfigOnly · 훅은 아직
   assert_eq "$(git config --global --get user.useConfigOnly)" "" "계정 없이 useConfigOnly 를 켜면 안 됨"
   assert_eq "$(git config --global --get hook.gitsw-pre-commit.event)" "" "계정 없이 검사 훅을 깔면 안 됨"
@@ -118,4 +118,34 @@ test_allow_marker_both_names() {
 
 test_self_update_does_not_pull() {
   run gitch self-update; assert_ok; assert_out "앱과 함께 업데이트"
+}
+
+test_install_replaces_old_shell_block() {
+  # installs before the rename wrote a gitsw-marked block; install swaps it for the gitch one, uninstall removes either
+  mk_config
+  printf 'export KEEP=1\n# >>> gitsw >>>  (old)\n_gitsw_prompt() { :; }\n# <<< gitsw <<<\n' > "$RC_FILE"
+  install_quiet
+  grep -q '# >>> gitsw >>>' "$RC_FILE" && fail "the old gitsw block is left"
+  grep -q '_gitsw_prompt' "$RC_FILE" && fail "the old prompt function is left"
+  [ "$(grep -c '# >>> gitch >>>' "$RC_FILE")" -eq 1 ] || fail "no gitch block"
+  grep -qx 'export KEEP=1' "$RC_FILE" || fail "a line outside the block was lost"
+  printf '# >>> gitsw >>>\n# <<< gitsw <<<\n' >> "$RC_FILE"
+  run gitch uninstall --yes; assert_ok
+  grep -qE '# >>> (gitch|gitsw) >>>' "$RC_FILE" && fail "uninstall left a shell block"
+  grep -qx 'export KEEP=1' "$RC_FILE" || fail "uninstall lost a line outside the block"
+}
+
+test_prompt_shows_nothing_without_account() {
+  mac_only || return 0
+  command -v zsh >/dev/null || return 0
+  mk_config
+  install_quiet
+  mkdir -p "$T/plain" && cd "$T/plain" && git init -q
+  # shellcheck disable=SC2016
+  local out; out=$(zsh -fc 'eval "$(sed -n "/^_gitch_prompt()/,/^}/p" "$1")"; _gitch_prompt' _ "$RC_FILE")
+  assert_eq "$out" "" "a repository with no account shows a marker"
+  git config gitswitch.account work
+  # shellcheck disable=SC2016
+  out=$(zsh -fc 'eval "$(sed -n "/^_gitch_prompt()/,/^}/p" "$1")"; _gitch_prompt' _ "$RC_FILE")
+  assert_eq "$out" "%F{green}[work]%f" "the account is not shown"
 }

@@ -4097,7 +4097,7 @@ doctor_cmd() {   # [--json] [--no-net]
   if is_link "$SHIM_LINK" && [ "$(resolve_link "$SHIM_LINK")" != "$(self_path)" ]; then
     dr 기본 WARN "~/bin/gitsw(예전 이름)가 다른 파일을 가리킵니다: $(tilde "$(resolve_link "$SHIM_LINK")") → $(tilde "$(self_path)") install"
   fi
-  if grep -q '# >>> gitsw >>>' "$SHELL_RC" 2>/dev/null; then dr 기본 OK "터미널 연동($(tilde "$SHELL_RC"))"; else dr 기본 WARN "터미널 연동 없음 → gitch install"; fi
+  if grep -q "^$SHELL_BEGIN" "$SHELL_RC" 2>/dev/null; then dr 기본 OK "터미널 연동($(tilde "$SHELL_RC"))"; else dr 기본 WARN "터미널 연동 없음 → gitch install"; fi
   if [ -n "$IS_WINDOWS" ]; then
     if [ -f "$BIN_LINK.cmd" ]; then dr 기본 OK "PowerShell · cmd 에서 부르는 명령(~/bin/gitch.cmd)"; else dr 기본 WARN "~/bin/gitch.cmd 없음 — PowerShell · cmd 에서 gitch 를 못 부릅니다 → gitch install"; fi
   fi
@@ -6094,37 +6094,41 @@ guard_cmd() {   # gitch guard --claude  (Claude Code PreToolUse 훅)
 
 # ================= install / uninstall / migrate / export / import =================
 
+# Markers of the shell block; installs before the rename used the old gitsw ones, which install replaces
+SHELL_BEGIN="# >>> gitch >>>" SHELL_END="# <<< gitch <<<"
+OLD_SHELL_BEGIN="# >>> gitsw >>>" OLD_SHELL_END="# <<< gitsw <<<"
+
 read -r -d '' ZSH_BLOCK <<'EOF'
-# >>> gitsw >>>  ('gitch install' 이 관리합니다)
+# >>> gitch >>>  ('gitch install' 이 관리합니다)
 [[ ":$PATH:" != *":$HOME/bin:"* ]] && export PATH="$HOME/bin:$PATH"
 alias gitch='noglob gitch'
 alias gitsw='noglob gitsw'
-_gitsw_prompt() {
+_gitch_prompt() {
   git rev-parse --is-inside-work-tree &>/dev/null || return
   local a; a=$(git config --get gitswitch.account)
-  if [[ -n $a ]]; then print -n "%F{green}[$a]%f"; else print -n "%F{yellow}[계정?]%f"; fi
+  [[ -n $a ]] && print -n "%F{green}[$a]%f"   # nothing when the repository has no account
 }
 setopt PROMPT_SUBST
-[[ $RPROMPT == *_gitsw_prompt* ]] || RPROMPT='$(_gitsw_prompt)'"$RPROMPT"
-# <<< gitsw <<<
+[[ $RPROMPT == *_gitch_prompt* ]] || RPROMPT='$(_gitch_prompt)'"$RPROMPT"
+# <<< gitch <<<
 EOF
 
 # Windows 의 Git Bash(~/.bashrc): PATH + 프롬프트의 마지막 줄 앞에 이 저장소의 계정 (Git Bash 기본 프롬프트는 '\n$ ' 로 끝난다)
 # shellcheck disable=SC2028  # \n · \$ 는 PS1 이 해석한다
 read -r -d '' BASH_BLOCK <<'EOF'
-# >>> gitsw >>>  ('gitch install' 이 관리합니다)
+# >>> gitch >>>  ('gitch install' 이 관리합니다)
 case ":$PATH:" in *":$HOME/bin:"*) ;; *) export PATH="$HOME/bin:$PATH" ;; esac
-_gitsw_prompt() {
+_gitch_prompt() {
   git rev-parse --is-inside-work-tree >/dev/null 2>&1 || return
   local a; a=$(git config --get gitswitch.account)
-  if [ -n "$a" ]; then printf '\033[32m[%s]\033[0m' "$a"; else printf '\033[33m[계정?]\033[0m'; fi
+  [ -n "$a" ] && printf '\033[32m[%s]\033[0m' "$a"   # nothing when the repository has no account
 }
 case "$PS1" in
-  *_gitsw_prompt*) ;;
-  *'\n$ ') PS1="${PS1%'\n$ '} \$(_gitsw_prompt)"'\n$ ' ;;
-  *) PS1="\$(_gitsw_prompt) $PS1" ;;
+  *_gitch_prompt*) ;;
+  *'\n$ ') PS1="${PS1%'\n$ '} \$(_gitch_prompt)"'\n$ ' ;;
+  *) PS1="\$(_gitch_prompt) $PS1" ;;
 esac
-# <<< gitsw <<<
+# <<< gitch <<<
 EOF
 
 install_hint() {   # $1 brew 이름 $2 winget 아이디 → 설치 명령 안내
@@ -6276,10 +6280,12 @@ install_cmd() {
   step 2 "터미널" "$total"
   backup_file "$SHELL_RC"
   if [ -n "$IS_WINDOWS" ]; then
-    update_marked_block "$SHELL_RC" "# >>> gitsw >>>" "# <<< gitsw <<<" "$BASH_BLOCK"
+    remove_marked_block "$SHELL_RC" "$OLD_SHELL_BEGIN" "$OLD_SHELL_END"
+    update_marked_block "$SHELL_RC" "$SHELL_BEGIN" "$SHELL_END" "$BASH_BLOCK"
     say "  ${GREEN}✔${RESET} 터미널 연동(Git Bash ~/.bashrc): 프롬프트에 현재 계정 표시"
   else
-    update_marked_block "$SHELL_RC" "# >>> gitsw >>>" "# <<< gitsw <<<" "$ZSH_BLOCK" "" "alias gitsw='noglob gitsw'"
+    remove_marked_block "$SHELL_RC" "$OLD_SHELL_BEGIN" "$OLD_SHELL_END"
+    update_marked_block "$SHELL_RC" "$SHELL_BEGIN" "$SHELL_END" "$ZSH_BLOCK" "" "alias gitsw='noglob gitsw'"
     say "  ${GREEN}✔${RESET} 터미널 연동: 따옴표 없는 주소 + 오른쪽에 현재 계정 표시"
   fi
   if [ -n "$noacc" ]; then
@@ -6334,7 +6340,11 @@ uninstall_cmd() {
   for ev in $HOOK_EVENTS; do git config --global --remove-section "hook.gitsw-$ev" 2>/dev/null; done
   rm -f "$HOOK_DISPATCHER"
   [ ${#ACC_IDS[@]} -gt 0 ] && remove_managed_rules "${ACC_IDS[*]}"
-  if grep -q '# >>> gitsw >>>' "$SHELL_RC" 2>/dev/null; then backup_file "$SHELL_RC"; remove_marked_block "$SHELL_RC" "# >>> gitsw >>>" "# <<< gitsw <<<"; fi
+  if grep -qE "^($SHELL_BEGIN|$OLD_SHELL_BEGIN)" "$SHELL_RC" 2>/dev/null; then
+    backup_file "$SHELL_RC"
+    remove_marked_block "$SHELL_RC" "$SHELL_BEGIN" "$SHELL_END"
+    remove_marked_block "$SHELL_RC" "$OLD_SHELL_BEGIN" "$OLD_SHELL_END"
+  fi
   [ -n "$IS_WINDOWS" ] && remove_windows_shims
   ai_remove
   if grep -q '^# >>> gitsw strict >>>' "$SSH_CONFIG" 2>/dev/null; then

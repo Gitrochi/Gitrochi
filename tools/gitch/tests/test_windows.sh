@@ -18,15 +18,15 @@ test_windows_install_links_cmd_and_path() {
   # 훅 연결 스크립트가 ~/bin/gitch 를 부른다
   grep -q "$HOME/bin/gitch" "$HOME/.local/share/gitsw/hook" || fail "훅이 ~/bin/gitch 를 부르지 않음"
   # .bashrc: 한 번만, PATH 와 프롬프트(Git Bash 기본 프롬프트는 '\n$ ' 로 끝난다)
-  [ "$(grep -c '# >>> gitsw >>>' "$HOME/.bashrc")" -eq 1 ] || fail ".bashrc 블록"
+  [ "$(grep -c '# >>> gitch >>>' "$HOME/.bashrc")" -eq 1 ] || fail ".bashrc 블록"
   install_quiet
-  [ "$(grep -c '# >>> gitsw >>>' "$HOME/.bashrc")" -eq 1 ] || fail ".bashrc 블록 중복"
+  [ "$(grep -c '# >>> gitch >>>' "$HOME/.bashrc")" -eq 1 ] || fail ".bashrc 블록 중복"
   [ "$(grep -c . "$T/userpath")" -eq 1 ] || fail "PATH 가 두 번 들어감"
   # shellcheck disable=SC2016
-  bash -c 'PS1="\\w\\n\$ "; . "$HOME/.bashrc"; case "$PS1" in *_gitsw_prompt*"\n$ ") ;; *) echo "$PS1"; exit 1 ;; esac' || fail "Git Bash 프롬프트에 계정이 없음"
+  bash -c 'PS1="\\w\\n\$ "; . "$HOME/.bashrc"; case "$PS1" in *_gitch_prompt*"\n$ ") ;; *) echo "$PS1"; exit 1 ;; esac' || fail "Git Bash 프롬프트에 계정이 없음"
   run gitch doctor --no-net; assert_out "~/bin/gitch.cmd"
   run gitch uninstall --yes; assert_ok
-  grep -q '# >>> gitsw >>>' "$HOME/.bashrc" && fail ".bashrc 블록이 남음"
+  grep -q '# >>> gitch >>>' "$HOME/.bashrc" && fail ".bashrc 블록이 남음"
   [ ! -s "$T/userpath" ] || fail "gitch 가 넣은 PATH 가 남음"
 }
 
