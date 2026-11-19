@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isLocalHost, resolveAddress, searchURL } from "../src/entities/terminal/lib/browser-address";
+import { isLocalHost, resolveAddress, searchEngines, searchURL } from "../src/entities/terminal/lib/browser-address";
 
 describe("browser tab address bar", () => {
   it("opens dev servers over plain http", () => {
@@ -16,10 +16,16 @@ describe("browser tab address bar", () => {
     expect(resolveAddress("about:blank")).toBe("about:blank");
   });
   it("searches anything else", () => {
-    expect(resolveAddress("git rebase onto")).toBe(searchURL + "git%20rebase%20onto");
-    expect(resolveAddress("readme")).toBe(searchURL + "readme");
-    expect(resolveAddress("file:///etc/passwd")).toBe(searchURL + encodeURIComponent("file:///etc/passwd"));
-    expect(resolveAddress("a..b")).toBe(searchURL + "a..b");
+    expect(resolveAddress("git rebase onto")).toBe(searchURL() + "git%20rebase%20onto");
+    expect(resolveAddress("readme")).toBe(searchURL() + "readme");
+    expect(resolveAddress("file:///etc/passwd")).toBe(searchURL() + encodeURIComponent("file:///etc/passwd"));
+    expect(resolveAddress("a..b")).toBe(searchURL() + "a..b");
     expect(resolveAddress("   ")).toBeNull();
+  });
+  it("searches with Google unless another engine is chosen", () => {
+    expect(resolveAddress("git rebase")).toBe("https://www.google.com/search?q=git%20rebase");
+    expect(resolveAddress("git rebase", "naver")).toBe("https://search.naver.com/search.naver?query=git%20rebase");
+    expect(resolveAddress("git rebase", "unknown")).toBe("https://www.google.com/search?q=git%20rebase");
+    for (const engine of searchEngines) expect(resolveAddress("a b", engine.id)).toBe(engine.url + "a%20b");
   });
 });

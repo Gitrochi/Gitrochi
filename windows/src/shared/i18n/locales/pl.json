@@ -2299,5 +2299,7 @@
   "{0} rows · {1} columns": "Wiersze: {0} · kolumny: {1}",
   "This file can't be shown as text.": "Tego pliku nie można wyświetlić jako tekstu.",
   "Receive beta updates": "Otrzymuj aktualizacje beta",
-  "Betas come before each release so new features can be tried early; they may have bugs. Turning this off keeps the beta until the next release.": "Wersje beta pojawiają się przed każdym wydaniem, aby wcześniej wypróbować nowe funkcje; mogą zawierać błędy. Po wyłączeniu beta zostaje do następnego wydania."
+  "Betas come before each release so new features can be tried early; they may have bugs. Turning this off keeps the beta until the next release.": "Wersje beta pojawiają się przed każdym wydaniem, aby wcześniej wypróbować nowe funkcje; mogą zawierać błędy. Po wyłączeniu beta zostaje do następnego wydania.",
+  "Search engine": "Wyszukiwarka",
+  "Text typed into a browser tab's address bar that isn't an address is searched with this engine.": "Tekst wpisany w pasku adresu karty przeglądarki, który nie jest adresem, jest wyszukiwany w tej wyszukiwarce."
 }

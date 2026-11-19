@@ -3,7 +3,18 @@
  * macOS: BrowserAddress in Services/BrowserSession.swift
  */
 
-export const searchURL = "https://duckduckgo.com/?q=";
+/** Where the address bar sends a search, chosen in Settings › Tools; titles are product names (macOS: SearchEngine) */
+export const searchEngines = [
+  { id: "google", title: "Google", url: "https://www.google.com/search?q=" },
+  { id: "duckduckgo", title: "DuckDuckGo", url: "https://duckduckgo.com/?q=" },
+  { id: "bing", title: "Bing", url: "https://www.bing.com/search?q=" },
+  { id: "naver", title: "Naver", url: "https://search.naver.com/search.naver?query=" },
+] as const;
+
+export const searchEngineKey = "browserSearchEngine";
+
+/** The search address of an engine id; Google for an unknown one */
+export const searchURL = (engine = "google") => (searchEngines.find((e) => e.id === engine) ?? searchEngines[0]).url;
 
 function hostPart(value: string): string {
   const end = value.search(/[/?#]/);
@@ -35,11 +46,11 @@ export function looksLikeHost(value: string): boolean {
 }
 
 /** The address to open, or null for empty text */
-export function resolveAddress(text: string): string | null {
+export function resolveAddress(text: string, engine = "google"): string | null {
   const value = text.trim();
   if (!value) return null;
   const scheme = /^([a-z][a-z0-9+.-]*):/i.exec(value)?.[1].toLowerCase();
   if (scheme === "about" || ((scheme === "http" || scheme === "https") && /^[a-z]+:\/\/[^/?#\s]+/i.test(value))) return value;
   if (!/\s/.test(value) && looksLikeHost(value)) return (isLocalHost(value) ? "http://" : "https://") + value;
-  return searchURL + encodeURIComponent(value);
+  return searchURL(engine) + encodeURIComponent(value);
 }

@@ -2300,5 +2300,7 @@
   "{0} rows · {1} columns": "{0} sor · {1} oszlop",
   "This file can't be shown as text.": "Ez a fájl nem jeleníthető meg szövegként.",
   "Receive beta updates": "Béta frissítések fogadása",
-  "Betas come before each release so new features can be tried early; they may have bugs. Turning this off keeps the beta until the next release.": "A béták minden kiadás előtt jelennek meg, hogy az új funkciók korán kipróbálhatók legyenek; hibákat tartalmazhatnak. Kikapcsolás után a béta megmarad a következő kiadásig."
+  "Betas come before each release so new features can be tried early; they may have bugs. Turning this off keeps the beta until the next release.": "A béták minden kiadás előtt jelennek meg, hogy az új funkciók korán kipróbálhatók legyenek; hibákat tartalmazhatnak. Kikapcsolás után a béta megmarad a következő kiadásig.",
+  "Search engine": "Keresőmotor",
+  "Text typed into a browser tab's address bar that isn't an address is searched with this engine.": "A böngészőlap címsorába írt szöveget, ha nem cím, ezzel a keresőmotorral keresi."
 }

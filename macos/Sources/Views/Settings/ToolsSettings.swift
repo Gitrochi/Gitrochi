@@ -7,6 +7,7 @@ struct ToolsSettings: View {
     @ViewState private var error: String?
     @ViewState private var busy: ToolID?
     @AppStorage(AgentCenter.Place.key) private var agentPlace = AgentCenter.Place.app
+    @AppStorage(SearchEngine.key) private var searchEngine = SearchEngine.google
 
     var body: some View {
         Form {
@@ -21,6 +22,14 @@ struct ToolsSettings: View {
                 }
             } footer: {
                 Text("In Gitrochi, a session runs in a new tab of the terminal below the graph and ends when you quit the app. Choose Terminal app to keep sessions running without Gitrochi.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            Section {
+                Picker("Search engine", selection: $searchEngine) {
+                    ForEach(SearchEngine.allCases) { Text(verbatim: $0.title).tag($0) }
+                }
+            } footer: {
+                Text("Text typed into a browser tab's address bar that isn't an address is searched with this engine.")
                     .font(.caption).foregroundStyle(.secondary)
             }
             ForEach(ToolID.allCases) { id in

@@ -2286,3 +2286,5 @@
 "This file can't be shown as text." = "Tento soubor nelze zobrazit jako text.";
 "Receive beta updates" = "Přijímat beta aktualizace";
 "Betas come before each release so new features can be tried early; they may have bugs. Turning this off keeps the beta until the next release." = "Bety vycházejí před každou verzí, abyste mohli nové funkce vyzkoušet dříve; mohou obsahovat chyby. Po vypnutí zůstane beta až do další verze.";
+"Search engine" = "Vyhledávač";
+"Text typed into a browser tab's address bar that isn't an address is searched with this engine." = "Text zadaný do adresního řádku karty prohlížeče, který není adresou, se vyhledá tímto vyhledávačem.";

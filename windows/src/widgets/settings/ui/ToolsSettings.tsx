@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { searchEngineKey, searchEngines } from "@/entities/terminal";
 import { ipc } from "@/shared/api";
 import { dirname, displayPath, isWindows, settings, toWslPath, wslDistroOf } from "@/shared/config";
 import { t } from "@/shared/i18n";
@@ -45,6 +46,22 @@ export function ToolsSettings() {
     <div className="col" style={{ gap: 10 }}>
       <span className="hint">
         {t("Install locations differ between PCs. If a tool isn't found automatically, use")}{" "}<b>{t("Locate")}</b>{t(" to choose the executable yourself. The chosen path is saved and used next time.")}</span>
+      <div className="form-section">
+        <span className="form-section-title">{t("Search engine")}</span>
+        <select
+          className="select"
+          style={{ width: 260 }}
+          value={settings.get<string>(searchEngineKey, "google")}
+          onChange={(e) => settings.set(searchEngineKey, e.target.value)}
+        >
+          {searchEngines.map((engine) => (
+            <option key={engine.id} value={engine.id}>
+              {engine.title}
+            </option>
+          ))}
+        </select>
+        <span className="hint">{t("Text typed into a browser tab's address bar that isn't an address is searched with this engine.")}</span>
+      </div>
       {toolList.map((tool) => {
         const st = tools.state[tool.id];
         const w = tools.wsl(tool.id);
