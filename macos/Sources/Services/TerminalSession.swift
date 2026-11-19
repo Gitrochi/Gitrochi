@@ -265,27 +265,36 @@ final class ShellView: LocalProcessTerminalView {
     var onOutput: (() -> Void)?
     /// Takes a ⌘-clicked link or word (a URL or a file path); false leaves it to the default handler
     var onOpenLink: ((String) -> Bool)?
+    /// Opens a path with spaces when that file exists; false when it does not
+    var onOpenFile: ((String) -> Bool)?
     private var linkTaken = false
 
     override func requestOpenLink(source: TerminalView, link: String, params: [String: String]) {
+        if linkTaken { return }
         linkTaken = true
         if onOpenLink?(link) == true { return }
         super.requestOpenLink(source: source, link: link, params: params)
     }
 
-    /// SwiftTerm finds paths only with a ./, ../, ~/ or / prefix; a ⌘-click on a bare name such as `schema.sql` or
-    /// `src/app.ts` (ls, git status) offers the word under the pointer instead
+    /// SwiftTerm finds paths only with a ./, ../, ~/ or / prefix and ends them at a space; a ⌘-click first tries a
+    /// path with spaces through the pointer, then on a bare name such as `schema.sql` or `src/app.ts` (ls, git status)
+    /// offers the word under the pointer
     override func mouseUp(with event: NSEvent) {
         linkTaken = false
+        let command = event.modifierFlags.contains(.command) && event.clickCount == 1 && !selectionActive
+        let point = convert(event.locationInWindow, from: nil)
+        if command, let (before, after) = text(at: point) {
+            linkTaken = TerminalWord.spanned(before: before, after: after).contains { onOpenFile?($0) == true }
+        }
         super.mouseUp(with: event)
-        guard event.modifierFlags.contains(.command), !linkTaken, event.clickCount == 1, !selectionActive,
-              let word = word(at: convert(event.locationInWindow, from: nil)) else { return }
+        guard command, !linkTaken, let (before, after) = text(at: point),
+              let word = TerminalWord.around(before: before, after: after) else { return }
         _ = onOpenLink?(word)
     }
 
-    /// The run of path characters under the point, read from the visible buffer. The cell size is worked out the way
-    /// SwiftTerm does (computeFontDimensions), since its own hit test is internal to the module.
-    private func word(at point: CGPoint) -> String? {
+    /// The line's text before and from the cell under the point, read from the visible buffer. The cell size is worked
+    /// out the way SwiftTerm does (computeFontDimensions), since its own hit test is internal to the module.
+    private func text(at point: CGPoint) -> (String, String)? {
         let scale = window?.backingScaleFactor ?? 2
         let ct = font as CTFont
         let cellHeight = ceil(ceil(CTFontGetAscent(ct) + CTFontGetDescent(ct) + CTFontGetLeading(ct)) * scale) / scale
@@ -296,7 +305,7 @@ final class ShellView: LocalProcessTerminalView {
         guard col >= 0, col < terminal.cols, let line = terminal.getLine(row: row) else { return nil }
         let before = line.translateToString(trimRight: false, startCol: 0, endCol: col)
         let after = line.translateToString(trimRight: true, startCol: col, endCol: terminal.cols)
-        return TerminalWord.around(before: before, after: after)
+        return (before, after)
     }
 
     /// macOS treats Control-Return as "open the context menu", so the graph would take it as a key equivalent
@@ -546,6 +555,15 @@ extension RepoStore {
         s.view.onFocus = { [weak self, weak s] in
             guard let self, let s, self.activeTerminalID != s.id else { return }
             self.selectTerminal(s)
+        }
+        s.view.onOpenFile = { [weak self, weak s] text in
+            guard let self, let s else { return false }
+            var isFolder: ObjCBool = false
+            guard let path = TerminalWord.file(text, in: s.directory, exists: {
+                FileManager.default.fileExists(atPath: $0, isDirectory: &isFolder) && !isFolder.boolValue
+            }) else { return false }
+            self.previewInBrowserTab(URL(fileURLWithPath: path), beside: s.id)
+            return true
         }
         s.view.onOpenLink = { [weak self, weak s] link in
             guard let self, let s else { return false }

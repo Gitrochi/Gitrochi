@@ -63,7 +63,7 @@ export class TerminalSession extends Observable {
   visible = false;
   onExit?: (code: number | null) => void;
   /** Takes a Ctrl-clicked web address or file path (the repository store opens it) */
-  onOpenLink?: (text: string) => void;
+  onOpenLink?: (text: string, candidates?: string[]) => void;
   /** The shell's process id while it runs; an agent typed into this tab has it as an ancestor */
   pid: number | null = null;
   /** A command or program runs in it (the tab's ring); a tab that runs a program instead of the shell is busy while it lives */
@@ -152,7 +152,7 @@ export class TerminalSession extends Observable {
       range: { start: { x: cols[token.start] + 1, y }, end: { x: cols[token.end - 1] + 1, y } },
       decorations: { underline: linkModifier, pointerCursor: linkModifier },
       activate: (event: MouseEvent, value: string) => {
-        if (isMac() ? event.metaKey : event.ctrlKey) this.onOpenLink?.(value);
+        if (isMac() ? event.metaKey : event.ctrlKey) this.onOpenLink?.(value, token.candidates);
       },
     }));
     return links.length ? links : undefined;
