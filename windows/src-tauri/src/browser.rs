@@ -32,10 +32,12 @@ fn webview(app: &tauri::AppHandle, id: &str) -> Result<tauri::Webview, String> {
         .ok_or_else(|| "browser tab is gone".to_string())
 }
 
-/// Opens a page in a new child webview of the calling window, at the given logical rectangle
+/// Opens a page in a new child webview of the calling window, at the given logical rectangle.
+/// Every command here is async: a sync command runs on the main thread, and `add_child` waits for the main thread
+/// to build the webview, so a sync `browser_open` deadlocks the app (it hung the Windows self-test).
 #[tauri::command]
 #[allow(clippy::too_many_arguments)]
-pub fn browser_open(
+pub async fn browser_open(
     window: tauri::Window,
     id: String,
     url: String,
@@ -92,7 +94,7 @@ pub fn browser_open(
 
 /// Follows the pane: its place, its size, and whether it is on screen
 #[tauri::command]
-pub fn browser_place(
+pub async fn browser_place(
     app: tauri::AppHandle,
     id: String,
     x: f64,
@@ -113,7 +115,11 @@ pub fn browser_place(
 }
 
 #[tauri::command]
-pub fn browser_navigate(app: tauri::AppHandle, id: String, url: String) -> Result<(), String> {
+pub async fn browser_navigate(
+    app: tauri::AppHandle,
+    id: String,
+    url: String,
+) -> Result<(), String> {
     webview(&app, &id)?
         .navigate(parse(&url)?)
         .map_err(|e| e.to_string())
@@ -121,24 +127,24 @@ pub fn browser_navigate(app: tauri::AppHandle, id: String, url: String) -> Resul
 
 /// Back (-1) or forward (1) in the page's history
 #[tauri::command]
-pub fn browser_history(app: tauri::AppHandle, id: String, step: i32) -> Result<(), String> {
+pub async fn browser_history(app: tauri::AppHandle, id: String, step: i32) -> Result<(), String> {
     webview(&app, &id)?
         .eval(format!("history.go({step})"))
         .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
-pub fn browser_reload(app: tauri::AppHandle, id: String) -> Result<(), String> {
+pub async fn browser_reload(app: tauri::AppHandle, id: String) -> Result<(), String> {
     webview(&app, &id)?.reload().map_err(|e| e.to_string())
 }
 
 #[tauri::command]
-pub fn browser_focus(app: tauri::AppHandle, id: String) -> Result<(), String> {
+pub async fn browser_focus(app: tauri::AppHandle, id: String) -> Result<(), String> {
     webview(&app, &id)?.set_focus().map_err(|e| e.to_string())
 }
 
 #[tauri::command]
-pub fn browser_close(app: tauri::AppHandle, id: String) -> Result<(), String> {
+pub async fn browser_close(app: tauri::AppHandle, id: String) -> Result<(), String> {
     match app.get_webview(&label(&id)) {
         Some(view) => view.close().map_err(|e| e.to_string()),
         None => Ok(()),
