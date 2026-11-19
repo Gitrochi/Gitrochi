@@ -226,9 +226,9 @@ pub fn msys_to_native(p: &str) -> String {
     p.to_string()
 }
 
-/// gitch's settings folder (`~/.config/gitsw`), found by the same rules as gitch.
-pub fn gitsw_dir() -> PathBuf {
-    if let Ok(cfg) = std::env::var("GITSW_CONFIG") {
+/// gitch's settings folder (`~/.config/gitch`), found by the same rules as gitch.
+pub fn gitch_dir() -> PathBuf {
+    if let Ok(cfg) = std::env::var("GITCH_CONFIG") {
         if !cfg.is_empty() {
             let p = PathBuf::from(msys_to_native(&cfg));
             if let Some(parent) = p.parent() {
@@ -238,27 +238,27 @@ pub fn gitsw_dir() -> PathBuf {
     }
     if let Ok(x) = std::env::var("XDG_CONFIG_HOME") {
         if !x.is_empty() {
-            return PathBuf::from(msys_to_native(&x)).join("gitsw");
+            return PathBuf::from(msys_to_native(&x)).join("gitch");
         }
     }
     home_dir()
         .unwrap_or_else(|| PathBuf::from("."))
         .join(".config")
-        .join("gitsw")
+        .join("gitch")
 }
 
-/// gitch's state folder (`~/.local/state/gitsw`), where the action log actions.jsonl lives.
-pub fn gitsw_state_dir() -> PathBuf {
+/// gitch's state folder (`~/.local/state/gitch`), where the action log actions.jsonl lives.
+pub fn gitch_state_dir() -> PathBuf {
     if let Ok(x) = std::env::var("XDG_STATE_HOME") {
         if !x.is_empty() {
-            return PathBuf::from(msys_to_native(&x)).join("gitsw");
+            return PathBuf::from(msys_to_native(&x)).join("gitch");
         }
     }
     home_dir()
         .unwrap_or_else(|| PathBuf::from("."))
         .join(".local")
         .join("state")
-        .join("gitsw")
+        .join("gitch")
 }
 
 /// The result cache folder.

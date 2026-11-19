@@ -7,7 +7,7 @@ use crate::util::tr;
 use serde_json::{json, Value};
 use std::path::Path;
 
-/// Per-repository gate settings (prePush.<repo-id> in ~/.config/gitsw/flow/settings.json).
+/// Per-repository gate settings (prePush.<repo-id> in ~/.config/gitch/flow/settings.json).
 pub fn enabled(root: &Path) -> Option<String> {
     let s = crate::cli::settings();
     let id = crate::trust::repo_id(root);
@@ -52,7 +52,7 @@ fn toggle(out: &Out, root: &Path, on: bool, flow: Option<String>) -> i32 {
         }
         return 2;
     }
-    let path = crate::util::gitsw_dir().join("flow").join("settings.json");
+    let path = crate::util::gitch_dir().join("flow").join("settings.json");
     let mut s = crate::cli::settings();
     if !s.is_object() {
         s = json!({});
@@ -185,7 +185,7 @@ pub fn cmd_gate(out: &Out, args: &Args) -> i32 {
         0
     } else {
         eprintln!("FLOW=STOP");
-        eprintln!("{}", tr("  push 를 멈췄습니다. 고친 뒤 다시 push 하거나, 사람이 직접 넘기려면 GITSW_SKIP=flow (기록이 남습니다).", "  push stopped. Fix it and push again; a person can skip it with GITSW_SKIP=flow (this is recorded)."));
+        eprintln!("{}", tr("  push 를 멈췄습니다. 고친 뒤 다시 push 하거나, 사람이 직접 넘기려면 GITCH_SKIP=flow (기록이 남습니다).", "  push stopped. Fix it and push again; a person can skip it with GITCH_SKIP=flow (this is recorded)."));
         if code == 2 {
             2
         } else {

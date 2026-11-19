@@ -22,7 +22,7 @@ export default mergeConfig(base, defineConfig({
      else if (["blocks", "list", "validate"].includes(operation)) args = [operation, "--json"];
      else if (operation === "plan" && /^[A-Za-z_][A-Za-z0-9_.-]*$/.test(payload.flow)) args = ["plan", payload.flow, "--json"];
      else throw new Error("Only local source authoring and read-only metadata are allowed.");
-     const child = spawn(engine, args, { cwd: repo, env: { ...process.env, GITCH_FLOW_LANG: "en", GITSW_ACTOR: "gitrochi-app" }, stdio: ["pipe", "pipe", "pipe"] });
+     const child = spawn(engine, args, { cwd: repo, env: { ...process.env, GITCH_FLOW_LANG: "en", GITCH_ACTOR: "gitrochi-app" }, stdio: ["pipe", "pipe", "pipe"] });
      let stdout = "", stderr = "";
      child.stdout.on("data", (chunk) => { stdout += chunk; }); child.stderr.on("data", (chunk) => { stderr += chunk; });
      const timer = setTimeout(() => child.kill(), 15000);

@@ -1,5 +1,5 @@
 //! Trusting flow files. A flow file is code, so it runs unattended only when its hash matches one a person reviewed and approved.
-//! The records live outside the repository in `~/.config/gitsw/flow/trust/`, where gitch guard keeps AI agents from editing.
+//! The records live outside the repository in `~/.config/gitch/flow/trust/`, where gitch guard keeps AI agents from editing.
 
 use crate::spec::Spec;
 use crate::util;
@@ -9,7 +9,7 @@ use std::path::{Path, PathBuf};
 
 /// Identifies the actor by the same rules as gitch.
 pub fn actor() -> String {
-    if let Ok(a) = std::env::var("GITSW_ACTOR") {
+    if let Ok(a) = std::env::var("GITCH_ACTOR") {
         if !a.is_empty() {
             return a;
         }
@@ -53,7 +53,7 @@ pub fn repo_id(root: &Path) -> String {
 }
 
 pub fn trust_path(root: &Path) -> PathBuf {
-    util::gitsw_dir()
+    util::gitch_dir()
         .join("flow")
         .join("trust")
         .join(format!("{}.json", repo_id(root)))

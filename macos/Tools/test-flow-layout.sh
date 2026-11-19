@@ -64,4 +64,4 @@ xcrun swiftc -parse-as-library -swift-version 5 -O -target "$ARCH-apple-macos15.
     "${TASK_SOURCES[@]}" "$ROOT/Tools/fixtures/FlowCodeLayout.swift" "$TASK_CORE" \
     -o "$TASK_APP/Contents/MacOS/FlowLayout"
 # Connection/trust metadata reads stay in an empty fixture settings folder too.
-GITSW_CONFIG="$TASK_TMP/settings/config" "$TASK_APP/Contents/MacOS/FlowLayout" "$TASK_OUTPUT" "$TASK_REPO" "$TASK_COMMON" -AppleLanguages '(en)'
+GITCH_CONFIG="$TASK_TMP/settings/config" "$TASK_APP/Contents/MacOS/FlowLayout" "$TASK_OUTPUT" "$TASK_REPO" "$TASK_COMMON" -AppleLanguages '(en)'

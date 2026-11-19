@@ -162,9 +162,9 @@ fn load(out: &Out, args: &Args) -> Result<Spec, i32> {
     spec::load(&root).map_err(|e| spec_errors(out, &e))
 }
 
-/// User settings (~/.config/gitsw/flow/settings.json): production allowances, default parallelism, internal domains.
+/// User settings (~/.config/gitch/flow/settings.json): production allowances, default parallelism, internal domains.
 pub fn settings() -> Value {
-    std::fs::read_to_string(util::gitsw_dir().join("flow").join("settings.json"))
+    std::fs::read_to_string(util::gitch_dir().join("flow").join("settings.json"))
         .ok()
         .and_then(|t| serde_json::from_str(&t).ok())
         .unwrap_or(json!({}))

@@ -329,7 +329,7 @@ pub fn follow(run_dir: &Path, since: u64, follow: bool, on: &mut dyn FnMut(&Valu
 // ---------- signatures ----------
 
 fn key_path() -> PathBuf {
-    util::gitsw_dir().join("flow").join("key")
+    util::gitch_dir().join("flow").join("key")
 }
 
 fn signing_key() -> Option<Vec<u8>> {

@@ -1,5 +1,5 @@
 //! Connections: addresses and credential references for Jenkins, GitLab, GitHub, plain HTTP CI and webhooks. They live in user settings outside the repository
-//! (`~/.config/gitsw/flow/connections.json`); secrets come only from the OS secret store, environment variables or the app's account tokens.
+//! (`~/.config/gitch/flow/connections.json`); secrets come only from the OS secret store, environment variables or the app's account tokens.
 
 use crate::cli::{Args, Out};
 use crate::util::{self, tr};
@@ -21,7 +21,7 @@ pub struct Connection {
 }
 
 fn path() -> std::path::PathBuf {
-    util::gitsw_dir().join("flow").join("connections.json")
+    util::gitch_dir().join("flow").join("connections.json")
 }
 
 fn load_all() -> Vec<Value> {
