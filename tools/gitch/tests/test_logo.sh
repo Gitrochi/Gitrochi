@@ -14,7 +14,7 @@ logo_assert_enabled() {
 test_logo_default_status_without_account_setup() {
   logo_run logo --json; logo_assert_enabled true
   logo_run logo status --json; logo_assert_enabled true
-  [ ! -e "$HOME/.config/gitsw/config" ] || fail 'reading default logo preference created a config file'
+  [ ! -e "$HOME/.config/gitch/config" ] || fail 'reading default logo preference created a config file'
 }
 
 test_logo_on_off_persists_without_account_setup() {
@@ -55,21 +55,21 @@ test_logo_config_rejects_invalid_value_and_rolls_back() {
   mk_config
   logo_run logo off --json; logo_assert_enabled false
   local before
-  before=$(cat "$HOME/.config/gitsw/config")
+  before=$(cat "$HOME/.config/gitch/config")
   logo_run config set ui.logo banana --yes; assert_fail; assert_out ui.logo
-  assert_eq "$(cat "$HOME/.config/gitsw/config")" "$before" 'invalid logo value changed config'
+  assert_eq "$(cat "$HOME/.config/gitch/config")" "$before" 'invalid logo value changed config'
   logo_run logo --json; logo_assert_enabled false
 }
 
 test_logo_invalid_arguments_do_not_mutate_preference() {
   logo_run logo on --json; logo_assert_enabled true
   local before
-  before=$(cat "$HOME/.config/gitsw/config")
+  before=$(cat "$HOME/.config/gitch/config")
   logo_run logo invalid --json; assert_rc 1; assert_json "$OUT"
   logo_run logo off extra --json; assert_rc 1; assert_json "$OUT"
   logo_run logo on off --json; assert_rc 1; assert_json "$OUT"
   logo_run logo --bad --json; assert_rc 1; assert_json "$OUT"
-  assert_eq "$(cat "$HOME/.config/gitsw/config")" "$before" 'invalid logo command changed config'
+  assert_eq "$(cat "$HOME/.config/gitch/config")" "$before" 'invalid logo command changed config'
   logo_run logo --json; logo_assert_enabled true
 }
 

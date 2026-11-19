@@ -21,7 +21,7 @@ test_hook_warns_once_when_gitch_is_missing() {
 
 test_hook_rewrites_old_dispatcher() {
   hook_repo
-  local d="$HOME/.local/share/gitsw/hook"
+  local d="$HOME/.local/share/gitch/hook"
   [ -f "$d" ] || fail "훅 연결 스크립트가 없음"
   # 예전 gitch 가 쓴 연결 스크립트 (gitch 가 없으면 말없이 넘어감)
   printf '#!/bin/sh\ng="%s"\n[ -x "$g" ] || exit 0\nexec "$g" _hook "$@"\n' "$HOME/bin/gitch" > "$d"
@@ -56,8 +56,8 @@ test_hook_blocks_secrets() {
   # 개인키 머리줄은 나눠 적는다(이 파일이 Gitrochi 저장소의 비밀값 검사에 걸리지 않게 — 만든 파일 내용은 같다)
   printf '%s%s\n' '-----BEGIN OPENSSH PRIVATE' ' KEY-----' > key.txt; git add key.txt; git reset -q conf.py
   run git commit -q -m key; assert_fail; assert_out "개인키"
-  printf '%s%s  # gitsw:allow\n' '-----BEGIN OPENSSH PRIVATE' ' KEY-----' > key.txt; git add key.txt
-  run git commit -q -m key-allowed; assert_ok "gitsw:allow 줄은 통과"
+  printf '%s%s  # gitch:allow\n' '-----BEGIN OPENSSH PRIVATE' ' KEY-----' > key.txt; git add key.txt
+  run git commit -q -m key-allowed; assert_ok "gitch:allow 줄은 통과"
 }
 
 test_hook_lockfiles_and_false_positives() {
@@ -68,13 +68,13 @@ test_hook_lockfiles_and_false_positives() {
   run git commit -q -m ok; assert_ok "잠금 파일/단어 중간의 sk- 는 통과"
   printf 'key = "sk-ant-%s"\n' "api03-ABCDEFGHIJKLMNOPQRSTUVWX" > ai.py; git add ai.py
   run git commit -q -m ai; assert_fail; assert_out "Anthropic 키"
-  run env GITSW_SKIP=secrets git commit -q -m ai; assert_ok "사람이 GITSW_SKIP 으로 넘길 수 있음"
+  run env GITCH_SKIP=secrets git commit -q -m ai; assert_ok "사람이 GITCH_SKIP 으로 넘길 수 있음"
 }
 
 test_hook_blocks_big_files() {
   hook_repo
-  gitch config set gitsw.maxFileMB 1 --yes >/dev/null
-  gitch config set gitsw.warnFileMB 0 --yes >/dev/null
+  gitch config set gitch.maxFileMB 1 --yes >/dev/null
+  gitch config set gitch.warnFileMB 0 --yes >/dev/null
   dd if=/dev/zero of=big.bin bs=1048576 count=2 2>/dev/null; git add big.bin
   run git commit -q -m big; assert_fail; assert_out "1MB 이상 파일"; assert_out "big.bin"
   git rm -q --cached big.bin
@@ -109,7 +109,7 @@ test_hook_blocks_unassigned_managed_repo() {
   run git commit -q -m a; assert_fail; assert_out "어느 계정으로 커밋할지 정해지지 않았습니다"
 }
 
-test_push_blocks_force_but_gitsw_force_works() {
+test_push_blocks_force_but_gitch_force_works() {
   hook_repo
   echo a > a; gitch cp -a -m a >/dev/null 2>&1 || fail "첫 push 실패"
   git commit -q --amend -m "a rewritten"
@@ -133,13 +133,13 @@ test_push_blocks_wrong_alias_and_raw_url() {
 test_push_blocks_other_account_commits_allows_colleague() {
   hook_repo
   echo a > a; git add a
-  GITSW_SKIP=identity git -c user.email=bob@example.com -c user.name=bob commit -q -m "by bob"
+  GITCH_SKIP=identity git -c user.email=bob@example.com -c user.name=bob commit -q -m "by bob"
   run git push -q origin main; assert_fail; assert_out "작성자가 alice"
   run gitch fix --yes; assert_ok
   assert_eq "$(git log -1 --format=%ae)" "alice@example.com"
   echo c > c; git add c
   git commit -q -m "colleague patch" --author="Colleague <colleague@corp.example>" 2>/dev/null || \
-    GITSW_SKIP=identity git commit -q -m "colleague patch" --author="Colleague <colleague@corp.example>"
+    GITCH_SKIP=identity git commit -q -m "colleague patch" --author="Colleague <colleague@corp.example>"
   run git push -q origin main; assert_ok "동료 작성 + 내 커밋터는 통과"
 }
 
@@ -157,7 +157,7 @@ test_push_protected_and_delete_default() {
 
 test_push_allow_remote_policy() {
   mk_config
-  git config -f "$HOME/.config/gitsw/config" --add folder.~/Develop/corp.allowRemote "gitlab.example.com/*"
+  git config -f "$HOME/.config/gitch/config" --add folder.~/Develop/corp.allowRemote "gitlab.example.com/*"
   install_quiet
   mk_remote_seeded gitlab-carol grp/app carol@corp.example
   gitch clone carol grp/app "$HOME/Develop/corp/app" >/dev/null 2>&1 || fail clone
@@ -175,14 +175,14 @@ test_fallback_hooks_when_no_config_hooks() {
   run git commit -q -m a; assert_fail
   [ "$(printf '%s\n' "$OUT" | grep -c '이 저장소는 alice 계정 전용')" -eq 1 ] || fail "전역 훅 + 보조 훅이 중복 검사함\n$OUT"
   # 전역 훅을 모르는 git 흉내: 전역 훅 설정을 지우면 저장소 보조 훅이 검사
-  for ev in pre-commit commit-msg pre-push post-commit; do git config --global --remove-section "hook.gitsw-$ev"; done
+  for ev in pre-commit commit-msg pre-push post-commit; do git config --global --remove-section "hook.gitch-$ev"; done
   run git commit -q -m a; assert_fail "보조 훅이 막아야 함"; assert_out "이 저장소는 alice 계정 전용"
 }
 
 test_post_commit_log_and_report() {
   hook_repo
   echo a > a; gitch c -a -m "logged" >/dev/null
-  [ -f "$HOME/.local/state/gitsw/actions.jsonl" ] || fail "기록 파일 없음"
+  [ -f "$HOME/.local/state/gitch/actions.jsonl" ] || fail "기록 파일 없음"
   run gitch report --json; assert_ok; assert_json "$OUT"
   assert_eq "$(printf '%s' "$OUT" | jq -r '[.[] | select(.event == "commit" and .subject == "logged")] | length')" "1"
   run gitch report; assert_ok; assert_out "logged"; assert_out "script"
@@ -190,7 +190,7 @@ test_post_commit_log_and_report() {
 
 test_hook_config_error_fails_open() {
   hook_repo
-  printf '[account "broken"]\n\thost = github.com\n' >> "$HOME/.config/gitsw/config"
+  printf '[account "broken"]\n\thost = github.com\n' >> "$HOME/.config/gitch/config"
   echo a > a; git add a
   run git commit -q -m a; assert_ok "설정이 깨지면 커밋은 막지 않고 경고"
   assert_out "설정 파일에 문제가 있어 검사를 건너뜁니다"

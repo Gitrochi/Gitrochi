@@ -54,14 +54,14 @@ test_push_pull_cp() {
   run gitch cp -a -m "b"; assert_ok; assert_out "push main → origin"
   assert_eq "$(git -C "$FAKE_REMOTES/github-alice/alice/app.git" log -1 --format=%s main)" "b"
   run gitch p; assert_ok; assert_out "이미 최신"
-  local log="$HOME/.local/state/gitsw/actions.jsonl" here; here=$(git rev-parse --show-toplevel)   # 기록은 git 이 준 경로(Windows 는 C:/…)
+  local log="$HOME/.local/state/gitch/actions.jsonl" here; here=$(git rev-parse --show-toplevel)   # 기록은 git 이 준 경로(Windows 는 C:/…)
   [ "$(jq -r --arg r "$here" 'select(.event == "push" and .repo == $r) | .event' "$log" | grep -c .)" -eq 1 ] || fail "push 한 번이 한 번만 기록돼야 함\n$(cat "$log")"
   git push -q origin main:other 2>/dev/null
   [ "$(jq -r --arg r "$here" 'select(.event == "push" and .repo == $r) | .event' "$log" | grep -c .)" -eq 2 ] || fail "git 으로 직접 한 push 도 기록돼야 함\n$(cat "$log")"
   # 다른 곳에서 원격에 커밋 → pl
   git clone -q "$FAKE_REMOTES/github-alice/alice/app.git" "$T/other"
   git -C "$T/other" -c user.name=alice -c user.email=alice@example.com commit -q --allow-empty -m "remote change"
-  GITSW_SKIP=all git -C "$T/other" push -q origin main
+  GITCH_SKIP=all git -C "$T/other" push -q origin main
   run gitch pl; assert_ok; assert_out "최신으로"
   assert_eq "$(git log -1 --format=%s)" "remote change"
   run gitch rescue; assert_ok; assert_out "pull"
@@ -98,7 +98,7 @@ test_conflict_continue_and_abort() {
   git clone -q "$FAKE_REMOTES/github-alice/alice/app.git" "$T/other"
   echo theirs > "$T/other/f.txt"
   git -C "$T/other" -c user.name=alice -c user.email=alice@example.com commit -q -am theirs
-  GITSW_SKIP=all git -C "$T/other" push -q origin main
+  GITCH_SKIP=all git -C "$T/other" push -q origin main
   echo mine > f.txt; gitch c -a -m mine >/dev/null
   run gitch pl; assert_fail; assert_out "충돌"
   run gitch ck; assert_out "IN_PROGRESS=rebase"; assert_out "CONFLICTS=1"
@@ -117,13 +117,13 @@ test_up_rebases_unpushed_and_merges_pushed() {
   git clone -q "$FAKE_REMOTES/github-alice/alice/app.git" "$T/other"
   gitch b feat >/dev/null; echo f > f.txt; gitch c -a -m feat >/dev/null
   git -C "$T/other" -c user.name=alice -c user.email=alice@example.com commit -q --allow-empty -m "main moved"
-  GITSW_SKIP=all git -C "$T/other" push -q origin main
+  GITCH_SKIP=all git -C "$T/other" push -q origin main
   run gitch up; assert_ok; assert_out "위로 옮겼습니다"
   assert_eq "$(git log --format=%s -2 | tail -1)" "main moved"
   gitch p >/dev/null 2>&1
   git -C "$T/other" pull -q origin main 2>/dev/null
   git -C "$T/other" -c user.name=alice -c user.email=alice@example.com commit -q --allow-empty -m "main again"
-  GITSW_SKIP=all git -C "$T/other" push -q origin main
+  GITCH_SKIP=all git -C "$T/other" push -q origin main
   run gitch up; assert_ok; assert_out "merge"
 }
 

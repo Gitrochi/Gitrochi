@@ -443,7 +443,7 @@ import ProjectDescriptionHelpers
 let project = Project.module(name: "Core", dependencies: [.external(name: "Logging")])
 EOF
   gr_commit
-  GITSW_SWIFT_DESCRIBE=0 gr_json modules
+  GITCH_SWIFT_DESCRIBE=0 gr_json modules
   gr_spm_check
   gr_edge tuist:App tuist:AppUI depends
   gr_edge tuist:App tuist:Core depends

@@ -17,7 +17,7 @@ test_versions_match_gitrochi() {
 test_version_checker_rejects_mismatched_cli() {
   local fixture="$T/version-fixture"
   copy_version_fixture "$fixture"
-  sed 's/^GITSW_VERSION=.*/GITSW_VERSION="99.0.0"/' "$GITSW_SRC" > "$fixture/tools/gitch/gitch"
+  sed 's/^GITCH_VERSION=.*/GITCH_VERSION="99.0.0"/' "$GITCH_SRC" > "$fixture/tools/gitch/gitch"
   run bash "$ROOT/../check-versions.sh" "$fixture"; assert_fail; assert_out "버전 불일치: gitch"
 }
 

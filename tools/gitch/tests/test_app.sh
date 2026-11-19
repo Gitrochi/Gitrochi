@@ -3,7 +3,7 @@
 
 app_fakes() {
   export APP_TEST_LOG="$T/app-launched" APP_TEST_ARGS="$T/app-args" APP_TEST_ROUTE="$T/app-route" APP_TEST_STATUS=0 APP_TEST_WINDOWS_ROOT="$T"
-  export GITSW_OS=darwin
+  export GITCH_OS=darwin
   unset LOCALAPPDATA PROGRAMFILES ProgramFiles PROGRAMW6432
   cat > "$T/fakebin/open" <<'EOF'
 #!/bin/bash
@@ -29,7 +29,7 @@ EOF
   chmod +x "$T/fakebin/open" "$T/fakebin/powershell" "$T/fakebin/cygpath"
 }
 
-app_cli_copy() { mkdir -p "$(dirname "$1")"; cp "$GITSW_SRC" "$1"; chmod +x "$1"; }
+app_cli_copy() { mkdir -p "$(dirname "$1")"; cp "$GITCH_SRC" "$1"; chmod +x "$1"; }
 app_mac_bundle() { mkdir -p "$1/Contents/MacOS"; }
 app_windows_exe() { mkdir -p "$(dirname "$1")"; : > "$1"; }
 
@@ -98,7 +98,7 @@ test_app_repository_name_and_windows_route() {
   app_fakes; mk_config
   local app="$T/Gitrochi.exe" repo="$HOME/Develop/alice/RouteProject"
   app_windows_exe "$app"; mk_repo "$repo"
-  export GITSW_OS=msys
+  export GITCH_OS=msys
   run gitch app RouteProject --path "$app" --file source.ts --line 3
   assert_ok
   case "$(cat "$APP_TEST_ROUTE")" in gitrochi://open?repo=native%3A*RouteProject\&file=source.ts\&line=3) ;; *) fail 'Windows 라우트가 보존되지 않음' ;; esac
@@ -149,7 +149,7 @@ test_app_mac_standalone_finds_user_install() {
 
 test_app_windows_bundled_cli() {
   app_fakes
-  export GITSW_OS=msys
+  export GITCH_OS=msys
   local dir="$T/Bundled App" app="$T/Bundled App/Gitrochi.exe"
   app_cli_copy "$dir/gitch"
   app_windows_exe "$app"
@@ -160,7 +160,7 @@ test_app_windows_bundled_cli() {
 
 test_app_windows_source_build_precedes_install() {
   app_fakes
-  export GITSW_OS=msys
+  export GITCH_OS=msys
   local source="$T/source" app="$T/source/windows/src-tauri/target/release/gitrochi.exe"
   app_cli_copy "$source/tools/gitch/gitch"
   app_windows_exe "$app"
@@ -171,7 +171,7 @@ test_app_windows_source_build_precedes_install() {
 
 test_app_windows_user_and_machine_install_locations() {
   app_fakes
-  export GITSW_OS=msys
+  export GITCH_OS=msys
   local cli="$T/standalone/gitch" app="$HOME/AppData/Local/Gitrochi/Gitrochi.exe"
   app_cli_copy "$cli"
   app_windows_exe "$app"
@@ -193,7 +193,7 @@ test_app_windows_user_and_machine_install_locations() {
 
 test_app_windows_explicit_special_path_and_launch_failure() {
   app_fakes
-  export GITSW_OS=msys
+  export GITCH_OS=msys
   local app="$T/space ' \$literal; & [bracket]/Gitrochi.exe"
   app_windows_exe "$app"
   run gitch app --path "$app"; assert_ok
@@ -204,12 +204,12 @@ test_app_windows_explicit_special_path_and_launch_failure() {
 
 test_app_not_installed_and_unsupported_platform() {
   app_fakes
-  export GITSW_OS=msys
+  export GITCH_OS=msys
   local cli="$T/standalone/gitch"
   app_cli_copy "$cli"
   run bash "$cli" app; assert_fail; assert_out '앱을 찾을 수 없습니다'; assert_out 'gitch app --path'
   [ ! -f "$APP_TEST_LOG" ] || fail '앱이 없는데 실행을 시도함'
-  export GITSW_OS=linux-gnu
+  export GITCH_OS=linux-gnu
   run bash "$cli" app; assert_fail; assert_out 'macOS · Windows 에서 지원'
   run bash "$cli" app --help; assert_ok
 }

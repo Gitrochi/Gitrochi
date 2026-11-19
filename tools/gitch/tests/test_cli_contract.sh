@@ -141,7 +141,7 @@ test_cli_contract_objects_and_legacy_array() {
   run gitch g check --rules "$T/graph.rules" --json; assert_ok
   contract_validate rules
   run gitch version --json; assert_ok; contract_validate version
-  assert_eq "$(printf '%s' "$OUT" | jq -r .version)" "$(sed -n 's/^GITSW_VERSION="\([^"]*\)".*/\1/p' "$GITSW_SRC" | head -1)"
+  assert_eq "$(printf '%s' "$OUT" | jq -r .version)" "$(sed -n 's/^GITCH_VERSION="\([^"]*\)".*/\1/p' "$GITCH_SRC" | head -1)"
   run gitch report --json; assert_ok; contract_validate report
   assert_eq "$(printf '%s' "$OUT" | jq -r type)" array 'report array compatibility'
 }
@@ -197,7 +197,7 @@ test_cli_contract_watch_reports_helper_startup_error() {
   contract_repo
   local bundle="$T/failing watcher"
   mkdir -p "$bundle"
-  cp "$GITSW_SRC" "$bundle/gitch"
+  cp "$GITCH_SRC" "$bundle/gitch"
   cat > "$bundle/gitch-graph-watch" <<'PY'
 #!/usr/bin/env python3
 import json

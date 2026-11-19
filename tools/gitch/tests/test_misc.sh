@@ -20,7 +20,7 @@ test_json_outputs_valid_and_no_colors() {
   run gitch scan --json; assert_json "$OUT"
   run gitch doctor --json --no-net; assert_json "$OUT"
   run gitch list --json; assert_json "$OUT"
-  GITSW_COLOR=auto run gitch status
+  GITCH_COLOR=auto run gitch status
   case "$OUT" in *$'\033['*) fail "파이프 출력에 색상 코드가 있음" ;; esac
 }
 
@@ -56,7 +56,7 @@ test_sync_exit_code_on_failure() {
   echo mine > m; gitch c -a -m mine >/dev/null
   git clone -q "$FAKE_REMOTES/github-alice/orig/proj.git" "$T/o"
   git -C "$T/o" -c user.name=o -c user.email=o@x commit -q --allow-empty -m theirs
-  GITSW_SKIP=all git -C "$T/o" push -q origin main
+  GITCH_SKIP=all git -C "$T/o" push -q origin main
   run gitch sync; assert_fail "갈라졌으면 sync 는 실패 종료코드"
 }
 
@@ -66,7 +66,7 @@ test_scan_fix_and_hooks() {
   mk_repo "$HOME/Develop/bob/n"
   run gitch scan; assert_fail; assert_out "잠금 없음 → 제안: bob"
   run gitch scan --fix; assert_ok
-  assert_eq "$(git -C "$HOME/Develop/bob/u" config gitswitch.account)" "bob"
+  assert_eq "$(git -C "$HOME/Develop/bob/u" config gitch.account)" "bob"
   assert_eq "$(git -C "$HOME/Develop/bob/u" config remote.origin.url)" "git@github-bob:bob/u.git"
   run gitch scan --json; assert_ok
   assert_eq "$(printf '%s' "$OUT" | jq -r .problems)" "0"
@@ -77,7 +77,7 @@ test_install_idempotent_and_rule_order() {
   install_quiet; install_quiet
   local list
   list=$(git config --global --list --name-only)
-  [ "$(printf '%s\n' "$list" | grep -c '^hook\.gitsw-pre-commit\.command$')" -eq 1 ] || fail "전역 훅이 중복 등록됨"
+  [ "$(printf '%s\n' "$list" | grep -c '^hook\.gitch-pre-commit\.command$')" -eq 1 ] || fail "전역 훅이 중복 등록됨"
   [ "$(printf '%s\n' "$list" | grep -c 'url.git@github-bob:teamb/.insteadof')" -eq 3 ] || fail "조직 insteadOf 개수\n$list"
   # 폴더 규칙이 먼저, 조직 규칙이 마지막
   local fl ol
@@ -109,11 +109,11 @@ EOF
   assert_eq "$(jq '.permissions.allow | length' "$s")" "$(jq '.permissions.allow | unique | length' "$s")" "허용 목록 중복"
   [ -f "$HOME/.claude/skills/gitch/SKILL.md" ] || fail "Claude 스킬"
   [ -f "$HOME/.codex/skills/gitch/SKILL.md" ] || fail "Codex 스킬"
-  grep -q 'gitsw:begin' "$HOME/.claude/CLAUDE.md" || fail "CLAUDE.md 규칙"
+  grep -q 'gitch:begin' "$HOME/.claude/CLAUDE.md" || fail "CLAUDE.md 규칙"
   run gitch ai --remove; assert_ok
   assert_eq "$(jq '[.hooks.PreToolUse[] | select(.hooks[0].command | test("guard --claude"))] | length' "$s")" "0"
   assert_eq "$(jq -r '.permissions.allow | join(",")' "$s")" "Bash(npm test)"
-  grep -q 'gitsw:begin' "$HOME/.claude/CLAUDE.md" && fail "규칙이 남아 있음"
+  grep -q 'gitch:begin' "$HOME/.claude/CLAUDE.md" && fail "규칙이 남아 있음"
   printf 'not json' > "$s"
   run gitch ai; assert_out "올바른 JSON 이 아니라"
   assert_eq "$(cat "$s")" "not json"
@@ -124,7 +124,7 @@ test_ai_rules_keep_user_content() {
   printf '# 내 규칙\n\n- 한국어로 답한다\n' > "$HOME/.claude/CLAUDE.md"
   install_quiet; install_quiet
   grep -q '한국어로 답한다' "$HOME/.claude/CLAUDE.md" || fail "사용자 내용이 사라짐"
-  [ "$(grep -c 'gitsw:begin' "$HOME/.claude/CLAUDE.md")" -eq 1 ] || fail "블록 중복"
+  [ "$(grep -c 'gitch:begin' "$HOME/.claude/CLAUDE.md")" -eq 1 ] || fail "블록 중복"
   grep -q '조직 github.com/teamb → bob' "$HOME/.claude/CLAUDE.md" || fail "조직 규칙 안내 없음"
 }
 
@@ -133,7 +133,7 @@ test_audit_reports_other_account_commits() {
   mk_remote_seeded github-alice alice/au alice@example.com
   git clone -q "$FAKE_REMOTES/github-alice/alice/au.git" "$T/seed2"
   git -C "$T/seed2" -c user.name=bob -c user.email=bob@example.com commit -q --allow-empty -m "oops bob"
-  GITSW_SKIP=all git -C "$T/seed2" push -q origin main
+  GITCH_SKIP=all git -C "$T/seed2" push -q origin main
   gitch clone alice alice/au "$HOME/Develop/alice/au" >/dev/null 2>&1 || fail clone
   cd "$HOME/Develop/alice/au" && run gitch audit; assert_ok; assert_out "1개"; assert_out "oops bob"
   run gitch audit --json; assert_json "$OUT"
@@ -176,7 +176,7 @@ test_ssh_prune_removes_only_orphans() {
   grep -q 'github-zed' "$HOME/.ssh/config" && fail "고아 설정이 남음"
   grep -q 'Host github-alice' "$HOME/.ssh/config" || fail "정상 설정이 지워짐"
   grep -q 'Host gitlab-carol' "$HOME/.ssh/config" || fail "정상 설정이 지워짐"
-  ls "$HOME/.local/state/gitsw/backups"/*/.ssh_config >/dev/null 2>&1 || fail "백업 없음"
+  ls "$HOME/.local/state/gitch/backups"/*/.ssh_config >/dev/null 2>&1 || fail "백업 없음"
 }
 
 test_setup_updates_existing_ssh_host() {
@@ -190,7 +190,7 @@ test_setup_updates_existing_ssh_host() {
   [ "$(grep -c -i '^[[:space:]]*Port' "$T/carol")" -eq 1 ] || fail "Port 줄이 여러 개"
   grep -q '^    IdentitiesOnly yes$' "$T/carol" || fail "기존 설정이 지워짐"
   grep -q 'Port' <(awk '/^Host /{h=$2} h=="github-alice"' "$HOME/.ssh/config") && fail "다른 Host 가 바뀜"
-  ls "$HOME/.local/state/gitsw/backups"/*/.ssh_config >/dev/null 2>&1 || fail "백업 없음"
+  ls "$HOME/.local/state/gitch/backups"/*/.ssh_config >/dev/null 2>&1 || fail "백업 없음"
   run gitch setup carol; assert_ok
   case "$OUT" in *"을 고침"*) fail "같은 설정인데 다시 고침" ;; esac
   return 0
@@ -216,11 +216,11 @@ test_setup_keeps_other_and_custom_ssh_hosts() {
 
 test_ssh_strict_option() {
   mk_config; install_quiet
-  run gitch config set gitsw.sshStrict true --yes; assert_ok
+  run gitch config set gitch.sshStrict true --yes; assert_ok
   grep -q '^Host github.com$' "$HOME/.ssh/config" || fail "strict 블록 없음"
   grep -q 'PubkeyAuthentication no' "$HOME/.ssh/config" || fail "strict 설정"
-  run gitch config set gitsw.sshStrict false --yes; assert_ok
-  grep -q 'gitsw strict' "$HOME/.ssh/config" && fail "strict 블록이 남음"
+  run gitch config set gitch.sshStrict false --yes; assert_ok
+  grep -q 'gitch strict' "$HOME/.ssh/config" && fail "strict 블록이 남음"
   return 0
 }
 
@@ -230,13 +230,13 @@ test_export_import_uninstall_version() {
   grep -q 'account "alice"' "$T/exp.cfg" || fail "내보내기 내용"
   run gitch import "$T/exp.cfg"; assert_fail "비대화형은 --yes 필요"
   run gitch import "$T/exp.cfg" --yes; assert_ok
-  run gitch version; assert_ok; assert_out "gitch $(sed -n 's/^GITSW_VERSION="\([^" ]*\)".*/\1/p' "$GITSW_SRC" | head -1)"
+  run gitch version; assert_ok; assert_out "gitch $(sed -n 's/^GITCH_VERSION="\([^" ]*\)".*/\1/p' "$GITCH_SRC" | head -1)"
   run gitch help; assert_ok; assert_out "gitch preflight"
   run gitch uninstall --yes; assert_ok
-  git config --global --get hook.gitsw-pre-commit.command >/dev/null && fail "전역 훅이 남음"
+  git config --global --get hook.gitch-pre-commit.command >/dev/null && fail "전역 훅이 남음"
   git config --global --get-regexp '^url\.' >/dev/null && fail "insteadOf 가 남음"
   grep -q '# >>> gitch >>>' "$RC_FILE" && fail "zshrc 블록이 남음"
-  [ -f "$HOME/.config/gitsw/config" ] || fail "설정 파일은 남겨야 함"
+  [ -f "$HOME/.config/gitch/config" ] || fail "설정 파일은 남겨야 함"
   run gitch install; assert_ok "다시 설치"
 }
 
@@ -245,12 +245,12 @@ test_install_banner_fits_terminal() {
   # 터미널이 아니면 로고 없이 단계만
   run gitch install; assert_ok; assert_out "◆ 명령  1/5"; assert_out "설치 완료"; assert_no_out "⣿"
   local TERM=xterm-256color
-  export TERM GITSW_BANNER=always GITSW_ANIM=0
+  export TERM GITCH_BANNER=always GITCH_ANIM=0
   COLUMNS=100 LINES=40 run gitch install; assert_ok; assert_out "⣸⣿⣿⣿⣿⣿⣿⣿⡷"
   COLUMNS=80 LINES=24 run gitch install; assert_ok; assert_out "⢿⣿⣿⡇ ⢀⡆"; assert_no_out "⣸⣿⣿⣿⣿⣿⣿⣿⡷"
   COLUMNS=40 LINES=24 run gitch install; assert_ok; assert_out "⣿⣿⠃⢀⡄"
   COLUMNS=20 LINES=24 run gitch install; assert_ok; assert_out "gitch v"; assert_no_out "⣿"
-  unset GITSW_BANNER GITSW_ANIM
+  unset GITCH_BANNER GITCH_ANIM
 }
 
 test_install_refuses_app_outside_applications() {
@@ -259,17 +259,17 @@ test_install_refuses_app_outside_applications() {
   local app
   # 다운로드 폴더의 앱: 응용 프로그램 폴더로 옮기면 끊기므로 연결하지 않는다
   app="$T/Downloads/Gitrochi.app"
-  mkdir -p "$app/Contents/Resources"; cp "$GITSW_SRC" "$app/Contents/Resources/gitch"
+  mkdir -p "$app/Contents/Resources"; cp "$GITCH_SRC" "$app/Contents/Resources/gitch"
   run "$app/Contents/Resources/gitch" install; assert_fail "다운로드 폴더의 앱에 연결하면 안 됨"
   assert_out "응용 프로그램 폴더 밖의 앱"; assert_out "/Applications/Gitrochi.app/Contents/Resources/gitch install"
   # 임시 위치(App Translocation): 다음에 앱을 열면 다른 곳이 된다
   app="$T/AppTranslocation/0A1B2C/d/Gitrochi.app"
-  mkdir -p "$app/Contents/Resources"; cp "$GITSW_SRC" "$app/Contents/Resources/gitch"
+  mkdir -p "$app/Contents/Resources"; cp "$GITCH_SRC" "$app/Contents/Resources/gitch"
   run "$app/Contents/Resources/gitch" install; assert_fail "임시 위치의 앱에 연결하면 안 됨"; assert_out "임시 위치(App Translocation)"
-  [ "$(resolve_path "$HOME/bin/gitch")" = "$(resolve_path "$GITSW_SRC")" ] || fail "거부했는데 ~/bin/gitch 가 바뀜"
+  [ "$(resolve_path "$HOME/bin/gitch")" = "$(resolve_path "$GITCH_SRC")" ] || fail "거부했는데 ~/bin/gitch 가 바뀜"
   # ~/Applications 의 앱은 된다
   app="$HOME/Applications/Gitrochi.app"
-  mkdir -p "$app/Contents/Resources"; cp "$GITSW_SRC" "$app/Contents/Resources/gitch"
+  mkdir -p "$app/Contents/Resources"; cp "$GITCH_SRC" "$app/Contents/Resources/gitch"
   run "$app/Contents/Resources/gitch" install; assert_ok "~/Applications 의 앱"
   [ "$(resolve_path "$HOME/bin/gitch")" = "$(resolve_path "$app/Contents/Resources/gitch")" ] || fail "~/bin/gitch 가 ~/Applications 의 앱을 가리켜야 함"
 }
@@ -277,14 +277,14 @@ test_install_refuses_app_outside_applications() {
 test_install_refuses_disk_image() {
   command -v hdiutil >/dev/null 2>&1 || return 0   # 디스크 이미지는 맥에서만
   mk_config
-  mkdir -p "$T/img" "$T/mnt"; cp "$GITSW_SRC" "$T/img/gitch"
+  mkdir -p "$T/img" "$T/mnt"; cp "$GITCH_SRC" "$T/img/gitch"
   hdiutil create -quiet -srcfolder "$T/img" -volname gitch-test -format UDZO "$T/g.dmg" || fail "이미지를 만들지 못함"
   hdiutil attach -quiet -nobrowse -readonly -mountpoint "$T/mnt" "$T/g.dmg" || fail "이미지를 붙이지 못함"
   trap 'hdiutil detach -quiet -force "$T/mnt" 2>/dev/null; cd /; rm -rf "$T"' EXIT
   # 앱 밖의 gitch 라도 디스크 이미지 안이면 꺼낼 때 끊긴다
   run "$T/mnt/gitch" install; assert_fail "디스크 이미지 안의 gitch 에 연결하면 안 됨"
   assert_out "디스크 이미지에서 실행 중"; assert_out "~/.local/share/gitch/"
-  [ "$(resolve_path "$HOME/bin/gitch")" = "$(resolve_path "$GITSW_SRC")" ] || fail "거부했는데 ~/bin/gitch 가 바뀜"
+  [ "$(resolve_path "$HOME/bin/gitch")" = "$(resolve_path "$GITCH_SRC")" ] || fail "거부했는데 ~/bin/gitch 가 바뀜"
 }
 
 test_fork_flow_without_gh_switch() {
@@ -308,7 +308,7 @@ test_publish_github_creates_private_repo_and_pushes() {
   assert_out "GitHub 저장소를 만들었습니다: https://github.com/alice/newproj (private)"
   grep -q "GH_TOKEN=tok-alice repo create alice/newproj --private --description 테스트 저장소" "$FAKE_GH/log" || fail "gh 호출\n$(cat "$FAKE_GH/log")"
   assert_eq "$(git config remote.origin.url)" "git@github-alice:alice/newproj.git"
-  assert_eq "$(git config gitswitch.alias)" "github-alice"
+  assert_eq "$(git config gitch.alias)" "github-alice"
   assert_eq "$(git -C "$FAKE_REMOTES/github-alice/alice/newproj.git" log -1 --format=%s main)" "first"
   run gitch publish --yes; assert_fail; assert_out "이미 origin 이 있습니다"
   mk_repo "$HOME/Develop/alice/dup"
@@ -329,18 +329,18 @@ test_publish_gitlab_push_to_create() {
 
 test_backups_skip_identical_and_rules_have_no_case_duplicates() {
   mk_config
-  git config -f "$HOME/.config/gitsw/config" org.github.com/TeamX.account bob
+  git config -f "$HOME/.config/gitch/config" org.github.com/TeamX.account bob
   install_quiet; install_quiet; install_quiet
   local n
-  n=$(count_dirs "$HOME/.local/state/gitsw/backups"/*/)
+  n=$(count_dirs "$HOME/.local/state/gitch/backups"/*/)
   [ "$n" -le 2 ] || fail "같은 내용인데도 백업이 계속 쌓임 ($n 개)"
   git config --global --list --name-only | grep -q 'url.git@github-bob:teamx/' && fail "대소문자만 다른 규칙이 또 생김"
   git config --global --list --name-only | grep -q 'url.git@github-bob:TeamX/' || fail "조직 규칙 없음"
-  mkdir -p "$HOME/.local/state/gitsw/backups/v1-원본"
-  for i in $(seq 1 32); do mkdir -p "$HOME/.local/state/gitsw/backups/2026010$((i % 9))-0000$i-1"; done
+  mkdir -p "$HOME/.local/state/gitch/backups/v1-원본"
+  for i in $(seq 1 32); do mkdir -p "$HOME/.local/state/gitch/backups/2026010$((i % 9))-0000$i-1"; done
   echo "# change" >> "$RC_FILE"; install_quiet
-  [ -d "$HOME/.local/state/gitsw/backups/v1-원본" ] || fail "보관용 폴더는 정리 대상이 아님"
-  n=$(count_dirs "$HOME/.local/state/gitsw/backups"/[0-9]*-[0-9]*-[0-9]*/)
+  [ -d "$HOME/.local/state/gitch/backups/v1-원본" ] || fail "보관용 폴더는 정리 대상이 아님"
+  n=$(count_dirs "$HOME/.local/state/gitch/backups"/[0-9]*-[0-9]*-[0-9]*/)
   [ "$n" -le 30 ] || fail "백업 폴더가 30개를 넘음 ($n)"
 }
 

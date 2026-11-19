@@ -9,10 +9,10 @@ help_dispatch_names() {   # every command and alias in the dispatcher, read from
       s = $0; sub(/^  /, "", s); sub(/\).*/, "", s)
       n = split(s, a, "|")
       for (i = 1; i <= n; i++) if (a[i] ~ /^[a-z]/) print a[i]
-    }' "$GITSW_SRC"
+    }' "$GITCH_SRC"
 }
 help_table_names() {   # the canonical names in the help table
-  sed -n "/^HELP_COMMANDS='/,/'\$/p" "$GITSW_SRC" | sed "s/^HELP_COMMANDS=//" | tr -d "'" | tr ' ' '\n' | grep .
+  sed -n "/^HELP_COMMANDS='/,/'\$/p" "$GITCH_SRC" | sed "s/^HELP_COMMANDS=//" | tr -d "'" | tr ' ' '\n' | grep .
 }
 help_flow_bin() {   # the flow engine built in this repository, when there is one
   local b
@@ -140,7 +140,7 @@ help_fixture() {   # an installed gitch and a locked repository where every comm
   gitch clone alice alice/app "$HOME/Develop/alice/app" >/dev/null 2>&1 || fail 'clone'
   cd "$HOME/Develop/alice/app" || fail cd
   git branch merged-topic || fail 'branch'                      # prune would delete it
-  git config --add gitswitch.protect release                    # protect would change the list
+  git config --add gitch.protect release                    # protect would change the list
   echo one > one.txt; git add one.txt
   gitch c -m 'Local work' >/dev/null 2>&1 || fail 'commit'       # not pushed: undo, amend, fix and p would act on it
   gitch pl >/dev/null 2>&1 || fail 'pull'                        # leaves a backup for rescue
@@ -184,8 +184,8 @@ test_help_flag_on_every_command_runs_nothing() {
     assert_help_only "$name" -h   # one comparison for both spellings keeps the loop short
   done
   assert_eq "$(git log -1 --format=%s)" 'Local work'
-  assert_eq "$(git config --get-all gitswitch.protect)" release
-  assert_eq "$(git config --get gitswitch.account)" alice
+  assert_eq "$(git config --get-all gitch.protect)" release
+  assert_eq "$(git config --get gitch.account)" alice
   git show-ref -q --verify refs/heads/merged-topic || fail 'a branch is gone'
   git show-ref -q --verify refs/heads/--help && fail 'a branch named --help was made'
   [ ! -e ./--help ] && [ ! -e ./-h ] || fail 'a file named after the flag was made'
@@ -229,10 +229,10 @@ test_help_flag_after_other_arguments_runs_nothing() {
   assert_help_only fork alice teamb/tool -h
   assert_help_only export --help
   assert_help_only export "$T/exported.cfg" -h
-  assert_help_only import "$HOME/.config/gitsw/config" --yes --help
+  assert_help_only import "$HOME/.config/gitch/config" --yes --help
   assert_help_only migrate --force --help
-  assert_help_only config set gitsw.scanRoot /tmp --yes --help
-  assert_help_only config unset gitsw.scanRoot --yes -h
+  assert_help_only config set gitch.scanRoot /tmp --yes --help
+  assert_help_only config unset gitch.scanRoot --yes -h
   assert_help_only org add github.com/neworg alice --yes --help
   assert_help_only org rm github.com/teamb --yes -h
   assert_help_only add --id dave --email dave@example.com --no-setup --json --yes --help

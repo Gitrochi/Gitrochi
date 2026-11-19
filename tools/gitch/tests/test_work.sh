@@ -11,7 +11,7 @@ work_fixture() {
   gitch clone alice alice/work-one "$WORK_ONE" >/dev/null 2>&1 || fail 'clone work one'
   gitch clone alice alice/work-two "$WORK_TWO" >/dev/null 2>&1 || fail 'clone work two'
   cd "$WORK_ONE" || fail cd
-  WORK_RECORD="$HOME/.local/state/gitsw/work"
+  WORK_RECORD="$HOME/.local/state/gitch/work"
 }
 
 test_work_start_info_list_and_preserving_end() {

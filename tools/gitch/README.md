@@ -55,8 +55,8 @@ Git for Windows(Git Bash)만 있으면 된다. gitch 는 bash 스크립트라 Gi
 - **Gitrochi 에서**: 설정 > CLI 는 맥과 같다. 계정 추가 · GitHub 브라우저 로그인 · SSH 키 준비 · 연결 확인 · 설정 검사(`doctor`)를 앱 안에서 진행한다. 암호가 있는 키 등 직접 설정이 필요할 때만 **고급 터미널 설정**으로 새 콘솔 창(Git Bash)을 연다. 터미널 명령 연결은 설치 프로그램으로 깐 Gitrochi(옆에 `uninstall.exe`)만 지원한다 — 포터블 zip · 빌드 폴더에 연결하면 옮기거나 지울 때 끊기므로 앱도 `gitch install` 도 거부한다.
 - **CLI 만**: Git Bash 에서 위의 `curl … | bash` 그대로. 다음 안내의 `source ~/.zshrc` 대신 `source ~/.bashrc`.
 - `gitch install` 이 맥과 다르게 하는 것
-  - `~/bin/gitch` · `~/bin/gitsw`: Git Bash 의 `ln -s` 는 링크 대신 복사본을 만들어서, 대상 경로를 적은 작은 연결 스크립트(`# gitch-link: <경로>` + `exec`)로 만든다. 앱을 업데이트하면 gitch 도 같이 바뀌는 것은 맥과 같다.
-  - `~/bin/gitch.cmd` · `gitsw.cmd`: PowerShell · cmd · Codex 에서 `gitch` 로 부르게 Git Bash 로 넘긴다. 사용자 PATH(레지스트리, `%VAR%` 는 그대로)에 `%USERPROFILE%\bin` 이 없으면 넣는다 — `gitch uninstall` 은 gitch 가 넣었을 때만 뺀다.
+  - `~/bin/gitch`: Git Bash 의 `ln -s` 는 링크 대신 복사본을 만들어서, 대상 경로를 적은 작은 연결 스크립트(`# gitch-link: <경로>` + `exec`)로 만든다. 앱을 업데이트하면 gitch 도 같이 바뀌는 것은 맥과 같다.
+  - `~/bin/gitch.cmd`: PowerShell · cmd · Codex 에서 `gitch` 로 부르게 Git Bash 로 넘긴다. 사용자 PATH(레지스트리, `%VAR%` 는 그대로)에 `%USERPROFILE%\bin` 이 없으면 넣는다 — `gitch uninstall` 은 gitch 가 넣었을 때만 뺀다.
   - 터미널 연동: `~/.zshrc` 대신 Git Bash 의 `~/.bashrc` (PATH + 프롬프트 마지막 줄 앞에 이 저장소 계정).
   - SSH 설정에 `UseKeychain`(맥 전용 옵션 — Windows 의 OpenSSH 는 모르는 옵션이라 멈춘다)을 넣지 않는다. 공개키 복사 · 페이지 열기는 `clip` · 기본 브라우저.
 - Claude Code 검사 훅에는 jq 가 필요하다: `winget install jqlang.jq`
@@ -79,13 +79,16 @@ Git for Windows(Git Bash)만 있으면 된다. gitch 는 bash 스크립트라 Gi
 | `graph` · `g` | 저장소 메뉴 › 구조 그래프 — 맥: 툴바의 폴더 아이콘 · 메뉴 막대 Repository, Windows: 툴바의 폴더 아이콘 · ≡ 메뉴. 관계를 고르면 html 을 만들어 기본 브라우저로 연다(아래 「구조 그래프」). 이름으로 부르는 `gitch g my-app` 은 앱에서 그 저장소를 골라 여는 것과 같다 |
 | `graph diff` · `graph check` | 같은 저장소 메뉴의 「이 브랜치에서 바뀐 의존」 — 관계를 고르면 기본 브랜치와 갈라진 곳과 비교한 페이지를 연다(「다른 기준과 비교…」로 브랜치 · 태그를 고르면 그것과 갈라진 곳과). 「의존 규칙 검사…」 — 결과 창에 위반 · 경고 목록, 그래프로 보기 · 규칙 고치기, `.gitch/graph.rules` 가 없으면 `--init` 으로 만들지 묻는다. `check --base` · `--lang` · `--no-external` 은 터미널에서 |
 
-## 예전 이름 gitsw
+## 예전 이름 gitsw 에서 옮기기
 
-gitch 는 gitsw 의 새 이름이다. 이미 gitsw 를 쓰던 컴퓨터는 `gitch install` 한 번이면 그대로 이어진다.
+gitch 는 gitsw 의 새 이름이다. 0.4.2-beta.2 까지는 설정·기록을 예전 이름으로 두었는데, 업데이트한 뒤 gitch 가 처음 실행될 때(명령, Git 훅, 앱 어느 쪽이든) 한 번 옮기고 그 뒤로는 gitch 이름만 쓴다.
 
-- `~/bin/gitsw` 도 같은 파일을 가리킨다 — gitsw 로 부르는 AI 규칙·스크립트가 계속 된다(링크가 아닌 파일이면 건드리지 않음).
-- 설정·잠금·기록은 예전 이름 그대로 읽고 쓴다: `~/.config/gitsw/config`(`[gitsw]` 섹션), 저장소의 `gitswitch.*`, `~/.local/state/gitsw`, 전역 훅 `hook.gitsw-*`, 백업 `refs/gitsw/backup/*`, 환경 변수 `GITSW_*`, 비밀값 예외 주석 `gitsw:allow`(새 이름 `gitch:allow` 도 됨).
-- `gitch install` 이 CLAUDE.md·AGENTS.md 의 규칙 블록, 스킬(`skills/gitsw` → `skills/gitch`), Claude Code 검사 훅과 허용 목록의 `gitsw` 항목을 gitch 로 바꾼다.
+- 폴더: `~/.config/gitsw` → `~/.config/gitch`(설정 파일의 `[gitsw]` 섹션은 `[gitch]`), `~/.local/state/gitsw` → `~/.local/state/gitch`, `~/.local/share/gitsw` → `~/.local/share/gitch`
+- 전역 훅 `hook.gitsw-*` → `hook.gitch-*`, `~/.zshrc`·`~/.bashrc`·`~/.ssh/config` 의 `gitsw` 표시 → `gitch`, CLAUDE.md·AGENTS.md·GEMINI.md 의 규칙 블록과 스킬은 새로 쓴다
+- `~/bin/gitsw`(와 Windows 의 `gitsw.cmd`)는 gitch 가 만든 링크일 때 지운다. `gitsw` 명령은 더 없다
+- 저장소의 `gitswitch.*` 설정 → `gitch.*`, 백업 `refs/gitsw/backup/*` → `refs/gitch/backup/*`, 보조 훅의 표시는 그 저장소에서 gitch 가 처음 실행될 때 옮긴다. `gitch install` 은 `gitch.scanRoot` 아래의 저장소를 모두 옮긴다
+- 환경 변수는 `GITCH_*` 만 읽는다(`GITSW_SKIP` → `GITCH_SKIP` 처럼 바꿔 쓴다)
+- 비밀값 예외 주석은 `gitch:allow`. 여러 사람이 함께 쓰는 소스에 이미 들어간 `gitsw:allow` 도 계속 인정한다
 
 ## 앱 계정 설정과 CLI API
 
@@ -120,9 +123,9 @@ GitHub 브라우저 로그인은 공식 [GitHub CLI의 웹 인증](https://cli.g
 |---|---|
 | 계정 | 커밋 작성자(이름/이메일) + 서버 목록. `host = github.com` / `host = gitlab.example.com:2222` |
 | 별칭 | 계정마다 SSH 별칭(`github-<계정>`, `gitlab-<계정>`)과 키(`~/.ssh/id_ed25519_<계정>`)를 쓴다 |
-| 잠금 | `gitch use/clone` 이 저장소에 계정을 기록(`gitswitch.account`)하고 주소를 별칭으로 바꾼다 |
+| 잠금 | `gitch use/clone` 이 저장소에 계정을 기록(`gitch.account`)하고 주소를 별칭으로 바꾼다 |
 | 자동 규칙 | 폴더(`~/Develop/<계정>`), 조직(`github.com/<조직>`), 주소 소유자, 서버(계정이 하나뿐인 서버)로 계정을 고름 |
-| 검사 훅 | git 전역 설정 훅(`hook.gitsw-*`) + 저장소 보조 훅(Apple git 대비) |
+| 검사 훅 | git 전역 설정 훅(`hook.gitch-*`) + 저장소 보조 훅(Apple git 대비) |
 
 계정 판단 순서: 잠금 → 주소 소유자 → 조직 규칙 → 폴더 기본 → 주소 별칭 → 서버에 계정이 하나뿐.
 
@@ -176,10 +179,10 @@ gitch help --all           # 모든 명령의 도움말을 한 번에
 - 파랑: 제목·강조, 초록 `✓`: 정상·완료, 노랑 `!`: 확인 필요, 빨강 `×`: 오류·중단, 흐린 `·`: 참고 정보.
 - `├─` · `└─` · `↳`로 파일·참조·다음 행동의 관계를 표시한다. 결과는 색 없이도 기호와 문장으로 구분된다.
 - 창이 좁으면 제목을 로고 아래로 옮긴다. 아주 좁은 창과 UTF-8이 아닌 로케일에서는 간단한 ASCII 헤더를 사용한다.
-- `NO_COLOR=1` 또는 `GITSW_COLOR=never`: 색을 끄고 두 눈과 관계 기호는 유지한다. `NO_COLOR`는 `GITSW_COLOR=always`보다 우선한다.
+- `NO_COLOR=1` 또는 `GITCH_COLOR=never`: 색을 끄고 두 눈과 관계 기호는 유지한다. `NO_COLOR`는 `GITCH_COLOR=always`보다 우선한다.
 - `GITCH_LOGO=off` 또는 `GITCH_LOGO=on`: 해당 실행에서만 로고를 숨기거나 표시한다. 저장한 설정은 바뀌지 않는다. `gitch logo on|off`는 저장할 값이 그 명령의 화면에도 바로 적용된다.
-- `GITCH_STYLE=plain`, `TERM=dumb`, `GITSW_BANNER=never`: 로고와 새 레이아웃을 끈다.
-- 파이프·파일로 보내는 출력은 기존 텍스트를 유지한다. `--json`·JSON 오류·스키마·자동완성·설정 경로·원시 그래프 출력에는 로고나 ANSI 색이 섞이지 않는다. `GITSW_BANNER=always`도 이 기계 출력 규칙을 바꾸지 않는다.
+- `GITCH_STYLE=plain`, `TERM=dumb`, `GITCH_BANNER=never`: 로고와 새 레이아웃을 끈다.
+- 파이프·파일로 보내는 출력은 기존 텍스트를 유지한다. `--json`·JSON 오류·스키마·자동완성·설정 경로·원시 그래프 출력에는 로고나 ANSI 색이 섞이지 않는다. `GITCH_BANNER=always`도 이 기계 출력 규칙을 바꾸지 않는다.
 
 ```bash
 gitch ck                              # 작은 두 눈과 작업 상태 요약
@@ -349,7 +352,7 @@ HTML 언어 메뉴는 실제 인식한 언어를 각각 보여 준다(TypeScript
 
 매니페스트는 실행하지 않고 정적인 선언을 읽는다. Maven dependencyManagement·빌드 플러그인의 의존은 앱의 직접 의존으로 추가하지 않고, .NET Update 항목도 새 의존으로 세지 않는다. 빌드 중 계산되는 값, 복잡한 조건·상속·매크로, 모든 언어의 패키지 관리자를 완전히 해석하지는 않는다. 언어 파일 인식과 모듈 매니페스트 지원은 별개이며, 연결 선언이 없는 모듈도 노드로 표시한다.
 
-- `modules`: Package.swift 는 `swift package describe --type json` 으로 읽고(매니페스트를 컴파일해서 몇 초), 안 되면 파일을 직접 읽는다(`GITSW_SWIFT_DESCRIBE=0` 이면 늘 직접). Tuist 는 Project.swift 의 Target 선언과 의존(`.target` · `.project` · `.external` · `.package` · `.sdk`)을, 도우미 함수로 만든 매니페스트(`Project.module(…)`)는 파일 안의 참조를 모은다. 그 밖에 모든 package.json(작업 공간 구성원은 `workspace`), Cargo 의 `path` · `workspace = true` 의존, Go 패키지 사이 import, Gradle 의 `include` · `project(":x")` · `projects.x`.
+- `modules`: Package.swift 는 `swift package describe --type json` 으로 읽고(매니페스트를 컴파일해서 몇 초), 안 되면 파일을 직접 읽는다(`GITCH_SWIFT_DESCRIBE=0` 이면 늘 직접). Tuist 는 Project.swift 의 Target 선언과 의존(`.target` · `.project` · `.external` · `.package` · `.sdk`)을, 도우미 함수로 만든 매니페스트(`Project.module(…)`)는 파일 안의 참조를 모은다. 그 밖에 모든 package.json(작업 공간 구성원은 `workspace`), Cargo 의 `path` · `workspace = true` 의존, Go 패키지 사이 import, Gradle 의 `include` · `project(":x")` · `projects.x`.
 - `changes`: `--since 날짜` · `--max-commits N`(기본 1000) · `--max-files N`(기본 30, 더 큰 커밋은 쌍이 너무 많아 뺀다) · `--min N`(기본 2). merge 커밋과 lock 파일은 뺀다. 합쳐진 브랜치의 일반 커밋은 포함하며, 같은 커밋을 한 번만 센다.
   - Git의 rename 감지를 따라 이름 변경 전 변경도 현재 추적 경로에 합친다. 다른 폴더에서 옮겨 온 파일도 놓치지 않게 `--max-commits`는 저장소 전체의 일반 커밋에 적용하고, 그 뒤 현재 경로의 폴더·언어를 거른다. 큰 커밋을 통계에서 빼더라도 그 커밋의 rename은 계보에 적용한다. Git이 rename으로 감지하지 못한 삭제·추가는 별도 파일로 남는다.
   - 파일을 삭제한 뒤 같은 이름으로 새로 만들면 옛 파일의 이력을 물려받지 않는다. 복사한 파일도 원본 이력을 물려받지 않는다. revert는 실제 수정 작업이므로 독립적인 변경 커밋으로 센다. 현재 삭제된 파일은 노드에 포함하지 않는다.
@@ -523,21 +526,21 @@ gitch ci status|logs|report      # this repository's remote CI
 gitch flow run --help            # that subcommand's usage; nothing is planned, run or sent (also gitch help flow run)
 ```
 
-- `gitch preflight` adds a `FLOW=OK|WARN|STOP` line only in repositories where the gate is on (the existing `PREFLIGHT=` line stays as it is). The pre-push hook runs the gate; a person can skip it with `GITSW_SKIP=flow` (recorded).
+- `gitch preflight` adds a `FLOW=OK|WARN|STOP` line only in repositories where the gate is on (the existing `PREFLIGHT=` line stays as it is). The pre-push hook runs the gate; a person can skip it with `GITCH_SKIP=flow` (recorded).
 - Where the engine is: `GITCH_FLOW` → next to gitch (the app's Resources, `~/.local/share/gitch`) → PATH. Without one, `gitch flow` stops with "engine not found" and the rest of gitch works as before.
 
 ## 검사 훅이 막는 것
 
 | 언제 | 무엇을 | 사람이 꼭 넘겨야 할 때 |
 |---|---|---|
-| 커밋 | 잠금/규칙과 다른 작성자, 계정이 정해지지 않은 관리 서버 저장소 | `GITSW_SKIP=identity` |
-| 커밋 | 비밀값(개인키, ghp_/github_pat_, glpat-, AKIA, xox?, sk-ant-, sk-, sk_live_, npm_), `.env`·`*.p12`·`*.jks`·SSH 키 파일 | 줄에 `gitsw:allow`, 또는 `GITSW_SKIP=secrets` |
-| 커밋 | `maxFileMB`(기본 50MB) 이상 파일 (`warnFileMB` 이상은 경고) | `GITSW_SKIP=bigfile` |
-| push | 별칭 없는 주소 / 다른 계정 별칭 | `GITSW_SKIP=identity` |
+| 커밋 | 잠금/규칙과 다른 작성자, 계정이 정해지지 않은 관리 서버 저장소 | `GITCH_SKIP=identity` |
+| 커밋 | 비밀값(개인키, ghp_/github_pat_, glpat-, AKIA, xox?, sk-ant-, sk-, sk_live_, npm_), `.env`·`*.p12`·`*.jks`·SSH 키 파일 | 줄에 `gitch:allow`, 또는 `GITCH_SKIP=secrets` |
+| 커밋 | `maxFileMB`(기본 50MB) 이상 파일 (`warnFileMB` 이상은 경고) | `GITCH_SKIP=bigfile` |
+| push | 별칭 없는 주소 / 다른 계정 별칭 | `GITCH_SKIP=identity` |
 | push | 강제 push(기존 원격 커밋 덮어쓰기) | `gitch p --force` |
 | push | push 할 새 커밋 중 커미터가 이 계정이 아니거나 작성자가 '다른 내 계정' | `gitch fix --yes` 로 고치기 |
-| push | 기본/보호 브랜치 삭제, 보호 브랜치(`gitch protect`) 직접 push | `GITSW_SKIP=protect` |
-| push | 폴더 허용 목록(`allowRemote`) 밖으로 push | `GITSW_SKIP=remote` |
+| push | 기본/보호 브랜치 삭제, 보호 브랜치(`gitch protect`) 직접 push | `GITCH_SKIP=protect` |
+| push | 폴더 허용 목록(`allowRemote`) 밖으로 push | `GITCH_SKIP=remote` |
 | 커밋 메시지 | 계정 정책 `aiTrailer = strip` 이면 `Co-Authored-By: Claude` 같은 줄 제거 | — |
 
 - `gitch.ignore` 로 저장소를 검사에서 뺄 수 있다: `gitch ignore` / `gitch ignore --off`.
@@ -554,27 +557,27 @@ gitch flow run --help            # that subcommand's usage; nothing is planned, 
 - `~/.claude/skills/gitch/SKILL.md`, `~/.codex/skills/gitch/SKILL.md` 스킬
 - `~/.claude/settings.json`
   - PreToolUse 훅 `gitch guard --claude`: Bash 명령과 Edit/Write 대상 파일을 검사
-    - 거부: `--no-verify`, `git push --force/+refspec`, `GITSW_*`/`GIT_AUTHOR_*`/`GIT_SSH_COMMAND` 환경변수, `git -c user.*|core.hooksPath|hook.*|url.*`, 전역 git 설정 쓰기, 작성자/원격 설정 쓰기, `~/.ssh`·`~/.gitconfig`·`~/.config/gitsw`·`.git/hooks` 수정, 관리 서버 저장소의 `git clone`(→ `gitch clone`), `gitch add/remove/setup/sign on|off/import`
+    - 거부: `--no-verify`, `git push --force/+refspec`, `GITCH_*`/`GIT_AUTHOR_*`/`GIT_SSH_COMMAND` 환경변수, `git -c user.*|core.hooksPath|hook.*|url.*`, 전역 git 설정 쓰기, 작성자/원격 설정 쓰기, `~/.ssh`·`~/.gitconfig`·`~/.config/gitch`·`.git/hooks` 수정, 관리 서버 저장소의 `git clone`(→ `gitch clone`), `gitch add/remove/setup/sign on|off/import`
     - Flows: refused are `gitch flow trust` (except `--show` and `--revoke`), `hold release`, `gate on|off`, and environment variables that move the flow settings or change whether it is CI (`HOME`, `XDG_*`, `CI`, `GITCH_FLOW*`); `connect add/remove`, `init/export/import --force`, `run/rerun/watch/test --yes` and remote CI runs ask first
     - 확인 창: push·PR 생성(아래 push 정책), 원격 브랜치 삭제, `reset --hard`, `clean -f`, `checkout -- 파일`, `restore`, `branch -D`, `stash drop`, `remote add/set-url`, `gitch unlock`, 잠긴 저장소를 다른 계정으로 `gitch use`, `gitch undo/amend/fix --yes/abort/rescue --restore`, gitch 설정 변경
   - 자동 허용: 읽기 명령(`gitch ck/status/preflight/l/d/doctor/...`, `git status/diff/log/show/...`)과 일상 명령(`git add`, `gitch c/cp/p/pl/up/b/wt/clone/pr`, `git commit/push/pull/branch/switch/checkout/restore/stash/remote`).
     위험한 옵션은 위의 훅이 먼저 거부하거나 확인을 받으므로, 자동 허용이어도 그대로 지켜진다.
-- push 정책 (`gitsw.aiPush`)
+- push 정책 (`gitch.aiPush`)
   - `branch` (권장): 작업 브랜치 push 는 확인 없이, **main/master/원격 기본 브랜치/보호 브랜치(`gitch protect`) push 와 PR/MR 생성만 확인**. 어느 브랜치로 가는지 모르면(detached 등) 확인. 태그 push 도 확인.
   - `ask` (기본값): push·PR 생성마다 확인
   - `allow`: 확인 없음 (검사 훅은 그대로)
-  - 바꾸기: `gitch config set gitsw.aiPush branch` — AI 규칙과 Claude 설정도 같이 갱신된다.
+  - 바꾸기: `gitch config set gitch.aiPush branch` — AI 규칙과 Claude 설정도 같이 갱신된다.
 - 실행 주체는 환경변수(`CLAUDECODE`, Codex 샌드박스 변수, `AI_AGENT` 등)로 구분해 `gitch report` 에 남는다. 터미널(TTY)이면 사람으로 본다.
 - 비대화형(AI)에서 `gitch c` 는 스테이지된 파일만 커밋한다 (모두 올리려면 `-a`).
 
 지우기: `gitch ai --remove`.
 
-## 설정 파일 (`~/.config/gitsw/config`)
+## 설정 파일 (`~/.config/gitch/config`)
 
 git config 형식이다. `gitch config set|add|unset <키> <값>` 으로 바꾸면 바꾼 뒤 검사하고, 틀리면 되돌린다.
 
 ```ini
-[gitsw]
+[gitch]
 	scanRoot = ~/Develop
 	aiPush = branch         # ask(매번 확인) | branch(main/보호 브랜치 push 와 PR 만 확인) | allow
 	maxFileMB = 50
@@ -610,11 +613,11 @@ git config 형식이다. `gitch config set|add|unset <키> <값>` 으로 바꾸�
 
 | 파일 | 내용 |
 |---|---|
-| `~/.config/gitsw/config` | 설정 |
-| `~/.local/state/gitsw/actions.jsonl` | 작업 기록 (`gitch report`) |
-| `~/.local/state/gitsw/backups/` | gitch 가 고치기 전 파일 백업 (내용이 바뀐 것만, 날짜 폴더 최근 30개. 다른 이름의 폴더는 지우지 않음) |
-| `~/.local/share/gitsw/hook` | git 훅 연결 스크립트 (gitch 가 없으면 막지 않고 커밋 · push 때 한 줄로 알림) |
-| `refs/gitsw/backup/*` (저장소 안) | `gitch rescue` 백업 (최근 30개, push 안 됨) |
+| `~/.config/gitch/config` | 설정 |
+| `~/.local/state/gitch/actions.jsonl` | 작업 기록 (`gitch report`) |
+| `~/.local/state/gitch/backups/` | gitch 가 고치기 전 파일 백업 (내용이 바뀐 것만, 날짜 폴더 최근 30개. 다른 이름의 폴더는 지우지 않음) |
+| `~/.local/share/gitch/hook` | git 훅 연결 스크립트 (gitch 가 없으면 막지 않고 커밋 · push 때 한 줄로 알림) |
+| `refs/gitch/backup/*` (저장소 안) | `gitch rescue` 백업 (최근 30개, push 안 됨) |
 | `~/.local/share/gitch/gitch` | 앱 없이 받은 gitch (`install.sh`, `gitch self-update`) |
 
 ## (선택) push 를 Touch ID 로 승인하기

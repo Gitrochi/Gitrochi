@@ -15,17 +15,17 @@ test_args_yes_is_accepted_short_and_at_any_position() {
   # unlock
   run gitch unlock; assert_rc 2 'unlock needs confirmation'
   run gitch unlock -y; assert_ok
-  [ -z "$(git config --get gitswitch.account)" ] || fail 'unlock -y did not unlock'
+  [ -z "$(git config --get gitch.account)" ] || fail 'unlock -y did not unlock'
   run gitch use alice; assert_ok
   run gitch unlock --yes; assert_ok
   run gitch use alice; assert_ok
   # ignore
   run gitch ignore -y; assert_ok
-  assert_eq "$(git config --get gitswitch.ignore)" true
+  assert_eq "$(git config --get gitch.ignore)" true
   run gitch ignore --off; assert_ok
   # fix: a commit by another account that was not pushed
   echo two > two.txt; git add two.txt
-  GITSW_SKIP=identity git -c user.email=bob@example.com -c user.name=bob commit -q -m 'By bob'
+  GITCH_SKIP=identity git -c user.email=bob@example.com -c user.name=bob commit -q -m 'By bob'
   run gitch fix; assert_rc 2 'fix needs confirmation'
   run gitch fix -y; assert_ok
   assert_eq "$(git log -1 --format=%ae)" alice@example.com
@@ -38,12 +38,12 @@ test_args_yes_is_accepted_short_and_at_any_position() {
   run gitch rescue -y 1 --restore; assert_ok
   assert_eq "$(git log -1 --format=%ae)" bob@example.com 'rescue -y did not restore the backup'
   # config and org: before the subcommand, after it, or at the end
-  run gitch config set gitsw.maxFileMB 7; assert_rc 2
-  run gitch config set gitsw.maxFileMB 7 -y; assert_ok
-  assert_eq "$(gitch config get gitsw.maxFileMB)" 7
-  run gitch config --yes set gitsw.maxFileMB 8; assert_ok
-  assert_eq "$(gitch config get gitsw.maxFileMB)" 8
-  run gitch config unset -y gitsw.maxFileMB; assert_ok
+  run gitch config set gitch.maxFileMB 7; assert_rc 2
+  run gitch config set gitch.maxFileMB 7 -y; assert_ok
+  assert_eq "$(gitch config get gitch.maxFileMB)" 7
+  run gitch config --yes set gitch.maxFileMB 8; assert_ok
+  assert_eq "$(gitch config get gitch.maxFileMB)" 8
+  run gitch config unset -y gitch.maxFileMB; assert_ok
   run gitch org add github.com/neworg alice; assert_rc 2
   run gitch org -y add github.com/neworg alice; assert_ok
   run gitch org; assert_out 'github.com/neworg → alice'
@@ -55,9 +55,9 @@ test_args_yes_is_accepted_short_and_at_any_position() {
   # sign: the mode may follow the flag
   run gitch sign on; assert_fail 'sign needs a terminal or --yes'
   run gitch sign --yes on; assert_ok
-  assert_eq "$(git config --global --get gitswitch.sign)" true
+  assert_eq "$(git config --global --get gitch.sign)" true
   run gitch sign off -y; assert_ok
-  [ -z "$(git config --global --get gitswitch.sign)" ] || fail 'sign off -y left signing on'
+  [ -z "$(git config --global --get gitch.sign)" ] || fail 'sign off -y left signing on'
   # ssh prune
   printf '\nHost github-zed\n    HostName github.com\n    IdentityFile %s/.ssh/id_ed25519_zed\n' "$HOME" >> "$HOME/.ssh/config"
   run gitch ssh prune; assert_rc 2
@@ -69,7 +69,7 @@ test_args_yes_is_accepted_short_and_at_any_position() {
   # uninstall
   run gitch uninstall; assert_rc 2
   run gitch uninstall -y; assert_ok
-  git config --global --get hook.gitsw-pre-commit.command >/dev/null && fail 'uninstall -y left the global hook'
+  git config --global --get hook.gitch-pre-commit.command >/dev/null && fail 'uninstall -y left the global hook'
   return 0
 }
 
@@ -79,7 +79,7 @@ test_args_yes_aborts_an_operation_in_progress() {
   git clone -q "$FAKE_REMOTES/github-alice/alice/app.git" "$T/other"
   echo theirs > "$T/other/one.txt"
   git -C "$T/other" -c user.name=alice -c user.email=alice@example.com commit -q -am theirs
-  GITSW_SKIP=all git -C "$T/other" push -q origin main
+  GITCH_SKIP=all git -C "$T/other" push -q origin main
   echo mine > one.txt; gitch c -a -m mine >/dev/null
   run gitch pl; assert_fail; assert_out '충돌'
   run gitch abort; assert_rc 2 'abort needs confirmation'
@@ -100,7 +100,7 @@ test_args_guard_still_asks_for_the_short_flag() {
   expect deny 'gitch sign --yes on'
   expect deny 'gitch sign -y off'
   expect none 'gitch sign'
-  expect ask 'gitch config --yes set gitsw.aiPush allow'
+  expect ask 'gitch config --yes set gitch.aiPush allow'
   expect ask 'gitch org -y add github.com/x alice'
   expect ask 'gitch unlock -y' "$r"
 }
@@ -132,7 +132,7 @@ test_args_commands_without_arguments_refuse_extra_ones() {
   [ ! -s "$FAKE_REMOTES/.log" ] || fail "a refused command reached the remote:\n$(cat "$FAKE_REMOTES/.log")"
   [ ! -e "$T/a.cfg" ] || fail 'export wrote a file although it was refused'
   git show-ref -q --verify refs/heads/one && fail 'b one two made a branch'
-  grep -q 'account "alice"' "$HOME/.config/gitsw/config" || fail 'remove ran although it was refused'
+  grep -q 'account "alice"' "$HOME/.config/gitch/config" || fail 'remove ran although it was refused'
   return 0
 }
 

@@ -65,10 +65,10 @@ EOF
   } > "$FAKE_WEB/$RELEASES_API"
 }
 
-gitch_ver() { sed -n 's/^GITSW_VERSION="\([^"]*\)".*/\1/p' "$1" | head -1; }
+gitch_ver() { sed -n 's/^GITCH_VERSION="\([^"]*\)".*/\1/p' "$1" | head -1; }
 with_version() {   # $1 version $2 file to create [$3 shared] [$4 bundle] [$5 flow]; older test releases had no helper or engine markers
-  if [ "${3:-}" = shared ]; then sed "s/^GITSW_VERSION=.*/GITSW_VERSION=\"$1\"/" "$GITSW_SRC"
-  else sed -e "s/^GITSW_VERSION=.*/GITSW_VERSION=\"$1\"/" -e '/^GITCH_VERSION_SCHEME=/d' "$GITSW_SRC"; fi | \
+  if [ "${3:-}" = shared ]; then sed "s/^GITCH_VERSION=.*/GITCH_VERSION=\"$1\"/" "$GITCH_SRC"
+  else sed -e "s/^GITCH_VERSION=.*/GITCH_VERSION=\"$1\"/" -e '/^GITCH_VERSION_SCHEME=/d' "$GITCH_SRC"; fi | \
     { if [ "${4:-}" = bundle ]; then cat; else sed '/^GITCH_HELPER_API=/d'; fi; } | \
     { if [ "${5:-}" = flow ]; then cat; else sed '/^GITCH_FLOW_API=/d'; fi; } > "$2"
 }
@@ -88,7 +88,7 @@ only_bundle_in() { [ "$(ls -A "$1" | LC_ALL=C sort | tr '\n' ' ')" = 'gitch gitc
 
 standalone_copy() {   # 설치기가 두는 자리에 이 gitch 를 두고 ~/bin/gitch 를 거기로
   mkdir -p "$HOME/.local/share/gitch"
-  cp "$GITSW_SRC" "$HOME/.local/share/gitch/gitch"
+  cp "$GITCH_SRC" "$HOME/.local/share/gitch/gitch"
   mklink_ "$HOME/.local/share/gitch/gitch" "$HOME/bin/gitch"
 }
 
@@ -105,14 +105,14 @@ test_installer_installs_release_gitch_without_running_install() {
   assert_out "~/.local/share/gitch/gitch install"
   # gitch install 은 사용자가 직접 — 설치기는 ~/.zshrc · ~/.gitconfig · ~/.claude · ~/bin 을 건드리지 않는다
   [ ! -e "$RC_FILE" ] || fail "~/.zshrc 를 바꿈"
-  [ -z "$(git config --global --get-regexp '^hook\.gitsw-')" ] || fail "전역 검사 훅을 설치함"
+  [ -z "$(git config --global --get-regexp '^hook\.gitch-')" ] || fail "전역 검사 훅을 설치함"
   [ -z "$(ls -A "$HOME/.claude")" ] || fail "~/.claude 를 바꿈"
-  [ "$(resolve_path "$HOME/bin/gitch")" = "$(resolve_path "$GITSW_SRC")" ] || fail "~/bin/gitch 를 바꿈"
+  [ "$(resolve_path "$HOME/bin/gitch")" = "$(resolve_path "$GITCH_SRC")" ] || fail "~/bin/gitch 를 바꿈"
   # 계정이 있으면 add 는 빼고 안내
   mk_config
   run bash "$ROOT/install.sh"; assert_ok; assert_out "이미 최신입니다: gitch 9.9.9 (v0.3.7)"
   assert_no_out "gitch add"; assert_out "~/.local/share/gitch/gitch install"
-  [ ! -e "$RC_FILE" ] && [ -z "$(git config --global --get-regexp '^hook\.gitsw-')" ] || fail "계정이 있다고 gitch install 을 실행함"
+  [ ! -e "$RC_FILE" ] && [ -z "$(git config --global --get-regexp '^hook\.gitch-')" ] || fail "계정이 있다고 gitch install 을 실행함"
   # 이미 ~/bin/gitch 가 이 파일이면 바로 쓰인다
   mklink_ "$d/gitch" "$HOME/bin/gitch"
   run bash "$ROOT/install.sh"; assert_ok; assert_out "바로 쓰입니다"; assert_no_out "다음은 터미널에서 직접"
@@ -126,7 +126,7 @@ test_installer_refuses_to_overwrite_other_files() {
   run bash "$ROOT/install.sh"; assert_fail; assert_out "gitch 가 아닌 파일"
   assert_eq "$(cat "$d/gitch")" "my notes" "gitch 가 아닌 파일을 덮어씀"
   if mac_only; then   # Git Bash 의 ln -s 는 링크 대신 복사본을 만든다
-    rm "$d/gitch"; ln -s "$GITSW_SRC" "$d/gitch"
+    rm "$d/gitch"; ln -s "$GITCH_SRC" "$d/gitch"
     run bash "$ROOT/install.sh"; assert_fail; assert_out "링크"
     [ -L "$d/gitch" ] || fail "링크를 덮어씀"
   fi
@@ -171,7 +171,7 @@ test_installer_picks_newest_release_with_gitch() {
 
 test_self_update_replaces_standalone_copy() {
   local d="$HOME/.local/share/gitch" cur
-  cur=$(gitch_ver "$GITSW_SRC")
+  cur=$(gitch_ver "$GITCH_SRC")
   standalone_copy
   git init -q "$HOME"   # 홈 폴더를 git 으로 관리해도 gitch 를 올리지 않았으면 따로 받은 것
   with_version 0.99.1 "$T/new" shared; with_version 0.99.3 "$T/pre" shared
@@ -185,7 +185,7 @@ test_self_update_replaces_standalone_copy() {
   only_gitch_in "$d"
   run gitch version; assert_out "gitch 0.99.1"
   run gitch self-update; assert_ok; assert_out "이미 최신입니다: gitch 0.99.1 (v0.99.1)"
-  grep -q '"event":"self-update"' "$HOME/.local/state/gitsw/actions.jsonl" || fail "작업 기록 없음"
+  grep -q '"event":"self-update"' "$HOME/.local/state/gitch/actions.jsonl" || fail "작업 기록 없음"
 }
 
 test_self_update_refuses_bad_or_older_release() {
@@ -194,16 +194,16 @@ test_self_update_refuses_bad_or_older_release() {
   with_version 9.9.9 "$T/new"
   mk_release v0.3.7 "$T/new" badsum
   run gitch self-update; assert_fail; assert_out "SHA-256"
-  cmp -s "$d/gitch" "$GITSW_SRC" || fail "SHA-256 이 틀렸는데 바꿈"
+  cmp -s "$d/gitch" "$GITCH_SRC" || fail "SHA-256 이 틀렸는데 바꿈"
   only_gitch_in "$d"
   with_version 0.0.1 "$T/old" shared
   mk_release v0.0.1 "$T/old"
   run gitch self-update; assert_ok; assert_out "그대로 뒀습니다"
-  cmp -s "$d/gitch" "$GITSW_SRC" || fail "더 낮은 버전으로 바꿈"
+  cmp -s "$d/gitch" "$GITCH_SRC" || fail "더 낮은 버전으로 바꿈"
   echo '<html>Not Found</html>' > "$T/html"
   mk_release v0.3.9 "$T/html"
   run gitch self-update; assert_fail; assert_out "gitch 가 아닙니다"
-  cmp -s "$d/gitch" "$GITSW_SRC" || fail "gitch 가 아닌 파일로 바꿈"
+  cmp -s "$d/gitch" "$GITCH_SRC" || fail "gitch 가 아닌 파일로 바꿈"
   only_gitch_in "$d"
 }
 
@@ -213,13 +213,13 @@ test_shared_version_update_scheme_and_release_tag() {
   with_version 3.2.1 "$T/legacy"
   mk_release v0.3.9 "$T/legacy"
   run gitch self-update; assert_ok; assert_out "이전 독립 CLI 버전 방식"
-  cmp -s "$d/gitch" "$GITSW_SRC" || fail "예전 CLI 번호로 돌아감"
+  cmp -s "$d/gitch" "$GITCH_SRC" || fail "예전 CLI 번호로 돌아감"
   with_version 0.99.1 "$T/new" shared
   mk_release v0.99.2 "$T/new"
   run gitch self-update; assert_fail; assert_out "릴리스 태그"
-  cmp -s "$d/gitch" "$GITSW_SRC" || fail "태그와 버전이 다른 파일로 바꿈"
+  cmp -s "$d/gitch" "$GITCH_SRC" || fail "태그와 버전이 다른 파일로 바꿈"
   run bash "$ROOT/install.sh"; assert_fail; assert_out "릴리스 태그"
-  cmp -s "$d/gitch" "$GITSW_SRC" || fail "설치기가 태그와 다른 버전을 설치함"
+  cmp -s "$d/gitch" "$GITCH_SRC" || fail "설치기가 태그와 다른 버전을 설치함"
 }
 
 test_legacy_version_installer_migrates_to_shared_version() {
@@ -241,13 +241,13 @@ test_self_update_leaves_app_and_repo_copies() {
   with_version 9.9.9 "$T/new"
   mk_release v0.3.7 "$T/new"
   mkdir -p "$app" "$repo/tools/gitch"
-  cp "$GITSW_SRC" "$app/gitch"
+  cp "$GITCH_SRC" "$app/gitch"
   run "$app/gitch" self-update; assert_ok; assert_out "앱과 함께 업데이트"
-  cmp -s "$app/gitch" "$GITSW_SRC" || fail "앱에 든 gitch 를 바꿈"
+  cmp -s "$app/gitch" "$GITCH_SRC" || fail "앱에 든 gitch 를 바꿈"
   # 저장소에 든 gitch 는 그 저장소로 바뀐다 (진짜 tools/gitch/gitch 대신 임시 저장소로 확인)
-  git init -q "$repo"; cp "$GITSW_SRC" "$repo/tools/gitch/gitch"; git -C "$repo" add tools/gitch/gitch
+  git init -q "$repo"; cp "$GITCH_SRC" "$repo/tools/gitch/gitch"; git -C "$repo" add tools/gitch/gitch
   run "$repo/tools/gitch/gitch" self-update; assert_ok; assert_out "앱과 함께 업데이트"
-  cmp -s "$repo/tools/gitch/gitch" "$GITSW_SRC" || fail "저장소의 gitch 를 바꿈"
+  cmp -s "$repo/tools/gitch/gitch" "$GITCH_SRC" || fail "저장소의 gitch 를 바꿈"
   [ ! -e "$FAKE_WEB/log" ] || fail "릴리스를 받음: $(cat "$FAKE_WEB/log")"
 }
 

@@ -4,11 +4,11 @@
 #   사용: tests/run.sh [-k 이름일부] [테스트파일...]
 HERE=$(cd "$(dirname "$0")" && pwd -P)
 ROOT=$(cd "$HERE/.." && pwd -P)
-GITSW_SRC="${GITSW_SRC:-$ROOT/gitch}"
-TMP_BASE="${GITSW_TEST_TMP:-${TMPDIR:-/tmp}}"
+GITCH_SRC="${GITCH_SRC:-$ROOT/gitch}"
+TMP_BASE="${GITCH_TEST_TMP:-${TMPDIR:-/tmp}}"
 TMP_BASE=${TMP_BASE%/}
 ORIG_PATH="$PATH"
-export GITSW_SRC ROOT TMP_BASE ORIG_PATH
+export GITCH_SRC ROOT TMP_BASE ORIG_PATH
 
 FILTER=""; SHARD="1/1"; LIST=""; files=()
 while [ $# -gt 0 ]; do

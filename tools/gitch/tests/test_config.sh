@@ -10,8 +10,8 @@ test_config_check_and_list() {
 }
 
 test_config_errors_reported() {
-  mkdir -p "$HOME/.config/gitsw"
-  cat > "$HOME/.config/gitsw/config" <<'EOF'
+  mkdir -p "$HOME/.config/gitch"
+  cat > "$HOME/.config/gitch/config" <<'EOF'
 [account "alice"]
 	host = github.com
 [account "bad name"]
@@ -22,7 +22,7 @@ test_config_errors_reported() {
 	host = github.com via nobody
 [org "github.com/zzz"]
 	account = ghost
-[gitsw]
+[gitch]
 	aiPush = sometimes
 EOF
   run gitch config check; assert_fail
@@ -41,7 +41,7 @@ test_config_set_validates_and_rolls_back() {
   run gitch config get account.alice.aiTrailer; assert_eq "$OUT" ""
   run gitch config set account.alice.aiTrailer strip --yes; assert_ok
   run gitch config get account.alice.aitrailer; assert_eq "$OUT" "strip"
-  run gitch config set gitsw.aiPush allow; assert_rc 2 "--yes 없으면 확인 필요(2)"
+  run gitch config set gitch.aiPush allow; assert_rc 2 "--yes 없으면 확인 필요(2)"
 }
 
 tty_gitch() {   # 표준입력의 답을 터미널(pty)로 넣어 gitch 를 돌린다 — gitch add 처럼 사람에게만 묻는 명령.
@@ -76,9 +76,9 @@ test_add_new_account_writes_email_and_host_together() {
   printf 'dave\ndave@example.com\n\n\n\n\n\n\n' > "$T/answers"   # 아이디 · 이메일 · 서버(github.com) · 빌려 쓰기(아니오) · 기본 폴더 · SSH 키 암호(아니오)
   run tty_gitch add < "$T/answers"
   assert_ok "gitch add"; assert_no_out "되돌렸습니다"; assert_out "dave 를 계정 목록에 추가했습니다"
-  assert_eq "$(git config -f "$HOME/.config/gitsw/config" --get account.dave.email)" "dave@example.com"
-  assert_eq "$(git config -f "$HOME/.config/gitsw/config" --get account.dave.host)" "github.com"
-  assert_eq "$(git config -f "$HOME/.config/gitsw/config" --get 'folder.~/Develop/dave.account')" "dave"
+  assert_eq "$(git config -f "$HOME/.config/gitch/config" --get account.dave.email)" "dave@example.com"
+  assert_eq "$(git config -f "$HOME/.config/gitch/config" --get account.dave.host)" "github.com"
+  assert_eq "$(git config -f "$HOME/.config/gitch/config" --get 'folder.~/Develop/dave.account')" "dave"
   [ -d "$HOME/Develop/dave" ] || fail "기본 폴더를 만들지 않음"
   run gitch config check; assert_ok; assert_out "계정 1개"
   # 있는 설정에 하나 더(기본 폴더 없이)
@@ -92,16 +92,16 @@ test_add_new_account_writes_email_and_host_together() {
 
 test_via_binding_uses_login_alias() {
   mk_config
-  git config -f "$HOME/.config/gitsw/config" account.dave.email dave@corp.example
-  git config -f "$HOME/.config/gitsw/config" --add account.dave.host "github.com via alice"
-  git config -f "$HOME/.config/gitsw/config" org.github.com/daveorg.account dave
+  git config -f "$HOME/.config/gitch/config" account.dave.email dave@corp.example
+  git config -f "$HOME/.config/gitch/config" --add account.dave.host "github.com via alice"
+  git config -f "$HOME/.config/gitch/config" org.github.com/daveorg.account dave
   run gitch config check; assert_ok
   run gitch list; assert_out "github.com(로그인 alice)"
   mk_remote_seeded github-alice daveorg/app
   run gitch clone https://github.com/daveorg/app "$T/app"; assert_ok
   assert_eq "$(git -C "$T/app" config user.email)" "dave@corp.example"
   assert_eq "$(git -C "$T/app" config remote.origin.url)" "git@github-alice:daveorg/app.git"
-  assert_eq "$(git -C "$T/app" config gitswitch.alias)" "github-alice"
+  assert_eq "$(git -C "$T/app" config gitch.alias)" "github-alice"
   cd "$T/app" && run gitch status; assert_out "PUSH_ACCOUNT=dave"; assert_out "PUSH_LOGIN=alice"
 }
 

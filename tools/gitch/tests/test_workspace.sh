@@ -17,7 +17,7 @@ test_workspace_membership_and_canonical_paths() {
   run gitch workspace create product "$T/Frontend with spaces" "$T/backend" --json
   assert_ok; assert_json "$OUT"
   assert_eq "$(printf '%s' "$OUT" | jq '.repositories | length')" 2
-  assert_eq "$(printf '%s' "$OUT" | jq -r '.repositories[0].path')" "$(git config --file "$HOME/.local/state/gitsw/workspaces/product.config" --get-all workspace.repository | head -1)" 'reported and persisted repository paths must match'
+  assert_eq "$(printf '%s' "$OUT" | jq -r '.repositories[0].path')" "$(git config --file "$HOME/.local/state/gitch/workspaces/product.config" --get-all workspace.repository | head -1)" 'reported and persisted repository paths must match'
   run gitch ws add product "$T/backend/." --json
   assert_ok
   assert_eq "$(printf '%s' "$OUT" | jq '.repositories | length')" 2
@@ -56,31 +56,31 @@ test_workspace_validation_is_atomic_and_dry_run_preserves_records() {
   assert_rc 1; assert_json "$OUT"
   run gitch workspace create product "$T/backend" "$T/missing" --json
   assert_rc 1
-  [ ! -f "$HOME/.local/state/gitsw/workspaces/product.config" ] || fail 'Invalid group was partly saved'
+  [ ! -f "$HOME/.local/state/gitch/workspaces/product.config" ] || fail 'Invalid group was partly saved'
   run gitch workspace create product "$T/backend" --dry-run --json
   assert_ok
   assert_eq "$(printf '%s' "$OUT" | jq .dryRun)" true
-  [ ! -f "$HOME/.local/state/gitsw/workspaces/product.config" ] || fail 'Dry run saved a record'
+  [ ! -f "$HOME/.local/state/gitch/workspaces/product.config" ] || fail 'Dry run saved a record'
   run gitch workspace create product "$T/backend" --json
   assert_ok
-  cp "$HOME/.local/state/gitsw/workspaces/product.config" "$T/original"
+  cp "$HOME/.local/state/gitch/workspaces/product.config" "$T/original"
   run gitch workspace add product "$T/Frontend with spaces" --dry-run --json
   assert_ok
-  cmp "$T/original" "$HOME/.local/state/gitsw/workspaces/product.config" || fail 'Dry run changed existing record'
+  cmp "$T/original" "$HOME/.local/state/gitch/workspaces/product.config" || fail 'Dry run changed existing record'
   run gitch workspace remove product "$T/missing" --json
   assert_rc 1
-  cmp "$T/original" "$HOME/.local/state/gitsw/workspaces/product.config" || fail 'Failed removal changed existing record'
+  cmp "$T/original" "$HOME/.local/state/gitch/workspaces/product.config" || fail 'Failed removal changed existing record'
 }
 
 test_workspace_rejects_symlink_records_and_control_paths() {
   workspace_fixture
-  mkdir -p "$HOME/.local/state/gitsw/workspaces"
+  mkdir -p "$HOME/.local/state/gitch/workspaces"
   printf '[workspace]\nname = product\n' > "$T/outside"
-  ln -s "$T/outside" "$HOME/.local/state/gitsw/workspaces/product.config"
+  ln -s "$T/outside" "$HOME/.local/state/gitch/workspaces/product.config"
   run gitch workspace create product "$T/backend" --json
   assert_rc 1
   # Git Bash can copy a file for ln -s when native symlinks are unavailable.
-  if [ -L "$HOME/.local/state/gitsw/workspaces/product.config" ]; then
+  if [ -L "$HOME/.local/state/gitch/workspaces/product.config" ]; then
     run gitch workspace show product --json
     assert_rc 1
   fi
@@ -98,7 +98,7 @@ break" --json
 test_workspace_corrupt_list_emits_one_json_error_without_partial_output() {
   workspace_fixture
   run gitch workspace create aaa "$T/backend" --json; assert_ok
-  printf '[workspace]\nname = different\n' > "$HOME/.local/state/gitsw/workspaces/zzz.config"
+  printf '[workspace]\nname = different\n' > "$HOME/.local/state/gitch/workspaces/zzz.config"
   run gitch workspace list --json
   assert_rc 1; assert_json "$OUT"
   assert_eq "$(printf '%s' "$OUT" | jq -r '.error.code')" GITCH_ERROR
