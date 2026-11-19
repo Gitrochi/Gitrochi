@@ -2311,5 +2311,7 @@
   "{0} rows · {1} columns": "{0} แถว · {1} คอลัมน์",
   "This file can't be shown as text.": "ไม่สามารถแสดงไฟล์นี้เป็นข้อความได้",
   "Receive beta updates": "รับอัปเดตเบต้า",
-  "Betas come before each release so new features can be tried early; they may have bugs. Turning this off keeps the beta until the next release.": "เบต้ามาก่อนแต่ละรุ่นเพื่อให้ลองฟีเจอร์ใหม่ได้ก่อน และอาจมีข้อบกพร่อง หากปิด จะใช้เบต้าเดิมต่อจนกว่าจะมีรุ่นถัดไป"
+  "Betas come before each release so new features can be tried early; they may have bugs. Turning this off keeps the beta until the next release.": "เบต้ามาก่อนแต่ละรุ่นเพื่อให้ลองฟีเจอร์ใหม่ได้ก่อน และอาจมีข้อบกพร่อง หากปิด จะใช้เบต้าเดิมต่อจนกว่าจะมีรุ่นถัดไป",
+  "Search engine": "เครื่องมือค้นหา",
+  "Text typed into a browser tab's address bar that isn't an address is searched with this engine.": "ข้อความที่พิมพ์ในแถบที่อยู่ของแท็บเบราว์เซอร์ซึ่งไม่ใช่ที่อยู่ จะค้นหาด้วยเครื่องมือนี้"
 }

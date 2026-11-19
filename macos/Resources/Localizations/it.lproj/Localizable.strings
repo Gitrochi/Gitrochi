@@ -2282,3 +2282,5 @@
 "This file can't be shown as text." = "Questo file non può essere mostrato come testo.";
 "Receive beta updates" = "Ricevi aggiornamenti beta";
 "Betas come before each release so new features can be tried early; they may have bugs. Turning this off keeps the beta until the next release." = "Le beta arrivano prima di ogni versione per provare in anticipo le novità; possono contenere errori. Disattivando l’opzione, la beta resta fino alla versione successiva.";
+"Search engine" = "Motore di ricerca";
+"Text typed into a browser tab's address bar that isn't an address is searched with this engine." = "Il testo digitato nella barra degli indirizzi di una scheda del browser che non è un indirizzo viene cercato con questo motore.";

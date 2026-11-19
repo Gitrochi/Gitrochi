@@ -4,3 +4,4 @@ export { SettingsNavigation } from "./ui/SettingsNavigation";
 export { GitchAccountSetup } from "./ui/GitchAccountSetup";
 export { AccountsSettings } from "./ui/AccountsSettings";
 export { type AutostartHost, BackgroundSettings } from "./ui/BackgroundSettings";
+export { ToolsSettings } from "./ui/ToolsSettings";

@@ -126,11 +126,36 @@ private final class BrowserRelay: NSObject, WKUIDelegate, WKNavigationDelegate {
     }
 }
 
+/// Where the address bar sends a search, chosen in Settings › Tools (Windows: searchEngines in browser-address.ts)
+enum SearchEngine: String, CaseIterable, Identifiable {
+    case google, duckduckgo, bing, naver
+
+    static let key = "browserSearchEngine"
+    static var current: SearchEngine { UserDefaults.standard.string(forKey: key).flatMap(SearchEngine.init) ?? .google }
+
+    var id: String { rawValue }
+    /// Product names, not translated
+    var title: String {
+        switch self {
+        case .google: "Google"
+        case .duckduckgo: "DuckDuckGo"
+        case .bing: "Bing"
+        case .naver: "Naver"
+        }
+    }
+    var searchURL: String {
+        switch self {
+        case .google: "https://www.google.com/search?q="
+        case .duckduckgo: "https://duckduckgo.com/?q="
+        case .bing: "https://www.bing.com/search?q="
+        case .naver: "https://search.naver.com/search.naver?query="
+        }
+    }
+}
+
 /// What the address bar does with typed text (Windows: entities/terminal/lib/browser-address.ts)
 enum BrowserAddress {
-    static let searchURL = "https://duckduckgo.com/?q="
-
-    static func resolve(_ text: String) -> URL? {
+    static func resolve(_ text: String, engine: SearchEngine = .current) -> URL? {
         let value = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !value.isEmpty else { return nil }
         if let url = URL(string: value), let scheme = url.scheme?.lowercased(),
@@ -141,7 +166,7 @@ enum BrowserAddress {
             return url
         }
         let query = value.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed.subtracting(CharacterSet(charactersIn: "&+=?#"))) ?? value
-        return URL(string: searchURL + query)
+        return URL(string: engine.searchURL + query)
     }
 
     /// localhost, an IP address, or a name with a dot, each with an optional port and path

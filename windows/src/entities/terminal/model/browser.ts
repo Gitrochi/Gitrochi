@@ -1,8 +1,12 @@
 import { type BrowserEvent, type BrowserRect, ipc } from "@/shared/api";
+import { settings } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { Observable } from "@/shared/lib";
-import { resolveAddress } from "../lib/browser-address";
+import { resolveAddress as resolve, searchEngineKey } from "../lib/browser-address";
 import { previewKind, previewPage, textLimit } from "../lib/file-preview";
+
+/** Searches go to the engine chosen in Settings › Tools */
+const resolveAddress = (text: string) => resolve(text, settings.get<string>(searchEngineKey, "google"));
 
 /** Pages served by the app for file previews (preview.rs) */
 const isPreviewAddress = (url: string) => /^(gitrochi-preview:|https?:\/\/gitrochi-preview\.localhost\/)/i.test(url);
