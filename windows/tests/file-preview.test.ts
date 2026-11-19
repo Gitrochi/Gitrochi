@@ -16,6 +16,21 @@ describe("Ctrl-click words in a terminal line", () => {
   it("leaves plain words and numbers alone", () => {
     expect(linkTokens("2 files changed, 10 insertions(+) v1.2.3 12:30")).toEqual([]);
   });
+  it("takes paths with spaces as one link, longest file-like end first", () => {
+    const line = 'open "/Users/me/Downloads/Trip plan (1 1~1 7).xlsx" now';
+    const [token] = linkTokens(line);
+    expect(token.text).toBe("/Users/me/Downloads/Trip plan (1 1~1 7).xlsx");
+    expect(token.candidates?.[0]).toBe(token.text);
+    expect(line.slice(token.start, token.end)).toBe(token.text);
+    expect(linkTokens("C:\\Users\\me\\Downloads\\Hold report 14.pdf").map((t) => t.text)).toEqual(["C:\\Users\\me\\Downloads\\Hold report 14.pdf"]);
+    expect(linkTokens("~/Downloads/a b.pdf: done.").map((t) => t.text)).toEqual(["~/Downloads/a b.pdf"]);
+  });
+  it("keeps separate paths and plain spaced words apart", () => {
+    expect(linkTokens("/a/x.txt /b/y.txt").map((t) => t.text)).toEqual(["/a/x.txt", "/b/y.txt"]);
+    expect(linkTokens("/a/x.txt  notes.md").map((t) => t.text)).toEqual(["/a/x.txt", "notes.md"]);
+    expect(linkTokens("/usr/bin is here").map((t) => t.text)).toEqual(["/usr/bin"]);
+    expect(linkTokens("open http://localhost:3000/ and docs.md").map((t) => t.text)).toEqual(["http://localhost:3000/", "docs.md"]);
+  });
 });
 
 describe("file previews", () => {

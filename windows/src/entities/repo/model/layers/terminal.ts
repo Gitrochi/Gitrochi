@@ -26,7 +26,7 @@ export abstract class RepoTerminal extends RepoAI {
   private makeTerminal(dir: string, spec: Partial<TerminalSpec>) {
     const s = new TerminalSession({ ...spec, directory: dir });
     s.subscribe(() => this.emit());
-    s.onOpenLink = (text) => void this.openTerminalLink(s, text);
+    s.onOpenLink = (text, candidates) => void this.openTerminalLink(s, text, candidates);
     this.terminals = [...this.terminals, s];
     this.activeTerminalID = s.id;
     this.showTerminal = true;
@@ -140,7 +140,7 @@ export abstract class RepoTerminal extends RepoAI {
   }
 
   /** What a Ctrl-click on a word in the terminal does (macOS: onOpenLink in TerminalSession.swift) */
-  async openTerminalLink(s: TerminalSession, text: string) {
+  async openTerminalLink(s: TerminalSession, text: string, candidates = [text]) {
     if (/^https?:\/\//i.test(text)) {
       let host = "";
       try {
@@ -152,8 +152,11 @@ export abstract class RepoTerminal extends RepoAI {
       else void ipc.openUrl(text).catch(() => undefined);
       return;
     }
-    const path = await ipc.previewResolve(text, s.directory).catch(() => null);
-    if (path) this.previewInBrowserTab(path, s.id);
+    // a path with spaces: the longest candidate that exists
+    for (const candidate of candidates) {
+      const path = await ipc.previewResolve(candidate, s.directory).catch(() => null);
+      if (path) return this.previewInBrowserTab(path, s.id);
+    }
   }
 
   selectBrowser(b: BrowserSession) {
