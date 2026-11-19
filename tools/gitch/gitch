@@ -6491,16 +6491,38 @@ RELEASE_AWK='
 
 curl_get() { curl -fsSL --connect-timeout 15 --max-time 120 "$@"; }
 sha256_of() { { shasum -a 256 "$1" 2>/dev/null || sha256sum "$1"; } | awk '{ print $1 }'; }
-ver_lt() {   # $1 이 $2 보다 낮은 버전인지 (3.0.9 < 3.0.10)
-  local IFS=. i x y a b
-  read -r -a a <<< "$1"; read -r -a b <<< "$2"
+ver_lt() {   # $1 is lower than $2, as semver: 3.0.9 < 3.0.10, 0.4.2-beta.1 < 0.4.2-beta.2 < 0.4.2 (app: ReleaseVersion)
+  local IFS=. i x y a b pa pb
+  local va=${1#v} vb=${2#v}
+  read -r -a a <<< "${va%%-*}"; read -r -a b <<< "${vb%%-*}"
   for i in 0 1 2 3; do
     x=${a[$i]:-0}; y=${b[$i]:-0}
     is_number "$x" || x=0; is_number "$y" || y=0
     [ "$x" -lt "$y" ] && return 0
     [ "$x" -gt "$y" ] && return 1
   done
-  return 1
+  # same release: a pre-release comes before it
+  pa=; pb=
+  [ "$va" != "${va%%-*}" ] && pa=${va#*-}
+  [ "$vb" != "${vb%%-*}" ] && pb=${vb#*-}
+  [ -z "$pa" ] && return 1
+  [ -z "$pb" ] && return 0
+  read -r -a a <<< "${pa%%+*}"; read -r -a b <<< "${pb%%+*}"
+  i=0
+  while :; do
+    x=${a[$i]:-}; y=${b[$i]:-}
+    [ -z "$x" ] && [ -z "$y" ] && return 1
+    [ -z "$x" ] && return 0
+    [ -z "$y" ] && return 1
+    if [ "$x" != "$y" ]; then
+      if is_number "$x" && is_number "$y"; then [ "$x" -lt "$y" ]; return; fi
+      # numbers come before words; words in ASCII order
+      is_number "$x" && return 0
+      is_number "$y" && return 1
+      [[ "$x" < "$y" ]]; return
+    fi
+    i=$((i + 1))
+  done
 }
 
 self_update_cmd() {   # 따로 받은 gitch 만 바꾼다 — 앱에 든 것은 앱과 함께, 저장소(git)의 것은 그 저장소와 함께(git pull 은 앱 저장소 전체를 바꾸므로 하지 않음)

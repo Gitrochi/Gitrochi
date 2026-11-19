@@ -3005,5 +3005,7 @@
   "Only the first 2 MB are shown.": "最初の2 MBのみ表示しています。",
   "The file is empty.": "ファイルは空です。",
   "{0} rows · {1} columns": "{0} 行 · {1} 列",
-  "This file can't be shown as text.": "このファイルはテキストとして表示できません。"
+  "This file can't be shown as text.": "このファイルはテキストとして表示できません。",
+  "Receive beta updates": "ベータ版のアップデートを受け取る",
+  "Betas come before each release so new features can be tried early; they may have bugs. Turning this off keeps the beta until the next release.": "ベータ版は各リリースの前に新機能を試せる版で、不具合がある場合があります。オフにすると、次のリリースまで現在のベータ版のままになります。"
 }

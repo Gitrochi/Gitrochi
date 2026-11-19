@@ -2301,5 +2301,7 @@
   "Only the first 2 MB are shown.": "Yalnızca ilk 2 MB gösteriliyor.",
   "The file is empty.": "Dosya boş.",
   "{0} rows · {1} columns": "{0} satır · {1} sütun",
-  "This file can't be shown as text.": "Bu dosya metin olarak gösterilemez."
+  "This file can't be shown as text.": "Bu dosya metin olarak gösterilemez.",
+  "Receive beta updates": "Beta güncellemelerini al",
+  "Betas come before each release so new features can be tried early; they may have bugs. Turning this off keeps the beta until the next release.": "Betalar, yeni özellikleri erken denemek için her sürümden önce çıkar; hata içerebilir. Kapatırsanız beta bir sonraki sürüme kadar kalır."
 }

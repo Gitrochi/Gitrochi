@@ -1,6 +1,9 @@
 import { Channel, invoke } from "@tauri-apps/api/core";
 import { env, settings } from "@/shared/config";
 import { Observable } from "@/shared/lib";
+import { betaEndpoint, type ReleaseEntry } from "./release-version";
+
+const releasesAPI = "https://api.github.com/repos/Gitrochi/Gitrochi/releases?per_page=20";
 
 export interface UpdateInfo {
   version: string;
@@ -34,6 +37,23 @@ class Updater extends Observable {
     this.emit();
   }
 
+  /** Pre-releases are offered too. Turning it off keeps the beta until the next release, which is newer. */
+  get beta() {
+    return settings.get("betaUpdates", false);
+  }
+
+  setBeta(v: boolean) {
+    settings.set("betaUpdates", v);
+    this.emit();
+  }
+
+  private async endpoint(): Promise<string | null> {
+    if (!this.beta) return null;
+    const response = await fetch(releasesAPI, { headers: { Accept: "application/vnd.github+json" } });
+    if (!response.ok) throw new Error(`GitHub ${response.status}`);
+    return betaEndpoint((await response.json()) as ReleaseEntry[]);
+  }
+
   /** 앱을 켤 때: 자동 확인이 켜져 있으면 조용히 확인하고, 하루에 한 번 다시 */
   start() {
     if (env.selftest) return;
@@ -50,7 +70,7 @@ class Updater extends Observable {
     this.error = null;
     this.emit();
     try {
-      const info = await invoke<UpdateInfo | null>("update_check", { endpoint: null });
+      const info = await invoke<UpdateInfo | null>("update_check", { endpoint: await this.endpoint() });
       this.lastChecked = Date.now();
       this.info = info;
       this.state = info ? "available" : "none";

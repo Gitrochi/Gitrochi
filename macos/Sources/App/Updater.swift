@@ -49,6 +49,12 @@ final class UpdateCenter {
         didSet { UserDefaults.standard.set(autoCheck, forKey: "autoUpdate") }
     }
 
+    /// Pre-releases are offered too. Turning it off keeps the beta until the next release, which is newer.
+    /// (Windows: updater.beta)
+    var beta: Bool = UserDefaults.standard.bool(forKey: "betaUpdates") {
+        didSet { UserDefaults.standard.set(beta, forKey: "betaUpdates") }
+    }
+
     static var currentVersion: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0"
     }
@@ -77,16 +83,8 @@ final class UpdateCenter {
         }
     }
 
-    /// "0.10.0" > "0.9.3"
-    static func isNewer(_ a: String, than b: String) -> Bool {
-        let x = a.split(separator: ".").map { Int($0.prefix { $0.isNumber }) ?? 0 }
-        let y = b.split(separator: ".").map { Int($0.prefix { $0.isNumber }) ?? 0 }
-        for i in 0..<max(x.count, y.count) {
-            let l = i < x.count ? x[i] : 0, r = i < y.count ? y[i] : 0
-            if l != r { return l > r }
-        }
-        return false
-    }
+    /// "0.10.0" > "0.9.3", and a release after its betas: "0.4.2" > "0.4.2-beta.2" > "0.4.2-beta.1"
+    static func isNewer(_ a: String, than b: String) -> Bool { ReleaseVersion.compare(a, b) > 0 }
 
     func check(manual: Bool) async {
         guard phase != .checking, phase != .downloading, phase != .installing else { return }
@@ -102,8 +100,9 @@ final class UpdateCenter {
                 throw AIError.failed("GitHub", String(localized: "Couldn't get release information (\((resp as? HTTPURLResponse)?.statusCode ?? 0))."))
             }
             lastChecked = Date()
+            let includeBetas = beta
             let macReleases = list.filter { r in
-                r["draft"] as? Bool != true && r["prerelease"] as? Bool != true
+                r["draft"] as? Bool != true && (includeBetas || r["prerelease"] as? Bool != true)
                     && (r["assets"] as? [[String: Any]] ?? []).contains { ($0["name"] as? String ?? "").hasSuffix("-macOS.zip") }
             }
             let version = { (r: [String: Any]) in (r["tag_name"] as? String ?? "").trimmingCharacters(in: CharacterSet(charactersIn: "vV")) }
@@ -409,5 +408,45 @@ struct UpdateView: View {
         }
         .padding(20)
         .frame(width: 520)
+    }
+}
+
+/// Release versions, ordered as semver: 0.4.2-beta.1 < 0.4.2-beta.2 < 0.4.2 < 0.4.10. A leading "v" is ignored.
+/// (Windows: shared/platform/release-version.ts; gitch: ver_lt)
+enum ReleaseVersion {
+    /// Negative when a comes before b, positive after, 0 when equal
+    static func compare(_ a: String, _ b: String) -> Int {
+        let x = parts(a), y = parts(b)
+        for i in 0..<max(x.core.count, y.core.count) {
+            let l = i < x.core.count ? x.core[i] : 0, r = i < y.core.count ? y.core[i] : 0
+            if l != r { return l < r ? -1 : 1 }
+        }
+        // a pre-release comes before its release
+        if x.pre.isEmpty || y.pre.isEmpty { return x.pre.isEmpty == y.pre.isEmpty ? 0 : x.pre.isEmpty ? 1 : -1 }
+        for i in 0..<max(x.pre.count, y.pre.count) {
+            guard i < x.pre.count else { return -1 }
+            guard i < y.pre.count else { return 1 }
+            let l = x.pre[i], r = y.pre[i]
+            if l == r { continue }
+            switch (Int(l), Int(r)) {
+            case let (ln?, rn?): return ln < rn ? -1 : 1
+            // numbers come before words; words in ASCII order
+            case (.some, nil): return -1
+            case (nil, .some): return 1
+            default: return l < r ? -1 : 1
+            }
+        }
+        return 0
+    }
+
+    static func isPrerelease(_ version: String) -> Bool { !parts(version).pre.isEmpty }
+
+    private static func parts(_ version: String) -> (core: [Int], pre: [String]) {
+        var v = version.trimmingCharacters(in: .whitespaces)
+        if v.first == "v" || v.first == "V" { v.removeFirst() }
+        let split = v.split(separator: "-", maxSplits: 1, omittingEmptySubsequences: false)
+        let core = split[0].split(separator: ".").map { Int($0) ?? 0 }
+        let pre = split.count > 1 ? split[1].split(separator: "+", maxSplits: 1)[0].split(separator: ".").map(String.init) : []
+        return (core, pre)
     }
 }

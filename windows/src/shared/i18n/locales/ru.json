@@ -2313,5 +2313,7 @@
   "Only the first 2 MB are shown.": "Показаны только первые 2 МБ.",
   "The file is empty.": "Файл пуст.",
   "{0} rows · {1} columns": "Строк: {0} · столбцов: {1}",
-  "This file can't be shown as text.": "Этот файл нельзя показать как текст."
+  "This file can't be shown as text.": "Этот файл нельзя показать как текст.",
+  "Receive beta updates": "Получать бета-обновления",
+  "Betas come before each release so new features can be tried early; they may have bugs. Turning this off keeps the beta until the next release.": "Бета-версии выходят перед каждым релизом, чтобы заранее попробовать новые функции; в них могут быть ошибки. Если отключить, бета останется до следующего релиза."
 }

@@ -2271,5 +2271,7 @@
   "Only the first 2 MB are shown.": "Chỉ hiển thị 2 MB đầu tiên.",
   "The file is empty.": "Tệp trống.",
   "{0} rows · {1} columns": "{0} hàng · {1} cột",
-  "This file can't be shown as text.": "Không thể hiển thị tệp này dưới dạng văn bản."
+  "This file can't be shown as text.": "Không thể hiển thị tệp này dưới dạng văn bản.",
+  "Receive beta updates": "Nhận bản cập nhật beta",
+  "Betas come before each release so new features can be tried early; they may have bugs. Turning this off keeps the beta until the next release.": "Bản beta ra trước mỗi bản phát hành để dùng thử tính năng mới sớm; có thể còn lỗi. Khi tắt, bản beta được giữ đến bản phát hành tiếp theo."
 }

@@ -21,6 +21,8 @@ struct UpdateSettings: View {
             }
             Section("Automatic updates") {
                 Toggle("Check for new versions at launch and once a day", isOn: $center.autoCheck)
+                Toggle("Receive beta updates", isOn: $center.beta)
+                    .help("Betas come before each release so new features can be tried early; they may have bugs. Turning this off keeps the beta until the next release.")
                 HStack {
                     Button("Check now") { Task { await center.check(manual: true) } }
                         .disabled(center.phase == .checking || center.phase == .downloading)

@@ -2340,3 +2340,5 @@
 "The file is empty." = "Le fichier est vide.";
 "%lld rows · %lld columns" = "%lld lignes · %lld colonnes";
 "This file can't be shown as text." = "Ce fichier ne peut pas être affiché comme texte.";
+"Receive beta updates" = "Recevoir les mises à jour bêta";
+"Betas come before each release so new features can be tried early; they may have bugs. Turning this off keeps the beta until the next release." = "Les bêtas précèdent chaque version pour essayer les nouveautés en avance ; elles peuvent contenir des bugs. Si vous désactivez cette option, la bêta reste installée jusqu’à la prochaine version.";

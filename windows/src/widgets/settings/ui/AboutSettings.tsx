@@ -37,6 +37,12 @@ export function AboutSettings() {
       <div className="form-section">
         <span className="form-section-title">{t("Automatic updates")}</span>
         <Checkbox checked={updater.autoCheck} onChange={(v) => updater.setAutoCheck(v)} label={t("Check for new versions at launch and once a day")} />
+        <Checkbox
+          checked={updater.beta}
+          onChange={(v) => updater.setBeta(v)}
+          label={t("Receive beta updates")}
+          tip={t("Betas come before each release so new features can be tried early; they may have bugs. Turning this off keeps the beta until the next release.")}
+        />
         <div className="row">
           <Button disabled={updater.state === "checking" || updater.state === "downloading"} onClick={() => void updater.check(true)}>
             {t("Check now")}</Button>

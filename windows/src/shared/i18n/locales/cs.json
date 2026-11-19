@@ -2296,5 +2296,7 @@
   "Only the first 2 MB are shown.": "Zobrazují se jen první 2 MB.",
   "The file is empty.": "Soubor je prázdný.",
   "{0} rows · {1} columns": "Řádky: {0} · sloupce: {1}",
-  "This file can't be shown as text.": "Tento soubor nelze zobrazit jako text."
+  "This file can't be shown as text.": "Tento soubor nelze zobrazit jako text.",
+  "Receive beta updates": "Přijímat beta aktualizace",
+  "Betas come before each release so new features can be tried early; they may have bugs. Turning this off keeps the beta until the next release.": "Bety vycházejí před každou verzí, abyste mohli nové funkce vyzkoušet dříve; mohou obsahovat chyby. Po vypnutí zůstane beta až do další verze."
 }

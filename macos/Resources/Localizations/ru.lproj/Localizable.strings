@@ -2302,3 +2302,5 @@
 "The file is empty." = "Файл пуст.";
 "%lld rows · %lld columns" = "Строк: %lld · столбцов: %lld";
 "This file can't be shown as text." = "Этот файл нельзя показать как текст.";
+"Receive beta updates" = "Получать бета-обновления";
+"Betas come before each release so new features can be tried early; they may have bugs. Turning this off keeps the beta until the next release." = "Бета-версии выходят перед каждым релизом, чтобы заранее попробовать новые функции; в них могут быть ошибки. Если отключить, бета останется до следующего релиза.";
