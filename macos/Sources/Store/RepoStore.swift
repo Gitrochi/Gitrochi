@@ -119,6 +119,8 @@ final class RepoStore: Identifiable {
 
     // MARK: 터미널 패널
     var terminals: [TerminalSession] = []
+    /// Browser tabs, in the same panes as the terminals
+    var browsers: [BrowserSession] = []
     var activeTerminalID: UUID?
     /// How the terminal panel is split into panes of tabs
     var terminalLayout: TerminalNode?

@@ -8,6 +8,12 @@ import { tools } from "@/shared/platform";
 import { theme as appTheme } from "@/shared/ui";
 import { shellBusy } from "../lib/panel-layout";
 import { pastedImageName, shellPath } from "../lib/paths";
+import { linkTokens } from "../lib/terminal-word";
+
+/** Ctrl (⌘ on a Mac) is held: links get their underline only then, as in macOS (SwiftTerm hoverWithModifier) */
+let linkModifier = false;
+const trackModifier = (e: KeyboardEvent | MouseEvent) => (linkModifier = isMac() ? e.metaKey : e.ctrlKey);
+if (typeof window !== "undefined") for (const type of ["keydown", "keyup", "mousemove"] as const) window.addEventListener(type, trackModifier, true);
 
 export interface TerminalSpec {
   directory: string;
@@ -56,6 +62,8 @@ export class TerminalSession extends Observable {
   unseenOutput = false;
   visible = false;
   onExit?: (code: number | null) => void;
+  /** Takes a Ctrl-clicked web address or file path (the repository store opens it) */
+  onOpenLink?: (text: string) => void;
   /** The shell's process id while it runs; an agent typed into this tab has it as an ancestor */
   pid: number | null = null;
   /** A command or program runs in it (the tab's ring); a tab that runs a program instead of the shell is busy while it lives */
@@ -98,6 +106,7 @@ export class TerminalSession extends Observable {
       this.updateTitle();
     });
     this.term.attachCustomKeyEventHandler((e) => this.keyFilter(e));
+    this.term.registerLinkProvider({ provideLinks: (y, done) => done(this.linksOn(y)) });
     this.unsubscribeTheme = appTheme.subscribe(() => (this.term.options.theme = termTheme()));
     // Dropped files and pasted images go in as paths, like Windows Terminal. The webview hands over contents, not paths,
     // so each one is saved under the temp folder first (macOS: ShellView pastes the original path).
@@ -123,6 +132,30 @@ export class TerminalSession extends Observable {
       e.preventDefault();
       void this.pasteFiles(files).then(() => this.focus());
     });
+  }
+
+  /** Web addresses and path-like words on a buffer line (1-based y), with cell ranges that follow wide characters */
+  private linksOn(y: number) {
+    const line = this.term.buffer.active.getLine(y - 1);
+    if (!line) return undefined;
+    let text = "";
+    const cols: number[] = [];
+    for (let x = 0; x < line.length; x++) {
+      const cell = line.getCell(x);
+      if (!cell || cell.getWidth() === 0) continue;
+      const chars = cell.getChars() || " ";
+      for (let i = 0; i < chars.length; i++) cols.push(x);
+      text += chars;
+    }
+    const links = linkTokens(text).map((token) => ({
+      text: token.text,
+      range: { start: { x: cols[token.start] + 1, y }, end: { x: cols[token.end - 1] + 1, y } },
+      decorations: { underline: linkModifier, pointerCursor: linkModifier },
+      activate: (event: MouseEvent, value: string) => {
+        if (isMac() ? event.metaKey : event.ctrlKey) this.onOpenLink?.(value);
+      },
+    }));
+    return links.length ? links : undefined;
   }
 
   /** Saves the files under the temp folder and types their paths, each followed by a space */

@@ -2294,5 +2294,13 @@
 "This job can't be started now." = "Зараз це завдання не можна запустити.";
 "This run is still running." = "Цей запуск ще триває.";
 "Not pushed yet" = "Ще не надіслано";
+"New browser tab" = "Нова вкладка браузера";
+"Forward" = "Вперед";
+"Reload" = "Перезавантажити";
+"Search or enter address" = "Пошук або введення адреси";
+"Only the first 2 MB are shown." = "Показано лише перші 2 МБ.";
+"The file is empty." = "Файл порожній.";
+"%lld rows · %lld columns" = "Рядків: %lld · стовпців: %lld";
+"This file can't be shown as text." = "Цей файл не можна показати як текст.";
 "Receive beta updates" = "Отримувати бета-оновлення";
 "Betas come before each release so new features can be tried early; they may have bugs. Turning this off keeps the beta until the next release." = "Бета-версії виходять перед кожним релізом, щоб заздалегідь спробувати нові функції; у них можуть бути помилки. Якщо вимкнути, бета залишиться до наступного релізу.";

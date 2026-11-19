@@ -1,8 +1,8 @@
-import { ChevronsRight } from "lucide-react";
+import { ChevronsRight, Globe } from "lucide-react";
 import { ChevronDown, Ellipsis, Plus, X } from "@/shared/icons";
 import { agents } from "@/entities/agent";
 import type { RepoStore } from "@/entities/repo";
-import { activity, compactBar, type TabMark, tabActivity, tabMark, TabMarkSlot, tabOverflow, tabStripWidth, type TerminalActivity, type TerminalSession, type TermPane } from "@/entities/terminal";
+import { activity, type BrowserSession, compactBar, type TabMark, tabActivity, tabMark, TabMarkSlot, tabOverflow, tabStripWidth, type TerminalActivity, type TerminalSession, type TermPane } from "@/entities/terminal";
 import { ipc } from "@/shared/api";
 import { displayPath } from "@/shared/config";
 import { t } from "@/shared/i18n";
@@ -22,15 +22,17 @@ export function tabStatus(term: TerminalSession): { mark: TabMark; activity: Ter
  * A pane's tab bar: tabs with their status marks, » for the tabs that do not fit, then the pane's buttons.
  * (macOS: TerminalTabBar in TerminalChrome.swift)
  */
-export function TerminalTabBar({ pane, shown, corner, width, store }: { pane: TermPane; shown: TerminalSession | null; corner: boolean; width: number; store: RepoStore }) {
+export function TerminalTabBar({ pane, shown, corner, width, store }: { pane: TermPane; shown: TerminalSession | BrowserSession | null; corner: boolean; width: number; store: RepoStore }) {
   useObserve(agents);
-  const tabs = pane.sessions.map((id) => store.terminals.find((x) => x.id === id)).filter((x): x is TerminalSession => !!x);
+  const tabs = pane.sessions.map((id) => store.terminals.find((x) => x.id === id) ?? store.browser(id)).filter((x): x is TerminalSession | BrowserSession => !!x);
+  const isTerminal = (x: TerminalSession | BrowserSession): x is TerminalSession => "term" in x;
+  const select = (x: TerminalSession | BrowserSession) => (isTerminal(x) ? store.selectTerminal(x) : store.selectBrowser(x));
   const compact = compactBar(width);
   const selected = shown ? tabs.indexOf(shown) : -1;
   const { visible, hidden } = tabOverflow(tabs.length, selected >= 0 ? selected : null, tabStripWidth(width, compact ? 1 : corner ? 3 : 2));
   const number = (term: TerminalSession) => (store.terminals.length > 1 ? store.terminals.indexOf(term) + 1 : null);
   const newTerminal = () => {
-    if (shown) store.selectTerminal(shown);
+    if (shown) select(shown);
     store.newTerminal();
   };
   const hide = () => {
@@ -39,15 +41,17 @@ export function TerminalTabBar({ pane, shown, corner, width, store }: { pane: Te
   };
   const overflow = (): MenuItem[] =>
     hidden.map((i) => {
-      const term = tabs[i];
-      const n = number(term);
-      return { label: n === null ? term.title : `${n}  ${term.title}`, shortcut: tabStatus(term).title, onClick: () => store.selectTerminal(term) };
+      const tab = tabs[i];
+      if (!isTerminal(tab)) return { label: tab.title, shortcut: t("Browser"), onClick: () => select(tab) };
+      const n = number(tab);
+      return { label: n === null ? tab.title : `${n}  ${tab.title}`, shortcut: tabStatus(tab).title, onClick: () => select(tab) };
     });
   const actions = (): MenuItem[] => [
     ...(compact ? [{ label: t("New terminal"), shortcut: "Ctrl+Shift+`", onClick: newTerminal }] : []),
+    { label: t("New browser tab"), tip: t("Opens a web page next to the terminals, such as a dev server."), onClick: () => store.newBrowser() },
     { label: t("Split right"), tip: t("Opens another shell next to this one, in the same folder."), onClick: () => store.splitTerminal(pane.id, "row") },
     { label: t("Split down"), tip: t("Opens another shell below this one, in the same folder."), onClick: () => store.splitTerminal(pane.id, "column") },
-    ...(shown
+    ...(shown && isTerminal(shown)
       ? [{ label: t("Open in external terminal"), tip: t("Opens the current folder ({0}) in a new Windows Terminal window.", displayPath(shown.directory)), onClick: () => void ipc.openTerminal(shown.directory) }]
       : []),
     ...(compact && corner ? ["divider" as const, { label: t("Hide terminal"), shortcut: "Ctrl+`", onClick: hide }] : []),
@@ -55,9 +59,10 @@ export function TerminalTabBar({ pane, shown, corner, width, store }: { pane: Te
   return (
     <div className="term-bar">
       <div className="term-tabs" role="tablist" aria-label={t("Terminals")}>
-        {visible.map((i) => (
-          <TermTab key={tabs[i].id} term={tabs[i]} n={number(tabs[i])} on={tabs[i] === shown} store={store} />
-        ))}
+        {visible.map((i) => {
+          const tab = tabs[i];
+          return isTerminal(tab) ? <TermTab key={tab.id} term={tab} n={number(tab)} on={tab === shown} store={store} /> : <BrowserTab key={tab.id} page={tab} on={tab === shown} store={store} />;
+        })}
       </div>
       {hidden.length > 0 && (
         <button
@@ -103,6 +108,31 @@ function TermTab({ term, n, on, store }: { term: TerminalSession; n: number | nu
           if (term.running && term.spec.program)
             store.ask({ title: t("Close the terminal?"), message: t("'{0}' is still running. Closing it will stop it.", term.title), actionTitle: t("Close"), action: () => store.closeTerminal(term) });
           else store.closeTerminal(term);
+        }}
+      />
+    </div>
+  );
+}
+
+function BrowserTab({ page, on, store }: { page: BrowserSession; on: boolean; store: RepoStore }) {
+  useObserve(page);
+  const state = page.loading ? t("Loading…") : t("Browser");
+  return (
+    <div className={`term-tab browser ${on ? "on" : ""}`} data-tip={`${page.url ?? page.title} · ${state}`}>
+      <button type="button" className="term-tab-select" role="tab" aria-selected={on} aria-label={`${page.title}, ${state}`} onClick={() => store.selectBrowser(page)}>
+        <TabMarkSlot mark={page.loading ? "ring" : "none"} />
+        <Globe size={11} className="term-tab-globe" aria-hidden />
+        <span className="ellipsis">{page.title}</span>
+      </button>
+      <IconButton
+        small
+        className="x"
+        icon={<X size={11} />}
+        aria-label={t("Close tab")}
+        tip={t("Close tab")}
+        onClick={(e) => {
+          e.stopPropagation();
+          store.closeBrowser(page);
         }}
       />
     </div>

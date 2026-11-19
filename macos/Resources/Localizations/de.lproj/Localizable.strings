@@ -2286,5 +2286,14 @@
 "This job can't be started now." = "Dieser Job kann gerade nicht gestartet werden.";
 "This run is still running." = "Dieser Lauf läuft noch.";
 "Not pushed yet" = "Noch nicht gepusht";
+"New browser tab" = "Neuer Browser-Tab";
+"Forward" = "Vorwärts";
+"Reload" = "Neu laden";
+"Search or enter address" = "Suchen oder Adresse eingeben";
+"Browser" = "Browser";
+"Only the first 2 MB are shown." = "Nur die ersten 2 MB werden angezeigt.";
+"The file is empty." = "Die Datei ist leer.";
+"%lld rows · %lld columns" = "%lld Zeilen · %lld Spalten";
+"This file can't be shown as text." = "Diese Datei kann nicht als Text angezeigt werden.";
 "Receive beta updates" = "Beta-Updates erhalten";
 "Betas come before each release so new features can be tried early; they may have bugs. Turning this off keeps the beta until the next release." = "Betas erscheinen vor jeder Version, damit neue Funktionen früh ausprobiert werden können; sie können Fehler enthalten. Wenn du dies ausschaltest, bleibt die Beta bis zur nächsten Version.";

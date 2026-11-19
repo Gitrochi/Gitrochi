@@ -2280,5 +2280,13 @@
 "This job can't be started now." = "Ez a feladat most nem indítható.";
 "This run is still running." = "Ez a futás még tart.";
 "Not pushed yet" = "Még nincs feltöltve";
+"New browser tab" = "Új böngészőlap";
+"Forward" = "Előre";
+"Reload" = "Újratöltés";
+"Search or enter address" = "Keresés vagy cím megadása";
+"Only the first 2 MB are shown." = "Csak az első 2 MB látható.";
+"The file is empty." = "A fájl üres.";
+"%lld rows · %lld columns" = "%lld sor · %lld oszlop";
+"This file can't be shown as text." = "Ez a fájl nem jeleníthető meg szövegként.";
 "Receive beta updates" = "Béta frissítések fogadása";
 "Betas come before each release so new features can be tried early; they may have bugs. Turning this off keeps the beta until the next release." = "A béták minden kiadás előtt jelennek meg, hogy az új funkciók korán kipróbálhatók legyenek; hibákat tartalmazhatnak. Kikapcsolás után a béta megmarad a következő kiadásig.";

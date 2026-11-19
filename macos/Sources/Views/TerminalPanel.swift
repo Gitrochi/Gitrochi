@@ -170,56 +170,76 @@ private struct TerminalPaneView: View {
 
     var body: some View {
         let shown = store.shownTerminal(in: pane)
-        let focused = shown != nil && shown?.id == store.activeTerminal?.id
+        let page = store.shownBrowser(in: pane)
+        let shownID = pane.shown(active: store.activeTerminalID)
+        let focused = shownID != nil && shownID == (store.activeTerminalID ?? store.terminals.last?.id)
         VStack(spacing: 0) {
-            tabBar(shown, focused: !split || focused)
+            tabBar(shown, page: page, focused: !split || focused)
             Divider()
-            ZStack {
-                Color(nsColor: TerminalSession.background)
-                if let session = shown {
-                    TerminalHost(session: session, focus: focused, fontSize: fontSize)
-                        .id(session.id)
-                        .padding(.horizontal, 10)
-                        .padding(.top, 8)
-                    if !session.running { ended(session, focused: focused) }
-                }
-            }
-            if TerminalPanelLayout.railShown(height: paneSize.height) {
-                TerminalQuickActions(enabled: shown?.running == true, width: paneSize.width) { command in
-                    insert(command.command, into: shown)
-                }
-            }
-            if let session = shown {
-                TerminalStatusBar(directory: session.directory, activity: session.tabStatus.activity,
-                                  program: session.command?.title ?? URL(fileURLWithPath: TerminalSession.loginShell).lastPathComponent,
-                                  branch: session.directory == store.url?.path ? store.currentBranch?.name : nil,
-                                  unseenCount: store.terminals.filter(\.unseenOutput).count,
-                                  width: paneSize.width,
-                                  copyDirectory: {
-                                      NSPasteboard.general.clearContents()
-                                      NSPasteboard.general.setString(session.directory, forType: .string)
-                                  }, nextUnseen: {
-                                      if let next = store.terminals.first(where: \.unseenOutput) { store.selectTerminal(next) }
-                                  })
+            if let page {
+                BrowserToolbar(session: page)
+                Divider()
+                BrowserHost(session: page)
+                    .id(page.id)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                terminalBody(shown, focused: focused)
             }
         }
         .background(Color(nsColor: .controlBackgroundColor))
         .onGeometryChange(for: CGSize.self) { $0.size } action: { paneSize = $0 }
     }
 
-    private func tabBar(_ shown: TerminalSession?, focused: Bool) -> some View {
-        let session = { (id: UUID) in store.terminals.first { $0.id == id } }
-        let tabs = pane.sessions.compactMap(session).map { session in
-            let status = session.tabStatus
-            return TerminalTabItem(id: session.id, title: session.title, directory: session.directory,
-                                   number: store.terminals.count > 1 ? (store.terminals.firstIndex { $0.id == session.id } ?? 0) + 1 : nil,
-                                   mark: status.mark, state: status.title)
+    @ViewBuilder
+    private func terminalBody(_ shown: TerminalSession?, focused: Bool) -> some View {
+        ZStack {
+            Color(nsColor: TerminalSession.background)
+            if let session = shown {
+                TerminalHost(session: session, focus: focused, fontSize: fontSize)
+                    .id(session.id)
+                    .padding(.horizontal, 10)
+                    .padding(.top, 8)
+                if !session.running { ended(session, focused: focused) }
+            }
         }
-        return TerminalTabBar(tabs: tabs, selected: shown?.id, focused: focused, width: paneSize.width, corner: isCorner,
+        if TerminalPanelLayout.railShown(height: paneSize.height) {
+            TerminalQuickActions(enabled: shown?.running == true, width: paneSize.width) { command in
+                insert(command.command, into: shown)
+            }
+        }
+        if let session = shown {
+            TerminalStatusBar(directory: session.directory, activity: session.tabStatus.activity,
+                              program: session.command?.title ?? URL(fileURLWithPath: TerminalSession.loginShell).lastPathComponent,
+                              branch: session.directory == store.url?.path ? store.currentBranch?.name : nil,
+                              unseenCount: store.terminals.filter(\.unseenOutput).count,
+                              width: paneSize.width,
+                              copyDirectory: {
+                                  NSPasteboard.general.clearContents()
+                                  NSPasteboard.general.setString(session.directory, forType: .string)
+                              }, nextUnseen: {
+                                  if let next = store.terminals.first(where: \.unseenOutput) { store.selectTerminal(next) }
+                              })
+        }
+    }
+
+    private func tabBar(_ shown: TerminalSession?, page: BrowserSession?, focused: Bool) -> some View {
+        let tabs = pane.sessions.compactMap { id -> TerminalTabItem? in
+            if let session = store.terminals.first(where: { $0.id == id }) {
+                let status = session.tabStatus
+                return TerminalTabItem(id: session.id, title: session.title, directory: session.directory,
+                                       number: store.terminals.count > 1 ? (store.terminals.firstIndex { $0.id == session.id } ?? 0) + 1 : nil,
+                                       mark: status.mark, state: status.title)
+            }
+            guard let b = store.browser(id) else { return nil }
+            return TerminalTabItem(id: b.id, title: b.title, directory: b.url?.absoluteString ?? "",
+                                   number: nil, mark: b.loading ? .ring : .none,
+                                   state: b.loading ? String(localized: "Loading…") : String(localized: "Browser"), browser: true)
+        }
+        return TerminalTabBar(tabs: tabs, selected: shown?.id ?? page?.id, focused: focused, width: paneSize.width, corner: isCorner,
                               voiceOn: store.terminalVoice.presented && store.terminalVoice.context?.sessionID == shown?.id,
                               voiceEnabled: shown?.running == true,
-                              select: { if let s = session($0) { store.selectTerminal(s) } },
-                              close: { if let s = session($0) { store.requestCloseTerminal(s) } },
+                              select: { store.selectTab($0) },
+                              close: { store.requestCloseTab($0) },
                               newTerminal: { newTerminal(at: shown) },
                               voice: { openDictation(for: shown) },
                               hide: { store.showTerminal = false }) {
@@ -230,6 +250,7 @@ private struct TerminalPaneView: View {
             }
             .disabled(shown?.running != true)
             Section {
+                Button("New browser tab", symbol: "globe") { store.newBrowser() }
                 Button("Split right", symbol: "rectangle.split.2x1") { store.splitTerminal(pane, .sideBySide) }
                 Button("Split down", symbol: "rectangle.split.1x2") { store.splitTerminal(pane, .stacked) }
                 if let shown {

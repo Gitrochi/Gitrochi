@@ -2289,5 +2289,13 @@
 "This job can't be started now." = "ยังเริ่มงานนี้ไม่ได้ในตอนนี้";
 "This run is still running." = "การรันนี้ยังดำเนินอยู่";
 "Not pushed yet" = "ยังไม่ได้พุช";
+"New browser tab" = "แท็บเบราว์เซอร์ใหม่";
+"Forward" = "ไปข้างหน้า";
+"Reload" = "โหลดซ้ำ";
+"Search or enter address" = "ค้นหาหรือป้อนที่อยู่";
+"Only the first 2 MB are shown." = "แสดงเฉพาะ 2 MB แรก";
+"The file is empty." = "ไฟล์ว่างเปล่า";
+"%lld rows · %lld columns" = "%lld แถว · %lld คอลัมน์";
+"This file can't be shown as text." = "ไม่สามารถแสดงไฟล์นี้เป็นข้อความได้";
 "Receive beta updates" = "รับอัปเดตเบต้า";
 "Betas come before each release so new features can be tried early; they may have bugs. Turning this off keeps the beta until the next release." = "เบต้ามาก่อนแต่ละรุ่นเพื่อให้ลองฟีเจอร์ใหม่ได้ก่อน และอาจมีข้อบกพร่อง หากปิด จะใช้เบต้าเดิมต่อจนกว่าจะมีรุ่นถัดไป";

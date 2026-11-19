@@ -2249,5 +2249,14 @@
 "This job can't be started now." = "Deze job kan nu niet worden gestart.";
 "This run is still running." = "Deze run is nog bezig.";
 "Not pushed yet" = "Nog niet gepusht";
+"New browser tab" = "Nieuw browsertabblad";
+"Forward" = "Vooruit";
+"Reload" = "Opnieuw laden";
+"Search or enter address" = "Zoek of voer adres in";
+"Browser" = "Browser";
+"Only the first 2 MB are shown." = "Alleen de eerste 2 MB wordt getoond.";
+"The file is empty." = "Het bestand is leeg.";
+"%lld rows · %lld columns" = "%lld rijen · %lld kolommen";
+"This file can't be shown as text." = "Dit bestand kan niet als tekst worden getoond.";
 "Receive beta updates" = "Bèta-updates ontvangen";
 "Betas come before each release so new features can be tried early; they may have bugs. Turning this off keeps the beta until the next release." = "Bèta’s verschijnen vóór elke release om nieuwe functies vroeg te proberen; ze kunnen fouten bevatten. Zet je dit uit, dan blijft de bèta tot de volgende release.";

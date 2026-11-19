@@ -257,6 +257,7 @@ extension Workspace {
     struct BackgroundTab {
         let url: URL
         var terminals: [TerminalSession] = []
+        var browsers: [BrowserSession] = []
         var layout: TerminalNode?
         var activeTerminal: UUID?
         var showTerminal = false
@@ -290,7 +291,7 @@ extension Workspace {
                 DispatchQueue.main.async { MainActor.assumeIsolated { self.settleClosing() } }
             }
             if let url = store.url {
-                closingTabs?.append(BackgroundTab(url: url, terminals: store.terminals, layout: store.terminalLayout,
+                closingTabs?.append(BackgroundTab(url: url, terminals: store.terminals, browsers: store.browsers, layout: store.terminalLayout,
                                                   activeTerminal: store.activeTerminalID, showTerminal: store.showTerminal))
                 store.releaseTerminals()
             }
@@ -305,7 +306,7 @@ extension Workspace {
         let order = closingOrder
         closingOrder = []
         guard !hasRepositoryWindow, BackgroundMode.keepRunning, !isTerminating, !RestoreState.shared.active else {
-            tabs.forEach { $0.terminals.forEach { $0.terminate() } }
+            tabs.forEach { $0.terminals.forEach { $0.terminate() }; $0.browsers.forEach { $0.close() } }
             return
         }
         // the next window starts a tab group of its own rather than joining a closed one
@@ -337,7 +338,7 @@ extension Workspace {
         guard let url = store.url else { return }
         if let i = backgroundTabs.firstIndex(where: { RepoStore.samePath($0.url.path, url.path) }) {
             let tab = backgroundTabs.remove(at: i)
-            store.adoptTerminals(tab.terminals, layout: tab.layout, active: tab.activeTerminal, shown: tab.showTerminal)
+            store.adoptTerminals(tab.terminals, browsers: tab.browsers, layout: tab.layout, active: tab.activeTerminal, shown: tab.showTerminal)
         }
         finishReveal()
     }

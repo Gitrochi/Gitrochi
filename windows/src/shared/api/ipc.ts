@@ -54,6 +54,9 @@ export interface EnvInfo {
 }
 
 export type PtyEvent = { kind: "data"; data: string } | { kind: "exit"; code: number | null };
+/** What a browser tab's child webview reports */
+export type BrowserEvent = { kind: "title"; value: string } | { kind: "url"; value: string } | { kind: "loading"; value: boolean };
+export type BrowserRect = { x: number; y: number; width: number; height: number };
 
 /** A repository index command; `git` picks the git executable the app found. */
 export interface IndexRequest {
@@ -160,6 +163,23 @@ export const ipc = {
   ptyWrite: (id: string, data: string) => invoke<void>("pty_write", { id, data }),
   ptyResize: (id: string, cols: number, rows: number) => invoke<void>("pty_resize", { id, cols, rows }),
   ptyKill: (id: string) => invoke<void>("pty_kill", { id }),
+
+  /** Browser tabs: native child webviews placed over a terminal pane */
+  browserOpen: (id: string, url: string, rect: BrowserRect, onEvent: (e: BrowserEvent) => void) => {
+    const ch = new Channel<BrowserEvent>();
+    ch.onmessage = onEvent;
+    return invoke<void>("browser_open", { id, url, ...rect, onEvent: ch });
+  },
+  browserPlace: (id: string, rect: BrowserRect, visible: boolean) => invoke<void>("browser_place", { id, ...rect, visible }),
+  browserNavigate: (id: string, url: string) => invoke<void>("browser_navigate", { id, url }),
+  browserHistory: (id: string, step: number) => invoke<void>("browser_history", { id, step }),
+  browserReload: (id: string) => invoke<void>("browser_reload", { id }),
+  browserFocus: (id: string) => invoke<void>("browser_focus", { id }),
+  browserClose: (id: string) => invoke<void>("browser_close", { id }),
+  /** A Ctrl-clicked word in a terminal → the file it names, from the shell's folder (or below it) */
+  previewResolve: (word: string, directory: string) => invoke<string | null>("preview_resolve", { word, directory }),
+  /** Registers a preview page (html) or a file the webview shows itself; returns the address to load */
+  previewRegister: (entry: { html: string } | { path: string; mime: string }) => invoke<string>("preview_register", { html: null, path: null, mime: null, ...entry }),
 
   watchStart: (id: string, path: string) => invoke<void>("watch_start", { id, path }),
   watchStop: (id: string) => invoke<void>("watch_stop", { id }),

@@ -2299,5 +2299,13 @@
 "This job can't be started now." = "現在無法啟動此作業。";
 "This run is still running." = "此執行仍在進行中。";
 "Not pushed yet" = "尚未推送";
+"New browser tab" = "新增瀏覽器分頁";
+"Forward" = "前進";
+"Reload" = "重新載入";
+"Search or enter address" = "搜尋或輸入網址";
+"Only the first 2 MB are shown." = "僅顯示前 2 MB。";
+"The file is empty." = "檔案是空的。";
+"%lld rows · %lld columns" = "%lld 列 · %lld 欄";
+"This file can't be shown as text." = "此檔案無法以文字顯示。";
 "Receive beta updates" = "接收測試版更新";
 "Betas come before each release so new features can be tried early; they may have bugs. Turning this off keeps the beta until the next release." = "測試版在每次正式發布前提供，可搶先試用新功能，但可能有問題。關閉後會保留目前的測試版，直到下一個正式版本。";
