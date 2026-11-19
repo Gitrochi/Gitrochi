@@ -103,7 +103,7 @@ test("reader and offline workspace share the same bundled graph snapshot identit
   const output = path.join(temp, "workspace.html");
   execFileSync(bash, [cli.replaceAll("\\", "/"), "graph", "files", "--format", "html", "--out", output.replaceAll("\\", "/"), "--no-open"], {
     cwd: repo, encoding: "utf8", timeout: 30000, maxBuffer: 2_000_000,
-    env: { ...process.env, GITSW_SWIFT_DESCRIBE: "0", GIT_OPTIONAL_LOCKS: "0", GIT_TERMINAL_PROMPT: "0", LC_ALL: "C", GIT_LITERAL_PATHSPECS: "1" },
+    env: { ...process.env, GITCH_SWIFT_DESCRIBE: "0", GIT_OPTIONAL_LOCKS: "0", GIT_TERMINAL_PROMPT: "0", LC_ALL: "C", GIT_LITERAL_PATHSPECS: "1" },
   });
   const html = await readFile(output, "utf8");
   const embedded = html.match(/<script id="graph-data" type="application\/json">\s*([\s\S]*?)<\/script>/);
@@ -124,7 +124,7 @@ test("graph subprocess disables fsmonitor after inherited runtime configuration"
   const get = (name) => execFileSync("git", ["config", "--get", name], { cwd: repo, env: hardened, encoding: "utf8" }).trim();
   assert.equal(get("core.fsmonitor"), "false");
   assert.equal(get("gitrochi.indexed"), "preserved"); assert.equal(get("gitrochi.parameter"), "preserved");
-  assert.equal(hardened.GIT_CONFIG_COUNT, "2"); assert.equal(hardened.GITSW_SWIFT_DESCRIBE, "0");
+  assert.equal(hardened.GIT_CONFIG_COUNT, "2"); assert.equal(hardened.GITCH_SWIFT_DESCRIBE, "0");
   assert.equal(inherited.GIT_CONFIG_PARAMETERS, "'gitrochi.parameter=preserved' 'core.fsmonitor=parameter-hook'");
 });
 test("openRepository and graph_context never execute a configured fsmonitor hook", async () => {

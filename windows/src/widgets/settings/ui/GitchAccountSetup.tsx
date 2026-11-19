@@ -54,7 +54,7 @@ export function GitchAccountSetup({ account, accounts, onSaved, onClose }: { acc
         <Checkbox checked={useFolder} onChange={setUseFolder} disabled={busy} label={t("Choose this account automatically for a folder")} />
         {useFolder && <div className="row"><input className="input grow" aria-label={t("Account folder")} value={folder} placeholder={destination} onChange={(e) => setFolder(e.target.value)} disabled={busy} /><Button disabled={busy} onClick={() => void run(async () => { const p = await ipc.pickFolder(t("Account folder"), env.home); if (p) setFolder(p); })}>{t("Browse…")}</Button></div>}
         {accounts.length > 0 && <label className="col" style={{ gap: 4 }}>{t("SSH login")}<select className="select" value={via} onChange={(e) => setVia(e.target.value)} disabled={busy}><option value="">{t("Use a separate SSH key for this account")}</option>{accounts.map((a) => <option key={a.id} value={a.id}>{t("Use the existing login: {0}", a.id)}</option>)}</select><span className="hint">{t("Choose an existing login only when both identities intentionally share the same server login.")}</span></label>}
-        <div className="hint">{t("Saving adds this account to ~/.config/gitsw/config and prepares the selected folder. SSH keys, shell integration and global Git settings are separate steps.")}</div>
+        <div className="hint">{t("Saving adds this account to ~/.config/gitch/config and prepares the selected folder. SSH keys, shell integration and global Git settings are separate steps.")}</div>
         <Button kind="primary" disabled={!valid || busy} onClick={() => void save()}>{t("Save account and continue")}</Button>
       </>}
       {state && <>

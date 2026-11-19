@@ -15,7 +15,7 @@ cat > "$TASK_APP/Info.plist" <<'PLIST'
 </dict></plist>
 PLIST
 cat > "$TASK_APP/Resources/gitch" <<'CLI'
-GITSW_VERSION="0.3.12"
+GITCH_VERSION="0.3.12"
 GITCH_VERSION_SCHEME="gitrochi"
 GITCH_GRAPH_API="1"
 CLI
@@ -105,7 +105,7 @@ import Foundation
         for variant in variants {
             let source = clean.merging(variant) { _, value in value }, protected = Gitch.readOnlyGraphEnvironment(source)
             precondition(variant.allSatisfy { $0.key == "GIT_CONFIG_PARAMETERS" || protected[$0.key] == $0.value })
-            precondition(protected["GITSW_SWIFT_DESCRIBE"] == "0")
+            precondition(protected["GITCH_SWIFT_DESCRIBE"] == "0")
             let raw = try run("/bin/bash", [CommandLine.arguments[1], "graph", "files", "--json", fixture.path], protected)
             precondition(raw.contains("source.ts"), "Protected analysis must still produce the actual file graph")
             precondition(!manager.fileExists(atPath: marker.path), "Read-only graph subprocesses cannot execute FSMonitor")

@@ -39,6 +39,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             MainActor.assumeIsolated { if !Workspace.shared.launchedByEvent { Splash.shared.show() } }
         }
         MainActor.assumeIsolated { UpdateCenter.shared.start() }
+        Task.detached(priority: .userInitiated) { await Gitch.moveOldSetup() }
         cleanUpLedger()
         // Actions runs scheduled for later start while the app is open, whichever repositories are
         MainActor.assumeIsolated { ScheduledRunStore.shared.start() }

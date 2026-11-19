@@ -1055,7 +1055,7 @@
 "This account can't approve." = "此帳號無法核准。";
 "This branch has no remote tracking branch to pull from (push it first to create one)." = "此分支沒有可提取的遠端追蹤分支（先推送即可建立）。";
 "This branch has no workflow with 'Run workflow' (workflow_dispatch)." = "此分支沒有含「Run workflow」(workflow_dispatch) 的工作流程。";
-"This changes files outside Gitrochi, backing them up first:\n• ~/bin/gitch and the old name ~/bin/gitsw: link to the gitch inside Gitrochi\n• ~/.zshrc: adds a gitch block\n• ~/.gitconfig: global hooks that check authors, secrets, big files and force pushes, and rules that pick the account\n• ~/.claude and ~/.codex: rules, skills and a hook for AI agents\nRemove it later with gitch uninstall." = "這會變更 Gitrochi 以外的檔案（變更前先備份）：\n• ~/bin/gitch 與舊名稱 ~/bin/gitsw：連結到 Gitrochi 內的 gitch\n• ~/.zshrc：加入 gitch 區塊\n• ~/.gitconfig：檢查作者、機密資訊、大型檔案與強制推送的全域掛鉤，以及選擇帳號的規則\n• ~/.claude 與 ~/.codex：給 AI 代理用的規則、技能與掛鉤\n之後可用 gitch uninstall 移除。";
+"This changes files outside Gitrochi, backing them up first:\n• ~/bin/gitch: link to the gitch inside Gitrochi\n• ~/.zshrc: adds a gitch block\n• ~/.gitconfig: global hooks that check authors, secrets, big files and force pushes, and rules that pick the account\n• ~/.claude and ~/.codex: rules, skills and a hook for AI agents\nRemove it later with gitch uninstall." = "這會變更 Gitrochi 以外的檔案（變更前先備份）：\n• ~/bin/gitch：連結到 Gitrochi 內的 gitch\n• ~/.zshrc：加入 gitch 區塊\n• ~/.gitconfig：檢查作者、機密資訊、大型檔案與強制推送的全域掛鉤，以及選擇帳號的規則\n• ~/.claude 與 ~/.codex：給 AI 代理用的規則、技能與掛鉤\n之後可用 gitch uninstall 移除。";
 "This commit is in history that isn't shown in the graph." = "此提交位於圖表中未顯示的歷程記錄中。";
 "This file hasn't been committed yet." = "此檔案尚未提交。";
 "This file was deleted." = "此檔案已被刪除。";

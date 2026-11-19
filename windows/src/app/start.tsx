@@ -3,6 +3,7 @@ import "./styles/global.css";
 import { createRoot } from "react-dom/client";
 import { agents } from "@/entities/agent";
 import { ai } from "@/entities/ai";
+import { gitch } from "@/entities/gitch";
 import { accounts } from "@/entities/hosting";
 import { workspace } from "@/entities/workspace";
 import { ipc } from "@/shared/api";
@@ -28,6 +29,8 @@ export async function start() {
   theme.init();
   await selfTestProgress("Detect tools");
   await tools.detectAll();
+  // settings gitch kept under its old name move before anything reads them
+  if (!env.selftest) await gitch.moveOldSetup();
   await selfTestProgress("Load accounts, AI and agents");
   await Promise.all([accounts.load(), ai.load(), agents.init()]);
   const git = gitAvailable();

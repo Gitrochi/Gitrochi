@@ -15,20 +15,20 @@ describe("구조 그래프(gitch graph)", () => {
   });
 
   it("앱과 버전을 맞춘 CLI 는 그래프 API 표시로, 옛 CLI 는 기존 버전으로 확인한다", () => {
-    const shared = 'GITSW_VERSION="0.3.10"\nGITCH_VERSION_SCHEME="gitrochi"\nGITCH_GRAPH_API="1"\n';
+    const shared = 'GITCH_VERSION="0.3.10"\nGITCH_VERSION_SCHEME="gitrochi"\nGITCH_GRAPH_API="1"\n';
     expect(supportsGraph(shared)).toBe(true);
     expect(supportsGraph(shared.replace('API="1"', 'API="2"'))).toBe(true);
     expect(supportsGraph(shared.replaceAll("\n", "\r\n"))).toBe(true);
-    expect(supportsGraph('GITSW_VERSION="3.2.0"\n')).toBe(true);
-    expect(supportsGraph('GITSW_VERSION="3.10.0"\n')).toBe(true);
-    expect(supportsGraph('GITSW_VERSION="3.1.9"\n')).toBe(false);
-    expect(supportsGraph('GITSW_VERSION="0.3.10"\n')).toBe(false);
-    expect(supportsGraph('GITSW_VERSION="broken"\n')).toBe(false);
+    expect(supportsGraph('GITCH_VERSION="3.2.0"\n')).toBe(true);
+    expect(supportsGraph('GITCH_VERSION="3.10.0"\n')).toBe(true);
+    expect(supportsGraph('GITCH_VERSION="3.1.9"\n')).toBe(false);
+    expect(supportsGraph('GITCH_VERSION="0.3.10"\n')).toBe(false);
+    expect(supportsGraph('GITCH_VERSION="broken"\n')).toBe(false);
     expect(supportsGraph("")).toBe(false);
   });
 
   it("기능 표시가 잘못됐거나 일부만 있으면 옛 버전 검사로 우회하지 않는다", () => {
-    const header = 'GITSW_VERSION="3.2.1"\nGITCH_VERSION_SCHEME="gitrochi"\nGITCH_GRAPH_API="1"\n';
+    const header = 'GITCH_VERSION="3.2.1"\nGITCH_VERSION_SCHEME="gitrochi"\nGITCH_GRAPH_API="1"\n';
     for (const value of ["0", "-1", "1.0", "garbage", ""]) {
       expect(supportsGraph(header.replace('API="1"', `API="${value}"`))).toBe(false);
     }
@@ -106,20 +106,22 @@ describe("gitch 출력 읽기", () => {
 
   it("백업: 최근 것이 먼저, 수정 중이던 파일(-wip)은 따로 보이지 않고 표시만", () => {
     const out = [
-      "refs/gitsw/backup/20261023-163654-pl\tab12cd3\tWIP 제목",
-      "refs/gitsw/backup/20261023-163654-pl-wip\tff00ff0\twip",
-      "refs/gitsw/backup/20261022-090000-fix\t1234567\t제목\t탭",
+      "refs/gitch/backup/20261023-163654-pl\tab12cd3\tWIP 제목",
+      "refs/gitch/backup/20261023-163654-pl-wip\tff00ff0\twip",
+      "refs/gitch/backup/20261022-090000-fix\t1234567\t제목\t탭",
     ].join("\n");
     expect(parseBackups(out)).toEqual([
-      { ref: "refs/gitsw/backup/20261023-163654-pl", date: "2026-10-23 16:36:54", reason: "pl", sha: "ab12cd3", subject: "WIP 제목", hasChanges: true },
-      { ref: "refs/gitsw/backup/20261022-090000-fix", date: "2026-10-22 09:00:00", reason: "fix", sha: "1234567", subject: "제목\t탭", hasChanges: false },
+      { ref: "refs/gitch/backup/20261023-163654-pl", date: "2026-10-23 16:36:54", reason: "pl", sha: "ab12cd3", subject: "WIP 제목", hasChanges: true },
+      { ref: "refs/gitch/backup/20261022-090000-fix", date: "2026-10-22 09:00:00", reason: "fix", sha: "1234567", subject: "제목\t탭", hasChanges: false },
     ]);
   });
 
   it("버전 · Windows 연결 스크립트 · 경로 · 색 코드", () => {
-    expect(versionOf('#!/bin/bash\n# ...\nGITSW_VERSION="3.1.0"\n')).toBe("3.1.0");
+    expect(versionOf('#!/bin/bash\n# ...\nGITCH_VERSION="3.1.0"\n')).toBe("3.1.0");
+    // a gitch installed by 0.4.2-beta.2 or older still says GITSW_VERSION
+    expect(versionOf('#!/bin/bash\nGITSW_VERSION="0.4.1"\n')).toBe("0.4.1");
     expect(linkTarget('#!/bin/sh\n# gitch-link: /c/Users/me/AppData/Local/Gitrochi/gitch\nexec "/c/Users/me/AppData/Local/Gitrochi/gitch" "$@"\n')).toBe("/c/Users/me/AppData/Local/Gitrochi/gitch");
-    expect(linkTarget('#!/bin/bash\nGITSW_VERSION="3.1.0"\n')).toBeNull();
+    expect(linkTarget('#!/bin/bash\nGITCH_VERSION="3.1.0"\n')).toBeNull();
     expect(fromPosix("/c/Users/me/x")).toBe("C:/Users/me/x");
     expect(fromPosix("C:/Users/me/x")).toBe("C:/Users/me/x");
     expect(plain("\u001b[32m✔\u001b[0m 설치 완료 \n")).toBe("✔ 설치 완료");

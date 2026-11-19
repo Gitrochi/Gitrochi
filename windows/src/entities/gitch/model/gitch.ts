@@ -6,7 +6,7 @@ import { accountAddArguments, browserLoginArguments, type GitHubLoginCapability,
 import { type GraphReview, parseGraphReview, parseGraphReviewStamp } from "./review";
 
 /**
- * gitch — 여러 Git 계정을 섞이지 않게 쓰는 셸 도구(tools/gitch, 예전 이름 gitsw). (맥 버전 Gitch.swift)
+ * gitch — 여러 Git 계정을 섞이지 않게 쓰는 셸 도구(tools/gitch). (맥 버전 Gitch.swift)
  * 앱 설치 폴더(Gitrochi.exe 옆)에 함께 들어 있고 설정 > CLI 에서 셸 명령으로 설치한다.
  * gitch 는 bash 스크립트라 Windows 에서는 Git for Windows 의 bash 로 돌린다.
  * 저장소 화면은 gitch 가 보는 이 저장소의 계정(잠금)과 커밋·push 전 점검을 보여 주고, 계정을 바꿀 수 있다.
@@ -40,7 +40,7 @@ export interface GitchAccount {
   sshKey: boolean | null;
 }
 
-/** gitch 가 pl · up · sync · fix · undo · amend · rescue 전에 남긴 자동 백업(refs/gitsw/backup/<날짜-시각>-<이유>, 최근 30개) */
+/** gitch 가 pl · up · sync · fix · undo · amend · rescue 전에 남긴 자동 백업(refs/gitch/backup/<날짜-시각>-<이유>, 최근 30개) */
 export interface GitchBackup {
   ref: string;
   /** "2026-10-23 16:36:54" */
@@ -106,7 +106,7 @@ export function parseAccounts(json: string): GitchAccount[] {
 
 /** for-each-ref 출력(ref \t 짧은 sha \t 제목) → 백업 목록(gitch rescue 와 같은 순서 — 최근 것이 1번) */
 export function parseBackups(out: string): GitchBackup[] {
-  const prefix = "refs/gitsw/backup/";
+  const prefix = "refs/gitch/backup/";
   const rows = out.split("\n").filter(Boolean).map((l) => l.split("\t"));
   const refs = new Set(rows.map((r) => r[0]));
   return rows.flatMap((r) => {
@@ -118,9 +118,9 @@ export function parseBackups(out: string): GitchBackup[] {
   });
 }
 
-/** 파일 머리의 GITSW_VERSION="x.y.z"(변수 이름은 예전 그대로) */
+/** 파일 머리의 GITCH_VERSION="x.y.z" (gitch from 0.4.2-beta.2 and older says GITSW_VERSION) */
 export function versionOf(head: string): string | null {
-  return head.match(/^GITSW_VERSION="([^"]+)"/m)?.[1] ?? null;
+  return head.match(/^GIT(?:CH|SW)_VERSION="([^"]+)"/m)?.[1] ?? null;
 }
 
 /** Windows 의 ~/bin/gitch 연결 스크립트(gitch install 이 만듦)가 가리키는 파일. 아니면 null */
@@ -302,13 +302,9 @@ class GitchService {
   get link() {
     return joinPath(env.home, "bin/gitch");
   }
-  /** 예전 이름 — gitch install 이 같은 파일로 이어 두고, 그 전에 gitsw 로 깔았으면 그것만 있다 */
-  get legacyLink() {
-    return joinPath(env.home, "bin/gitsw");
-  }
   /** 설정 파일은 예전 이름의 폴더 그대로(기존 설치와 같은 설정을 쓰게) */
   get configFile() {
-    return joinPath(env.home, ".config/gitsw/config");
+    return joinPath(env.home, ".config/gitch/config");
   }
 
   /** gitch 를 돌릴 bash: Windows 는 Git for Windows 의 bin\bash.exe(System32 의 bash.exe 는 WSL 이라 쓰지 않는다) */
@@ -339,19 +335,27 @@ class GitchService {
     return ipc.exists(this.configFile);
   }
 
-  /** 셸 명령(~/bin/gitch, 없으면 예전 ~/bin/gitsw)이 가리키는 실제 파일. 설치하지 않았으면 null */
+  /** 셸 명령(~/bin/gitch)이 가리키는 실제 파일. 설치하지 않았으면 null */
   async installed(): Promise<{ name: string; path: string } | null> {
-    for (const [name, link] of [["~/bin/gitch", this.link], ["~/bin/gitsw", this.legacyLink]] as const) {
-      const body = await ipc.readHead(link, 400).catch(() => null);
-      if (!body || body.binary) continue;
-      const target = linkTarget(body.text);
-      // 맥 · 리눅스는 심볼릭 링크라 파일 내용이 gitch 그대로다
-      return { name, path: target ? fromPosix(target) : link };
-    }
-    return null;
+    const body = await ipc.readHead(this.link, 400).catch(() => null);
+    if (!body || body.binary) return null;
+    const target = linkTarget(body.text);
+    // 맥 · 리눅스는 심볼릭 링크라 파일 내용이 gitch 그대로다
+    return { name: "~/bin/gitch", path: target ? fromPosix(target) : this.link };
   }
 
-  /** 설치된 셸 명령이 이 앱에 든 gitch 인지(아니면 따로 받은 gitch 나 예전 gitsw) */
+  /**
+   * Up to 0.4.2-beta.2 gitch kept its settings under its old name, gitsw; any gitch run moves them once
+   * (tools/gitch: migrate_home_from_gitsw). Runs the bundled one at launch so the app's own checks see the moved
+   * settings. (macOS: Gitch.moveOldSetup)
+   */
+  async moveOldSetup() {
+    const old = await Promise.all([".config/gitsw", ".local/state/gitsw"].map((p) => ipc.exists(joinPath(env.home, p)).catch(() => false)));
+    if (!old.some(Boolean) || !this.bundled) return;
+    await this.spawn(["version"], env.home, 60_000, this.bundled).catch(() => undefined);
+  }
+
+  /** 설치된 셸 명령이 이 앱에 든 gitch 인지(아니면 따로 받은 gitch) */
   async installedIsBundled(): Promise<boolean> {
     const i = await this.installed();
     const b = this.bundled;
@@ -377,7 +381,7 @@ class GitchService {
     const bash = await this.bash();
     if (!bash) throw new GitchError(t("gitch needs Git for Windows (Git Bash). Install it from https://git-scm.com/download/win."));
     // 앱에서 부를 때는 사람이 보는 터미널이 아니다: 색·로고 없이, 묻지 않고(확인이 필요하면 종료 코드 2)
-    return ipc.run(bash, readOnlyGraph ? readOnlyGraphArguments(bash, path, args) : [path, ...args], { cwd, timeoutMs, env: { GITSW_COLOR: "never", GITSW_BANNER: "never", ...extraEnv } });
+    return ipc.run(bash, readOnlyGraph ? readOnlyGraphArguments(bash, path, args) : [path, ...args], { cwd, timeoutMs, env: { GITCH_COLOR: "never", GITCH_BANNER: "never", ...extraEnv } });
   }
 
   private async json(args: string[], cwd: string): Promise<string | null> {
@@ -546,7 +550,7 @@ class GitchService {
   private async runGraph(args: string[], repo: string, ok = [0]) {
     const reason = await this.graphUnavailable();
     if (reason) throw new GitchError(reason);
-    const r = await this.spawn(["graph", ...args], repo, 600_000, this.bundled, { GITCH_GRAPH_LANG: graphLanguage(), GITSW_SWIFT_DESCRIBE: "0" }, true);
+    const r = await this.spawn(["graph", ...args], repo, 600_000, this.bundled, { GITCH_GRAPH_LANG: graphLanguage(), GITCH_SWIFT_DESCRIBE: "0" }, true);
     if (!ok.includes(r.status)) throw graphFailure(r);
     return r;
   }
@@ -594,7 +598,7 @@ class GitchService {
   /** 자동 백업 목록 */
   async backups(repo: string): Promise<GitchBackup[]> {
     try {
-      const r = await git(["for-each-ref", "--sort=-refname", "--format=%(refname)%09%(objectname:short)%09%(subject)", "refs/gitsw/backup/"], repo);
+      const r = await git(["for-each-ref", "--sort=-refname", "--format=%(refname)%09%(objectname:short)%09%(subject)", "refs/gitch/backup/"], repo);
       return parseBackups(r.stdout);
     } catch {
       return [];

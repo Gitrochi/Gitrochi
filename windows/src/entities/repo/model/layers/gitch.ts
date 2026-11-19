@@ -152,7 +152,7 @@ export abstract class RepoGitch extends RepoTerminal {
       gitch.status(path),
       gitch.preflight(path, fetch),
       gitch.accounts(),
-      this.g(["config", "--get-all", "gitswitch.protect"], { ok: [0, 1] }).catch(() => null),
+      this.g(["config", "--get-all", "gitch.protect"], { ok: [0, 1] }).catch(() => null),
     ]);
     if (gen !== this.gitchGen || this.path !== path) return;
     this.gitchChecking = false;

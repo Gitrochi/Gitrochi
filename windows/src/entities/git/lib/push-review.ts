@@ -78,7 +78,7 @@ export function resolvePushDestination(config: PushConfig, remotes: string[], br
 
 /** 목적지·인증·히스토리에 관련된 설정만 정렬해 재확인 때 비교한다. */
 export function pushConfigStamp(config: PushConfig): string {
-  return JSON.stringify(Object.entries(config).filter(([key]) => /^(branch\.|remote\.|push\.|url\.|user\.|gitsw\.|core\.sshcommand|credential\.)/.test(key)).sort(([a], [b]) => a.localeCompare(b)));
+  return JSON.stringify(Object.entries(config).filter(([key]) => /^(branch\.|remote\.|push\.|url\.|user\.|gitch\.|core\.sshcommand|credential\.)/.test(key)).sort(([a], [b]) => a.localeCompare(b)));
 }
 
 /** 원본 SHA 를 고정하고 설정에 포함된 암묵적인 태그·서브모듈 push 를 막는다. */

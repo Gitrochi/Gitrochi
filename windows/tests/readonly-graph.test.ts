@@ -47,7 +47,7 @@ describe("read-only graph subprocess boundary", () => {
         { GIT_CONFIG_COUNT: "2", GIT_CONFIG_KEY_0: "core.quotepath", GIT_CONFIG_VALUE_0: "false", GIT_CONFIG_KEY_1: "core.fsmonitor", GIT_CONFIG_VALUE_1: hookCommand },
         { GIT_CONFIG_COUNT: "1", GIT_CONFIG_KEY_0: "core.fsmonitor", GIT_CONFIG_VALUE_0: hookCommand, GIT_CONFIG_PARAMETERS: quote("core.fsmonitor=" + hookCommand) },
       ]) {
-        const environment = { ...cleanEnv, ...inherited, XDG_CACHE_HOME: join(fixture, "cache").replaceAll("\\", "/"), GITSW_SWIFT_DESCRIBE: "0" };
+        const environment = { ...cleanEnv, ...inherited, XDG_CACHE_HOME: join(fixture, "cache").replaceAll("\\", "/"), GITCH_SWIFT_DESCRIBE: "0" };
         const raw = execFileSync(bash, readOnlyGraphArguments(bash, cli, ["graph", "files", "--json", "."]), { cwd: fixture, env: environment, encoding: "utf8", maxBuffer: 16_000_000 });
         expect(JSON.parse(raw).nodes.some((node: { id: string }) => node.id === "source.ts")).toBe(true);
         expect(existsSync(marker)).toBe(false);
