@@ -431,7 +431,9 @@ jobs:
         run: |
           tag="$GITHUB_REF_NAME"
           # gh release view 는 초안도 태그 이름으로 찾는다(쓰기 권한이 있는 토큰)
-          gh release view "$tag" >/dev/null 2>&1 || gh release create "$tag" --draft --verify-tag --title "Gitrochi ${tag#v}" --notes ""
+          # a tag with a pre-release part (v0.4.2-beta.1) is a beta: stable update checks skip pre-releases
+          pre=; case "$tag" in v*-*) pre=--prerelease ;; esac
+          gh release view "$tag" >/dev/null 2>&1 || gh release create "$tag" --draft $pre --verify-tag --title "Gitrochi ${tag#v}" --notes ""
           gh release upload "$tag" dist/* --clobber
           {
             echo "### Windows 배포 파일 → $tag"

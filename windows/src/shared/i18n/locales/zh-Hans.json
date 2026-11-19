@@ -2439,5 +2439,7 @@
   "This job is already running.": "此作业已在运行。",
   "This job can't be started now.": "现在无法启动此作业。",
   "This run is still running.": "此运行仍在进行中。",
-  "Not pushed yet": "尚未推送"
+  "Not pushed yet": "尚未推送",
+  "Receive beta updates": "接收测试版更新",
+  "Betas come before each release so new features can be tried early; they may have bugs. Turning this off keeps the beta until the next release.": "测试版在每次正式发布前提供，可抢先试用新功能，但可能存在问题。关闭后将保留当前测试版，直到下一个正式版本。"
 }
