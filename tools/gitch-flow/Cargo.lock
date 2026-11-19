@@ -228,7 +228,7 @@ dependencies = [
 
 [[package]]
 name = "gitch-flow"
-version = "0.4.2-beta.1"
+version = "0.4.2-beta.2"
 dependencies = [
  "getrandom",
  "keyring",
