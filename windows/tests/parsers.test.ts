@@ -137,6 +137,15 @@ describe("WSL 경로", async () => {
     expect(toWslPath("//wsl$/Ubuntu/root")).toBe("/root");
     expect(toWslPath("/home/me")).toBe("/home/me");
   });
+  it("WSL path back to where Windows opens it", async () => {
+    const { fromWslPath } = await import("@/shared/config/env");
+    expect(fromWslPath("/mnt/c/Users/me/shot.png")).toBe("C:\\Users\\me\\shot.png");
+    expect(fromWslPath("/mnt/d")).toBe("D:\\");
+    expect(fromWslPath("/home/me/a.ts:12", "Ubuntu")).toBe("\\\\wsl.localhost\\Ubuntu\\home\\me\\a.ts:12");
+    expect(fromWslPath("/home/me/a.ts", "")).toBe("/home/me/a.ts");
+    expect(fromWslPath("src/a.ts", "Ubuntu")).toBe("src/a.ts");
+    expect(fromWslPath("C:\\x.md", "Ubuntu")).toBe("C:\\x.md");
+  });
   it("배포판 이름", () => {
     expect(wslDistroOf("\\\\wsl.localhost\\Ubuntu-24.04\\home\\me")).toBe("Ubuntu-24.04");
     expect(wslDistroOf("C:\\x")).toBeNull();

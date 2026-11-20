@@ -1,5 +1,6 @@
 import { addTab, BrowserSession, isLocalHost, paneOf, panes, removeTab, selectTab, setRatio, shownIn, splitPane, TerminalSession, type TerminalSpec, type TermSplit } from "@/entities/terminal";
 import { ipc } from "@/shared/api";
+import { fromWslPath } from "@/shared/config";
 import { RepoAI } from "./ai";
 
 /** 아래 터미널 패널 — split into panes of tabs (terminalLayout) */
@@ -152,6 +153,9 @@ export abstract class RepoTerminal extends RepoAI {
       else void ipc.openUrl(text).catch(() => undefined);
       return;
     }
+    // a path a WSL program printed (/mnt/c/…, /home/…) is looked up where Windows sees it
+    const distro = s.wslDistro;
+    if (distro !== null) candidates = candidates.map((c) => fromWslPath(c, distro));
     // a path with spaces: the longest candidate that exists
     for (const candidate of candidates) {
       const path = await ipc.previewResolve(candidate, s.directory).catch(() => null);
