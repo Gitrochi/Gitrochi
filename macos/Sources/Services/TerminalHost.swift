@@ -394,28 +394,40 @@ final class TerminalHostLink: @unchecked Sendable {
     /// Starts the host in a session of its own, so it outlives the app (and a Terminal window the app ran from)
     private func start(_ executable: URL) -> Bool {
         try? FileManager.default.createDirectory(at: stateDir, withIntermediateDirectories: true)
-        var attributes: posix_spawnattr_t?
-        posix_spawnattr_init(&attributes)
-        defer { posix_spawnattr_destroy(&attributes) }
-        posix_spawnattr_setflags(&attributes, Int16(POSIX_SPAWN_SETSID))
-        var actions: posix_spawn_file_actions_t?
-        posix_spawn_file_actions_init(&actions)
-        defer { posix_spawn_file_actions_destroy(&actions) }
-        for fd: Int32 in 0...2 { posix_spawn_file_actions_addopen(&actions, fd, "/dev/null", fd == 0 ? O_RDONLY : O_WRONLY, 0) }
-        let argv = [executable.path, "--state-dir", stateDir.path]
         // the host's own environment is what each session starts from
-        let envp = TerminalSession.environment()
-        var pid: pid_t = 0
-        let cArgs = argv.map { strdup($0) } + [nil]
-        let cEnv = envp.map { strdup($0) } + [nil]
-        defer { (cArgs + cEnv).forEach { free($0) } }
-        guard posix_spawn(&pid, executable.path, &actions, &attributes, cArgs, cEnv) == 0 else { return false }
+        guard let pid = Self.spawnDetached(executable.path, args: ["--state-dir", stateDir.path], env: TerminalSession.environment()) else {
+            return false
+        }
         // the host never ends while the app waits for it; reap it whenever it does, so it leaves no zombie
         DispatchQueue.global(qos: .utility).async {
             var status: Int32 = 0
             waitpid(pid, &status, 0)
         }
         return true
+    }
+
+    /// Runs a program in a new session with no terminal, standard streams on /dev/null, and every signal back at its
+    /// default: a signal the app ignores (SIGPIPE, or SIGTERM as a launched app may have it) would otherwise stay ignored
+    /// in the host, and `kill` or a logout could not end it
+    static func spawnDetached(_ path: String, args: [String], env: [String]) -> pid_t? {
+        var attributes: posix_spawnattr_t?
+        posix_spawnattr_init(&attributes)
+        defer { posix_spawnattr_destroy(&attributes) }
+        var all = sigset_t(), none = sigset_t()
+        sigfillset(&all)
+        sigemptyset(&none)
+        posix_spawnattr_setsigdefault(&attributes, &all)
+        posix_spawnattr_setsigmask(&attributes, &none)
+        posix_spawnattr_setflags(&attributes, Int16(POSIX_SPAWN_SETSID | POSIX_SPAWN_SETSIGDEF | POSIX_SPAWN_SETSIGMASK))
+        var actions: posix_spawn_file_actions_t?
+        posix_spawn_file_actions_init(&actions)
+        defer { posix_spawn_file_actions_destroy(&actions) }
+        for fd: Int32 in 0...2 { posix_spawn_file_actions_addopen(&actions, fd, "/dev/null", fd == 0 ? O_RDONLY : O_WRONLY, 0) }
+        var pid: pid_t = 0
+        let cArgs = ([path] + args).map { strdup($0) } + [nil]
+        let cEnv = env.map { strdup($0) } + [nil]
+        defer { (cArgs + cEnv).forEach { free($0) } }
+        return posix_spawn(&pid, path, &actions, &attributes, cArgs, cEnv) == 0 ? pid : nil
     }
 
     private func deliver(_ event: TerminalHostClient.Event) {
