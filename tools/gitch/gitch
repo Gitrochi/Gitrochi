@@ -6174,13 +6174,12 @@ WIN_PATH_PS='
 '
 
 install_windows_shims() {   # gitch install 1단계(Windows): .cmd + 사용자 PATH
-  local n r
-  for n in "$BIN_LINK"; do
-    if [ -e "$n.cmd" ] && ! grep -q 'gitch-link' "$n.cmd" 2>/dev/null; then
-      say "  ${YELLOW}⚠ $(tilde "$n").cmd 가 gitch 가 만든 파일이 아니라 그대로 뒀습니다${RESET}"; continue
-    fi
-    is_link "$n" && write_cmd_shim "$n"
-  done
+  local r
+  if [ -e "$BIN_LINK.cmd" ] && ! grep -q 'gitch-link' "$BIN_LINK.cmd" 2>/dev/null; then
+    say "  ${YELLOW}⚠ $(tilde "$BIN_LINK").cmd 가 gitch 가 만든 파일이 아니라 그대로 뒀습니다${RESET}"
+  elif is_link "$BIN_LINK"; then
+    write_cmd_shim "$BIN_LINK"
+  fi
   r=$(win_user_path add)
   case "$r" in
     added) mkdir -p "$STATE_DIR" && : > "$WIN_PATH_MARK"

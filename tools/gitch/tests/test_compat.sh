@@ -94,7 +94,7 @@ old_gitsw_setup() {
   sed -i.bak 's/^# >>> gitch >>>/# >>> gitsw >>>/; s/^# <<< gitch <<</# <<< gitsw <<</; s/_gitch_prompt/_gitsw_prompt/g' "$RC_FILE" && rm -f "$RC_FILE.bak"
   mkdir -p "$HOME/.ssh"; printf 'Host *\n# >>> gitsw strict >>>  (old)\n  IdentitiesOnly yes\n# <<< gitsw strict <<<\n' >> "$HOME/.ssh/config"
   mklink_ "$GITCH_SRC" "$HOME/bin/gitsw"
-  cd "$T/old/repo"
+  cd "$T/old/repo" || fail cd
   git config gitswitch.account alice; git config gitswitch.protect main
   git update-ref refs/gitsw/backup/20260101-000000-pl HEAD
   printf '#!/bin/sh\n# gitswitch-lock — old\nexit 0\n' > .git/hooks/pre-commit; chmod +x .git/hooks/pre-commit
@@ -131,7 +131,7 @@ test_install_moves_repositories_it_finds() {
   old_gitsw_setup
   mkdir -p "$T/scan/other" && cd "$T/scan/other" && git init -q && git config gitswitch.account alice
   git config -f "$HOME/.config/gitsw/config" gitsw.scanRoot "$T/scan"
-  cd "$T"
+  cd "$T" || fail cd
   install_quiet
   assert_eq "$(git -C "$T/scan/other" config --get gitch.account)" "alice" "install did not move a repository under the scan folder"
 }
