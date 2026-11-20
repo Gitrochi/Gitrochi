@@ -737,9 +737,9 @@ extension RepoStore {
     }
 
     func closeAllTerminals() {
-        // quitting leaves the host's terminals running for the next launch
-        let quitting = Workspace.shared.isTerminating
-        terminals.forEach { quitting ? $0.release() : $0.terminate() }
+        // the repository closes (its window or tab, or the app quits): the host's terminals keep running and come back
+        // when it opens again; only a shell the app runs itself ends
+        terminals.forEach { $0.release() }
         browsers.forEach { $0.close() }
         releaseTerminals()
     }

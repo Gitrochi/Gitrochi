@@ -184,8 +184,12 @@ export abstract class RepoTerminal extends RepoAI {
     this.removePaneTab(b.id);
   }
 
+  /** The repository closes: the host's terminals keep running and come back when it opens again; the app's own end */
   closeAllTerminals() {
-    for (const t of this.terminals) t.dispose();
+    for (const t of this.terminals) {
+      if (t.hosted) t.release();
+      t.dispose();
+    }
     for (const b of this.browsers) b.dispose();
     this.browsers = [];
     this.terminals = [];
