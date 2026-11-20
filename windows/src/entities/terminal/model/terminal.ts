@@ -254,6 +254,19 @@ export class TerminalSession extends Observable {
     return shell.startsWith("wsl:") ? shell.slice(4) || "WSL" : name(shell);
   }
 
+  /** The WSL distro the tab runs in: a "wsl:<distro>" shell, or a program started with wsl.exe -d <distro>; "" for the default one */
+  get wslDistro(): string | null {
+    if (!isWindows()) return null;
+    if (!this.spec.program) {
+      const shell = tools.path("shell") ?? "";
+      return shell.startsWith("wsl:") ? shell.slice(4) : null;
+    }
+    if (!/^wsl(\.exe)?$/i.test(basename(this.spec.program))) return null;
+    const args = this.spec.args ?? [];
+    const at = args.findIndex((a) => a === "-d" || a === "--distribution");
+    return at >= 0 ? args[at + 1] ?? "" : "";
+  }
+
   /** Takes the number of processes below the shell from the panel's poll */
   noteChildren(count: number) {
     this.idleChildren = this.idleChildren === null ? count : Math.min(this.idleChildren, count);

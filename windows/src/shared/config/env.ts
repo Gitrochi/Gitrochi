@@ -95,6 +95,17 @@ export function toWslPath(p: string): string {
   return s;
 }
 
+/**
+ * A path a WSL program printed, as Windows opens it: /mnt/c/a/b → C:\a\b, and with the distro known /home/x →
+ * \\wsl.localhost\Ubuntu\home\x. Anything else is left as it is.
+ */
+export function fromWslPath(p: string, distro?: string | null): string {
+  const drive = p.match(/^\/mnt\/([A-Za-z])(\/.*)?$/);
+  if (drive) return `${drive[1].toUpperCase()}:${(drive[2] ?? "/").replace(/\//g, "\\")}`;
+  if (distro && /^\/(?!\/)/.test(p)) return `\\\\wsl.localhost\\${distro}${p.replace(/\//g, "\\")}`;
+  return p;
+}
+
 /** 임시 폴더 안의 워크트리인지(재부팅하면 지워질 수 있음) */
 export function isTemporaryPath(p: string) {
   const s = samePathKey(p);
