@@ -14,7 +14,7 @@ import { panes } from "@/entities/terminal";
 import { workspace } from "@/entities/workspace";
 import { structureGraphMenus } from "@/features/git-menus";
 import { ipc } from "@/shared/api";
-import { dirname, env, joinPath, samePath, settings, toWslPath } from "@/shared/config";
+import { dirname, env, isWindows, joinPath, samePath, settings, toWslPath } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { gitRaw, listDistros, tools } from "@/shared/platform";
 import { Markdown, theme } from "@/shared/ui";
@@ -413,6 +413,31 @@ export async function runSelfTest(): Promise<boolean> {
     await t.send('git commit --allow-empty -m "터미널에서 만든 커밋"\r');
     const ok = await until(() => s.entries.find((e) => !isWIP(e.commit))?.commit.subject === "터미널에서 만든 커밋", 15000);
     return [ok, s.entries[0]?.commit.subject];
+  });
+
+  // The terminal host keeps a tab's program when the app lets go of it (as a quit does); the repository brings the tab back
+  await step("Terminal host: a released tab comes back with its output", async () => {
+    const t = s.newTerminal();
+    const ready = await until(() => t.running && t.term.buffer.active.length > 0, 15000);
+    await sleep(1500);
+    await t.send("echo HOSTED_SELFTEST\r");
+    const echoed = await until(() => bufferText(t.term).includes("HOSTED_SELFTEST"), 10000);
+    const id = t.hostSession;
+    const hosted = (await ipc.ptySessions()).some((x) => x.id === id && x.running);
+    if (!hosted) {
+      s.closeTerminal(t);
+      // the Windows build ships the host; a development run elsewhere may not have built it
+      return [ready && echoed && !isWindows(), "no terminal host (the app runs terminals itself)"];
+    }
+    t.release();
+    s.closeTerminal(t);
+    await s.restoreTerminals();
+    const back = s.terminals.find((x) => x.hostSession === id);
+    if (back) s.focusTerminal(back);
+    const replayed = !!back && (await until(() => back.running && bufferText(back.term).includes("HOSTED_SELFTEST"), 10000));
+    if (back) s.closeTerminal(back);
+    const ended = await until(async () => !(await ipc.ptySessions()).some((x) => x.id === id), 10000);
+    return [ready && echoed && replayed && ended, `restored=${!!back} replayed=${replayed} ended=${ended}`];
   });
 
   // 도우미 모드(같은 실행 파일): git 자격 증명 응답, Claude Code 훅

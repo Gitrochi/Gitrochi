@@ -29,7 +29,7 @@ let previous; try { previous=readFileSync(target,"utf8"); } catch {}
 if (previous !== output) writeFileSync(target,output);
 
 // 같은 Rust 패키지의 네이티브 실행 파일도 CLI 리소스로 배포한다.
-const native = spawnSync(cargo, ["build", "--locked", "--release", "--bin", "gitch-core", "--bin", "gitrochi-index", "--manifest-path", path.join(root,"crates/Cargo.toml")], { cwd: root, stdio: "inherit", env: buildEnv });
+const native = spawnSync(cargo, ["build", "--locked", "--release", "--bin", "gitch-core", "--bin", "gitrochi-index", "--bin", "gitrochi-terminal-host", "--manifest-path", path.join(root,"crates/Cargo.toml")], { cwd: root, stdio: "inherit", env: buildEnv });
 if (native.error || native.status !== 0) process.exit(native.status || 1);
 
 const nativeSource = path.join(root, "crates/target/release", process.platform === "win32" ? "gitch-core.exe" : "gitch-core");
@@ -38,3 +38,5 @@ mkdirSync(nativeDirectory, { recursive: true });
 copyFileSync(nativeSource, path.join(nativeDirectory, "gitch-core.exe"));
 // The repository index CLI for gitch, the Python tools and the Go monitor (the app links the crate).
 copyFileSync(path.join(root, "crates/target/release", process.platform === "win32" ? "gitrochi-index.exe" : "gitrochi-index"), path.join(nativeDirectory, "gitrochi-index.exe"));
+// The terminal host the app starts so terminals outlive it (src-tauri/src/pty.rs).
+copyFileSync(path.join(root, "crates/target/release", process.platform === "win32" ? "gitrochi-terminal-host.exe" : "gitrochi-terminal-host"), path.join(nativeDirectory, "gitrochi-terminal-host.exe"));

@@ -46,6 +46,7 @@ export abstract class RepoCore extends Observable implements AgentHost {
   abstract newTerminal(path?: string, spec?: Partial<TerminalSpec>): TerminalSession;
   abstract focusTerminal(s: TerminalSession): void;
   abstract closeAllTerminals(): void;
+  abstract restoreTerminals(): Promise<void>;
   abstract switchWorktree(path: string): Promise<void>;
   abstract refreshWorktreeStats(): Promise<void>;
   abstract run(label: string, args: string[], o?: { network?: boolean; input?: string; env?: Record<string, string> }): Promise<boolean>;
@@ -394,6 +395,7 @@ export abstract class RepoCore extends Observable implements AgentHost {
     this.restoreWorkspaceDestination();
     if (requestedPage) this.navigate(requestedPage);
     if (this.worktrees.length > 1) void this.refreshWorktreeStats();
+    void this.restoreTerminals();
     this.worktreePoll ??= setInterval(() => {
       if (this.isActive && document.hasFocus() && this.worktrees.length > 1) void this.refreshWorktreeStats();
     }, 5000);
