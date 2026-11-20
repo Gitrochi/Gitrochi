@@ -26,7 +26,7 @@ enum FlowEngine {
 
     static var environment: [String: String] {
         var env = Gitch.environment
-        env["GITSW_ACTOR"] = "gitrochi-app"
+        env["GITCH_ACTOR"] = "gitrochi-app"
         env["GITCH_FLOW_LANG"] = AppLanguage.current.hasPrefix("ko") ? "ko" : "en"
         // For when the engine calls gitch back (the affected graph, gitch blocks)
         if let g = Gitch.bundled ?? Gitch.installed { env["GITCH_PATH"] = g }

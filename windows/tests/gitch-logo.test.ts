@@ -20,7 +20,7 @@ describe("CLI 로고 설정", () => {
     expect(config).not.toHaveBeenCalled();
     expect(installed).not.toHaveBeenCalled();
     expect(run.mock.calls[0][1]).toEqual(["/bundled/gitch", "logo", "--json"]);
-    expect(run.mock.calls[0][2]?.env).toMatchObject({ GITSW_COLOR: "never", GITSW_BANNER: "never" });
+    expect(run.mock.calls[0][2]?.env).toMatchObject({ GITCH_COLOR: "never", GITCH_BANNER: "never" });
   });
 
   it.each([true, false])("저장한 실제 상태를 반환한다: %s", async (enabled) => {

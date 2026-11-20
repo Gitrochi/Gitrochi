@@ -61,7 +61,7 @@ enum PushReview {
 
     static func configStamp(_ config: Config) -> String {
         let relevant = config.filter { key, _ in
-            ["branch.", "remote.", "push.", "url.", "user.", "gitsw.", "core.sshcommand", "credential."].contains { key.hasPrefix($0) }
+            ["branch.", "remote.", "push.", "url.", "user.", "gitch.", "core.sshcommand", "credential."].contains { key.hasPrefix($0) }
         }
         return String(decoding: (try? JSONSerialization.data(withJSONObject: relevant, options: [.sortedKeys])) ?? Data(), as: UTF8.self)
     }

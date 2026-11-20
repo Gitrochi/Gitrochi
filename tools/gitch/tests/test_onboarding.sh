@@ -21,7 +21,7 @@ test_onboarding_add_and_inspect_preserve_existing_accounts_and_identity() {
   cp "$HOME/.gitconfig" "$T/global-before-add"
   cp "$HOME/.claude/CLAUDE.md" "$T/claude-before-add"
   cp "$HOME/.codex/AGENTS.md" "$T/codex-before-add"
-  mk_repo "$T/locked"; git -C "$T/locked" config gitswitch.account alice
+  mk_repo "$T/locked"; git -C "$T/locked" config gitch.account alice
   cp "$HOME/.ssh/config" "$T/ssh-before"
   onboard_add; assert_ok; onboard_validate
   assert_eq "$(onboard_q '.account.id')" dave
@@ -37,21 +37,21 @@ test_onboarding_add_and_inspect_preserve_existing_accounts_and_identity() {
   cmp -s "$HOME/.codex/AGENTS.md" "$T/codex-before-add" || fail 'account registration changed Codex rules'
   [ ! -d "$HOME/.claude/skills/gitch" ] || fail 'account registration installed Claude skill'
   [ ! -d "$HOME/.codex/skills/gitch" ] || fail 'account registration installed Codex skill'
-  assert_eq "$(git -C "$T/locked" config gitswitch.account)" alice
-  assert_eq "$(git config -f "$HOME/.config/gitsw/config" account.alice.email)" alice@example.com
-  find "$HOME/.local/state/gitsw/backups" -type f | grep . >/dev/null || fail 'account config backup missing'
-  cp "$HOME/.config/gitsw/config" "$T/config-before-inspect"
+  assert_eq "$(git -C "$T/locked" config gitch.account)" alice
+  assert_eq "$(git config -f "$HOME/.config/gitch/config" account.alice.email)" alice@example.com
+  find "$HOME/.local/state/gitch/backups" -type f | grep . >/dev/null || fail 'account config backup missing'
+  cp "$HOME/.config/gitch/config" "$T/config-before-inspect"
   run gitch setup dave --inspect --json; assert_ok; onboard_validate
   assert_eq "$(onboard_q '.publicKey')" ''
   assert_eq "$(onboard_q '.registrationURL')" https://github.com/settings/ssh/new
-  cmp -s "$HOME/.config/gitsw/config" "$T/config-before-inspect" || fail 'inspect wrote account config'
+  cmp -s "$HOME/.config/gitch/config" "$T/config-before-inspect" || fail 'inspect wrote account config'
   cmp -s "$HOME/.ssh/config" "$T/ssh-before" || fail 'inspect wrote SSH config'
 }
 
 test_onboarding_confirmation_and_validation_have_no_side_effects() {
   run gitch add --id dave --email dave@example.com --host github.com --no-setup --json
   assert_rc 2; assert_json "$OUT"
-  [ ! -e "$HOME/.config/gitsw/config" ] || fail 'cancelled add created account config'
+  [ ! -e "$HOME/.config/gitch/config" ] || fail 'cancelled add created account config'
   local bad
   for bad in 'bad;touch' 'bad$(touch SHOULD_NOT_EXIST)' '-option'; do
     run gitch add --id "$bad" --email dave@example.com --host github.com --json --yes
@@ -65,7 +65,7 @@ test_onboarding_confirmation_and_validation_have_no_side_effects() {
     run gitch add --id dave --email dave@example.com --host github.com --port "$bad" --json --yes
     assert_rc 1; assert_json "$OUT"
   done
-  [ ! -e "$HOME/.config/gitsw/config" ] || fail 'invalid input changed configuration'
+  [ ! -e "$HOME/.config/gitch/config" ] || fail 'invalid input changed configuration'
   [ ! -e SHOULD_NOT_EXIST ] || fail 'input was evaluated as shell text'
   onboard_add; assert_ok
   run gitch setup dave --generate --json; assert_rc 2; assert_json "$OUT"
@@ -74,15 +74,15 @@ test_onboarding_confirmation_and_validation_have_no_side_effects() {
 
 test_onboarding_rejects_duplicate_folder_aliases_and_concurrent_add() {
   mk_config
-  cp "$HOME/.config/gitsw/config" "$T/config-before"
+  cp "$HOME/.config/gitch/config" "$T/config-before"
   onboard_add alice; assert_rc 1; assert_json "$OUT"
   run gitch add --id dave --email dave@example.com --host github.com --folder "$HOME/Develop/alice/../alice" --no-setup --json --yes
   assert_rc 1; assert_json "$OUT"
-  cmp -s "$HOME/.config/gitsw/config" "$T/config-before" || fail 'duplicate overwrote configuration'
-  mkdir "$HOME/.config/gitsw/config.gitch-account.lock"
+  cmp -s "$HOME/.config/gitch/config" "$T/config-before" || fail 'duplicate overwrote configuration'
+  mkdir "$HOME/.config/gitch/config.gitch-account.lock"
   onboard_add; assert_rc 1; assert_json "$OUT"
-  cmp -s "$HOME/.config/gitsw/config" "$T/config-before" || fail 'concurrent add overwrote config'
-  [ -d "$HOME/.config/gitsw/config.gitch-account.lock" ] || fail 'removed another operation lock'
+  cmp -s "$HOME/.config/gitch/config" "$T/config-before" || fail 'concurrent add overwrote config'
+  [ -d "$HOME/.config/gitch/config.gitch-account.lock" ] || fail 'removed another operation lock'
 }
 
 test_onboarding_generates_once_preserves_keys_and_alias_and_no_secrets() {
@@ -122,7 +122,7 @@ printf '%s\n' "$SSH_CHECK_MESSAGE"
 exit "$SSH_CHECK_RC"
 SSH
   chmod +x "$T/check-ssh"
-  export GITSW_SSH="$T/check-ssh" SSH_CHECK_ARGS="$T/ssh-args" SSH_CHECK_MESSAGE='Hi dave! You have successfully authenticated.' SSH_CHECK_RC=1
+  export GITCH_SSH="$T/check-ssh" SSH_CHECK_ARGS="$T/ssh-args" SSH_CHECK_MESSAGE='Hi dave! You have successfully authenticated.' SSH_CHECK_RC=1
   run gitch setup dave --check --json; assert_ok; onboard_validate
   assert_eq "$(onboard_q '.authenticated')" true
   grep -Fx 'StrictHostKeyChecking=accept-new' "$T/ssh-args" >/dev/null || fail 'host key checks weakened'
@@ -181,7 +181,7 @@ SSH
   chmod +x "$T/slow-ssh"
   local started
   started=$(date +%s)
-  GITSW_SSH="$T/slow-ssh" run gitch setup dave --check --json
+  GITCH_SSH="$T/slow-ssh" run gitch setup dave --check --json
   assert_rc 1; onboard_validate
   [ "$(( $(date +%s) - started ))" -lt 20 ] || fail 'SSH check exceeded wall deadline'
   assert_eq "$(onboard_q '.authenticated')" false
@@ -198,7 +198,7 @@ test_onboarding_generate_does_not_overwrite_concurrent_ssh_config() {
 
 test_onboarding_config_write_failure_rolls_back_entire_account() {
   mk_config
-  cp "$HOME/.config/gitsw/config" "$T/config-before"
+  cp "$HOME/.config/gitch/config" "$T/config-before"
   export ONBOARD_REAL_GIT
   ONBOARD_REAL_GIT=$(command -v git)
   cat > "$T/fakebin/git" <<'GIT'
@@ -208,8 +208,8 @@ exec "$ONBOARD_REAL_GIT" "$@"
 GIT
   chmod +x "$T/fakebin/git"
   onboard_add; assert_rc 1; assert_json "$OUT"
-  cmp -s "$HOME/.config/gitsw/config" "$T/config-before" || fail 'partial account config survived failure'
-  [ ! -e "$HOME/.config/gitsw/config.gitch-account.lock" ] || fail 'account transaction lock not released'
+  cmp -s "$HOME/.config/gitch/config" "$T/config-before" || fail 'partial account config survived failure'
+  [ ! -e "$HOME/.config/gitch/config.gitch-account.lock" ] || fail 'account transaction lock not released'
 }
 
 test_onboarding_parallel_adds_do_not_reassign_same_folder() {
@@ -224,6 +224,6 @@ test_onboarding_parallel_adds_do_not_reassign_same_folder() {
   [ "$((rc_one + rc_two))" -eq 1 ] || fail "parallel account adds: $rc_one / $rc_two"
   if [ "$rc_one" -eq 0 ]; then winner=one; OUT=$(cat "$T/one.out"); else winner=two; OUT=$(cat "$T/two.out"); fi
   onboard_validate
-  assert_eq "$(git config -f "$HOME/.config/gitsw/config" "folder.$T/shared-account.account")" "$winner"
-  assert_eq "$(git config -f "$HOME/.config/gitsw/config" --get-regexp '^account\.(one|two)\.email$' | wc -l | tr -d ' ')" 1
+  assert_eq "$(git config -f "$HOME/.config/gitch/config" "folder.$T/shared-account.account")" "$winner"
+  assert_eq "$(git config -f "$HOME/.config/gitch/config" --get-regexp '^account\.(one|two)\.email$' | wc -l | tr -d ' ')" 1
 }

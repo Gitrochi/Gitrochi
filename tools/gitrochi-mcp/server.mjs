@@ -88,7 +88,7 @@ function validate(name, args) {
 /** Last command-scope value wins over repository config and inherited indexed overrides. */
 export function readOnlyGraphEnvironment(environment = process.env) {
   const inherited = environment.GIT_CONFIG_PARAMETERS ?? "";
-  return { GITSW_SWIFT_DESCRIBE: "0", GIT_CONFIG_PARAMETERS: (inherited ? inherited + " " : "") + "'core.fsmonitor=false'" };
+  return { GITCH_SWIFT_DESCRIBE: "0", GIT_CONFIG_PARAMETERS: (inherited ? inherited + " " : "") + "'core.fsmonitor=false'" };
 }
 
 function processOutput(program, args, cwd, signal, allowOne = false, maxBuffer = 2_000_000, environment = {}) {

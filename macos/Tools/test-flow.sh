@@ -20,7 +20,7 @@ mkdir -p "$T/home" "$T/repo/.gitch" "$T/repo/tests" "$T/empty"
 printf '[user]\n\tname = Flow Test\n\temail = flow-test@example.invalid\n[init]\n\tdefaultBranch = main\n' > "$T/home/gitconfig"
 # Leaves user settings and the keychain alone, and calls the engine the way the app does, for actions a person clicked.
 export HOME="$T/home" XDG_CONFIG_HOME="$T/home/.config" XDG_STATE_HOME="$T/home/.local/state" XDG_CACHE_HOME="$T/home/.cache"
-export GIT_CONFIG_GLOBAL="$T/home/gitconfig" GIT_CONFIG_NOSYSTEM=1 GITCH_FLOW_NO_KEYSTORE=1 GITSW_ACTOR=gitrochi-app GITCH_FLOW_LANG=en
+export GIT_CONFIG_GLOBAL="$T/home/gitconfig" GIT_CONFIG_NOSYSTEM=1 GITCH_FLOW_NO_KEYSTORE=1 GITCH_ACTOR=gitrochi-app GITCH_FLOW_LANG=en
 unset CLAUDECODE CODEX_SANDBOX CODEX_THREAD_ID CODEX_CI CURSOR_AGENT GEMINI_CLI AI_AGENT || true
 
 cat > "$T/repo/tests/r.sh" <<'R'

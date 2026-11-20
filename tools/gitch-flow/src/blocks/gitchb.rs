@@ -29,7 +29,7 @@ fn gitch(cx: &mut NodeCx, args: &[&str]) -> Result<(Value, super::Captured), Str
     let mut a = vec![g];
     a.extend(args.iter().map(|s| s.to_string()));
     let mut env = cx.env.clone();
-    env.push(("GITSW_COLOR".into(), "never".into()));
+    env.push(("GITCH_COLOR".into(), "never".into()));
     let spec = ProcSpec {
         program: crate::process::bash_path(),
         args: a,

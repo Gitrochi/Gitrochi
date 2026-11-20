@@ -343,8 +343,8 @@ printf '</body></html>' >> "$out"
         home.mkdir()
         environment = dict(os.environ, HOME=str(home), GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1",
                            XDG_CONFIG_HOME=str(home / "config"), XDG_STATE_HOME=str(home / "state"),
-                           XDG_CACHE_HOME=str(home / "cache"), GITSW_CONFIG=str(home / "config/gitsw/config"),
-                           GITSW_SWIFT_DESCRIBE="0", GITCH_SWIFT_INDEX="")
+                           XDG_CACHE_HOME=str(home / "cache"), GITCH_CONFIG=str(home / "config/gitch/config"),
+                           GITCH_SWIFT_DESCRIBE="0", GITCH_SWIFT_INDEX="")
         result = subprocess.run([bash_executable(), str(cli), "g", "watch", "files", "--out", str(self.output),
                                  "--interval", "1", "--no-open", "--detach", "--json", "--lang", "ts"],
                                 env=environment, cwd=str(self.repo), capture_output=True, text=True, encoding="utf-8", timeout=20)

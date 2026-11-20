@@ -1,14 +1,14 @@
 #!/bin/bash
 # ==========================================================
-#  gitch — 여러 Git 계정(GitHub + 회사 GitLab) 관리 도구 (예전 이름 gitsw — ~/bin/gitsw 로 불러도 같다)
+#  gitch — 여러 Git 계정(GitHub + 회사 GitLab) 관리 도구
 #  전체 명령 보기: gitch help
-#  설정 파일: ~/.config/gitsw/config  (위치 확인: gitch config path)
+#  설정 파일: ~/.config/gitch/config  (위치 확인: gitch config path)
 #  macOS 기본 bash 3.2 에서 동작하도록 작성 (연관 배열 등 bash 4 기능 사용 안 함)
 #  Gitrochi 와 함께 배포(tools/gitch, 앱 안 Contents/Resources/gitch) · MIT 라이선스(저장소 LICENSE) · © 2026 jjunhaa0211
 # ==========================================================
 
 # shellcheck disable=SC2088,SC2016  # 화면 표시용 ~ 와 $HOME 문자열은 일부러 펼치지 않음
-GITSW_VERSION="0.4.2-beta.2"
+GITCH_VERSION="0.4.2-beta.2"
 GITCH_VERSION_SCHEME="gitrochi"
 # shellcheck disable=SC2034  # 앱이 이 선언을 실행하지 않고 파일 머리에서 읽는다.
 GITCH_GRAPH_API="1"
@@ -26,9 +26,9 @@ done
 unset _gitch_expect_format _gitch_argument
 
 # ----- 경로 -----
-CFG="${GITSW_CONFIG:-${XDG_CONFIG_HOME:-$HOME/.config}/gitsw/config}"
-STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/gitsw"
-DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/gitsw"
+CFG="${GITCH_CONFIG:-${XDG_CONFIG_HOME:-$HOME/.config}/gitch/config}"
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/gitch"
+DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/gitch"
 HOOK_DISPATCHER="$DATA_DIR/hook"
 ACTION_LOG="$STATE_DIR/actions.jsonl"
 BACKUP_DIR="$STATE_DIR/backups"
@@ -36,11 +36,10 @@ SSH_DIR="$HOME/.ssh"
 SSH_CONFIG="$SSH_DIR/config"
 # Windows(Git for Windows 의 Git Bash · MSYS2 · Cygwin): ln -s 가 링크 대신 복사본을 만들어 ~/bin/gitch 는 연결 스크립트로,
 # 터미널 연동은 Git Bash 의 ~/.bashrc 로, 클립보드·브라우저는 clip · url.dll 로 한다 (uname 대신 OSTYPE — 훅마다 프로세스를 띄우지 않게)
-case "${GITSW_OS:-${OSTYPE:-}}" in msys*|cygwin*|win*) IS_WINDOWS=1 ;; *) IS_WINDOWS="" ;; esac
+case "${GITCH_OS:-${OSTYPE:-}}" in msys*|cygwin*|win*) IS_WINDOWS=1 ;; *) IS_WINDOWS="" ;; esac
 if [ -n "$IS_WINDOWS" ]; then SHELL_RC="$HOME/.bashrc"; else SHELL_RC="${ZDOTDIR:-$HOME}/.zshrc"; fi
 BIN_LINK="$HOME/bin/gitch"
-SHIM_LINK="$HOME/bin/gitsw"   # 예전 이름 — gitsw 로 부르는 AI 규칙·스크립트가 계속 되게 같은 파일을 가리킨다
-SSH_BIN="${GITSW_SSH:-ssh}"
+SSH_BIN="${GITCH_SSH:-ssh}"
 CLAUDE_DIR="$HOME/.claude"
 CODEX_DIR="$HOME/.codex"
 GEMINI_DIR="$HOME/.gemini"
@@ -50,7 +49,7 @@ AI_TRAILER_RE='^[[:space:]]*(co-authored-by:.*(claude|anthropic|codex|openai|cha
 
 # ----- 실행 주체 (사람/AI) -----
 detect_actor() {
-  if [ -n "${GITSW_ACTOR:-}" ]; then ACTOR="$GITSW_ACTOR"
+  if [ -n "${GITCH_ACTOR:-}" ]; then ACTOR="$GITCH_ACTOR"
   elif [ -t 0 ] || [ -t 2 ]; then ACTOR=human
   elif [ -n "${CLAUDECODE:-}" ]; then ACTOR=claude
   elif [ -n "${CODEX_SANDBOX:-}${CODEX_SANDBOX_NETWORK_DISABLED:-}${CODEX_THREAD_ID:-}${CODEX_CI:-}" ]; then ACTOR=codex
@@ -63,7 +62,7 @@ can_prompt() { [ -t 0 ] && [ -t 2 ]; }
 
 # ----- 출력 -----
 setup_colors() {
-  local c="${GITSW_COLOR:-auto}"
+  local c="${GITCH_COLOR:-auto}"
   if [ -z "${MACHINE_JSON:-}" ] && [ -z "${NO_COLOR:-}" ] && [ "${TERM:-}" != dumb ] && [ "${GITCH_STYLE:-auto}" != plain ] && \
     { [ "$c" = always ] || { [ "$c" = auto ] && [ -t 1 ]; }; }; then
     GREEN=$'\033[32m'; RED=$'\033[31m'; YELLOW=$'\033[33m'; BOLD=$'\033[1m'; DIM=$'\033[2m'; RESET=$'\033[0m'
@@ -134,8 +133,8 @@ term_size() {   # 터미널 크기 → TW(칸) TH(줄). 모르면 80×24
   is_number "$TW" || TW=80; is_number "$TH" || TH=24
 }
 
-fancy_out() {   # 사람이 보는 터미널이면 로고·진행 표시를 그린다 (GITSW_BANNER=always|never 로 강제)
-  case "${GITSW_BANNER:-auto}" in always) return 0 ;; never) return 1 ;; esac
+fancy_out() {   # 사람이 보는 터미널이면 로고·진행 표시를 그린다 (GITCH_BANNER=always|never 로 강제)
+  case "${GITCH_BANNER:-auto}" in always) return 0 ;; never) return 1 ;; esac
   [ -t 1 ] && [ "$ACTOR" = human ]
 }
 
@@ -145,7 +144,7 @@ banner() {   # 터미널 크기에 맞는 로고 + 이름: 넓고 높으면 큰 
   [ "${GITCH_STYLE:-auto}" != plain ] && [ "${TERM:-}" != dumb ] || return 0
   local t1 t2 i n at=-9 below="" line
   local -a rows
-  t1="${LEAF}●${RESET} ${BOLD}gitch${RESET} ${DIM}v$GITSW_VERSION${RESET}"
+  t1="${LEAF}●${RESET} ${BOLD}gitch${RESET} ${DIM}v$GITCH_VERSION${RESET}"
   t2="${DIM}여러 Git 계정을 섞이지 않게${RESET}"
   term_size
   if [ "$TW" -ge 60 ] && [ "$TH" -ge 30 ]; then rows=("${LOGO_L[@]}"); at=2
@@ -159,7 +158,7 @@ banner() {   # 터미널 크기에 맞는 로고 + 이름: 넓고 높으면 큰 
     line="  ${LOGO_PAL[$((i * 6 / (n - 1)))]}${rows[$i]}${RESET}"
     if [ "$i" -eq "$at" ]; then line="$line   $t1"; elif [ "$i" -eq $((at + 1)) ]; then line="$line   $t2"; fi
     printf '%s\n' "$line"
-    [ "${GITSW_ANIM:-1}" = 0 ] || sleep 0.02
+    [ "${GITCH_ANIM:-1}" = 0 ] || sleep 0.02
   done
   [ -n "$below" ] && printf '\n  %s\n  %s\n' "$t1" "$t2"
   return 0
@@ -176,7 +175,7 @@ ui_init() {
     case "${2:-}" in on) UI_LOGO=1 ;; off) UI_LOGO=0 ;; esac
   fi
   [ -t 1 ] && [ -z "${MACHINE_JSON:-}" ] && [ "${TERM:-}" != dumb ] \
-    && [ "${GITCH_STYLE:-auto}" != plain ] && [ "${GITSW_BANNER:-auto}" != never ] || return 0
+    && [ "${GITCH_STYLE:-auto}" != plain ] && [ "${GITCH_BANNER:-auto}" != never ] || return 0
   local command=${1:-help} argument expect='' fmt='' output='' sub=${2:-} charmap help_requested=0
   case "$command" in _*|guard|schema|completion|export) return 0 ;; esac
   case "$command $sub" in 'config path'|'config get') return 0 ;; esac
@@ -331,11 +330,11 @@ ui_start() {
     repo=$(basename "$(repo_top)"); branch=$(cur_branch)
     [ -n "$branch" ] || branch='detached HEAD'
     meta="$repo $separator $branch"
-    account=$(git config --get gitswitch.account 2>/dev/null)
+    account=$(git config --get gitch.account 2>/dev/null)
     if [ -n "$account" ]; then
       if [ "$UI_UTF8" = 1 ]; then context="계정 $account · 잠금"; else context="account $account | locked"; fi
     fi
-  else meta="Gitrochi CLI $separator v$GITSW_VERSION"; fi
+  else meta="Gitrochi CLI $separator v$GITCH_VERSION"; fi
   ui_header "gitch $separator $title" "$meta" "$context"
 }
 
@@ -422,7 +421,7 @@ ident_email() { local x="${1#*<}"; printf '%s' "${x%%>*}"; }
 file_mtime() { stat -c %Y "$1" 2>/dev/null || stat -f %m "$1" 2>/dev/null || echo 0; }
 now_iso() { date '+%Y-%m-%dT%H:%M:%S%z'; }
 
-# Windows 의 ~/bin/gitch · ~/bin/gitsw: 심볼릭 링크 대신 이 표시 줄과 exec 한 줄로 된 연결 스크립트
+# Windows 의 ~/bin/gitch: 심볼릭 링크 대신 이 표시 줄과 exec 한 줄로 된 연결 스크립트
 LINK_MARK="# gitch-link: "
 link_target() {   # $1 이 심볼릭 링크나 연결 스크립트면 가리키는 경로 → LT (아니면 거짓)
   LT=""
@@ -451,7 +450,7 @@ resolve_link() {   # 심볼릭 링크(Windows 는 연결 스크립트도)를 끝
   printf '%s' "$(cd "$(dirname "$p")" 2>/dev/null && pwd -P)/$(basename "$p")"
 }
 self_path() { resolve_link "${BASH_SOURCE[0]}"; }
-gitsw_cmd_path() {   # 훅/설정에 적을 gitch 경로 (~/bin/gitch 가 이 파일을 가리키면 그 경로)
+gitch_cmd_path() {   # 훅/설정에 적을 gitch 경로 (~/bin/gitch 가 이 파일을 가리키면 그 경로)
   if is_link "$BIN_LINK" && [ "$(resolve_link "$BIN_LINK")" = "$(self_path)" ]; then printf '%s' "$BIN_LINK"
   else self_path; fi
 }
@@ -495,9 +494,9 @@ git_version_ok() {   # includeIf hasconfig 때문에 2.36 이상 필요
 _CH_SUP=""
 config_hooks_supported() {   # git 설정 기반 훅(hook.<이름>.command) 지원 여부
   if [ -z "$_CH_SUP" ]; then
-    local t; t=$(mktemp -d "${TMPDIR:-/tmp}/gitsw-probe.XXXXXX" 2>/dev/null) || { _CH_SUP=0; return 1; }
+    local t; t=$(mktemp -d "${TMPDIR:-/tmp}/gitch-probe.XXXXXX" 2>/dev/null) || { _CH_SUP=0; return 1; }
     if git -C "$t" init -q 2>/dev/null && \
-       git -C "$t" -c hook.gitswprobe.event=pre-commit -c hook.gitswprobe.command=true hook list pre-commit 2>/dev/null | grep -qx gitswprobe; then
+       git -C "$t" -c hook.gitchprobe.event=pre-commit -c hook.gitchprobe.command=true hook list pre-commit 2>/dev/null | grep -qx gitchprobe; then
       _CH_SUP=1
     else
       _CH_SUP=0
@@ -516,7 +515,7 @@ net_env() {
 }
 
 # ================= 설정 파일 =================
-#  [gitsw]           scanRoot, aiPush(ask|branch|allow), maxFileMB, warnFileMB
+#  [gitch]           scanRoot, aiPush(ask|branch|allow), maxFileMB, warnFileMB
 #  [account "<id>"]  email, name, host = 서버[:포트] [via 다른계정] (여러 개), aiTrailer(keep|strip)
 #  [folder "<경로>"] account
 #  [org "<서버>/<조직>"] account
@@ -628,10 +627,10 @@ load_config() {
     key=${entry%%$'\n'*}
     case "$entry" in *$'\n'*) val=${entry#*$'\n'} ;; *) val="" ;; esac
     case "$key" in
-      gitsw.scanroot) CFG_SCAN_ROOT="$val" ;;
-      gitsw.aipush) CFG_AI_PUSH="$val" ;;
-      gitsw.maxfilemb) CFG_MAX_MB="$val" ;;
-      gitsw.warnfilemb) CFG_WARN_MB="$val" ;;
+      gitch.scanroot) CFG_SCAN_ROOT="$val" ;;
+      gitch.aipush) CFG_AI_PUSH="$val" ;;
+      gitch.maxfilemb) CFG_MAX_MB="$val" ;;
+      gitch.warnfilemb) CFG_WARN_MB="$val" ;;
       ui.logo) CFG_UI_LOGO=$(lower "$val") ;;
       account.*.*)
         rest=${key#account.}; var=${rest##*.}; id=${rest%.*}
@@ -647,7 +646,7 @@ load_config() {
         esac ;;
       folder.*.account) rest=${key#folder.}; F_RAW+=("${rest%.account}"); F_REAL+=(""); F_ACC+=("$val") ;;
       folder.*.allowremote) rest=${key#folder.}; AR_RAW+=("${rest%.allowremote}"); AR_REAL+=(""); AR_PAT+=("$(lower "$val")") ;;
-      gitsw.sshstrict) CFG_SSH_STRICT=$(lower "$val") ;;
+      gitch.sshstrict) CFG_SSH_STRICT=$(lower "$val") ;;
       org.*.account)
         rest=${key#org.}; rest=${rest%.account}; rest=${rest%/}
         O_RAW+=("$rest"); O_HOST+=("$(lower "${rest%%/*}")"); O_PATH+=("$(lower "${rest#*/}")"); O_ACC+=("$val") ;;
@@ -722,11 +721,11 @@ validate_config() {
     [ -z "${AR_PAT[$i]}" ] && CFG_ERRORS+=("folder \"${AR_RAW[$i]}\": allowRemote 가 비어 있습니다 (예: gitlab.example.com/*)")
     i=$((i+1))
   done
-  case "$(lower "$CFG_AI_PUSH")" in ask|allow|branch) ;; *) CFG_ERRORS+=("gitsw.aiPush 는 ask, branch, allow 중 하나입니다 (지금: $CFG_AI_PUSH)") ;; esac
-  case "$CFG_SSH_STRICT" in ""|true|false|yes|no|on|off|1|0) ;; *) CFG_ERRORS+=("gitsw.sshStrict 는 true 또는 false 입니다") ;; esac
+  case "$(lower "$CFG_AI_PUSH")" in ask|allow|branch) ;; *) CFG_ERRORS+=("gitch.aiPush 는 ask, branch, allow 중 하나입니다 (지금: $CFG_AI_PUSH)") ;; esac
+  case "$CFG_SSH_STRICT" in ""|true|false|yes|no|on|off|1|0) ;; *) CFG_ERRORS+=("gitch.sshStrict 는 true 또는 false 입니다") ;; esac
   case "$CFG_UI_LOGO" in ""|true|false|yes|no|on|off|1|0) ;; *) CFG_ERRORS+=("ui.logo 는 true 또는 false 입니다") ;; esac
-  is_number "$CFG_MAX_MB" || CFG_ERRORS+=("gitsw.maxFileMB 는 숫자여야 합니다")
-  is_number "$CFG_WARN_MB" || CFG_ERRORS+=("gitsw.warnFileMB 는 숫자여야 합니다")
+  is_number "$CFG_MAX_MB" || CFG_ERRORS+=("gitch.maxFileMB 는 숫자여야 합니다")
+  is_number "$CFG_WARN_MB" || CFG_ERRORS+=("gitch.warnFileMB 는 숫자여야 합니다")
 }
 find_binding_any() { local a; for a in "${B_ACC[@]}"; do [ "$a" = "$1" ] && return 0; done; return 1; }
 
@@ -908,11 +907,11 @@ resolve_repo() {   # $1 폴더 [$2 fast — 훅용: 잠금이 있으면 규칙 �
   while IFS= read -r line; do
     k=${line%% *}; v=${line#* }; [ "$v" = "$line" ] && v=""
     case "$k" in
-      gitswitch.account) R_LOCK=$v ;;
-      gitswitch.ignore) case "$(lower "$v")" in true|yes|on|1) R_IGNORED=1 ;; esac ;;
+      gitch.account) R_LOCK=$v ;;
+      gitch.ignore) case "$(lower "$v")" in true|yes|on|1) R_IGNORED=1 ;; esac ;;
       remote.origin.url) R_URL=$v ;;
     esac
-  done < <(git -C "$dir" config --get-regexp '^(gitswitch\.(account|ignore)|remote\.origin\.url)$' 2>/dev/null)
+  done < <(git -C "$dir" config --get-regexp '^(gitch\.(account|ignore)|remote\.origin\.url)$' 2>/dev/null)
   [ "${2:-}" = fast ] && [ -n "$R_LOCK" ] && is_account "$R_LOCK" && want_rules=""
 
   if [ -n "$R_URL" ] && parse_url "$R_URL"; then
@@ -947,7 +946,7 @@ push_url_alias() {   # $1 폴더 → PU_URL(실제 push 주소) PU_ALIAS
 # ================= 백업 / 기록 =================
 
 BACKUP_SESSION=""
-backup_file() {   # 고치기 전에 한 번 백업 (~/.local/state/gitsw/backups/<시각>/) — 마지막 백업과 내용이 같으면 건너뜀
+backup_file() {   # 고치기 전에 한 번 백업 (~/.local/state/gitch/backups/<시각>/) — 마지막 백업과 내용이 같으면 건너뜀
   local f="$1" name dest d
   [ -f "$f" ] || return 0
   name=$(printf '%s' "${f#"$HOME"/}" | tr '/' '_')
@@ -973,8 +972,8 @@ prune_backup_dirs() {   # <날짜>-<시각>-<번호> 모양 폴더는 최근 30�
 global_gitconfig() { printf '%s' "${GIT_CONFIG_GLOBAL:-$HOME/.gitconfig}"; }
 backup_global() { backup_file "$(global_gitconfig)"; backup_file "${XDG_CONFIG_HOME:-$HOME/.config}/git/config"; }
 
-log_action() {   # $1 이벤트, 나머지 key=value — ~/.local/state/gitsw/actions.jsonl (훅에서도 불리므로 가볍게)
-  [ -n "${GITSW_INTERNAL:-}" ] && return 0
+log_action() {   # $1 이벤트, 나머지 key=value — ~/.local/state/gitch/actions.jsonl (훅에서도 불리므로 가볍게)
+  [ -n "${GITCH_INTERNAL:-}" ] && return 0
   local ev="$1" kv line top
   shift
   [ -d "$STATE_DIR" ] || mkdir -p "$STATE_DIR" 2>/dev/null || return 0
@@ -995,18 +994,18 @@ log_action() {   # $1 이벤트, 나머지 key=value — ~/.local/state/gitsw/ac
   return 0
 }
 
-# 위험한 작업 전 현재 상태를 refs/gitsw/backup/ 에 남김 (gitch rescue 로 복구)
+# 위험한 작업 전 현재 상태를 refs/gitch/backup/ 에 남김 (gitch rescue 로 복구)
 backup_ref() {
   has_head || return 0
   local ts name n=1 wip
   ts=$(date +%Y%m%d-%H%M%S)
-  name="refs/gitsw/backup/$ts-$1"
-  while git show-ref -q --verify "$name"; do name="refs/gitsw/backup/$ts-$1-$n"; n=$((n+1)); done
+  name="refs/gitch/backup/$ts-$1"
+  while git show-ref -q --verify "$name"; do name="refs/gitch/backup/$ts-$1-$n"; n=$((n+1)); done
   git update-ref -m "gitch backup ($1)" "$name" HEAD 2>/dev/null || return 0
   wip=$(git stash create 2>/dev/null)
   [ -n "$wip" ] && git update-ref -m "gitch backup wip ($1)" "$name-wip" "$wip" 2>/dev/null
   local refs r i=0
-  refs=$(git for-each-ref --sort=-refname --format='%(refname)' refs/gitsw/backup/ | grep -v -- '-wip$')
+  refs=$(git for-each-ref --sort=-refname --format='%(refname)' refs/gitch/backup/ | grep -v -- '-wip$')
   for r in $refs; do
     i=$((i+1))
     if [ $i -gt 30 ]; then git update-ref -d "$r" 2>/dev/null; git update-ref -d "$r-wip" 2>/dev/null; fi
@@ -1016,7 +1015,7 @@ backup_ref() {
 
 # ================= 잠금 =================
 
-sign_enabled() { [ "$(git config --global --get gitswitch.sign)" = "true" ]; }
+sign_enabled() { [ "$(git config --global --get gitch.sign)" = "true" ]; }
 
 apply_sign() {   # 저장소 서명 설정 (SA_ID 기준)
   local dir="$1" key="$SSH_DIR/id_ed25519_$SA_ID.pub"
@@ -1025,13 +1024,13 @@ apply_sign() {   # 저장소 서명 설정 (SA_ID 기준)
     git -C "$dir" config user.signingkey "$key"
     git -C "$dir" config commit.gpgsign true
     git -C "$dir" config tag.gpgsign true
-    git -C "$dir" config gitswitch.signed true
-  elif [ "$(git -C "$dir" config --get gitswitch.signed)" = "true" ]; then
+    git -C "$dir" config gitch.signed true
+  elif [ "$(git -C "$dir" config --get gitch.signed)" = "true" ]; then
     git -C "$dir" config --unset gpg.format
     git -C "$dir" config --unset user.signingkey
     git -C "$dir" config --unset commit.gpgsign
     git -C "$dir" config --unset tag.gpgsign
-    git -C "$dir" config --unset gitswitch.signed
+    git -C "$dir" config --unset gitch.signed
   fi
 }
 
@@ -1043,22 +1042,22 @@ repo_hooks_dir() {   # 저장소의 실제 훅 폴더 (워크트리여도 공용
 }
 
 repo_hook_script() {   # 보조 훅 내용 (Apple git 처럼 전역 훅을 모르는 git 용)
-  local ev="$1" g miss=":"; g=$(gitsw_cmd_path)
+  local ev="$1" g miss=":"; g=$(gitch_cmd_path)
   # gitch 가 없으면 커밋·push 때만 한 줄로 알린다 (전역 훅이 있으면 그쪽이 이미 알림)
   case "$ev" in pre-commit|pre-push) miss="echo \"$(missing_gitch_msg "$g")\" >&2" ;; esac
-  # 이 git 이 전역 훅(gitsw-<이벤트>)을 이미 실행했으면 gitch 검사는 건너뛰고 기존 훅(.local)만 이어서 실행
+  # 이 git 이 전역 훅(gitch-<이벤트>)을 이미 실행했으면 gitch 검사는 건너뛰고 기존 훅(.local)만 이어서 실행
   if [ "$ev" = pre-push ]; then
     cat <<EOF
 #!/bin/sh
-# gitswitch-lock — gitch 보조 훅 (gitch 가 관리, 새 git 은 전역 훅이 먼저 검사)
+# gitch-lock — gitch 보조 훅 (gitch 가 관리, 새 git 은 전역 훅이 먼저 검사)
 g="$g"
-if [ ! -x "\$g" ] || git hook list $ev 2>/dev/null | grep -qx gitsw-$ev; then
-  [ -x "\$g" ] || git hook list $ev 2>/dev/null | grep -qx gitsw-$ev || $miss
+if [ ! -x "\$g" ] || git hook list $ev 2>/dev/null | grep -qx gitch-$ev; then
+  [ -x "\$g" ] || git hook list $ev 2>/dev/null | grep -qx gitch-$ev || $miss
   if [ -x "\$0.local" ]; then exec "\$0.local" "\$@"; fi
   cat > /dev/null
   exit 0
 fi
-t=\$(mktemp "\${TMPDIR:-/tmp}/gitsw-push.XXXXXX") || exit 1
+t=\$(mktemp "\${TMPDIR:-/tmp}/gitch-push.XXXXXX") || exit 1
 cat > "\$t"
 "\$g" _hook --fallback $ev "\$@" < "\$t" || { rc=\$?; rm -f "\$t"; exit \$rc; }
 if [ -x "\$0.local" ]; then "\$0.local" "\$@" < "\$t"; rc=\$?; rm -f "\$t"; exit \$rc; fi
@@ -1068,9 +1067,9 @@ EOF
   else
     cat <<EOF
 #!/bin/sh
-# gitswitch-lock — gitch 보조 훅 (gitch 가 관리, 새 git 은 전역 훅이 먼저 검사)
+# gitch-lock — gitch 보조 훅 (gitch 가 관리, 새 git 은 전역 훅이 먼저 검사)
 g="$g"
-if ! git hook list $ev 2>/dev/null | grep -qx gitsw-$ev; then
+if ! git hook list $ev 2>/dev/null | grep -qx gitch-$ev; then
   if [ -x "\$g" ]; then "\$g" _hook --fallback $ev "\$@" || exit \$?; else $miss; fi
 fi
 if [ -x "\$0.local" ]; then exec "\$0.local" "\$@"; fi
@@ -1094,7 +1093,7 @@ install_repo_hooks() {   # $1 저장소 — 보조 훅 설치 (기존 훅은 .lo
   mkdir -p "$hd" || return 1
   for ev in $HOOK_EVENTS; do
     f="$hd/$ev"
-    if [ -f "$f" ] && ! grep -q "gitswitch-lock" "$f"; then mv "$f" "$f.local"; fi
+    if [ -f "$f" ] && ! grep -q "gitch-lock" "$f"; then mv "$f" "$f.local"; fi
     repo_hook_script "$ev" > "$f" && chmod +x "$f"
   done
   REPO_HOOK_NOTE=""
@@ -1114,7 +1113,7 @@ remove_repo_hooks() {   # gitch 보조 훅 제거 (.local 이 있으면 되돌�
   hd=$(repo_hooks_dir "$1") || return 0
   for ev in $HOOK_EVENTS; do
     f="$hd/$ev"
-    if [ -f "$f" ] && grep -q "gitswitch-lock" "$f"; then
+    if [ -f "$f" ] && grep -q "gitch-lock" "$f"; then
       rm -f "$f"
       [ -f "$f.local" ] && mv "$f.local" "$f"
     fi
@@ -1123,13 +1122,13 @@ remove_repo_hooks() {   # gitch 보조 훅 제거 (.local 이 있으면 되돌�
 
 lock_repo() {   # $1 폴더 — SA_* 계정으로 작성자 설정 + 잠금
   local dir="$1" prev
-  prev=$(git -C "$dir" config --get gitswitch.account)
+  prev=$(git -C "$dir" config --get gitch.account)
   git -C "$dir" config user.name "$SA_NAME"
   git -C "$dir" config user.email "$SA_EMAIL"
-  git -C "$dir" config gitswitch.account "$SA_ID"
-  git -C "$dir" config gitswitch.email "$SA_EMAIL"
-  if [ -n "$SA_ALIAS" ]; then git -C "$dir" config gitswitch.alias "$SA_ALIAS"
-  else git -C "$dir" config --unset gitswitch.alias 2>/dev/null; fi
+  git -C "$dir" config gitch.account "$SA_ID"
+  git -C "$dir" config gitch.email "$SA_EMAIL"
+  if [ -n "$SA_ALIAS" ]; then git -C "$dir" config gitch.alias "$SA_ALIAS"
+  else git -C "$dir" config --unset gitch.alias 2>/dev/null; fi
   apply_sign "$dir"
   install_repo_hooks "$dir"
   [ -n "$REPO_HOOK_NOTE" ] && dim "  ($REPO_HOOK_NOTE)"
@@ -1187,9 +1186,9 @@ unlock_cmd() {
   arity 'gitch unlock [--yes]' 0 "${rest[@]}"
   require_repo
   confirm "이 저장소의 계정 잠금을 풉니다. 계속할까요?" "$yes" "gitch unlock --yes"
-  git config --unset gitswitch.account 2>/dev/null
-  git config --unset gitswitch.email 2>/dev/null
-  git config --unset gitswitch.alias 2>/dev/null
+  git config --unset gitch.account 2>/dev/null
+  git config --unset gitch.email 2>/dev/null
+  git config --unset gitch.alias 2>/dev/null
   say "🔓 잠금을 해제했습니다. (작성자 설정은 그대로입니다)"
   log_action unlock
 }
@@ -1199,11 +1198,11 @@ ignore_cmd() {   # gitch 관리에서 이 저장소 빼기/되돌리기
   local off="" yes="" a
   for a in "$@"; do case "$a" in --off) off=1 ;; --yes|-y) yes=1 ;; *) die "사용법: gitch ignore [--off]" ;; esac; done
   if [ -n "$off" ]; then
-    git config --unset gitswitch.ignore 2>/dev/null
+    git config --unset gitch.ignore 2>/dev/null
     ok "이 저장소를 다시 gitch 가 관리합니다."
   else
     confirm "이 저장소를 gitch 검사에서 뺍니다 (작성자/비밀값/push 검사 안 함). 계속할까요?" "$yes" "gitch ignore --yes"
-    git config gitswitch.ignore true
+    git config gitch.ignore true
     ok "이 저장소는 이제 gitch 검사를 하지 않습니다. (되돌리기: gitch ignore --off)"
   fi
 }
@@ -1212,7 +1211,7 @@ protect_cmd() {   # 보호 브랜치 (직접 push 금지)
   require_repo
   local rm="" b list
   if [ $# -eq 0 ] || [ "$1" = --list ]; then
-    list=$(git config --get-all gitswitch.protect)
+    list=$(git config --get-all gitch.protect)
     if [ -n "$list" ]; then say "보호 브랜치 (직접 push 금지):"; printf '%s\n' "$list" | sed 's/^/  /'
     else say "보호 브랜치가 없습니다. (추가: gitch protect main)"; fi
     return 0
@@ -1222,14 +1221,14 @@ protect_cmd() {   # 보호 브랜치 (직접 push 금지)
   for b in "$@"; do
     case "$b" in --yes) continue ;; esac
     if [ -n "$rm" ]; then
-      git config --fixed-value --unset-all gitswitch.protect "$b" 2>/dev/null && ok "보호 해제: $b"
+      git config --fixed-value --unset-all gitch.protect "$b" 2>/dev/null && ok "보호 해제: $b"
     else
-      git config --get-all gitswitch.protect | grep -qx -- "$b" || git config --add gitswitch.protect "$b"
+      git config --get-all gitch.protect | grep -qx -- "$b" || git config --add gitch.protect "$b"
       ok "보호 브랜치: $b (직접 push 금지 → 다른 브랜치에서 gitch pr)"
     fi
   done
 }
-is_protected() { git config --get-all gitswitch.protect 2>/dev/null | grep -qx -- "$1"; }
+is_protected() { git config --get-all gitch.protect 2>/dev/null | grep -qx -- "$1"; }
 
 default_branch() {   # $1 원격 → 기본 브랜치 이름
   local r="${1:-origin}" d
@@ -1408,7 +1407,7 @@ fix_cmd() {
   local exec_cmd="git commit --amend --no-edit --no-verify --allow-empty --author='$SA_NAME <$SA_EMAIL>'"
   local base=(--root)
   git rev-parse -q --verify "$first^" >/dev/null && base=("$first^")
-  if GITSW_INTERNAL=1 GIT_SEQUENCE_EDITOR=: GIT_EDITOR=true git rebase -q -r --autostash --exec "$exec_cmd" "${base[@]}" >/dev/null; then
+  if GITCH_INTERNAL=1 GIT_SEQUENCE_EDITOR=: GIT_EDITOR=true git rebase -q -r --autostash --exec "$exec_cmd" "${base[@]}" >/dev/null; then
     ok "${bad}개 커밋의 작성자를 고쳤습니다. (되돌리기: gitch rescue)"
     log_action fix "account=$SA_ID" "count=$bad"
   else
@@ -1582,7 +1581,7 @@ write_dispatcher() {   # 임시 파일에 쓰고 바꿔 넣는다 — 다른 git
   local t
   mkdir -p "$DATA_DIR" || return 1
   t=$(mktemp "$DATA_DIR/hook.XXXXXX") || return 1
-  if dispatcher_text "$(gitsw_cmd_path)" > "$t" && chmod +x "$t" && mv -f "$t" "$HOOK_DISPATCHER"; then return 0; fi
+  if dispatcher_text "$(gitch_cmd_path)" > "$t" && chmod +x "$t" && mv -f "$t" "$HOOK_DISPATCHER"; then return 0; fi
   rm -f "$t"; return 1
 }
 
@@ -1595,21 +1594,21 @@ hook_command() {   # $1 이벤트 → 전역 훅 명령. Windows 는 C:/… 로 
 install_global_hooks() {   # git 설정 기반 훅 등록 (모든 저장소/워크트리/husky 저장소에 적용)
   local ev
   write_dispatcher || return 1
-  for ev in $HOOK_EVENTS; do git config --global --remove-section "hook.gitsw-$ev" 2>/dev/null; done
+  for ev in $HOOK_EVENTS; do git config --global --remove-section "hook.gitch-$ev" 2>/dev/null; done
   config_hooks_supported || return 1
   for ev in $HOOK_EVENTS; do
-    git config --global "hook.gitsw-$ev.event" "$ev"
-    git config --global "hook.gitsw-$ev.command" "$(hook_command "$ev")"
+    git config --global "hook.gitch-$ev.event" "$ev"
+    git config --global "hook.gitch-$ev.command" "$(hook_command "$ev")"
   done
   return 0
 }
 
 global_hooks_ok() {
   local ev
-  [ -x "$HOOK_DISPATCHER" ] && grep -q "$(gitsw_cmd_path)" "$HOOK_DISPATCHER" 2>/dev/null || return 1
+  [ -x "$HOOK_DISPATCHER" ] && grep -q "$(gitch_cmd_path)" "$HOOK_DISPATCHER" 2>/dev/null || return 1
   config_hooks_supported || return 1
   for ev in $HOOK_EVENTS; do
-    [ "$(git config --global --get "hook.gitsw-$ev.command")" = "$(hook_command "$ev")" ] || return 1
+    [ "$(git config --global --get "hook.gitch-$ev.command")" = "$(hook_command "$ev")" ] || return 1
   done
   return 0
 }
@@ -1623,19 +1622,19 @@ apply_ssh_strict() {   # 별칭 없는 github.com 등으로는 키 인증을 안
     i=$((i+1))
   done
   if ssh_strict_on; then
-    block="# >>> gitsw strict >>>  ('gitch install' 이 관리 — 별칭 없는 주소로는 키 인증 안 함)"
+    block="# >>> gitch strict >>>  ('gitch install' 이 관리 — 별칭 없는 주소로는 키 인증 안 함)"
     for h in $hosts; do
       block="$block"$'\n'"Host $h"$'\n'"    PubkeyAuthentication no"$'\n'"    IdentitiesOnly yes"
     done
-    block="$block"$'\n'"# <<< gitsw strict <<<"
+    block="$block"$'\n'"# <<< gitch strict <<<"
     backup_file "$SSH_CONFIG"
-    update_marked_block "$SSH_CONFIG" "# >>> gitsw strict >>>" "# <<< gitsw strict <<<" "$block"
+    update_marked_block "$SSH_CONFIG" "# >>> gitch strict >>>" "# <<< gitch strict <<<" "$block"
     chmod 600 "$SSH_CONFIG"
     return 0
   fi
-  if grep -q '^# >>> gitsw strict >>>' "$SSH_CONFIG" 2>/dev/null; then
+  if grep -q '^# >>> gitch strict >>>' "$SSH_CONFIG" 2>/dev/null; then
     backup_file "$SSH_CONFIG"
-    remove_marked_block "$SSH_CONFIG" "# >>> gitsw strict >>>" "# <<< gitsw strict <<<"
+    remove_marked_block "$SSH_CONFIG" "# >>> gitch strict >>>" "# <<< gitch strict <<<"
   fi
   return 0
 }
@@ -1645,7 +1644,7 @@ update_marked_block() {
   local f="$1" tmp
   mkdir -p "$(dirname "$f")"
   [ -f "$f" ] || : > "$f"
-  tmp=$(mktemp "${TMPDIR:-/tmp}/gitsw.XXXXXX") || return 1
+  tmp=$(mktemp "${TMPDIR:-/tmp}/gitch.XXXXXX") || return 1
   awk -v b="$2" -v e="$3" -v old="$5" -v drop="$6" '
     skip { if (index($0, e) == 1) skip = 0; next }
     index($0, b) == 1 { skip = 1; next }
@@ -1663,7 +1662,7 @@ update_marked_block() {
 remove_marked_block() {   # $1 파일 $2 시작표시 $3 끝표시
   local f="$1" tmp
   [ -f "$f" ] || return 0
-  tmp=$(mktemp "${TMPDIR:-/tmp}/gitsw.XXXXXX") || return 1
+  tmp=$(mktemp "${TMPDIR:-/tmp}/gitch.XXXXXX") || return 1
   awk -v b="$2" -v e="$3" '
     skip { if (index($0, e) == 1) skip = 0; next }
     index($0, b) == 1 { skip = 1; next }
@@ -1676,11 +1675,11 @@ remove_marked_block() {   # $1 파일 $2 시작표시 $3 끝표시
 
 # ================= _hook: git 이 부르는 검사 =================
 
-hook_skip() { case ",${GITSW_SKIP:-}," in *",$1,"*|*",all,"*) return 0 ;; esac; return 1; }
+hook_skip() { case ",${GITCH_SKIP:-}," in *",$1,"*|*",all,"*) return 0 ;; esac; return 1; }
 
 hook_footer() {
   if [ "$ACTOR" = human ]; then
-    err "  (정말 필요하면 터미널에서 직접: GITSW_SKIP=<identity|secrets|bigfile|force|protect|remote|flow> git ...)"
+    err "  (정말 필요하면 터미널에서 직접: GITCH_SKIP=<identity|secrets|bigfile|force|protect|remote|flow> git ...)"
   else
     err "  → AI 는 이 검사를 우회하지 말고, 위 메시지를 사용자에게 그대로 보고하세요."
   fi
@@ -1691,7 +1690,7 @@ hook_main() {   # [--fallback] <이벤트> [인자...] — 보조 훅 스크립�
   [ "$1" = --fallback ] && shift
   ev="$1"; shift
   # 앱을 업데이트하면 gitch 만 바뀌고 연결 스크립트는 그대로라, 내용이 다르면 여기서 새로 쓴다 (못 쓰면 그대로 둔다)
-  if [ -f "$HOOK_DISPATCHER" ] && [ "$(cat "$HOOK_DISPATCHER" 2>/dev/null)" != "$(dispatcher_text "$(gitsw_cmd_path)")" ]; then
+  if [ -f "$HOOK_DISPATCHER" ] && [ "$(cat "$HOOK_DISPATCHER" 2>/dev/null)" != "$(dispatcher_text "$(gitch_cmd_path)")" ]; then
     write_dispatcher 2>/dev/null
   fi
   if hook_skip all || ! load_config || [ "$(git rev-parse --is-bare-repository 2>/dev/null)" = true ]; then
@@ -1770,7 +1769,7 @@ read -r -d '' SECRET_AWK <<'AWKEOF'
 function mask(s) { if (length(s) <= 10) return substr(s, 1, 3) "…"; return substr(s, 1, 8) "…(" length(s) "자)" }
 function okb(l) { return RSTART == 1 || substr(l, RSTART - 1, 1) !~ /[A-Za-z0-9_]/ }
 BEGIN { file = ""; skip = 0; ln = 0 }
-/^\+\+\+ / { f = substr($0, 5); if (substr(f, 1, 2) == "b/") f = substr(f, 3); file = f; skip = (file ~ ENVIRON["GITSW_LOCKRE"]); next }
+/^\+\+\+ / { f = substr($0, 5); if (substr(f, 1, 2) == "b/") f = substr(f, 3); file = f; skip = (file ~ ENVIRON["GITCH_LOCKRE"]); next }
 /^--- / { next }
 /^@@/ { s = $0; sub(/^@@ -[0-9]+(,[0-9]+)? \+/, "", s); sub(/[^0-9].*$/, "", s); ln = s + 0; next }
 /^\+/ {
@@ -1808,7 +1807,7 @@ run_gitleaks() {   # gitleaks 가 설치돼 있으면 스테이지 내용을 한
 
 hook_check_secrets() {
   local out bad="" f gl
-  out=$(git -c core.quotepath=off diff --cached --no-color --no-ext-diff --no-textconv -U0 --diff-filter=ACMR 2>/dev/null | GITSW_LOCKRE="$LOCKFILE_RE" awk "$SECRET_AWK")
+  out=$(git -c core.quotepath=off diff --cached --no-color --no-ext-diff --no-textconv -U0 --diff-filter=ACMR 2>/dev/null | GITCH_LOCKRE="$LOCKFILE_RE" awk "$SECRET_AWK")
   while IFS= read -r -d '' f; do
     [ -z "$f" ] && continue
     sensitive_name "$f" && bad="$bad  $f  — $SN_REASON"$'\n'
@@ -1820,7 +1819,7 @@ hook_check_secrets() {
     [ -n "$out" ] && printf '%s\n' "$out" | sed 's/^/  /' >&2
     [ -n "$gl" ] && printf '%s\n' "$gl" | sed 's/^/  /' >&2
     err "  해결: 그 파일/줄을 커밋에서 빼세요 (git restore --staged <파일>, .gitignore 에 추가)."
-    err "  일부러 넣는 예시 값이면 그 줄에 'gitch:allow' 주석을 붙이세요. (예전 이름 gitsw:allow 도 됩니다)"
+    err "  일부러 넣는 예시 값이면 그 줄에 'gitch:allow' 주석을 붙이세요."
     return 1
   fi
   return 0
@@ -1901,7 +1900,7 @@ hook_pre_push() {   # $1 원격 이름 $2 주소, 표준입력: <local ref> <loc
   # Flow gate (only in repositories that turned it on): without a signed passing record for the same commit, run the pre-push flow
   if [ $rc -eq 0 ] && [ -n "$refs" ] && ! hook_skip flow; then hook_flow_gate || rc=1; fi
   # gitch p 로 한 push 는 결과를 보고 gitch 가 직접 기록하므로 여기서는 건너뜀 (중복 기록 방지)
-  if [ $rc -eq 0 ]; then [ "${GITSW_NOLOG_PUSH:-}" = 1 ] || log_action push "remote=$remote" "url=$url" "account=${R_ACC:-}"
+  if [ $rc -eq 0 ]; then [ "${GITCH_NOLOG_PUSH:-}" = 1 ] || log_action push "remote=$remote" "url=$url" "account=${R_ACC:-}"
   else hook_footer; fi
   return $rc
 }
@@ -1949,7 +1948,7 @@ hook_check_refs() {   # $1 원격 $2 ref 줄들 $3 관리 서버 여부
     fi
     if ! is_zero_sha "$rsha"; then
       if ! git cat-file -e "$rsha^{commit}" 2>/dev/null || ! git merge-base --is-ancestor "$rsha" "$lsha" 2>/dev/null; then
-        if [ "${GITSW_ALLOW_FORCE:-}" != 1 ] && ! hook_skip force; then
+        if [ "${GITCH_ALLOW_FORCE:-}" != 1 ] && ! hook_skip force; then
           err "✘ [gitch] 강제 push(원격의 기존 커밋 덮어쓰기)를 막았습니다: ${br:-$rref}"
           err "  원격에 새 커밋이 있으면: gitch pl 로 받은 뒤 다시 push"
           err "  정말 덮어써야 하면 사용자가 직접: gitch p --force"
@@ -2044,7 +2043,7 @@ maybe_fetch() {   # $1 force|auto|never → 0 받음/최근에 받음, 1 실패,
   fh=$(git rev-parse --git-path FETCH_HEAD 2>/dev/null)
   if [ "$1" = auto ] && [ -f "$fh" ]; then
     age=$(( $(date +%s) - $(file_mtime "$fh") ))
-    [ "$age" -lt "${GITSW_FETCH_TTL:-60}" ] && return 0
+    [ "$age" -lt "${GITCH_FETCH_TTL:-60}" ] && return 0
   fi
   GIT_SSH_COMMAND="${GIT_SSH_COMMAND:-ssh -o BatchMode=yes -o ConnectTimeout=5}" GIT_TERMINAL_PROMPT=0 git fetch -q --no-tags origin 2>/dev/null
 }
@@ -2613,9 +2612,9 @@ push_cmd() {   # [--force [--yes]] [--dry-run] [--tags]
   net_env
   if has_upstream; then
     if [ -z "$force" ] && [ -z "$tags" ] && [ "$(git rev-list --count '@{u}..HEAD')" = 0 ]; then say "이미 최신입니다. (push 할 커밋 없음)"; return 0; fi
-    if [ -n "$force" ]; then GITSW_NOLOG_PUSH=1 GITSW_ALLOW_FORCE=1 git "${args[@]}"; else GITSW_NOLOG_PUSH=1 git "${args[@]}"; fi
+    if [ -n "$force" ]; then GITCH_NOLOG_PUSH=1 GITCH_ALLOW_FORCE=1 git "${args[@]}"; else GITCH_NOLOG_PUSH=1 git "${args[@]}"; fi
   else
-    if [ -n "$force" ]; then GITSW_NOLOG_PUSH=1 GITSW_ALLOW_FORCE=1 git "${args[@]}" -u origin "$br"; else GITSW_NOLOG_PUSH=1 git "${args[@]}" -u origin "$br"; fi
+    if [ -n "$force" ]; then GITCH_NOLOG_PUSH=1 GITCH_ALLOW_FORCE=1 git "${args[@]}" -u origin "$br"; else GITCH_NOLOG_PUSH=1 git "${args[@]}" -u origin "$br"; fi
   fi
   rc=$?
   if [ $rc -eq 0 ]; then
@@ -2806,7 +2805,7 @@ open_cmd() {
 
 rescue_line() {   # $1 번호 $2 ref
   local r="$2" n ts reason sha subj wip=""
-  n=${r#refs/gitsw/backup/}; ts=${n:0:15}; reason=${n:16}
+  n=${r#refs/gitch/backup/}; ts=${n:0:15}; reason=${n:16}
   sha=$(git rev-parse --short "$r" 2>/dev/null); subj=$(git log -1 --format=%s "$r" 2>/dev/null)
   git show-ref -q --verify "$r-wip" && wip="  ${DIM}(+수정 중이던 파일)${RESET}"
   printf '  %2s) %s-%s-%s %s:%s:%s  %-8s %s %s%s\n' "$1" "${ts:0:4}" "${ts:4:2}" "${ts:6:2}" "${ts:9:2}" "${ts:11:2}" "${ts:13:2}" "$reason" "$sha" "$subj" "$wip"
@@ -2815,7 +2814,7 @@ rescue_line() {   # $1 번호 $2 ref
 rescue_cmd() {   # [번호] [--branch 이름 | --restore [--yes]]
   require_repo
   local refs=() r i=0 pick="" restore="" branch="" yes=""
-  while IFS= read -r r; do [ -n "$r" ] && refs+=("$r"); done < <(git for-each-ref --sort=-refname --format='%(refname)' refs/gitsw/backup/ 2>/dev/null | grep -v -- '-wip$')
+  while IFS= read -r r; do [ -n "$r" ] && refs+=("$r"); done < <(git for-each-ref --sort=-refname --format='%(refname)' refs/gitch/backup/ 2>/dev/null | grep -v -- '-wip$')
   while [ $# -gt 0 ]; do
     case "$1" in
       --restore) restore=1 ;; --yes|-y) yes=1 ;;
@@ -3033,7 +3032,7 @@ overlap_graph() (   # 워크트리 경로·임시 폴더; 빌드·인덱서·캐
   git ls-files -z > "$dest/files.z" && git ls-files --others --exclude-standard -z >> "$dest/files.z" || return 1
   graph_safe_file_list "$dest/files.z" "$dest/files" "$dest/unsafe-paths.records" || return 1
   # 과거 공통 기준을 포함한 모든 비교 대상에 동일한 정적 분석을 적용합니다.
-  local GITCH_SWIFT_INDEX='' GITSW_SWIFT_DESCRIBE=0 GRAPH_INDEX=''
+  local GITCH_SWIFT_INDEX='' GITCH_SWIFT_DESCRIBE=0 GRAPH_INDEX=''
   before=$(graph_content_key "$dest" files) || return 20
   graph_collect "$dest" files '' 1 '' 1000 30 2 0 '' '' '' > "$dest/raw" || return 21
   after=$(graph_content_key "$dest" files) || return 22
@@ -3067,7 +3066,7 @@ overlap_index_graph() (   # 워크트리 경로·스냅샷 폴더; 작업 파일
     mkdir -p "$dest/src/$(dirname "$path")" && git show ":$path" > "$dest/src/$path" || return 1
   done < "$dest/files"
   cd "$dest/src" || return 1
-  GITCH_SWIFT_INDEX='' GITSW_SWIFT_DESCRIBE=0 GRAPH_INDEX='' \
+  GITCH_SWIFT_INDEX='' GITCH_SWIFT_DESCRIBE=0 GRAPH_INDEX='' \
     graph_collect "$dest" files '' 1 '' 1000 30 2 0 '' '' '' > "$dest/records"
 )
 
@@ -3258,7 +3257,7 @@ overlap_snapshot() (
         if [ ! -f "$dest/base-$base/records" ]; then
           mkdir -p "$dest/base-$base"
           if graph_base_extract "$base" "$dest/base-$base" && \
-            ( cd "$dest/base-$base/src" && GITCH_SWIFT_INDEX='' GITSW_SWIFT_DESCRIBE=0 GRAPH_INDEX='' \
+            ( cd "$dest/base-$base/src" && GITCH_SWIFT_INDEX='' GITCH_SWIFT_DESCRIBE=0 GRAPH_INDEX='' \
               graph_collect "$dest/base-$base" files '' 1 '' 1000 30 2 0 '' '' '' > "$dest/base-$base/records" ); then :
           else
             overlap_diagnostic "$dest" BASE_GRAPH_UNAVAILABLE "$left_id ↔ $right_id: 공통 조상의 코드 의존을 읽지 못했습니다."
@@ -3307,7 +3306,7 @@ overlap_snapshot() (
   # 처음 사용한 공통 조상 커밋으로 다시 확인합니다.
   for ((i=1;i<=n;i++)); do
     if [ -f "$dest/graph-$i/fingerprint" ]; then
-      if ! ( cd "${paths[$i]}" && GITCH_SWIFT_INDEX='' GITSW_SWIFT_DESCRIBE=0 GRAPH_INDEX='' \
+      if ! ( cd "${paths[$i]}" && GITCH_SWIFT_INDEX='' GITCH_SWIFT_DESCRIBE=0 GRAPH_INDEX='' \
         graph_content_key "$dest/graph-$i" files ) > "$dest/graph-$i/fingerprint-after" \
         || ! cmp -s "$dest/graph-$i/fingerprint" "$dest/graph-$i/fingerprint-after"; then
         overlap_diagnostic "$dest" SNAPSHOT_CHANGED "w$i: 분석 중 소스 또는 스테이지가 바뀌었습니다. 다시 점검하세요." "w$i"
@@ -3486,7 +3485,7 @@ move_cmd() {
     [ ! -e "$path" ] || [ -d "$path" ] || die "대상 상위 경로가 폴더가 아닙니다: $path"
     case "$path" in */*) path=${path%/*} ;; *) path='' ;; esac
   done
-  GITSW_SWIFT_DESCRIBE=0 GITCH_SWIFT_INDEX='' GRAPH_INDEX='' graph_collect "$tmp/graph" modules '' 1 '' 1000 30 2 0 '' "$(basename "$top")" '' > "$tmp/modules" \
+  GITCH_SWIFT_DESCRIBE=0 GITCH_SWIFT_INDEX='' GRAPH_INDEX='' graph_collect "$tmp/graph" modules '' 1 '' 1000 30 2 0 '' "$(basename "$top")" '' > "$tmp/modules" \
     || die '파일의 소속 모듈을 읽지 못했습니다.'
   GITCH_RENDER_RICH="${UI_ACTIVE:-0}" GITCH_RENDER_UTF8="${UI_UTF8:-0}" \
   GITCH_RENDER_ACCENT="$ACCENT" GITCH_RENDER_DIM="$DIM" GITCH_RENDER_RESET="$RESET" GITCH_RENDER_YELLOW="$YELLOW" GITCH_RENDER_GREEN="$GREEN" \
@@ -3498,7 +3497,7 @@ move_cmd() {
       || die '이동 영향 계획을 만들지 못했습니다.'
   # 계획을 출력하기 전에 원본 내용·인덱스·미추적 경로를 다시 확인합니다.
   stamp=$(cat "$tmp/graph/fingerprint")
-  after=$(GITCH_SWIFT_INDEX='' GITSW_SWIFT_DESCRIBE=0 GRAPH_INDEX='' graph_content_key "$tmp/graph" files) || die '분석 후 파일 상태를 확인하지 못했습니다.'
+  after=$(GITCH_SWIFT_INDEX='' GITCH_SWIFT_DESCRIBE=0 GRAPH_INDEX='' graph_content_key "$tmp/graph" files) || die '분석 후 파일 상태를 확인하지 못했습니다.'
   git ls-files -z > "$tmp/files-after.z" && git ls-files --others --exclude-standard -z >> "$tmp/files-after.z" || die '분석 후 파일 목록을 확인하지 못했습니다.'
   if [ "$stamp" != "$after" ] || ! cmp -s "$tmp/graph/files.z" "$tmp/files-after.z"; then
     die '분석 중 소스·스테이지·파일 목록이 바뀌었습니다. 다시 실행하세요.'
@@ -4058,7 +4057,7 @@ ssh_host_sync() {   # $1 별칭 $2 서버 $3 포트 — 이미 있는 Host 블�
   [ "${cur% *}" = "$h" ] || return 1
   [ "${cur##* }" = "$port" ] && return 1
   backup_file "$SSH_CONFIG"
-  tmp=$(mktemp "${TMPDIR:-/tmp}/gitsw.XXXXXX") || die "임시 파일을 만들 수 없습니다."
+  tmp=$(mktemp "${TMPDIR:-/tmp}/gitch.XXXXXX") || die "임시 파일을 만들 수 없습니다."
   # 블록의 Port 줄을 지우고 첫 HostName 줄 바로 뒤에 새 Port 를 둔다 (ssh 는 처음 나온 값만 쓰므로)
   awk -v host="$al" -v port="$port" '
     { k = tolower($1) }
@@ -4092,11 +4091,8 @@ doctor_cmd() {   # [--json] [--no-net]
   if [ -x /usr/bin/git ] && [ "$(command -v git)" != /usr/bin/git ]; then
     dr 기본 INFO "Apple git(/usr/bin/git)으로 커밋하면 저장소별 보조 훅이 검사합니다"
   fi
-  if [ "$(resolve_link "$BIN_LINK" 2>/dev/null)" = "$(self_path)" ]; then dr 기본 OK "gitch 명령 → $(tilde "$(self_path)") (v$GITSW_VERSION)"
+  if [ "$(resolve_link "$BIN_LINK" 2>/dev/null)" = "$(self_path)" ]; then dr 기본 OK "gitch 명령 → $(tilde "$(self_path)") (v$GITCH_VERSION)"
   else dr 기본 WARN "~/bin/gitch 가 이 파일을 가리키지 않습니다 → $(tilde "$(self_path)") install"; fi
-  if is_link "$SHIM_LINK" && [ "$(resolve_link "$SHIM_LINK")" != "$(self_path)" ]; then
-    dr 기본 WARN "~/bin/gitsw(예전 이름)가 다른 파일을 가리킵니다: $(tilde "$(resolve_link "$SHIM_LINK")") → $(tilde "$(self_path)") install"
-  fi
   if grep -q "^$SHELL_BEGIN" "$SHELL_RC" 2>/dev/null; then dr 기본 OK "터미널 연동($(tilde "$SHELL_RC"))"; else dr 기본 WARN "터미널 연동 없음 → gitch install"; fi
   if [ -n "$IS_WINDOWS" ]; then
     if [ -f "$BIN_LINK.cmd" ]; then dr 기본 OK "PowerShell · cmd 에서 부르는 명령(~/bin/gitch.cmd)"; else dr 기본 WARN "~/bin/gitch.cmd 없음 — PowerShell · cmd 에서 gitch 를 못 부릅니다 → gitch install"; fi
@@ -4143,12 +4139,12 @@ doctor_cmd() {   # [--json] [--no-net]
   repos=$(find_repos)
   while IFS= read -r d; do
     [ -z "$d" ] && continue
-    [ -n "$(git -C "$d" config --get gitswitch.account)" ] || continue
-    [ "$(git -C "$d" config --get gitswitch.ignore)" = true ] && continue
+    [ -n "$(git -C "$d" config --get gitch.account)" ] || continue
+    [ "$(git -C "$d" config --get gitch.ignore)" = true ] && continue
     if ! repo_hooks_ok "$d"; then
       missing=$((missing+1))
       f=$(repo_hooks_dir "$d")/pre-commit
-      grep -q gitswitch-lock "$f" 2>/dev/null && v1=$((v1+1))
+      grep -q gitch-lock "$f" 2>/dev/null && v1=$((v1+1))
     fi
   done <<< "$repos"
   if [ "$missing" -gt 0 ]; then
@@ -4159,7 +4155,7 @@ doctor_cmd() {   # [--json] [--no-net]
 
   # [AI]
   for f in "$CLAUDE_DIR/CLAUDE.md" "$CODEX_DIR/AGENTS.md"; do
-    grep -q 'gitsw:begin' "$f" 2>/dev/null && dr AI OK "규칙: $(tilde "$f")" || dr AI WARN "$(tilde "$f") 에 규칙 없음 → gitch ai"
+    grep -q 'gitch:begin' "$f" 2>/dev/null && dr AI OK "규칙: $(tilde "$f")" || dr AI WARN "$(tilde "$f") 에 규칙 없음 → gitch ai"
   done
   [ -d "$CLAUDE_DIR" ] && { [ -f "$CLAUDE_DIR/skills/gitch/SKILL.md" ] && dr AI OK "Claude 스킬" || dr AI WARN "Claude 스킬 없음 → gitch ai"; }
   [ -d "$CODEX_DIR" ] && { [ -f "$CODEX_DIR/skills/gitch/SKILL.md" ] && dr AI OK "Codex 스킬" || dr AI WARN "Codex 스킬 없음 → gitch ai"; }
@@ -4167,9 +4163,9 @@ doctor_cmd() {   # [--json] [--no-net]
     if grep -q 'guard --claude' "$CLAUDE_DIR/settings.json" 2>/dev/null; then dr AI OK "Claude Code 명령 검사 훅 (~/.claude/settings.json)"
     else dr AI WARN "Claude Code 명령 검사 훅 없음 → gitch ai"; fi
     case "$(lower "$CFG_AI_PUSH")" in
-      branch) dr AI INFO "Claude push 정책: 작업 브랜치는 자동, main/보호 브랜치 push 와 PR 생성만 확인 (gitsw.aiPush=branch)" ;;
-      allow) dr AI INFO "Claude push 정책: 확인 없음 (gitsw.aiPush=allow) — 검사 훅은 그대로" ;;
-      *) dr AI INFO "Claude push 정책: 매번 확인 (gitsw.aiPush=ask) — 작업 브랜치 자동: gitch config set gitsw.aiPush branch" ;;
+      branch) dr AI INFO "Claude push 정책: 작업 브랜치는 자동, main/보호 브랜치 push 와 PR 생성만 확인 (gitch.aiPush=branch)" ;;
+      allow) dr AI INFO "Claude push 정책: 확인 없음 (gitch.aiPush=allow) — 검사 훅은 그대로" ;;
+      *) dr AI INFO "Claude push 정책: 매번 확인 (gitch.aiPush=ask) — 작업 브랜치 자동: gitch config set gitch.aiPush branch" ;;
     esac
   fi
 
@@ -4232,7 +4228,7 @@ doctor_print() {
       [ -n "$first" ] || jl="$jl,"; first=""
       jl="$jl{\"section\":$(json_str "$sec"),\"level\":$(json_str "$lv"),\"message\":$(json_str "$msg")}"
     done
-    printf '{"schemaVersion":1,"version":%s,"problems":%s,"items":[%s]}\n' "$(json_str "$GITSW_VERSION")" "$DR_PROBLEMS" "$jl"
+    printf '{"schemaVersion":1,"version":%s,"problems":%s,"items":[%s]}\n' "$(json_str "$GITCH_VERSION")" "$DR_PROBLEMS" "$jl"
     return
   fi
   for it in "${DR_ITEMS[@]}"; do
@@ -4298,7 +4294,7 @@ cfg_header() {
   cat <<'EOF'
 # gitch 설정 파일 (git config 형식) — 'gitch config set|add|unset' 으로 고치거나 사용자가 직접 편집
 #
-# [gitsw]
+# [gitch]
 #     scanRoot = ~/Develop          # gitch scan 기본 폴더
 #     aiPush = ask                  # Claude Code push 확인: ask 매번 | branch 기본/보호 브랜치와 PR 만 | allow 안 함
 #     maxFileMB = 50                # 이 크기 이상 파일은 커밋 막기
@@ -4329,14 +4325,14 @@ cfg_begin() {   # 설정을 바꾸기 전: 파일이 없으면 만들고, 되돌
   mkdir -p "$(dirname "$CFG")" || die "설정 폴더를 만들 수 없습니다."
   [ -f "$CFG" ] || cfg_header > "$CFG"
   backup_file "$CFG"
-  CFG_BAK=$(mktemp "${TMPDIR:-/tmp}/gitsw-cfg.XXXXXX") || die "임시 파일을 만들 수 없습니다."
+  CFG_BAK=$(mktemp "${TMPDIR:-/tmp}/gitch-cfg.XXXXXX") || die "임시 파일을 만들 수 없습니다."
   cp -p "$CFG" "$CFG_BAK"
 }
 
 cfg_end() {   # $1 git config 의 종료 코드 $2 무엇을 바꿨나 — 실패했거나 바꾼 뒤 검사가 틀리면 되돌림
   if [ "$1" -ne 0 ]; then cp -p "$CFG_BAK" "$CFG"; rm -f "$CFG_BAK"; die "설정을 바꾸지 못했습니다: $2"; fi
-  if ! GITSW_CONFIG="$CFG" "$(self_path)" config check >/dev/null 2>&1; then
-    [ -n "$MACHINE_JSON" ] || GITSW_CONFIG="$CFG" "$(self_path)" config check 2>&1 | sed 's/^/  /' >&2
+  if ! GITCH_CONFIG="$CFG" "$(self_path)" config check >/dev/null 2>&1; then
+    [ -n "$MACHINE_JSON" ] || GITCH_CONFIG="$CFG" "$(self_path)" config check 2>&1 | sed 's/^/  /' >&2
     cp -p "$CFG_BAK" "$CFG"; rm -f "$CFG_BAK"
     die "설정이 올바르지 않아 되돌렸습니다."
   fi
@@ -4447,7 +4443,7 @@ config_cmd() {   # path | show | get <키> | check | set|add|unset|unset-all <�
       confirm "gitch 설정 변경: $sub ${args[*]}" "$yes" "gitch config $sub ${args[*]} --yes"
       cfg_change "$sub" "${args[0]}" "${args[1]}"
       ok "설정을 바꿨습니다: $sub ${args[*]}"
-      case "$(lower "${args[0]}")" in account.*|folder.*|org.*|gitsw.sshstrict|gitsw.aipush) after_config_change ;; esac ;;
+      case "$(lower "${args[0]}")" in account.*|folder.*|org.*|gitch.sshstrict|gitch.aipush) after_config_change ;; esac ;;
     edit)
       can_prompt || die "설정 편집은 사용자가 터미널에서 직접 하세요: gitch config edit"
       mkdir -p "$(dirname "$CFG")"; [ -f "$CFG" ] || cfg_header > "$CFG"
@@ -5109,10 +5105,10 @@ sign_cmd() {   # on | off | (상태)  [--yes]
     on|off)
       can_prompt || [ -n "$yes" ] || die "서명 설정은 사용자가 터미널에서 직접 'gitch sign $1' 을 실행해야 합니다."
       need_config
-      if [ "$1" = on ]; then git config --global gitswitch.sign true; else git config --global --unset gitswitch.sign 2>/dev/null; fi
+      if [ "$1" = on ]; then git config --global gitch.sign true; else git config --global --unset gitch.sign 2>/dev/null; fi
       for id in "${ACC_IDS[@]}"; do sync_include_file "$id"; done
       while IFS= read -r d; do
-        acc=$(git -C "$d" config --get gitswitch.account)
+        acc=$(git -C "$d" config --get gitch.account)
         [ -n "$acc" ] && is_account "$acc" && { set_account "$acc"; apply_sign "$d"; }
       done < <(find_repos)
       if [ "$1" = off ]; then say "커밋 서명을 껐습니다."; return 0; fi
@@ -5151,7 +5147,7 @@ ssh_cmd() {   # prune [--yes]
       confirm "위 Host 설정을 ~/.ssh/config 에서 지울까요? (키 파일은 그대로, 백업 남김)" "$yes" "gitch ssh prune --yes"
       backup_file "$SSH_CONFIG"
       for h in $orphans; do
-        tmp=$(mktemp "${TMPDIR:-/tmp}/gitsw.XXXXXX") || die "임시 파일을 만들 수 없습니다."
+        tmp=$(mktemp "${TMPDIR:-/tmp}/gitch.XXXXXX") || die "임시 파일을 만들 수 없습니다."
         awk -v host="$h" '
           /^(Host|Match)[ \t]/ { skip = ($1 == "Host" && $2 == host && NF == 2) }
           skip { next }
@@ -5171,10 +5167,10 @@ ssh_cmd() {   # prune [--yes]
 
 gen_ai_block() {
   local i id strip=""
-  echo "<!-- gitsw:begin — 'gitch ai' 가 자동으로 만들고 갱신합니다. 직접 고치지 마세요 -->"
+  echo "<!-- gitch:begin — 'gitch ai' 가 자동으로 만들고 갱신합니다. 직접 고치지 마세요 -->"
   echo "## Git 계정 규칙 (gitch)"
   echo ""
-  echo "이 컴퓨터에는 git 계정이 여러 개 있고, 모든 git 작업은 \`gitch\` 로 한다(예전 이름 \`gitsw\` 도 같은 명령). (자세한 절차: gitch 스킬, \`gitch help\`)"
+  echo "이 컴퓨터에는 git 계정이 여러 개 있고, 모든 git 작업은 \`gitch\` 로 한다. (자세한 절차: gitch 스킬, \`gitch help\`)"
   echo ""
   echo "계정:"
   for id in "${ACC_IDS[@]}"; do echo "- $id — $(acc_email "$id") — $(acc_hosts_desc "$id")"; done
@@ -5200,17 +5196,17 @@ gen_ai_block() {
   echo ""
   echo "금지/확인:"
   echo "- 잠긴 저장소(LOCKED_ACCOUNT)의 계정을 다른 계정으로 바꾸거나(\`gitch use <다른계정>\`) 잠금을 풀지(\`gitch unlock\`) 않는다. 사용자가 명시적으로 요청한 경우만 예외. 같은 계정을 다시 적용하는 \`gitch use <LOCKED_ACCOUNT>\` 는 괜찮다."
-  echo "- \`--no-verify\`, \`git push --force\`, \`GITSW_SKIP\`·\`GIT_AUTHOR_*\` 같은 환경변수, \`git -c user.*\`·\`core.hooksPath\` 로 검사를 우회하지 않는다. 강제 push 가 꼭 필요하면 사용자에게 요청한다."
+  echo "- \`--no-verify\`, \`git push --force\`, \`GITCH_SKIP\`·\`GIT_AUTHOR_*\` 같은 환경변수, \`git -c user.*\`·\`core.hooksPath\` 로 검사를 우회하지 않는다. 강제 push 가 꼭 필요하면 사용자에게 요청한다."
   echo "- commit/push 가 \`[gitch]\` 메시지로 거부되면 우회하지 말고 메시지를 그대로 사용자에게 보고한다. 비밀값으로 막힌 파일은 커밋에서 빼고 사용자에게 알린다."
   echo "- \`gitch undo\`·\`amend\`·\`fix --yes\`·\`rescue --restore\` 는 사용자가 요청했을 때만, push 전 커밋에만 쓴다."
-  echo "- ~/.gitconfig, ~/.ssh, ~/.config/gitsw 를 직접 수정하지 않는다. HTTPS 비밀번호/토큰 인증을 시도하지 않는다."
+  echo "- ~/.gitconfig, ~/.ssh, ~/.config/gitch 를 직접 수정하지 않는다. HTTPS 비밀번호/토큰 인증을 시도하지 않는다."
   echo "- 계정 추가, GitHub 브라우저 로그인, SSH 설정은 사용자가 Gitrochi 앱의 계정 설정 또는 터미널에서 직접 진행한다. AI는 사용자의 명시적인 요청 없이 계정·인증·SSH 키를 만들거나 변경하지 않는다."
   echo "- \`gitch remove\`·\`sign on|off\`·\`import\` 와 \`gh auth login\` 은 사용자가 터미널에서 직접 실행하도록 안내한다."
   echo "- 흐름 파일을 고치면 신뢰가 풀려 사람이 다시 승인한다(\`gitch flow trust\` · \`gitch flow hold release\` 는 사람이 실행). 흐름 실행 기록(.git/gitch/flow)을 직접 만들거나 고치지 않고, \`--yes\` 로 확인을 건너뛰지 않는다."
   for id in "${ACC_IDS[@]}"; do acc_idx "$id"; [ "${ACC_TRAILER[$ACC_I]}" = strip ] && strip="$strip${strip:+, }$id"; done
   [ -n "$strip" ] && echo "- $strip 계정 저장소의 커밋 메시지에는 AI 표기(Co-Authored-By: Claude 등)를 넣지 않는다."
   echo "- git 계정 문제가 생기면 \`gitch doctor\` 결과를 사용자에게 보여준다."
-  echo "<!-- gitsw:end -->"
+  echo "<!-- gitch:end -->"
 }
 
 write_ai_rules() {
@@ -5218,12 +5214,12 @@ write_ai_rules() {
   block=$(gen_ai_block)
   for f in "$CLAUDE_DIR/CLAUDE.md" "$CODEX_DIR/AGENTS.md"; do
     backup_file "$f"
-    update_marked_block "$f" "<!-- gitsw:begin" "<!-- gitsw:end -->" "$block" "## Git 계정 규칙"
+    update_marked_block "$f" "<!-- gitch:begin" "<!-- gitch:end -->" "$block" "## Git 계정 규칙"
     say "  ${GREEN}✔${RESET} AI 규칙: $(tilde "$f")"
   done
   if [ -d "$GEMINI_DIR" ]; then
     backup_file "$GEMINI_DIR/GEMINI.md"
-    update_marked_block "$GEMINI_DIR/GEMINI.md" "<!-- gitsw:begin" "<!-- gitsw:end -->" "$block" "## Git 계정 규칙"
+    update_marked_block "$GEMINI_DIR/GEMINI.md" "<!-- gitch:begin" "<!-- gitch:end -->" "$block" "## Git 계정 규칙"
     say "  ${GREEN}✔${RESET} AI 규칙: ~/.gemini/GEMINI.md"
   fi
   dim "  Cursor 등 다른 도구: 'gitch ai --print' 내용을 그 도구의 규칙 설정에 붙여넣으세요."
@@ -5273,7 +5269,7 @@ gitch ci                                     # CI 결과
 ```
 
 - 기본 브랜치에서는 PR 을 만들 수 없다 → `gitch b feature/이름` 으로 브랜치를 만들고 작업한다.
-- Claude Code 에서는 `gitsw.aiPush` 설정에 따라 확인 창이 뜬다. branch 면 작업 브랜치 push 는 바로 되고, main/보호 브랜치 push 와 PR 생성만 확인한다.
+- Claude Code 에서는 `gitch.aiPush` 설정에 따라 확인 창이 뜬다. branch 면 작업 브랜치 push 는 바로 되고, main/보호 브랜치 push 와 PR 생성만 확인한다.
 - GitHub PR 은 gh 로그인이 필요하다. "gh 에 <계정> 로그인이 필요" 가 나오면 사용자가 Gitrochi 앱의 GitHub 로그인 또는 터미널의 `gh auth login` 으로 진행하도록 안내한다.
 - GitLab MR 은 push 옵션으로 만들어진다 (새 커밋이 있어야 함). 출력된 MR 주소를 사용자에게 알려준다.
 
@@ -5302,7 +5298,7 @@ gitch flow report last                       # 마지막 실행 결과
 | push 할 커밋 중 N개의 작성자가 | 잘못된 작성자 커밋 | 사용자 동의 후 `gitch fix --yes` |
 | 이 곳으로 push 할 수 없습니다 | 폴더 허용 목록 밖 | push 대상을 다시 확인하고 사용자에게 보고 |
 
-`--no-verify`, `GITSW_SKIP`, `git -c ...`, `GIT_AUTHOR_*` 로 절대 우회하지 않는다.
+`--no-verify`, `GITCH_SKIP`, `git -c ...`, `GIT_AUTHOR_*` 로 절대 우회하지 않는다.
 
 ## 5. 충돌 / 진행 중 작업
 
@@ -5382,9 +5378,9 @@ CLAUDE_ALLOW='["Bash(gitch ck:*)","Bash(gitch check:*)","Bash(gitch status:*)","
 # 예전 버전이 넣었지만 지금은 쓰지 않는 것 (설치할 때 지움) — 위 항목과 겹치는 것, gitsw 시절의 'Bash(gitsw …)' 항목
 CLAUDE_ALLOW_OLD='["Bash(gitch ck)","Bash(gitch status)","Bash(gitch preflight)","Bash(gitch l)","Bash(gitch d)","Bash(gitch doctor)","Bash(gitch list)","Bash(gitch b)","Bash(gitch pr status:*)","Bash(gitsw ck)","Bash(gitsw status)","Bash(gitsw preflight)","Bash(gitsw l)","Bash(gitsw d)","Bash(gitsw doctor)","Bash(gitsw list)","Bash(gitsw b)","Bash(gitsw pr status:*)","Bash(gitsw ck:*)","Bash(gitsw check:*)","Bash(gitsw status:*)","Bash(gitsw st:*)","Bash(gitsw preflight:*)","Bash(gitsw l:*)","Bash(gitsw log:*)","Bash(gitsw d:*)","Bash(gitsw diff:*)","Bash(gitsw doctor:*)","Bash(gitsw list:*)","Bash(gitsw report:*)","Bash(gitsw audit:*)","Bash(gitsw help)","Bash(gitsw version)","Bash(gitsw ci)","Bash(gitsw rescue)","Bash(gitsw c:*)","Bash(gitsw commit:*)","Bash(gitsw cp:*)","Bash(gitsw p:*)","Bash(gitsw push:*)","Bash(gitsw pl)","Bash(gitsw pull)","Bash(gitsw up)","Bash(gitsw b:*)","Bash(gitsw branch:*)","Bash(gitsw wt:*)","Bash(gitsw continue)","Bash(gitsw sync)","Bash(gitsw clone:*)","Bash(gitsw pr:*)"]'
 JQ_CLAUDE_INSTALL='
-  def notgitsw: ((.hooks // []) | map((.command // "") | test("(gitch|gitsw)\"? guard")) | any) | not;
+  def notguard: ((.hooks // []) | map((.command // "") | test("(gitch|gitsw)\"? guard")) | any) | not;
   .hooks = (.hooks // {})
-  | .hooks.PreToolUse = (((.hooks.PreToolUse // []) | map(select(notgitsw))) + [
+  | .hooks.PreToolUse = (((.hooks.PreToolUse // []) | map(select(notguard))) + [
       {"matcher": "Bash", "hooks": [{"type": "command", "command": $cmd, "timeout": 15}]},
       {"matcher": "Edit|Write|MultiEdit|NotebookEdit", "hooks": [{"type": "command", "command": $cmd, "timeout": 15}]}
     ])
@@ -5392,8 +5388,8 @@ JQ_CLAUDE_INSTALL='
   | .permissions.allow = (((.permissions.allow // []) | map(select(. as $x | ($old | any(.[]; . == $x)) | not))) as $kept
       | reduce $allow[] as $x ($kept; if any(.[]; . == $x) then . else . + [$x] end))'
 JQ_CLAUDE_REMOVE='
-  def notgitsw: ((.hooks // []) | map((.command // "") | test("(gitch|gitsw)\"? guard")) | any) | not;
-  (if .hooks.PreToolUse then .hooks.PreToolUse |= map(select(notgitsw)) else . end)
+  def notguard: ((.hooks // []) | map((.command // "") | test("(gitch|gitsw)\"? guard")) | any) | not;
+  (if .hooks.PreToolUse then .hooks.PreToolUse |= map(select(notguard)) else . end)
   | (if .hooks.PreToolUse == [] then del(.hooks.PreToolUse) else . end)
   | (if .hooks == {} then del(.hooks) else . end)
   | (if .permissions.allow then .permissions.allow |= map(select(. as $x | ($allow | any(.[]; . == $x)) | not)) else . end)
@@ -5404,12 +5400,12 @@ write_claude_settings() {
   [ -d "$CLAUDE_DIR" ] || return 0
   command -v jq >/dev/null 2>&1 || { warn "jq 가 없어 Claude Code 검사 훅을 설치하지 못했습니다 ($(install_hint jq jqlang.jq))"; return 1; }
   local f="$CLAUDE_DIR/settings.json" tmp cmd
-  cmd="\"$(gitsw_cmd_path)\" guard --claude"
+  cmd="\"$(gitch_cmd_path)\" guard --claude"
   if [ -f "$f" ]; then
     jq empty "$f" >/dev/null 2>&1 || { warn "$(tilde "$f") 이 올바른 JSON 이 아니라 건드리지 않았습니다"; return 1; }
     backup_file "$f"
   fi
-  tmp=$(mktemp "${TMPDIR:-/tmp}/gitsw-claude.XXXXXX") || return 1
+  tmp=$(mktemp "${TMPDIR:-/tmp}/gitch-claude.XXXXXX") || return 1
   if { if [ -f "$f" ]; then cat "$f"; else echo '{}'; fi; } | jq --arg cmd "$cmd" --argjson allow "$CLAUDE_ALLOW" --argjson old "$CLAUDE_ALLOW_OLD" "$JQ_CLAUDE_INSTALL" > "$tmp"; then
     cat "$tmp" > "$f"
     say "  ${GREEN}✔${RESET} Claude Code 명령 검사 훅 + 읽기 명령 허용: $(tilde "$f")"
@@ -5422,14 +5418,14 @@ write_claude_settings() {
 ai_remove() {
   local f tmp d
   for f in "$CLAUDE_DIR/CLAUDE.md" "$CODEX_DIR/AGENTS.md" "$GEMINI_DIR/GEMINI.md"; do
-    grep -q 'gitsw:begin' "$f" 2>/dev/null || continue
-    backup_file "$f"; remove_marked_block "$f" "<!-- gitsw:begin" "<!-- gitsw:end -->"
+    grep -q 'gitch:begin' "$f" 2>/dev/null || continue
+    backup_file "$f"; remove_marked_block "$f" "<!-- gitch:begin" "<!-- gitch:end -->"
   done
   for d in "$CLAUDE_DIR" "$CODEX_DIR"; do rm -rf "$d/skills/gitch"; remove_legacy_skill "$d"; done
   f="$CLAUDE_DIR/settings.json"
   if [ -f "$f" ] && command -v jq >/dev/null 2>&1 && jq empty "$f" >/dev/null 2>&1; then
     backup_file "$f"
-    tmp=$(mktemp "${TMPDIR:-/tmp}/gitsw-claude.XXXXXX") || return 1
+    tmp=$(mktemp "${TMPDIR:-/tmp}/gitch-claude.XXXXXX") || return 1
     jq --argjson allow "$(jq -cn --argjson a "$CLAUDE_ALLOW" --argjson b "$CLAUDE_ALLOW_OLD" '$a + $b')" "$JQ_CLAUDE_REMOVE" "$f" > "$tmp" && cat "$tmp" > "$f"
     rm -f "$tmp"
   fi
@@ -5550,14 +5546,14 @@ g_protected() {   # gitch 가 관리하는 파일인지 (Windows 는 대소문�
 
 g_sensitive_key() {
   case "$1" in
-    user.*|author.*|committer.*|gitswitch.*|core.hookspath|hook.*|url.*|includeif.*|include.*|core.sshcommand) return 0 ;;
+    user.*|author.*|committer.*|gitch.*|core.hookspath|hook.*|url.*|includeif.*|include.*|core.sshcommand) return 0 ;;
     remote.*.url|remote.*.pushurl|alias.*|gpg.*|commit.gpgsign) return 0 ;;
   esac
   return 1
 }
 
-g_push_mode() {   # gitsw.aiPush → ask(매번 확인) | branch(기본/보호 브랜치만 확인) | allow(확인 안 함)
-  local p; p=$(lower "$(git config -f "$CFG" --get gitsw.aipush 2>/dev/null)")
+g_push_mode() {   # gitch.aiPush → ask(매번 확인) | branch(기본/보호 브랜치만 확인) | allow(확인 안 함)
+  local p; p=$(lower "$(git config -f "$CFG" --get gitch.aipush 2>/dev/null)")
   case "$p" in allow|branch) printf '%s' "$p" ;; *) printf 'ask' ;; esac
 }
 g_cur_branch() { git -C "$G_CWD" symbolic-ref --short HEAD 2>/dev/null; }
@@ -5582,13 +5578,13 @@ g_push_check() {   # $1 설명 $2 원격 $3.. 올라갈 브랜치 (빈 값 = 알
       def=$(g_remote_default "$remote")
       for b in "$@"; do
         if [ -z "$b" ] || [ "$b" = "$def" ] || [ "$b" = main ] || [ "$b" = master ] || \
-           git -C "$G_CWD" config --get-all gitswitch.protect 2>/dev/null | grep -qx -- "$b"; then
+           git -C "$G_CWD" config --get-all gitch.protect 2>/dev/null | grep -qx -- "$b"; then
           g_decide ask "$what — 기본/보호 브랜치(${b:-?})에 올리기 전에 사용자 확인을 받습니다. (작업 브랜치는 확인 없이 push 됩니다)"
           return 0
         fi
       done
       return 0 ;;
-    *) g_decide ask "$what — 원격에 올리기 전에 사용자 확인을 받습니다. (작업 브랜치는 자동으로 하려면 사용자가: gitch config set gitsw.aiPush branch)" ;;
+    *) g_decide ask "$what — 원격에 올리기 전에 사용자 확인을 받습니다. (작업 브랜치는 자동으로 하려면 사용자가: gitch config set gitch.aiPush branch)" ;;
   esac
 }
 
@@ -5603,7 +5599,7 @@ guard_env() {   # NAME=값
   case "$name" in
     GITCH_FLOW|GITCH_FLOW_NO_KEYSTORE|GITCH_FLOW_CACHE|GITCH_FLOW_DETACHED|GITCH_FLOW_OUT_DIR|GITCH_FLOW_GIT|GITCH_PATH|GITCH_BASH|GITCH_DOCKER)
       g_decide deny "흐름 엔진의 위치 · 동작을 바꾸는 환경변수($name)는 AI 가 쓸 수 없습니다. 필요하면 사용자에게 요청하세요." ;;
-    GITSW_SKIP|GITSW_ALLOW_FORCE|GITSW_CONFIG|GITSW_ACTOR|GITSW_INTERNAL|GITSW_NOLOG_PUSH)
+    GITCH_SKIP|GITCH_ALLOW_FORCE|GITCH_CONFIG|GITCH_ACTOR|GITCH_INTERNAL|GITCH_NOLOG_PUSH)
       g_decide deny "gitch 검사를 바꾸는 환경변수($name)는 AI 가 쓸 수 없습니다. 필요하면 사용자에게 요청하세요." ;;
     GIT_AUTHOR_NAME|GIT_AUTHOR_EMAIL|GIT_COMMITTER_NAME|GIT_COMMITTER_EMAIL|GIT_SSH|GIT_SSH_COMMAND|GIT_CONFIG|GIT_CONFIG_GLOBAL|GIT_CONFIG_SYSTEM|GIT_CONFIG_NOSYSTEM|GIT_CONFIG_COUNT|GIT_CONFIG_KEY_*|GIT_CONFIG_VALUE_*|GIT_CONFIG_PARAMETERS)
       g_decide deny "환경변수($name)로 작성자/SSH/git 설정을 바꾸면 gitch 검사를 우회하게 됩니다. 'gitch use <계정>' 을 쓰세요." ;;
@@ -5827,7 +5823,7 @@ guard_git() {
   return 0
 }
 
-guard_gitsw_work() {
+guard_gitch_work() {
   local action=${1:-help} name='' dry='' delete='' force='' tags='' first_child='' token rows path branch
   local G_CWD="$G_CWD"
   [ $# -eq 0 ] || shift
@@ -5892,7 +5888,7 @@ guard_gitsw_work() {
   done <<< "$rows"
 }
 
-guard_gitsw() {
+guard_gitch() {
   local i=$1 sub="${GW[$1]:-}" rest=() lock acc k o
   rest=("${GW[@]:$((i+1))}")
   case "$sub" in
@@ -5918,14 +5914,14 @@ guard_gitsw() {
     use)
       acc=${rest[0]:-}
       case "$acc" in ""|-*) return 0 ;; esac
-      lock=$(git -C "$G_CWD" config --get gitswitch.account 2>/dev/null)
+      lock=$(git -C "$G_CWD" config --get gitch.account 2>/dev/null)
       [ -n "$lock" ] && [ "$lock" != "$acc" ] && g_decide ask "잠긴 저장소($lock)의 계정을 $acc 로 바꿉니다. 사용자가 요청한 경우에만 하세요." ;;
     p|push|cp)
       if g_in_list --force "${rest[@]}" || g_in_list -f "${rest[@]}" || g_in_list --force-with-lease "${rest[@]}"; then
         g_decide ask "강제 push(원격의 기존 커밋 덮어쓰기)입니다. 사용자 확인이 필요합니다."
       else g_push_check "gitch $sub" origin "$(g_cur_branch)"; fi ;;
     pr|mr) case "${rest[0]:-}" in status|view|list) ;; *) g_pr_check "gitch $sub" ;; esac ;;
-    work|w) guard_gitsw_work "${rest[@]}" ;;
+    work|w) guard_gitch_work "${rest[@]}" ;;
     fix) { g_in_list --yes "${rest[@]}" || g_in_list -y "${rest[@]}"; } && g_decide ask "push 안 한 커밋의 작성자를 고칩니다 (기록 다시 쓰기)." ;;
     undo) g_decide ask "마지막 커밋을 취소합니다. 사용자가 요청한 경우에만 하세요." ;;
     amend) g_decide ask "마지막 커밋을 고칩니다. 사용자가 요청한 경우에만 하세요." ;;
@@ -6038,7 +6034,7 @@ guard_simple() {   # GW 배열(단순 명령 하나) 검사
   i=$((i+1))
   case "$prog" in
     git) guard_git $i ;;
-    gitch|gitsw) guard_gitsw $i ;;   # gitsw 는 예전 이름(같은 명령)
+    gitch) guard_gitch $i ;;
     cd|pushd) [ $i -lt $n ] && case "${GW[$i]}" in -*) ;; *) G_CWD=$(g_path "${GW[$i]}") ;; esac ;;
     export|declare|typeset|local|readonly)
       while [ $i -lt $n ]; do case "${GW[$i]}" in *=*) guard_env "${GW[$i]}" ;; esac; i=$((i+1)); done ;;
@@ -6094,18 +6090,16 @@ guard_cmd() {   # gitch guard --claude  (Claude Code PreToolUse 훅)
 
 # ================= install / uninstall / migrate / export / import =================
 
-# Markers of the shell block; installs before the rename used the old gitsw ones, which install replaces
+# Markers of the shell block (the one-time move from gitsw replaces the old ones)
 SHELL_BEGIN="# >>> gitch >>>" SHELL_END="# <<< gitch <<<"
-OLD_SHELL_BEGIN="# >>> gitsw >>>" OLD_SHELL_END="# <<< gitsw <<<"
 
 read -r -d '' ZSH_BLOCK <<'EOF'
 # >>> gitch >>>  ('gitch install' 이 관리합니다)
 [[ ":$PATH:" != *":$HOME/bin:"* ]] && export PATH="$HOME/bin:$PATH"
 alias gitch='noglob gitch'
-alias gitsw='noglob gitsw'
 _gitch_prompt() {
   git rev-parse --is-inside-work-tree &>/dev/null || return
-  local a; a=$(git config --get gitswitch.account)
+  local a; a=$(git config --get gitch.account)
   [[ -n $a ]] && print -n "%F{green}[$a]%f"   # nothing when the repository has no account
 }
 setopt PROMPT_SUBST
@@ -6120,7 +6114,7 @@ read -r -d '' BASH_BLOCK <<'EOF'
 case ":$PATH:" in *":$HOME/bin:"*) ;; *) export PATH="$HOME/bin:$PATH" ;; esac
 _gitch_prompt() {
   git rev-parse --is-inside-work-tree >/dev/null 2>&1 || return
-  local a; a=$(git config --get gitswitch.account)
+  local a; a=$(git config --get gitch.account)
   [ -n "$a" ] && printf '\033[32m[%s]\033[0m' "$a"   # nothing when the repository has no account
 }
 case "$PS1" in
@@ -6136,7 +6130,7 @@ install_hint() {   # $1 brew 이름 $2 winget 아이디 → 설치 명령 안내
 }
 
 # ----- Windows: PowerShell · cmd · Codex 에서도 gitch 를 부르게 -----
-PS_BIN="${GITSW_POWERSHELL:-powershell.exe}"
+PS_BIN="${GITCH_POWERSHELL:-powershell.exe}"
 WIN_PATH_MARK="$STATE_DIR/windows-path"   # 사용자 PATH 에 ~/bin 을 gitch 가 넣었다는 표시 (uninstall 이 그때만 뺀다)
 
 win_bash() {   # Git Bash 를 여는 bash.exe (Git for Windows 의 bin\bash.exe 는 PATH 를 갖춰 준다), Windows 경로
@@ -6160,11 +6154,11 @@ win_user_path() {   # add|remove|has — 사용자 PATH(레지스트리, %VAR% �
   dir=$(cygpath -w "$HOME/bin" 2>/dev/null) || return 1
   # 따옴표가 명령줄을 거치며 바뀌지 않게 -EncodedCommand(UTF-16LE base64)로 넘긴다
   enc=$(printf '%s' "$WIN_PATH_PS" | iconv -f UTF-8 -t UTF-16LE | base64 | tr -d '\n') || return 1
-  GITSW_PATH_DIR="$dir" GITSW_PATH_OP="$1" "$PS_BIN" -NoProfile -NonInteractive -EncodedCommand "$enc" 2>/dev/null | tr -d '\r'
+  GITCH_PATH_DIR="$dir" GITCH_PATH_OP="$1" "$PS_BIN" -NoProfile -NonInteractive -EncodedCommand "$enc" 2>/dev/null | tr -d '\r'
 }
 # shellcheck disable=SC2016  # PowerShell 스크립트 — $ 는 PowerShell 이 읽는다
 WIN_PATH_PS='
-    $d = $env:GITSW_PATH_DIR.TrimEnd("\"); $op = $env:GITSW_PATH_OP
+    $d = $env:GITCH_PATH_DIR.TrimEnd("\"); $op = $env:GITCH_PATH_OP
     $k = [Microsoft.Win32.Registry]::CurrentUser.CreateSubKey("Environment")
     $p = [string]$k.GetValue("Path", "", "DoNotExpandEnvironmentNames")
     $parts = @($p -split ";" | Where-Object { $_ -ne "" })
@@ -6175,18 +6169,17 @@ WIN_PATH_PS='
     elseif ($has) { $parts = @($parts | Where-Object { -not (& $same $_) }) } else { exit 0 }
     $k.SetValue("Path", ($parts -join ";"), "ExpandString")
     # 열려 있는 탐색기 · 새 터미널이 바뀐 PATH 를 받게 알린다 (임시 변수를 지우면 WM_SETTINGCHANGE 를 보낸다)
-    [Environment]::SetEnvironmentVariable("GITSW_PATH_REFRESH", $null, "User")
+    [Environment]::SetEnvironmentVariable("GITCH_PATH_REFRESH", $null, "User")
     if ($op -eq "add") { "added" } else { "removed" }
 '
 
 install_windows_shims() {   # gitch install 1단계(Windows): .cmd + 사용자 PATH
-  local n r
-  for n in "$BIN_LINK" "$SHIM_LINK"; do
-    if [ -e "$n.cmd" ] && ! grep -q 'gitch-link' "$n.cmd" 2>/dev/null; then
-      say "  ${YELLOW}⚠ $(tilde "$n").cmd 가 gitch 가 만든 파일이 아니라 그대로 뒀습니다${RESET}"; continue
-    fi
-    is_link "$n" && write_cmd_shim "$n"
-  done
+  local r
+  if [ -e "$BIN_LINK.cmd" ] && ! grep -q 'gitch-link' "$BIN_LINK.cmd" 2>/dev/null; then
+    say "  ${YELLOW}⚠ $(tilde "$BIN_LINK").cmd 가 gitch 가 만든 파일이 아니라 그대로 뒀습니다${RESET}"
+  elif is_link "$BIN_LINK"; then
+    write_cmd_shim "$BIN_LINK"
+  fi
   r=$(win_user_path add)
   case "$r" in
     added) mkdir -p "$STATE_DIR" && : > "$WIN_PATH_MARK"
@@ -6255,6 +6248,128 @@ install_location_ok() {   # $1 연결할 gitch — 디스크를 꺼내거나 앱
   return 1
 }
 
+# ================= one-time move from the old name (gitsw) =================
+# Up to 0.4.2-beta.2 gitch kept everything under its old name, gitsw. The first gitch run after the update (any
+# command, a Git hook or the app) moves it to the gitch names; nothing reads the old names afterwards. A repository's
+# settings, backup refs and fallback hooks move when gitch first runs in it, or when gitch install finds it.
+OLD_CFG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/gitsw"
+OLD_STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/gitsw"
+OLD_DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/gitsw"
+
+move_dir() {   # $1 old folder $2 new: rename it, or merge it into an existing new one (files already there win)
+  local f
+  [ -d "$1" ] && [ ! -L "$1" ] || return 0
+  if [ ! -e "$2" ]; then mkdir -p "$(dirname "$2")" && mv "$1" "$2"; return; fi
+  [ -d "$2" ] || return 1
+  for f in "$1"/* "$1"/.[!.]*; do
+    [ -e "$f" ] || [ -L "$f" ] || continue
+    if [ ! -e "$2/${f##*/}" ]; then mv "$f" "$2/"
+    elif [ -d "$f" ] && [ -d "$2/${f##*/}" ]; then move_dir "$f" "$2/${f##*/}"; fi
+  done
+  rm -rf "$1"
+}
+
+replace_in_file() {   # $1 file, then sed expressions: rewrite in place (keeps the file's permissions)
+  local f="$1" tmp; shift
+  [ -f "$f" ] || return 0
+  tmp=$(mktemp "${TMPDIR:-/tmp}/gitch-edit.XXXXXX") || return 1
+  sed "$@" "$f" > "$tmp" && cat "$tmp" > "$f"
+  rm -f "$tmp"
+}
+
+migrate_home_from_gitsw() {
+  local lock ev d hooks="" rules=""
+  # builtins and file tests only: this runs on every gitch call
+  [ -d "$OLD_CFG_DIR" ] || [ -d "$OLD_STATE_DIR" ] || [ -d "$OLD_DATA_DIR" ] || is_link "$HOME/bin/gitsw" \
+    || [ -f "$HOME/bin/gitsw.cmd" ] || return 0
+  # one process moves; another gitch started meanwhile (parallel hooks) goes on without waiting
+  lock="${TMPDIR:-/tmp}/gitch-move-$(id -u 2>/dev/null || echo 0)"
+  [ -d "$lock" ] && [ -n "$(find "$lock" -maxdepth 0 -mmin +10 2>/dev/null)" ] && rmdir "$lock" 2>/dev/null
+  mkdir "$lock" 2>/dev/null || return 0
+  git config --global --get-regexp '^hook\.gitsw-' >/dev/null 2>&1 && hooks=1
+  move_dir "$OLD_CFG_DIR" "$(dirname "$CFG")"
+  move_dir "$OLD_STATE_DIR" "$STATE_DIR"
+  move_dir "$OLD_DATA_DIR" "$DATA_DIR"
+  [ -f "$CFG" ] && git config -f "$CFG" --get-regexp '^gitsw\.' >/dev/null 2>&1 && git config -f "$CFG" --rename-section gitsw gitch
+  if [ -n "$hooks" ]; then
+    for ev in $HOOK_EVENTS; do git config --global --remove-section "hook.gitsw-$ev" 2>/dev/null; done
+    install_global_hooks >/dev/null 2>&1
+  fi
+  if grep -q "^# >>> gitsw >>>" "$SHELL_RC" 2>/dev/null; then
+    backup_file "$SHELL_RC"
+    remove_marked_block "$SHELL_RC" "# >>> gitsw >>>" "# <<< gitsw <<<"
+    if [ -n "$IS_WINDOWS" ]; then update_marked_block "$SHELL_RC" "$SHELL_BEGIN" "$SHELL_END" "$BASH_BLOCK"
+    else update_marked_block "$SHELL_RC" "$SHELL_BEGIN" "$SHELL_END" "$ZSH_BLOCK" "" "alias gitsw='noglob gitsw'"; fi
+  fi
+  if grep -q '^# >>> gitsw strict >>>' "$SSH_CONFIG" 2>/dev/null; then
+    backup_file "$SSH_CONFIG"
+    replace_in_file "$SSH_CONFIG" -e 's/^# >>> gitsw strict >>>/# >>> gitch strict >>>/' -e 's/^# <<< gitsw strict <<</# <<< gitch strict <<</'
+  fi
+  # AI rules and the skill say "gitsw" inside, so they are written again rather than renamed
+  for d in "$CLAUDE_DIR/CLAUDE.md" "$CODEX_DIR/AGENTS.md" "$GEMINI_DIR/GEMINI.md"; do
+    grep -q '<!-- gitsw:begin' "$d" 2>/dev/null || continue
+    rules=1; backup_file "$d"; remove_marked_block "$d" "<!-- gitsw:begin" "<!-- gitsw:end -->"
+  done
+  if [ -n "$rules" ] && load_config >/dev/null 2>&1; then
+    { write_ai_rules; write_skills; write_claude_settings; } >/dev/null 2>&1
+  fi
+  for d in "$CLAUDE_DIR" "$CODEX_DIR"; do remove_legacy_skill "$d"; done
+  for d in "$HOME/bin/gitsw" "$HOME/bin/gitswitch"; do is_link "$d" && rm -f "$d"; done
+  [ -e "$HOME/bin/gitsw" ] && warn "~/bin/gitsw 는 gitch 가 만든 링크가 아니라 그대로 뒀습니다"
+  grep -q 'gitch-link' "$HOME/bin/gitsw.cmd" 2>/dev/null && rm -f "$HOME/bin/gitsw.cmd"
+  rmdir "$lock" 2>/dev/null
+  log_action moved-from-gitsw
+  printf '%s\n' "gitch: 예전 이름(gitsw)으로 된 설정을 gitch 로 옮겼습니다 (~/.config/gitch, ~/.local/state/gitch). 지금 터미널에 적용: source $(tilde "$SHELL_RC")" >&2
+}
+
+migrate_repo_from_gitsw() {   # $1 a folder in the repository: its settings, backup refs and fallback hooks
+  local gd f ref oid old=""
+  gd=$(git -C "$1" rev-parse --git-common-dir 2>/dev/null) || return 0
+  case "$gd" in /*|[A-Za-z]:*) ;; *) gd="$1/$gd" ;; esac
+  grep -q '^\[gitswitch' "$gd/config" 2>/dev/null && git config -f "$gd/config" --rename-section gitswitch gitch
+  if [ -d "$gd/refs/gitsw" ] || grep -q ' refs/gitsw/' "$gd/packed-refs" 2>/dev/null; then
+    while read -r ref oid; do
+      git -C "$1" update-ref "refs/gitch/${ref#refs/gitsw/}" "$oid" && git -C "$1" update-ref -d "$ref" "$oid"
+    done < <(git -C "$1" for-each-ref --format='%(refname) %(objectname)' refs/gitsw/)
+  fi
+  # the old fallback hooks carry the old marker; mark them as gitch's, then write them again
+  for f in "$gd"/hooks/*; do
+    grep -q 'gitswitch-lock' "$f" 2>/dev/null || continue
+    replace_in_file "$f" -e 's/gitswitch-lock/gitch-lock/'; old=1
+  done
+  [ -n "$old" ] && install_repo_hooks "$1" >/dev/null 2>&1
+  return 0
+}
+
+migrate_here_from_gitsw() {   # the repository gitch runs in; builtins and file tests first, since this runs on every call
+  local d="$PWD" p up gd="" line=""
+  while [ -n "$d" ]; do
+    p=${d%/}   # "/" + "/.git" would be "//.git", which Git Bash looks up as a network share and can hang on
+    if [ -d "$p/.git" ]; then gd="$p/.git"; break; fi
+    if [ -f "$p/.git" ]; then   # a worktree: .git names its folder, whose commondir is the shared one
+      read -r line < "$p/.git"; gd=${line#gitdir: }
+      case "$gd" in /*|[A-Za-z]:*) ;; *) gd="$p/$gd" ;; esac
+      if [ -f "$gd/commondir" ]; then read -r line < "$gd/commondir"; case "$line" in /*|[A-Za-z]:*) gd=$line ;; *) gd="$gd/$line" ;; esac; fi
+      break
+    fi
+    [ "$d" = / ] && return 0
+    # one folder up; a Windows path such as D:/a ends at "D:", which has no parent to cut
+    up=${d%/*}; [ -z "$up" ] && up=/
+    [ "$up" = "$d" ] && return 0
+    d=$up
+  done
+  [ -n "$gd" ] || return 0
+  line=""
+  if [ -d "$gd/refs/gitsw" ]; then line=refs
+  elif [ -f "$gd/config" ]; then
+    while IFS= read -r line; do case "$line" in '[gitswitch'*) line=config; break ;; esac; line=""; done < "$gd/config"
+  fi
+  [ -z "$line" ] && [ -s "$gd/packed-refs" ] && grep -q ' refs/gitsw/' "$gd/packed-refs" 2>/dev/null && line=packed
+  [ -z "$line" ] && [ -f "$gd/hooks/pre-commit" ] && grep -q gitswitch-lock "$gd/hooks/pre-commit" 2>/dev/null && line=hooks
+  [ -n "$line" ] && migrate_repo_from_gitsw "$d"
+  return 0
+}
+
 install_cmd() {
   local self n=0 d fancy="" noacc="" total=5
   self=$(self_path)
@@ -6268,24 +6383,15 @@ install_cmd() {
   step 1 "명령" "$total"
   mkdir -p "$HOME/bin"
   [ "$(resolve_link "$BIN_LINK" 2>/dev/null)" != "$self" ] && make_link "$self" "$BIN_LINK"
-  # 예전 이름 ~/bin/gitsw 도 같은 파일로(링크가 아닌 파일이면 사용자 것이라 그대로 둔다)
-  if is_link "$SHIM_LINK" || [ ! -e "$SHIM_LINK" ]; then
-    [ "$(resolve_link "$SHIM_LINK" 2>/dev/null)" != "$self" ] && make_link "$self" "$SHIM_LINK"
-  else
-    say "  ${YELLOW}⚠ ~/bin/gitsw 가 링크가 아닌 파일이라 그대로 뒀습니다 (gitsw 로 부르면 그 파일이 돕니다)${RESET}"
-  fi
-  is_link "$HOME/bin/gitswitch" && rm -f "$HOME/bin/gitswitch"
-  say "  ${GREEN}✔${RESET} gitch 명령 연결: ~/bin/gitch → $(tilde "$self") (예전 이름 ~/bin/gitsw 도)"
+  say "  ${GREEN}✔${RESET} gitch 명령 연결: ~/bin/gitch → $(tilde "$self")"
   [ -n "$IS_WINDOWS" ] && install_windows_shims
   step 2 "터미널" "$total"
   backup_file "$SHELL_RC"
   if [ -n "$IS_WINDOWS" ]; then
-    remove_marked_block "$SHELL_RC" "$OLD_SHELL_BEGIN" "$OLD_SHELL_END"
     update_marked_block "$SHELL_RC" "$SHELL_BEGIN" "$SHELL_END" "$BASH_BLOCK"
     say "  ${GREEN}✔${RESET} 터미널 연동(Git Bash ~/.bashrc): 프롬프트에 현재 계정 표시"
   else
-    remove_marked_block "$SHELL_RC" "$OLD_SHELL_BEGIN" "$OLD_SHELL_END"
-    update_marked_block "$SHELL_RC" "$SHELL_BEGIN" "$SHELL_END" "$ZSH_BLOCK" "" "alias gitsw='noglob gitsw'"
+    update_marked_block "$SHELL_RC" "$SHELL_BEGIN" "$SHELL_END" "$ZSH_BLOCK"
     say "  ${GREEN}✔${RESET} 터미널 연동: 따옴표 없는 주소 + 오른쪽에 현재 계정 표시"
   fi
   if [ -n "$noacc" ]; then
@@ -6296,7 +6402,7 @@ install_cmd() {
     say "  계정이 아직 없어 자동 규칙 · 검사 훅 · AI 연동은 건너뛰었습니다 — ${BOLD}gitch add${RESET} 로 계정을 만든 뒤 ${BOLD}gitch install${RESET} 을 한 번 더 하세요."
     say "  ${DIM}계정 없이도 되는 것: gitch g (구조 그래프) · gitch app (앱 열기) · gitch help${RESET}"
     [ -n "$BACKUP_SESSION" ] && dim "  (바꾸기 전 파일 백업: $(tilde "$BACKUP_SESSION"))"
-    log_action install "version=$GITSW_VERSION" "accounts=0"
+    log_action install "version=$GITCH_VERSION" "accounts=0"
     return 0
   fi
   # 순서 고정: [user] → 자동 규칙 → 훅 (몇 번을 설치해도 ~/.gitconfig 내용이 같도록)
@@ -6310,7 +6416,8 @@ install_cmd() {
   else say "  ${YELLOW}⚠ 이 git 은 전역 훅을 지원하지 않아 저장소별 보조 훅으로만 검사합니다${RESET}"; fi
   [ -n "$fancy" ] && printf '  %s' "${DIM}잠긴 저장소 찾는 중…${RESET}"
   while IFS= read -r d; do
-    [ -n "$(git -C "$d" config --get gitswitch.account)" ] || continue
+    migrate_repo_from_gitsw "$d"
+    [ -n "$(git -C "$d" config --get gitch.account)" ] || continue
     install_repo_hooks "$d" >/dev/null 2>&1 && n=$((n+1))
   done < <(find_repos)
   [ -n "$fancy" ] && printf '\r\033[K'
@@ -6324,10 +6431,10 @@ install_cmd() {
   [ -n "$fancy" ] && rule
   if [ -n "$IS_WINDOWS" ]; then ok "설치 완료! 지금 Git Bash 에 적용: ${BOLD}source ~/.bashrc${RESET} (PowerShell · cmd 는 새 창에서)"
   else ok "설치 완료! 지금 터미널에 적용: ${BOLD}source ~/.zshrc${RESET}"; fi
-  say "  ${DIM}계정 ${#ACC_IDS[@]}개 · 잠긴 저장소 ${n}개 · gitch v$GITSW_VERSION${RESET}"
+  say "  ${DIM}계정 ${#ACC_IDS[@]}개 · 잠긴 저장소 ${n}개 · gitch v$GITCH_VERSION${RESET}"
   say "  ${DIM}다음: gitch doctor (점검) · gitch help (명령 보기)${RESET}"
   [ -n "$BACKUP_SESSION" ] && dim "  (바꾸기 전 파일 백업: $(tilde "$BACKUP_SESSION"))"
-  log_action install "version=$GITSW_VERSION"
+  log_action install "version=$GITCH_VERSION"
 }
 
 uninstall_cmd() {
@@ -6337,22 +6444,18 @@ uninstall_cmd() {
   confirm "gitch 전역 설정(자동 규칙, 검사 훅, AI 연동, 터미널 연동)을 지웁니다. 계정 설정 파일/SSH 키/저장소 잠금은 남깁니다. 계속할까요?" "$yes" "gitch uninstall --yes"
   load_config >/dev/null 2>&1
   backup_global
-  for ev in $HOOK_EVENTS; do git config --global --remove-section "hook.gitsw-$ev" 2>/dev/null; done
+  for ev in $HOOK_EVENTS; do git config --global --remove-section "hook.gitch-$ev" 2>/dev/null; done
   rm -f "$HOOK_DISPATCHER"
   [ ${#ACC_IDS[@]} -gt 0 ] && remove_managed_rules "${ACC_IDS[*]}"
-  if grep -qE "^($SHELL_BEGIN|$OLD_SHELL_BEGIN)" "$SHELL_RC" 2>/dev/null; then
-    backup_file "$SHELL_RC"
-    remove_marked_block "$SHELL_RC" "$SHELL_BEGIN" "$SHELL_END"
-    remove_marked_block "$SHELL_RC" "$OLD_SHELL_BEGIN" "$OLD_SHELL_END"
-  fi
+  if grep -q "^$SHELL_BEGIN" "$SHELL_RC" 2>/dev/null; then backup_file "$SHELL_RC"; remove_marked_block "$SHELL_RC" "$SHELL_BEGIN" "$SHELL_END"; fi
   [ -n "$IS_WINDOWS" ] && remove_windows_shims
   ai_remove
-  if grep -q '^# >>> gitsw strict >>>' "$SSH_CONFIG" 2>/dev/null; then
-    backup_file "$SSH_CONFIG"; remove_marked_block "$SSH_CONFIG" "# >>> gitsw strict >>>" "# <<< gitsw strict <<<"
+  if grep -q '^# >>> gitch strict >>>' "$SSH_CONFIG" 2>/dev/null; then
+    backup_file "$SSH_CONFIG"; remove_marked_block "$SSH_CONFIG" "# >>> gitch strict >>>" "# <<< gitch strict <<<"
   fi
   while IFS= read -r d; do remove_repo_hooks "$d"; done < <(find_repos)
   ok "gitch 전역 설정을 지웠습니다.${BACKUP_SESSION:+ (백업: $(tilde "$BACKUP_SESSION"))}"
-  say "남긴 것: 설정 파일 $(tilde "$CFG"), SSH 키/설정, 저장소별 작성자/잠금, user.useConfigOnly=true, ~/bin/gitch, ~/bin/gitsw"
+  say "남긴 것: 설정 파일 $(tilde "$CFG"), SSH 키/설정, 저장소별 작성자/잠금, user.useConfigOnly=true, ~/bin/gitch"
   say "다시 설치: gitch install"
 }
 
@@ -6367,10 +6470,10 @@ migrate_cmd() {   # [기존 gitch(v1) 경로] [--force]
   fi
   { [ -n "$src" ] && [ -f "$src" ]; } || die "옮길 기존 gitch(v1) 파일을 찾지 못했습니다. 사용법: gitch migrate <기존 gitch 경로>"
   grep -q '^ACCOUNTS=(' "$src" || die "v1 gitch 파일이 아닙니다: $src"
-  tmp=$(mktemp "${TMPDIR:-/tmp}/gitsw-migrate.XXXXXX") || die "임시 파일을 만들 수 없습니다."
+  tmp=$(mktemp "${TMPDIR:-/tmp}/gitch-migrate.XXXXXX") || die "임시 파일을 만들 수 없습니다."
   cfg_header > "$tmp"
   root=$(sed -n 's/^SCAN_ROOT="\(.*\)"$/\1/p' "$src" | head -1)
-  [ -n "$root" ] && git config -f "$tmp" gitsw.scanRoot "$root"
+  [ -n "$root" ] && git config -f "$tmp" gitch.scanRoot "$root"
   while IFS= read -r line; do
     [ -z "$line" ] && continue
     IFS='|' read -r id email host port <<< "$line"
@@ -6384,8 +6487,8 @@ migrate_cmd() {   # [기존 gitch(v1) 경로] [--force]
     [ -z "$line" ] && continue
     git config -f "$tmp" "folder.${line%%|*}.account" "${line#*|}"
   done < <(awk '/^FOLDERS=\(/ { f = 1; next } f && /^\)/ { f = 0 } f' "$src" | sed -E 's/^[[:space:]]*"//; s/"[[:space:]]*$//')
-  if ! GITSW_CONFIG="$tmp" "$(self_path)" config check >/dev/null 2>&1; then
-    GITSW_CONFIG="$tmp" "$(self_path)" config check 2>&1 | sed 's/^/  /' >&2
+  if ! GITCH_CONFIG="$tmp" "$(self_path)" config check >/dev/null 2>&1; then
+    GITCH_CONFIG="$tmp" "$(self_path)" config check 2>&1 | sed 's/^/  /' >&2
     rm -f "$tmp"; die "옮긴 설정에 문제가 있어 멈췄습니다."
   fi
   mkdir -p "$(dirname "$CFG")"
@@ -6409,7 +6512,7 @@ import_cmd() {   # <파일> [--yes]
   for a in "$@"; do case "$a" in --yes|-y) yes=1 ;; *) f="$a" ;; esac; done
   [ -n "$f" ] && [ -f "$f" ] || die "사용법: gitch import <설정 파일>"
   can_prompt || [ -n "$yes" ] || die "설정 가져오기는 사용자가 터미널에서 직접 실행해야 합니다."
-  GITSW_CONFIG="$f" "$(self_path)" config check >/dev/null 2>&1 || { GITSW_CONFIG="$f" "$(self_path)" config check 2>&1 | sed 's/^/  /' >&2; die "가져올 설정에 문제가 있습니다."; }
+  GITCH_CONFIG="$f" "$(self_path)" config check >/dev/null 2>&1 || { GITCH_CONFIG="$f" "$(self_path)" config check 2>&1 | sed 's/^/  /' >&2; die "가져올 설정에 문제가 있습니다."; }
   [ -f "$CFG" ] && confirm "지금 설정($(tilde "$CFG"))을 바꿉니다 (백업 남김). 계속할까요?" "$yes" "gitch import $f --yes"
   mkdir -p "$(dirname "$CFG")"
   backup_file "$CFG"
@@ -6483,11 +6586,11 @@ report_cmd() {   # [--today | --days N | --since YYYY-MM-DD] [--json]
 
 version_cmd() {
   case "${1:-}" in
-    --json) printf '{"schemaVersion":1,"tool":"gitch","version":%s,"versionScheme":%s,"graphApi":%s,"flowApi":%s}\n' "$(json_str "$GITSW_VERSION")" "$(json_str "$GITCH_VERSION_SCHEME")" "$GITCH_GRAPH_API" "$GITCH_FLOW_API"; return 0 ;;
+    --json) printf '{"schemaVersion":1,"tool":"gitch","version":%s,"versionScheme":%s,"graphApi":%s,"flowApi":%s}\n' "$(json_str "$GITCH_VERSION")" "$(json_str "$GITCH_VERSION_SCHEME")" "$GITCH_GRAPH_API" "$GITCH_FLOW_API"; return 0 ;;
     "") ;;
     *) die "사용법: gitch version [--json]" ;;
   esac
-  say "gitch $GITSW_VERSION — $(tilde "$(self_path)")"
+  say "gitch $GITCH_VERSION — $(tilde "$(self_path)")"
 }
 
 GITCH_RELEASES="Gitrochi/Gitrochi"   # 따로 받은 gitch 가 업데이트를 받는 곳 (tools/gitch/install.sh 와 같음)
@@ -6543,7 +6646,7 @@ self_update_cmd() {   # 따로 받은 gitch 만 바꾼다 — 앱에 든 것은 
     *) [ -f "$dir/Gitrochi.exe" ] || git -C "$dir" ls-files --error-unmatch -- "$(basename "$self")" >/dev/null 2>&1 || { self_update_standalone "$self"; return $?; } ;;
   esac
   say "gitch 는 Gitrochi 앱과 함께 업데이트됩니다(앱의 자동 업데이트). 저장소(tools/gitch)에서 쓰고 있다면 그 저장소를 직접 받으세요."
-  say "지금: $(tilde "$self") (v$GITSW_VERSION)"
+  say "지금: $(tilde "$self") (v$GITCH_VERSION)"
 }
 
 # Helper scripts come only from the selected gitch release directory and need their own matching checksum.
@@ -6629,7 +6732,7 @@ self_update_standalone() {   # $1 이 파일 — 릴리스의 gitch 를 gitch.sh
   want=$(awk '$2 == "gitch" || $2 == "*gitch" { print $1; exit }' "$UPDATE_TMP/gitch.sha256")
   have=$(sha256_of "$UPDATE_TMP/gitch")
   [ -n "$want" ] && [ "$want" = "$have" ] || die "SHA-256 이 gitch.sha256 과 맞지 않아 바꾸지 않았습니다 ($tag)"
-  new=$(sed -n 's/^GITSW_VERSION="\([^"]*\)".*/\1/p' "$UPDATE_TMP/gitch" | head -1)
+  new=$(sed -n 's/^GITCH_VERSION="\([^"]*\)".*/\1/p' "$UPDATE_TMP/gitch" | head -1)
   [ -n "$new" ] && "${BASH:-bash}" -n "$UPDATE_TMP/gitch" 2>/dev/null || die "받은 파일이 gitch 가 아닙니다: $url"
   scheme=$(sed -n 's/^GITCH_VERSION_SCHEME="\([^"]*\)".*/\1/p' "$UPDATE_TMP/gitch" | head -1)
   if [ "$scheme" = gitrochi ]; then
@@ -6640,8 +6743,8 @@ self_update_standalone() {   # $1 이 파일 — 릴리스의 gitch 를 gitch.sh
     say "릴리스 $tag 는 이전 독립 CLI 버전 방식이라 그대로 뒀습니다. Gitrochi 와 같은 버전의 릴리스를 기다리세요."
     return 0
   fi
-  if { [ "$scheme" != gitrochi ] || [ "${GITCH_VERSION_SCHEME:-}" = gitrochi ]; } && ver_lt "$new" "$GITSW_VERSION"; then
-    say "지금 gitch($GITSW_VERSION)가 릴리스 $tag 의 gitch($new)보다 새 버전이라 그대로 뒀습니다."
+  if { [ "$scheme" != gitrochi ] || [ "${GITCH_VERSION_SCHEME:-}" = gitrochi ]; } && ver_lt "$new" "$GITCH_VERSION"; then
+    say "지금 gitch($GITCH_VERSION)가 릴리스 $tag 의 gitch($new)보다 새 버전이라 그대로 뒀습니다."
     return 0
   fi
   helper_api=$(sed -n 's/^GITCH_HELPER_API="\([^"]*\)".*/\1/p' "$UPDATE_TMP/gitch" | head -1)
@@ -6649,12 +6752,12 @@ self_update_standalone() {   # $1 이 파일 — 릴리스의 gitch 를 gitch.sh
   release_stage_engine "$UPDATE_TMP" "$url" "$(sed -n 's/^GITCH_FLOW_API="\([^"]*\)".*/\1/p' "$UPDATE_TMP/gitch" | head -1)"
   if [ "$have" = "$(sha256_of "$self")" ]; then
     release_promote "$UPDATE_TMP" "$dir" "$(basename "$self")"
-    ok "이미 최신입니다: gitch $GITSW_VERSION ($tag)"; return 0
+    ok "이미 최신입니다: gitch $GITCH_VERSION ($tag)"; return 0
   fi
   release_promote "$UPDATE_TMP" "$dir" "$(basename "$self")"
-  ok "gitch $GITSW_VERSION → $new ($tag): $(tilde "$self")"
+  ok "gitch $GITCH_VERSION → $new ($tag): $(tilde "$self")"
   dim "  AI 규칙·스킬·검사 훅도 새 버전으로 쓰려면: gitch install"
-  log_action self-update "from=$GITSW_VERSION" "to=$new" "release=$tag"
+  log_action self-update "from=$GITCH_VERSION" "to=$new" "release=$tag"
 }
 
 # ================= 데스크톱 앱 =================
@@ -6776,7 +6879,7 @@ app_cmd() {
     shift
   done
   if [ -z "$IS_WINDOWS" ]; then
-    case "${GITSW_OS:-${OSTYPE:-}}" in darwin*) ;; *) die "gitch app 은 macOS · Windows 에서 지원합니다." ;; esac
+    case "${GITCH_OS:-${OSTYPE:-}}" in darwin*) ;; *) die "gitch app 은 macOS · Windows 에서 지원합니다." ;; esac
   fi
   app_route "$repo" "$file" "$line" "$view" "$commit" || return 1
   if [ -n "$explicit" ]; then
@@ -7037,7 +7140,7 @@ graph_open() {   # $1 파일 — 기본 앱(브라우저 · 그림 보기)으로
 # 매니페스트를 컴파일해서 몇 초 걸리지만 변수 · 조건 · 기본 경로까지 정확하다. 실패하거나 swift 가 없으면 awk 가 Package.swift 를 직접 읽는다.
 graph_spm_describe() {   # $1 임시 폴더 $2 범위(접두사) $3 고른 언어 — 매니페스트마다 몇 초라 동시에 돌린다
   local d n=0
-  [ "${GITSW_SWIFT_DESCRIBE:-1}" = 0 ] && return 0
+  [ "${GITCH_SWIFT_DESCRIBE:-1}" = 0 ] && return 0
   [ -n "${3:-}" ] && ! in_list swift "${3//,/ }" && return 0
   command -v swift >/dev/null 2>&1 || return 0
   while IFS= read -r d; do
@@ -7151,7 +7254,7 @@ graph_content_key() (   # tracked source bytes, index, HEAD and analyzer options
   shift
   set -o pipefail
   {
-    printf 'gitch-graph-cache-3\n%s\n' "$GITSW_VERSION"
+    printf 'gitch-graph-cache-3\n%s\n' "$GITCH_VERSION"
     printf '%s\0' "$@"
     git hash-object --no-filters -- "$(self_path)" || exit 1
     local core
@@ -7170,7 +7273,7 @@ graph_content_key() (   # tracked source bytes, index, HEAD and analyzer options
       # Batched hashing preserves every filename boundary, including spaces and newlines.
       # It also notices assume-unchanged files and same-size writes with restored timestamps.
       xargs -0 git hash-object --no-filters -- < "$tmp/cache-hash.paths" || exit 1
-      printf 'swift-describe:%s\0' "${GITSW_SWIFT_DESCRIBE:-1}"
+      printf 'swift-describe:%s\0' "${GITCH_SWIFT_DESCRIBE:-1}"
     fi
     git for-each-ref --format='%(refname) %(objectname)' refs/replace
     shallow=$(git rev-parse --git-path shallow)
@@ -7801,9 +7904,9 @@ graph_affected_prepare() {   # entire repo dependency closure, including deleted
   done < "$tmp/changed"
   mkdir -p "$tmp/affected-base"
   graph_base_extract "$sha" "$tmp/affected-base" || return 1
-  GITSW_SWIFT_DESCRIBE=0 GITCH_SWIFT_INDEX='' GRAPH_INDEX='' graph_side "$tmp/affected-base" files "" 1 "$repo" "" "$sha" > "$tmp/affected-before" || return 1
-  GITSW_SWIFT_DESCRIBE=0 GITCH_SWIFT_INDEX='' GRAPH_INDEX='' graph_side "$tmp/affected-base" modules "" 1 "$repo" "" "$sha" > "$tmp/affected-modules-before" || return 1
-  GITSW_SWIFT_DESCRIBE=0 GITCH_SWIFT_INDEX='' graph_side "$tmp" files "" 1 "$repo" "" > "$tmp/affected-now" || return 1
+  GITCH_SWIFT_DESCRIBE=0 GITCH_SWIFT_INDEX='' GRAPH_INDEX='' graph_side "$tmp/affected-base" files "" 1 "$repo" "" "$sha" > "$tmp/affected-before" || return 1
+  GITCH_SWIFT_DESCRIBE=0 GITCH_SWIFT_INDEX='' GRAPH_INDEX='' graph_side "$tmp/affected-base" modules "" 1 "$repo" "" "$sha" > "$tmp/affected-modules-before" || return 1
+  GITCH_SWIFT_DESCRIBE=0 GITCH_SWIFT_INDEX='' graph_side "$tmp" files "" 1 "$repo" "" > "$tmp/affected-now" || return 1
   graph_side "$tmp" modules "" 1 "$repo" "" > "$tmp/affected-modules" || return 1
   local core
   core=$(graph_core)
@@ -8019,7 +8122,7 @@ graph_collect() {   # $1 임시 폴더 $2 관계 $3 범위 $4 외부 빼기 $5 s
         "$sx" --repo "$PWD" --covered "$tmp/swiftidx.covered" > "$tmp/swiftidx" 2> "$tmp/swiftidx.err"; sxrc=$?
         sxerr=$(head -n 1 "$tmp/swiftidx.err" 2>/dev/null)
       fi
-      GITSW_SWIFTERR="$sxerr" awk -v rel="$rel" -v list="$tmp/files" -v scope="$scope" -v noext="$4" -v spm="$tmp/spm.list" -v repo="$repo" -v langs="$langs" \
+      GITCH_SWIFTERR="$sxerr" awk -v rel="$rel" -v list="$tmp/files" -v scope="$scope" -v noext="$4" -v spm="$tmp/spm.list" -v repo="$repo" -v langs="$langs" \
         -v swiftidx="$tmp/swiftidx" -v swiftcov="$tmp/swiftidx.covered" -v swiftrc="$sxrc" \
         "$(graph_awk_lib)$(graph_awk_scan)" > "$tmp/scan.$rel" || return 1
       if [ "$rel" = files ] && [ -n "${GRAPH_INDEX:-}" ]; then
@@ -8040,7 +8143,7 @@ graph_collect() {   # $1 임시 폴더 $2 관계 $3 범위 $4 외부 빼기 $5 s
       git -c core.quotepath=off log --no-merges --topo-order --find-renames --name-status -z \
         --format='%x01%H%x09%cI%x09%ct%x09%s' ${5:+"--since=$5"} -n "$(($6 + 1))" > "$tmp/changes.log" 2>/dev/null || true
       graph_changes_stream "$tmp/changes.log" | \
-        GITSW_LOCKRE="$LOCKFILE_RE" awk -v rel="$rel" -v list="$tmp/files" -v scope="$scope" -v maxf="$7" -v min="$8" -v maxc="$6" -v since="$5" -v langs="$langs" \
+        GITCH_LOCKRE="$LOCKFILE_RE" awk -v rel="$rel" -v list="$tmp/files" -v scope="$scope" -v maxf="$7" -v min="$8" -v maxc="$6" -v since="$5" -v langs="$langs" \
           -v shallow="$(git rev-parse --is-shallow-repository 2>/dev/null)" "$(graph_awk_lib)$(graph_awk_changes)" ;;
     tree)
       # 크기는 인덱스의 blob 크기(git cat-file 한 번) — 파일마다 stat 하지 않는다. 서브모듈(160000)은 뺀다
@@ -8176,7 +8279,7 @@ graph_cmd() {   # [files|modules|changes|tree] [옵션...] [폴더] · diff … 
   read -r n_nodes n_edges n_heur <<< "$(awk -F'\t' '$1 == 1 { n++ } $1 == 2 { e++; if ($6 == "h") h++ } END { print n + 0, e + 0, h + 0 }' "$tmp/rec")"
   local nativeTop="$top"
   [ -z "$IS_WINDOWS" ] || nativeTop=$(cygpath -m "$top" 2>/dev/null || printf '%s' "$top")
-  meta=(-v rel="$rel" -v repo="$repo" -v branch="$(git symbolic-ref --short -q HEAD || git rev-parse --short HEAD 2>/dev/null)" -v repoPath="$nativeTop" -v scope="${prefix%/}" -v commit="$(git rev-parse --short HEAD 2>/dev/null)" -v ver="$GITSW_VERSION" -v when="$(now_iso)" -v langs="$langs")
+  meta=(-v rel="$rel" -v repo="$repo" -v branch="$(git symbolic-ref --short -q HEAD || git rev-parse --short HEAD 2>/dev/null)" -v repoPath="$nativeTop" -v scope="${prefix%/}" -v commit="$(git rev-parse --short HEAD 2>/dev/null)" -v ver="$GITCH_VERSION" -v when="$(now_iso)" -v langs="$langs")
   case "$fmt" in
     json) graph_json "${meta[@]}" "$tmp/rec" > "$tmp/out" ;;
     html)   # {"initial": 처음 탭, "views": {관계: 그 관계의 json, …}}
@@ -8277,7 +8380,7 @@ graph_side() {   # $1 임시 폴더 $2 관계 $3 범위 $4 외부 빼기 $5 저�
 graph_meta() {   # JSON 머리에 쓰는 awk 변수들 → GRAPH_META 배열
   local nativeTop="$PWD"
   [ -z "$IS_WINDOWS" ] || nativeTop=$(cygpath -m "$PWD" 2>/dev/null || printf '%s' "$PWD")
-  GRAPH_META=(-v rel="$1" -v repo="$2" -v branch="$(git symbolic-ref --short -q HEAD || git rev-parse --short HEAD 2>/dev/null)" -v repoPath="$nativeTop" -v scope="${3%/}" -v commit="$(git rev-parse --short HEAD 2>/dev/null)" -v ver="$GITSW_VERSION" -v when="$(now_iso)" -v langs="$4")
+  GRAPH_META=(-v rel="$1" -v repo="$2" -v branch="$(git symbolic-ref --short -q HEAD || git rev-parse --short HEAD 2>/dev/null)" -v repoPath="$nativeTop" -v scope="${3%/}" -v commit="$(git rev-parse --short HEAD 2>/dev/null)" -v ver="$GITCH_VERSION" -v when="$(now_iso)" -v langs="$4")
 }
 
 graph_review_progress() {   # Human stderr only; never pollute JSON/app stdout.
@@ -8353,9 +8456,9 @@ graph_review_prepare() {   # tmp base selectedRef mergeBase scope prefix langs r
     for rel in files modules; do
       graph_review_progress "$side · $(graph_rel_word "$rel") 해석"
       if [ "$side" = a ] && [ "$scope" = worktree ]; then
-        GITSW_SWIFT_DESCRIBE=0 GITCH_SWIFT_INDEX='' GRAPH_INDEX='' graph_side "$tmp/a" "$rel" "$prefix" "$noext" "$repo" "$langs" > "$tmp/$side/rec.$rel" || return 1
+        GITCH_SWIFT_DESCRIBE=0 GITCH_SWIFT_INDEX='' GRAPH_INDEX='' graph_side "$tmp/a" "$rel" "$prefix" "$noext" "$repo" "$langs" > "$tmp/$side/rec.$rel" || return 1
       else
-        (cd "$tmp/$side/src" && GITSW_SWIFT_DESCRIBE=0 GITCH_SWIFT_INDEX='' GRAPH_INDEX='' graph_side "$tmp/$side" "$rel" "$prefix" "$noext" "$repo" "$langs") > "$tmp/$side/rec.$rel" || return 1
+        (cd "$tmp/$side/src" && GITCH_SWIFT_DESCRIBE=0 GITCH_SWIFT_INDEX='' GRAPH_INDEX='' graph_side "$tmp/$side" "$rel" "$prefix" "$noext" "$repo" "$langs") > "$tmp/$side/rec.$rel" || return 1
       fi
       graph_json "${GRAPH_META[@]}" -v rel="$rel" "$tmp/$side/rec.$rel" > "$tmp/$side/$rel.json"
     done
@@ -8796,8 +8899,8 @@ graph_check_cmd() {   # [--rules 파일] [--base 기준] [--format text|json|htm
   : > "$tmp/v"
   for rel in $rels; do
     if [ -n "$bsha" ]; then   # 비교할 때는 양쪽을 같은 방법으로
-      GITSW_SWIFT_DESCRIBE=0 GITCH_SWIFT_INDEX='' graph_side "$tmp" "$rel" "$prefix" "" "$repo" "" > "$tmp/rec.$rel" || die "그래프를 만들지 못했습니다 ($rel)."
-      GITSW_SWIFT_DESCRIBE=0 GITCH_SWIFT_INDEX='' graph_side "$tmp/b" "$rel" "$prefix" "" "$repo" "" "$bsha" > "$tmp/brec.$rel" || die "그래프를 만들지 못했습니다 ($rel, $bsha)."
+      GITCH_SWIFT_DESCRIBE=0 GITCH_SWIFT_INDEX='' graph_side "$tmp" "$rel" "$prefix" "" "$repo" "" > "$tmp/rec.$rel" || die "그래프를 만들지 못했습니다 ($rel)."
+      GITCH_SWIFT_DESCRIBE=0 GITCH_SWIFT_INDEX='' graph_side "$tmp/b" "$rel" "$prefix" "" "$repo" "" "$bsha" > "$tmp/brec.$rel" || die "그래프를 만들지 못했습니다 ($rel, $bsha)."
       awk -v rules="$rules" -v rel="$rel" "$(graph_awk_lib)$(graph_awk_scc)$(graph_awk_check)" "$tmp/brec.$rel" | awk -F'\t' -v r="$rel" '$1 == "V" { print r "\t" $4 "\t" $6 "\t" $7 }' > "$tmp/old.$rel"
     else
       graph_side "$tmp" "$rel" "$prefix" "" "$repo" "" > "$tmp/rec.$rel" || die "그래프를 만들지 못했습니다 ($rel)."
@@ -9013,7 +9116,7 @@ AWKEOF
 graph_awk_scan() {
   cat <<'AWKEOF'
 BEGIN {
-  swifterr = ENVIRON["GITSW_SWIFTERR"]
+  swifterr = ENVIRON["GITCH_SWIFTERR"]
   NTSX = split(".ts .tsx .d.ts .js .jsx .mjs .cjs .mts .cts .json .vue .svelte", TSX, " ")
   split(".ts .tsx .mts .cts", TSJ, " ")
   UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -10514,7 +10617,7 @@ $0 != "" && !IGNORE {
 END { flush(); changes_out() }
 function addchange(p) {
   if (p == "" || !(p in TR) || !inscope(p) || (p in SEEN) || !langok(p)) return
-  if (p ~ ENVIRON["GITSW_LOCKRE"]) { LOCKS[p] = 1; return }
+  if (p ~ ENVIRON["GITCH_LOCKRE"]) { LOCKS[p] = 1; return }
   SEEN[p] = 1; FL[++NFC] = p
 }
 function flush(   i, j, x, y, t, k, p) {   # 큰 커밋도 rename 계보는 적용하고 통계/쌍에서만 뺀다
@@ -20910,18 +21013,18 @@ _gitch_completion() {
   COMPREPLY=()
   while IFS= read -r candidate; do COMPREPLY+=("$candidate"); done < <(command gitch _complete -- "${COMP_WORDS[@]:1:COMP_CWORD}" 2>/dev/null)
 }
-complete -o bashdefault -o default -o filenames -F _gitch_completion gitch gitsw
+complete -o bashdefault -o default -o filenames -F _gitch_completion gitch
 COMPLETION
       ;;
     zsh) cat <<'COMPLETION'
-#compdef gitch gitsw
+#compdef gitch
 # compinit 후 source <(gitch completion zsh)
 _gitch_completion() {
   local -a candidates
   candidates=("${(@f)$(command gitch _complete -- "${words[@]:1:$((CURRENT - 1))}" 2>/dev/null)}")
   if (( ${#candidates} )) && [[ -n ${candidates[1]} ]]; then compadd -a candidates; else _files; fi
 }
-compdef _gitch_completion gitch gitsw
+compdef _gitch_completion gitch
 COMPLETION
       ;;
     fish) cat <<'COMPLETION'
@@ -20933,12 +21036,11 @@ function __gitch_complete
   command gitch _complete -- $words "$current" 2>/dev/null | string escape
 end
 complete -c gitch -f -a '(__gitch_complete)'
-complete -c gitsw -f -a '(__gitch_complete)'
 COMPLETION
       ;;
     powershell|pwsh) cat <<'COMPLETION'
 # gitch completion powershell | Out-String | Invoke-Expression
-Register-ArgumentCompleter -Native -CommandName gitch,gitsw -ScriptBlock {
+Register-ArgumentCompleter -Native -CommandName gitch -ScriptBlock {
   param($wordToComplete, $commandAst, $cursorPosition)
   $arguments = @()
   foreach ($element in @($commandAst.CommandElements | Select-Object -Skip 1)) {
@@ -22135,7 +22237,7 @@ gitch use alice' ;;
       H_DESC='이 저장소를 gitch 검사(작성자 · 비밀값 · push)에서 빼거나, --off 로 다시 넣는다.'
       H_FLAGS='  --off       다시 gitch 가 관리
   -y, --yes   확인 질문 건너뛰기 (사용자 동의를 받은 뒤)'
-      H_WRITES='저장소 설정 (gitswitch.ignore)'
+      H_WRITES='저장소 설정 (gitch.ignore)'
       H_EX='gitch ignore
 gitch ignore --off' ;;
     protect) H_GROUP='repo'; H_TIER='main'
@@ -22147,7 +22249,7 @@ gitch protect --list'
       H_SUM='직접 push 금지 브랜치'
       H_FLAGS='  --list   보호 브랜치 목록 (인자가 없을 때와 같음)
   --rm     뒤에 오는 브랜치의 보호를 해제'
-      H_WRITES='브랜치를 주면 저장소 설정 (gitswitch.protect)'
+      H_WRITES='브랜치를 주면 저장소 설정 (gitch.protect)'
       H_EX='gitch protect main release
 gitch protect --rm release' ;;
     fix) H_GROUP='repo'; H_TIER='main'
@@ -22277,7 +22379,7 @@ gitch config edit'
   -y, --yes                   확인 질문 건너뛰기 (사용자 동의를 받은 뒤)'
       H_WRITES='set · add · unset · edit 는 gitch 설정 (계정/폴더/조직 키는 전역 git 설정도)'
       H_EX='gitch config check
-gitch config get gitsw.scanRoot' ;;
+gitch config get gitch.scanRoot' ;;
     setup) H_GROUP='account'; H_TIER='main'
       H_USAGE='gitch setup [계정]
 gitch setup ID --inspect|--generate|--check --json [--yes]'
@@ -22504,7 +22606,7 @@ help_show() {   # $1 command or alias, $2 optional subcommand → that command's
 help_cmd() {   # the overview: one line for the commands people use most, names for the rest (all from the table above)
   local group name nl=$'\n' usage pad more
   load_config >/dev/null 2>&1
-  say "gitch $GITSW_VERSION — 여러 Git 계정 관리 (계정: $(account_names))"
+  say "gitch $GITCH_VERSION — 여러 Git 계정 관리 (계정: $(account_names))"
   for group in $HELP_GROUPS; do
     [ "$group" != internal ] || continue
     help_group_title "$group"
@@ -22529,7 +22631,7 @@ help_cmd() {   # the overview: one line for the commands people use most, names 
 help_all() {   # gitch help --all: every command's help, in the overview's order
   local group name
   load_config >/dev/null 2>&1
-  say "gitch $GITSW_VERSION — 여러 Git 계정 관리 (계정: $(account_names))"
+  say "gitch $GITCH_VERSION — 여러 Git 계정 관리 (계정: $(account_names))"
   for group in $HELP_GROUPS; do
     help_group_title "$group"
     say ''; say "━━ $HELP_TITLE ━━"
@@ -22659,6 +22761,10 @@ ui_start "$@"
 
 # Asking for help never runs the command: gitch <command> ... --help prints that command's help, for every command and alias.
 # (Internal protocol commands, _complete and the hooks, take their arguments as data.)
+case "${1:-}" in
+  _complete) ;;
+  *) migrate_home_from_gitsw; migrate_here_from_gitsw ;;
+esac
 case "${1:-}" in
   ''|help|-h|--help|_*) ;;
   *) if [ $# -gt 1 ] && help_flag_in "$@" && help_show "$1" "${2:-}"; then exit 0; fi ;;

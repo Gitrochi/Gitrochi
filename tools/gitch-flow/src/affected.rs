@@ -186,7 +186,7 @@ fn graph_affected(root: &Path, base: Option<&str>) -> Option<(Vec<String>, Vec<S
         program: bash,
         args,
         cwd: root.to_path_buf(),
-        env: vec![("GITSW_COLOR".into(), "never".into())],
+        env: vec![("GITCH_COLOR".into(), "never".into())],
         clear_env: false,
         timeout_ms: Some(180_000),
         settle_ms: 2000,

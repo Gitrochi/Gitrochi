@@ -1,7 +1,7 @@
 import Foundation
 import CryptoKit
 
-/// gitch — 여러 Git 계정을 섞이지 않게 쓰는 셸 도구(tools/gitch, 예전 이름 gitsw).
+/// gitch — 여러 Git 계정을 섞이지 않게 쓰는 셸 도구(tools/gitch).
 /// 앱 안(Contents/Resources/gitch)에 함께 들어 있고 설정 > CLI 에서 셸 명령으로 설치한다.
 /// 저장소 화면은 gitch 가 보는 이 저장소의 계정(잠금)과 커밋·push 전 점검을 보여 주고, 계정을 바꿀 수 있다.
 /// 저장소 메뉴의 구조 그래프 · 이 브랜치에서 바뀐 의존 · 의존 규칙 검사도 gitch(gitch graph)가 한다.
@@ -59,7 +59,7 @@ enum Gitch {
         let sshKey: Bool?
     }
 
-    /// gitch 가 pl · up · sync · fix · undo · amend · rescue 전에 남긴 자동 백업(refs/gitsw/backup/<날짜-시각>-<이유>, 최근 30개)
+    /// gitch 가 pl · up · sync · fix · undo · amend · rescue 전에 남긴 자동 백업(refs/gitch/backup/<날짜-시각>-<이유>, 최근 30개)
     struct Backup: Identifiable, Equatable {
         let ref: String
         /// "2026-10-23 16:36:54"
@@ -177,28 +177,26 @@ enum Gitch {
     static var bundled: String? { Bundle.main.path(forResource: "gitch", ofType: nil) }
     /// gitch install 이 만드는 셸 명령
     static var link: String { NSHomeDirectory() + "/bin/gitch" }
-    /// 예전 이름 — gitch install 이 같은 파일로 이어 두고, 그 전에 gitsw 로 깔았으면 그것만 있다
-    static var legacyLink: String { NSHomeDirectory() + "/bin/gitsw" }
-    /// 설정 파일은 예전 이름의 폴더 그대로(기존 설치와 같은 설정을 쓰게)
-    static var configFile: String { NSHomeDirectory() + "/.config/gitsw/config" }
+    static var configFile: String { NSHomeDirectory() + "/.config/gitch/config" }
     /// 계정을 하나라도 더했는지(gitch add) — 없으면 install 도 저장소 점검도 할 수 없다
     static var hasConfig: Bool { FileManager.default.fileExists(atPath: configFile) }
 
-    /// 셸 명령이 가리키는 실제 파일(~/bin/gitch, 없으면 예전 ~/bin/gitsw). 설치하지 않았으면 nil
+    /// 셸 명령(~/bin/gitch)이 가리키는 실제 파일. 설치하지 않았으면 nil
     static var installed: String? {
-        let fm = FileManager.default
-        guard let path = [link, legacyLink].first(where: { fm.isExecutableFile(atPath: $0) }) else { return nil }
-        return URL(fileURLWithPath: path).resolvingSymlinksInPath().path
+        guard FileManager.default.isExecutableFile(atPath: link) else { return nil }
+        return URL(fileURLWithPath: link).resolvingSymlinksInPath().path
     }
 
-    /// 셸 명령 이름(~/bin/gitch 또는 예전 ~/bin/gitsw)
-    static var installedName: String? {
-        let fm = FileManager.default
-        if fm.isExecutableFile(atPath: link) { return "~/bin/gitch" }
-        return fm.isExecutableFile(atPath: legacyLink) ? "~/bin/gitsw" : nil
+    /// Up to 0.4.2-beta.2 gitch kept its settings under its old name, gitsw; any gitch run moves them once
+    /// (tools/gitch: migrate_home_from_gitsw). Runs the bundled one at launch so the app's own checks see the moved
+    /// settings. (Windows: Gitch.moveOldSetup)
+    static func moveOldSetup() async {
+        let home = NSHomeDirectory(), fm = FileManager.default
+        guard ["/.config/gitsw", "/.local/state/gitsw"].contains(where: { fm.fileExists(atPath: home + $0) }), let exe = bundled else { return }
+        _ = try? await Shell.run("/bin/bash", [exe, "version"], cwd: URL(fileURLWithPath: home), env: environment, timeout: 60)
     }
 
-    /// 설치된 셸 명령이 이 앱에 든 gitch 인지(아니면 따로 받은 gitch 나 예전 gitsw)
+    /// 설치된 셸 명령이 이 앱에 든 gitch 인지(아니면 따로 받은 gitch)
     static var installedIsBundled: Bool {
         guard let i = installed, let b = bundled else { return false }
         return i == URL(fileURLWithPath: b).resolvingSymlinksInPath().path
@@ -207,7 +205,7 @@ enum Gitch {
     /// 저장소 점검에 쓸 gitch: 설치된 것(따로 받은 것일 수도), 없으면 앱에 든 것
     static var executable: String? { installed ?? bundled }
 
-    /// 파일 머리의 GITSW_VERSION="x.y.z"(변수 이름은 예전 그대로)
+    /// 파일 머리의 GITCH_VERSION="x.y.z" (gitch from 0.4.2-beta.2 and older says GITSW_VERSION)
     static func version(at path: String) -> String? {
         guard let head = header(at: path) else { return nil }
         return version(in: head)
@@ -220,7 +218,7 @@ enum Gitch {
     }
 
     private static func version(in head: String) -> String? {
-        guard let start = head.range(of: "GITSW_VERSION=\"")?.upperBound,
+        guard let start = (head.range(of: "GITCH_VERSION=\"") ?? head.range(of: "GITSW_VERSION=\""))?.upperBound,
               let end = head[start...].firstIndex(of: "\"") else { return nil }
         return String(head[start..<end])
     }
@@ -239,7 +237,7 @@ enum Gitch {
         var result = source
         let parameters = source["GIT_CONFIG_PARAMETERS"] ?? ""
         result["GIT_CONFIG_PARAMETERS"] = (parameters.isEmpty ? "" : parameters + " ") + "'core.fsmonitor=false'"
-        result["GITSW_SWIFT_DESCRIBE"] = "0"
+        result["GITCH_SWIFT_DESCRIBE"] = "0"
         return result
     }
 
@@ -275,7 +273,7 @@ enum Gitch {
 
     /// 자동 백업 목록(gitch rescue 와 같은 순서 — 최근 것이 1번)
     static func backups(in repo: URL) async -> [Backup] {
-        let prefix = "refs/gitsw/backup/"
+        let prefix = "refs/gitch/backup/"
         guard let r = try? await Git.run(["for-each-ref", "--sort=-refname", "--format=%(refname)%09%(objectname:short)%09%(subject)", prefix], in: repo) else { return [] }
         let rows = r.output.split(separator: "\n").map { $0.split(separator: "\t", maxSplits: 2, omittingEmptySubsequences: false).map(String.init) }
         let refs = Set(rows.compactMap(\.first))
@@ -294,7 +292,7 @@ enum Gitch {
         try await run(["use", account], in: repo, timeout: 60)
     }
 
-    /// 앱에 든 gitch 로 `gitch install`: ~/bin/gitch(와 예전 이름 ~/bin/gitsw) 연결, ~/.zshrc, git 전역 훅·규칙, AI 도구 규칙
+    /// 앱에 든 gitch 로 `gitch install`: ~/bin/gitch 연결, ~/.zshrc, git 전역 훅·규칙, AI 도구 규칙
     static func install() async throws -> String {
         guard let exe = bundled else { throw Failure(message: String(localized: "Couldn't find gitch inside Gitrochi.")) }
         // 응용 프로그램 폴더 밖(디스크 이미지 · 다운로드 폴더 · 임시 위치)의 앱에 연결하면 디스크를 꺼내거나 앱을 옮길 때 끊긴다

@@ -266,7 +266,7 @@ fn base_env(spec: &Spec, ci: bool) -> Vec<(String, String)> {
             EnvPolicy::Inherit => {
                 allow.contains(k.as_str())
                     || (!crate::secret::looks_secret(&k)
-                        && !k.starts_with("GITSW_")
+                        && !k.starts_with("GITCH_")
                         && !k.starts_with("GITCH_FLOW_INTERNAL"))
             }
             EnvPolicy::Allowlist => {
@@ -1625,7 +1625,7 @@ pub fn execute(spec: &Spec, plan: &Plan, st: &Store, opts: &RunOptions) -> RunRe
 
 /// Records the run in gitch's action log (actions.jsonl) so `gitch report` shows it.
 fn record_action(spec: &Spec, plan: &Plan, opts: &RunOptions, summary: &Value) {
-    let path = util::gitsw_state_dir().join("actions.jsonl");
+    let path = util::gitch_state_dir().join("actions.jsonl");
     if !path.parent().map(|p| p.is_dir()).unwrap_or(false) {
         return;
     }

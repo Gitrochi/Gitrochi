@@ -11,7 +11,7 @@
 REPO="Gitrochi/Gitrochi"
 DEST_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/gitch"
 DEST="$DEST_DIR/gitch"
-CFG="${GITSW_CONFIG:-${XDG_CONFIG_HOME:-$HOME/.config}/gitsw/config}"
+CFG="${GITCH_CONFIG:-${XDG_CONFIG_HOME:-$HOME/.config}/gitch/config}"
 TMP=""
 case "${OSTYPE:-}" in msys*|cygwin*) RC="~/.bashrc" ;; *) RC="~/.zshrc" ;; esac
 
@@ -39,7 +39,8 @@ resolve_link() {   # 심볼릭 링크(연결 스크립트도)를 끝까지 따�
 }
 curl_get() { curl -fsSL --connect-timeout 15 --max-time 120 "$@"; }
 sha256_of() { { shasum -a 256 "$1" 2>/dev/null || sha256sum "$1"; } | awk '{ print $1 }'; }
-gitch_version() { sed -n 's/^GITSW_VERSION="\([^"]*\)".*/\1/p' "$1" 2>/dev/null | head -1; }
+# an installed gitch from 0.4.2-beta.2 or older says GITSW_VERSION
+gitch_version() { sed -n -E 's/^GIT(CH|SW)_VERSION="([^"]*)".*/\2/p' "$1" 2>/dev/null | head -1; }
 
 # Helper scripts come only from the selected gitch release directory and need their own matching checksum.
 # Every download is verified before any installed file is promoted.

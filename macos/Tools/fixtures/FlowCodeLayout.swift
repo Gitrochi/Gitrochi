@@ -127,7 +127,7 @@ check_source
         try flowLayoutYAML.write(to: yamlURL, atomically: true, encoding: .utf8)
         try flowLayoutScript.write(to: scriptURL, atomically: true, encoding: .utf8)
         let beforeYAML = try Data(contentsOf: yamlURL), beforeScript = try Data(contentsOf: scriptURL)
-        let settings = URL(fileURLWithPath: ProcessInfo.processInfo.environment["GITSW_CONFIG"]!).deletingLastPathComponent()
+        let settings = URL(fileURLWithPath: ProcessInfo.processInfo.environment["GITCH_CONFIG"]!).deletingLastPathComponent()
         let trust = settings.appendingPathComponent("flow/trust")
         let trustedBefore = ((try? manager.contentsOfDirectory(atPath: trust.path)) ?? []).sorted()
         let digest = SHA256.hash(data: Data(repo.resolvingSymlinksInPath().path.utf8))

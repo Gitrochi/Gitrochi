@@ -40,7 +40,7 @@ class FlowEngineService {
   }
 
   private async environment(): Promise<Record<string, string>> {
-    const e: Record<string, string> = { GITSW_ACTOR: "gitrochi-app", GITCH_FLOW_LANG: language === "ko" ? "ko" : "en" };
+    const e: Record<string, string> = { GITCH_ACTOR: "gitrochi-app", GITCH_FLOW_LANG: language === "ko" ? "ko" : "en" };
     // For when the engine calls gitch back (the affected graph, gitch blocks)
     const g = gitch.bundled;
     if (g && (await ipc.exists(g))) e.GITCH_PATH = g;

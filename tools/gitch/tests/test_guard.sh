@@ -40,7 +40,7 @@ EOF
 )\""
   expect deny 'git -c user.email=x@y commit -m x'
   expect deny 'git -c core.hooksPath=/dev/null commit -m x'
-  expect deny 'git -c hook.gitsw-pre-commit.enabled=false commit -m x'
+  expect deny 'git -c hook.gitch-pre-commit.enabled=false commit -m x'
   expect none 'git -c color.ui=always log'
 }
 
@@ -62,7 +62,7 @@ test_guard_push_rules() {
   expect ask 'gitch p --force'
   expect ask 'gitch pr --title t'
   expect none 'gitch pr status'
-  git config -f "$HOME/.config/gitsw/config" gitsw.aiPush allow
+  git config -f "$HOME/.config/gitch/config" gitch.aiPush allow
   expect none 'git push'
   expect none 'gitch p'
   expect ask 'gitch p --force'
@@ -72,14 +72,14 @@ test_guard_push_rules() {
 test_guard_env_and_config_rules() {
   mk_config
   expect deny 'GIT_AUTHOR_EMAIL=x@y git commit -m y'
-  expect deny 'GITSW_SKIP=secrets git commit -m y'
-  expect deny 'env GITSW_SKIP=all git push'
+  expect deny 'GITCH_SKIP=secrets git commit -m y'
+  expect deny 'env GITCH_SKIP=all git push'
   expect deny 'export GIT_SSH_COMMAND="ssh -i key"'
-  expect none 'GITSW_COLOR=always gitch ck'
-  expect none 'GITSW_TEST_TMP=/tmp tests/run.sh'
-  expect deny 'GITSW_CONFIG=/tmp/other git commit -m x'
-  expect deny 'GITSW_ALLOW_FORCE=1 git push'
-  expect deny 'GITSW_NOLOG_PUSH=1 git push'
+  expect none 'GITCH_COLOR=always gitch ck'
+  expect none 'GITCH_TEST_TMP=/tmp tests/run.sh'
+  expect deny 'GITCH_CONFIG=/tmp/other git commit -m x'
+  expect deny 'GITCH_ALLOW_FORCE=1 git push'
+  expect deny 'GITCH_NOLOG_PUSH=1 git push'
   expect deny 'git config --global user.email x@y'
   expect deny 'git config user.email x@y'
   expect deny 'git config set user.name x'
@@ -129,7 +129,7 @@ test_guard_clone_rules() {
   expect deny 'git clone -c user.email=x@y https://example.org/x.git'
 }
 
-test_guard_gitsw_rules() {
+test_guard_gitch_rules() {
   mk_config; install_quiet
   mk_repo "$HOME/Develop/alice/r" "git@github-alice:alice/r.git"
   (cd "$HOME/Develop/alice/r" && gitch use alice >/dev/null)
@@ -147,7 +147,7 @@ test_guard_gitsw_rules() {
   expect none 'gitch fix' "$r"
   expect ask 'gitch fix --yes' "$r"
   expect ask 'gitch undo' "$r"
-  expect ask 'gitch config set gitsw.aiPush allow'
+  expect ask 'gitch config set gitch.aiPush allow'
   expect none 'gitch config show'
   expect ask 'gitch org add github.com/x alice'
   expect none 'gitch org'
@@ -167,7 +167,7 @@ test_guard_protected_files() {
   expect none "sed 's/a/b/' ~/.ssh/config"
   expect deny 'cp /tmp/x ~/.ssh/config'
   expect none 'cp ~/.ssh/config /tmp/x'
-  expect deny 'rm -rf ~/.config/gitsw'
+  expect deny 'rm -rf ~/.config/gitch'
   expect deny 'tee -a .git/hooks/pre-commit' "$T"
   expect deny 'rm .git/hooks/pre-push' "$T"
   expect ask 'ssh-keygen -t ed25519 -f ~/.ssh/new'
@@ -193,7 +193,7 @@ test_guard_branch_push_policy() {
   mk_remote_seeded github-alice alice/pp alice@example.com
   gitch clone alice alice/pp "$HOME/Develop/alice/pp" >/dev/null 2>&1 || fail clone
   local r="$HOME/Develop/alice/pp"
-  git config -f "$HOME/.config/gitsw/config" gitsw.aiPush branch
+  git config -f "$HOME/.config/gitch/config" gitch.aiPush branch
   # 기본 브랜치(main) 위에서는 확인
   expect ask 'gitch p' "$r"
   expect ask 'gitch cp -m x' "$r"
@@ -216,7 +216,7 @@ test_guard_branch_push_policy() {
   expect ask 'gitch pr --title t' "$r"
   expect none 'gitch pr status' "$r"
   # 보호 브랜치, 기본 브랜치가 develop 인 저장소
-  git -C "$r" config --add gitswitch.protect release
+  git -C "$r" config --add gitch.protect release
   expect ask 'git push origin release' "$r"
   git -C "$r" symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/develop
   expect ask 'git push origin develop' "$r"
@@ -225,15 +225,15 @@ test_guard_branch_push_policy() {
   git -C "$r" checkout -q --detach
   expect ask 'gitch p' "$r"
   # allow: PR 도 자동, 강제 push 는 여전히 거부
-  git config -f "$HOME/.config/gitsw/config" gitsw.aiPush allow
+  git config -f "$HOME/.config/gitch/config" gitch.aiPush allow
   expect none 'gitch pr --title t' "$r"
   expect deny 'git push --force' "$r"
 }
 
 test_branch_policy_rules_and_allow_list() {
   mk_config; install_quiet
-  run gitch config set gitsw.aiPush sometimes --yes; assert_fail
-  run gitch config set gitsw.aiPush branch --yes; assert_ok
+  run gitch config set gitch.aiPush sometimes --yes; assert_fail
+  run gitch config set gitch.aiPush branch --yes; assert_ok
   grep -q '작업 브랜치 push 는 바로 되고' "$HOME/.claude/CLAUDE.md" || fail "AI 규칙에 push 정책이 없음"
   local s="$HOME/.claude/settings.json" e
   for e in "Bash(git add:*)" "Bash(gitch c:*)" "Bash(gitch p:*)" "Bash(git push:*)" "Bash(gitch pr:*)" "Bash(gitch wt:*)"; do
@@ -252,7 +252,7 @@ test_guard_graph_out_and_allowlist() {
   expect none 'gitch graph --out /tmp/g.html'
   expect deny 'gitch graph --out ~/.ssh/config'
   expect deny 'gitch graph tree -o ~/.gitconfig'
-  expect deny 'gitch graph --out=~/.config/gitsw/config'
+  expect deny 'gitch graph --out=~/.config/gitch/config'
   expect deny 'gitch graph diff main --out ~/.ssh/config'
   expect deny 'gitch graph check --init --rules ~/.gitconfig'
   expect none 'gitch graph check --rules ~/.gitconfig'          # 읽기만 한다
@@ -301,41 +301,41 @@ guard_work_fixture() {
 
 test_guard_work_aggregate_push_checks_each_recorded_repository() {
   guard_work_fixture
-  git config -f "$HOME/.config/gitsw/config" gitsw.aiPush branch
+  git config -f "$HOME/.config/gitch/config" gitch.aiPush branch
   expect none 'gitch work push' "$T"
   expect none 'gitch w push --work review' "$T"
-  git -C "$GUARD_WORK_TWO" config --add gitswitch.protect feature/review
+  git -C "$GUARD_WORK_TWO" config --add gitch.protect feature/review
   expect ask 'gitch work push' "$GUARD_WORK_ONE"
   expect ask 'gitch work push --work review' "$T"
-  git -C "$GUARD_WORK_TWO" config --unset-all gitswitch.protect
+  git -C "$GUARD_WORK_TWO" config --unset-all gitch.protect
   git -C "$GUARD_WORK_TWO" symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/feature/review
   expect ask 'gitch work push' "$GUARD_WORK_ONE"
   git -C "$GUARD_WORK_TWO" symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/main
   git -C "$GUARD_WORK_ONE" switch -q main
   git -C "$GUARD_WORK_TWO" switch -q main
-  git config --file "$HOME/.local/state/gitsw/work/review.config" work.branch main
+  git config --file "$HOME/.local/state/gitch/work/review.config" work.branch main
   expect ask 'gitch work push' "$T"
-  git config -f "$HOME/.config/gitsw/config" gitsw.aiPush allow
+  git config -f "$HOME/.config/gitch/config" gitch.aiPush allow
   expect none 'gitch work push' "$T"
   expect ask 'gitch work push --force' "$T"
 }
 
 test_guard_work_push_unknown_state_and_modified_state_directory() {
   guard_work_fixture
-  git config -f "$HOME/.config/gitsw/config" gitsw.aiPush branch
+  git config -f "$HOME/.config/gitch/config" gitch.aiPush branch
   expect ask 'gitch work push --work missing' "$T"
   expect ask 'gitch work push --work "--dry-run"' "$T"
   expect ask 'XDG_STATE_HOME=/tmp/other gitch work push' "$T"
   expect ask 'XDG_CONFIG_HOME=/tmp/other gitch work push' "$T"
   git -C "$GUARD_WORK_TWO" switch -q main
   expect ask 'gitch work push' "$GUARD_WORK_ONE"
-  printf '../invalid\n' > "$HOME/.local/state/gitsw/work/active"
+  printf '../invalid\n' > "$HOME/.local/state/gitch/work/active"
   expect ask 'gitch work push' "$T"
 }
 
 test_guard_work_pr_and_deletion_respect_dry_run_and_message_values() {
   mk_config
-  git config -f "$HOME/.config/gitsw/config" gitsw.aiPush branch
+  git config -f "$HOME/.config/gitch/config" gitch.aiPush branch
   expect ask 'gitch work pr --title "Task pull request"'
   expect ask 'gitch w pr create --title "Task pull request"'
   expect ask 'gitch work pr --title "--dry-run"'
@@ -357,7 +357,7 @@ test_guard_work_pr_and_deletion_respect_dry_run_and_message_values() {
   expect none 'gitch work commit -m "--no-verify"'
   expect none 'gitch work commit --message "--no-verify"'
   expect none 'gitch work commit -am "-n"'
-  git config -f "$HOME/.config/gitsw/config" gitsw.aiPush allow
+  git config -f "$HOME/.config/gitch/config" gitch.aiPush allow
   expect none 'gitch work pr --title "Task pull request"'
   expect ask 'gitch work end task --delete-branch --yes'
 }

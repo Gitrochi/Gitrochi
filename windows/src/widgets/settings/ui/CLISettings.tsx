@@ -24,7 +24,7 @@ function tilde(p: string) {
 }
 
 /**
- * 설정 > CLI 의 gitch(예전 이름 gitsw): 앱에 든 gitch 를 셸 명령으로 설치한다. (맥 버전 GitchSettings)
+ * 설정 > CLI 의 gitch: 앱에 든 gitch 를 셸 명령으로 설치한다. (맥 버전 GitchSettings)
  * 계정과 SSH 설정은 앱에서 명시적으로 저장·생성·연결 확인한다.
  */
 export function CLISettings({ initialMode = "setup" }: { initialMode?: "setup" | "guide" } = {}) {
@@ -208,7 +208,7 @@ export function CLISettings({ initialMode = "setup" }: { initialMode?: "setup" |
             <span style={{ fontWeight: 600 }}>{t("Install gitch?")}</span>
             <span className="hint" style={{ whiteSpace: "pre-wrap" }}>
               {t(
-                "This changes files outside Gitrochi, backing them up first:\n• ~/bin/gitch and the old name ~/bin/gitsw: link to the gitch inside Gitrochi (and gitch.cmd for PowerShell and cmd; ~/bin is added to your user PATH)\n• ~/.bashrc: adds a gitch block for Git Bash\n• ~/.gitconfig: global hooks that check authors, secrets, big files and force pushes, and rules that pick the account\n• ~/.claude and ~/.codex: rules, skills and a hook for AI agents\nRemove it later with gitch uninstall.",
+                "This changes files outside Gitrochi, backing them up first:\n• ~/bin/gitch: link to the gitch inside Gitrochi (and gitch.cmd for PowerShell and cmd; ~/bin is added to your user PATH)\n• ~/.bashrc: adds a gitch block for Git Bash\n• ~/.gitconfig: global hooks that check authors, secrets, big files and force pushes, and rules that pick the account\n• ~/.claude and ~/.codex: rules, skills and a hook for AI agents\nRemove it later with gitch uninstall.",
               )}
             </span>
             <div className="row">

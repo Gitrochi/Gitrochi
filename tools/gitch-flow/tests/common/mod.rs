@@ -86,7 +86,7 @@ impl Fx {
                 c.env("CLAUDECODE", "1");
             }
             other => {
-                c.env("GITSW_ACTOR", other);
+                c.env("GITCH_ACTOR", other);
             }
         }
         c

@@ -39,9 +39,9 @@ result_path, columns, *command = sys.argv[1:]
 master, slave = pty.openpty()
 fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 24, int(columns), 0, 0))
 environment = dict(os.environ)
-for key in ("NO_COLOR", "GITCH_STYLE", "GITCH_LOGO", "GITSW_BANNER", "GITSW_COLOR", "COLUMNS", "LINES"):
+for key in ("NO_COLOR", "GITCH_STYLE", "GITCH_LOGO", "GITCH_BANNER", "GITCH_COLOR", "COLUMNS", "LINES"):
     environment.pop(key, None)
-environment.update(TERM="xterm-256color", COLORTERM="truecolor", GITSW_ANIM="0", COLUMNS=columns, LINES="24")
+environment.update(TERM="xterm-256color", COLORTERM="truecolor", GITCH_ANIM="0", COLUMNS=columns, LINES="24")
 # Both macOS and Linux provide one of these UTF-8 locales. Do not leak locale warnings into stderr JSON.
 for candidate in ("en_US.UTF-8", "C.UTF-8", "UTF-8"):
     try:
@@ -153,12 +153,12 @@ test_terminal_ui_errors_keep_one_header_and_exit_status() {
 
 test_terminal_ui_no_color_keeps_eyes_without_ansi() {
   mac_only || return 0
-  terminal_ui_run 80 env NO_COLOR=1 GITSW_COLOR=always gitch version
+  terminal_ui_run 80 env NO_COLOR=1 GITCH_COLOR=always gitch version
   assert_ok; terminal_ui_once
   case "$OUT$UI_ERR" in *$'\033'*) fail 'NO_COLOR must suppress ANSI even with forced color' ;; esac
-  terminal_ui_run 80 env GITSW_COLOR=never gitch version
+  terminal_ui_run 80 env GITCH_COLOR=never gitch version
   assert_ok; terminal_ui_once
-  case "$OUT$UI_ERR" in *$'\033'*) fail 'GITSW_COLOR=never must suppress ANSI' ;; esac
+  case "$OUT$UI_ERR" in *$'\033'*) fail 'GITCH_COLOR=never must suppress ANSI' ;; esac
 }
 
 test_terminal_ui_color_auto_on_real_tty() {
@@ -171,7 +171,7 @@ test_terminal_ui_color_auto_on_real_tty() {
 test_terminal_ui_install_keeps_one_header_and_clean_results() {
   mac_only || return 0
   terminal_ui_repo
-  terminal_ui_run 90 env GITSW_ANIM=0 gitch install
+  terminal_ui_run 90 env GITCH_ANIM=0 gitch install
   assert_ok; terminal_ui_once
   assert_no_out '\e[1m' 'legacy result exposed a literal bold escape'
   assert_no_out '\e[0m' 'legacy result exposed a literal reset escape'
@@ -184,25 +184,25 @@ test_terminal_ui_plain_and_dumb_disable_layout() {
   assert_ok; terminal_ui_no_decoration
   assert_out 'PREFLIGHT='
   assert_out 'REPO_ACCOUNT=alice'
-  terminal_ui_run 80 env TERM=dumb GITSW_BANNER=always gitch ck --no-fetch
+  terminal_ui_run 80 env TERM=dumb GITCH_BANNER=always gitch ck --no-fetch
   assert_ok; terminal_ui_no_decoration
-  terminal_ui_run 80 env GITSW_BANNER=never gitch version
+  terminal_ui_run 80 env GITCH_BANNER=never gitch version
   assert_ok; terminal_ui_no_decoration
-  terminal_ui_run 80 env GITCH_STYLE=plain GITSW_BANNER=always gitch install
+  terminal_ui_run 80 env GITCH_STYLE=plain GITCH_BANNER=always gitch install
   assert_ok; terminal_ui_no_decoration
-  terminal_ui_run 80 env TERM=dumb GITSW_BANNER=always gitch install
+  terminal_ui_run 80 env TERM=dumb GITCH_BANNER=always gitch install
   assert_ok; terminal_ui_no_decoration
 }
 
 test_terminal_ui_pipe_preserves_plain_contract() {
   terminal_ui_repo
-  run env TERM=xterm-256color GITSW_COLOR=auto GITSW_BANNER=always gitch preflight --no-fetch
+  run env TERM=xterm-256color GITCH_COLOR=auto GITCH_BANNER=always gitch preflight --no-fetch
   assert_ok
   assert_out 'PREFLIGHT='
   assert_out 'REPO_ACCOUNT=alice'
   assert_no_out '⣼⣿⣦'
   assert_no_out $'\033'
-  run env TERM=xterm-256color GITSW_COLOR=auto GITSW_BANNER=always gitch ck --json --no-fetch
+  run env TERM=xterm-256color GITCH_COLOR=auto GITCH_BANNER=always gitch ck --json --no-fetch
   assert_ok; assert_json "$OUT"
   assert_no_out $'\033'
 }
@@ -213,21 +213,21 @@ test_terminal_ui_json_tty_stays_parseable_when_forced() {
   local command
   for command in version status ck preflight overlap; do
     case "$command" in
-      ck|preflight) terminal_ui_run 80 env GITSW_COLOR=always GITSW_BANNER=always gitch "$command" --json --no-fetch ;;
-      *) terminal_ui_run 80 env GITSW_COLOR=always GITSW_BANNER=always gitch "$command" --json ;;
+      ck|preflight) terminal_ui_run 80 env GITCH_COLOR=always GITCH_BANNER=always gitch "$command" --json --no-fetch ;;
+      *) terminal_ui_run 80 env GITCH_COLOR=always GITCH_BANNER=always gitch "$command" --json ;;
     esac
     assert_ok; assert_json "$OUT" "$command JSON on PTY"
     terminal_ui_no_decoration
   done
-  terminal_ui_run 80 env GITSW_COLOR=always GITSW_BANNER=always gitch move src/api.ts src/network/api.ts --plan --json
+  terminal_ui_run 80 env GITCH_COLOR=always GITCH_BANNER=always gitch move src/api.ts src/network/api.ts --plan --json
   assert_ok; assert_json "$OUT"; terminal_ui_no_decoration
-  terminal_ui_run 80 env GITSW_COLOR=always GITSW_BANNER=always gitch module audit --json
+  terminal_ui_run 80 env GITCH_COLOR=always GITCH_BANNER=always gitch module audit --json
   assert_ok; assert_json "$OUT"; terminal_ui_no_decoration
 }
 
 test_terminal_ui_json_error_channel_stays_clean_on_tty() {
   mac_only || return 0
-  terminal_ui_run 80 env GITSW_COLOR=always GITSW_BANNER=always gitch unknown-terminal-command --json
+  terminal_ui_run 80 env GITCH_COLOR=always GITCH_BANNER=always gitch unknown-terminal-command --json
   assert_rc 1
   assert_eq "$OUT" '' 'structured error must not write a human header to stdout'
   assert_json "$UI_ERR" 'structured error stderr'
@@ -237,17 +237,17 @@ test_terminal_ui_json_error_channel_stays_clean_on_tty() {
 test_terminal_ui_raw_protocols_stay_clean_on_tty() {
   mac_only || return 0
   terminal_ui_repo
-  terminal_ui_run 80 env GITSW_COLOR=always GITSW_BANNER=always gitch schema ck
+  terminal_ui_run 80 env GITCH_COLOR=always GITCH_BANNER=always gitch schema ck
   assert_ok; assert_json "$OUT"; terminal_ui_no_decoration
-  terminal_ui_run 80 env GITSW_COLOR=always GITSW_BANNER=always gitch completion bash
+  terminal_ui_run 80 env GITCH_COLOR=always GITCH_BANNER=always gitch completion bash
   assert_ok; terminal_ui_no_decoration
   assert_out '_gitch_completion'
-  terminal_ui_run 80 env GITSW_COLOR=always GITSW_BANNER=always gitch _complete -- ver
+  terminal_ui_run 80 env GITCH_COLOR=always GITCH_BANNER=always gitch _complete -- ver
   assert_ok; terminal_ui_no_decoration
   assert_eq "$OUT" version
-  terminal_ui_run 80 env GITSW_COLOR=always GITSW_BANNER=always gitch config path
+  terminal_ui_run 80 env GITCH_COLOR=always GITCH_BANNER=always gitch config path
   assert_ok; terminal_ui_no_decoration
-  assert_eq "$OUT" "$HOME/.config/gitsw/config"
+  assert_eq "$OUT" "$HOME/.config/gitch/config"
   # Git may enable the config pager by default; raw values must bypass it even when explicitly enabled.
   git config --global pager.config true
   cat > "$T/ui-pager" <<'EOF'
@@ -257,11 +257,11 @@ printf '\033[?1h'
 cat
 EOF
   chmod +x "$T/ui-pager"
-  terminal_ui_run 80 env GIT_PAGER="$T/ui-pager" GITCH_TEST_PAGER_USED="$T/pager-used" GITSW_COLOR=always GITSW_BANNER=always gitch config get account.alice.email
+  terminal_ui_run 80 env GIT_PAGER="$T/ui-pager" GITCH_TEST_PAGER_USED="$T/pager-used" GITCH_COLOR=always GITCH_BANNER=always gitch config get account.alice.email
   assert_ok; terminal_ui_no_decoration
   assert_eq "$OUT" alice@example.com
   [ ! -e "$T/pager-used" ] || fail 'raw config get must bypass the Git pager'
-  terminal_ui_run 80 env GITSW_COLOR=always GITSW_BANNER=always gitch graph files --format dot --no-open
+  terminal_ui_run 80 env GITCH_COLOR=always GITCH_BANNER=always gitch graph files --format dot --no-open
   assert_ok; terminal_ui_no_decoration
   assert_out 'digraph'
 }
@@ -411,9 +411,9 @@ test_terminal_ui_logo_environment_override_is_temporary() {
   assert_ok; terminal_ui_no_eye
   terminal_ui_run 90 gitch version
   assert_ok; terminal_ui_once
-  terminal_ui_run 90 env GITCH_LOGO=on GITCH_STYLE=plain GITSW_BANNER=always gitch version
+  terminal_ui_run 90 env GITCH_LOGO=on GITCH_STYLE=plain GITCH_BANNER=always gitch version
   assert_ok; terminal_ui_no_decoration
-  terminal_ui_run 90 env GITCH_LOGO=on GITSW_BANNER=never gitch version
+  terminal_ui_run 90 env GITCH_LOGO=on GITCH_BANNER=never gitch version
   assert_ok; terminal_ui_no_decoration
 }
 
@@ -421,11 +421,11 @@ test_terminal_ui_logo_json_and_error_protocols_are_clean() {
   mac_only || return 0
   local sub
   for sub in status off on; do
-    terminal_ui_run 90 env GITSW_COLOR=always GITSW_BANNER=always gitch logo "$sub" --json
+    terminal_ui_run 90 env GITCH_COLOR=always GITCH_BANNER=always gitch logo "$sub" --json
     assert_ok; assert_json "$OUT"; terminal_ui_no_decoration
     assert_eq "$UI_ERR" '' 'successful logo JSON wrote stderr'
   done
-  terminal_ui_run 90 env GITSW_COLOR=always GITSW_BANNER=always gitch logo off extra --json
+  terminal_ui_run 90 env GITCH_COLOR=always GITCH_BANNER=always gitch logo off extra --json
   assert_rc 1
   assert_eq "$OUT" '' 'invalid logo JSON wrote human stdout'
   assert_json "$UI_ERR"; terminal_ui_no_decoration

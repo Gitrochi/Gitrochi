@@ -14,7 +14,7 @@ extension RepoStore {
         async let s = Gitch.status(in: url)
         async let p = Gitch.preflight(in: url, fetch: fetch)
         async let a = Gitch.accounts()
-        async let b = Git.run(["config", "--get-all", "gitswitch.protect"], in: url, ok: [0, 1])
+        async let b = Git.run(["config", "--get-all", "gitch.protect"], in: url, ok: [0, 1])
         let (status, preflight, accounts, protected) = await (s, p, a, try? b)
         gitchChecking = false
         guard self.url == url else { return }

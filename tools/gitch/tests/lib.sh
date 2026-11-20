@@ -22,18 +22,18 @@ t_setup() {
   export HOME="$T/home"
   mkdir -p "$HOME/bin" "$HOME/.ssh" "$HOME/.claude" "$HOME/.codex" "$HOME/Develop"
   export GIT_CONFIG_NOSYSTEM=1
-  unset GIT_CONFIG_GLOBAL XDG_CONFIG_HOME XDG_STATE_HOME XDG_DATA_HOME GITSW_CONFIG GITSW_SKIP GITSW_ALLOW_FORCE ZDOTDIR
+  unset GIT_CONFIG_GLOBAL XDG_CONFIG_HOME XDG_STATE_HOME XDG_DATA_HOME GITCH_CONFIG GITCH_SKIP GITCH_ALLOW_FORCE ZDOTDIR
   unset CLAUDECODE AI_AGENT CODEX_SANDBOX CODEX_SANDBOX_NETWORK_DISABLED CODEX_THREAD_ID CODEX_CI CURSOR_AGENT CURSOR_TRACE_ID GEMINI_CLI
   unset GIT_SSH GIT_SSH_COMMAND GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_COMMITTER_NAME GIT_COMMITTER_EMAIL GIT_EDITOR
-  export GITSW_ACTOR=script GITSW_COLOR=never GITSW_FETCH_TTL=0
+  export GITCH_ACTOR=script GITCH_COLOR=never GITCH_FETCH_TTL=0
   export FAKE_REMOTES="$T/remotes" FAKE_SSH_USERS="$T/sshusers" FAKE_GH="$T/gh" FAKE_WEB="$T/web"
   mkdir -p "$FAKE_REMOTES" "$FAKE_SSH_USERS" "$FAKE_GH/tokens" "$FAKE_WEB" "$T/fakebin"
   make_fakes
   export PATH="$HOME/bin:$T/fakebin:$ORIG_PATH"
   # Windows: 사용자 PATH(레지스트리)는 가짜 PowerShell 로 — 실제 PATH 를 건드리지 않는다
-  export GITSW_POWERSHELL="$T/fakebin/powershell"
+  export GITCH_POWERSHELL="$T/fakebin/powershell"
   if [ -n "$IS_WIN" ]; then RC_FILE="$HOME/.bashrc"; else RC_FILE="$HOME/.zshrc"; fi
-  mklink_ "$GITSW_SRC" "$HOME/bin/gitch"
+  mklink_ "$GITCH_SRC" "$HOME/bin/gitch"
   git config --global init.defaultBranch main
   git config --global advice.detachedHead false
   git config --global advice.skippedCherryPicks false
@@ -116,11 +116,11 @@ EOF
   cat > "$T/fakebin/powershell" <<EOF
 #!/bin/bash
 f="$T/userpath"; touch "\$f"
-has() { grep -qixF -- "\$GITSW_PATH_DIR" "\$f"; }
-case "\$GITSW_PATH_OP" in
+has() { grep -qixF -- "\$GITCH_PATH_DIR" "\$f"; }
+case "\$GITCH_PATH_OP" in
   has) if has; then echo yes; else echo no; fi ;;
-  add) if has; then echo same; else echo "\$GITSW_PATH_DIR" >> "\$f"; echo added; fi ;;
-  remove) if has; then grep -vixF -- "\$GITSW_PATH_DIR" "\$f" > "\$f.n"; mv "\$f.n" "\$f"; echo removed; fi ;;
+  add) if has; then echo same; else echo "\$GITCH_PATH_DIR" >> "\$f"; echo added; fi ;;
+  remove) if has; then grep -vixF -- "\$GITCH_PATH_DIR" "\$f" > "\$f.n"; mv "\$f.n" "\$f"; echo removed; fi ;;
 esac
 EOF
   chmod +x "$T/fakebin/"*
@@ -128,9 +128,9 @@ EOF
 
 # 테스트 계정: alice(github), bob(github), carol(gitlab.example.com:2222) / 폴더 / 조직 teamb → bob
 mk_config() {
-  mkdir -p "$HOME/.config/gitsw" "$HOME/Develop/alice" "$HOME/Develop/bob" "$HOME/Develop/corp"
-  cat > "$HOME/.config/gitsw/config" <<'EOF'
-[gitsw]
+  mkdir -p "$HOME/.config/gitch" "$HOME/Develop/alice" "$HOME/Develop/bob" "$HOME/Develop/corp"
+  cat > "$HOME/.config/gitch/config" <<'EOF'
+[gitch]
 	scanRoot = ~/Develop
 [account "alice"]
 	email = alice@example.com
@@ -194,7 +194,7 @@ mk_repo() {   # $1 폴더 $2 origin 주소(선택) — 빈 저장소
 seed_commit() {   # $1 저장소 — 커밋 하나 (훅 없이, 현재 작성자)
   echo "seed $RANDOM" >> "$1/seed.txt"
   git -C "$1" add seed.txt
-  GITSW_SKIP=all git -C "$1" commit -q -m "seed"
+  GITCH_SKIP=all git -C "$1" commit -q -m "seed"
 }
 
 run() { OUT=$("$@" 2>&1); RC=$?; }

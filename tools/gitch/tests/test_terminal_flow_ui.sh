@@ -17,7 +17,7 @@ terminal_flow_ui_run() {
   local width=90
   # Windows의 Python에는 pty가 없어 일반 출력 호환성 검사로 확인합니다.
   [ -z "$IS_WIN" ] || return 0
-  python3 - "$T/flow-ui-result.json" "$width" env GITSW_COLOR=always GITSW_BANNER=always GITCH_LOGO=on gitch "$@" <<'PY'
+  python3 - "$T/flow-ui-result.json" "$width" env GITCH_COLOR=always GITCH_BANNER=always GITCH_LOGO=on gitch "$@" <<'PY'
 import errno
 import fcntl
 import json
@@ -36,9 +36,9 @@ result_path, columns, *command = sys.argv[1:]
 master, slave = pty.openpty()
 fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 24, int(columns), 0, 0))
 environment = dict(os.environ)
-for key in ("NO_COLOR", "GITCH_STYLE", "GITCH_LOGO", "GITSW_BANNER", "GITSW_COLOR", "COLUMNS", "LINES"):
+for key in ("NO_COLOR", "GITCH_STYLE", "GITCH_LOGO", "GITCH_BANNER", "GITCH_COLOR", "COLUMNS", "LINES"):
     environment.pop(key, None)
-environment.update(TERM="xterm-256color", COLORTERM="truecolor", GITSW_ANIM="0", COLUMNS=columns, LINES="24")
+environment.update(TERM="xterm-256color", COLORTERM="truecolor", GITCH_ANIM="0", COLUMNS=columns, LINES="24")
 # Both macOS and Linux provide one of these UTF-8 locales. Do not leak locale warnings into stderr JSON.
 for candidate in ("en_US.UTF-8", "C.UTF-8", "UTF-8"):
     try:

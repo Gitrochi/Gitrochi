@@ -8,7 +8,7 @@ test_use_rewrites_remote_and_locks() {
   run gitch use; assert_ok; assert_out "계정 자동 선택: alice"
   assert_eq "$(git config remote.origin.url)" "git@github-alice:alice/r.git"
   assert_eq "$(git config user.email)" "alice@example.com"
-  assert_eq "$(git config gitswitch.account)" "alice"
+  assert_eq "$(git config gitch.account)" "alice"
   grep -q "_hook --fallback" .git/hooks/pre-commit || fail "보조 훅 없음"
   run gitch status; assert_out "PUSH_ACCOUNT=alice"; assert_out "WARNINGS=0"
 }
@@ -47,7 +47,7 @@ test_clone_org_rule_into_account_folder() {
   cd "$HOME" && run gitch clone teamb/proj; assert_ok
   assert_out "계정 자동 선택: bob"
   [ -d "$HOME/Develop/bob/proj/.git" ] || fail "bob 기본 폴더에 받지 않음: $OUT"
-  assert_eq "$(git -C "$HOME/Develop/bob/proj" config gitswitch.account)" "bob"
+  assert_eq "$(git -C "$HOME/Develop/bob/proj" config gitch.account)" "bob"
   assert_eq "$(git -C "$HOME/Develop/bob/proj" config remote.origin.url)" "git@github-bob:teamb/proj.git"
 }
 

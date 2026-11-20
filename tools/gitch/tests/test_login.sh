@@ -50,7 +50,7 @@ login_start() {
   run gitch login github --start --json --yes "$@"
   assert_ok; assert_json "$OUT"
   LOGIN_TEST_SESSION=$(printf '%s' "$OUT" | jq -r .session)
-  LOGIN_TEST_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/gitsw/logins/$LOGIN_TEST_SESSION"
+  LOGIN_TEST_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/gitch/logins/$LOGIN_TEST_SESSION"
   [ -d "$LOGIN_TEST_DIR" ] || fail 'session was not created'
   assert_eq "$(printf '%s' "$OUT" | jq -r .state)" pending
 }
@@ -85,7 +85,7 @@ test_login_confirmation_missing_helper_and_bad_session_have_no_side_effects() {
   assert_rc 2; assert_json "$OUT"
   GITCH_GH="$T/no-gh" run gitch login github --start --json --yes
   assert_rc 1; assert_json "$OUT"; assert_out GITHUB_CLI_MISSING; assert_out https://cli.github.com/
-  [ ! -e "$HOME/.local/state/gitsw/logins" ] || fail 'cancel/missing helper created session'
+  [ ! -e "$HOME/.local/state/gitch/logins" ] || fail 'cancel/missing helper created session'
   local bad
   for bad in '../outside' '/tmp/session' 'github-1234567890/../other' 'github-$(touch PWNED)' '--option'; do
     run gitch login github --status "$bad" --json; assert_rc 1; assert_json "$OUT"; assert_out LOGIN_SESSION_INVALID
@@ -175,7 +175,7 @@ test_login_success_resolves_named_identity_and_verified_email() {
   grep -F -- 'auth token --hostname github.com --user dave' "$LOGIN_FIXTURE/args" >/dev/null || fail 'selected active account instead of named account'
   [ ! -e "$LOGIN_TEST_DIR/token.tmp" ] || fail 'persisted token'
   [ ! -e "$HOME/.ssh/id_ed25519_dave" ] || fail 'OAuth login generated SSH key'
-  [ ! -e "$HOME/.config/gitsw/config" ] || fail 'OAuth login registered account before confirmation'
+  [ ! -e "$HOME/.config/gitch/config" ] || fail 'OAuth login registered account before confirmation'
 }
 
 test_login_projects_access_is_opt_in_and_keeps_the_selected_identity() {
@@ -206,7 +206,7 @@ test_login_permission_options_are_allowlisted_and_need_an_explicit_selected_acco
   run gitch login github --status github-1234567890 --json --capability projects --expected-login dave; assert_rc 1; assert_out LOGIN_ARGUMENT
   [ ! -e "$LOGIN_FIXTURE/args" ] || fail 'invalid permission arguments started authentication'
   [ ! -e PWNED ] || fail 'expected account executed shell text'
-  [ ! -e "$HOME/.local/state/gitsw/logins" ] || fail 'invalid permission arguments created a session'
+  [ ! -e "$HOME/.local/state/gitch/logins" ] || fail 'invalid permission arguments created a session'
 }
 
 test_login_session_paths_preserve_spaces_quotes_and_dollars() {
@@ -267,7 +267,7 @@ test_login_deadline_and_symlink_session_are_safe() {
   while [ "$attempts" -lt 30 ] && [ ! -f "$LOGIN_TEST_DIR/result.json" ]; do attempts=$((attempts+1)); sleep 0.2; done
   [ -f "$LOGIN_TEST_DIR/result.json" ] || fail 'deadline did not stop worker'
   if mac_only; then
-    mkdir "$T/outside-login"; ln -s "$T/outside-login" "$HOME/.local/state/gitsw/logins/github-0000000000"
+    mkdir "$T/outside-login"; ln -s "$T/outside-login" "$HOME/.local/state/gitch/logins/github-0000000000"
     run gitch login github --cancel github-0000000000 --json; assert_rc 1; assert_json "$OUT"
     [ ! -e "$T/outside-login/cancel" ] || fail 'followed arbitrary symlink'
   fi
@@ -282,7 +282,7 @@ test_login_crashed_worker_lock_recovers_without_touching_other_processes() {
   # This PID is only our fake sleep fixture, never loaded by product cancellation/recovery.
   kill "$child" 2>/dev/null || :
   printf '%s\n' "$(( $(date +%s) - 1000 ))" > "$crashed_dir/created"
-  [ -d "$HOME/.local/state/gitsw/logins/active.lock/$crashed" ] || fail 'crash fixture did not leave owning-session lock'
+  [ -d "$HOME/.local/state/gitch/logins/active.lock/$crashed" ] || fail 'crash fixture did not leave owning-session lock'
   export LOGIN_TEST_MODE=success LOGIN_TEST_USER=other
   login_start; login_poll complete; login_validate
   assert_eq "$(printf '%s' "$OUT" | jq -r .login)" other
@@ -292,7 +292,7 @@ test_login_crashed_worker_lock_recovers_without_touching_other_processes() {
 
 test_login_stale_cleanup_is_bounded_to_completed_session_directories() {
   login_fake
-  local base="$HOME/.local/state/gitsw/logins"
+  local base="$HOME/.local/state/gitch/logins"
   mkdir -p "$base/github-0123456789" "$base/github-ABCDEFGHIJ" "$base/not-a-session"
   printf '%s\n' "$(( $(date +%s) - 90000 ))" > "$base/github-0123456789/created"
   printf '{}\n' > "$base/github-0123456789/result.json"

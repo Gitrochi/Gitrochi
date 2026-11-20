@@ -54,7 +54,7 @@ struct GitchGuideSheet: View {
             Button("Cancel", role: .cancel) {}
             Button("Install") { Task { await install() } }
         } message: {
-            Text("This changes files outside Gitrochi, backing them up first:\n• ~/bin/gitch and the old name ~/bin/gitsw: link to the gitch inside Gitrochi\n• ~/.zshrc: adds a gitch block\n• ~/.gitconfig: global hooks that check authors, secrets, big files and force pushes, and rules that pick the account\n• ~/.claude and ~/.codex: rules, skills and a hook for AI agents\nRemove it later with gitch uninstall.")
+            Text("This changes files outside Gitrochi, backing them up first:\n• ~/bin/gitch: link to the gitch inside Gitrochi\n• ~/.zshrc: adds a gitch block\n• ~/.gitconfig: global hooks that check authors, secrets, big files and force pushes, and rules that pick the account\n• ~/.claude and ~/.codex: rules, skills and a hook for AI agents\nRemove it later with gitch uninstall.")
         }
     }
 
