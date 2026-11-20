@@ -1,7 +1,8 @@
 import { FitAddon } from "@xterm/addon-fit";
+import { WebglAddon } from "@xterm/addon-webgl";
 import { type ITheme, Terminal } from "@xterm/xterm";
 import { ipc, type PtyEvent } from "@/shared/api";
-import { basename, env, isMac, isWindows, toWslPath } from "@/shared/config";
+import { basename, env, isMac, isWindows, settings, toWslPath } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { Observable } from "@/shared/lib";
 import { tools } from "@/shared/platform";
@@ -221,6 +222,7 @@ export class TerminalSession extends Observable {
     if (!this.opened) {
       this.term.open(this.host);
       this.opened = true;
+      this.useGpu();
     }
     this.visible = true;
     this.unseenOutput = false;
@@ -228,6 +230,22 @@ export class TerminalSession extends Observable {
     this.refit();
     if (!this.started) void this.start();
     this.emit();
+  }
+
+  /**
+   * Draws with WebGL once the terminal is open, as the addon requires. Without WebGL, or when the GPU drops the
+   * context later, xterm.js goes back to its DOM renderer. Off with "terminalGpuRendering": false in settings.json.
+   * (macOS: ShellView.viewDidMoveToWindow)
+   */
+  private useGpu() {
+    if (!settings.get<boolean>("terminalGpuRendering", true)) return;
+    try {
+      const webgl = new WebglAddon();
+      webgl.onContextLoss(() => webgl.dispose());
+      this.term.loadAddon(webgl);
+    } catch {
+      // no WebGL2 in this webview: keep the DOM renderer
+    }
   }
 
   detach() {

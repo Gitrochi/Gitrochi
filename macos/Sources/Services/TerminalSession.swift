@@ -511,6 +511,20 @@ final class ShellView: LocalProcessTerminalView {
         return nil
     }
 
+    /// Off with `defaults write <bundle id> terminalGPURendering -bool false` (Windows: terminalGpuRendering in settings.json)
+    static let gpuRenderingKey = "terminalGPURendering"
+    private var gpuTried = false
+
+    /// Draws with Metal once the view is in a window, as SwiftTerm requires; without a Metal device or pipeline it keeps
+    /// drawing with CoreGraphics, and SwiftTerm falls back by itself if the renderer is lost later
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        guard window != nil, !gpuTried else { return }
+        gpuTried = true
+        guard UserDefaults.standard.object(forKey: Self.gpuRenderingKey) as? Bool ?? true else { return }
+        try? setUseMetal(true)
+    }
+
     override func dataReceived(slice: ArraySlice<UInt8>) {
         super.dataReceived(slice: slice)
         onOutput?()
