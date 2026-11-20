@@ -109,7 +109,9 @@ test_moves_gitsw_setup_once() {
   [ -z "$(git config -f "$HOME/.config/gitch/config" --get-regexp '^gitsw\.')" ] || fail "a [gitsw] setting is left"
   [ -z "$(git config --global --get-regexp '^hook\.gitsw-')" ] || fail "an old global hook is left"
   [ "$(git config --global --get hook.gitch-pre-commit.event)" = pre-commit ] || fail "the global hooks were not registered again"
-  grep -q "$HOME/.local/share/gitch/hook" <<< "$(git config --global --get hook.gitch-pre-commit.command)" || fail "the hook does not run the moved dispatcher"
+  case "$(git config --global --get hook.gitch-pre-commit.command)" in   # D:/… on Windows
+    *share/gitch/hook*) ;; *) fail "the hook does not run the moved dispatcher" ;;
+  esac
   grep -q gitsw "$RC_FILE" && fail "the shell file still says gitsw"
   [ "$(grep -c '# >>> gitch >>>' "$RC_FILE")" -eq 1 ] || fail "no gitch shell block"
   grep -q 'gitsw strict' "$HOME/.ssh/config" && fail "the SSH marker still says gitsw"

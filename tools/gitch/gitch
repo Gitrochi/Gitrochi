@@ -6342,7 +6342,7 @@ migrate_repo_from_gitsw() {   # $1 a folder in the repository: its settings, bac
 }
 
 migrate_here_from_gitsw() {   # the repository gitch runs in; builtins and file tests first, since this runs on every call
-  local d="$PWD" p gd="" line=""
+  local d="$PWD" p up gd="" line=""
   while [ -n "$d" ]; do
     p=${d%/}   # "/" + "/.git" would be "//.git", which Git Bash looks up as a network share and can hang on
     if [ -d "$p/.git" ]; then gd="$p/.git"; break; fi
@@ -6353,7 +6353,10 @@ migrate_here_from_gitsw() {   # the repository gitch runs in; builtins and file 
       break
     fi
     [ "$d" = / ] && return 0
-    d=${d%/*}; [ -z "$d" ] && d=/
+    # one folder up; a Windows path such as D:/a ends at "D:", which has no parent to cut
+    up=${d%/*}; [ -z "$up" ] && up=/
+    [ "$up" = "$d" ] && return 0
+    d=$up
   done
   [ -n "$gd" ] || return 0
   line=""
