@@ -1,6 +1,6 @@
-import { addTab, BrowserSession, isLocalHost, paneOf, panes, removeTab, selectTab, setRatio, shownIn, splitPane, TerminalSession, type TerminalSpec, type TermSplit } from "@/entities/terminal";
+import { addTab, BrowserSession, isLocalHost, paneOf, panes, removeTab, selectTab, sessionsToRestore, setRatio, shownIn, splitPane, TerminalSession, type TerminalSpec, type TermSplit } from "@/entities/terminal";
 import { ipc } from "@/shared/api";
-import { fromWslPath } from "@/shared/config";
+import { fromWslPath, samePath } from "@/shared/config";
 import { RepoAI } from "./ai";
 
 /** 아래 터미널 패널 — split into panes of tabs (terminalLayout) */
@@ -25,7 +25,7 @@ export abstract class RepoTerminal extends RepoAI {
   }
 
   private makeTerminal(dir: string, spec: Partial<TerminalSpec>) {
-    const s = new TerminalSession({ ...spec, directory: dir });
+    const s = new TerminalSession({ repository: this.path ?? undefined, ...spec, directory: dir });
     s.subscribe(() => this.emit());
     s.onOpenLink = (text, candidates) => void this.openTerminalLink(s, text, candidates);
     this.terminals = [...this.terminals, s];
@@ -41,6 +41,18 @@ export abstract class RepoTerminal extends RepoAI {
     this.terminalLayout = addTab(this.terminalLayout, focused, s.id);
     this.emit();
     return s;
+  }
+
+  /** Tabs of this repository's terminals that outlived an earlier run of the app (the terminal host kept them) */
+  async restoreTerminals() {
+    const path = this.path;
+    if (!path) return;
+    const sessions = await ipc.ptySessions().catch(() => []);
+    if (this.path !== path) return;
+    const shown = new Set(this.terminals.map((t) => t.hostSession).filter((id): id is string => !!id));
+    for (const { session, meta } of sessionsToRestore(sessions, path, shown, samePath)) {
+      this.newTerminal(meta.spec.directory, { ...meta.spec, repository: meta.repository, resume: session.id });
+    }
   }
 
   /** A new shell beside (row) or below (column) the pane, in the folder its terminal is in */

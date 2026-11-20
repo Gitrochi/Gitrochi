@@ -1,6 +1,6 @@
 import { FitAddon } from "@xterm/addon-fit";
 import { type ITheme, Terminal } from "@xterm/xterm";
-import { ipc } from "@/shared/api";
+import { ipc, type PtyEvent } from "@/shared/api";
 import { basename, env, isMac, isWindows, toWslPath } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { Observable } from "@/shared/lib";
@@ -8,6 +8,7 @@ import { tools } from "@/shared/platform";
 import { theme as appTheme } from "@/shared/ui";
 import { shellBusy } from "../lib/panel-layout";
 import { pastedImageName, shellPath } from "../lib/paths";
+import { terminalMeta } from "../lib/host-session";
 import { linkTokens } from "../lib/terminal-word";
 
 /** Ctrl (⌘ on a Mac) is held: links get their underline only then, as in macOS (SwiftTerm hoverWithModifier) */
@@ -25,6 +26,10 @@ export interface TerminalSpec {
   title?: string;
   /** 프로세스를 띄울 윈도 쪽 폴더(비우면 directory). WSL 안 폴더(\\wsl.localhost\…)는 윈도 프로그램이 못 들어가서 따로 준다. */
   cwd?: string;
+  /** The repository whose panel the tab is in: a relaunched app restores the tab there */
+  repository?: string;
+  /** A terminal host session to take up instead of starting a program (a tab restored after a relaunch) */
+  resume?: string;
 }
 
 function termTheme(): ITheme {
@@ -72,6 +77,8 @@ export class TerminalSession extends Observable {
   private idleChildren: number | null = null;
 
   private ptyId: string | null = null;
+  /** The host session still to take up on the first start */
+  private resumeId: string | null;
   private opened = false;
   private shellTitle: string | null = null;
   /** 설정 > 화면의 테마가 바뀌면 터미널 색도 */
@@ -80,6 +87,7 @@ export class TerminalSession extends Observable {
   constructor(readonly spec: TerminalSpec) {
     super();
     this.directory = spec.directory;
+    this.resumeId = spec.resume ?? null;
     this.title = spec.title ?? basename(spec.directory);
     this.host = document.createElement("div");
     this.host.className = "terminal-host";
@@ -283,7 +291,13 @@ export class TerminalSession extends Observable {
     return { program, args: tools.shellArgs(program) };
   }
 
+  /** The terminal host session the tab shows, or will once it is first shown */
+  get hostSession(): string | null {
+    return this.resumeId ?? this.ptyId;
+  }
+
   async start() {
+    if (this.resumeId) return this.resume(this.resumeId);
     this.started = true;
     this.exitCode = null;
     this.running = true;
@@ -302,24 +316,9 @@ export class TerminalSession extends Observable {
     if (!isWindows()) vars.LANG = vars.LANG ?? "ko_KR.UTF-8";
     const ptyId = crypto.randomUUID();
     this.ptyId = ptyId;
+    const meta = terminalMeta(this.spec.repository ?? this.directory, { ...this.spec, resume: undefined });
     try {
-      const pid = await ipc.ptySpawn(ptyId, program, args, shell.cwd ?? this.directory, vars, this.term.cols, this.term.rows, (ev) => {
-        if (this.ptyId !== ptyId) return;
-        if (ev.kind === "data") {
-          this.term.write(ev.data);
-          if (!this.visible && !this.unseenOutput) {
-            this.unseenOutput = true;
-            this.emit();
-          }
-        } else {
-          this.running = false;
-          this.pid = null;
-          this.busy = false;
-          this.exitCode = ev.code;
-          this.emit();
-          this.onExit?.(ev.code);
-        }
-      });
+      const pid = await ipc.ptySpawn(ptyId, program, args, shell.cwd ?? this.directory, vars, this.term.cols, this.term.rows, meta, (ev) => this.received(ptyId, ev));
       // the shell may already have ended before the spawn call returned
       if (this.ptyId === ptyId && this.running) this.pid = pid;
     } catch (e) {
@@ -328,6 +327,53 @@ export class TerminalSession extends Observable {
       this.term.write(t("\r\n\u001b[31mCouldn't start the terminal: {0}\u001b[0m\r\n", String(e)));
       this.emit();
     }
+  }
+
+  private received(ptyId: string, ev: PtyEvent) {
+    if (this.ptyId !== ptyId) return;
+    if (ev.kind === "data") {
+      this.term.write(ev.data);
+      if (!this.visible && !this.unseenOutput) {
+        this.unseenOutput = true;
+        this.emit();
+      }
+    } else {
+      this.running = false;
+      this.pid = null;
+      this.busy = false;
+      this.exitCode = ev.code;
+      this.emit();
+      this.onExit?.(ev.code);
+    }
+  }
+
+  /** Takes up a session the terminal host kept: its output so far, then what follows. Starting again later runs the program anew. */
+  private async resume(id: string) {
+    this.resumeId = null;
+    this.started = true;
+    this.exitCode = null;
+    this.running = true;
+    this.idleChildren = null;
+    this.busy = !!this.spec.program;
+    this.ptyId = id;
+    this.emit();
+    try {
+      const session = await ipc.ptyAttach(id, this.term.cols, this.term.rows, (ev) => this.received(id, ev));
+      if (this.ptyId === id && this.running) this.pid = session.pid;
+    } catch (e) {
+      this.running = false;
+      this.busy = false;
+      this.term.write(t("\r\n\u001b[31mCouldn't start the terminal: {0}\u001b[0m\r\n", String(e)));
+      this.emit();
+    }
+  }
+
+  /** Lets go of the program without ending it: the terminal host keeps it for the next run of the app */
+  release() {
+    this.ptyId = null;
+    this.running = false;
+    this.busy = false;
+    this.emit();
   }
 
   /** 셸과 그 안에서 돌고 있는 프로그램을 끝낸다 */

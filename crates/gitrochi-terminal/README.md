@@ -35,7 +35,7 @@ The first frame from the app is `{"type":"hello","version":1,"token":"…"}`; th
 |---|---|
 | `list` | `sessions` — every session, oldest first, ended ones until forgotten |
 | `spawn` `{spec}` | `spawned` `{id, pid}` |
-| `attach` `{id}` | `attached` `{session}`, then the scrollback as one data frame, then live output |
+| `attach` `{id}` | `attached` `{session}`, then the scrollback as one data frame, then `exited` if the program has ended, else live output |
 | `detach` `{id}` | `ok` |
 | `resize` `{id, cols, rows}` | `ok` |
 | `kill` `{id}` | `ok` |

@@ -54,6 +54,8 @@ export interface EnvInfo {
 }
 
 export type PtyEvent = { kind: "data"; data: string } | { kind: "exit"; code: number | null };
+/** A terminal the terminal host keeps, possibly from an earlier run of the app */
+export type PtySession = { id: string; pid: number | null; running: boolean; exitCode: number | null; meta: unknown };
 /** What a browser tab's child webview reports */
 export type BrowserEvent = { kind: "title"; value: string } | { kind: "url"; value: string } | { kind: "loading"; value: boolean };
 export type BrowserRect = { x: number; y: number; width: number; height: number };
@@ -154,12 +156,21 @@ export const ipc = {
     env: Record<string, string>,
     cols: number,
     rows: number,
+    meta: unknown,
     onEvent: (e: PtyEvent) => void,
   ) => {
     const ch = new Channel<PtyEvent>();
     ch.onmessage = onEvent;
-    return invoke<number | null>("pty_spawn", { id, program, args, cwd, env, cols, rows, onEvent: ch });
+    return invoke<number | null>("pty_spawn", { id, program, args, cwd, env, cols, rows, meta, onEvent: ch });
   },
+  /** Takes up a host session: its output so far, then what follows (or its end) */
+  ptyAttach: (id: string, cols: number, rows: number, onEvent: (e: PtyEvent) => void) => {
+    const ch = new Channel<PtyEvent>();
+    ch.onmessage = onEvent;
+    return invoke<PtySession>("pty_attach", { id, cols, rows, onEvent: ch });
+  },
+  /** The terminal host's sessions; empty when it does not run */
+  ptySessions: () => invoke<PtySession[]>("pty_sessions"),
   ptyWrite: (id: string, data: string) => invoke<void>("pty_write", { id, data }),
   ptyResize: (id: string, cols: number, rows: number) => invoke<void>("pty_resize", { id, cols, rows }),
   ptyKill: (id: string) => invoke<void>("pty_kill", { id }),

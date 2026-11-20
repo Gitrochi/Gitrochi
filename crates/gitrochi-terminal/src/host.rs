@@ -70,6 +70,8 @@ struct Session {
     killer: Box<dyn ChildKiller + Send + Sync>,
     scrollback: Scrollback,
     watchers: Vec<Arc<Peer>>,
+    /// `exited` went out to the apps attached then
+    exit_announced: bool,
 }
 
 impl Session {
@@ -267,9 +269,14 @@ fn handle(shared: &Arc<Shared>, peer: &Arc<Peer>, message: Message) -> Result<Me
             // under the session's lock, so no output slips between the replay and the live stream
             peer.send(Frame::Control(attached.clone()));
             peer.send(Frame::Data {
-                id,
+                id: id.clone(),
                 bytes: s.scrollback.snapshot(),
             });
+            // an app that attaches after the ending was announced hears of it right after the replay
+            if s.exit_announced {
+                let exit_code = s.info.exit_code;
+                peer.send(Frame::Control(Message::Exited { id, exit_code }));
+            }
             if !s.watchers.iter().any(|p| Arc::ptr_eq(p, peer)) {
                 s.watchers.push(peer.clone());
             }
@@ -373,6 +380,7 @@ fn spawn(shared: &Arc<Shared>, spec: SpawnSpec) -> Result<Message, String> {
         killer,
         scrollback: Scrollback::new(shared.options.scrollback),
         watchers: Vec::new(),
+        exit_announced: false,
     }));
     shared
         .sessions
@@ -427,6 +435,7 @@ fn spawn(shared: &Arc<Shared>, spec: SpawnSpec) -> Result<Message, String> {
             let mut s = session.lock().unwrap();
             let exit_code = s.info.exit_code;
             s.broadcast(&Frame::Control(Message::Exited { id, exit_code }));
+            s.exit_announced = true;
         });
     }
 
