@@ -85,8 +85,8 @@ test_install_idempotent_and_rule_order() {
   ol=$(printf '%s\n' "$list" | grep -n 'includeif.hasconfig:remote.\*.url:git@github-bob:teamb/' | tail -1 | cut -d: -f1)
   [ "$fl" -lt "$ol" ] || fail "규칙 순서가 틀림 (folder $fl, org $ol)"
   [ "$(git config --global user.useConfigOnly)" = true ] || fail "useConfigOnly"
-  grep -q '# >>> gitsw >>>' "$RC_FILE" || fail "zshrc 연동"
-  [ "$(grep -c '# >>> gitsw >>>' "$RC_FILE")" -eq 1 ] || fail "zshrc 블록 중복"
+  grep -q '# >>> gitch >>>' "$RC_FILE" || fail "zshrc 연동"
+  [ "$(grep -c '# >>> gitch >>>' "$RC_FILE")" -eq 1 ] || fail "zshrc 블록 중복"
   echo tok > "$FAKE_GH/tokens/alice"; echo tok > "$FAKE_GH/tokens/bob"
   run gitch doctor --no-net; assert_ok; assert_out "DOCTOR_PROBLEMS=0"
   rm "$FAKE_GH/tokens/bob"
@@ -235,7 +235,7 @@ test_export_import_uninstall_version() {
   run gitch uninstall --yes; assert_ok
   git config --global --get hook.gitsw-pre-commit.command >/dev/null && fail "전역 훅이 남음"
   git config --global --get-regexp '^url\.' >/dev/null && fail "insteadOf 가 남음"
-  grep -q '# >>> gitsw >>>' "$RC_FILE" && fail "zshrc 블록이 남음"
+  grep -q '# >>> gitch >>>' "$RC_FILE" && fail "zshrc 블록이 남음"
   [ -f "$HOME/.config/gitsw/config" ] || fail "설정 파일은 남겨야 함"
   run gitch install; assert_ok "다시 설치"
 }
