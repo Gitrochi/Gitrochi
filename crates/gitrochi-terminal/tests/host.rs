@@ -157,6 +157,14 @@ fn reports_the_exit_code_and_keeps_the_ended_session() {
     until("the ending", || exited(&events, "t").is_some());
     assert_eq!(exited(&events, "t"), Some(Some(3)));
     assert!(output(&events, "t").contains("bye"));
+    drop(app);
+
+    // an app that comes back later gets the output and then the ending
+    let (app, events) = connect(dir.path());
+    assert!(!app.attach("t").unwrap().running);
+    until("the ending again", || exited(&events, "t").is_some());
+    assert_eq!(exited(&events, "t"), Some(Some(3)));
+    assert!(output(&events, "t").contains("bye"));
     assert!(app.forget("t").is_ok());
     drop(app);
     until("the idle host to end", || host.is_finished());
