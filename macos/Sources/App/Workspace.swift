@@ -340,6 +340,8 @@ extension Workspace {
             let tab = backgroundTabs.remove(at: i)
             store.adoptTerminals(tab.terminals, browsers: tab.browsers, layout: tab.layout, active: tab.activeTerminal, shown: tab.showTerminal)
         }
+        // and those the terminal host kept from an earlier run
+        store.restoreHostTerminals()
         finishReveal()
     }
 

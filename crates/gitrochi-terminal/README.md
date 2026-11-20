@@ -1,6 +1,6 @@
 # Terminal host
 
-`gitrochi-terminal-host` owns the pseudo terminals of the Gitrochi apps, so shells and agents keep running after the app quits, and a relaunched app reattaches to them with their recent output. Issue #420 tracks the whole change; this crate is its first step, and neither app uses it yet.
+`gitrochi-terminal-host` owns the pseudo terminals of the Gitrochi apps, so shells and agents keep running after the app quits, and a relaunched app reattaches to them with their recent output. Issue #420 tracks the whole change. The Windows app talks to it through this crate's client (`windows/src-tauri/src/pty.rs`), the macOS app through a Swift client of the same protocol (`macos/Sources/Services/TerminalHost.swift`); both fall back to running terminals themselves when the host can't start.
 
 ```sh
 gitrochi-terminal-host --state-dir <app state folder> [--idle-exit <seconds>]
