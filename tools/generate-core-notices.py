@@ -2,7 +2,7 @@
 """Regenerate the "Shared Rust core dependency notices" section of THIRD_PARTY_NOTICES.md.
 
 The section covers the locked normal and build dependencies of the crates/ workspace (the
-shared core and the repository index) on every platform the apps ship, with each upstream
+shared core, the repository index and the terminal host) on every platform the apps ship, with each upstream
 license file reproduced once per identical text. `--check` fails when the file is out of date.
 """
 
@@ -24,7 +24,7 @@ TARGETS = [
     "wasm32-unknown-unknown",
 ]
 INTRO = (
-    "The shared native and WebAssembly core and the repository index use the following "
+    "The shared native and WebAssembly core, the repository index and the terminal host use the following "
     "Cargo.lock dependencies. These upstream notices are distributed with both application "
     "bundles through this file. This inventory covers the `crates/` workspace "
     "(`tools/generate-core-notices.py` regenerates it); the audit status of other dependencies "
