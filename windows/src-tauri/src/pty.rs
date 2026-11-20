@@ -56,6 +56,13 @@ pub enum PtyEvent {
     Exit { code: Option<i32> },
 }
 
+/// A started terminal: its process id, and whether the host runs it (it then outlives the app)
+#[derive(Serialize)]
+pub struct Spawned {
+    pid: Option<u32>,
+    hosted: bool,
+}
+
 /// A host session as the screen sees it, to restore its tab
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -273,13 +280,13 @@ pub async fn pty_spawn(
     rows: u16,
     meta: Option<serde_json::Value>,
     on_event: Channel<PtyEvent>,
-) -> Result<Option<u32>, String> {
+) -> Result<Spawned, String> {
     let ptys = state.inner().clone();
     tauri::async_runtime::spawn_blocking(move || {
         let exe = crate::process::find_program(&program).map(|p| p.to_string_lossy().into_owned()).unwrap_or(program);
         let cwd = crate::process::native(&cwd);
         let Some(link) = ptys.host(&app) else {
-            return spawn_local(&ptys, id, exe, args, cwd, env, cols, rows, on_event);
+            return spawn_local(&ptys, id, exe, args, cwd, env, cols, rows, on_event).map(|pid| Spawned { pid, hosted: false });
         };
         // the app's environment now, not the host's from when it started (a newly installed tool's PATH)
         let mut full: std::collections::BTreeMap<String, String> = std::env::vars().collect();
@@ -296,7 +303,7 @@ pub async fn pty_spawn(
         };
         link.routes.lock().unwrap().insert(id.clone(), Route { channel: on_event, carry: Vec::new() });
         let started = link.client.spawn(spec).and_then(|pid| link.client.attach(&id).map(|_| pid));
-        started.map_err(|e| {
+        started.map(|pid| Spawned { pid, hosted: true }).map_err(|e| {
             link.routes.lock().unwrap().remove(&id);
             e.to_string()
         })
@@ -342,6 +349,23 @@ pub async fn pty_sessions(state: tauri::State<'_, Ptys>) -> Result<Vec<PtySessio
         }
         let Some(link) = ptys.running_host() else { return Ok(Vec::new()) };
         link.client.list().map(|s| s.into_iter().map(PtySession::from).collect()).map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+/// Ends every terminal the host runs, open in a tab or not ("Quit and End Terminals")
+#[tauri::command]
+pub async fn pty_end_all(state: tauri::State<'_, Ptys>) -> Result<(), String> {
+    let ptys = state.inner().clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        let Some(link) = ptys.running_host() else { return Ok(()) };
+        for session in link.client.list().map_err(|e| e.to_string())? {
+            if session.running {
+                let _ = link.client.kill(&session.id);
+            }
+        }
+        Ok(())
     })
     .await
     .map_err(|e| e.to_string())?

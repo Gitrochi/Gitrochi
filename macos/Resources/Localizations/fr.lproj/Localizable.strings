@@ -2167,12 +2167,14 @@
 "Open Gitrochi" = "Ouvrir Gitrochi";
 "Settings…" = "Paramètres…";
 "Quit Gitrochi" = "Quitter Gitrochi";
+"Quit and End Terminals" = "Quitter et fermer les terminaux";
+"Terminals in the background" = "Terminaux en arrière-plan";
 "Startup and background" = "Démarrage et arrière-plan";
 "Open at login" = "Ouvrir à l’ouverture de session";
 "Allow Gitrochi in System Settings › General › Login Items to open it at login." = "Autorisez Gitrochi dans Réglages Système › Général › Ouverture pour qu’il s’ouvre à l’ouverture de session.";
 "Open Login Items" = "Ouvrir les éléments d’ouverture";
 "Keep running in the menu bar when windows are closed" = "Continuer dans la barre des menus quand les fenêtres sont fermées";
-"Scheduled runs still start and terminals keep running while no window is open. Quit from the menu bar to stop them." = "Les exécutions planifiées démarrent et les terminaux continuent de tourner même sans fenêtre ouverte. Quittez depuis la barre des menus pour les arrêter.";
+"Scheduled runs still start while no window is open. Terminals keep running either way; Quit and End Terminals in the menu bar ends them." = "Les exécutions planifiées démarrent même sans fenêtre ouverte. Les terminaux continuent de tourner dans tous les cas ; « Quitter et fermer les terminaux » dans la barre des menus les arrête.";
 "Couldn't add Gitrochi to the login items: %@" = "Impossible d’ajouter Gitrochi aux éléments d’ouverture : %@";
 "Couldn't remove Gitrochi from the login items: %@" = "Impossible de retirer Gitrochi des éléments d’ouverture : %@";
 "Pipeline" = "Pipeline";

@@ -367,6 +367,22 @@ final class TerminalHostLink: @unchecked Sendable {
         queue.async { [self] in work(connected(launch: launch)) }
     }
 
+    /// The host's sessions with the tab meta they carry, on the main queue; none when no host runs
+    func sessions(_ done: @escaping @MainActor @Sendable ([(id: String, running: Bool, meta: TerminalHostMeta)]) -> Void) {
+        perform(launch: false) { client in
+            let found = ((try? client?.list()) ?? []).compactMap { s in TerminalHostMeta(s.meta).map { (id: s.id, running: s.running, meta: $0) } }
+            DispatchQueue.main.async { MainActor.assumeIsolated { done(found) } }
+        }
+    }
+
+    /// Ends every terminal the host runs, open in a tab or not ("Quit and End Terminals"), then calls done on the main queue
+    func endAll(_ done: @escaping @MainActor @Sendable () -> Void) {
+        perform(launch: false) { client in
+            for session in (try? client?.list()) ?? [] where session.running { try? client?.kill(session.id) }
+            DispatchQueue.main.async { MainActor.assumeIsolated { done() } }
+        }
+    }
+
     private func connected(launch: Bool) -> TerminalHostClient? {
         if let client, client.isOpen { return client }
         client = nil

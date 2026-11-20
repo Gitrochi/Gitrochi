@@ -2,17 +2,18 @@ import { tabStatus } from "@/widgets/terminal-panel";
 import { agents } from "@/entities/agent";
 import { scheduledRuns, scheduledRunTime } from "@/entities/ci";
 import type { RepoStore } from "@/entities/repo";
-import { tabActivity } from "@/entities/terminal";
+import { readTerminalMeta, tabActivity } from "@/entities/terminal";
 import { workspace } from "@/entities/workspace";
 import { ipc } from "@/shared/api";
 import { basename, keepRunningInBackground, recents, samePath, settings } from "@/shared/config";
 import { t } from "@/shared/i18n";
-import { backgroundMenu, type MenuRepository, pendingRunCount, quitWarning, trayAction, trayItems } from "./background-menu";
+import { backgroundMenu, backgroundRepositories, type HostTerminal, type MenuRepository, pendingRunCount, quitWarning, trayAction, trayItems } from "./background-menu";
 
 /**
- * Gitrochi in the background: closing the window hides it into the tray (a setting, on by default), so runs scheduled
- * for later still start and terminals keep running; the tray menu lists them, and quitting asks once when it stops
- * them. (macOS: App/MenuBar.swift › BackgroundMode)
+ * Gitrochi in the background: closing the window can hide it into the tray (a setting, off by default), so runs
+ * scheduled for later still start. Terminals outlive the app in the terminal host either way; the tray shows while
+ * some belong to repositories that are not open, lists them, and offers to end them with the app. Quitting asks once
+ * when it stops something. (macOS: App/MenuBar.swift › BackgroundMode)
  */
 
 /** The open repositories, each with its terminals still alive */
@@ -24,22 +25,33 @@ function repositories(): MenuRepository[] {
   }));
 }
 
-/** Terminals that something runs in or that wait for input: quitting ends them */
-function busyTerminals(): number {
+/** Terminals that something runs in or that wait for input; hosted ones only when ending them too */
+function busyTerminals(hostedToo: boolean): number {
   return workspace.tabs.flatMap((tab) => tab.terminals).filter((term) => {
-    if (!term.running) return false;
+    if (!term.running || (term.hosted && !hostedToo)) return false;
     const { busy, waiting } = tabActivity(agents.statusIn(term), term.busy);
     return busy || waiting;
   }).length;
 }
 
-/** Quit Gitrochi from the tray or by closing the window with the setting off; asks once when that stops something */
-export async function requestQuit() {
-  const message = quitWarning(pendingRunCount(scheduledRuns.runs), busyTerminals());
+/** Host terminals of repositories that are not open, as the tray last saw them */
+let backgroundCount = 0;
+
+/**
+ * Quit Gitrochi from the tray or by closing the window with the setting off; asks once when that stops something.
+ * Host terminals keep running unless endTerminals asks to end them too.
+ */
+export async function requestQuit(endTerminals = false) {
+  const terminals = busyTerminals(endTerminals) + (endTerminals ? backgroundCount : 0);
+  const message = quitWarning(pendingRunCount(scheduledRuns.runs), terminals);
+  const quit = async () => {
+    if (endTerminals) await ipc.ptyEndAll().catch(() => undefined);
+    await ipc.quitApp();
+  };
   const store = workspace.active;
-  if (!message || !store) return void ipc.quitApp();
+  if (!message || !store) return void quit();
   await ipc.showWindow();
-  store.confirm = { title: t("Quit Gitrochi?"), message, actionTitle: t("Quit"), action: () => ipc.quitApp() };
+  store.confirm = { title: t("Quit Gitrochi?"), message, actionTitle: t("Quit"), action: () => void quit() };
   store.changed();
 }
 
@@ -61,11 +73,14 @@ function choose(id: string) {
       window.dispatchEvent(new CustomEvent("gitrochi-open-settings", { detail: "about" }));
       return;
     case "quit": return void requestQuit();
+    case "quitAndEnd": return void requestQuit(true);
     case "run": return void reveal(action.path, (store) => store.navigate("actions"));
     case "repository": case "recent": return void reveal(action.path);
     case "terminal":
-      return void reveal(action.path, (store) => {
-        const term = store.terminals.find((x) => x.id === action.id);
+      return void reveal(action.path, async (store) => {
+        // a terminal in the background is a host session: its tab comes back with the repository
+        await store.restoreTerminals();
+        const term = store.terminals.find((x) => x.id === action.id || x.hostSession === action.id);
         if (term) store.focusTerminal(term);
       });
   }
@@ -75,31 +90,39 @@ function choose(id: string) {
 export function startTray(): () => void {
   let sent = "";
   let timer: ReturnType<typeof setTimeout> | null = null;
-  const update = () => {
+  const update = async () => {
     timer = null;
+    const sessions = (await ipc.ptySessions().catch(() => [])).flatMap((s): HostTerminal[] => {
+      const meta = readTerminalMeta(s.meta);
+      return meta ? [{ id: s.id, running: s.running, repository: meta.repository, directory: meta.spec.directory, program: meta.spec.program, title: meta.spec.title }] : [];
+    });
     const now = Date.now();
+    const open = repositories();
+    const background = backgroundRepositories(sessions, open.map((r) => r.path), samePath, t("Running"));
+    backgroundCount = background.reduce((n, r) => n + r.terminals.length, 0);
     const items = trayItems(backgroundMenu({
       runs: scheduledRuns.runs,
       time: (at) => scheduledRunTime(at, now),
-      repositories: repositories(),
+      repositories: open,
+      background,
       recents: recents(),
       same: samePath,
     }));
-    const visible = keepRunningInBackground();
+    const visible = keepRunningInBackground() || background.length > 0;
     const key = JSON.stringify([items, visible]);
     if (key === sent) return;
     sent = key;
     ipc.trayUpdate(items, visible).catch(console.error);
   };
-  const schedule = () => { timer ??= setTimeout(update, 250); };
+  const schedule = () => { timer ??= setTimeout(() => void update(), 250); };
   const stops = [workspace.subscribe(schedule), scheduledRuns.subscribe(schedule), settings.subscribe(schedule), agents.subscribe(schedule)];
   // a terminal's title and state change without the workspace hearing of it
-  const interval = setInterval(update, 5000);
+  const interval = setInterval(() => void update(), 5000);
   const listening = [
     ipc.onTrayAction(choose),
     ipc.onCloseRequested(() => void (keepRunningInBackground() ? ipc.hideWindow() : requestQuit())),
   ];
-  update();
+  void update();
   return () => {
     stops.forEach((stop) => stop());
     clearInterval(interval);

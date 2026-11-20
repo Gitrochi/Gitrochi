@@ -2124,12 +2124,14 @@
 "Open Gitrochi" = "เปิด Gitrochi";
 "Settings…" = "การตั้งค่า…";
 "Quit Gitrochi" = "ออกจาก Gitrochi";
+"Quit and End Terminals" = "ออกและปิดเทอร์มินัล";
+"Terminals in the background" = "เทอร์มินัลเบื้องหลัง";
 "Startup and background" = "การเริ่มต้นและเบื้องหลัง";
 "Open at login" = "เปิดเมื่อเข้าสู่ระบบ";
 "Allow Gitrochi in System Settings › General › Login Items to open it at login." = "อนุญาต Gitrochi ในการตั้งค่าระบบ › ทั่วไป › รายการเข้าสู่ระบบ เพื่อให้เปิดเมื่อเข้าสู่ระบบ";
 "Open Login Items" = "เปิดรายการเข้าสู่ระบบ";
 "Keep running in the menu bar when windows are closed" = "ทำงานต่อในแถบเมนูเมื่อปิดหน้าต่าง";
-"Scheduled runs still start and terminals keep running while no window is open. Quit from the menu bar to stop them." = "การรันที่ตั้งเวลาไว้ยังคงเริ่ม และเทอร์มินัลยังทำงานต่อแม้ไม่มีหน้าต่างเปิดอยู่ ออกจากแถบเมนูเพื่อหยุด";
+"Scheduled runs still start while no window is open. Terminals keep running either way; Quit and End Terminals in the menu bar ends them." = "การรันที่ตั้งเวลาไว้ยังเริ่มทำงานแม้ไม่มีหน้าต่างเปิดอยู่ เทอร์มินัลยังคงทำงานต่อไม่ว่ากรณีใด เลือก “ออกและปิดเทอร์มินัล” ในแถบเมนูเพื่อปิด";
 "Couldn't add Gitrochi to the login items: %@" = "เพิ่ม Gitrochi ในรายการเข้าสู่ระบบไม่ได้: %@";
 "Couldn't remove Gitrochi from the login items: %@" = "เอา Gitrochi ออกจากรายการเข้าสู่ระบบไม่ได้: %@";
 "Pipeline" = "ไปป์ไลน์";

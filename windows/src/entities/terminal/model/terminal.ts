@@ -77,6 +77,8 @@ export class TerminalSession extends Observable {
   private idleChildren: number | null = null;
 
   private ptyId: string | null = null;
+  /** The terminal host runs the program: it outlives the app */
+  hosted = false;
   /** The host session still to take up on the first start */
   private resumeId: string | null;
   private opened = false;
@@ -305,7 +307,8 @@ export class TerminalSession extends Observable {
     this.ptyId = ptyId;
     const meta = terminalMeta(this.spec.repository ?? this.directory, { ...this.spec, resume: undefined });
     try {
-      const pid = await ipc.ptySpawn(ptyId, program, args, shell.cwd ?? this.directory, vars, this.term.cols, this.term.rows, meta, (ev) => this.received(ptyId, ev));
+      const { pid, hosted } = await ipc.ptySpawn(ptyId, program, args, shell.cwd ?? this.directory, vars, this.term.cols, this.term.rows, meta, (ev) => this.received(ptyId, ev));
+      if (this.ptyId === ptyId) this.hosted = hosted;
       // the shell may already have ended before the spawn call returned
       if (this.ptyId === ptyId && this.running) this.pid = pid;
     } catch (e) {
@@ -343,6 +346,7 @@ export class TerminalSession extends Observable {
     this.idleChildren = null;
     this.busy = !!this.spec.program;
     this.ptyId = id;
+    this.hosted = true;
     this.emit();
     try {
       const session = await ipc.ptyAttach(id, this.term.cols, this.term.rows, (ev) => this.received(id, ev));

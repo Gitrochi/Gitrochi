@@ -37,7 +37,7 @@ export async function backgroundSettingsSelfTest(): Promise<[boolean, string]> {
     if (!await until(() => boxes().length === 2 && !boxes()[0].disabled)) return [false, "The two startup toggles did not appear"];
     const [login, keep] = boxes();
     if (login.checked) return [false, "Open at login shows on while it is off"];
-    if (!keep.checked || !keepRunningInBackground()) return [false, "Keeping running in the tray is not on by default"];
+    if (keep.checked || keepRunningInBackground()) return [false, "Keeping running in the tray is not off by default"];
     login.click();
     if (!await until(() => boxes()[0].checked) || calls.join() !== "true") return [false, "Turning on opening at login did not set it"];
     fail = true;
@@ -45,9 +45,9 @@ export async function backgroundSettingsSelfTest(): Promise<[boolean, string]> {
     if (!await until(() => !!host.querySelector("[role=alert]"))) return [false, "A failed login change did not say why"];
     if (!boxes()[0].checked) return [false, "A failed login change did not go back"];
     boxes()[1].click();
-    if (!await until(() => !boxes()[1].checked) || keepRunningInBackground()) return [false, "Turning off keeping running did not save it"];
+    if (!await until(() => boxes()[1].checked) || !keepRunningInBackground()) return [false, "Turning on keeping running did not save it"];
     boxes()[1].click();
-    if (!await until(() => boxes()[1].checked) || !keepRunningInBackground()) return [false, "Turning keeping running back on did not save it"];
+    if (!await until(() => !boxes()[1].checked) || keepRunningInBackground()) return [false, "Turning keeping running back off did not save it"];
     return [true, "Open at login and keep running in the tray: default, change, failure and restore"];
   } finally {
     root.unmount();

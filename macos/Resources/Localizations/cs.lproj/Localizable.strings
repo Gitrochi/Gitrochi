@@ -2111,12 +2111,14 @@
 "Open Gitrochi" = "Otevřít Gitrochi";
 "Settings…" = "Nastavení…";
 "Quit Gitrochi" = "Ukončit Gitrochi";
+"Quit and End Terminals" = "Ukončit a zavřít terminály";
+"Terminals in the background" = "Terminály na pozadí";
 "Startup and background" = "Spouštění a pozadí";
 "Open at login" = "Otevřít po přihlášení";
 "Allow Gitrochi in System Settings › General › Login Items to open it at login." = "Povolte Gitrochi v Nastavení systému › Obecné › Otevřít po přihlášení, aby se otevřel po přihlášení.";
 "Open Login Items" = "Otevřít položky po přihlášení";
 "Keep running in the menu bar when windows are closed" = "Běžet dál v řádku nabídek, když jsou okna zavřená";
-"Scheduled runs still start and terminals keep running while no window is open. Quit from the menu bar to stop them." = "Naplánované běhy se dál spouštějí a terminály běží, i když není otevřené žádné okno. Zastavíte je ukončením z řádku nabídek.";
+"Scheduled runs still start while no window is open. Terminals keep running either way; Quit and End Terminals in the menu bar ends them." = "Naplánovaná spuštění začnou i bez otevřeného okna. Terminály běží dál v každém případě; „Ukončit a zavřít terminály“ na řádku nabídek je ukončí.";
 "Couldn't add Gitrochi to the login items: %@" = "Gitrochi se nepodařilo přidat k položkám po přihlášení: %@";
 "Couldn't remove Gitrochi from the login items: %@" = "Gitrochi se nepodařilo odebrat z položek po přihlášení: %@";
 "Pipeline" = "Pipeline";

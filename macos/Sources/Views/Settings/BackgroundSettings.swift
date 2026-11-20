@@ -5,7 +5,7 @@ import ServiceManagement
 /// Startup and background, in Settings › Update: open at login, and keep running in the menu bar with the windows
 /// closed. (Windows: widgets/settings/ui/BackgroundSettings.tsx)
 struct BackgroundSettings: View {
-    @AppStorage(BackgroundMode.keepRunningKey) private var keepRunning = true
+    @AppStorage(BackgroundMode.keepRunningKey) private var keepRunning = false
     @ViewState private var login = SMAppService.mainApp.status
     @ViewState private var failure: String?
 
@@ -25,7 +25,7 @@ struct BackgroundSettings: View {
                 Text(failure).font(.caption).foregroundStyle(StudioStyle.Tone.failed.text).textSelection(.enabled)
             }
             Toggle("Keep running in the menu bar when windows are closed", isOn: $keepRunning)
-            Text("Scheduled runs still start and terminals keep running while no window is open. Quit from the menu bar to stop them.")
+            Text("Scheduled runs still start while no window is open. Terminals keep running either way; Quit and End Terminals in the menu bar ends them.")
                 .font(.caption).foregroundStyle(.secondary)
         }
         .onChange(of: keepRunning) { _, _ in BackgroundMode.shared.update() }

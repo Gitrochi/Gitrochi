@@ -1,15 +1,21 @@
 import AppKit
 
-/// Gitrochi in the background: with its windows closed it keeps running in the menu bar, so runs scheduled for later
-/// still start and terminals keep running. The Dock icon shows only while a window is open, and quitting asks once
-/// when that stops scheduled runs or busy terminals. (Windows: app/lib/tray.ts and src-tauri/src/tray.rs)
+/// Gitrochi in the background: with its windows closed it can keep running in the menu bar (a setting, off by
+/// default), so runs scheduled for later still start. Terminals outlive the app in the terminal host either way; the
+/// menu bar item also shows while some belong to repositories that are not open, lists them, and offers to end them
+/// with the app. The Dock icon shows only while a window is open, and quitting asks once when that stops scheduled
+/// runs or busy terminals. (Windows: app/lib/tray.ts and src-tauri/src/tray.rs)
 @MainActor
 final class BackgroundMode: NSObject, NSMenuDelegate {
     static let shared = BackgroundMode()
-    /// On unless turned off in Settings › Update (Windows: the same settings key)
+    /// Off unless turned on in Settings › Update (Windows: the same settings key)
     static let keepRunningKey = "keepRunningInBackground"
 
-    static var keepRunning: Bool { UserDefaults.standard.object(forKey: keepRunningKey) as? Bool ?? true }
+    static var keepRunning: Bool { UserDefaults.standard.object(forKey: keepRunningKey) as? Bool ?? false }
+
+    /// The host's terminals of repositories that are not open, as last seen
+    private var background: [BackgroundMenu.Repository] = []
+    private var backgroundPoll: Timer?
 
     private var item: NSStatusItem?
     private var quitConfirmed = false
@@ -18,9 +24,13 @@ final class BackgroundMode: NSObject, NSMenuDelegate {
 
     /// Called once at launch
     func start() {
-        UserDefaults.standard.register(defaults: [Self.keepRunningKey: true])
+        UserDefaults.standard.register(defaults: [Self.keepRunningKey: false])
         AppLanguage.quitToRestart = { BackgroundMode.shared.quitToRestart() }
         update()
+        refreshBackground()
+        backgroundPoll = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { _ in
+            MainActor.assumeIsolated { BackgroundMode.shared.refreshBackground() }
+        }
         // a window coming forward (Settings too) brings the Dock icon back
         NotificationCenter.default.addObserver(forName: NSWindow.didBecomeMainNotification, object: nil, queue: .main) { _ in
             MainActor.assumeIsolated { BackgroundMode.shared.showInDock(true) }
@@ -34,7 +44,31 @@ final class BackgroundMode: NSObject, NSMenuDelegate {
     /// The setting changed: shows or removes the menu bar item. Turned off with tabs in the background, those open
     /// again, since nothing else would reach them.
     func update() {
-        if Self.keepRunning {
+        showItem(Self.keepRunning || !background.isEmpty)
+        if !Self.keepRunning {
+            if !Workspace.shared.backgroundTabs.isEmpty { Workspace.shared.reopen() }
+            showInDock(true)
+        }
+    }
+
+    /// Looks again at the host's terminals of repositories that are not open; the item shows while there are any
+    func refreshBackground() {
+        TerminalHostLink.shared.sessions { found in
+            let sessions = found.map {
+                BackgroundMenu.HostTerminal(id: $0.id, running: $0.running, repository: $0.meta.repository, directory: $0.meta.directory,
+                                            program: $0.meta.program, title: $0.meta.title)
+            }
+            let mode = BackgroundMode.shared
+            let open = Workspace.shared.menuRepositories.map(\.url.path)
+            let now = BackgroundMenu.background(sessions, open: open, same: RepoStore.samePath, running: String(localized: "Running"))
+            guard now != mode.background else { return }
+            mode.background = now
+            mode.showItem(Self.keepRunning || !now.isEmpty)
+        }
+    }
+
+    private func showItem(_ shown: Bool) {
+        if shown {
             guard item == nil else { return }
             let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
             item.button?.image = MenuBarIcon.image()
@@ -48,8 +82,6 @@ final class BackgroundMode: NSObject, NSMenuDelegate {
         } else {
             if let item { NSStatusBar.system.removeStatusItem(item) }
             item = nil
-            if !Workspace.shared.backgroundTabs.isEmpty { Workspace.shared.reopen() }
-            showInDock(true)
         }
     }
 
@@ -81,8 +113,22 @@ final class BackgroundMode: NSObject, NSMenuDelegate {
     /// Asks once before quitting stops scheduled runs or busy terminals ("2 scheduled runs won't start. …")
     func confirmQuit() -> Bool {
         if quitConfirmed || quittingWithLastWindow { return true }
+        return ask(terminals: Workspace.shared.busyTerminalCount())
+    }
+
+    /// Quits after ending every terminal, those the host keeps for repositories that are not open too
+    private func quitAndEndTerminals() {
+        let terminals = Workspace.shared.busyTerminalCount(hostedToo: true) + background.reduce(0) { $0 + $1.terminals.count }
+        guard ask(terminals: terminals) else { return }
+        TerminalHostLink.shared.endAll { NSApp.terminate(nil) }
+    }
+
+    private func ask(terminals: Int) -> Bool {
         let scheduled = BackgroundMenu.pendingRuns(ScheduledRunStore.shared.runs)
-        guard let message = BackgroundMenu.quitWarning(scheduled: scheduled, terminals: Workspace.shared.busyTerminalCount) else { return true }
+        guard let message = BackgroundMenu.quitWarning(scheduled: scheduled, terminals: terminals) else {
+            quitConfirmed = true
+            return true
+        }
         let alert = NSAlert()
         alert.alertStyle = .warning
         alert.messageText = String(localized: "Quit Gitrochi?")
@@ -109,10 +155,12 @@ final class BackgroundMode: NSObject, NSMenuDelegate {
         let now = Date()
         let repositories = Workspace.shared.menuRepositories.map { entry in
             BackgroundMenu.Repository(path: entry.url.path, name: entry.url.lastPathComponent,
-                                      terminals: entry.terminals.filter(\.running).map { BackgroundMenu.Terminal(id: $0.id, title: $0.title, state: $0.tabStatus.title) })
+                                      terminals: entry.terminals.filter(\.running).map { BackgroundMenu.Terminal(id: $0.id.uuidString, title: $0.title, state: $0.tabStatus.title) })
         }
+        let shown = background.filter { b in !repositories.contains { RepoStore.samePath($0.path, b.path) } }
         let items = BackgroundMenu.items(runs: ScheduledRunStore.shared.runs, time: { ScheduledRuns.time($0, now: now) },
-                                         repositories: repositories, recents: Recents.load().map(\.path), same: RepoStore.samePath)
+                                         repositories: repositories, background: shown, recents: Recents.load().map(\.path), same: RepoStore.samePath)
+        refreshBackground()
         for entry in items { menu.addItem(menuItem(entry)) }
     }
 
@@ -141,6 +189,7 @@ final class BackgroundMode: NSObject, NSMenuDelegate {
         case .open: return command(String(localized: "Open Gitrochi"))
         case .settings: return command(String(localized: "Settings…"), key: ",")
         case .quit: return command(String(localized: "Quit Gitrochi"), key: "q")
+        case .quitAndEnd: return command(String(localized: "Quit and End Terminals"))
         }
     }
 
@@ -152,11 +201,15 @@ final class BackgroundMode: NSObject, NSMenuDelegate {
         case .repository(_, let path), .recent(_, let path): workspace.reveal(path: path)
         case .terminal(_, let path, let id):
             workspace.reveal(path: path) { store in
-                if let session = store.terminals.first(where: { $0.id == id }) { store.focusTerminal(session) }
+                // a terminal in the background is a host session: its tab comes back with the repository
+                store.restoreHostTerminals {
+                    if let session = store.terminals.first(where: { $0.id.uuidString == id || $0.hostSession == id }) { store.focusTerminal(session) }
+                }
             }
         case .open: workspace.reopen()
         case .settings: openSettings()
         case .quit: NSApp.terminate(nil)
+        case .quitAndEnd: quitAndEndTerminals()
         case .header, .note, .separator: break
         }
     }

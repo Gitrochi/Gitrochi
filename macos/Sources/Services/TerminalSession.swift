@@ -648,13 +648,14 @@ extension RepoStore {
     }
 
     /// Tabs of this repository's terminals that outlived an earlier run of the app (the terminal host kept them)
-    func restoreHostTerminals() {
-        guard let path = url?.path else { return }
+    func restoreHostTerminals(then done: (@MainActor () -> Void)? = nil) {
+        guard let path = url?.path else { done?(); return }
         TerminalHostLink.shared.perform(launch: false) { client in
             let sessions = (try? client?.list()) ?? []
             let found = sessions.compactMap { s in TerminalHostMeta(s.meta).map { (id: s.id, meta: $0) } }
             DispatchQueue.main.async {
                 MainActor.assumeIsolated { [weak self] in
+                    defer { done?() }
                     guard let self, self.url?.path == path else { return }
                     let shown = Set(self.terminals.compactMap(\.hostSession))
                     for (id, meta) in found where !shown.contains(id) && RepoStore.samePath(meta.repository, path) {

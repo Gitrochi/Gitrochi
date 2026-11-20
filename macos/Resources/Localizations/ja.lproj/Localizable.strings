@@ -2793,12 +2793,14 @@
 "Open Gitrochi" = "Gitrochi を開く";
 "Settings…" = "設定…";
 "Quit Gitrochi" = "Gitrochi を終了";
+"Quit and End Terminals" = "終了してターミナルも終了";
+"Terminals in the background" = "バックグラウンドのターミナル";
 "Startup and background" = "起動とバックグラウンド";
 "Open at login" = "ログイン時に開く";
 "Allow Gitrochi in System Settings › General › Login Items to open it at login." = "ログイン時に開くには、システム設定 › 一般 › ログイン項目で Gitrochi を許可してください。";
 "Open Login Items" = "ログイン項目を開く";
 "Keep running in the menu bar when windows are closed" = "ウインドウを閉じてもメニューバーで実行を続ける";
-"Scheduled runs still start and terminals keep running while no window is open. Quit from the menu bar to stop them." = "ウインドウが開いていなくても、予約された実行は開始され、ターミナルは動き続けます。止めるにはメニューバーから終了してください。";
+"Scheduled runs still start while no window is open. Terminals keep running either way; Quit and End Terminals in the menu bar ends them." = "ウィンドウが開いていなくても、予約された実行は開始されます。ターミナルはどちらの場合も動き続けます。メニューバーの「終了してターミナルも終了」で終了できます。";
 "Couldn't add Gitrochi to the login items: %@" = "ログイン項目に Gitrochi を追加できませんでした: %@";
 "Couldn't remove Gitrochi from the login items: %@" = "ログイン項目から Gitrochi を削除できませんでした: %@";
 "Pipeline" = "パイプライン";
