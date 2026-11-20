@@ -6342,12 +6342,13 @@ migrate_repo_from_gitsw() {   # $1 a folder in the repository: its settings, bac
 }
 
 migrate_here_from_gitsw() {   # the repository gitch runs in; builtins and file tests first, since this runs on every call
-  local d="$PWD" gd="" line=""
+  local d="$PWD" p gd="" line=""
   while [ -n "$d" ]; do
-    if [ -d "$d/.git" ]; then gd="$d/.git"; break; fi
-    if [ -f "$d/.git" ]; then   # a worktree: .git names its folder, whose commondir is the shared one
-      read -r line < "$d/.git"; gd=${line#gitdir: }
-      case "$gd" in /*|[A-Za-z]:*) ;; *) gd="$d/$gd" ;; esac
+    p=${d%/}   # "/" + "/.git" would be "//.git", which Git Bash looks up as a network share and can hang on
+    if [ -d "$p/.git" ]; then gd="$p/.git"; break; fi
+    if [ -f "$p/.git" ]; then   # a worktree: .git names its folder, whose commondir is the shared one
+      read -r line < "$p/.git"; gd=${line#gitdir: }
+      case "$gd" in /*|[A-Za-z]:*) ;; *) gd="$p/$gd" ;; esac
       if [ -f "$gd/commondir" ]; then read -r line < "$gd/commondir"; case "$line" in /*|[A-Za-z]:*) gd=$line ;; *) gd="$gd/$line" ;; esac; fi
       break
     fi
