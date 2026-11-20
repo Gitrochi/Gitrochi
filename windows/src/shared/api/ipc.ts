@@ -161,8 +161,10 @@ export const ipc = {
   ) => {
     const ch = new Channel<PtyEvent>();
     ch.onmessage = onEvent;
-    return invoke<number | null>("pty_spawn", { id, program, args, cwd, env, cols, rows, meta, onEvent: ch });
+    return invoke<{ pid: number | null; hosted: boolean }>("pty_spawn", { id, program, args, cwd, env, cols, rows, meta, onEvent: ch });
   },
+  /** Ends every terminal the terminal host runs */
+  ptyEndAll: () => invoke<void>("pty_end_all"),
   /** Takes up a host session: its output so far, then what follows (or its end) */
   ptyAttach: (id: string, cols: number, rows: number, onEvent: (e: PtyEvent) => void) => {
     const ch = new Channel<PtyEvent>();

@@ -271,10 +271,11 @@ extension Workspace {
             + backgroundTabs.map { ($0.url, $0.terminals) }
     }
 
-    /// Terminals that something runs in or that wait for input, open or in the background: quitting ends them
-    var busyTerminalCount: Int {
+    /// Terminals that something runs in or that wait for input, open or in the background, that quitting ends: those the
+    /// terminal host runs outlive it unless they are ended too
+    func busyTerminalCount(hostedToo: Bool = false) -> Int {
         (openRepositories.flatMap(\.terminals) + backgroundTabs.flatMap(\.terminals)).filter { session in
-            guard session.running else { return false }
+            guard session.running, hostedToo || session.hostID == nil else { return false }
             let state = TerminalPanelLayout.tabActivity(agent: AgentCenter.shared.status(in: session)?.rawValue, shellBusy: session.busy)
             return state.busy || state.waiting
         }.count

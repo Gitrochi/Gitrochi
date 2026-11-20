@@ -648,13 +648,14 @@ extension RepoStore {
     }
 
     /// Tabs of this repository's terminals that outlived an earlier run of the app (the terminal host kept them)
-    func restoreHostTerminals() {
-        guard let path = url?.path else { return }
+    func restoreHostTerminals(then done: (@MainActor () -> Void)? = nil) {
+        guard let path = url?.path else { done?(); return }
         TerminalHostLink.shared.perform(launch: false) { client in
             let sessions = (try? client?.list()) ?? []
             let found = sessions.compactMap { s in TerminalHostMeta(s.meta).map { (id: s.id, meta: $0) } }
             DispatchQueue.main.async {
                 MainActor.assumeIsolated { [weak self] in
+                    defer { done?() }
                     guard let self, self.url?.path == path else { return }
                     let shown = Set(self.terminals.compactMap(\.hostSession))
                     for (id, meta) in found where !shown.contains(id) && RepoStore.samePath(meta.repository, path) {
@@ -736,9 +737,9 @@ extension RepoStore {
     }
 
     func closeAllTerminals() {
-        // quitting leaves the host's terminals running for the next launch
-        let quitting = Workspace.shared.isTerminating
-        terminals.forEach { quitting ? $0.release() : $0.terminate() }
+        // the repository closes (its window or tab, or the app quits): the host's terminals keep running and come back
+        // when it opens again; only a shell the app runs itself ends
+        terminals.forEach { $0.release() }
         browsers.forEach { $0.close() }
         releaseTerminals()
     }

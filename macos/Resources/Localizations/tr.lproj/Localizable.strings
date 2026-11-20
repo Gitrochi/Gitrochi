@@ -2117,12 +2117,14 @@
 "Open Gitrochi" = "Gitrochi’yi aç";
 "Settings…" = "Ayarlar…";
 "Quit Gitrochi" = "Gitrochi’den çık";
+"Quit and End Terminals" = "Çık ve terminalleri kapat";
+"Terminals in the background" = "Arka plandaki terminaller";
 "Startup and background" = "Başlangıç ve arka plan";
 "Open at login" = "Oturum açılınca aç";
 "Allow Gitrochi in System Settings › General › Login Items to open it at login." = "Oturum açılınca açılması için Sistem Ayarları › Genel › Giriş Öğeleri’nde Gitrochi’ye izin verin.";
 "Open Login Items" = "Giriş Öğeleri’ni aç";
 "Keep running in the menu bar when windows are closed" = "Pencereler kapatılınca menü çubuğunda çalışmaya devam et";
-"Scheduled runs still start and terminals keep running while no window is open. Quit from the menu bar to stop them." = "Hiç pencere açık değilken de zamanlanmış çalıştırmalar başlar ve terminaller çalışmaya devam eder. Durdurmak için menü çubuğundan çıkın.";
+"Scheduled runs still start while no window is open. Terminals keep running either way; Quit and End Terminals in the menu bar ends them." = "Açık pencere yokken de zamanlanmış çalıştırmalar başlar. Terminaller her durumda çalışmaya devam eder; menü çubuğundaki “Çık ve terminalleri kapat” onları sonlandırır.";
 "Couldn't add Gitrochi to the login items: %@" = "Gitrochi giriş öğelerine eklenemedi: %@";
 "Couldn't remove Gitrochi from the login items: %@" = "Gitrochi giriş öğelerinden kaldırılamadı: %@";
 "Pipeline" = "Pipeline";

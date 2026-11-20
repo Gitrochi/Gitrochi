@@ -43,7 +43,7 @@ export function BackgroundSettings({ autostart = registry, showLogin = isWindows
       {showLogin && <Checkbox checked={login === true} disabled={login === null} onChange={(on) => void changeLogin(on)} label={t("Open at login")} />}
       {error && <span className="error-text selectable" role="alert">{error}</span>}
       <Checkbox checked={keepRunningInBackground()} onChange={setKeepRunningInBackground} label={t("Keep running in the system tray when the window is closed")} />
-      <span className="hint">{t("Scheduled runs still start and terminals keep running while the window is closed. Quit from the tray icon to stop them.")}</span>
+      <span className="hint">{t("Scheduled runs still start while the window is closed. Terminals keep running either way; Quit and End Terminals in the tray menu ends them.")}</span>
     </div>
   );
 }

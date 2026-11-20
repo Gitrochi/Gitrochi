@@ -2115,12 +2115,14 @@
 "Open Gitrochi" = "Gitrochi megnyitása";
 "Settings…" = "Beállítások…";
 "Quit Gitrochi" = "Kilépés a Gitrochiból";
+"Quit and End Terminals" = "Kilépés és a terminálok bezárása";
+"Terminals in the background" = "Háttérben futó terminálok";
 "Startup and background" = "Indítás és háttér";
 "Open at login" = "Megnyitás bejelentkezéskor";
 "Allow Gitrochi in System Settings › General › Login Items to open it at login." = "Engedélyezze a Gitrochit a Rendszerbeállítások › Általános › Bejelentkezési elemek alatt, hogy bejelentkezéskor megnyíljon.";
 "Open Login Items" = "Bejelentkezési elemek megnyitása";
 "Keep running in the menu bar when windows are closed" = "Futás tovább a menüsoron, ha az ablakok be vannak zárva";
-"Scheduled runs still start and terminals keep running while no window is open. Quit from the menu bar to stop them." = "Az ütemezett futtatások elindulnak, és a terminálok tovább futnak akkor is, ha nincs nyitott ablak. Leállításukhoz lépjen ki a menüsorról.";
+"Scheduled runs still start while no window is open. Terminals keep running either way; Quit and End Terminals in the menu bar ends them." = "Az ütemezett futtatások akkor is elindulnak, ha nincs nyitott ablak. A terminálok mindenképp tovább futnak; a menüsor „Kilépés és a terminálok bezárása” pontja leállítja őket.";
 "Couldn't add Gitrochi to the login items: %@" = "Nem sikerült hozzáadni a Gitrochit a bejelentkezési elemekhez: %@";
 "Couldn't remove Gitrochi from the login items: %@" = "Nem sikerült eltávolítani a Gitrochit a bejelentkezési elemek közül: %@";
 "Pipeline" = "Pipeline";

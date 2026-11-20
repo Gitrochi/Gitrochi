@@ -2086,12 +2086,14 @@
 "Open Gitrochi" = "Buka Gitrochi";
 "Settings…" = "Pengaturan…";
 "Quit Gitrochi" = "Keluar dari Gitrochi";
+"Quit and End Terminals" = "Keluar dan akhiri terminal";
+"Terminals in the background" = "Terminal di latar belakang";
 "Startup and background" = "Mulai dan latar belakang";
 "Open at login" = "Buka saat login";
 "Allow Gitrochi in System Settings › General › Login Items to open it at login." = "Izinkan Gitrochi di Pengaturan Sistem › Umum › Item Login agar terbuka saat login.";
 "Open Login Items" = "Buka Item Login";
 "Keep running in the menu bar when windows are closed" = "Tetap berjalan di bar menu saat jendela ditutup";
-"Scheduled runs still start and terminals keep running while no window is open. Quit from the menu bar to stop them." = "Run terjadwal tetap dimulai dan terminal tetap berjalan saat tidak ada jendela yang terbuka. Keluar dari bar menu untuk menghentikannya.";
+"Scheduled runs still start while no window is open. Terminals keep running either way; Quit and End Terminals in the menu bar ends them." = "Jalankan terjadwal tetap dimulai saat tidak ada jendela yang terbuka. Terminal tetap berjalan dalam kedua kasus; “Keluar dan akhiri terminal” di bar menu mengakhirinya.";
 "Couldn't add Gitrochi to the login items: %@" = "Tidak dapat menambahkan Gitrochi ke item login: %@";
 "Couldn't remove Gitrochi from the login items: %@" = "Tidak dapat menghapus Gitrochi dari item login: %@";
 "Pipeline" = "Pipeline";

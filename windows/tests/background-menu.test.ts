@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  backgroundMenu, type BackgroundMenuItem, menuRecentLimit, menuRunLimit, pendingRunCount, quitWarning, recentToOpen, runLine, trayAction,
+  backgroundMenu, type BackgroundMenuItem, backgroundRepositories, menuRecentLimit, menuRunLimit, pendingRunCount, quitWarning, recentToOpen, runLine, trayAction,
   trayItems, upcomingRuns,
 } from "../src/app/lib/background-menu";
 
@@ -59,7 +59,7 @@ describe("the tray menu", () => {
       "header:Scheduled runs", "run:T100 · demo · Deploy (main)", "run:T200 · api · Nightly (main)",
       "separator", "header:Open repositories", "repository:demo", "terminal:zsh — Idle", "terminal:claude — Waiting for input", "repository:api",
       "separator", "header:Recent repositories", "recent:docs",
-      "separator", "open", "settings", "separator", "quit",
+      "separator", "open", "settings", "separator", "quit", "quitAndEnd",
     ]);
     const terminal = items.find((item) => item.kind === "terminal" && item.id === "t2");
     expect(terminal).toMatchObject({ path: "/work/demo" });
@@ -83,9 +83,31 @@ describe("the tray menu", () => {
       { kind: "repository", path: "C:\\work\\demo" },
       { kind: "terminal", path: "C:\\work\\demo", id: "t1" },
       { kind: "recent", path: "C:\\work\\docs" },
-      { kind: "open" }, { kind: "settings" }, { kind: "quit" },
+      { kind: "open" }, { kind: "settings" }, { kind: "quit" }, { kind: "quitAndEnd" },
     ]);
-    expect(lines.slice(-4).map((line) => line.label)).toEqual(["Open Gitrochi", "Settings…", null, "Quit Gitrochi"]);
+    expect(lines.slice(-5).map((line) => line.label)).toEqual(["Open Gitrochi", "Settings…", null, "Quit Gitrochi", "Quit and End Terminals"]);
+  });
+
+  it("lists the host's terminals of repositories that are not open, and leaves them out of the recent ones", () => {
+    const session = (id: string, running: boolean, repository: string, extra: { program?: string; title?: string } = {}) => ({ id, running, repository, directory: repository, ...extra });
+    const sessions = [
+      session("h1", true, "C:\\work\\api", { program: "C:\\tools\\claude.exe", title: "Claude" }),
+      session("h2", true, "C:\\work\\demo"),
+      session("h3", false, "C:\\work\\api"),
+      session("h5", true, "c:/WORK/api", { program: "/usr/bin/zsh" }),
+    ];
+    const background = backgroundRepositories(sessions, ["C:\\work\\demo"], same, "Running");
+    expect(background).toEqual([
+      { path: "C:\\work\\api", name: "api", terminals: [{ id: "h1", title: "Claude", state: "Running" }, { id: "h5", title: "zsh", state: "Running" }] },
+    ]);
+    const items = backgroundMenu({ runs: [], time, repositories: [], background, recents: ["C:\\work\\api", "C:\\work\\docs"], same });
+    expect(titles(items)).toEqual([
+      "header:Scheduled runs", "note:No scheduled runs",
+      "separator", "header:Terminals in the background", "repository:api", "terminal:Claude — Running", "terminal:zsh — Running",
+      "separator", "header:Recent repositories", "recent:docs",
+      "separator", "open", "settings", "separator", "quit", "quitAndEnd",
+    ]);
+    expect(trayAction(trayItems(items).find((line) => line.label?.trim() === "Claude — Running")!.id!)).toEqual({ kind: "terminal", path: "C:\\work\\api", id: "h1" });
   });
 
   it("keeps an ampersand in a name from becoming a shortcut", () => {
@@ -98,6 +120,7 @@ describe("the tray menu", () => {
     expect(trayAction("quit")).toBeNull();
     expect(trayAction(JSON.stringify({ kind: "terminal", path: "/a" }))).toBeNull();
     expect(trayAction(JSON.stringify({ kind: "delete", path: "/a" }))).toBeNull();
+    expect(trayAction(JSON.stringify({ kind: "quitAndEnd" }))).toEqual({ kind: "quitAndEnd" });
   });
 });
 

@@ -2084,12 +2084,14 @@
 "Open Gitrochi" = "Open Gitrochi";
 "Settings…" = "Instellingen…";
 "Quit Gitrochi" = "Stop Gitrochi";
+"Quit and End Terminals" = "Stoppen en terminals beëindigen";
+"Terminals in the background" = "Terminals op de achtergrond";
 "Startup and background" = "Opstarten en achtergrond";
 "Open at login" = "Openen bij inloggen";
 "Allow Gitrochi in System Settings › General › Login Items to open it at login." = "Sta Gitrochi toe in Systeeminstellingen › Algemeen › Inloggen om het bij het inloggen te openen.";
 "Open Login Items" = "Open inlogonderdelen";
 "Keep running in the menu bar when windows are closed" = "Blijf draaien in de menubalk als de vensters gesloten zijn";
-"Scheduled runs still start and terminals keep running while no window is open. Quit from the menu bar to stop them." = "Geplande runs starten nog steeds en terminals blijven draaien terwijl er geen venster open is. Stop via de menubalk om ze te stoppen.";
+"Scheduled runs still start while no window is open. Terminals keep running either way; Quit and End Terminals in the menu bar ends them." = "Geplande runs starten ook als er geen venster open is. Terminals blijven hoe dan ook draaien; ‘Stoppen en terminals beëindigen’ in de menubalk beëindigt ze.";
 "Couldn't add Gitrochi to the login items: %@" = "Kan Gitrochi niet toevoegen aan de inlogonderdelen: %@";
 "Couldn't remove Gitrochi from the login items: %@" = "Kan Gitrochi niet verwijderen uit de inlogonderdelen: %@";
 "Pipeline" = "Pipeline";

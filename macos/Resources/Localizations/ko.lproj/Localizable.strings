@@ -3884,12 +3884,14 @@
 "Open Gitrochi" = "Gitrochi 열기";
 "Settings…" = "설정…";
 "Quit Gitrochi" = "Gitrochi 종료";
+"Quit and End Terminals" = "종료하고 터미널도 끝내기";
+"Terminals in the background" = "백그라운드 터미널";
 "Startup and background" = "시작 및 백그라운드";
 "Open at login" = "로그인 시 열기";
 "Allow Gitrochi in System Settings › General › Login Items to open it at login." = "로그인할 때 열리게 하려면 시스템 설정 › 일반 › 로그인 항목에서 Gitrochi를 허용하세요.";
 "Open Login Items" = "로그인 항목 열기";
 "Keep running in the menu bar when windows are closed" = "창을 닫아도 메뉴 막대에서 계속 실행";
-"Scheduled runs still start and terminals keep running while no window is open. Quit from the menu bar to stop them." = "열린 창이 없어도 예약된 실행이 시작되고 터미널이 계속 실행됩니다. 멈추려면 메뉴 막대에서 종료하세요.";
+"Scheduled runs still start while no window is open. Terminals keep running either way; Quit and End Terminals in the menu bar ends them." = "열린 창이 없어도 예약된 실행이 시작됩니다. 터미널은 어느 쪽이든 계속 실행되며, 메뉴 막대의 '종료하고 터미널도 끝내기'로 끝낼 수 있습니다.";
 "Couldn't add Gitrochi to the login items: %@" = "로그인 항목에 Gitrochi를 추가하지 못했습니다: %@";
 "Couldn't remove Gitrochi from the login items: %@" = "로그인 항목에서 Gitrochi를 제거하지 못했습니다: %@";
 "Pipeline" = "파이프라인";

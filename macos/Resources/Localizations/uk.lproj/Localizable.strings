@@ -2129,12 +2129,14 @@
 "Open Gitrochi" = "Відкрити Gitrochi";
 "Settings…" = "Налаштування…";
 "Quit Gitrochi" = "Закрити Gitrochi";
+"Quit and End Terminals" = "Вийти й завершити термінали";
+"Terminals in the background" = "Термінали у фоні";
 "Startup and background" = "Запуск і фоновий режим";
 "Open at login" = "Відкривати під час входу";
 "Allow Gitrochi in System Settings › General › Login Items to open it at login." = "Дозвольте Gitrochi в Системних параметрах › Загальні › Обʼєкти входу, щоб він відкривався під час входу.";
 "Open Login Items" = "Відкрити обʼєкти входу";
 "Keep running in the menu bar when windows are closed" = "Працювати в смузі меню, коли вікна закрито";
-"Scheduled runs still start and terminals keep running while no window is open. Quit from the menu bar to stop them." = "Заплановані запуски й далі починаються, а термінали працюють, навіть коли жодне вікно не відкрито. Щоб зупинити їх, закрийте застосунок зі смуги меню.";
+"Scheduled runs still start while no window is open. Terminals keep running either way; Quit and End Terminals in the menu bar ends them." = "Заплановані запуски стартують, навіть коли немає відкритих вікон. Термінали працюють далі в будь-якому разі; «Вийти й завершити термінали» в рядку меню завершує їх.";
 "Couldn't add Gitrochi to the login items: %@" = "Не вдалося додати Gitrochi до обʼєктів входу: %@";
 "Couldn't remove Gitrochi from the login items: %@" = "Не вдалося вилучити Gitrochi з обʼєктів входу: %@";
 "Pipeline" = "Конвеєр";

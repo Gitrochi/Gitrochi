@@ -102,6 +102,7 @@ pub fn run() {
             pty::pty_kill,
             pty::pty_attach,
             pty::pty_sessions,
+            pty::pty_end_all,
             watch::watch_start,
             watch::watch_stop,
             net::http_request,
