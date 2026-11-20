@@ -10,7 +10,7 @@ Gitrochi의 두 화면과 CLI가 공유하는 계산 코어다. 운영체제 화
 | Windows 화면 | 동일 Rust 소스의 WebAssembly | 같은 계산; 큰 diff·커밋·blame·이력은 worker에서 실행 |
 | 앱에 포함된 gitch | `gitch-core` 네이티브 실행 파일 | 구조 그래프 JSON 생성, 기준·현재 그래프의 변경 영향 계산 |
 | 단독 gitch 스크립트 | 기존 Bash·AWK 경로 | 네이티브 도우미가 없어도 기존 명령·계약을 유지 |
-| Terminal host (#420, not used by the apps yet) | `gitrochi-terminal-host` native executable | Owns the terminals so they outlive the app; see [gitrochi-terminal/README.md](gitrochi-terminal/README.md) |
+| Terminal host (#420) | `gitrochi-terminal-host` native executable | Owns the terminals so they outlive the app; see [gitrochi-terminal/README.md](gitrochi-terminal/README.md) |
 
 도우미는 gitch 옆의 `gitch-core` 또는 `gitch-core.exe`에서 찾는다. `GITCH_CORE=/path/to/gitch-core`로 지정할 수 있고 빈 값은 기존 셸 경로를 선택한다. 언어별 정적 import 수집, Swift 컴파일러 인덱스, SCIP·감시·MCP 프로토콜은 기존 구현을 유지한다. 메모리·네트워크 대기 위주의 운영체제 통합이나 단순 UI 상태를 다른 언어로 바꾸는 이점은 확인되지 않았다.
 

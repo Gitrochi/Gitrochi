@@ -22,6 +22,16 @@ final class TerminalSession: Identifiable {
     private(set) var busy = false
 
     @ObservationIgnored private var relay: Relay?
+    /// The session in the terminal host while the tab runs there; nil when the app runs the shell itself
+    private(set) var hostID: String?
+    @ObservationIgnored private var hostPID: Int32?
+    @ObservationIgnored private var hostRelay: HostRelay?
+    /// The host session to take up on the first start (a tab restored after a relaunch)
+    @ObservationIgnored private var resumeID: String?
+    /// The repository whose panel the tab is in: a relaunched app restores it there
+    let repository: String?
+    /// The host session the tab shows, or will take up when it starts
+    var hostSession: String? { hostID ?? resumeID }
     @ObservationIgnored private var shellTitle: String?
     @ObservationIgnored private var refreshScheduled = false
     /// Output came while a refresh was already scheduled; a command started in that window is seen by one more refresh
@@ -39,9 +49,11 @@ final class TerminalSession: Identifiable {
 
     let command: Command?
 
-    init(directory: String, command: Command? = nil) {
+    init(directory: String, command: Command? = nil, repository: String? = nil, resume: String? = nil) {
         self.directory = directory
         self.command = command
+        self.repository = repository
+        self.resumeID = resume
         self.title = URL(fileURLWithPath: directory).lastPathComponent
         view = ShellView(frame: NSRect(x: 0, y: 0, width: 640, height: 260))
         _ = ShellView.controlReturnMonitor
@@ -60,6 +72,18 @@ final class TerminalSession: Identifiable {
     func start() {
         exitCode = nil
         running = true
+        if let id = resumeID {
+            resumeID = nil
+            resume(id)
+        } else if TerminalHostLink.shared.enabled {
+            startHosted()
+        } else {
+            startLocal()
+        }
+    }
+
+    private func startLocal() {
+        view.terminalDelegate = view
         let shell = ToolPaths.shared.get(.shell) ?? Self.loginShell
         let execName = "-" + URL(fileURLWithPath: shell).lastPathComponent
         if let command {
@@ -79,6 +103,20 @@ final class TerminalSession: Identifiable {
 
     /// 셸과 그 안에서 돌고 있는 프로그램을 끝낸다(터미널을 닫을 때처럼 SIGHUP).
     func terminate() {
+        if let id = hostID {
+            if running, let pid = hostPID, pid > 0 {
+                kill(-pid, SIGHUP)
+                kill(pid, SIGHUP)
+            }
+            // the host reports the end and forgets the session; the tab is gone by then
+            TerminalHostLink.shared.unroute(id)
+            if running { TerminalHostLink.shared.perform(launch: false) { try? $0?.kill(id) } }
+            hostID = nil
+            hostPID = nil
+            running = false
+            busy = false
+            return
+        }
         let pid = view.process?.shellPid ?? 0
         if running, pid > 0 {
             kill(-pid, SIGHUP)
@@ -90,6 +128,115 @@ final class TerminalSession: Identifiable {
         }
         running = false
         busy = false
+    }
+
+    /// Lets go of a host session without ending it: the app quits and the next run takes the tab up again. A shell
+    /// the app runs itself ends as before.
+    func release() {
+        guard let id = hostID else { return terminate() }
+        TerminalHostLink.shared.unroute(id)
+        hostID = nil
+        hostPID = nil
+        running = false
+        busy = false
+    }
+
+    // MARK: Terminal host
+
+    /// What the host runs: the shell as a login shell (-l, as Terminal does), or the program through it
+    private func hostedCommand() -> (program: String, args: [String], env: [String: String]) {
+        let shell = ToolPaths.shared.get(.shell) ?? Self.loginShell
+        var env = Dictionary(Self.environment().compactMap { pair -> (String, String)? in
+            guard let eq = pair.firstIndex(of: "=") else { return nil }
+            return (String(pair[..<eq]), String(pair[pair.index(after: eq)...]))
+        }, uniquingKeysWith: { _, last in last })
+        guard let command else { return (shell, ["-l"], env) }
+        command.env.forEach { env[$0.key] = $0.value }
+        let line = (["exec", Launcher.quote(command.program)] + command.args.map(Launcher.quote)).joined(separator: " ")
+        return (shell, ["-l", "-i", "-c", line], env)
+    }
+
+    private var hostMeta: TerminalHostMeta {
+        TerminalHostMeta(repository: repository ?? directory, directory: directory, program: command?.program, args: command?.args,
+                         env: command?.env, title: command?.title)
+    }
+
+    /// Sends typing and size changes to the host and its output to the view
+    private func connectHost(_ id: String) {
+        hostID = id
+        let relay = HostRelay(view: view, id: id)
+        hostRelay = relay
+        view.terminalDelegate = relay
+        TerminalHostLink.shared.route(id, .init(output: { [weak self] bytes in
+            guard let self, self.hostID == id else { return }
+            self.view.feed(byteArray: ArraySlice([UInt8](bytes)))
+            self.noteOutput()
+        }, exited: { [weak self] code in
+            guard let self, self.hostID == id else { return }
+            self.hostPID = nil
+            self.processEnded(code)
+        }))
+    }
+
+    private func startHosted() {
+        let id = UUID().uuidString
+        connectHost(id)
+        let (program, args, env) = hostedCommand()
+        let terminal = view.getTerminal()
+        let cols = terminal.cols, rows = terminal.rows, cwd = directory, meta = hostMeta.json, pidFile = command?.pidFile
+        TerminalHostLink.shared.perform(launch: true) { [weak self] client in
+            let result: Result<Int32?, Error>? = client.map { c in
+                Result { try c.spawn(id: id, program: program, args: args, cwd: cwd, env: env, cols: cols, rows: rows, meta: meta) }
+                    .flatMap { pid in Result { _ = try c.attach(id); return pid } }
+            }
+            DispatchQueue.main.async {
+                MainActor.assumeIsolated {
+                    guard let self, self.hostID == id else { return }
+                    switch result {
+                    case .success(let pid)?:
+                        self.hostPID = pid
+                        if let pidFile, let pid, pid > 0 { try? String(pid).write(toFile: pidFile, atomically: true, encoding: .utf8) }
+                        self.refreshInfo()
+                    case .failure?, nil:
+                        // no host, or it could not start the program: run the shell in the app as before
+                        TerminalHostLink.shared.unroute(id)
+                        self.hostID = nil
+                        self.hostRelay = nil
+                        self.startLocal()
+                    }
+                }
+            }
+        }
+    }
+
+    /// Takes up a session the host kept: its output so far, then what follows. Starting again later runs anew.
+    private func resume(_ id: String) {
+        connectHost(id)
+        let terminal = view.getTerminal()
+        let cols = terminal.cols, rows = terminal.rows
+        TerminalHostLink.shared.perform(launch: false) { [weak self] client in
+            let result = client.map { c in
+                Result { () -> TerminalHostClient.Session in
+                    let session = try c.attach(id)
+                    if session.running, (session.cols, session.rows) != (cols, rows) { try? c.resize(id, cols: cols, rows: rows) }
+                    return session
+                }
+            }
+            DispatchQueue.main.async {
+                MainActor.assumeIsolated {
+                    guard let self, self.hostID == id else { return }
+                    switch result {
+                    case .success(let session)?:
+                        self.hostPID = session.pid
+                        self.refreshInfo()
+                    case .failure?, nil:
+                        TerminalHostLink.shared.unroute(id)
+                        self.hostID = nil
+                        self.processEnded(nil)
+                    }
+                }
+            }
+        }
     }
 
     /// SwiftTerm 은 직접 끝낸 셸을 거두지 않아 좀비로 남으므로 여기서 거둔다(2초 안에 안 끝나면 SIGKILL).
@@ -137,7 +284,13 @@ final class TerminalSession: Identifiable {
 
     /// 실행 중인 프로그램(셸 자신이 아니면). 닫기 전에 물어볼 때 쓴다.
     var foregroundProgram: String? {
-        guard running, let p = view.process, p.childfd >= 0 else { return nil }
+        guard running else { return nil }
+        if hostID != nil {
+            // the host holds the terminal; the shell's process info names the terminal's foreground group
+            guard let pid = hostPID, pid > 0, let pgid = Self.terminalForeground(pid), pgid != pid else { return nil }
+            return Self.processName(pgid)
+        }
+        guard let p = view.process, p.childfd >= 0 else { return nil }
         let pgid = tcgetpgrp(p.childfd)
         guard pgid > 0, pgid != p.shellPid else { return nil }
         return Self.processName(pgid)
@@ -145,8 +298,15 @@ final class TerminalSession: Identifiable {
 
     /// The shell's pid while it runs; an agent typed into this tab has it as an ancestor
     var shellPID: Int32? {
-        guard running, let pid = view.process?.shellPid, pid > 0 else { return nil }
+        guard running, let pid = hostID != nil ? hostPID : view.process?.shellPid, pid > 0 else { return nil }
         return pid
+    }
+
+    static func terminalForeground(_ pid: pid_t) -> pid_t? {
+        var info = proc_bsdinfo()
+        let size = Int32(MemoryLayout<proc_bsdinfo>.size)
+        guard proc_pidinfo(pid, PROC_PIDTBSDINFO, 0, &info, size) == size, info.e_tpgid > 0 else { return nil }
+        return pid_t(info.e_tpgid)
     }
 
     // MARK: 상태 갱신
@@ -187,8 +347,8 @@ final class TerminalSession: Identifiable {
     }
 
     private func refreshInfo() {
-        guard let p = view.process, p.shellPid > 0 else { return }
-        if let cwd = Self.currentDirectory(p.shellPid), cwd != directory { directory = cwd }
+        guard let pid = hostID != nil ? hostPID : view.process?.shellPid, pid > 0 else { return }
+        if let cwd = Self.currentDirectory(pid), cwd != directory { directory = cwd }
         let name = shellTitle ?? foregroundProgram ?? command?.title ?? URL(fileURLWithPath: directory).lastPathComponent
         if name != title { title = name }
         let nowBusy = running && (command != nil || foregroundProgram != nil)
@@ -206,7 +366,7 @@ final class TerminalSession: Identifiable {
     }
 
     /// Finder 에서 띄운 앱은 환경 변수가 거의 없으므로 터미널에 필요한 것만 채운다(PATH 등은 로그인 셸이 읽는다).
-    static func environment() -> [String] {
+    nonisolated static func environment() -> [String] {
         var env = ProcessInfo.processInfo.environment
         for k in ["CLAUDECODE", "CLAUDE_CODE_ENTRYPOINT", "TERM_SESSION_ID", "__CFBundleIdentifier", "XPC_SERVICE_NAME"] {
             env.removeValue(forKey: k)
@@ -258,6 +418,39 @@ private final class Relay: NSObject, LocalProcessTerminalViewDelegate {
     func processTerminated(source: TerminalView, exitCode: Int32?) {
         MainActor.assumeIsolated { owner?.processEnded(exitCode) }
     }
+}
+
+/// The view's delegate while the host runs the tab: typing and size changes go to the host, the rest to the view as
+/// it handles them for a shell of its own (LocalProcessTerminalView's sizeChanged only talks to its own process)
+private final class HostRelay: NSObject, TerminalViewDelegate {
+    weak var view: ShellView?
+    let id: String
+    init(view: ShellView, id: String) {
+        self.view = view
+        self.id = id
+    }
+
+    private var own: TerminalViewDelegate? { view }
+
+    func send(source: TerminalView, data: ArraySlice<UInt8>) {
+        let id = id, bytes = Data(data)
+        TerminalHostLink.shared.perform(launch: false) { try? $0?.input(id, bytes) }
+    }
+
+    func sizeChanged(source: TerminalView, newCols: Int, newRows: Int) {
+        let id = id
+        TerminalHostLink.shared.perform(launch: false) { try? $0?.resize(id, cols: newCols, rows: newRows) }
+    }
+
+    func setTerminalTitle(source: TerminalView, title: String) { own?.setTerminalTitle(source: source, title: title) }
+    func hostCurrentDirectoryUpdate(source: TerminalView, directory: String?) { own?.hostCurrentDirectoryUpdate(source: source, directory: directory) }
+    func scrolled(source: TerminalView, position: Double) { own?.scrolled(source: source, position: position) }
+    func requestOpenLink(source: TerminalView, link: String, params: [String: String]) { own?.requestOpenLink(source: source, link: link, params: params) }
+    func bell(source: TerminalView) { own?.bell(source: source) }
+    func clipboardCopy(source: TerminalView, content: Data) { own?.clipboardCopy(source: source, content: content) }
+    func clipboardRead(source: TerminalView) -> Data? { own?.clipboardRead(source: source) }
+    func iTermContent(source: TerminalView, content: ArraySlice<UInt8>) { own?.iTermContent(source: source, content: content) }
+    func rangeChanged(source: TerminalView, startY: Int, endY: Int) { own?.rangeChanged(source: source, startY: startY, endY: endY) }
 }
 
 /// 출력이 올 때 알려 주는 터미널 뷰
@@ -434,8 +627,8 @@ extension RepoStore {
         }
     }
 
-    private func makeTerminal(in dir: String, command: TerminalSession.Command?) -> TerminalSession {
-        let s = TerminalSession(directory: dir, command: command)
+    private func makeTerminal(in dir: String, command: TerminalSession.Command?, resume: String? = nil) -> TerminalSession {
+        let s = TerminalSession(directory: dir, command: command, repository: url?.path, resume: resume)
         wire(s)
         terminals.append(s)
         activeTerminalID = s.id
@@ -452,6 +645,30 @@ extension RepoStore {
         terminalLayout = TerminalNode.adding(s.id, to: focused, in: terminalLayout)
         s.start()
         return s
+    }
+
+    /// Tabs of this repository's terminals that outlived an earlier run of the app (the terminal host kept them)
+    func restoreHostTerminals() {
+        guard let path = url?.path else { return }
+        TerminalHostLink.shared.perform(launch: false) { client in
+            let sessions = (try? client?.list()) ?? []
+            let found = sessions.compactMap { s in TerminalHostMeta(s.meta).map { (id: s.id, meta: $0) } }
+            DispatchQueue.main.async {
+                MainActor.assumeIsolated { [weak self] in
+                    guard let self, self.url?.path == path else { return }
+                    let shown = Set(self.terminals.compactMap(\.hostSession))
+                    for (id, meta) in found where !shown.contains(id) && RepoStore.samePath(meta.repository, path) {
+                        let command = meta.program.map {
+                            TerminalSession.Command(program: $0, args: meta.args ?? [], env: meta.env ?? [:], title: meta.title ?? URL(fileURLWithPath: $0).lastPathComponent)
+                        }
+                        let focused = self.terminalLayout?.pane(of: self.activeTerminalID)?.id
+                        let s = self.makeTerminal(in: meta.directory, command: command, resume: id)
+                        self.terminalLayout = TerminalNode.adding(s.id, to: focused, in: self.terminalLayout)
+                        s.start()
+                    }
+                }
+            }
+        }
     }
 
     /// The tab a pane shows
@@ -519,7 +736,9 @@ extension RepoStore {
     }
 
     func closeAllTerminals() {
-        terminals.forEach { $0.terminate() }
+        // quitting leaves the host's terminals running for the next launch
+        let quitting = Workspace.shared.isTerminating
+        terminals.forEach { quitting ? $0.release() : $0.terminate() }
         browsers.forEach { $0.close() }
         releaseTerminals()
     }
