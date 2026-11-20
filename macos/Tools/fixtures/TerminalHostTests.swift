@@ -45,6 +45,7 @@ func until(_ what: String, _ ready: () -> Bool) {
     static func main() throws {
         frames()
         meta()
+        signalsReset()
         try sessions(stateDir: URL(fileURLWithPath: CommandLine.arguments[1]))
         print("terminal host tests passed")
     }
@@ -74,6 +75,18 @@ func until(_ what: String, _ ready: () -> Bool) {
         precondition(TerminalHostMeta(["app": "other", "repository": "/r", "spec": ["directory": "/r"]]) == nil)
         precondition(TerminalHostMeta(["app": "gitrochi", "repository": "/r", "spec": ["directory": "/r", "args": [1]]]) == nil)
         precondition(TerminalHostMeta(nil) == nil)
+    }
+
+    /// A host started by an app that ignores SIGTERM still ends on SIGTERM
+    static func signalsReset() {
+        signal(SIGTERM, SIG_IGN)
+        defer { signal(SIGTERM, SIG_DFL) }
+        guard let pid = TerminalHostLink.spawnDetached("/bin/sleep", args: ["30"], env: []) else { preconditionFailure("spawn") }
+        precondition(getsid(pid) == pid, "a session of its own")
+        kill(pid, SIGTERM)
+        var status: Int32 = 0
+        waitpid(pid, &status, 0)
+        precondition(status & 0x7f == SIGTERM, "SIGTERM was still ignored (status \(status))")
     }
 
     /// A real host: a session outlives the connection and replays its output to the next one
