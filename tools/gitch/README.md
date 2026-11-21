@@ -9,7 +9,7 @@ Gitrochi 맥 앱(`Gitrochi.app/Contents/Resources/gitch`)과 Windows 앱(설치 
 - 비밀값·큰 파일·강제 push·다른 계정 커밋을 **git 훅에서 막는다** (어떤 도구로 git 을 써도 적용).
 - AI 에게는 규칙(CLAUDE.md/AGENTS.md), 스킬, Claude Code 명령 검사 훅을 깔아 준다.
 - macOS 기본 bash 3.2 + git 만으로 동작한다 (jq 는 Claude 훅/JSON 요약에만 사용). Windows 는 Git for Windows 의 Git Bash 로 돈다 — 아래 [Windows](#windows).
-- gitch 버전은 Gitrochi 릴리스 버전과 같다(현재 `0.4.2-beta.4`). 예전 CLI 전용 `3.x` 번호는 더 쓰지 않는다.
+- gitch 버전은 Gitrochi 릴리스 버전과 같다(현재 `0.4.2-beta.5`). 예전 CLI 전용 `3.x` 번호는 더 쓰지 않는다.
 
 ## 설치
 
@@ -395,7 +395,7 @@ JSON (노드 · 연결이 한 줄에 하나):
 ```json
 {
   "tool": "gitch graph",
-  "version": "0.4.2-beta.4",
+  "version": "0.4.2-beta.5",
   "relation": "files",
   "directed": true,
   "repo": "app",
