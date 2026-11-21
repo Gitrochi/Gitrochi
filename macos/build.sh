@@ -36,7 +36,10 @@ fi
 
 # SwiftPM 없이 swiftc 로 바로 빌드한다(일부 Command Line Tools 에서 SwiftPM·SwiftUI 매크로가 깨져 있음).
 ST_SRC="$ROOT/Vendor/SwiftTerm/Sources"
-SWIFT_FLAGS=(-O -parse-as-library -swift-version 5)
+# CI sets GITROCHI_SWIFT_OPT=-Onone for pull-request checks, which only need a working app; a release is always -O
+SWIFT_OPT="${GITROCHI_SWIFT_OPT:--O}"
+[[ "$MODE" == "release" ]] && SWIFT_OPT=-O
+SWIFT_FLAGS=("$SWIFT_OPT" -parse-as-library -swift-version 5)
 
 build_arch() {
     local arch="$1"

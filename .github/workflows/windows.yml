@@ -20,6 +20,30 @@ permissions:
   contents: read
 
 jobs:
+  # Which parts a pull request touches: the gitch suite runs only when gitch, its helpers or the shared Rust core change
+  changes:
+    name: 바뀐 곳
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: read
+    outputs:
+      gitch: ${{ steps.files.outputs.gitch }}
+    steps:
+      - id: files
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          files=$(gh api "repos/$REPO/pulls/$PR/files" --paginate --jq '.[].filename')
+          if grep -qE '^(tools/gitch/|tools/gitch-flow/|crates/|tools/check-versions\.sh$|\.github/workflows/windows\.yml$)' <<<"$files"; then
+            echo gitch=true >> "$GITHUB_OUTPUT"
+          else
+            echo gitch=false >> "$GITHUB_OUTPUT"
+          fi
+
   build:
     name: 빌드 · 자동 점검
     # Signing keys live in the release environment (v* tags and main only); PR runs build without them
@@ -172,7 +196,15 @@ jobs:
         run: |
           # 가짜 업데이트 서버(http://127.0.0.1)로 서명 확인을 시험하려고 http 허용 + 낮은 버전(0.0.1)으로 빌드한다.
           # 배포 파일(위에서 올린 설치 파일)은 https 만 쓴다. 배포용 빌드가 없으면(보통 푸시) 업데이트 점검은 건너뛴다.
-          npx tauri build --no-bundle --config '{"version":"0.0.1","bundle":{"createUpdaterArtifacts":false},"plugins":{"updater":{"dangerousInsecureTransportProtocol":true}}}'
+          # A pull request checks a debug build (the Rust side builds several times faster); releases check the release build.
+          config='{"version":"0.0.1","bundle":{"createUpdaterArtifacts":false},"plugins":{"updater":{"dangerousInsecureTransportProtocol":true}}}'
+          if [ "$FULL" = true ]; then
+            npx tauri build --no-bundle --config "$config"
+            echo "CHECK_EXE=src-tauri/target/release/gitrochi.exe" >> "$GITHUB_ENV"
+          else
+            npx tauri build --debug --no-bundle --config "$config"
+            echo "CHECK_EXE=src-tauri/target/debug/gitrochi.exe" >> "$GITHUB_ENV"
+          fi
 
       - name: 테스트 저장소 만들기
         shell: bash
@@ -225,7 +257,7 @@ jobs:
           $mock = Start-Process -FilePath node -ArgumentList $mockArgs -PassThru -WindowStyle Hidden
           Start-Sleep -Seconds 2
           try { Set-DisplayResolution -Width 1920 -Height 1080 -Force -ErrorAction Stop } catch { Write-Host "해상도 변경 불가: $_" }
-          $exe = Resolve-Path "src-tauri/target/release/gitrochi.exe"
+          $exe = Resolve-Path $env:CHECK_EXE
           $result = "$env:ST_ROOT/selftest-result.json"
           $env:GITROCHI_SELFTEST = "$env:ST_ROOT/repo"
           $p = Start-Process -FilePath $exe -PassThru -RedirectStandardOutput "$env:ST_ROOT/app-stdout.log" -RedirectStandardError "$env:ST_ROOT/app-stderr.log"
@@ -263,7 +295,7 @@ jobs:
         run: |
           # 점검이 끝난 실제 앱을 데모 저장소로 다시 열어 창만 찍는다(docs/images/windows-*.png 로 쓰려고)
           $repo = (Resolve-Path "$env:ST_ROOT/demo/shop-web").Path -replace '\\', '/'
-          $exe = Resolve-Path "src-tauri/target/release/gitrochi.exe"
+          $exe = Resolve-Path $env:CHECK_EXE
           $data = Join-Path $env:APPDATA "Gitrochi"
           New-Item -ItemType Directory -Force $data, "$env:ST_ROOT/shots" | Out-Null
           Add-Type -AssemblyName System.Drawing
@@ -348,7 +380,8 @@ jobs:
   # Windows 프로세스 실행 비용 때문에 테스트 항목 전체를 4등분해 동시에 검사한다. 태그는 PR에서 확인했으므로 건너뛴다.
   gitch:
     name: gitch 테스트 (Git Bash ${{ matrix.shard }}/4)
-    if: github.ref_type != 'tag'
+    needs: changes
+    if: ${{ !cancelled() && github.ref_type != 'tag' && (github.event_name != 'pull_request' || needs.changes.outputs.gitch == 'true') }}
     runs-on: windows-latest
     timeout-minutes: 90
     strategy:

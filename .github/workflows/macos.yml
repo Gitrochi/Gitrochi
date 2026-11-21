@@ -18,12 +18,39 @@ permissions:
   contents: read
 
 jobs:
+  # Which parts a pull request touches: the gitch suite runs only when gitch, its helpers or the shared Rust core change
+  changes:
+    name: 바뀐 곳
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: read
+    outputs:
+      gitch: ${{ steps.files.outputs.gitch }}
+    steps:
+      - id: files
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          files=$(gh api "repos/$REPO/pulls/$PR/files" --paginate --jq '.[].filename')
+          if grep -qE '^(tools/gitch/|tools/gitch-flow/|tools/gitch-swift-index/|crates/|tools/check-versions\.sh$|\.github/workflows/macos\.yml$)' <<<"$files"; then
+            echo gitch=true >> "$GITHUB_OUTPUT"
+          else
+            echo gitch=false >> "$GITHUB_OUTPUT"
+          fi
+
   build:
     name: 빌드
     if: github.ref_type != 'tag'
     runs-on: macos-26
     # The native build, window fixtures and regression suites run in one job.
     timeout-minutes: 90
+    # A pull request only needs a working app: an unoptimized build is several times faster. Releases build -O.
+    env:
+      GITROCHI_SWIFT_OPT: ${{ github.event_name == 'pull_request' && '-Onone' || '-O' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -117,35 +144,9 @@ jobs:
           bash macos/Tools/test-terminal-layout.sh "$RUNNER_TEMP/voice-workflow-layout"
           bash macos/Tools/test-shared-sheet-layout.sh "$RUNNER_TEMP/shared-sheet-layout"
 
-      - name: 비교 · 협업 · 로컬 복구 도구 테스트
-        run: |
-          bash macos/Tools/test-history-tools.sh
-          bash macos/Tools/test-collaboration.sh
-          bash macos/Tools/test-local-workflows.sh
-          bash macos/Tools/test-work-context.sh
-          bash macos/Tools/test-work-validation.sh
-          bash macos/Tools/test-project-dependencies.sh
-          bash macos/Tools/test-workspace-navigation.sh
-          bash macos/Tools/test-inspector-layout.sh
-          bash macos/Tools/test-adaptive-workbench-identity.sh
-          bash macos/Tools/test-large-changes.sh
-          bash macos/Tools/test-repository-browser.sh
-          bash macos/Tools/test-workbench-first-screen.sh
-          bash macos/Tools/test-hosting-target.sh
-          bash macos/Tools/test-hosting-hub.sh
-          bash macos/Tools/test-hosting-hub-credentials.sh
-          bash macos/Tools/test-project-item-completeness.sh
-          bash macos/Tools/test-project-workbench.sh
-          bash macos/Tools/test-project-schedule.sh
-          bash macos/Tools/test-project-scheduling.sh
-          bash macos/Tools/test-project-portfolio.sh
-          bash macos/Tools/test-local-projects.sh
-          bash macos/Tools/test-project-management.sh
-          bash macos/Tools/test-project-creation-recovery.sh
-          bash macos/Tools/test-project-backend.sh
-          bash macos/Tools/test-project-task-creation.sh
-          bash macos/Tools/test-workspace-operations.sh
-          bash macos/Tools/test-confirmation-guard.sh
+      # The other tool suites compile their own sources and run in the 도구 테스트 job beside this one
+      - name: 작업 공간 이동 테스트 (앱 필요)
+        run: bash macos/Tools/test-workspace-navigation.sh
 
       - uses: actions/setup-node@v4
         with:
@@ -175,10 +176,57 @@ jobs:
       - name: gitch-swift-index 테스트
         run: tools/gitch-swift-index/tests/run.sh macos/build/Gitrochi.app/Contents/Resources/gitch-swift-index
 
+  # Tool suites that compile their own Swift sources (no app needed), beside the build so they do not add up
+  tools:
+    name: 도구 테스트
+    if: github.ref_type != 'tag'
+    runs-on: macos-26
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "crates -> target"
+
+      - name: 비교 · 협업 · 로컬 복구 도구 테스트
+        run: |
+          bash macos/Tools/test-history-tools.sh
+          bash macos/Tools/test-collaboration.sh
+          bash macos/Tools/test-local-workflows.sh
+          bash macos/Tools/test-work-context.sh
+          bash macos/Tools/test-work-validation.sh
+          bash macos/Tools/test-project-dependencies.sh
+          bash macos/Tools/test-inspector-layout.sh
+          bash macos/Tools/test-adaptive-workbench-identity.sh
+          bash macos/Tools/test-large-changes.sh
+          bash macos/Tools/test-repository-browser.sh
+          bash macos/Tools/test-workbench-first-screen.sh
+          bash macos/Tools/test-hosting-target.sh
+          bash macos/Tools/test-hosting-hub.sh
+          bash macos/Tools/test-hosting-hub-credentials.sh
+          bash macos/Tools/test-project-item-completeness.sh
+          bash macos/Tools/test-project-workbench.sh
+          bash macos/Tools/test-project-schedule.sh
+          bash macos/Tools/test-project-scheduling.sh
+          bash macos/Tools/test-project-portfolio.sh
+          bash macos/Tools/test-local-projects.sh
+          bash macos/Tools/test-project-management.sh
+          bash macos/Tools/test-project-creation-recovery.sh
+          bash macos/Tools/test-project-backend.sh
+          bash macos/Tools/test-project-task-creation.sh
+          bash macos/Tools/test-workspace-operations.sh
+          bash macos/Tools/test-confirmation-guard.sh
+
   # gitch(앱에 함께 들어가는 셸 도구): macOS 기본 bash 3.2 로 전체 테스트(임시 HOME · 가짜 ssh/gh/curl/원격)
   gitch:
     name: gitch 테스트
-    if: github.ref_type != 'tag'
+    needs: changes
+    if: ${{ !cancelled() && github.ref_type != 'tag' && (github.event_name != 'pull_request' || needs.changes.outputs.gitch == 'true') }}
     runs-on: macos-26
     # The shell suite and native-helper regression run sequentially on hosted runners.
     timeout-minutes: 30
