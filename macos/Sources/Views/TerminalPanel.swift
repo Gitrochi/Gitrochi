@@ -10,16 +10,18 @@ struct ContentColumn: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Group {
-                if let f = store.fileInspect {
-                    FileInspectView(inspect: f)
-                } else if let source = store.diffSource {
-                    DiffView(source: source)
-                } else {
-                    GraphView()
+            if !(store.showTerminal && store.terminalMaximized) {
+                Group {
+                    if let f = store.fileInspect {
+                        FileInspectView(inspect: f)
+                    } else if let source = store.diffSource {
+                        DiffView(source: source)
+                    } else {
+                        GraphView()
+                    }
                 }
+                .frame(minHeight: 0, maxHeight: .infinity)
             }
-            .frame(minHeight: 0, maxHeight: .infinity)
 
             if store.showTerminal {
                 TerminalPanel(columnHeight: columnHeight)
@@ -54,7 +56,7 @@ private struct SplitHandle: View {
 }
 
 /// The terminal panel: panes split right or down, each with its own tabs. Its top edge drags to resize it, and every
-/// page shares the height. It docks under the centre column only: the sidebar and the right panel keep the full window
+/// page shares the height; maximized, it takes the whole column and the content above steps aside. It docks under the centre column only: the sidebar and the right panel keep the full window
 /// height (docs/design.md › App shell). (Windows: widgets/terminal-panel/ui/TerminalPanel.tsx)
 struct TerminalPanel: View {
     @Environment(RepoStore.self) private var store
@@ -71,9 +73,9 @@ struct TerminalPanel: View {
             }
         }
         .background(Color(nsColor: .windowBackgroundColor))
-        .frame(height: min(max(terminalHeight, range.lowerBound), range.upperBound))
+        .frame(height: store.terminalMaximized ? columnHeight : min(max(terminalHeight, range.lowerBound), range.upperBound))
         .overlay(alignment: .top) {
-            SplitHandle(height: $terminalHeight, range: range)
+            if !store.terminalMaximized { SplitHandle(height: $terminalHeight, range: range) }
         }
     }
 }
@@ -242,6 +244,8 @@ private struct TerminalPaneView: View {
                               close: { store.requestCloseTab($0) },
                               newTerminal: { newTerminal(at: shown) },
                               voice: { openDictation(for: shown) },
+                              maximized: store.terminalMaximized,
+                              maximize: { store.toggleTerminalMaximized() },
                               hide: { store.showTerminal = false }) {
             Section("Insert command") {
                 ForEach(TerminalQuickCommand.allCases) { command in

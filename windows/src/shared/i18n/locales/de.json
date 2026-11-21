@@ -2316,5 +2316,7 @@
   "Receive beta updates": "Beta-Updates erhalten",
   "Betas come before each release so new features can be tried early; they may have bugs. Turning this off keeps the beta until the next release.": "Betas erscheinen vor jeder Version, damit neue Funktionen früh ausprobiert werden können; sie können Fehler enthalten. Wenn du dies ausschaltest, bleibt die Beta bis zur nächsten Version.",
   "Search engine": "Suchmaschine",
-  "Text typed into a browser tab's address bar that isn't an address is searched with this engine.": "Text in der Adressleiste eines Browser-Tabs, der keine Adresse ist, wird mit dieser Suchmaschine gesucht."
+  "Text typed into a browser tab's address bar that isn't an address is searched with this engine.": "Text in der Adressleiste eines Browser-Tabs, der keine Adresse ist, wird mit dieser Suchmaschine gesucht.",
+  "Maximize terminal": "Terminal maximieren",
+  "Restore terminal size": "Terminalgröße wiederherstellen"
 }

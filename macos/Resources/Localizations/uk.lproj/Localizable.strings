@@ -2308,3 +2308,5 @@
 "Betas come before each release so new features can be tried early; they may have bugs. Turning this off keeps the beta until the next release." = "Бета-версії виходять перед кожним релізом, щоб заздалегідь спробувати нові функції; у них можуть бути помилки. Якщо вимкнути, бета залишиться до наступного релізу.";
 "Search engine" = "Пошукова система";
 "Text typed into a browser tab's address bar that isn't an address is searched with this engine." = "Текст в адресному рядку вкладки браузера, який не є адресою, шукається в цій пошуковій системі.";
+"Maximize terminal" = "Розгорнути термінал";
+"Restore terminal size" = "Відновити розмір термінала";

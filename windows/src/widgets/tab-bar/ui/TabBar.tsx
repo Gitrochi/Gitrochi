@@ -41,6 +41,7 @@ export function TabBar({ openSettings }: { openSettings: () => void }) {
               { label: t("Refresh"), shortcut: "F5", disabled: !s?.path, onClick: () => void s?.reload() },
               { label: t("Search commits"), shortcut: "Ctrl+F", disabled: !s?.path, onClick: () => s?.requestSearchFocus() },
               { label: t("Show/hide terminal"), shortcut: "Ctrl+`", disabled: !s?.path, onClick: () => s?.toggleTerminal() },
+              { label: s?.showTerminal && s.terminalMaximized ? t("Restore terminal size") : t("Maximize terminal"), disabled: !s?.path, onClick: () => s?.toggleTerminalMaximized() },
               ...structureGraphMenus(s ?? null),
               "divider",
               { label: t("Settings…"), shortcut: "Ctrl+,", onClick: openSettings },

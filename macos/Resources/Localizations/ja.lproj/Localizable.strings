@@ -2971,3 +2971,5 @@
 "Betas come before each release so new features can be tried early; they may have bugs. Turning this off keeps the beta until the next release." = "ベータ版は各リリースの前に新機能を試せる版で、不具合がある場合があります。オフにすると、次のリリースまで現在のベータ版のままになります。";
 "Search engine" = "検索エンジン";
 "Text typed into a browser tab's address bar that isn't an address is searched with this engine." = "ブラウザタブのアドレスバーに入力した文字がアドレスでない場合は、この検索エンジンで検索します。";
+"Maximize terminal" = "ターミナルを最大化";
+"Restore terminal size" = "ターミナルを元のサイズに戻す";

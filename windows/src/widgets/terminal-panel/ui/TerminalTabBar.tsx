@@ -1,4 +1,4 @@
-import { ChevronsRight, Globe } from "lucide-react";
+import { ChevronsRight, Globe, Maximize2, Minimize2 } from "lucide-react";
 import { ChevronDown, Ellipsis, Plus, X } from "@/shared/icons";
 import { agents } from "@/entities/agent";
 import type { RepoStore } from "@/entities/repo";
@@ -29,7 +29,7 @@ export function TerminalTabBar({ pane, shown, corner, width, store }: { pane: Te
   const select = (x: TerminalSession | BrowserSession) => (isTerminal(x) ? store.selectTerminal(x) : store.selectBrowser(x));
   const compact = compactBar(width);
   const selected = shown ? tabs.indexOf(shown) : -1;
-  const { visible, hidden } = tabOverflow(tabs.length, selected >= 0 ? selected : null, tabStripWidth(width, compact ? 1 : corner ? 3 : 2));
+  const { visible, hidden } = tabOverflow(tabs.length, selected >= 0 ? selected : null, tabStripWidth(width, compact ? 1 : corner ? 4 : 2));
   const number = (term: TerminalSession) => (store.terminals.length > 1 ? store.terminals.indexOf(term) + 1 : null);
   const newTerminal = () => {
     if (shown) select(shown);
@@ -39,6 +39,8 @@ export function TerminalTabBar({ pane, shown, corner, width, store }: { pane: Te
     store.showTerminal = false;
     store.changed();
   };
+  const maximizeLabel = store.terminalMaximized ? t("Restore terminal size") : t("Maximize terminal");
+  const maximize = () => store.toggleTerminalMaximized();
   const overflow = (): MenuItem[] =>
     hidden.map((i) => {
       const tab = tabs[i];
@@ -54,7 +56,7 @@ export function TerminalTabBar({ pane, shown, corner, width, store }: { pane: Te
     ...(shown && isTerminal(shown)
       ? [{ label: t("Open in external terminal"), tip: t("Opens the current folder ({0}) in a new Windows Terminal window.", displayPath(shown.directory)), onClick: () => void ipc.openTerminal(shown.directory) }]
       : []),
-    ...(compact && corner ? ["divider" as const, { label: t("Hide terminal"), shortcut: "Ctrl+`", onClick: hide }] : []),
+    ...(compact && corner ? ["divider" as const, { label: maximizeLabel, onClick: maximize }, { label: t("Hide terminal"), shortcut: "Ctrl+`", onClick: hide }] : []),
   ];
   return (
     <div className="term-bar">
@@ -80,6 +82,9 @@ export function TerminalTabBar({ pane, shown, corner, width, store }: { pane: Te
       {!compact && <IconButton small className="term-new" icon={<Plus size={14} />} aria-label={t("New terminal")} tip={tip(t("New terminal"), t("Opens another shell in the repository folder."), "Ctrl+Shift+`")} onClick={newTerminal} />}
       <span className="spacer" />
       <IconButton small className="term-more" icon={<Ellipsis size={14} />} aria-haspopup="menu" aria-label={t("Terminal actions")} tip={t("Terminal actions")} onClick={(e) => showMenuBelow(e.currentTarget, actions())} />
+      {!compact && corner && (
+        <IconButton small className="term-maximize" icon={store.terminalMaximized ? <Minimize2 size={13} /> : <Maximize2 size={13} />} aria-label={maximizeLabel} tip={maximizeLabel} onClick={maximize} />
+      )}
       {!compact && corner && (
         <IconButton small className="term-hide" icon={<ChevronDown size={15} />} aria-label={t("Hide terminal")} tip={tip(t("Hide terminal"), t("Only the panel is hidden; shells keep running."), "Ctrl+`")} onClick={hide} />
       )}

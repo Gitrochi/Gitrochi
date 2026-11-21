@@ -17,6 +17,13 @@ export abstract class RepoTerminal extends RepoAI {
   }
 
   /** Ctrl+` : 터미널 패널 보이기/숨기기(처음이면 저장소 폴더에서 셸을 하나 연다) */
+  /** Maximizes the panel, showing it first if it is hidden, or brings back its own height */
+  toggleTerminalMaximized() {
+    if (!this.showTerminal) this.toggleTerminal();
+    this.terminalMaximized = this.showTerminal && !this.terminalMaximized;
+    this.emit();
+  }
+
   toggleTerminal() {
     if (this.showTerminal) this.showTerminal = false;
     else if (!this.terminals.length && !this.browsers.length) this.newTerminal();

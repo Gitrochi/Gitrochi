@@ -40,7 +40,10 @@ struct RepoView: View {
                         }.padding(12)
                         Divider()
                     }
-                    WorkspaceDestinationContent()
+                    // a maximized terminal takes the page's place
+                    if !(store.showTerminal && store.terminalMaximized && store.destination != .repository) {
+                        WorkspaceDestinationContent()
+                    }
                     // the repository screen has its own terminal under the graph; the other pages get one below
                     if store.showTerminal, store.destination != .repository {
                         TerminalPanel(columnHeight: pageHeight)

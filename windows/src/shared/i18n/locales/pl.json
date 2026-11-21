@@ -2303,5 +2303,7 @@
   "Receive beta updates": "Otrzymuj aktualizacje beta",
   "Betas come before each release so new features can be tried early; they may have bugs. Turning this off keeps the beta until the next release.": "Wersje beta pojawiają się przed każdym wydaniem, aby wcześniej wypróbować nowe funkcje; mogą zawierać błędy. Po wyłączeniu beta zostaje do następnego wydania.",
   "Search engine": "Wyszukiwarka",
-  "Text typed into a browser tab's address bar that isn't an address is searched with this engine.": "Tekst wpisany w pasku adresu karty przeglądarki, który nie jest adresem, jest wyszukiwany w tej wyszukiwarce."
+  "Text typed into a browser tab's address bar that isn't an address is searched with this engine.": "Tekst wpisany w pasku adresu karty przeglądarki, który nie jest adresem, jest wyszukiwany w tej wyszukiwarce.",
+  "Maximize terminal": "Maksymalizuj terminal",
+  "Restore terminal size": "Przywróć rozmiar terminala"
 }
