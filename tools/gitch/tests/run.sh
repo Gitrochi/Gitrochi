@@ -10,9 +10,9 @@ TMP_BASE=${TMP_BASE%/}
 ORIG_PATH="$PATH"
 export GITCH_SRC ROOT TMP_BASE ORIG_PATH
 
-FILTER=""; SHARD="1/1"; LIST=""; files=()
+FILTER=""; SKIP=""; SHARD="1/1"; LIST=""; files=()
 while [ $# -gt 0 ]; do
-  case "$1" in -k) shift; FILTER="$1" ;; --shard) shift; SHARD="${1:-}" ;; --list) LIST=1 ;; *) files+=("$1") ;; esac
+  case "$1" in -k) shift; FILTER="$1" ;; --skip) shift; SKIP="$1" ;; --shard) shift; SHARD="${1:-}" ;; --list) LIST=1 ;; *) files+=("$1") ;; esac
   shift
 done
 if [[ "$SHARD" =~ ^([1-9][0-9]*)/([1-9][0-9]*)$ ]]; then
@@ -34,6 +34,7 @@ done
 selected=(); index=0
 for t in $(declare -F | awk '{print $3}' | grep '^test_'); do
   if [ -n "$FILTER" ]; then case "$t" in *"$FILTER"*) ;; *) continue ;; esac; fi
+  if [ -n "$SKIP" ]; then case "$t" in *"$SKIP"*) continue ;; esac; fi
   if [ "$((index % SHARD_COUNT + 1))" -eq "$SHARD_INDEX" ]; then selected+=("$t"); fi
   index=$((index + 1))
 done
