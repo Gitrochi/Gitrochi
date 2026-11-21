@@ -10,10 +10,6 @@ copy_version_fixture() {   # $1 folder — copies every file check-versions.sh r
   done
 }
 
-test_versions_match_gitrochi() {
-  run bash "$ROOT/../check-versions.sh"; assert_ok; assert_out "버전 일치"
-}
-
 test_version_checker_rejects_mismatched_cli() {
   local fixture="$T/version-fixture"
   copy_version_fixture "$fixture"

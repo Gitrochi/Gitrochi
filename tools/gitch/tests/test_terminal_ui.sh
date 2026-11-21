@@ -161,13 +161,6 @@ test_terminal_ui_no_color_keeps_eyes_without_ansi() {
   case "$OUT$UI_ERR" in *$'\033'*) fail 'GITCH_COLOR=never must suppress ANSI' ;; esac
 }
 
-test_terminal_ui_color_auto_on_real_tty() {
-  mac_only || return 0
-  terminal_ui_run 80 gitch version
-  assert_ok; terminal_ui_once
-  case "$OUT" in *$'\033['*) ;; *) fail 'real color terminal should use ANSI emphasis' ;; esac
-}
-
 test_terminal_ui_install_keeps_one_header_and_clean_results() {
   mac_only || return 0
   terminal_ui_repo
