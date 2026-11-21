@@ -224,12 +224,17 @@ jobs:
 
   # gitch(앱에 함께 들어가는 셸 도구): macOS 기본 bash 3.2 로 전체 테스트(임시 HOME · 가짜 ssh/gh/curl/원격)
   gitch:
-    name: gitch 테스트
+    name: gitch 테스트 (${{ matrix.shard }}/2)
     needs: changes
     if: ${{ !cancelled() && github.ref_type != 'tag' && (github.event_name != 'pull_request' || needs.changes.outputs.gitch == 'true') }}
     runs-on: macos-26
     # The shell suite and native-helper regression run sequentially on hosted runners.
     timeout-minutes: 30
+    # Two halves side by side; the first also runs the Python helpers and shellcheck, the second the Rust fast path
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -252,23 +257,27 @@ jobs:
         run: command -v dot >/dev/null || brew install graphviz
 
       - name: 테스트
-        run: tools/gitch/tests/run.sh
+        run: tools/gitch/tests/run.sh --shard "${{ matrix.shard }}/2"
 
       - uses: dtolnay/rust-toolchain@stable
+        if: matrix.shard == 2
 
+      # The graph suite again through the Rust core; the in-browser checks draw the same pages either way
       - name: Rust CLI 가속 경로 테스트
+        if: matrix.shard == 2
         run: |
           cargo build --locked --release --manifest-path crates/Cargo.toml --bin gitch-core
-          GITCH_CORE="$GITHUB_WORKSPACE/crates/target/release/gitch-core" bash tools/gitch/tests/run.sh -k graph
+          GITCH_CORE="$GITHUB_WORKSPACE/crates/target/release/gitch-core" bash tools/gitch/tests/run.sh -k graph --skip in_browser
 
       - name: 정밀 참조 · 자동 갱신 테스트
+        if: matrix.shard == 1
         run: |
           python tools/gitch/tests/test_scip.py
           python tools/gitch/tests/test_watch.py
 
       # 정적 검사(경고 이상) — 로컬과 같은 최신 shellcheck. 테스트가 실패해도 따로 결과를 보인다
       - name: shellcheck
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && matrix.shard == 1 }}
         env:
           HOMEBREW_NO_AUTO_UPDATE: "1"
           HOMEBREW_NO_INSTALL_CLEANUP: "1"
