@@ -80,11 +80,10 @@ test_clone_browser_page_address_uses_its_repository() {
     run gitch clone "$u"; assert_ok "clone $u"
     assert_eq "$(git -C "$HOME/Develop/alice/app" config remote.origin.url)" "git@github-alice:alice/app.git" "$u"
   done
-  for u in https://gitlab.example.com/grp/sub/tool/-/merge_requests/4; do
-    cd "$HOME/Develop/corp" && rm -rf tool
-    run gitch clone "$u"; assert_ok "clone $u"
-    assert_eq "$(git -C "$HOME/Develop/corp/tool" config remote.origin.url)" "git@gitlab-carol:grp/sub/tool.git" "$u"
-  done
+  u=https://gitlab.example.com/grp/sub/tool/-/merge_requests/4
+  cd "$HOME/Develop/corp" || fail cd
+  run gitch clone "$u"; assert_ok "clone $u"
+  assert_eq "$(git -C "$HOME/Develop/corp/tool" config remote.origin.url)" "git@gitlab-carol:grp/sub/tool.git" "$u"
 }
 
 test_plain_git_clone_gets_identity_from_rules() {
