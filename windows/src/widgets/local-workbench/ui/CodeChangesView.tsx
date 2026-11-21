@@ -4,7 +4,8 @@ import { diffSides, parseDiffAsync, splitRows, StatusBadge, type ChangeKind, typ
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
 import { describe, type ExternalEditor } from "@/shared/platform";
-import { DiffHeader, type DiffFilePosition, Empty, Spinner } from "@/shared/ui";
+import { sourceLanguage } from "@/shared/lib";
+import { CodeText, DiffHeader, type DiffFilePosition, Empty, Spinner } from "@/shared/ui";
 import { comparisonChangeArgs, diffGaps, fileAtCommitArgs, fileChangeArgs, sourceLines, workingChangeArgs, type DiffGap } from "../lib/code-history";
 import type { RepositoryEditorSource } from "./CodeExternalEditors";
 import "./repository-code.css";
@@ -112,20 +113,9 @@ export function CodeChangesView({ store, repo, path, commit, base = null, oldPat
   }, [doc, source, expanded, halves]);
 
   const kind: ChangeKind = doc?.info?.newFile ? "added" : doc?.info?.deletedFile ? "deleted" : doc?.info?.renameFrom && doc.info.renameTo ? "renamed" : "modified";
-  const code = (cell: Cell): ReactNode => {
-    const text = cell.text || " ";
-    if (!cell.changes?.length) return text;
-    // the words that changed inside a changed line, on a stronger fill
-    const chars = [...text], parts: ReactNode[] = [];
-    let position = 0;
-    cell.changes.forEach(([start, end], index) => {
-      if (start > position) parts.push(chars.slice(position, start).join(""));
-      parts.push(<mark key={index}>{chars.slice(start, end).join("")}</mark>);
-      position = end;
-    });
-    if (position < chars.length) parts.push(chars.slice(position).join(""));
-    return parts;
-  };
+  // syntax colours, and the words that changed inside a changed line on a stronger fill
+  const language = sourceLanguage(path);
+  const code = (cell: Cell): ReactNode => <CodeText text={cell.text || " "} language={language} marks={cell.changes} />;
   // the sign says it as well as the colour
   const line = (cell: Cell | null, numbers: Array<number | null>) => cell
     ? <div className={`code-diff-line ${cell.kind}`}>{numbers.map((value, index) => <span className="no" key={index}>{value ?? ""}</span>)}<span className="sign">{cell.kind === "added" ? "+" : cell.kind === "removed" ? "−" : ""}</span><span className="code" style={hangingIndent(cell.text, wrapping)}>{code(cell)}</span></div>

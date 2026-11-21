@@ -5,8 +5,8 @@ import { avatars } from "@/entities/avatar";
 import { type BlameLine, isUncommittedLine, short } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
-import { longDate, shortDate, useObserve } from "@/shared/lib";
-import { Avatar, DiffHeader, Empty, Segmented, Spinner, tip } from "@/shared/ui";
+import { longDate, shortDate, sourceLanguage, useObserve } from "@/shared/lib";
+import { Avatar, CodeText, DiffHeader, Empty, Segmented, Spinner, tip } from "@/shared/ui";
 import { DiffBody, DiffEmptyState } from "./DiffView";
 import "./diff-viewer.css";
 
@@ -114,6 +114,7 @@ function HistoryPane({ store }: { store: RepoStore }) {
 /** 줄마다 마지막으로 바꾼 커밋. 같은 커밋이 이어지면 첫 줄에만 작성자·날짜, 오래된 줄일수록 옅은 띠. */
 function BlamePane({ store }: { store: RepoStore }) {
   const lines = store.blameLines;
+  const language = sourceLanguage(store.fileInspect?.path ?? "");
   const [oldest, newest] = useMemo(() => {
     const ds = lines.filter((l) => !isUncommittedLine(l)).map((l) => l.date);
     return ds.length ? [Math.min(...ds), Math.max(...ds)] : [0, 0];
@@ -178,7 +179,7 @@ function BlamePane({ store }: { store: RepoStore }) {
                   ))}
               </span>
               <span className="no">{l.no}</span>
-              <span style={{ paddingLeft: 8 }}>{l.text || " "}</span>
+              <CodeText text={l.text || " "} language={language} style={{ paddingLeft: 8 }} />
             </div>
           ))}
         </div>

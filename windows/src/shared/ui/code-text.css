@@ -1,0 +1,6 @@
+/* The code reader's token colours (as in code-editor.css), for code shown outside the editor */
+.code-token-comment { color: var(--text-2); font-style: italic; }
+.code-token-string { color: var(--green); }
+.code-token-keyword { color: var(--accent); }
+.code-token-number { color: var(--orange); }
+.code-token-type { color: color-mix(in srgb, var(--accent) 60%, var(--text)); }

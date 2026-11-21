@@ -1,14 +1,14 @@
 import { CornerDownLeft, Equal, FileArchive, ImageOff, LockOpen, TriangleAlert } from "lucide-react";
 import { FileText, Minus, Pencil, Plus, Trash2 } from "@/shared/icons";
-import { type ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ConflictView } from "@/features/resolve-conflict";
-import { type DiffDocument, type DiffLine, diffSiblings, diffSides, modeSummary, sameDiffSource, short, type SplitRow, splitRows, StatusBadge } from "@/entities/git";
+import { type DiffDocument, type DiffLine, diffPath, diffSiblings, diffSides, modeSummary, sameDiffSource, short, type SplitRow, splitRows, StatusBadge } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
 import { ipc } from "@/shared/api";
 import { basename, joinPath, samePath, settings } from "@/shared/config";
 import { t } from "@/shared/i18n";
-import { useObserve } from "@/shared/lib";
-import { Button, DiffHeader, Empty, type MenuItem, Spinner, useFileViewMode } from "@/shared/ui";
+import { sourceLanguage, useObserve } from "@/shared/lib";
+import { Button, CodeText, DiffHeader, Empty, type MenuItem, Spinner, useFileViewMode } from "@/shared/ui";
 import "./diff-viewer.css";
 
 const LINE_H = 18;
@@ -185,6 +185,8 @@ const CHAR_W = 7.2;
  */
 export function DiffBody({ store, doc, split, editable, staged }: { store: RepoStore; doc: DiffDocument; split: boolean; editable: boolean; staged: boolean }) {
   const sides = useMemo(() => diffSides(doc.lines), [doc]);
+  // one language per document: a diff of several files is left uncoloured
+  const language = useMemo(() => (doc.multipleFiles ? "Plain text" : sourceLanguage(diffPath(doc.header) ?? "")), [doc]);
   // 새 파일·지운 파일처럼 한쪽만 있으면 나란히 보기라도 한 칸으로(빈 반쪽 없이)
   const halves = split && sides.old && sides.new;
   const rows: SplitRow[] = useMemo(
@@ -294,7 +296,7 @@ export function DiffBody({ store, doc, split, editable, staged }: { store: RepoS
           </span>
         )}
         <span className="mk">{l.kind === "added" ? "+" : l.kind === "removed" ? "−" : ""}</span>
-        <LineText line={l} />
+        <LineText line={l} language={language} />
       </div>
     );
   };
@@ -338,25 +340,11 @@ export function DiffBody({ store, doc, split, editable, staged }: { store: RepoS
   );
 }
 
-/** 단어 단위로 바뀐 부분을 진하게 */
-function LineText({ line }: { line: DiffLine }) {
-  const text = line.text || " ";
-  if (!line.changes?.length) return <span className="txt">{text}</span>;
-  const chars = [...text];
-  const parts: ReactNode[] = [];
-  let pos = 0;
-  line.changes.forEach(([a, b], k) => {
-    if (a > pos) parts.push(chars.slice(pos, a).join(""));
-    parts.push(
-      <mark key={k} className="diff-word">
-        {chars.slice(a, b).join("")}
-      </mark>,
-    );
-    pos = b;
-  });
-  if (pos < chars.length) parts.push(chars.slice(pos).join(""));
-  return <span className="txt">{parts}</span>;
+/** The line with its syntax colours, and the changed words in bold (macOS: DiffLineRow.content) */
+function LineText({ line, language }: { line: DiffLine; language: string }) {
+  return <CodeText className="txt" text={line.text || " "} language={line.kind === "hunk" || line.kind === "meta" ? "Plain text" : language} marks={line.changes} markClassName="diff-word" />;
 }
+
 
 /** @@ 줄: 덩어리 위치 + (작업 트리 diff 면) 덩어리·고른 줄 스테이지·언스테이지·버리기 */
 function HunkHeader({ store, line, hunk, editable, staged }: { store: RepoStore; line: DiffLine; hunk: number; editable: boolean; staged: boolean }) {

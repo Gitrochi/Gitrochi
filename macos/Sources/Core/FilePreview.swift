@@ -1,10 +1,10 @@
 import Foundation
 
 /// How a file opens in a browser tab: WebKit shows media, PDF and HTML itself; text formats are turned into a page
-/// here (SQL highlighted, CSV/TSV as a table, JSON as a folding tree, anything else as plain text). The pages carry no
-/// script. (Windows: entities/terminal/lib/file-preview.ts)
+/// here (SQL highlighted, CSV/TSV as a table, JSON as a folding tree, source code in the code reader's colours, anything
+/// else as plain text). The pages carry no script. (Windows: entities/terminal/lib/file-preview.ts)
 enum FilePreview {
-    enum Kind: Equatable { case native, sql, table(Character), json, text }
+    enum Kind: Equatable { case native, sql, table(Character), json, code(String), text }
 
     /// Larger text files are cut, so a log or a dump cannot stall the tab
     static let textLimit = 2 * 1024 * 1024
@@ -19,7 +19,9 @@ enum FilePreview {
         case "csv": return .table(",")
         case "tsv", "tab": return .table("\t")
         case "json", "geojson", "jsonc": return .json
-        default: return .text
+        default:
+            let language = RepositoryCodeReading.language(for: path)
+            return ["Plain text", "Markdown", "HTML", "XML"].contains(language) ? .text : .code(language)
         }
     }
 
@@ -39,10 +41,25 @@ enum FilePreview {
             } else {
                 body = "<pre class=\"code\">" + escape(text) + "</pre>"
             }
+        case .code(let language): body = "<pre class=\"code\">" + highlightCode(text, language: language) + "</pre>"
         case .native, .text: body = "<pre class=\"code\">" + escape(text) + "</pre>"
         }
         let note = cut ? "<p class=\"note\">" + escape(String(localized: "Only the first 2 MB are shown.")) + "</p>" : ""
         return document(title: name, body: note + body)
+    }
+
+    /// Escaped HTML with the code reader's token colours, in the page's own classes (Windows: highlightCode)
+    static func highlightCode(_ text: String, language: String) -> String {
+        let source = text as NSString
+        var out = "", at = 0
+        for token in RepositoryCodeReading.tokens(in: text, language: language) where token.range.location >= at {
+            out += escape(source.substring(with: NSRange(location: at, length: token.range.location - at)))
+            let cls: String
+            switch token.kind { case .comment: cls = "comment"; case .string: cls = "string"; case .keyword: cls = "keyword"; case .number: cls = "number" }
+            out += "<span class=\"\(cls)\">" + escape(source.substring(with: token.range)) + "</span>"
+            at = NSMaxRange(token.range)
+        }
+        return out + escape(source.substring(from: at))
     }
 
     // MARK: - SQL

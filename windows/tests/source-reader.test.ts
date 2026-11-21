@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { sourceLanguage, sourceLineCount, sourceMatches, sourceMatchLimit, sourceTokens, syntaxCharacterLimit, syntaxTokenLimit } from "../src/widgets/local-workbench/lib/source-reader";
+import { sourceSegments } from "../src/shared/lib/source-reader";
 
 describe("source reader", () => {
   it("identifies source languages without interpreting unknown files as code", () => {
@@ -39,5 +40,18 @@ describe("source reader", () => {
   });
   it("counts actual lines without adding an extra line for the final newline", () => {
     expect(["", "one", "one\n", "one\r\ntwo\r\n", "\n\n"].map(sourceLineCount)).toEqual([0, 1, 1, 2, 2]);
+  });
+});
+
+describe("source segments", () => {
+  it("splits a line at token and changed-word edges", () => {
+    const text = 'let x = "ab"';
+    expect(sourceSegments(text, sourceTokens(text, "Swift"), [[4, 9]])).toEqual([
+      { text: "let", kind: "keyword" }, { text: " " }, { text: "x = ", mark: true }, { text: '"', kind: "string", mark: true }, { text: 'ab"', kind: "string" },
+    ]);
+  });
+  it("reads word marks as code points, so text after an emoji keeps its place", () => {
+    expect(sourceSegments("🙂ab", [], [[1, 2]])).toEqual([{ text: "🙂" }, { text: "a", mark: true }, { text: "b" }]);
+    expect(sourceSegments("", [], [])).toEqual([]);
   });
 });

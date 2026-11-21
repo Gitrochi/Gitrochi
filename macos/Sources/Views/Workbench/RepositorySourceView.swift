@@ -83,16 +83,8 @@ struct RepositorySourceView: NSViewRepresentable {
             paragraph.firstLineHeadIndent = gutterWidth
             paragraph.headIndent = gutterWidth
             let value = NSMutableAttributedString(string: text, attributes: [.font: NSFont.monospacedSystemFont(ofSize: fontSize, weight: .regular), .foregroundColor: NSColor.textColor, .paragraphStyle: paragraph])
-            for token in tokens {
-                let color: NSColor
-                switch token.kind {
-                case .comment: color = .secondaryLabelColor
-                case .string: color = .systemGreen
-                case .keyword: color = .systemPurple
-                case .number: color = .systemOrange
-                }
-                let readable = token.kind == .comment ? color : color.blended(withFraction: colorScheme == .dark ? 0.15 : 0.35, of: colorScheme == .dark ? .white : .black) ?? color
-                if NSMaxRange(token.range) <= value.length { value.addAttribute(.foregroundColor, value: readable, range: token.range) }
+            for token in tokens where NSMaxRange(token.range) <= value.length {
+                value.addAttribute(.foregroundColor, value: RepositoryCodeReading.color(token.kind, dark: colorScheme == .dark), range: token.range)
             }
             if editableText != nil {
                 if view.string != text {

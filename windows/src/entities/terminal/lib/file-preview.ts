@@ -1,10 +1,11 @@
 /**
  * How a file opens in a browser tab: the webview shows media, PDF and HTML itself; text formats are turned into a page
- * here (SQL highlighted, CSV/TSV as a table, JSON as a folding tree, anything else as plain text). The pages carry no
- * script. macOS: Core/FilePreview.swift
+ * here (SQL highlighted, CSV/TSV as a table, JSON as a folding tree, source code in the code reader's colours, anything
+ * else as plain text). The pages carry no script. macOS: Core/FilePreview.swift
  */
+import { sourceLanguage, sourceSegments, sourceTokens } from "@/shared/lib";
 
-export type PreviewKind = { kind: "native"; mime: string } | { kind: "sql" } | { kind: "table"; separator: string } | { kind: "json" } | { kind: "text" };
+export type PreviewKind = { kind: "native"; mime: string } | { kind: "sql" } | { kind: "table"; separator: string } | { kind: "json" } | { kind: "code"; language: string } | { kind: "text" };
 
 /** Larger text files are cut, so a log or a dump cannot stall the tab */
 export const textLimit = 2 * 1024 * 1024;
@@ -42,11 +43,20 @@ export function previewKind(path: string): PreviewKind {
   if (ext === "csv") return { kind: "table", separator: "," };
   if (ext === "tsv" || ext === "tab") return { kind: "table", separator: "\t" };
   if (["json", "geojson", "jsonc"].includes(ext)) return { kind: "json" };
+  const language = sourceLanguage(name);
+  if (!["Plain text", "Markdown", "HTML", "XML"].includes(language)) return { kind: "code", language };
   return { kind: "text" };
 }
 
 export function escapeHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+/** Escaped HTML with the code reader's token colours, in the page's own classes (macOS: FilePreview.highlightCode) */
+export function highlightCode(text: string, language: string): string {
+  return sourceSegments(text, sourceTokens(text, language))
+    .map((seg) => (seg.kind ? `<span class="${seg.kind}">${escapeHtml(seg.text)}</span>` : escapeHtml(seg.text)))
+    .join("");
 }
 
 // MARK: SQL
@@ -207,7 +217,8 @@ export function previewPage(name: string, text: string, kind: PreviewKind, cut: 
     } catch {
       body = `<pre class="code">${escapeHtml(text)}</pre>`;
     }
-  } else body = `<pre class="code">${escapeHtml(text)}</pre>`;
+  } else if (kind.kind === "code") body = `<pre class="code">${highlightCode(text, kind.language)}</pre>`;
+  else body = `<pre class="code">${escapeHtml(text)}</pre>`;
   return previewDocument(name, (cut ? `<p class="note">${escapeHtml(words.cut)}</p>` : "") + body);
 }
 
