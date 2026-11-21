@@ -12,6 +12,7 @@ export { CheckGroupHead, CheckLog, checkLogMenu, FailedCheckBlock } from "./Fail
 export { SharedSheet, type SheetPrimary } from "./SharedSheet";
 export { HostedAccountNeeded, hostedListAge, HostedListChip, HostedListColumns, HostedListEmpty, HostedListHeader, HostedListIconButton, HostedListLoading, HostedListPage, HostedListRow, HostedListSearch, HostedListSegments, HostedListSummary, HostedListSummaryBar, HostedListSummaryBars, HostedListSummaryLoadingLine, HostedListSummaryMessage, HostedListTextButton } from "./HostedList";
 export { CodeEditor } from "./CodeEditor";
+export { CodeText } from "./CodeText";
 export { FileViewToggle, requestFileView, useFileViewMode } from "./FileViewToggle";
 export { DiffHeader, type DiffFilePosition } from "./DiffHeader";
 export { diffHeaderFolders, diffHeaderFolds } from "./diff-header-folds";

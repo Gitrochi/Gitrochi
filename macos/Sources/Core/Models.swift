@@ -304,6 +304,16 @@ struct DiffDocument {
     var oneSided: Bool { !(hasOldSide && hasNewSide) }
 }
 
+extension DiffDocument {
+    /// The file a one-file diff is about, from its header: "+++ b/…", or "--- a/…" for a deleted file (Windows: diffPath)
+    var path: String? {
+        func side(_ prefix: String) -> String? {
+            header.first { $0.hasPrefix(prefix) && !$0.hasSuffix("/dev/null") }.map { String($0.dropFirst(prefix.count)) }
+        }
+        return side("+++ b/") ?? side("--- a/")
+    }
+}
+
 /// diff 머리의 파일 정보
 struct DiffFileInfo {
     var newFile = false

@@ -55,3 +55,37 @@ export function sourceLineCount(text: string): number {
   for (let i = 0; i < text.length; i++) if (text[i] === "\n") count++;
   return count + (text.endsWith("\n") ? 0 : 1);
 }
+
+/** A run of a line with one token colour and one changed-word mark */
+export interface SourceSegment { text: string; kind?: SourceToken["kind"]; mark?: boolean }
+
+/**
+ * Splits text into runs that share one token colour and one mark, for drawing syntax colours under a diff's changed
+ * words. Tokens use UTF-16 offsets; marks are code point ranges, as a diff's word changes are. (macOS: RepositoryCodeReading.segments)
+ */
+export function sourceSegments(text: string, tokens: SourceToken[], marks: [number, number][] = []): SourceSegment[] {
+  if (!text) return [];
+  const kinds: (SourceToken["kind"] | undefined)[] = new Array(text.length);
+  for (const token of tokens) for (let i = Math.max(0, token.start); i < Math.min(text.length, token.end); i++) kinds[i] = token.kind;
+  const marked = new Array<boolean>(text.length).fill(false);
+  if (marks.length) {
+    const unit: number[] = [];   // code point index -> UTF-16 offset
+    for (let i = 0; i < text.length; i++) {
+      unit.push(i);
+      if (text.charCodeAt(i) >= 0xd800 && text.charCodeAt(i) <= 0xdbff) i++;
+    }
+    unit.push(text.length);
+    for (const [a, b] of marks) for (let i = unit[Math.min(a, unit.length - 1)]; i < unit[Math.min(b, unit.length - 1)]; i++) marked[i] = true;
+  }
+  const out: SourceSegment[] = [];
+  let start = 0;
+  for (let i = 1; i <= text.length; i++) {
+    if (i < text.length && kinds[i] === kinds[start] && marked[i] === marked[start]) continue;
+    const seg: SourceSegment = { text: text.slice(start, i) };
+    if (kinds[start]) seg.kind = kinds[start];
+    if (marked[start]) seg.mark = true;
+    out.push(seg);
+    start = i;
+  }
+  return out;
+}

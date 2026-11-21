@@ -5,6 +5,8 @@ import SwiftUI
 /// stripes, which read as hover. (Windows: widgets/local-workbench/ui/CodeBlameView.tsx)
 struct RepositoryCodeBlameView: View {
     let lines: [BlameLine]
+    /// The file's path, for its syntax colours
+    var path = ""
     /// The widest line, so the lines scroll sideways as one sheet
     let textWidth: CGFloat
     let wraps: Bool
@@ -12,6 +14,7 @@ struct RepositoryCodeBlameView: View {
     /// Blames the file as it was before a commit; nil when its history does not reach an older commit
     let before: (String) -> (() -> Void)?
     /// The first line of the group under the pointer
+    @Environment(\.colorScheme) private var colorScheme
     @ViewState private var hovered: Int?
     /// The first line of the group whose commit card is open
     @ViewState private var opened: Int?
@@ -53,7 +56,7 @@ struct RepositoryCodeBlameView: View {
                     .frame(width: RepositoryCodeText.gutter - 8, alignment: .trailing).padding(.trailing, 8)
                 let indent = RepositoryCodeText.hangingIndent(line.text, limit: hanging)
                 Text(verbatim: String(repeating: " ", count: indent)).fixedSize().padding(.leading, 12)
-                Text(verbatim: line.text.count > indent ? String(line.text.dropFirst(indent)) : " ")
+                Text(RepositoryCodeReading.attributed(line.text, language: RepositoryCodeReading.language(for: path), dark: colorScheme == .dark, dropping: indent))
                     .fixedSize(horizontal: !wraps, vertical: true)
                     .frame(maxWidth: wraps ? .infinity : nil, alignment: .leading)
                     .padding(.trailing, 12)

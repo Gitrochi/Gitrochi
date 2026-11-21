@@ -40,3 +40,9 @@ export function modeSummary(info: DiffFileInfo | undefined): string | null {
   const note = !was && now ? t(" — now executable") : was && !now ? t(" — no longer executable") : "";
   return `${info.oldMode} → ${info.newMode}${note}`;
 }
+
+/** The file a one-file diff is about, from its header: "+++ b/…", or "--- a/…" for a deleted file (macOS: DiffDocument.path) */
+export function diffPath(header: string[]): string | null {
+  const side = (prefix: string) => header.find((line) => line.startsWith(prefix) && !line.endsWith("/dev/null"))?.slice(prefix.length) ?? null;
+  return side("+++ b/") ?? side("--- a/");
+}

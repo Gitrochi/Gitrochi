@@ -252,7 +252,7 @@ export function RepositoryCodePanel({ store, source = defaultCodeSource, editorS
           {fileLoading ? <div className="code-loading" role="status"><Spinner/>{t("Loading…")}</div>
             : mode === "History" && repo ? <CodeHistoryView store={store} repo={repo} entries={history} local={local} selected={historySelected} select={setHistorySelected} read={source.read} wrap={wrap} setWrap={setWrap} onLines={setLines}/>
             : mode === "Working changes" && repo ? <CodeChangesView store={store} repo={repo} path={selected.path} commit={null} read={source.read} wrap={wrap} setWrap={setWrap} onLines={setLines}/>
-            : mode === "Blame" && blame?.length ? <CodeBlameView lines={blame} wrap={wrap} show={(commit) => store.reveal(commit)} before={before}/>
+            : mode === "Blame" && blame?.length ? <CodeBlameView lines={blame} path={selected.path} wrap={wrap} show={(commit) => store.reveal(commit)} before={before}/>
             : image ? <div className="code-image"><img src={blob!.image} alt={selected.path}/></div>
             : mode === "Preview" && tree && text ? /\.html?$/i.test(selected.path) ? <RepositoryHTMLPreview text={text} path={selected.path} revision={tree.revision} entries={allEntries} read={previewReader}/> : <div className="code-markdown-preview"><Markdown text={text} canLoadImage={() => false}/></div>
             : mode === "Source" && text ? <RepositorySourceView text={text} language={language} fontSize={fontSize} wrap={wrap} matches={matches} activeMatch={matchIndex} lineCount={lineCount} jump={lineJump}/>

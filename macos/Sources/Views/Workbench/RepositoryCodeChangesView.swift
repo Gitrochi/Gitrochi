@@ -8,6 +8,7 @@ import CoreText
 struct RepositoryCodeChangesView: View {
     @Environment(RepoStore.self) private var store
     let repository: URL
+    @Environment(\.colorScheme) private var colorScheme
     let path: String
     /// nil for the working tree against HEAD
     let commit: String?
@@ -249,15 +250,12 @@ struct RepositoryCodeChangesView: View {
         kind == .added ? StudioStyle.added.opacity(0.12) : kind == .removed ? StudioStyle.deleted.opacity(0.12) : .clear
     }
 
-    /// The line without its first `indent` spaces, the words that changed inside it on a stronger fill
+    /// The line without its first `indent` spaces, in the code reader's colours, the words that changed inside it on a
+    /// stronger fill
     private func marked(_ cell: Cell, dropping indent: Int) -> AttributedString {
-        var text = AttributedString(cell.text.count > indent ? String(cell.text.dropFirst(indent)) : " ")
-        guard !cell.changes.isEmpty else { return text }
-        let fill = (cell.kind == .added ? StudioStyle.added : StudioStyle.deleted).opacity(0.28), count = cell.text.count - indent
-        for range in cell.changes where range.lowerBound >= indent && range.upperBound - indent <= count {
-            text[text.index(text.startIndex, offsetByCharacters: range.lowerBound - indent)..<text.index(text.startIndex, offsetByCharacters: range.upperBound - indent)].backgroundColor = fill
-        }
-        return text
+        RepositoryCodeReading.attributed(cell.text, language: RepositoryCodeReading.language(for: path), dark: colorScheme == .dark,
+                                         changes: cell.changes, changeFill: (cell.kind == .added ? StudioStyle.added : StudioStyle.deleted).opacity(0.28),
+                                         dropping: indent)
     }
 
     private func expand(_ gap: RepositoryCodeHistory.Gap) {

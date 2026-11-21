@@ -187,6 +187,8 @@ struct DiffLinesView: View {
     let split: Bool
     let editable: Bool
     let staged: Bool
+    /// One language for the whole document; a diff of several files is left uncoloured
+    private var language: String { doc.multipleFiles ? "Plain text" : RepositoryCodeReading.language(for: doc.path ?? "") }
 
     var body: some View {
         // 새 파일·지운 파일처럼 한쪽만 있으면 나란히 보기라도 한 칸으로(빈 반쪽 없이)
@@ -213,7 +215,7 @@ struct DiffLinesView: View {
                         if line.kind == .hunk || line.kind == .meta {
                             fullRow(line, gutter: gutter)
                         } else {
-                            DiffLineRow(line: line, showOld: doc.hasOldSide, showNew: doc.hasNewSide, numberWidth: numberWidth,
+                            DiffLineRow(line: line, language: language, showOld: doc.hasOldSide, showNew: doc.hasNewSide, numberWidth: numberWidth,
                                         selected: store.diffSelection.contains(line.id), stage: stage(line))
                                 .modifier(Selectable(line: line, enabled: editable))
                                 .modifier(ReviewCommentable(line: line, side: nil, enabled: !doc.combined && !doc.multipleFiles))
@@ -267,7 +269,7 @@ struct DiffLinesView: View {
     @ViewBuilder
     private func cell(_ line: DiffLine?, side: Side, numberWidth: CGFloat) -> some View {
         if let line {
-            DiffLineRow(line: line, showOld: side == .left, showNew: side == .right, numberWidth: numberWidth,
+            DiffLineRow(line: line, language: language, showOld: side == .left, showNew: side == .right, numberWidth: numberWidth,
                         selected: store.diffSelection.contains(line.id), stage: stage(line))
                 .modifier(Selectable(line: line, enabled: editable))
                 .modifier(ReviewCommentable(line: line, side: side == .left ? .left : .right, enabled: !doc.combined && !doc.multipleFiles))
@@ -425,6 +427,8 @@ private struct DiffLineRow: View {
     }
 
     let line: DiffLine
+    /// The file's language, for its syntax colours
+    var language = "Plain text"
     var showOld = true
     var showNew = true
     var numberWidth: CGFloat = 44
@@ -432,6 +436,7 @@ private struct DiffLineRow: View {
     /// nil where lines cannot be staged (a commit's diff, file history): no column at all
     var stage: Stage? = nil
     @ViewState private var hovered = false
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 0) {
@@ -489,18 +494,10 @@ private struct DiffLineRow: View {
         .accessibilityLabel(unstage ? "Unstage line" : "Stage line")
     }
 
-    /// 단어 단위로 바뀐 부분을 진하게
+    /// The line in the code reader's colours, the words that changed on a stronger fill (Windows: LineText in DiffView.tsx)
     private var content: AttributedString {
-        var s = AttributedString(line.text.isEmpty ? " " : line.text)
-        guard !line.changes.isEmpty else { return s }
-        let strong = line.kind == .added ? Color.green.opacity(0.32) : Color.red.opacity(0.30)
-        let chars = Array(line.text)
-        for r in line.changes where r.lowerBound >= 0 && r.upperBound <= chars.count {
-            let lo = s.index(s.startIndex, offsetByCharacters: r.lowerBound)
-            let hi = s.index(s.startIndex, offsetByCharacters: r.upperBound)
-            s[lo..<hi].backgroundColor = strong
-        }
-        return s
+        RepositoryCodeReading.attributed(line.text.isEmpty ? " " : line.text, language: language, dark: colorScheme == .dark,
+                                         changes: line.changes, changeFill: line.kind == .added ? Color.green.opacity(0.32) : Color.red.opacity(0.30))
     }
 
     private var marker: String {

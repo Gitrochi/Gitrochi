@@ -70,6 +70,7 @@ import { sidebarTreeSelfTest } from "./lib/sidebar-tree-selftest";
 import { settingsNavigationSelfTest } from "./lib/settings-navigation-selftest";
 import { backgroundSettingsSelfTest } from "./lib/background-settings-selftest";
 import { searchEngineSettingsSelfTest } from "./lib/search-engine-settings-selftest";
+import { codeTextSelfTest } from "./lib/code-text-selftest";
 
 /**
  * 자동 점검(CI 의 Windows 서버에서): GITROCHI_SELFTEST=<테스트 저장소> 로 켜면
@@ -278,6 +279,7 @@ export async function runSelfTest(): Promise<boolean> {
   await step("Settings category icons, selection and narrow navigation", settingsNavigationSelfTest);
   await step("Settings › Update: open at login and keep running in the tray, on by default, changed, failed and restored", backgroundSettingsSelfTest);
   await step("Settings › Tools: browser search engine picker, Google by default, changed and saved", searchEngineSettingsSelfTest);
+  await step("Syntax colours in diffs, blame and file history (CodeText)", codeTextSelfTest);
   await step("다른 앱에서 도는 에이전트 목록과 그 앱 앞으로 가져오기(가짜 프로세스 목록)", externalAgentsSelfTest);
   await step("Agents sidebar: Needs you, worktree state icons and ahead/behind, one session row with the tab marks, Running, nothing clipped at 240px", agentsSidebarSelfTest);
   await step("레인이 많은 그래프: 머리줄 스크롤 막대·옆 스크롤·선택한 노드 보이기", graphLanesSelfTest);

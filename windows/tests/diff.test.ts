@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildPatch, canEditLines, diffSides, modeSummary, splitRows, wordRanges } from "@/entities/git/lib/diff";
+import { buildPatch, canEditLines, diffPath, diffSides, modeSummary, splitRows, wordRanges } from "@/entities/git/lib/diff";
 import { newFileDiff, parseDiff } from "@/entities/git/lib/parsers";
 
 const DIFF = [
@@ -129,5 +129,14 @@ describe("파일 종류별", () => {
 
   it.each(["\n", "\r\n"])("줄바꿈 하나로 된 새 파일은 한 줄을 표시한다: %j", (text) => {
     expect(newFileDiff(text, false).lines.map((l) => l.kind)).toEqual(["hunk", "added"]);
+  });
+});
+
+describe("diff path", () => {
+  it("reads the file from the header, the old side for a deleted file", () => {
+    expect(diffPath(["diff --git a/src/a.ts b/src/a.ts", "--- a/src/a.ts", "+++ b/src/a.ts"])).toBe("src/a.ts");
+    expect(diffPath(["--- a/gone.py", "+++ /dev/null"])).toBe("gone.py");
+    expect(diffPath(["--- /dev/null", "+++ b/new.rs"])).toBe("new.rs");
+    expect(diffPath([])).toBeNull();
   });
 });

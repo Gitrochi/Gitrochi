@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { highlightSql, jsonTree, parseDelimited, previewKind, previewPage } from "../src/entities/terminal/lib/file-preview";
+import { highlightCode, highlightSql, jsonTree, parseDelimited, previewKind, previewPage } from "../src/entities/terminal/lib/file-preview";
 import { linkTokens } from "../src/entities/terminal/lib/terminal-word";
 
 const words = { cut: "cut", empty: "empty", size: (rows: number, columns: number) => `${rows}x${columns}` };
@@ -64,5 +64,18 @@ describe("file previews", () => {
     const tree = jsonTree({ b: [1, null], a: true });
     expect(tree.indexOf('class="key">a<')).toBeLessThan(tree.indexOf('class="key">b<'));
     expect(tree).toContain('<span class="keyword">null</span>');
+  });
+});
+
+describe("source code previews", () => {
+  it("opens code files in the code reader's colours and leaves plain text alone", () => {
+    expect(previewKind("src/app.ts")).toEqual({ kind: "code", language: "TypeScript" });
+    expect(previewKind("main.RS")).toEqual({ kind: "code", language: "Rust" });
+    expect(previewKind("notes.md")).toEqual({ kind: "text" });
+    expect(previewKind("README")).toEqual({ kind: "text" });
+  });
+  it("colours tokens in the page's own classes and escapes the rest", () => {
+    expect(highlightCode('const a = "<b>"; // x', "TypeScript")).toBe('<span class="keyword">const</span> a = <span class="string">&quot;&lt;b&gt;&quot;</span>; <span class="comment">// x</span>');
+    expect(previewPage("a.py", "def f(): pass", { kind: "code", language: "Python" }, false, { cut: "cut", empty: "empty", size: () => "" })).toContain('<span class="keyword">def</span>');
   });
 });

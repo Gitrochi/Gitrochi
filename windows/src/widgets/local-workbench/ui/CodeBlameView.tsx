@@ -2,12 +2,14 @@ import { useEffect, useMemo, useState } from "react";
 import { avatars } from "@/entities/avatar";
 import { isUncommittedLine, short, type BlameLine } from "@/entities/git";
 import { t } from "@/shared/i18n";
-import { shortDate, useObserve } from "@/shared/lib";
-import { Avatar } from "@/shared/ui";
+import { shortDate, sourceLanguage, useObserve } from "@/shared/lib";
+import { Avatar, CodeText } from "@/shared/ui";
 import { hangingIndent } from "./CodeChangesView";
 
 interface Props {
   lines: BlameLine[];
+  /** The file's path, for its syntax colours */
+  path: string;
   wrap: boolean;
   show: (commit: string) => void;
   /** Blames the file as it was before a commit; null when its history does not reach an older commit */
@@ -19,7 +21,8 @@ interface Props {
  * form a group that names the commit once, in a 280px gutter; a 1px line separates the groups, and no stripes, which
  * read as hover. (macOS: RepositoryCodeBlameView)
  */
-export function CodeBlameView({ lines, wrap, show, before }: Props) {
+export function CodeBlameView({ lines, path, wrap, show, before }: Props) {
+  const language = sourceLanguage(path);
   useObserve(avatars);
   // the first line of the group whose commit card is open
   const [opened, setOpened] = useState<number | null>(null);
@@ -49,7 +52,7 @@ export function CodeBlameView({ lines, wrap, show, before }: Props) {
                 <span className="code-blame-age">{shortDate(line.date)}</span>
               </button>)}</span>
             <span className="no">{line.no}</span>
-            <span className="code" style={hangingIndent(line.text, wrap)}>{line.text || " "}</span>
+            <CodeText className="code" style={hangingIndent(line.text, wrap)} text={line.text || " "} language={language} />
           </div>)}
           {open && <div className="code-blame-card" role="dialog" aria-label={`${t("Commit")} ${short(first.sha)}`}>
             <span className="code-blame-who"><Avatar name={first.author} email={first.email} size={20} url={avatars.url(first.email, first.author)}/><strong className="ellipsis">{first.author}</strong><span className="code-blame-age">{shortDate(first.date)}</span></span>

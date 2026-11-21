@@ -370,7 +370,7 @@ struct RepositoryCodePanel: View {
         } else if mode == "Working changes", let repository = treeURL {
             RepositoryCodeChangesView(repository: repository, path: selected.path, commit: nil, wraps: $wraps, lineCount: $lineCount)
         } else if mode == "Blame", let blame, !blame.isEmpty {
-            RepositoryCodeBlameView(lines: blame, textWidth: blameWidth, wraps: wraps, show: { store.reveal($0) }, before: blameBefore)
+            RepositoryCodeBlameView(lines: blame, path: selected.path, textWidth: blameWidth, wraps: wraps, show: { store.reveal($0) }, before: blameBefore)
         } else if mode == "Preview", let text = preview?.text {
             if ["html", "htm"].contains((selected.path as NSString).pathExtension.lowercased()), let tree, let repository = treeURL {
                 RepositoryHTMLPreview(text: text, entry: selected, tree: tree, repository: repository)

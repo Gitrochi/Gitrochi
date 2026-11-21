@@ -103,12 +103,14 @@ private struct HistoryPane: View {
 /// 줄마다 마지막으로 바꾼 커밋. 같은 커밋이 이어지면 첫 줄에만 작성자·날짜, 오래된 줄일수록 옅은 띠.
 private struct BlamePane: View {
     @Environment(RepoStore.self) private var store
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         let lines = store.blameLines
         let committed = lines.filter { !$0.uncommitted }
         let oldest = committed.map(\.date).min() ?? Date()
         let newest = committed.map(\.date).max() ?? Date()
+        let language = RepositoryCodeReading.language(for: store.fileInspect?.path ?? "")
         ScrollViewReader { proxy in
         ScrollView([.vertical, .horizontal]) {
             LazyVStack(alignment: .leading, spacing: 0) {
@@ -121,7 +123,7 @@ private struct BlamePane: View {
                             .frame(width: 44, alignment: .trailing)
                             .foregroundStyle(.tertiary)
                             .padding(.trailing, 8)
-                        Text(l.text.isEmpty ? " " : l.text)
+                        Text(RepositoryCodeReading.attributed(l.text.isEmpty ? " " : l.text, language: language, dark: colorScheme == .dark))
                             .fixedSize(horizontal: true, vertical: false)
                     }
                     .font(.system(size: 12, design: .monospaced))
