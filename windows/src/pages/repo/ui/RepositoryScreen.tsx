@@ -42,7 +42,7 @@ export function RepositoryScreen({ store }: { store: RepoStore }) {
         </>
       )}
       <div className="center" ref={centerRef}>
-        {store.fileInspect ? <FileInspectView store={store} /> : store.diffSource ? <DiffView store={store} /> : <GraphView store={store} />}
+        {!(store.showTerminal && store.terminalMaximized) && (store.fileInspect ? <FileInspectView store={store} /> : store.diffSource ? <DiffView store={store} /> : <GraphView store={store} />)}
         {store.showTerminal && <TerminalPanel store={store} columnHeight={centerH} />}
       </div>
       <div className="splitter" hidden={inspectorCollapsed} onMouseDown={resizeColumn("inspectorWidth", inspectorW, 320, 600, -1)} />

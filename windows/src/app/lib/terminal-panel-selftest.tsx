@@ -194,7 +194,22 @@ export async function terminalPanelSelfTest(): Promise<[boolean, string]> {
     ensure(shell.host.isConnected && bufferText(shell).includes("KEEP-SCROLLBACK") && panes(store.terminalLayout!).length === 3, "Splitting must keep the first terminal and its scrollback");
     settings.set("terminalHeight", 120);
     await soon(() => !one(".term-rail") && all(".term-bar").length === 3 && all(".term-status").length === 3, () => "A short panel must hide the command rail and keep the tab bars and status lines");
-    return [true, "Docked under the centre column with full-height sidebar and right panel, also on the Agents page; ring, dot and hollow marks in a reserved 12px slot and no logo; commands insert without running; screen, scrollback, mount and focus survive hiding either side column, the Agents page and a worktree switch, and the screen survives page switches; extra tabs go into » with the selected one kept; narrow panes fold the commands, then drop the branch, then the shell; a short panel hides the rail"];
+    // 7. maximize: the panel takes the whole centre column, the graph steps aside, and restore brings the height back
+    const centreKids = () => [...one(".repository-screen > .center")!.children].filter((el) => !el.classList.contains("term-panel") && !el.classList.contains("hsplitter")).length;
+    const restored = box(".term-panel").height;
+    ensure(all(".term-maximize").length === 1 && centreKids() > 0 && one(".hsplitter"), "Maximize appears once, in the corner pane, while the graph and the drag handle show");
+    one<HTMLButtonElement>(".term-maximize")!.click();
+    await soon(() => store.terminalMaximized && near(box(".term-panel").height, box(".repository-screen > .center").height) && centreKids() === 0 && !one(".hsplitter"),
+      () => `Maximize must fill the centre column and hide the graph and drag handle: ${box(".term-panel").height} of ${box(".repository-screen > .center").height}, ${centreKids()} other children`);
+    ensure(shell.host.isConnected && bufferText(shell).includes("KEEP-SCROLLBACK"), "Maximizing must keep the terminals and their scrollback");
+    one<HTMLButtonElement>(".term-maximize")!.click();
+    await soon(() => !store.terminalMaximized && near(box(".term-panel").height, restored) && centreKids() > 0 && one(".hsplitter"), () => "Restore must bring back the panel's own height, the graph and the drag handle");
+    store.toggleTerminalMaximized();
+    store.showTerminal = false; store.changed();
+    ensure(!store.terminalMaximized, "Hiding the terminal must end the maximized state");
+    store.showTerminal = true; store.changed();
+    await soon(() => one(".term-panel") && centreKids() > 0, () => "Showing the terminal again must dock it at its own height");
+    return [true, "Docked under the centre column with full-height sidebar and right panel, also on the Agents page; ring, dot and hollow marks in a reserved 12px slot and no logo; commands insert without running; screen, scrollback, mount and focus survive hiding either side column, the Agents page and a worktree switch, and the screen survives page switches; extra tabs go into » with the selected one kept; narrow panes fold the commands, then drop the branch, then the shell; a short panel hides the rail; maximize fills the column and restore and hiding bring back the docked height"];
   } catch (error) { return [false, error instanceof Error ? error.message : String(error)]; }
   finally {
     root.unmount(); host.remove();

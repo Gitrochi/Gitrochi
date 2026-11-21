@@ -23,7 +23,8 @@ export function TerminalPanel({ store, columnHeight }: { store: RepoStore; colum
   useObserve(store);
   useObserve(settings);
   const max = Math.max(120, columnHeight - 200);
-  const height = Math.min(Math.max(settings.get("terminalHeight", 260), 120), max);
+  const maximized = store.terminalMaximized;
+  const height = maximized ? columnHeight : Math.min(Math.max(settings.get("terminalHeight", 260), 120), max);
   const layout = store.terminalLayout;
   const panel = useRef<HTMLDivElement>(null);
   // A shell does not say when a command starts or ends, so ask for the processes below it while the panel shows
@@ -69,7 +70,7 @@ export function TerminalPanel({ store, columnHeight }: { store: RepoStore; colum
 
   return (
     <>
-      <div className="hsplitter" onMouseDown={startDrag} />
+      {!maximized && <div className="hsplitter" onMouseDown={startDrag} />}
       <div ref={panel} className="term-panel" style={{ height }}>
         {layout && <TermNodeView node={layout} corner={cornerPane(layout).id} split={panes(layout).length > 1} store={store} height={height} />}
       </div>

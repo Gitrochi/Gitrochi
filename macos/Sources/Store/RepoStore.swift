@@ -124,7 +124,11 @@ final class RepoStore: Identifiable {
     var activeTerminalID: UUID?
     /// How the terminal panel is split into panes of tabs
     var terminalLayout: TerminalNode?
-    var showTerminal = false
+    var showTerminal = false {
+        didSet { if !showTerminal { terminalMaximized = false } }
+    }
+    /// The panel fills the centre column, over the graph or page above; hiding the terminal ends it
+    var terminalMaximized = false
     var terminalVoiceActionID: UUID?
     let terminalVoice = TerminalVoiceCoordinator()
 

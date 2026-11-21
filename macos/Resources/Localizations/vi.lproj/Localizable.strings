@@ -2270,3 +2270,5 @@
 "Betas come before each release so new features can be tried early; they may have bugs. Turning this off keeps the beta until the next release." = "Bản beta ra trước mỗi bản phát hành để dùng thử tính năng mới sớm; có thể còn lỗi. Khi tắt, bản beta được giữ đến bản phát hành tiếp theo.";
 "Search engine" = "Công cụ tìm kiếm";
 "Text typed into a browser tab's address bar that isn't an address is searched with this engine." = "Nội dung nhập vào thanh địa chỉ của thẻ trình duyệt mà không phải địa chỉ sẽ được tìm bằng công cụ này.";
+"Maximize terminal" = "Phóng to terminal";
+"Restore terminal size" = "Khôi phục kích thước terminal";

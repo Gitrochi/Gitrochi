@@ -4017,5 +4017,7 @@
   "Receive beta updates": "베타 업데이트 받기",
   "Betas come before each release so new features can be tried early; they may have bugs. Turning this off keeps the beta until the next release.": "베타는 정식 출시 전에 새 기능을 미리 써 볼 수 있는 버전이며 버그가 있을 수 있습니다. 끄면 다음 정식 버전이 나올 때까지 지금 베타를 유지합니다.",
   "Search engine": "검색 엔진",
-  "Text typed into a browser tab's address bar that isn't an address is searched with this engine.": "브라우저 탭 주소 창에 입력한 글자가 주소가 아니면 이 검색 엔진으로 검색합니다."
+  "Text typed into a browser tab's address bar that isn't an address is searched with this engine.": "브라우저 탭 주소 창에 입력한 글자가 주소가 아니면 이 검색 엔진으로 검색합니다.",
+  "Maximize terminal": "터미널 최대화",
+  "Restore terminal size": "터미널 원래 크기로"
 }

@@ -105,6 +105,9 @@ struct TerminalTabBar<Actions: View>: View {
     let close: (UUID) -> Void
     let newTerminal: () -> Void
     let voice: () -> Void
+    /// The panel fills the column (the top-right pane carries the button)
+    var maximized = false
+    var maximize: () -> Void = {}
     let hide: () -> Void
     /// The actions menu's own items; the bar adds the buttons it folds away
     @ViewBuilder let actions: () -> Actions
@@ -112,7 +115,7 @@ struct TerminalTabBar<Actions: View>: View {
     var body: some View {
         let compact = TerminalPanelLayout.compactBar(width: width)
         let fit = TerminalPanelLayout.tabOverflow(count: tabs.count, selected: tabs.firstIndex { $0.id == selected },
-                                                  width: TerminalPanelLayout.tabStripWidth(bar: width, controls: compact ? 1 : corner ? 4 : 3))
+                                                  width: TerminalPanelLayout.tabStripWidth(bar: width, controls: compact ? 1 : corner ? 5 : 3))
         HStack(spacing: 2) {
             HStack(spacing: 0) {
                 ForEach(fit.visible.map { tabs[$0] }) { tab in
@@ -158,6 +161,8 @@ struct TerminalTabBar<Actions: View>: View {
                 }
                 actions()
                 if compact && corner {
+                    Button(maximized ? "Restore terminal size" : "Maximize terminal",
+                           symbol: maximized ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right", action: maximize)
                     Button("Hide terminal", symbol: "chevron.down", action: hide)
                 }
             } label: {
@@ -173,6 +178,9 @@ struct TerminalTabBar<Actions: View>: View {
             .accessibilityLabel("Terminal actions")
             .accessibilityIdentifier("terminal-actions")
             if !compact && corner {
+                TerminalToolbarButton(symbol: maximized ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right",
+                                      label: maximized ? "Restore terminal size" : "Maximize terminal", action: maximize)
+                    .accessibilityIdentifier("terminal-maximize")
                 TerminalToolbarButton(symbol: "chevron.down", label: "Hide terminal", action: hide)
                     .accessibilityIdentifier("terminal-hide")
             }

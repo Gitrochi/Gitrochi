@@ -2264,3 +2264,5 @@
 "Betas come before each release so new features can be tried early; they may have bugs. Turning this off keeps the beta until the next release." = "Bèta’s verschijnen vóór elke release om nieuwe functies vroeg te proberen; ze kunnen fouten bevatten. Zet je dit uit, dan blijft de bèta tot de volgende release.";
 "Search engine" = "Zoekmachine";
 "Text typed into a browser tab's address bar that isn't an address is searched with this engine." = "Tekst in de adresbalk van een browsertabblad die geen adres is, wordt met deze zoekmachine gezocht.";
+"Maximize terminal" = "Terminal maximaliseren";
+"Restore terminal size" = "Terminalgrootte herstellen";

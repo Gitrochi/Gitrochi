@@ -631,6 +631,12 @@ extension RepoStore {
     }
 
     /// ⌃` : 터미널 패널 보이기/숨기기(처음이면 저장소 폴더에서 셸을 하나 연다)
+    /// Maximizes the panel, showing it first if it is hidden, or brings back its own height
+    func toggleTerminalMaximized() {
+        if !showTerminal { toggleTerminal() }
+        terminalMaximized = showTerminal && !terminalMaximized
+    }
+
     func toggleTerminal() {
         if showTerminal {
             showTerminal = false

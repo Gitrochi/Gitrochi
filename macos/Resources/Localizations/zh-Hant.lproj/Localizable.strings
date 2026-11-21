@@ -2313,3 +2313,5 @@
 "Betas come before each release so new features can be tried early; they may have bugs. Turning this off keeps the beta until the next release." = "測試版在每次正式發布前提供，可搶先試用新功能，但可能有問題。關閉後會保留目前的測試版，直到下一個正式版本。";
 "Search engine" = "搜尋引擎";
 "Text typed into a browser tab's address bar that isn't an address is searched with this engine." = "在瀏覽器分頁網址列輸入的內容若不是網址，將使用此搜尋引擎搜尋。";
+"Maximize terminal" = "最大化終端機";
+"Restore terminal size" = "還原終端機大小";

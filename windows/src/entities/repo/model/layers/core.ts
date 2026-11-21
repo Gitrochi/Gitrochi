@@ -258,7 +258,16 @@ export abstract class RepoCore extends Observable implements AgentHost {
   activeTerminalID: string | null = null;
   /** How the terminal panel is split into panes of tabs */
   terminalLayout: TermNode | null = null;
-  showTerminal = false;
+  private terminalShown = false;
+  /** The panel fills the centre column, over the graph or page above; hiding the terminal ends it (macOS: RepoStore) */
+  terminalMaximized = false;
+  get showTerminal() {
+    return this.terminalShown;
+  }
+  set showTerminal(shown: boolean) {
+    this.terminalShown = shown;
+    if (!shown) this.terminalMaximized = false;
+  }
 
   /** 다른 저장소·워크트리를 새 탭으로 여는 동작(작업 공간이 넣어 준다) */
   openRepo: ((path: string) => void) | null = null;

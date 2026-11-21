@@ -309,6 +309,10 @@ struct AppCommands: Commands {
             Button(store?.showTerminal == true ? "Hide terminal" : "Show terminal") { store?.toggleTerminal() }
                 .keyboardShortcut("`", modifiers: .control)
                 .disabled(store?.url == nil)
+            Button(store?.terminalMaximized == true && store?.showTerminal == true ? "Restore terminal size" : "Maximize terminal") {
+                store?.toggleTerminalMaximized()
+            }
+            .disabled(store?.url == nil)
             Button("New terminal") { store?.newTerminal() }
                 .keyboardShortcut("`", modifiers: [.control, .shift])
                 .disabled(store?.url == nil)

@@ -53,7 +53,7 @@ export function RepoPage({ store, openSettings, gitMissing = false }: { store: R
         <div className="workspace-main">
           {gitMissing && <div className="workspace-git-notice"><span>{t("Install Git or locate the existing executable to work with local repositories.")}</span><Button onClick={() => window.dispatchEvent(new CustomEvent("gitrochi-open-settings", { detail: "tools" }))}>{t("Locate Git…")}</Button></div>}
           {repository ? <RepositoryScreen store={store} /> : <div className="workspace-pane" ref={paneRef} key={store.path ?? "empty"}>
-            <WorkspaceContent store={store} openSettings={openSettings} />
+            {!(store.showTerminal && store.terminalMaximized && store.path) && <WorkspaceContent store={store} openSettings={openSettings} />}
             {store.showTerminal && store.path && <TerminalPanel store={store} columnHeight={paneH} />}
           </div>}
         </div>
