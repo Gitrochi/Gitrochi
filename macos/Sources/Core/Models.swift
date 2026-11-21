@@ -312,9 +312,6 @@ extension DiffDocument {
         }
         return side("+++ b/") ?? side("--- a/")
     }
-
-    /// The language the diff's lines are coloured in; a diff of several files is left uncoloured
-    var language: String { multipleFiles ? "Plain text" : RepositoryCodeReading.language(for: path ?? "") }
 }
 
 /// diff 머리의 파일 정보

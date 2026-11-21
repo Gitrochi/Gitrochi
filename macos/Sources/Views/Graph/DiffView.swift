@@ -187,8 +187,8 @@ struct DiffLinesView: View {
     let split: Bool
     let editable: Bool
     let staged: Bool
-    /// One language for the whole document, worked out once rather than per row
-    private var language: String { doc.language }
+    /// One language for the whole document; a diff of several files is left uncoloured
+    private var language: String { doc.multipleFiles ? "Plain text" : RepositoryCodeReading.language(for: doc.path ?? "") }
 
     var body: some View {
         // 새 파일·지운 파일처럼 한쪽만 있으면 나란히 보기라도 한 칸으로(빈 반쪽 없이)
