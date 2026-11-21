@@ -145,8 +145,11 @@ jobs:
           bash macos/Tools/test-shared-sheet-layout.sh "$RUNNER_TEMP/shared-sheet-layout"
 
       # The other tool suites compile their own sources and run in the 도구 테스트 job beside this one
-      - name: 작업 공간 이동 테스트 (앱 필요)
-        run: bash macos/Tools/test-workspace-navigation.sh
+      # These two need the build: the app itself, and the SwiftTerm module it builds
+      - name: 작업 공간 이동 · 오른쪽 패널 배치 테스트
+        run: |
+          bash macos/Tools/test-workspace-navigation.sh
+          bash macos/Tools/test-inspector-layout.sh
 
       - uses: actions/setup-node@v4
         with:
@@ -201,7 +204,6 @@ jobs:
           bash macos/Tools/test-work-context.sh
           bash macos/Tools/test-work-validation.sh
           bash macos/Tools/test-project-dependencies.sh
-          bash macos/Tools/test-inspector-layout.sh
           bash macos/Tools/test-adaptive-workbench-identity.sh
           bash macos/Tools/test-large-changes.sh
           bash macos/Tools/test-repository-browser.sh
