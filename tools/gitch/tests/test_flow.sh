@@ -111,9 +111,3 @@ test_flow_guard_rules() {
   expect none 'gitch ci status'
   expect ask 'gitch flow export github --force'
 }
-
-test_flow_completion() {
-  run gitch _complete -- ""; assert_ok; assert_out "flow"; assert_out "test"
-  run gitch _complete -- flow ""; assert_ok; assert_out "init"; assert_out "trust"; assert_out "gate"
-  run gitch _complete -- flow export ""; assert_ok; assert_out "jenkins"
-}

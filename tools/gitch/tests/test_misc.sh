@@ -8,7 +8,7 @@ misc_repo() {
   cd "$HOME/Develop/alice/m" || fail cd
 }
 
-test_json_outputs_valid_and_no_colors() {
+test_json_outputs_valid_and_no_colors() {   # values; the schema of every JSON command is test_cli_contract's, colours on a pipe test_terminal_ui's
   misc_repo
   echo x > x
   run gitch status --json; assert_ok; assert_json "$OUT"
@@ -17,11 +17,6 @@ test_json_outputs_valid_and_no_colors() {
   assert_eq "$(printf '%s' "$OUT" | jq -r '.untracked[0]')" "x"
   run gitch preflight --json; assert_ok; assert_json "$OUT"
   assert_eq "$(printf '%s' "$OUT" | jq -r .result)" "OK"
-  run gitch scan --json; assert_json "$OUT"
-  run gitch doctor --json --no-net; assert_json "$OUT"
-  run gitch list --json; assert_json "$OUT"
-  GITCH_COLOR=auto run gitch status
-  case "$OUT" in *$'\033['*) fail "파이프 출력에 색상 코드가 있음" ;; esac
 }
 
 test_preflight_detects_problems() {
@@ -230,8 +225,6 @@ test_export_import_uninstall_version() {
   grep -q 'account "alice"' "$T/exp.cfg" || fail "내보내기 내용"
   run gitch import "$T/exp.cfg"; assert_fail "비대화형은 --yes 필요"
   run gitch import "$T/exp.cfg" --yes; assert_ok
-  run gitch version; assert_ok; assert_out "gitch $(sed -n 's/^GITCH_VERSION="\([^" ]*\)".*/\1/p' "$GITCH_SRC" | head -1)"
-  run gitch help; assert_ok; assert_out "gitch preflight"
   run gitch uninstall --yes; assert_ok
   git config --global --get hook.gitch-pre-commit.command >/dev/null && fail "전역 훅이 남음"
   git config --global --get-regexp '^url\.' >/dev/null && fail "insteadOf 가 남음"

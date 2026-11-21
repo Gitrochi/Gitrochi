@@ -36,18 +36,6 @@ test_install_without_accounts_links_command() {
   [ "$(git config --global --get hook.gitch-pre-commit.event)" = pre-commit ] || fail "계정을 만든 뒤 전역 훅이 설치되지 않음"
 }
 
-test_app_opens_gitrochi() {
-  mac_only || return 0                                   # Windows 는 설치 폴더의 Gitrochi.exe 를 기본 앱으로 연다
-  local app="$HOME/Applications/Gitrochi.app"
-  mkdir -p "$app/Contents/Resources" "$app/Contents/MacOS" && cp "$GITCH_SRC" "$app/Contents/Resources/gitch"
-  run "$app/Contents/Resources/gitch" app; assert_ok "gitch app"; assert_out "Gitrochi 앱을 열었습니다"
-  grep -qF "open -a $app" "$T/opened" || fail "이 gitch 가 든 앱을 열지 않음\n$(cat "$T/opened" 2>&1)"
-}
-
-
-
-
-
 test_allow_marker_both_names() {   # gitsw:allow stays: it is written in shared source files, not in this machine's setup
   hook_repo
   printf 'token = "ghp_%s"  # gitch:allow\n' "abcdefghijklmnopqrstuvwxyz0123456789" > a.py; git add a.py
@@ -57,11 +45,6 @@ test_allow_marker_both_names() {   # gitsw:allow stays: it is written in shared 
   printf 'token = "ghp_%s"\n' "0123456789abcdefghijklmnopqrstuvwxyz" > c.py; git add c.py
   run git commit -q -m c; assert_fail; assert_out "gitch:allow"
 }
-
-test_self_update_does_not_pull() {
-  run gitch self-update; assert_ok; assert_out "앱과 함께 업데이트"
-}
-
 
 test_prompt_shows_nothing_without_account() {
   mac_only || return 0

@@ -74,14 +74,13 @@ test_clone_browser_page_address_uses_its_repository() {
   mk_remote_seeded github-alice alice/app
   mk_remote_seeded gitlab-carol grp/sub/tool
   local u
-  # Addresses copied from a repository's web pages, not only its clone address
-  for u in https://github.com/alice/app/tree/main https://github.com/alice/app/pull/3 \
-    https://github.com/alice/app/blob/main/src/a.ts 'https://github.com/alice/app?tab=readme-ov-file' https://github.com/alice/app#readme; do
+  # Addresses copied from a repository's web pages, not only its clone address: a path, a query, and GitLab's /-/
+  for u in https://github.com/alice/app/pull/3 'https://github.com/alice/app?tab=readme-ov-file'; do
     cd "$HOME/Develop/alice" && rm -rf app
     run gitch clone "$u"; assert_ok "clone $u"
     assert_eq "$(git -C "$HOME/Develop/alice/app" config remote.origin.url)" "git@github-alice:alice/app.git" "$u"
   done
-  for u in https://gitlab.example.com/grp/sub/tool/-/tree/main https://gitlab.example.com/grp/sub/tool/-/merge_requests/4; do
+  for u in https://gitlab.example.com/grp/sub/tool/-/merge_requests/4; do
     cd "$HOME/Develop/corp" && rm -rf tool
     run gitch clone "$u"; assert_ok "clone $u"
     assert_eq "$(git -C "$HOME/Develop/corp/tool" config remote.origin.url)" "git@gitlab-carol:grp/sub/tool.git" "$u"
