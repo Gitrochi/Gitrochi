@@ -17,11 +17,14 @@
 .code-editor-surface > textarea::selection { background: var(--select); }
 .code-editor-surface:focus-within { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent); }
 .code-editor-body.wrap .code-editor-row, .code-editor-body.wrap textarea { white-space: pre-wrap; overflow-wrap: anywhere; }
-.code-token-comment { color: var(--text-2); font-style: italic; }
-.code-token-string { color: var(--green); }
-.code-token-keyword { color: var(--accent); }
-.code-token-number { color: var(--orange); }
-.code-token-type { color: color-mix(in srgb, var(--accent) 60%, var(--text)); }
+.code-token-comment { color: var(--syn-comment); font-style: italic; }
+.code-token-string { color: var(--syn-string); }
+.code-token-keyword { color: var(--syn-keyword); }
+.code-token-number { color: var(--syn-number); }
+.code-token-type { color: var(--syn-type); }
+.code-token-function { color: var(--syn-function); }
+.code-token-property { color: var(--syn-property); }
+.code-token-variable { color: var(--syn-variable); }
 .code-editor-status { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; min-height: 26px; border-top: 1px solid var(--border); padding: 5px 12px; background: var(--sidebar); color: var(--text-2); font-size: 9px; }
 @media (forced-colors: active) { .code-editor-syntax { display: none; } .code-editor-surface > textarea { color: CanvasText; -webkit-text-fill-color: CanvasText; } }
 

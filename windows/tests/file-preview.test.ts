@@ -75,7 +75,7 @@ describe("source code previews", () => {
     expect(previewKind("README")).toEqual({ kind: "text" });
   });
   it("colours tokens in the page's own classes and escapes the rest", () => {
-    expect(highlightCode('const a = "<b>"; // x', "TypeScript")).toBe('<span class="keyword">const</span> a = <span class="string">&quot;&lt;b&gt;&quot;</span>; <span class="comment">// x</span>');
+    expect(highlightCode('const a = "<b>"; // x', "TypeScript")).toBe('<span class="keyword">const</span> <span class="variable">a</span> = <span class="string">&quot;&lt;b&gt;&quot;</span>; <span class="comment">// x</span>');
     expect(previewPage("a.py", "def f(): pass", { kind: "code", language: "Python" }, false, { cut: "cut", empty: "empty", size: () => "" })).toContain('<span class="keyword">def</span>');
   });
 });
