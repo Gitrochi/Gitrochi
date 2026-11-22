@@ -47,8 +47,15 @@ describe("source segments", () => {
   it("splits a line at token and changed-word edges", () => {
     const text = 'let x = "ab"';
     expect(sourceSegments(text, sourceTokens(text, "Swift"), [[4, 9]])).toEqual([
-      { text: "let", kind: "keyword" }, { text: " " }, { text: "x = ", mark: true }, { text: '"', kind: "string", mark: true }, { text: 'ab"', kind: "string" },
+      { text: "let", kind: "keyword" }, { text: " " }, { text: "x", kind: "variable", mark: true }, { text: " = ", mark: true },
+      { text: '"', kind: "string", mark: true }, { text: 'ab"', kind: "string" },
     ]);
+  });
+  it("colours every name by its place: calls, members, types and variables", () => {
+    const text = "const user = store.load(id); new Date(); MAX_SIZE";
+    const kinds = Object.fromEntries(sourceTokens(text, "TypeScript").map((t) => [text.slice(t.start, t.end), t.kind]));
+    expect(kinds).toMatchObject({ const: "keyword", user: "variable", store: "variable", load: "function", id: "variable", new: "keyword", Date: "type", MAX_SIZE: "variable" });
+    expect(sourceTokens("a.b", "TypeScript").map((t) => t.kind)).toEqual(["variable", "property"]);
   });
   it("reads word marks as code points, so text after an emoji keeps its place", () => {
     expect(sourceSegments("🙂ab", [], [[1, 2]])).toEqual([{ text: "🙂" }, { text: "a", mark: true }, { text: "b" }]);

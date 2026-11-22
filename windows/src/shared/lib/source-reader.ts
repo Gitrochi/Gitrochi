@@ -1,6 +1,6 @@
-export interface SourceToken { start: number; end: number; kind: "comment" | "string" | "keyword" | "number" | "type" }
+export interface SourceToken { start: number; end: number; kind: "comment" | "string" | "keyword" | "number" | "type" | "function" | "property" | "variable" }
 export interface SourceMatch { start: number; end: number }
-export const syntaxCharacterLimit = 200_000, syntaxTokenLimit = 12_000, sourceMatchLimit = 10_000, wrappingLineLimit = 5_000;
+export const syntaxCharacterLimit = 200_000, syntaxTokenLimit = 60_000, sourceMatchLimit = 10_000, wrappingLineLimit = 5_000;
 
 const languages: Record<string, string> = {
   swift: "Swift", ts: "TypeScript", tsx: "TypeScript JSX", js: "JavaScript", jsx: "JavaScript JSX",
@@ -11,6 +11,19 @@ const languages: Record<string, string> = {
 };
 const hashComments = new Set(["Python", "Ruby", "Shell", "YAML", "TOML"]);
 const keywords = new Set(("as async await break case catch class const continue default defer do else enum export extension false final finally for from func function guard if impl import in init interface internal is let match module mut namespace new nil null of open override package private protected protocol pub public readonly repeat return self Self static struct super switch throw throws true try type typealias typeof undefined use val var void when where while with yield fn def pass raise except elif lambda None True False and or not select SELECT FROM WHERE INSERT UPDATE DELETE CREATE TABLE INTO VALUES").split(" "));
+
+/**
+ * A name by its place, as editors colour it without a parser: called (followed by "("), a member (after "."), a type
+ * (capitalised), or else a variable. (macOS: RepositoryCodeReading.identifierKind)
+ */
+function identifierKind(text: string, start: number, end: number, name: string): SourceToken["kind"] {
+  let next = end;
+  while (text[next] === " " || text[next] === "\t") next++;
+  const typeName = /^[A-Z]/.test(name) && /[a-z]/.test(name);   // Foo, not a CONSTANT
+  if (text[next] === "(") return typeName ? "type" : "function";   // a capitalised call constructs a type
+  if (text[start - 1] === ".") return "property";
+  return typeName ? "type" : "variable";
+}
 
 /** macOS: RepositorySourceView uses the same bounded, lightweight source colors. */
 export function sourceLanguage(path: string): string {
@@ -25,12 +38,13 @@ export function sourceTokens(text: string, language: string): SourceToken[] {
     : /\/\/[^\r\n]*|\/\*[\s\S]*?\*\/|"(?:\\[\s\S]|[^"\\])*"|'(?:\\[\s\S]|[^'\\])*'|`(?:\\[\s\S]|[^`\\])*`|\b(?:0[xX][\da-fA-F]+|\d+(?:\.\d+)?)\b|\b[A-Za-z_$][\w$]*\b/g;
   const tokens: SourceToken[] = [];
   for (const match of text.matchAll(pattern)) {
-    const value = match[0], first = value[0];
-    const kind = value.startsWith("//") || value.startsWith("/*") || first === "#" ? "comment"
+    const value = match[0], first = value[0], at = match.index, end = at + value.length;
+    const kind: SourceToken["kind"] = value.startsWith("//") || value.startsWith("/*") || first === "#" ? "comment"
       : first === '"' || first === "'" || first === "`" ? "string"
-      : keywords.has(value) ? "keyword" : /^\d/.test(value) ? "number" : /^[A-Z][A-Za-z\d_]*$/.test(value) ? "type" : null;
-    if (kind) tokens.push({ start: match.index, end: match.index + value.length, kind });
-    if (tokens.length >= syntaxTokenLimit) return [];
+      : /^\d/.test(value) ? "number" : keywords.has(value) ? "keyword" : identifierKind(text, at, end, value);
+    tokens.push({ start: at, end, kind });
+    // a very long file keeps the colours of its first part rather than losing them all
+    if (tokens.length >= syntaxTokenLimit) break;
   }
   return tokens;
 }

@@ -1,6 +1,9 @@
 /* The code reader's token colours (as in code-editor.css), for code shown outside the editor */
-.code-token-comment { color: var(--text-2); font-style: italic; }
-.code-token-string { color: var(--green); }
-.code-token-keyword { color: var(--accent); }
-.code-token-number { color: var(--orange); }
-.code-token-type { color: color-mix(in srgb, var(--accent) 60%, var(--text)); }
+.code-token-comment { color: var(--syn-comment); font-style: italic; }
+.code-token-string { color: var(--syn-string); }
+.code-token-keyword { color: var(--syn-keyword); }
+.code-token-number { color: var(--syn-number); }
+.code-token-type { color: var(--syn-type); }
+.code-token-function { color: var(--syn-function); }
+.code-token-property { color: var(--syn-property); }
+.code-token-variable { color: var(--syn-variable); }

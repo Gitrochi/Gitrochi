@@ -5,7 +5,7 @@ import SwiftUI
 /// Lightweight reading metadata; all ranges use UTF-16 for AppKit text storage.
 enum RepositoryCodeReading {
     struct Token: Equatable {
-        enum Kind: Equatable { case comment, string, keyword, number }
+        enum Kind: Equatable { case comment, string, keyword, number, type, function, property, variable }
         let range: NSRange
         let kind: Kind
     }
@@ -51,39 +51,60 @@ enum RepositoryCodeReading {
         func build(_ hashComments: Bool) -> NSRegularExpression? {
             let comments = hashComments ? #"#[^\n]*"# : #"//[^\n]*|/\*[\s\S]*?\*/"#
             let keywords = #"\b(?:actor|as|async|await|break|case|catch|class|const|continue|def|default|defer|do|else|enum|export|extends|false|final|fn|for|from|func|function|guard|if|impl|import|in|init|interface|internal|is|let|match|mut|namespace|new|nil|null|None|open|override|package|private|protected|protocol|pub|public|return|self|static|struct|super|switch|this|throw|throws|trait|true|try|type|typeof|use|var|void|where|while|with|yield)\b"#
-            return try? NSRegularExpression(pattern: "(" + comments + #")|("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`)|("# + keywords + #")|(\b(?:0[xX][\da-fA-F]+|\d+(?:\.\d+)?)\b)"#)
+            return try? NSRegularExpression(pattern: "(" + comments + #")|("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`)|("# + keywords + #")|(\b(?:0[xX][\da-fA-F]+|\d+(?:\.\d+)?)\b)|(\b[A-Za-z_$][\w$]*\b)"#)
         }
         return [false: build(false), true: build(true)].compactMapValues { $0 }
     }()
+
+    /// A name by its place, as editors colour it without a parser: called (followed by "("), a member (after "."), a type
+    /// (capitalised), or else a variable. (Windows: identifierKind in source-reader.ts)
+    static func identifierKind(in source: NSString, _ range: NSRange) -> Token.Kind {
+        let name = source.substring(with: range)
+        let typeName = name.first?.isUppercase == true && name.contains { $0.isLowercase }   // Foo, not a CONSTANT
+        var next = NSMaxRange(range)
+        while next < source.length, [32, 9].contains(source.character(at: next)) { next += 1 }
+        if next < source.length, source.character(at: next) == 40 { return typeName ? .type : .function }   // "(": a capitalised call constructs a type
+        if range.location > 0, source.character(at: range.location - 1) == 46 { return .property }   // "."
+        return typeName ? .type : .variable
+    }
 
     static func tokens(in text: String, language: String) -> [Token] {
         // Large previews stay selectable and searchable without a costly styling pass.
         guard text.utf16.count <= 200_000, language != "Plain text",
               let regex = patterns[["Python", "Shell", "YAML", "TOML"].contains(language)] else { return [] }
         var result: [Token] = []
-        regex.enumerateMatches(in: text, range: NSRange(location: 0, length: (text as NSString).length)) { match, _, stop in
+        let source = text as NSString
+        regex.enumerateMatches(in: text, range: NSRange(location: 0, length: source.length)) { match, _, stop in
             guard let match else { return }
             let kinds: [Token.Kind] = [.comment, .string, .keyword, .number]
-            for (index, kind) in kinds.enumerated() where match.range(at: index + 1).location != NSNotFound {
-                result.append(Token(range: match.range, kind: kind)); break
+            if let index = kinds.indices.first(where: { match.range(at: $0 + 1).location != NSNotFound }) {
+                result.append(Token(range: match.range, kind: kinds[index]))
+            } else {
+                result.append(Token(range: match.range, kind: identifierKind(in: source, match.range)))
             }
-            if result.count >= 12_000 || Task.isCancelled { stop.pointee = true }
+            // a very long file keeps the colours of its first part rather than losing them all
+            if result.count >= 60_000 || Task.isCancelled { stop.pointee = true }
         }
         return result
     }
 }
 
 extension RepositoryCodeReading {
-    /// The code reader's colour for a token, a little toward the text colour so it reads on either background
+    /// The colour for a token, as VS Code's Light+ and Dark+ themes draw it (Windows: --syn-* in global.css)
     static func color(_ kind: Token.Kind, dark: Bool) -> NSColor {
-        let base: NSColor
-        switch kind {
-        case .comment: return .secondaryLabelColor
-        case .string: base = .systemGreen
-        case .keyword: base = .systemPurple
-        case .number: base = .systemOrange
+        func hex(_ value: Int) -> NSColor {
+            NSColor(srgbRed: CGFloat(value >> 16 & 0xff) / 255, green: CGFloat(value >> 8 & 0xff) / 255, blue: CGFloat(value & 0xff) / 255, alpha: 1)
         }
-        return base.blended(withFraction: dark ? 0.15 : 0.35, of: dark ? .white : .black) ?? base
+        switch kind {
+        case .keyword: return hex(dark ? 0xc586c0 : 0xaf00db)
+        case .string: return hex(dark ? 0xce9178 : 0xa31515)
+        case .number: return hex(dark ? 0xb5cea8 : 0x098658)
+        case .comment: return hex(dark ? 0x6a9955 : 0x008000)
+        case .type: return hex(dark ? 0x4ec9b0 : 0x267f99)
+        case .function: return hex(dark ? 0xdcdcaa : 0x795e26)
+        case .variable: return hex(dark ? 0x9cdcfe : 0x001080)
+        case .property: return hex(dark ? 0x4fc1ff : 0x0070c1)
+        }
     }
 
     /// One line in the code reader's colours, without its first `indent` characters, with the words that changed

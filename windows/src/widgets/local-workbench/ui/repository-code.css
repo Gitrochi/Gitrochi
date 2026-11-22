@@ -245,11 +245,14 @@
 .repository-source.large { display: flex; align-items: flex-start; }
 .source-gutter { position: sticky; left: 0; flex: none; min-width: 5.5ch; padding-right: 1.6ch; text-align: right; background: var(--surface); color: var(--text-3); user-select: none; border-right: 1px solid var(--border); }
 .source-large-text { font: inherit; display: block; padding: 0 22px 0 16px; }
-.source-keyword { color: var(--accent); font-weight: 500; }
-.source-string { color: var(--green); }
-.source-number { color: var(--orange); }
-.source-type { color: color-mix(in srgb, var(--accent) 60%, var(--text)); }
-.source-comment { color: var(--text-2); font-style: italic; }
+.source-comment { color: var(--syn-comment); font-style: italic; }
+.source-string { color: var(--syn-string); }
+.source-keyword { color: var(--syn-keyword); }
+.source-number { color: var(--syn-number); }
+.source-type { color: var(--syn-type); }
+.source-function { color: var(--syn-function); }
+.source-property { color: var(--syn-property); }
+.source-variable { color: var(--syn-variable); }
 .repository-source mark { color: inherit; background: var(--hit); outline: 1px solid color-mix(in srgb, var(--hit-bar) 40%, transparent); border-radius: 2px; }
 .repository-source mark.active { background: color-mix(in srgb, var(--hit-bar) 36%, var(--surface)); outline: 1px solid var(--hit-bar); }
 .code-image { flex: 1; min-height: 0; padding: 28px; overflow: auto; display: grid; place-items: start center; background: var(--bg); }

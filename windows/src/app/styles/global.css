@@ -77,11 +77,17 @@
   --person-3-fill: #f7e4eb;
   --person-3-letter: #9b3a5f;
   --person-3-node: #b4466e;
+  /* Syntax colours (as VS Code's Light+), shared by the code reader, the editor, diffs and blame (macOS: RepositoryCodeReading.color) */
+  --syn-keyword: #af00db; --syn-string: #a31515; --syn-number: #098658; --syn-comment: #008000;
+  --syn-type: #267f99; --syn-function: #795e26; --syn-variable: #001080; --syn-property: #0070c1;
   color-scheme: light;
 }
 
 /* 다크: 설정 > 화면에서 고르거나 시스템을 따른다(lib/theme.ts 가 시작할 때 data-theme 을 넣는다) */
 :root[data-theme="dark"] {
+  /* Syntax colours (as VS Code's Dark+) */
+  --syn-keyword: #c586c0; --syn-string: #ce9178; --syn-number: #b5cea8; --syn-comment: #6a9955;
+  --syn-type: #4ec9b0; --syn-function: #dcdcaa; --syn-variable: #9cdcfe; --syn-property: #4fc1ff;
   --bg: #1e1e21;
   --surface: #242427;
   --sidebar: #212124;

@@ -227,13 +227,14 @@ export function previewDocument(title: string, body: string): string {
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'">
 <title>${escapeHtml(title)}</title><style>
 :root { color-scheme: light dark; --fg: #1d1d1f; --bg: #fff; --muted: #6e6e73; --line: #e5e5ea; --head: #f5f5f7;
-  --kw: #9b2393; --type: #0b4f79; --str: #c41a16; --num: #1c00cf; --com: #5d6c79; --key: #0e6e8c; }
+  --kw: #af00db; --type: #267f99; --str: #a31515; --num: #098658; --com: #008000; --key: #0e6e8c; --fn: #795e26; --var: #001080; --prop: #0070c1; }
 @media (prefers-color-scheme: dark) { :root { --fg: #e6e6e6; --bg: #1e1e1e; --muted: #98989d; --line: #38383a; --head: #2a2a2c;
-  --kw: #fc5fa3; --type: #5dd8ff; --str: #fc6a5d; --num: #d0bf69; --com: #7f8c98; --key: #67b7a4; } }
+  --kw: #c586c0; --type: #4ec9b0; --str: #ce9178; --num: #b5cea8; --com: #6a9955; --key: #67b7a4; --fn: #dcdcaa; --var: #9cdcfe; --prop: #4fc1ff; } }
 body { margin: 0; padding: 16px 20px; background: var(--bg); color: var(--fg); font: 13px "Segoe UI", -apple-system, sans-serif; }
 pre, .tree, table { font: 12px "Cascadia Mono", Consolas, ui-monospace, Menlo, monospace; }
 pre { margin: 0; white-space: pre-wrap; word-break: break-word; line-height: 1.5; }
 .keyword { color: var(--kw); font-weight: 600; } .type { color: var(--type); } .string { color: var(--str); }
+.function { color: var(--fn); } .variable { color: var(--var); } .property { color: var(--prop); }
 .number { color: var(--num); } .comment { color: var(--com); font-style: italic; } .ident, .key { color: var(--key); }
 .note, .count, .punct { color: var(--muted); } .note { margin: 0 0 10px; font-size: 12px; }
 table { border-collapse: collapse; } th, td { border: 1px solid var(--line); padding: 4px 8px; text-align: left; vertical-align: top; white-space: pre-wrap; }
