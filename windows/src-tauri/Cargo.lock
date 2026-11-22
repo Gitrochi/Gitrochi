@@ -1434,7 +1434,7 @@ dependencies = [
 
 [[package]]
 name = "gitrochi"
-version = "0.4.2-beta.5"
+version = "0.4.2-beta.6"
 dependencies = [
  "dirs 5.0.1",
  "gitrochi-index",
