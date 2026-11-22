@@ -47,7 +47,7 @@ enum Git {
         precondition(RepositoryCodeReading.matches(in: "🧭 let value = LET", query: "let") == [NSRange(location: 3, length: 3), NSRange(location: 15, length: 3)])
         precondition(RepositoryCodeReading.matches(in: String(repeating: "x", count: 20_000), query: "x").count == 10_001)
         let tokens = RepositoryCodeReading.tokens(in: "const answer = \"42\"; // 7\n", path: "source.ts")
-        precondition(tokens.map(\.kind) == [.keyword, .string, .comment])
+        precondition(tokens.map(\.kind) == [.keyword, .variable, .string, .comment])
         precondition(RepositoryCodeReading.tokens(in: String(repeating: "let x = 1\n", count: 30_000), path: "source.swift").isEmpty)
         var navigation = RepositoryCodeNavigation()
         for index in 0..<80 { navigation.visit("file\(index).swift", mode: "Source") }
