@@ -95,8 +95,9 @@ export async function scheduledRunsSelfTest(): Promise<[boolean, string]> {
     button("Schedule run")!.click();
     check(await until(() => button("Schedule run")?.disabled && host.textContent?.includes(t("Choose a time in the future."))), "A time gone by must disable Schedule run and say why");
     field().querySelector<HTMLButtonElement>('[data-preset="tomorrow"]')!.click();
+    // the field shows the new value once React has drawn it
+    check(await until(() => new Date(Number(field().dataset.value)).getHours() === 9 && button("Schedule run")?.disabled === false), "Tomorrow morning must set 9:00 and enable Schedule run");
     const runAt = Number(field().dataset.value);
-    check(await until(() => button("Schedule run")?.disabled === false) && new Date(runAt).getHours() === 9, "Tomorrow morning must set 9:00 and enable Schedule run");
     state.now = now;
     button("Schedule run")!.click();
     check(await until(() => closed === 1 && state.runs.length === 1), `Schedule run did not keep the run: ${JSON.stringify(state.runs)}`);
