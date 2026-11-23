@@ -2346,3 +2346,6 @@
 "Text typed into a browser tab's address bar that isn't an address is searched with this engine." = "El texto escrito en la barra de direcciones de una pestaña del navegador que no sea una dirección se busca con este motor.";
 "Maximize terminal" = "Maximizar terminal";
 "Restore terminal size" = "Restaurar tamaño del terminal";
+"Search commits by message or SHA" = "Buscar commits por mensaje o SHA";
+"No commits match." = "Ningún commit coincide.";
+"Runs on the branch's newest commit when it starts." = "Se ejecuta en el commit más reciente de la rama cuando empieza.";

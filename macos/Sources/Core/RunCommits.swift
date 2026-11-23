@@ -40,6 +40,17 @@ enum RunCommits {
     }
 
     /// GitHub: the newest run of each workflow, the ones a chosen commit can re-run (Windows: commitWorkflowRuns)
+    /// The commits whose message or SHA holds every word of the query, whatever its case, in their order
+    /// (Windows: filterRunCommits)
+    static func filter(_ commits: [RunCommit], query: String) -> [RunCommit] {
+        let words = query.lowercased().split(whereSeparator: \.isWhitespace).map(String.init)
+        guard !words.isEmpty else { return commits }
+        return commits.filter { c in
+            let text = (c.subject + " " + c.sha).lowercased()
+            return words.allSatisfy { text.contains($0) }
+        }
+    }
+
     static func workflowRuns(_ commit: RunCommit) -> [CIPipeline] {
         var seen = Set<String>()
         return commit.runs.filter { seen.insert($0.name).inserted }

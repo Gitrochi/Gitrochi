@@ -2456,5 +2456,8 @@
   "Search engine": "搜索引擎",
   "Text typed into a browser tab's address bar that isn't an address is searched with this engine.": "在浏览器标签页地址栏中输入的内容如果不是网址，将使用此搜索引擎搜索。",
   "Maximize terminal": "最大化终端",
-  "Restore terminal size": "恢复终端大小"
+  "Restore terminal size": "恢复终端大小",
+  "Search commits by message or SHA": "按提交信息或 SHA 搜索",
+  "No commits match.": "没有匹配的提交。",
+  "Runs on the branch's newest commit when it starts.": "在运行开始时使用该分支的最新提交。"
 }

@@ -2305,5 +2305,8 @@
   "Search engine": "Wyszukiwarka",
   "Text typed into a browser tab's address bar that isn't an address is searched with this engine.": "Tekst wpisany w pasku adresu karty przeglądarki, który nie jest adresem, jest wyszukiwany w tej wyszukiwarce.",
   "Maximize terminal": "Maksymalizuj terminal",
-  "Restore terminal size": "Przywróć rozmiar terminala"
+  "Restore terminal size": "Przywróć rozmiar terminala",
+  "Search commits by message or SHA": "Szukaj commitów po wiadomości lub SHA",
+  "No commits match.": "Brak pasujących commitów.",
+  "Runs on the branch's newest commit when it starts.": "Uruchamia się na najnowszym commicie gałęzi w chwili startu."
 }

@@ -2326,5 +2326,8 @@
   "Search engine": "搜尋引擎",
   "Text typed into a browser tab's address bar that isn't an address is searched with this engine.": "在瀏覽器分頁網址列輸入的內容若不是網址，將使用此搜尋引擎搜尋。",
   "Maximize terminal": "最大化終端機",
-  "Restore terminal size": "還原終端機大小"
+  "Restore terminal size": "還原終端機大小",
+  "Search commits by message or SHA": "依提交訊息或 SHA 搜尋",
+  "No commits match.": "沒有符合的提交。",
+  "Runs on the branch's newest commit when it starts.": "在執行開始時使用該分支的最新提交。"
 }

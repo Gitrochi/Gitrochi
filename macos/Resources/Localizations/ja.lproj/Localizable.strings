@@ -2973,3 +2973,6 @@
 "Text typed into a browser tab's address bar that isn't an address is searched with this engine." = "ブラウザタブのアドレスバーに入力した文字がアドレスでない場合は、この検索エンジンで検索します。";
 "Maximize terminal" = "ターミナルを最大化";
 "Restore terminal size" = "ターミナルを元のサイズに戻す";
+"Search commits by message or SHA" = "コミットメッセージまたは SHA で検索";
+"No commits match." = "一致するコミットはありません。";
+"Runs on the branch's newest commit when it starts." = "実行開始時のブランチの最新コミットで実行します。";

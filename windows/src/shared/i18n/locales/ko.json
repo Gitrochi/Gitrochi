@@ -4019,5 +4019,8 @@
   "Search engine": "검색 엔진",
   "Text typed into a browser tab's address bar that isn't an address is searched with this engine.": "브라우저 탭 주소 창에 입력한 글자가 주소가 아니면 이 검색 엔진으로 검색합니다.",
   "Maximize terminal": "터미널 최대화",
-  "Restore terminal size": "터미널 원래 크기로"
+  "Restore terminal size": "터미널 원래 크기로",
+  "Search commits by message or SHA": "커밋 메시지나 SHA로 검색",
+  "No commits match.": "일치하는 커밋이 없습니다.",
+  "Runs on the branch's newest commit when it starts.": "실행이 시작될 때 브랜치의 최신 커밋에서 돌립니다."
 }

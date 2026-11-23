@@ -2321,5 +2321,8 @@
   "Search engine": "Поисковая система",
   "Text typed into a browser tab's address bar that isn't an address is searched with this engine.": "Текст в адресной строке вкладки браузера, который не является адресом, ищется в этой поисковой системе.",
   "Maximize terminal": "Развернуть терминал",
-  "Restore terminal size": "Восстановить размер терминала"
+  "Restore terminal size": "Восстановить размер терминала",
+  "Search commits by message or SHA": "Искать коммиты по сообщению или SHA",
+  "No commits match.": "Подходящих коммитов нет.",
+  "Runs on the branch's newest commit when it starts.": "Запускается на последнем коммите ветки в момент старта."
 }

@@ -56,6 +56,9 @@ export async function scheduledRunsSelfTest(): Promise<[boolean, string]> {
   };
   const select = (id: string) => host.querySelector<HTMLSelectElement>(`#${id}`);
   const note = () => host.querySelector("[data-run-commit-note]")?.textContent ?? "";
+  // the commit list: one row per commit with runs, the branch's tip first (data-sha="")
+  const commitRow = (sha: string) => host.querySelector<HTMLButtonElement>(`.run-commit-row[data-sha="${sha}"]`);
+  const pickCommit = async (sha: string) => { commitRow(sha)!.click(); await pause(); };
   // the commit of 11:00 on main, whose pipeline waits on a manual build job (GitLab) or whose Deploy run finished (GitHub)
   const older = "0123456789abcdef0123456789abcdef01234567";
   const runOf = (id: number, name: string): CIPipeline => ({ id, number: id, name, title: "Fix the deploy", ref: "main", sha: older, status: "success", url: "", created: now / 1000 - 5400, event: "push", actor: null });
@@ -103,10 +106,19 @@ export async function scheduledRunsSelfTest(): Promise<[boolean, string]> {
     // GitHub, a chosen commit: the branch's tip by default; the commit's run is re-run with its original inputs
     closed = 0;
     await mount(<RunPipelineSheet store={store} close={() => { closed++; }} />);
-    check(await until(() => select("run-commit")?.querySelector(`option[value='${older}']`)), "The sheet did not list the commits with runs");
-    check(select("run-commit")!.value === "" && select("run-commit")!.options[0].textContent === t("Latest on {0}", "main"), "The commit must start on Latest on main");
-    check(select("run-commit")!.options[1].textContent?.startsWith("0123456  Fix the deploy"), "A commit reads as its short SHA and subject");
-    await choose(select("run-commit")!, older);
+    check(await until(() => commitRow(older)), "The sheet did not list the commits with runs");
+    check(commitRow("")?.getAttribute("aria-selected") === "true" && commitRow("")?.querySelector(".run-commit-title")?.textContent === t("Latest on {0}", "main"), "The commit must start on Latest on main");
+    check(commitRow(older)?.querySelector(".run-commit-title")?.textContent === "Fix the deploy" && commitRow(older)?.querySelector(".run-commit-meta")?.textContent?.startsWith("0123456"), "A commit reads as its subject over its short SHA");
+    // the search keeps the commits whose message or SHA holds every word, and says so when none does
+    const search = host.querySelector<HTMLInputElement>("#run-commit-search")!;
+    const type = async (text: string) => { Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(search, text); search.dispatchEvent(new Event("input", { bubbles: true })); await pause(); };
+    await type("DEPLOY fix");
+    check(await until(() => commitRow(older) && !commitRow("")), "Searching by message must keep the matching commit and drop the branch tip");
+    await type("no such commit");
+    check(await until(() => !commitRow(older) && host.textContent?.includes(t("No commits match."))), "A search with no match must say so");
+    await type("");
+    check(await until(() => commitRow("") && commitRow(older)), "Clearing the search must bring every commit back");
+    await pickCommit(older);
     check(await until(() => select("run-commit-run")?.value === "4242"), "A chosen commit must offer its newest workflow run");
     check(!host.querySelector("select option[value='42']") && !host.textContent?.includes("level"), "A re-run takes no workflow or inputs");
     check(note() === t("Re-runs this run of {0} on {1} with its original inputs.", "0123456", "main"), `The note must say the run repeats: ${note()}`);
@@ -118,8 +130,8 @@ export async function scheduledRunsSelfTest(): Promise<[boolean, string]> {
     // Run later keeps the commit and its run
     closed = 0;
     await mount(<RunPipelineSheet store={store} close={() => { closed++; }} />);
-    check(await until(() => select("run-commit")?.querySelector(`option[value='${older}']`)), "The sheet did not list the commits again");
-    await choose(select("run-commit")!, older);
+    check(await until(() => commitRow(older)), "The sheet did not list the commits again");
+    await pickCommit(older);
     check(await until(() => select("run-commit-run")?.value === "4242"), "The run was not chosen again");
     button("Run later")!.click();
     check(await until(() => button("Schedule run")?.disabled === false), "Run later on a commit must offer a time ahead");
@@ -147,8 +159,8 @@ export async function scheduledRunsSelfTest(): Promise<[boolean, string]> {
     // GitLab, a chosen commit: its pipeline's manual job is pressed, now or later, without new variables
     closed = 0;
     await mount(<RunPipelineSheet store={store} close={() => { closed++; }} />);
-    check(await until(() => select("run-commit")?.querySelector(`option[value='${older}']`)), "The pipeline sheet did not list the commits");
-    await choose(select("run-commit")!, older);
+    check(await until(() => commitRow(older)), "The pipeline sheet did not list the commits");
+    await pickCommit(older);
     check(await until(() => select("run-commit-job")?.value === "build-job"), "The manual job must come chosen");
     check(select("run-commit-job")!.options[0].value === "build-job" && !host.textContent?.includes("DEPLOY_ENV"), "Manual jobs come first, and pressing one takes no variables");
     check(note() === t("Presses this job in the pipeline of {0} on {1}.", "0123456", "main"), `The note must say the job is pressed: ${note()}`);
@@ -161,8 +173,8 @@ export async function scheduledRunsSelfTest(): Promise<[boolean, string]> {
     reset();
     closed = 0;
     await mount(<RunPipelineSheet store={store} close={() => { closed++; }} />);
-    check(await until(() => select("run-commit")?.querySelector(`option[value='${older}']`)), "The pipeline sheet did not list the commits again");
-    await choose(select("run-commit")!, older);
+    check(await until(() => commitRow(older)), "The pipeline sheet did not list the commits again");
+    await pickCommit(older);
     check(await until(() => select("run-commit-job")?.value === "build-job"), "The manual job must come chosen again");
     button("Run later")!.click();
     check(await until(() => button("Schedule run")?.disabled === false), "Run later on a job must offer a time ahead");

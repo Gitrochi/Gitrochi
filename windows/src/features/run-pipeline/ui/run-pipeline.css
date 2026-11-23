@@ -1,0 +1,21 @@
+.run-pipeline-body { gap: 16px; padding: 16px 20px; }
+.run-pipeline-body .form-row > label { font-size: 12px; font-weight: 600; color: var(--text-2); }
+
+/* Search field: as the sidebar's Filter branches field */
+.run-commit-choices { gap: 6px; min-width: 0; }
+.run-commit-search { display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border: 1px solid var(--border-strong); border-radius: 6px; background: var(--input); color: var(--text-2); box-sizing: border-box; }
+.run-commit-search:focus-within { border-color: color-mix(in srgb, var(--accent) 70%, transparent); }
+.run-commit-search input { flex: 1; min-width: 0; padding: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: 13px; color: var(--text); }
+
+.run-commit-list { display: flex; flex-direction: column; gap: 2px; height: 172px; overflow: auto; padding: 4px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+.run-commit-row { display: flex; align-items: center; gap: 8px; height: 40px; flex: none; padding: 0 8px; border: 0; border-radius: 6px; background: transparent; color: var(--text); text-align: left; cursor: pointer; font: inherit; }
+.run-commit-row:hover { background: var(--row-hover); }
+.run-commit-row.on { background: color-mix(in srgb, var(--accent) 16%, transparent); }
+.run-commit-row:focus-visible { outline: 2px solid color-mix(in srgb, var(--accent) 40%, transparent); outline-offset: -2px; }
+.run-commit-mark { flex: none; width: 16px; display: flex; justify-content: center; color: var(--text-3); }
+.run-commit-text { display: flex; flex-direction: column; min-width: 0; gap: 1px; }
+.run-commit-title { font-size: 13px; }
+.run-commit-row.on .run-commit-title { font-weight: 600; }
+.run-commit-meta { font-size: 11px; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.run-commit-row.on .run-commit-meta { color: var(--on-select); }
+.run-commit-empty { padding: 16px 0; text-align: center; font-size: 12px; }

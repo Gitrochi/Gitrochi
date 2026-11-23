@@ -2272,3 +2272,6 @@
 "Text typed into a browser tab's address bar that isn't an address is searched with this engine." = "Nội dung nhập vào thanh địa chỉ của thẻ trình duyệt mà không phải địa chỉ sẽ được tìm bằng công cụ này.";
 "Maximize terminal" = "Phóng to terminal";
 "Restore terminal size" = "Khôi phục kích thước terminal";
+"Search commits by message or SHA" = "Tìm commit theo nội dung hoặc SHA";
+"No commits match." = "Không có commit nào khớp.";
+"Runs on the branch's newest commit when it starts." = "Chạy trên commit mới nhất của nhánh khi bắt đầu.";

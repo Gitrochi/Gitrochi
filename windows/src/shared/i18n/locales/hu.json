@@ -2306,5 +2306,8 @@
   "Search engine": "Keresőmotor",
   "Text typed into a browser tab's address bar that isn't an address is searched with this engine.": "A böngészőlap címsorába írt szöveget, ha nem cím, ezzel a keresőmotorral keresi.",
   "Maximize terminal": "Terminál teljes méretre",
-  "Restore terminal size": "Terminál méretének visszaállítása"
+  "Restore terminal size": "Terminál méretének visszaállítása",
+  "Search commits by message or SHA": "Commitok keresése üzenet vagy SHA alapján",
+  "No commits match.": "Nincs egyező commit.",
+  "Runs on the branch's newest commit when it starts.": "Az ág legújabb commitján fut, amikor elindul."
 }

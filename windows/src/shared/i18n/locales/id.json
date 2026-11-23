@@ -2277,5 +2277,8 @@
   "Search engine": "Mesin pencari",
   "Text typed into a browser tab's address bar that isn't an address is searched with this engine.": "Teks yang diketik di bilah alamat tab browser yang bukan alamat akan dicari dengan mesin ini.",
   "Maximize terminal": "Maksimalkan terminal",
-  "Restore terminal size": "Kembalikan ukuran terminal"
+  "Restore terminal size": "Kembalikan ukuran terminal",
+  "Search commits by message or SHA": "Cari commit berdasarkan pesan atau SHA",
+  "No commits match.": "Tidak ada commit yang cocok.",
+  "Runs on the branch's newest commit when it starts.": "Berjalan di commit terbaru branch saat dimulai."
 }

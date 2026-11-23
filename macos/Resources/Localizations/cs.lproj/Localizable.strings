@@ -2292,3 +2292,6 @@
 "Text typed into a browser tab's address bar that isn't an address is searched with this engine." = "Text zadaný do adresního řádku karty prohlížeče, který není adresou, se vyhledá tímto vyhledávačem.";
 "Maximize terminal" = "Maximalizovat terminál";
 "Restore terminal size" = "Obnovit velikost terminálu";
+"Search commits by message or SHA" = "Hledat commity podle zprávy nebo SHA";
+"No commits match." = "Žádný commit neodpovídá.";
+"Runs on the branch's newest commit when it starts." = "Spustí se na nejnovějším commitu větve v okamžiku spuštění.";

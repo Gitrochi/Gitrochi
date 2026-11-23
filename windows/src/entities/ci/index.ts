@@ -6,4 +6,4 @@ export { ciDuration, commonWorkflow, jobGroup, jobGroups, runBaseRef, runCount, 
 export { CIStatusIcon } from "./ui/CIStatusIcon";
 export { canSchedule, dateTimeInputValue, nextFullHour, parseDateTimeInput, type ScheduledRun, scheduledRunRelative, scheduledRunTime } from "./model/scheduled-runs";
 export { scheduledRuns } from "./model/scheduled-run-store";
-export { commitWorkflowRuns, type CommitRun, defaultCommitJob, type RunCommit } from "./model/run-commits";
+export { commitWorkflowRuns, type CommitRun, defaultCommitJob, filterRunCommits, type RunCommit } from "./model/run-commits";

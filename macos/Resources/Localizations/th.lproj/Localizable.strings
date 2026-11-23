@@ -2305,3 +2305,6 @@
 "Text typed into a browser tab's address bar that isn't an address is searched with this engine." = "ข้อความที่พิมพ์ในแถบที่อยู่ของแท็บเบราว์เซอร์ซึ่งไม่ใช่ที่อยู่ จะค้นหาด้วยเครื่องมือนี้";
 "Maximize terminal" = "ขยายเทอร์มินัลเต็มพื้นที่";
 "Restore terminal size" = "คืนขนาดเทอร์มินัล";
+"Search commits by message or SHA" = "ค้นหาคอมมิตตามข้อความหรือ SHA";
+"No commits match." = "ไม่มีคอมมิตที่ตรงกัน";
+"Runs on the branch's newest commit when it starts." = "รันบนคอมมิตล่าสุดของแบรนช์เมื่อเริ่มทำงาน";

@@ -2309,5 +2309,8 @@
   "Search engine": "Arama motoru",
   "Text typed into a browser tab's address bar that isn't an address is searched with this engine.": "Bir tarayıcı sekmesinin adres çubuğuna yazılan ve adres olmayan metin bu arama motoruyla aranır.",
   "Maximize terminal": "Terminali büyüt",
-  "Restore terminal size": "Terminal boyutunu geri yükle"
+  "Restore terminal size": "Terminal boyutunu geri yükle",
+  "Search commits by message or SHA": "Commit'leri mesaja veya SHA'ya göre ara",
+  "No commits match.": "Eşleşen commit yok.",
+  "Runs on the branch's newest commit when it starts.": "Başladığında dalın en yeni commit'inde çalışır."
 }

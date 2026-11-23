@@ -2303,3 +2303,6 @@
 "Text typed into a browser tab's address bar that isn't an address is searched with this engine." = "Text in der Adressleiste eines Browser-Tabs, der keine Adresse ist, wird mit dieser Suchmaschine gesucht.";
 "Maximize terminal" = "Terminal maximieren";
 "Restore terminal size" = "Terminalgröße wiederherstellen";
+"Search commits by message or SHA" = "Commits nach Nachricht oder SHA suchen";
+"No commits match." = "Keine passenden Commits.";
+"Runs on the branch's newest commit when it starts." = "Läuft auf dem neuesten Commit des Branches, wenn der Lauf startet.";

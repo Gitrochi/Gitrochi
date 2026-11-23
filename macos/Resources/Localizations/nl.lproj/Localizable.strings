@@ -2266,3 +2266,6 @@
 "Text typed into a browser tab's address bar that isn't an address is searched with this engine." = "Tekst in de adresbalk van een browsertabblad die geen adres is, wordt met deze zoekmachine gezocht.";
 "Maximize terminal" = "Terminal maximaliseren";
 "Restore terminal size" = "Terminalgrootte herstellen";
+"Search commits by message or SHA" = "Commits zoeken op bericht of SHA";
+"No commits match." = "Geen commits gevonden.";
+"Runs on the branch's newest commit when it starts." = "Draait op de nieuwste commit van de branch zodra de run start.";
