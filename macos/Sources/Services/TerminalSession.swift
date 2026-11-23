@@ -257,6 +257,15 @@ final class TerminalSession: Identifiable {
         w.makeFirstResponder(view)
     }
 
+    /// Sends this terminal's size to the host again. Another window or app on the same session may have resized it to
+    /// its own, and SwiftTerm only reports a size when its own changes, so the program would keep drawing for the other
+    /// width. Called when the terminal is clicked or comes back into a window. (Windows: TerminalSession.reassertSize)
+    func reassertSize() {
+        guard let id = hostID, running else { return }
+        let terminal = view.getTerminal(), cols = terminal.cols, rows = terminal.rows
+        TerminalHostLink.shared.perform(launch: false) { try? $0?.resize(id, cols: cols, rows: rows) }
+    }
+
     /// Dictation and command shortcuts only fill the input; the user submits it in the terminal.
     func insertText(_ text: String) {
         let text = TerminalInput.singleLine(text)
@@ -517,8 +526,12 @@ final class ShellView: LocalProcessTerminalView {
 
     /// Draws with Metal once the view is in a window, as SwiftTerm requires; without a Metal device or pipeline it keeps
     /// drawing with CoreGraphics, and SwiftTerm falls back by itself if the renderer is lost later
+    /// The view is in a window again (the panel or the tab shows it)
+    var onShown: (() -> Void)?
+
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
+        if window != nil { onShown?() }
         guard window != nil, !gpuTried else { return }
         gpuTried = true
         guard UserDefaults.standard.object(forKey: Self.gpuRenderingKey) as? Bool ?? true else { return }
@@ -792,7 +805,9 @@ extension RepoStore {
 
     /// Clicking into the terminal selects its tab
     private func wire(_ s: TerminalSession) {
+        s.view.onShown = { [weak s] in s?.reassertSize() }
         s.view.onFocus = { [weak self, weak s] in
+            s?.reassertSize()
             guard let self, let s, self.activeTerminalID != s.id else { return }
             self.selectTerminal(s)
         }

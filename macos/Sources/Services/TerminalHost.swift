@@ -335,8 +335,16 @@ final class TerminalHostLink: @unchecked Sendable {
     private let lock = NSLock()
     private var routes: [String: Route] = [:]
 
+    /// A copy of the app under another bundle identifier (a review or development build) gets a host of its own: sharing
+    /// one would let it take up the installed app's terminals and resize them to its own window
     let stateDir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-        .appendingPathComponent("Gitrochi/terminal-host", isDirectory: true)
+        .appendingPathComponent(TerminalHostLink.hostFolder(bundleID: Bundle.main.bundleIdentifier), isDirectory: true)
+
+    /// "Gitrochi/terminal-host" for the app itself, "Gitrochi/terminal-host-<bundle id>" for a copy
+    static func hostFolder(bundleID: String?) -> String {
+        guard let id = bundleID, id != "com.ensnif.Gitrochi" else { return "Gitrochi/terminal-host" }
+        return "Gitrochi/terminal-host-" + id.map { $0.isLetter || $0.isNumber || $0 == "." || $0 == "-" ? $0 : "_" }.map(String.init).joined()
+    }
 
     /// GITROCHI_TERMINAL_HOST=off keeps terminals in the app; a path runs another host build
     private var override: String? { ProcessInfo.processInfo.environment["GITROCHI_TERMINAL_HOST"] }
