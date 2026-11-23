@@ -36,7 +36,7 @@ struct RepositoryQuickOpen: View {
                             ForEach(results, id: \.self) { path in
                                 Button { open(path) } label: {
                                     HStack(spacing: 10) {
-                                        DesignIconImage(icon: .file).foregroundStyle(.secondary)
+                                        FileTypeIcon(path: path, size: 14)
                                         VStack(alignment: .leading, spacing: 4) {
                                             Text((path as NSString).lastPathComponent).font(.callout.weight(.medium)).lineLimit(1).truncationMode(.middle)
                                             Text(path).font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)

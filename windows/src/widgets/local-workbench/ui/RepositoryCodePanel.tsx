@@ -7,7 +7,7 @@ import { keyLabel } from "@/shared/config";
 import { t } from "@/shared/i18n";
 import { useObserve } from "@/shared/lib";
 import { describe, git } from "@/shared/platform";
-import { Button, Empty, IconButton, Markdown, Spinner, StatusPill } from "@/shared/ui";
+import { Button, Empty, FileTypeIcon, IconButton, Markdown, Spinner, StatusPill } from "@/shared/ui";
 import { sourceLanguage, sourceLineCount, sourceMatches, sourceMatchLimit, wrappingLineLimit } from "../lib/source-reader";
 import { closeCodeFile, codeOutline, emptyCodeNavigation, stepCodeHistory, visitCodeLocation, type CodeNavigation, type CodeViewMode } from "../lib/code-navigation";
 import { blameArgs, blameBefore, droppedFolders, fileHistoryArgs, historyCountLabel, localCommitArgs, revisionName } from "../lib/code-history";
@@ -232,7 +232,7 @@ export function RepositoryCodePanel({ store, source = defaultCodeSource, editorS
       <nav className="code-explorer" aria-label={t("Repository files")}>
         <div className="code-file-list">{directory && <button type="button" className="code-file-row folder parent" aria-label={t("Parent folder")} title={t("Parent folder")} onClick={() => setDirectory(directory.split("/").slice(0, -1).join("/"))}><CornerLeftUp size={13}/><code>..</code></button>}
           {folders.map((folder) => <button type="button" className="code-file-row folder" key={folder} onClick={() => setDirectory(folder)}><Folder size={13}/><span>{folder.slice(prefix.length)}</span></button>)}
-          {entries.slice(0, 2000).map((entry) => <button type="button" key={entry.path} className={`code-file-row ${selected?.path === entry.path ? "on" : ""}`} aria-current={selected?.path === entry.path ? "true" : undefined} onClick={() => { if (tree) void readFile(entry, tree); }} title={entry.path}><File size={13}/><span>{entry.path.slice(prefix.length)}</span>{entry.kind !== "file" && <span className="code-entry-kind">{entry.kind === "symlink" ? "↪" : "⊞"}</span>}{changed.has(entry.path) && <StatusBadge kind={changed.get(entry.path)!}/>}</button>)}
+          {entries.slice(0, 2000).map((entry) => <button type="button" key={entry.path} className={`code-file-row ${selected?.path === entry.path ? "on" : ""}`} aria-current={selected?.path === entry.path ? "true" : undefined} onClick={() => { if (tree) void readFile(entry, tree); }} title={entry.path}>{entry.kind === "file" ? <FileTypeIcon path={entry.path} /> : <File size={13}/>}<span>{entry.path.slice(prefix.length)}</span>{entry.kind !== "file" && <span className="code-entry-kind">{entry.kind === "symlink" ? "↪" : "⊞"}</span>}{changed.has(entry.path) && <StatusBadge kind={changed.get(entry.path)!}/>}</button>)}
           {entries.length > 2000 && <p className="hint">{t("Showing the first 2,000 matches. Search to narrow the file list.")}</p>}{tree && !entries.length && !folders.length && <Empty title={t("No matching files")}/>}
         </div>
         {tree && <RepositoryLanguages summary={languageSummary} selected={languageFilter} select={(value) => { setLanguageFilter(value); setDirectory(""); }}/>}

@@ -1,4 +1,5 @@
 import { type KeyboardEvent, type MouseEvent, type ReactNode, useLayoutEffect, useRef, useState } from "react";
+import { FileTypeIcon } from "./FileTypeIcon";
 import { Check, ChevronDown, ChevronRight, Folder, MessageSquare } from "@/shared/icons";
 import { t } from "@/shared/i18n";
 import { fileRowFolds } from "./file-row-folds";
@@ -84,6 +85,7 @@ export function FileRow({ path, oldPath, badge, rename, selected, showFolder = t
       onFocus={() => setActive(true)} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setActive(event.currentTarget.matches(":hover")); }}>
       <button type="button" ref={words} className="file-row-open" aria-current={selected || undefined} onKeyDown={onKey} onKeyUp={onKey}>
         {badge}
+        <FileTypeIcon path={path} />
         {/* the semibold width is kept either way, so selecting a row never moves what follows the name */}
         <span className={`file-row-name${fold.cut ? " cut" : ""}`} data-name={name}><span>{name}</span></span>
         {fold.folder && <span className="file-row-folder" title={folder}>{fold.folder}</span>}
