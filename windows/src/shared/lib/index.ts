@@ -15,3 +15,4 @@ export { teamHubEndpoint, teamRepoKey, decodeTeamSnapshot, readTeamSnapshot, typ
 export { sourceLanguage, sourceSegments, type SourceSegment, sourceTokens, sourceMatches, sourceLineCount, sourceMatchLimit, syntaxCharacterLimit, syntaxTokenLimit, wrappingLineLimit, type SourceMatch, type SourceToken } from "./source-reader";
 export { applyEditorText, editorLineRange, editorText, indentEditorText } from "./source-editing";
 export { checkLogLines, failedTests, firstError, firstLogLine, isLogError, type LogLine, logLines, numberedLog, testNames } from "./job-log";
+export { type CalendarDay, dateTimePresets, type DateTimePreset, minutesOfDay, monthGrid, startOfDay, timeSlots, withDay, withMinutes } from "./calendar";

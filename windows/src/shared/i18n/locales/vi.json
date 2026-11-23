@@ -2102,7 +2102,6 @@
   "Couldn't read the account's token.": "Không đọc được token của tài khoản.",
   "Run now": "Chạy ngay",
   "Run later": "Chạy sau",
-  "Run at": "Chạy lúc",
   "Schedule run": "Lên lịch chạy",
   "Choose a time in the future.": "Hãy chọn một thời điểm trong tương lai.",
   "Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed.": "Gitrochi bắt đầu lượt chạy vào thời điểm này nếu ứng dụng đang mở. Nếu không, lượt chạy được đánh dấu là bị lỡ.",
@@ -2279,5 +2278,16 @@
   "Search engine": "Công cụ tìm kiếm",
   "Text typed into a browser tab's address bar that isn't an address is searched with this engine.": "Nội dung nhập vào thanh địa chỉ của thẻ trình duyệt mà không phải địa chỉ sẽ được tìm bằng công cụ này.",
   "Maximize terminal": "Phóng to terminal",
-  "Restore terminal size": "Khôi phục kích thước terminal"
+  "Restore terminal size": "Khôi phục kích thước terminal",
+  "Search commits by message or SHA": "Tìm commit theo nội dung hoặc SHA",
+  "No commits match.": "Không có commit nào khớp.",
+  "Runs on the branch's newest commit when it starts.": "Chạy trên commit mới nhất của nhánh khi bắt đầu.",
+  "When": "Thời điểm",
+  "In 1 hour": "Sau 1 giờ",
+  "Tonight": "Tối nay",
+  "Tomorrow morning": "Sáng mai",
+  "Choose a date": "Chọn ngày",
+  "Choose a time": "Chọn giờ",
+  "Previous month": "Tháng trước",
+  "Next month": "Tháng sau"
 }

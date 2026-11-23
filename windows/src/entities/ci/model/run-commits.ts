@@ -47,6 +47,16 @@ export function runCommits(runs: CIPipeline[], branch: string, subjects: Map<str
 }
 
 /** GitHub: the newest run of each workflow, the ones a chosen commit can re-run (macOS: RunCommits.workflowRuns) */
+/** The commits whose message or SHA holds every word of the query, whatever its case, in their order (macOS: RunCommits.filter) */
+export function filterRunCommits(commits: RunCommit[], query: string): RunCommit[] {
+  const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+  if (!words.length) return commits;
+  return commits.filter((c) => {
+    const text = `${c.subject} ${c.sha}`.toLowerCase();
+    return words.every((w) => text.includes(w));
+  });
+}
+
 export function commitWorkflowRuns(commit: RunCommit): CIPipeline[] {
   const seen = new Set<string>();
   return commit.runs.filter((r) => !seen.has(r.name) && !!seen.add(r.name));

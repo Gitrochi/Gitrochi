@@ -2113,7 +2113,6 @@
 "Couldn't read the account's token." = "Не удалось прочитать токен учётной записи.";
 "Run now" = "Запустить сейчас";
 "Run later" = "Запустить позже";
-"Run at" = "Запустить в";
 "Schedule run" = "Запланировать запуск";
 "Choose a time in the future." = "Выберите время в будущем.";
 "Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed." = "Gitrochi начнёт запуск в это время, если приложение открыто. Иначе запуск будет отмечен как пропущенный.";
@@ -2310,3 +2309,14 @@
 "Text typed into a browser tab's address bar that isn't an address is searched with this engine." = "Текст в адресной строке вкладки браузера, который не является адресом, ищется в этой поисковой системе.";
 "Maximize terminal" = "Развернуть терминал";
 "Restore terminal size" = "Восстановить размер терминала";
+"Search commits by message or SHA" = "Искать коммиты по сообщению или SHA";
+"No commits match." = "Подходящих коммитов нет.";
+"Runs on the branch's newest commit when it starts." = "Запускается на последнем коммите ветки в момент старта.";
+"When" = "Когда";
+"In 1 hour" = "Через 1 час";
+"Tonight" = "Сегодня вечером";
+"Tomorrow morning" = "Завтра утром";
+"Choose a date" = "Выбрать дату";
+"Choose a time" = "Выбрать время";
+"Previous month" = "Предыдущий месяц";
+"Next month" = "Следующий месяц";

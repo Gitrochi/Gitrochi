@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
 import {
-  canSchedule, type CIInput, type CIJob, type CIWorkflow, type CommitRun, commitWorkflowRuns, dateTimeInputValue, defaultCommitJob, nextFullHour,
-  parseDateTimeInput, type RunCommit, scheduledRuns, statusInfo,
+  canSchedule, type CIInput, type CIJob, CIStatusIcon, type CIStatus, type CIWorkflow, type CommitRun, commitWorkflowRuns, dateTimeInputValue, defaultCommitJob,
+  filterRunCommits, nextFullHour, parseDateTimeInput, type RunCommit, scheduledRuns, statusInfo,
 } from "@/entities/ci";
 import type { Provider } from "@/entities/git";
 import type { RepoStore } from "@/entities/repo";
 import { t } from "@/shared/i18n";
 import { listWhen } from "@/shared/lib";
 import { describe } from "@/shared/platform";
-import { Button, Checkbox, IconButton, Modal, Segmented, Spinner } from "@/shared/ui";
+import { ArrowUp, Search } from "@/shared/icons";
+import { Checkbox, DateTimeField, IconButton, Segmented, SharedSheet } from "@/shared/ui";
+import "./run-pipeline.css";
 
 interface Variable {
   id: number;
@@ -34,6 +36,8 @@ export function RunPipelineSheet({ store, close }: { store: RepoStore; close: ()
   // the branch's commits with runs on it; null runs on the branch's tip as it is when the run starts
   const [commits, setCommits] = useState<RunCommit[]>([]);
   const [sha, setSha] = useState<string | null>(null);
+  // narrows the commits by message or SHA
+  const [query, setQuery] = useState("");
   // GitLab: the chosen commit's pipeline jobs, manual ones first, and the one to press
   const [jobs, setJobs] = useState<CIJob[]>([]);
   const [jobName, setJobName] = useState<string | null>(null);
@@ -189,23 +193,20 @@ export function RunPipelineSheet({ store, close }: { store: RepoStore; close: ()
   const update = (id: number, patch: Partial<Variable>) => setVariables((vs) => vs.map((v) => (v.id === id ? { ...v, ...patch } : v)));
 
   return (
-    <Modal
+    <SharedSheet
       title={provider === "gitlab" ? t("Run pipeline") : t("Run workflow")}
-      width={540}
+      context={store.target ? `${store.target.host} / ${store.target.path}` : null}
       onClose={close}
-      footer={
-        <>
-          {loading && <Spinner />}
-          <span className="spacer" />
-          <Button onClick={close}>{t("Cancel")}</Button>
-          {/* the reason sits beside the primary it disables */}
-          {later && !timeOK && <span className="muted">{t("Choose a time in the future.")}</span>}
-          <Button kind="primary" disabled={!canRun || (later && !timeOK)} onClick={run}>
-            {later ? t("Schedule run") : t("Run")}</Button>
-        </>
-      }
+      className="run-pipeline-sheet"
+      primary={{
+        label: later ? t("Schedule run") : t("Run"),
+        onClick: run,
+        disabledReason: later && !timeOK ? t("Choose a time in the future.") : null,
+        disabled: !canRun,
+        busy: loading,
+      }}
     >
-      <div className="col" style={{ gap: 12 }}>
+      <div className="col run-pipeline-body">
         <div className="form-row">
           <label>{t("Branch")}</label>
           <div className="row">
@@ -223,19 +224,10 @@ export function RunPipelineSheet({ store, close }: { store: RepoStore; close: ()
           </div>
         </div>
 
-        {/* the branch's tip by default, or one of its commits that already has runs on the branch */}
+        {/* the branch's tip by default, or one of its commits that already has runs on the branch, found by message or SHA */}
         <div className="form-row">
-          <label htmlFor="run-commit">{t("Commit")}</label>
-          <div className="row">
-            <select id="run-commit" className="select grow" value={sha ?? ""} onChange={(e) => setSha(e.target.value || null)}>
-              <option value="">{t("Latest on {0}", ref.trim())}</option>
-              {commits.map((c) => (
-                <option key={c.sha} value={c.sha}>
-                  {[`${c.sha.slice(0, 7)}  ${c.subject}`, ...(c.created !== null ? [listWhen(c.created)] : [])].join(" · ")}
-                </option>
-              ))}
-            </select>
-          </div>
+          <label htmlFor="run-commit-search">{t("Commit")}</label>
+          <CommitChoices ref_={ref.trim()} commits={commits} query={query} setQuery={setQuery} sha={sha} choose={setSha} />
         </div>
 
         {commit && provider === "gitlab" ? (
@@ -351,25 +343,18 @@ export function RunPipelineSheet({ store, close }: { store: RepoStore; close: ()
         )}
 
         {/* run now, or at a date and time: the app keeps the run and starts it then */}
-        <div className="col" style={{ gap: 8 }}>
-          <div className="row">
+        <div className="form-row">
+          <label>{t("When")}</label>
+          <div className="row run-when">
             <Segmented value={later ? "later" : "now"} onChange={(v) => setLater(v === "later")}
               options={[{ value: "now", label: t("Run now") }, { value: "later", label: t("Run later") }]} />
           </div>
-          {later && (
-            <>
-              <div className="form-row">
-                <label htmlFor="run-later-at">{t("Run at")}</label>
-                <div className="row">
-                  <input id="run-later-at" type="datetime-local" className="input grow" value={runAt} onChange={(e) => setRunAt(e.target.value)} />
-                </div>
-              </div>
-              <span className="muted">{t("Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed.")}</span>
-            </>
-          )}
+          {later && <DateTimeField id="run-later-at" value={parseDateTimeInput(runAt) ?? nextFullHour(scheduledRuns.now())} now={scheduledRuns.now()} min={scheduledRuns.now()}
+            onChange={(at) => setRunAt(dateTimeInputValue(at))} />}
+          {later && <span className="run-when-note">{t("Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed.")}</span>}
         </div>
       </div>
-    </Modal>
+    </SharedSheet>
   );
 }
 
@@ -390,6 +375,46 @@ function InputField({ input, value, onChange }: { input: CIInput; value: string;
       ) : (
         <input className="input" placeholder={input.name} value={value} onChange={(e) => onChange(e.target.value)} />
       )}
+    </div>
+  );
+}
+
+/**
+ * The commit to run on: a search field over a list with the branch's tip first, then the commits that have runs on
+ * it. A row is a status mark, the message and "sha · when", with the selection tint and a lighter hover
+ * (docs/design.md, Selection). (macOS: commitForm and RunCommitRow in RunPipelineSheet.swift)
+ */
+function CommitChoices({ ref_, commits, query, setQuery, sha, choose }: {
+  ref_: string;
+  commits: RunCommit[];
+  query: string;
+  setQuery: (q: string) => void;
+  sha: string | null;
+  choose: (sha: string | null) => void;
+}) {
+  const shown = filterRunCommits(commits, query);
+  const latest = t("Latest on {0}", ref_);
+  const showLatest = !query.trim() || latest.toLowerCase().includes(query.trim().toLowerCase());
+  const row = (key: string, selected: boolean, title: string, meta: string, status: CIStatus | null, onClick: () => void) => (
+    <button key={key} type="button" role="option" aria-selected={selected} data-sha={key === "latest" ? "" : key} className={`run-commit-row ${selected ? "on" : ""}`} title={title} onClick={onClick}>
+      <span className="run-commit-mark">{status ? <CIStatusIcon status={status} size={12} /> : <ArrowUp size={12} />}</span>
+      <span className="run-commit-text">
+        <span className="run-commit-title ellipsis">{title}</span>
+        <span className="run-commit-meta ellipsis">{meta}</span>
+      </span>
+    </button>
+  );
+  return (
+    <div className="col run-commit-choices">
+      <label className="run-commit-search">
+        <Search size={13} />
+        <input id="run-commit-search" value={query} placeholder={t("Search commits by message or SHA")} spellCheck={false} onChange={(e) => setQuery(e.target.value)} />
+      </label>
+      <div className="run-commit-list" role="listbox" aria-label={t("Commits")}>
+        {showLatest && row("latest", sha === null, latest, t("Runs on the branch's newest commit when it starts."), null, () => choose(null))}
+        {shown.map((c) => row(c.sha, sha === c.sha, c.subject || c.sha.slice(0, 7), [c.sha.slice(0, 7), ...(c.created !== null ? [listWhen(c.created)] : [])].join(" · "), c.runs[0]?.status ?? null, () => choose(c.sha)))}
+        {!shown.length && !showLatest && <span className="muted run-commit-empty">{t("No commits match.")}</span>}
+      </div>
     </div>
   );
 }

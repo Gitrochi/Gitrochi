@@ -10,6 +10,8 @@ struct RunPipelineSheet: View {
     /// The branch's commits with runs on it; nil runs on the branch's tip as it is when the run starts
     @ViewState private var commits: [RunCommit] = []
     @ViewState private var sha: String?
+    /// Narrows the commits by message or SHA
+    @ViewState private var query = ""
     /// GitLab: the chosen commit's pipeline jobs, manual ones first, and the one to press
     @ViewState private var jobs: [CIJob] = []
     @ViewState private var jobName: String?
@@ -42,69 +44,100 @@ struct RunPipelineSheet: View {
     private var commit: RunCommit? { sha.flatMap { s in commits.first { $0.sha == s } } }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text(provider == .gitlab ? "Run pipeline" : "Run workflow").font(.title3.weight(.semibold))
-            LabeledContent("Branch") {
-                let branches = store.ciBranches
-                if branches.isEmpty {
-                    TextField("Branch name", text: $ref).textFieldStyle(.roundedBorder)
+        SharedSheet(title: provider == .gitlab ? String(localized: "Run pipeline") : String(localized: "Run workflow"),
+                    context: store.target.map { $0.host + " / " + $0.path },
+                    primary: SheetPrimary(title: later ? String(localized: "Schedule run") : String(localized: "Run"),
+                                          disabledReason: later && !timeOK ? String(localized: "Choose a time in the future.") : nil,
+                                          disabled: !canRun, busy: loading) { run() },
+                    cancel: { dismiss() }) {
+            VStack(alignment: .leading, spacing: 18) {
+                field("Branch") { branchPicker }
+                commitForm
+                if let commit {
+                    if provider == .gitlab { jobForm(commit) } else { rerunForm(commit) }
+                } else if provider == .gitlab {
+                    gitlabForm
                 } else {
-                    Picker("", selection: $ref) {
-                        ForEach(branches, id: \.self) { Text($0).tag($0) }
-                    }
-                    .labelsHidden()
+                    githubForm
                 }
+                whenForm
             }
-            commitForm
-            if let commit {
-                if provider == .gitlab { jobForm(commit) } else { rerunForm(commit) }
-            } else if provider == .gitlab {
-                gitlabForm
-            } else {
-                githubForm
-            }
-            whenForm
-            HStack {
-                if loading { ProgressView().controlSize(.small) }
-                Spacer()
-                Button("Cancel", role: .cancel) { dismiss() }
-                    .keyboardShortcut(.cancelAction)
-                // the reason sits beside the primary it disables
-                if later, !timeOK {
-                    Text("Choose a time in the future.").font(.caption).foregroundStyle(.secondary)
-                }
-                Button { run() } label: { later ? Text("Schedule run") : Text("Run") }
-                    .keyboardShortcut(.defaultAction)
-                    .disabled(!canRun || (later && !timeOK))
-            }
+            .padding(.horizontal, 20).padding(.vertical, 16)
         }
-        .padding(20)
-        .frame(width: 520)
         .onAppear(perform: setup)
         .onChange(of: ref) { _, _ in
             sha = nil
+            query = ""
             Task { await loadCommits() }
             if provider == .github { Task { await loadWorkflows() } }
         }
         .onChange(of: sha) { _, _ in pickCommit() }
     }
 
-    // MARK: Commit
-
-    /// The branch's tip by default, or one of its commits that already has runs on the branch
-    private var commitForm: some View {
-        LabeledContent("Commit") {
-            Picker("", selection: $sha) {
-                Text("Latest on \(ref)").tag(String?.none)
-                if !commits.isEmpty { Divider() }
-                ForEach(commits) { c in Text(verbatim: commitLabel(c)).tag(String?.some(c.sha)) }
-            }
-            .labelsHidden()
+    /// A 12 pt semibold label over its control
+    private func field<Control: View>(_ label: LocalizedStringKey, @ViewBuilder _ control: () -> Control) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(label).font(.system(size: 12, weight: .semibold)).foregroundStyle(HostedList.caption)
+            control()
         }
     }
 
-    private func commitLabel(_ c: RunCommit) -> String {
-        var parts = [c.short + "  " + c.subject]
+    @ViewBuilder private var branchPicker: some View {
+        let branches = store.ciBranches
+        if branches.isEmpty {
+            TextField("Branch name", text: $ref).textFieldStyle(.roundedBorder)
+        } else {
+            Picker("", selection: $ref) {
+                ForEach(branches, id: \.self) { Text($0).tag($0) }
+            }
+            .labelsHidden()
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    // MARK: Commit
+
+    /// The branch's tip, or one of its commits that already has runs on the branch, found by message or SHA
+    private var commitForm: some View {
+        let shown = RunCommits.filter(commits, query: query)
+        let latest = String(localized: "Latest on \(ref)")
+        let showLatest = query.trimmed.isEmpty || latest.localizedCaseInsensitiveContains(query.trimmed)
+        return field("Commit") {
+            HStack(spacing: 6) {
+                DesignIconImage(icon: .search, size: 13).foregroundStyle(StudioStyle.Rail.icon).accessibilityHidden(true)
+                TextField("Search commits by message or SHA", text: $query)
+                    .textFieldStyle(.plain).font(.system(size: 13)).autocorrectionDisabled()
+                    .accessibilityIdentifier("run-commit-search")
+            }
+            .padding(.horizontal, 10).frame(height: 28)
+            .background(RoundedRectangle(cornerRadius: 6).fill(StudioStyle.surface))
+            .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.primary.opacity(0.16)))
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 2) {
+                    if showLatest {
+                        RunCommitRow(title: latest, meta: String(localized: "Runs on the branch's newest commit when it starts."),
+                                     status: nil, selected: sha == nil) { sha = nil }
+                    }
+                    ForEach(shown) { c in
+                        RunCommitRow(title: c.subject.isEmpty ? c.short : c.subject, meta: commitMeta(c),
+                                     status: c.runs.first?.status, selected: sha == c.sha) { sha = c.sha }
+                    }
+                    if shown.isEmpty, !showLatest {
+                        Text("No commits match.").font(.system(size: 12)).foregroundStyle(HostedList.caption)
+                            .frame(maxWidth: .infinity).padding(.vertical, 16)
+                    }
+                }
+                .padding(4)
+            }
+            .frame(height: 172)
+            .background(RoundedRectangle(cornerRadius: 8).fill(StudioStyle.surface))
+            .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(StudioStyle.border))
+            .accessibilityElement(children: .contain).accessibilityLabel("Commits")
+        }
+    }
+
+    private func commitMeta(_ c: RunCommit) -> String {
+        var parts = [c.short]
         if let created = c.created { parts.append(ListDate.when(created, locale: locale)) }
         return parts.joined(separator: " · ")
     }
@@ -114,11 +147,12 @@ struct RunPipelineSheet: View {
         if jobs.isEmpty {
             Text(loading ? "Reading the jobs…" : "This pipeline has no jobs.").font(.callout).foregroundStyle(.secondary)
         } else {
-            LabeledContent("Job") {
+            field("Job") {
                 Picker("", selection: $jobName) {
                     ForEach(jobs) { job in Text(verbatim: job.name + " · " + job.status.title).tag(String?.some(job.name)) }
                 }
                 .labelsHidden()
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
             let manual = jobs.first { $0.name == jobName }?.canPlay ?? true
             Text(manual ? LocalizedStringKey("Presses this job in the pipeline of \(commit.short) on \(ref).")
@@ -129,7 +163,7 @@ struct RunPipelineSheet: View {
 
     /// GitHub: which of the commit's workflow runs to re-run; its inputs can't change
     @ViewBuilder private func rerunForm(_ commit: RunCommit) -> some View {
-        LabeledContent("Workflow run") {
+        field("Workflow run") {
             Picker("", selection: $runID) {
                 ForEach(RunCommits.workflowRuns(commit)) { r in
                     Text(verbatim: r.name + " · " + String(localized: "run #\(String(r.number))")).tag(Int?.some(r.id))
@@ -175,7 +209,7 @@ struct RunPipelineSheet: View {
     private var gitlabForm: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("Variables").font(.subheadline.weight(.semibold))
+                Text("Variables").font(.system(size: 12, weight: .semibold)).foregroundStyle(HostedList.caption)
                 Spacer()
                 Button { variables.append(Variable(key: "", value: "")) } label: { DesignIconImage(icon: .plus) }
                     .buttonStyle(.borderless)
@@ -226,7 +260,7 @@ struct RunPipelineSheet: View {
             Text(loading ? "Reading the workflow…" : "This branch has no workflow with 'Run workflow' (workflow_dispatch).")
                 .font(.callout).foregroundStyle(.secondary)
         } else {
-            LabeledContent("Workflow") {
+            field("Workflow") {
                 Picker("", selection: Binding(get: { workflowID ?? workflows[0].id }, set: { pick($0) })) {
                     ForEach(workflows) { w in Text(w.name).tag(w.id) }
                 }
@@ -271,20 +305,18 @@ struct RunPipelineSheet: View {
     // MARK: Run later
 
     /// Run now or at a date and time; the app keeps the run and starts it then (ScheduledRunStore)
-    @ViewBuilder private var whenForm: some View {
-        Picker("", selection: $later) {
-            Text("Run now").tag(false)
-            Text("Run later").tag(true)
-        }
-        .pickerStyle(.segmented)
-        .labelsHidden()
-        .fixedSize()
-        if later {
-            LabeledContent("Run at") {
-                DatePicker("", selection: $runAt, displayedComponents: [.date, .hourAndMinute]).labelsHidden()
+    /// The mode switch, and the date and time under it once the run is for later
+    private var whenForm: some View {
+        field("When") {
+            Segmented(label: "When", items: [
+                .init(value: false, title: String(localized: "Run now")),
+                .init(value: true, title: String(localized: "Run later")),
+            ], selection: later) { later = $0 }
+            if later {
+                DateTimeField(value: $runAt, minimum: Date()).padding(.top, 2)
+                Text("Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed.")
+                    .font(.system(size: 11)).foregroundStyle(HostedList.caption).fixedSize(horizontal: false, vertical: true)
             }
-            Text("Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed.")
-                .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
         }
     }
 
@@ -386,5 +418,40 @@ struct RunPipelineSheet: View {
         fill(&run)
         ScheduledRunStore.shared.add(run)
         dismiss()
+    }
+}
+
+/// One commit to run on: a status mark, the message and "sha · when" in a 40 pt row with the 16% selection tint and
+/// a hover lighter than it (docs/design.md, Selection). (Windows: CommitChoice in RunPipelineSheet.tsx)
+private struct RunCommitRow: View {
+    let title: String
+    let meta: String
+    let status: CIStatus?
+    let selected: Bool
+    let choose: () -> Void
+    @ViewState private var hovered = false
+
+    var body: some View {
+        Button(action: choose) {
+            HStack(spacing: 8) {
+                Group {
+                    if let status { CIStatusIcon(status: status, size: 12) } else { SymbolIcon("arrow.up.to.line").font(.system(size: 12)).foregroundStyle(StudioStyle.Rail.icon) }
+                }
+                .frame(width: 16)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(verbatim: title).font(.system(size: 13, weight: selected ? .semibold : .regular)).lineLimit(1).truncationMode(.tail)
+                    Text(verbatim: meta).font(.system(size: 11).monospacedDigit())
+                        .foregroundStyle(selected ? StudioStyle.FileList.onSelection : HostedList.caption).lineLimit(1)
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 8).frame(height: 40)
+            .background(RoundedRectangle(cornerRadius: 6).fill(selected ? StudioStyle.FileList.selection : hovered ? StudioStyle.FileList.hover : .clear))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { hovered = $0 }
+        .help(title)
+        .accessibilityAddTraits(selected ? .isSelected : [])
     }
 }
