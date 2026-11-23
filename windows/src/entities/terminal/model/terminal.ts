@@ -223,13 +223,24 @@ export class TerminalSession extends Observable {
       this.term.open(this.host);
       this.opened = true;
       this.useGpu();
+      this.term.textarea?.addEventListener("focus", () => this.reassertSize());
     }
     this.visible = true;
     this.unseenOutput = false;
     this.term.options.theme = termTheme();
     this.refit();
+    this.reassertSize();
     if (!this.started) void this.start();
     this.emit();
+  }
+
+  /**
+   * Sends this terminal's size to the host again. Another window on the same session may have resized it to its own,
+   * and xterm.js only reports a size when its own changes, so the program would keep drawing for the other width.
+   * Called when the terminal shows again or takes the focus. (macOS: TerminalSession.reassertSize)
+   */
+  private reassertSize() {
+    if (this.hosted && this.ptyId && this.running) void ipc.ptyResize(this.ptyId, this.term.cols, this.term.rows).catch(() => {});
   }
 
   /**
