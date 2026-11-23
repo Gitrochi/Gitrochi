@@ -343,22 +343,14 @@ export function RunPipelineSheet({ store, close }: { store: RepoStore; close: ()
         )}
 
         {/* run now, or at a date and time: the app keeps the run and starts it then */}
-        <div className="col" style={{ gap: 8 }}>
-          <div className="row">
+        <div className="form-row">
+          <label>{t("When")}</label>
+          <div className="row run-when">
             <Segmented value={later ? "later" : "now"} onChange={(v) => setLater(v === "later")}
               options={[{ value: "now", label: t("Run now") }, { value: "later", label: t("Run later") }]} />
+            {later && <input id="run-later-at" type="datetime-local" className="input" aria-label={t("Run at")} value={runAt} onChange={(e) => setRunAt(e.target.value)} />}
           </div>
-          {later && (
-            <>
-              <div className="form-row">
-                <label htmlFor="run-later-at">{t("Run at")}</label>
-                <div className="row">
-                  <input id="run-later-at" type="datetime-local" className="input grow" value={runAt} onChange={(e) => setRunAt(e.target.value)} />
-                </div>
-              </div>
-              <span className="muted">{t("Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed.")}</span>
-            </>
-          )}
+          {later && <span className="run-when-note">{t("Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed.")}</span>}
         </div>
       </div>
     </SharedSheet>

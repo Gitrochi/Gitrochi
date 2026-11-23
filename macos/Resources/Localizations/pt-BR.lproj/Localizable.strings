@@ -2283,3 +2283,4 @@
 "Search commits by message or SHA" = "Buscar commits por mensagem ou SHA";
 "No commits match." = "Nenhum commit corresponde.";
 "Runs on the branch's newest commit when it starts." = "Executa no commit mais recente do branch quando começar.";
+"When" = "Quando";

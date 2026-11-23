@@ -2280,5 +2280,6 @@
   "Restore terminal size": "Kembalikan ukuran terminal",
   "Search commits by message or SHA": "Cari commit berdasarkan pesan atau SHA",
   "No commits match.": "Tidak ada commit yang cocok.",
-  "Runs on the branch's newest commit when it starts.": "Berjalan di commit terbaru branch saat dimulai."
+  "Runs on the branch's newest commit when it starts.": "Berjalan di commit terbaru branch saat dimulai.",
+  "When": "Kapan"
 }

@@ -2456,3 +2456,4 @@
 "Search commits by message or SHA" = "按提交信息或 SHA 搜索";
 "No commits match." = "没有匹配的提交。";
 "Runs on the branch's newest commit when it starts." = "在运行开始时使用该分支的最新提交。";
+"When" = "运行时间";

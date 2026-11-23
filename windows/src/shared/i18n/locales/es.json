@@ -2361,5 +2361,6 @@
   "Restore terminal size": "Restaurar tamaño del terminal",
   "Search commits by message or SHA": "Buscar commits por mensaje o SHA",
   "No commits match.": "Ningún commit coincide.",
-  "Runs on the branch's newest commit when it starts.": "Se ejecuta en el commit más reciente de la rama cuando empieza."
+  "Runs on the branch's newest commit when it starts.": "Se ejecuta en el commit más reciente de la rama cuando empieza.",
+  "When": "Cuándo"
 }

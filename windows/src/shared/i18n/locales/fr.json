@@ -2362,5 +2362,6 @@
   "Restore terminal size": "Rétablir la taille du terminal",
   "Search commits by message or SHA": "Rechercher des commits par message ou SHA",
   "No commits match.": "Aucun commit ne correspond.",
-  "Runs on the branch's newest commit when it starts.": "S’exécute sur le dernier commit de la branche au moment du lancement."
+  "Runs on the branch's newest commit when it starts.": "S’exécute sur le dernier commit de la branche au moment du lancement.",
+  "When": "Quand"
 }

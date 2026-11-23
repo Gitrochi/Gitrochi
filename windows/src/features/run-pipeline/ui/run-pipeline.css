@@ -19,3 +19,8 @@
 .run-commit-meta { font-size: 11px; color: var(--text-2); font-variant-numeric: tabular-nums; }
 .run-commit-row.on .run-commit-meta { color: var(--on-select); }
 .run-commit-empty { padding: 16px 0; text-align: center; font-size: 12px; }
+
+/* When: the mode switch with the date and time beside it */
+.run-when { gap: 10px; align-items: center; }
+.run-when input[type="datetime-local"] { height: 28px; width: auto; }
+.run-when-note { font-size: 11px; color: var(--text-2); }

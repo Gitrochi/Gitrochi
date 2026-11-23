@@ -2297,3 +2297,4 @@
 "Search commits by message or SHA" = "Szukaj commitów po wiadomości lub SHA";
 "No commits match." = "Brak pasujących commitów.";
 "Runs on the branch's newest commit when it starts." = "Uruchamia się na najnowszym commicie gałęzi w chwili startu.";
+"When" = "Kiedy";

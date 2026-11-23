@@ -2312,5 +2312,6 @@
   "Restore terminal size": "Terminal boyutunu geri yükle",
   "Search commits by message or SHA": "Commit'leri mesaja veya SHA'ya göre ara",
   "No commits match.": "Eşleşen commit yok.",
-  "Runs on the branch's newest commit when it starts.": "Başladığında dalın en yeni commit'inde çalışır."
+  "Runs on the branch's newest commit when it starts.": "Başladığında dalın en yeni commit'inde çalışır.",
+  "When": "Ne zaman"
 }

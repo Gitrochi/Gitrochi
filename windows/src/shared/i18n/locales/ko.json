@@ -4022,5 +4022,6 @@
   "Restore terminal size": "터미널 원래 크기로",
   "Search commits by message or SHA": "커밋 메시지나 SHA로 검색",
   "No commits match.": "일치하는 커밋이 없습니다.",
-  "Runs on the branch's newest commit when it starts.": "실행이 시작될 때 브랜치의 최신 커밋에서 돌립니다."
+  "Runs on the branch's newest commit when it starts.": "실행이 시작될 때 브랜치의 최신 커밋에서 돌립니다.",
+  "When": "실행 시점"
 }

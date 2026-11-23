@@ -2307,5 +2307,6 @@
   "Restore terminal size": "Obnovit velikost terminálu",
   "Search commits by message or SHA": "Hledat commity podle zprávy nebo SHA",
   "No commits match.": "Žádný commit neodpovídá.",
-  "Runs on the branch's newest commit when it starts.": "Spustí se na nejnovějším commitu větve v okamžiku spuštění."
+  "Runs on the branch's newest commit when it starts.": "Spustí se na nejnovějším commitu větve v okamžiku spuštění.",
+  "When": "Kdy"
 }

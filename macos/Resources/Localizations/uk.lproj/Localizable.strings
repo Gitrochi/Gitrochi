@@ -2313,3 +2313,4 @@
 "Search commits by message or SHA" = "Шукати коміти за повідомленням або SHA";
 "No commits match." = "Немає відповідних комітів.";
 "Runs on the branch's newest commit when it starts." = "Запускається на найновішому коміті гілки в момент старту.";
+"When" = "Коли";

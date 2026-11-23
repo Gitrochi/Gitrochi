@@ -2269,3 +2269,4 @@
 "Search commits by message or SHA" = "Commits zoeken op bericht of SHA";
 "No commits match." = "Geen commits gevonden.";
 "Runs on the branch's newest commit when it starts." = "Draait op de nieuwste commit van de branch zodra de run start.";
+"When" = "Wanneer";

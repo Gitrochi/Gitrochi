@@ -2282,5 +2282,6 @@
   "Restore terminal size": "Khôi phục kích thước terminal",
   "Search commits by message or SHA": "Tìm commit theo nội dung hoặc SHA",
   "No commits match.": "Không có commit nào khớp.",
-  "Runs on the branch's newest commit when it starts.": "Chạy trên commit mới nhất của nhánh khi bắt đầu."
+  "Runs on the branch's newest commit when it starts.": "Chạy trên commit mới nhất của nhánh khi bắt đầu.",
+  "When": "Thời điểm"
 }

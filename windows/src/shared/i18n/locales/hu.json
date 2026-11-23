@@ -2309,5 +2309,6 @@
   "Restore terminal size": "Terminál méretének visszaállítása",
   "Search commits by message or SHA": "Commitok keresése üzenet vagy SHA alapján",
   "No commits match.": "Nincs egyező commit.",
-  "Runs on the branch's newest commit when it starts.": "Az ág legújabb commitján fut, amikor elindul."
+  "Runs on the branch's newest commit when it starts.": "Az ág legújabb commitján fut, amikor elindul.",
+  "When": "Mikor"
 }

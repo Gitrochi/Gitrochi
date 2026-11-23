@@ -2306,3 +2306,4 @@
 "Search commits by message or SHA" = "Commits nach Nachricht oder SHA suchen";
 "No commits match." = "Keine passenden Commits.";
 "Runs on the branch's newest commit when it starts." = "Läuft auf dem neuesten Commit des Branches, wenn der Lauf startet.";
+"When" = "Zeitpunkt";

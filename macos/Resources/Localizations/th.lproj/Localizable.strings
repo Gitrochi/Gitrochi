@@ -2308,3 +2308,4 @@
 "Search commits by message or SHA" = "ค้นหาคอมมิตตามข้อความหรือ SHA";
 "No commits match." = "ไม่มีคอมมิตที่ตรงกัน";
 "Runs on the branch's newest commit when it starts." = "รันบนคอมมิตล่าสุดของแบรนช์เมื่อเริ่มทำงาน";
+"When" = "เวลาที่รัน";

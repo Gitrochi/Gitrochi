@@ -2324,5 +2324,6 @@
   "Restore terminal size": "Восстановить размер терминала",
   "Search commits by message or SHA": "Искать коммиты по сообщению или SHA",
   "No commits match.": "Подходящих коммитов нет.",
-  "Runs on the branch's newest commit when it starts.": "Запускается на последнем коммите ветки в момент старта."
+  "Runs on the branch's newest commit when it starts.": "Запускается на последнем коммите ветки в момент старта.",
+  "When": "Когда"
 }
