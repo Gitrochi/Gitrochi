@@ -2123,7 +2123,6 @@
   "Couldn't read the account's token.": "Impossibile leggere il token dell'account.",
   "Run now": "Esegui ora",
   "Run later": "Esegui più tardi",
-  "Run at": "Esegui alle",
   "Schedule run": "Pianifica esecuzione",
   "Choose a time in the future.": "Scegli un orario nel futuro.",
   "Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed.": "Gitrochi avvia l'esecuzione a quest'ora se è aperto. Altrimenti viene segnata come persa.",
@@ -2304,5 +2303,12 @@
   "Search commits by message or SHA": "Cerca i commit per messaggio o SHA",
   "No commits match.": "Nessun commit corrisponde.",
   "Runs on the branch's newest commit when it starts.": "Viene eseguita sul commit più recente del branch quando parte.",
-  "When": "Quando"
+  "When": "Quando",
+  "In 1 hour": "Tra 1 ora",
+  "Tonight": "Stasera",
+  "Tomorrow morning": "Domattina",
+  "Choose a date": "Scegli una data",
+  "Choose a time": "Scegli un orario",
+  "Previous month": "Mese precedente",
+  "Next month": "Mese successivo"
 }

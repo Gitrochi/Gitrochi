@@ -22,5 +22,5 @@
 
 /* When: the mode switch with the date and time beside it */
 .run-when { gap: 10px; align-items: center; }
-.run-when input[type="datetime-local"] { height: 28px; width: auto; }
+.run-when { flex-wrap: wrap; }
 .run-when-note { font-size: 11px; color: var(--text-2); }

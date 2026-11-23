@@ -2140,7 +2140,6 @@
   "Couldn't read the account's token.": "อ่านโทเค็นของบัญชีไม่ได้",
   "Run now": "รันเลย",
   "Run later": "รันภายหลัง",
-  "Run at": "รันเวลา",
   "Schedule run": "ตั้งเวลารัน",
   "Choose a time in the future.": "เลือกเวลาในอนาคต",
   "Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed.": "Gitrochi จะเริ่มการรันในเวลานี้หากแอปเปิดอยู่ มิฉะนั้นการรันจะถูกทำเครื่องหมายว่าพลาด",
@@ -2321,5 +2320,12 @@
   "Search commits by message or SHA": "ค้นหาคอมมิตตามข้อความหรือ SHA",
   "No commits match.": "ไม่มีคอมมิตที่ตรงกัน",
   "Runs on the branch's newest commit when it starts.": "รันบนคอมมิตล่าสุดของแบรนช์เมื่อเริ่มทำงาน",
-  "When": "เวลาที่รัน"
+  "When": "เวลาที่รัน",
+  "In 1 hour": "อีก 1 ชั่วโมง",
+  "Tonight": "คืนนี้",
+  "Tomorrow morning": "พรุ่งนี้เช้า",
+  "Choose a date": "เลือกวันที่",
+  "Choose a time": "เลือกเวลา",
+  "Previous month": "เดือนก่อนหน้า",
+  "Next month": "เดือนถัดไป"
 }

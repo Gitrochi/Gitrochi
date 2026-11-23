@@ -2777,7 +2777,6 @@
 "Couldn't read the account's token." = "アカウントのトークンを読み取れませんでした。";
 "Run now" = "今すぐ実行";
 "Run later" = "後で実行";
-"Run at" = "実行日時";
 "Schedule run" = "実行を予約";
 "Choose a time in the future." = "未来の日時を選んでください。";
 "Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed." = "Gitrochi が開いていれば、この日時に実行を開始します。開いていない場合は見逃した実行として表示されます。";
@@ -2977,3 +2976,10 @@
 "No commits match." = "一致するコミットはありません。";
 "Runs on the branch's newest commit when it starts." = "実行開始時のブランチの最新コミットで実行します。";
 "When" = "実行タイミング";
+"In 1 hour" = "1時間後";
+"Tonight" = "今夜";
+"Tomorrow morning" = "明日の朝";
+"Choose a date" = "日付を選択";
+"Choose a time" = "時刻を選択";
+"Previous month" = "前の月";
+"Next month" = "次の月";

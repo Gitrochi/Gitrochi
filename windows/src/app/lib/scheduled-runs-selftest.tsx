@@ -1,7 +1,7 @@
 import { createRoot } from "react-dom/client";
 import type { ReactNode } from "react";
 import {
-  type CIJob, type CIPipeline, type CIWorkflow, type CommitRun, dateTimeInputValue, nextFullHour, type RunCommit, type ScheduledRun, scheduledRunRelative,
+  type CIJob, type CIPipeline, type CIWorkflow, type CommitRun, nextFullHour, type RunCommit, type ScheduledRun, scheduledRunRelative,
   scheduledRuns, scheduledRunTime,
 } from "@/entities/ci";
 import type { RepoTarget } from "@/entities/git";
@@ -43,11 +43,6 @@ export async function scheduledRunsSelfTest(): Promise<[boolean, string]> {
   const mount = async (node: ReactNode) => { root.render(node); await pause(); await pause(); };
   const reset = () => { root.unmount(); host.replaceChildren(); root = createRoot(host); };
   const button = (label: string, scope: ParentNode = host) => [...scope.querySelectorAll<HTMLButtonElement>("button")].find((b) => b.textContent?.trim() === t(label));
-  const change = async (element: HTMLInputElement, value: string) => {
-    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(element, value);
-    element.dispatchEvent(new Event("input", { bubbles: true }));
-    await pause();
-  };
   const row = (id: string) => host.querySelector<HTMLElement>(`.ci-scheduled-run[data-scheduled="${id}"]`);
   const choose = async (select: HTMLSelectElement, value: string) => {
     Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")!.set!.call(select, value);
@@ -87,14 +82,22 @@ export async function scheduledRunsSelfTest(): Promise<[boolean, string]> {
     check(button("Run") && !host.querySelector("#run-later-at"), "The sheet must start on Run now");
     button("Run later")!.click();
     check(await until(() => host.querySelector("#run-later-at")), "Run later did not show the date and time");
-    const field = host.querySelector<HTMLInputElement>("#run-later-at")!;
-    check(field.value === dateTimeInputValue(nextFullHour(now)), `Run later must offer the next full hour, not ${field.value}`);
+    const field = () => host.querySelector<HTMLElement>("#run-later-at")!;
+    check(Number(field().dataset.value) === nextFullHour(now), `Run later must offer the next full hour, not ${field().dataset.value}`);
     check(button("Schedule run") && !button("Run"), "Run later must turn the primary into Schedule run");
-    await change(field, dateTimeInputValue(now - 3_600_000));
+    // the date opens a month whose past days can't be picked, the time a list of quarter hours
+    field().querySelector<HTMLButtonElement>(`[aria-label="${t("Choose a date")}"]`)!.click();
+    check(await until(() => document.querySelector(".dt-panel .dt-day.on") && document.querySelector<HTMLButtonElement>(".dt-panel .dt-day:not(.out)")?.disabled), "The month must open with the chosen day and past days off");
+    document.querySelector<HTMLButtonElement>(".dt-panel .dt-day.on")!.click();
+    check(await until(() => !document.querySelector(".dt-panel")), "Picking a day must close the month");
+    // time passes while the sheet is open: the next press finds the time gone by and says why
+    state.now = nextFullHour(now) + 60_000;
+    button("Schedule run")!.click();
     check(await until(() => button("Schedule run")?.disabled && host.textContent?.includes(t("Choose a time in the future."))), "A time gone by must disable Schedule run and say why");
-    const runAt = now + 2 * 3_600_000 + 10 * 60_000;
-    await change(field, dateTimeInputValue(runAt));
-    check(await until(() => button("Schedule run")?.disabled === false), "A time ahead must enable Schedule run");
+    field().querySelector<HTMLButtonElement>('[data-preset="tomorrow"]')!.click();
+    const runAt = Number(field().dataset.value);
+    check(await until(() => button("Schedule run")?.disabled === false) && new Date(runAt).getHours() === 9, "Tomorrow morning must set 9:00 and enable Schedule run");
+    state.now = now;
     button("Schedule run")!.click();
     check(await until(() => closed === 1 && state.runs.length === 1), `Schedule run did not keep the run: ${JSON.stringify(state.runs)}`);
     const kept = state.runs[0];

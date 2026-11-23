@@ -3868,7 +3868,6 @@
 "The account for this run is no longer connected." = "이 실행에 쓸 계정이 더 이상 연결되어 있지 않습니다.";
 "Couldn't read the account's token." = "계정 토큰을 읽지 못했습니다.";
 "Run now" = "지금 실행";
-"Run at" = "실행 시각";
 "Schedule run" = "실행 예약";
 "Choose a time in the future." = "지금 이후의 시각을 고르세요.";
 "Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed." = "Gitrochi가 열려 있으면 이 시각에 실행을 시작합니다. 열려 있지 않으면 놓친 실행으로 표시됩니다.";
@@ -4047,3 +4046,10 @@
 "No commits match." = "일치하는 커밋이 없습니다.";
 "Runs on the branch's newest commit when it starts." = "실행이 시작될 때 브랜치의 최신 커밋에서 돌립니다.";
 "When" = "실행 시점";
+"In 1 hour" = "1시간 뒤";
+"Tonight" = "오늘 밤";
+"Tomorrow morning" = "내일 아침";
+"Choose a date" = "날짜 선택";
+"Choose a time" = "시간 선택";
+"Previous month" = "이전 달";
+"Next month" = "다음 달";

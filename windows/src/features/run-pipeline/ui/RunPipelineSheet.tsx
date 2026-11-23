@@ -9,7 +9,7 @@ import { t } from "@/shared/i18n";
 import { listWhen } from "@/shared/lib";
 import { describe } from "@/shared/platform";
 import { ArrowUp, Search } from "@/shared/icons";
-import { Checkbox, IconButton, Segmented, SharedSheet } from "@/shared/ui";
+import { Checkbox, DateTimeField, IconButton, Segmented, SharedSheet } from "@/shared/ui";
 import "./run-pipeline.css";
 
 interface Variable {
@@ -348,8 +348,9 @@ export function RunPipelineSheet({ store, close }: { store: RepoStore; close: ()
           <div className="row run-when">
             <Segmented value={later ? "later" : "now"} onChange={(v) => setLater(v === "later")}
               options={[{ value: "now", label: t("Run now") }, { value: "later", label: t("Run later") }]} />
-            {later && <input id="run-later-at" type="datetime-local" className="input" aria-label={t("Run at")} value={runAt} onChange={(e) => setRunAt(e.target.value)} />}
           </div>
+          {later && <DateTimeField id="run-later-at" value={parseDateTimeInput(runAt) ?? nextFullHour(scheduledRuns.now())} now={scheduledRuns.now()} min={scheduledRuns.now()}
+            onChange={(at) => setRunAt(dateTimeInputValue(at))} />}
           {later && <span className="run-when-note">{t("Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed.")}</span>}
         </div>
       </div>

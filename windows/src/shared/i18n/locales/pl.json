@@ -2128,7 +2128,6 @@
   "Couldn't read the account's token.": "Nie można odczytać tokenu konta.",
   "Run now": "Uruchom teraz",
   "Run later": "Uruchom później",
-  "Run at": "Uruchom o",
   "Schedule run": "Zaplanuj uruchomienie",
   "Choose a time in the future.": "Wybierz czas w przyszłości.",
   "Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed.": "Gitrochi rozpocznie uruchomienie o tej godzinie, jeśli będzie otwarty. W przeciwnym razie zostanie ono oznaczone jako pominięte.",
@@ -2309,5 +2308,12 @@
   "Search commits by message or SHA": "Szukaj commitów po wiadomości lub SHA",
   "No commits match.": "Brak pasujących commitów.",
   "Runs on the branch's newest commit when it starts.": "Uruchamia się na najnowszym commicie gałęzi w chwili startu.",
-  "When": "Kiedy"
+  "When": "Kiedy",
+  "In 1 hour": "Za 1 godzinę",
+  "Tonight": "Dziś wieczorem",
+  "Tomorrow morning": "Jutro rano",
+  "Choose a date": "Wybierz datę",
+  "Choose a time": "Wybierz godzinę",
+  "Previous month": "Poprzedni miesiąc",
+  "Next month": "Następny miesiąc"
 }

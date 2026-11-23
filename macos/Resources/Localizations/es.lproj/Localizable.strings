@@ -2149,7 +2149,6 @@
 "Couldn't read the account's token." = "No se pudo leer el token de la cuenta.";
 "Run now" = "Ejecutar ahora";
 "Run later" = "Ejecutar más tarde";
-"Run at" = "Ejecutar a las";
 "Schedule run" = "Programar ejecución";
 "Choose a time in the future." = "Elige una hora en el futuro.";
 "Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed." = "Gitrochi inicia la ejecución a esta hora si está abierto. Si no, se marca como perdida.";
@@ -2350,3 +2349,10 @@
 "No commits match." = "Ningún commit coincide.";
 "Runs on the branch's newest commit when it starts." = "Se ejecuta en el commit más reciente de la rama cuando empieza.";
 "When" = "Cuándo";
+"In 1 hour" = "En 1 hora";
+"Tonight" = "Esta noche";
+"Tomorrow morning" = "Mañana por la mañana";
+"Choose a date" = "Elegir fecha";
+"Choose a time" = "Elegir hora";
+"Previous month" = "Mes anterior";
+"Next month" = "Mes siguiente";

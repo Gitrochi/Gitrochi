@@ -2127,7 +2127,6 @@
   "Couldn't read the account's token.": "Token účtu se nepodařilo přečíst.",
   "Run now": "Spustit nyní",
   "Run later": "Spustit později",
-  "Run at": "Spustit v",
   "Schedule run": "Naplánovat běh",
   "Choose a time in the future.": "Vyberte čas v budoucnosti.",
   "Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed.": "Gitrochi spustí běh v tento čas, pokud bude otevřený. Jinak bude běh označen jako zmeškaný.",
@@ -2308,5 +2307,12 @@
   "Search commits by message or SHA": "Hledat commity podle zprávy nebo SHA",
   "No commits match.": "Žádný commit neodpovídá.",
   "Runs on the branch's newest commit when it starts.": "Spustí se na nejnovějším commitu větve v okamžiku spuštění.",
-  "When": "Kdy"
+  "When": "Kdy",
+  "In 1 hour": "Za 1 hodinu",
+  "Tonight": "Dnes večer",
+  "Tomorrow morning": "Zítra ráno",
+  "Choose a date": "Vybrat datum",
+  "Choose a time": "Vybrat čas",
+  "Previous month": "Předchozí měsíc",
+  "Next month": "Další měsíc"
 }

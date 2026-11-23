@@ -2149,7 +2149,6 @@
   "Couldn't read the account's token.": "無法讀取帳號的權杖。",
   "Run now": "立即執行",
   "Run later": "稍後執行",
-  "Run at": "執行時間",
   "Schedule run": "排程執行",
   "Choose a time in the future.": "請選擇未來的時間。",
   "Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed.": "若 Gitrochi 開啟中，會在此時間開始執行；否則此執行會標示為已錯過。",
@@ -2330,5 +2329,12 @@
   "Search commits by message or SHA": "依提交訊息或 SHA 搜尋",
   "No commits match.": "沒有符合的提交。",
   "Runs on the branch's newest commit when it starts.": "在執行開始時使用該分支的最新提交。",
-  "When": "執行時間"
+  "When": "執行時間",
+  "In 1 hour": "1 小時後",
+  "Tonight": "今晚",
+  "Tomorrow morning": "明早",
+  "Choose a date": "選擇日期",
+  "Choose a time": "選擇時間",
+  "Previous month": "上個月",
+  "Next month": "下個月"
 }

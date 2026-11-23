@@ -305,22 +305,15 @@ struct RunPipelineSheet: View {
     // MARK: Run later
 
     /// Run now or at a date and time; the app keeps the run and starts it then (ScheduledRunStore)
-    /// The mode switch, and the date and time beside it once the run is for later
+    /// The mode switch, and the date and time under it once the run is for later
     private var whenForm: some View {
         field("When") {
-            HStack(spacing: 10) {
-                Segmented(label: "When", items: [
-                    .init(value: false, title: String(localized: "Run now")),
-                    .init(value: true, title: String(localized: "Run later")),
-                ], selection: later) { later = $0 }
-                if later {
-                    DatePicker("Run at", selection: $runAt, displayedComponents: [.date, .hourAndMinute])
-                        .labelsHidden().datePickerStyle(.field).fixedSize()
-                        .accessibilityLabel("Run at")
-                }
-                Spacer(minLength: 0)
-            }
+            Segmented(label: "When", items: [
+                .init(value: false, title: String(localized: "Run now")),
+                .init(value: true, title: String(localized: "Run later")),
+            ], selection: later) { later = $0 }
             if later {
+                DateTimeField(value: $runAt, minimum: Date()).padding(.top, 2)
                 Text("Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed.")
                     .font(.system(size: 11)).foregroundStyle(HostedList.caption).fixedSize(horizontal: false, vertical: true)
             }

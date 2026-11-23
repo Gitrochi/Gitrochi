@@ -2068,7 +2068,6 @@
 "Couldn't read the account's token." = "Kan het token van het account niet lezen.";
 "Run now" = "Nu uitvoeren";
 "Run later" = "Later uitvoeren";
-"Run at" = "Uitvoeren om";
 "Schedule run" = "Run plannen";
 "Choose a time in the future." = "Kies een tijd in de toekomst.";
 "Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed." = "Gitrochi start de run op dit tijdstip als het geopend is. Anders wordt de run als gemist gemarkeerd.";
@@ -2270,3 +2269,10 @@
 "No commits match." = "Geen commits gevonden.";
 "Runs on the branch's newest commit when it starts." = "Draait op de nieuwste commit van de branch zodra de run start.";
 "When" = "Wanneer";
+"In 1 hour" = "Over 1 uur";
+"Tonight" = "Vanavond";
+"Tomorrow morning" = "Morgenochtend";
+"Choose a date" = "Datum kiezen";
+"Choose a time" = "Tijd kiezen";
+"Previous month" = "Vorige maand";
+"Next month" = "Volgende maand";
