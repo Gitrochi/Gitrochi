@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
-  commitJobAction, commitJobs, commitRunBusy, commitWorkflowRuns, defaultCommitJob, parseCommitSubjects, runCommits,
+  commitJobAction, commitJobs, commitRunBusy, commitWorkflowRuns, defaultCommitJob, filterRunCommits, parseCommitSubjects, runCommits,
 } from "@/entities/ci/model/run-commits";
 import { type ScheduledRunHost, ScheduledRunStore } from "@/entities/ci/model/scheduled-run-store";
 import {
@@ -292,5 +292,18 @@ describe("Scheduled run store", () => {
       expect(store.runs[0].state).toBe("failed");
       expect(store.runs[0].message).toContain("created over a month ago");
     });
+  });
+});
+
+describe("searching the commits to run on", () => {
+  const commits = [
+    { sha: "45f757e0aa", subject: "Merge branch 'main' into prod", created: null, runs: [] },
+    { sha: "0123456789", subject: "Fix the deploy warmup", created: null, runs: [] },
+  ];
+  it("keeps the commits whose message or SHA holds every word, whatever the case", () => {
+    expect(filterRunCommits(commits, "")).toEqual(commits);
+    expect(filterRunCommits(commits, "  DEPLOY  fix ").map((c) => c.sha)).toEqual(["0123456789"]);
+    expect(filterRunCommits(commits, "45f7").map((c) => c.sha)).toEqual(["45f757e0aa"]);
+    expect(filterRunCommits(commits, "main deploy")).toEqual([]);
   });
 });

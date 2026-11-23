@@ -16,3 +16,4 @@ export { sourceLanguage, sourceSegments, type SourceSegment, sourceTokens, sourc
 export { applyEditorText, editorLineRange, editorText, indentEditorText } from "./source-editing";
 export { checkLogLines, failedTests, firstError, firstLogLine, isLogError, type LogLine, logLines, numberedLog, testNames } from "./job-log";
 export { type FileIcon, fileIcon, type FileIconKind } from "./file-icon";
+export { type CalendarDay, dateTimePresets, type DateTimePreset, minutesOfDay, monthGrid, startOfDay, timeSlots, withDay, withMinutes } from "./calendar";

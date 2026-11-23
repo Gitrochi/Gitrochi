@@ -2101,7 +2101,6 @@
 "Couldn't read the account's token." = "Hesabın belirteci okunamadı.";
 "Run now" = "Şimdi çalıştır";
 "Run later" = "Sonra çalıştır";
-"Run at" = "Çalıştırma zamanı";
 "Schedule run" = "Çalıştırmayı zamanla";
 "Choose a time in the future." = "Gelecekte bir zaman seçin.";
 "Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed." = "Gitrochi açıksa çalıştırmayı bu zamanda başlatır. Değilse çalıştırma kaçırıldı olarak işaretlenir.";
@@ -2298,3 +2297,14 @@
 "Text typed into a browser tab's address bar that isn't an address is searched with this engine." = "Bir tarayıcı sekmesinin adres çubuğuna yazılan ve adres olmayan metin bu arama motoruyla aranır.";
 "Maximize terminal" = "Terminali büyüt";
 "Restore terminal size" = "Terminal boyutunu geri yükle";
+"Search commits by message or SHA" = "Commit'leri mesaja veya SHA'ya göre ara";
+"No commits match." = "Eşleşen commit yok.";
+"Runs on the branch's newest commit when it starts." = "Başladığında dalın en yeni commit'inde çalışır.";
+"When" = "Ne zaman";
+"In 1 hour" = "1 saat sonra";
+"Tonight" = "Bu akşam";
+"Tomorrow morning" = "Yarın sabah";
+"Choose a date" = "Tarih seç";
+"Choose a time" = "Saat seç";
+"Previous month" = "Önceki ay";
+"Next month" = "Sonraki ay";

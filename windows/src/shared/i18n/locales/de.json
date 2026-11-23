@@ -2140,7 +2140,6 @@
   "Couldn't read the account's token.": "Das Token des Kontos konnte nicht gelesen werden.",
   "Run now": "Jetzt ausführen",
   "Run later": "Später ausführen",
-  "Run at": "Ausführen um",
   "Schedule run": "Ausführung planen",
   "Choose a time in the future.": "Wählen Sie eine Zeit in der Zukunft.",
   "Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed.": "Gitrochi startet die Ausführung zu dieser Zeit, wenn es geöffnet ist. Andernfalls wird sie als verpasst markiert.",
@@ -2318,5 +2317,16 @@
   "Search engine": "Suchmaschine",
   "Text typed into a browser tab's address bar that isn't an address is searched with this engine.": "Text in der Adressleiste eines Browser-Tabs, der keine Adresse ist, wird mit dieser Suchmaschine gesucht.",
   "Maximize terminal": "Terminal maximieren",
-  "Restore terminal size": "Terminalgröße wiederherstellen"
+  "Restore terminal size": "Terminalgröße wiederherstellen",
+  "Search commits by message or SHA": "Commits nach Nachricht oder SHA suchen",
+  "No commits match.": "Keine passenden Commits.",
+  "Runs on the branch's newest commit when it starts.": "Läuft auf dem neuesten Commit des Branches, wenn der Lauf startet.",
+  "When": "Zeitpunkt",
+  "In 1 hour": "In 1 Stunde",
+  "Tonight": "Heute Abend",
+  "Tomorrow morning": "Morgen früh",
+  "Choose a date": "Datum wählen",
+  "Choose a time": "Uhrzeit wählen",
+  "Previous month": "Vorheriger Monat",
+  "Next month": "Nächster Monat"
 }

@@ -2256,7 +2256,6 @@
 "Couldn't read the account's token." = "无法读取账户的令牌。";
 "Run now" = "立即运行";
 "Run later" = "稍后运行";
-"Run at" = "运行时间";
 "Schedule run" = "计划运行";
 "Choose a time in the future." = "请选择将来的时间。";
 "Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed." = "如果 Gitrochi 处于打开状态，将在此时间开始运行；否则该运行会被标记为已错过。";
@@ -2453,3 +2452,14 @@
 "Text typed into a browser tab's address bar that isn't an address is searched with this engine." = "在浏览器标签页地址栏中输入的内容如果不是网址，将使用此搜索引擎搜索。";
 "Maximize terminal" = "最大化终端";
 "Restore terminal size" = "恢复终端大小";
+"Search commits by message or SHA" = "按提交信息或 SHA 搜索";
+"No commits match." = "没有匹配的提交。";
+"Runs on the branch's newest commit when it starts." = "在运行开始时使用该分支的最新提交。";
+"When" = "运行时间";
+"In 1 hour" = "1 小时后";
+"Tonight" = "今晚";
+"Tomorrow morning" = "明早";
+"Choose a date" = "选择日期";
+"Choose a time" = "选择时间";
+"Previous month" = "上个月";
+"Next month" = "下个月";

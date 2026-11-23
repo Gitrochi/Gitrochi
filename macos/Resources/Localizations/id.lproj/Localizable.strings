@@ -2070,7 +2070,6 @@
 "Couldn't read the account's token." = "Tidak dapat membaca token akun.";
 "Run now" = "Jalankan sekarang";
 "Run later" = "Jalankan nanti";
-"Run at" = "Jalankan pada";
 "Schedule run" = "Jadwalkan run";
 "Choose a time in the future." = "Pilih waktu di masa depan.";
 "Gitrochi starts the run at this time if it is open. Otherwise the run is marked missed." = "Gitrochi memulai run pada waktu ini jika sedang terbuka. Jika tidak, run ditandai terlewat.";
@@ -2269,3 +2268,14 @@
 "Text typed into a browser tab's address bar that isn't an address is searched with this engine." = "Teks yang diketik di bilah alamat tab browser yang bukan alamat akan dicari dengan mesin ini.";
 "Maximize terminal" = "Maksimalkan terminal";
 "Restore terminal size" = "Kembalikan ukuran terminal";
+"Search commits by message or SHA" = "Cari commit berdasarkan pesan atau SHA";
+"No commits match." = "Tidak ada commit yang cocok.";
+"Runs on the branch's newest commit when it starts." = "Berjalan di commit terbaru branch saat dimulai.";
+"When" = "Kapan";
+"In 1 hour" = "Dalam 1 jam";
+"Tonight" = "Malam ini";
+"Tomorrow morning" = "Besok pagi";
+"Choose a date" = "Pilih tanggal";
+"Choose a time" = "Pilih waktu";
+"Previous month" = "Bulan sebelumnya";
+"Next month" = "Bulan berikutnya";
