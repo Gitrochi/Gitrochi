@@ -77,6 +77,9 @@ export async function workingChangesSelfTest(): Promise<[boolean, string]> {
     check(Math.round(badge.getBoundingClientRect().width) === 18 && height(badge) === 18 && badgeStyle.borderRadius === "4px" && badgeStyle.fontSize === "11px" && badgeStyle.fontWeight === "600" && badgeStyle.borderTopWidth === "0px", "the status badge must be 18px, radius 4, 11px semibold, no border");
     const letters = Object.fromEntries(all(".file-row").map((item) => [item.querySelector(".file-row-name > span")!.textContent, item.querySelector(".status-badge")!.textContent]));
     check(letters["SearchPanel.swift"] === "M" && letters["search-tips.md"] === "U" && letters["search-empty.png"] === "A" && letters["search.md"] === "R" && letters["copy.md"] === "R" && letters[long.split("/").pop()!] === "M", `badge letters: ${JSON.stringify(letters)}`);
+    // the file type icon follows the badge, in the language's colour
+    const typeIcon = first.querySelector<SVGElement>(".status-badge + .file-type-icon");
+    check(!!typeIcon && getComputedStyle(typeIcon).color === "rgb(240, 81, 56)" && !!row("search-empty.png")?.querySelector(".file-type-icon"), "every file row needs its type icon after the badge, Swift in its own orange");
     check(first.querySelector(".file-row-folder")?.textContent === "macos/Sources/Views/Search" || first.querySelector(".file-row-folder")?.textContent?.startsWith("…/"), "the folder must be whole or shortened by whole segments");
     check(first.querySelector(".linestat")?.textContent === "+12−2" && row("search-tips.md")?.querySelector(".linestat .z")?.textContent === "−0", "the counts show both sides, the empty one in grey");
     check(row("search-empty.png")?.querySelector(".status-pill")?.textContent === t("Binary") && !row("search-empty.png")?.querySelector(".linestat"), "a binary file has the neutral pill in place of the counts");

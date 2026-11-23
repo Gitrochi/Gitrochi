@@ -19,7 +19,7 @@ for TASK_SOURCE in \
     "$ROOT/Sources/Core/AppLanguage.swift" \
     "$ROOT/Sources/Core/RepositoryBrowser.swift" \
     "$ROOT/Sources/Core/RepositoryCodeHistory.swift" \
-    "$ROOT/Sources/Core/RepositoryCodeReading.swift" \
+    "$ROOT/Sources/Core/RepositoryCodeReading.swift" "$ROOT/Sources/Core/FileIcons.swift" "$ROOT/Sources/Views/Shared/FileTypeIcon.swift" \
     "$ROOT/Sources/Core/RepositoryCodeEditing.swift" \
     "$ROOT/Sources/Core/RepositoryCodeNavigation.swift" \
     "$ROOT/Sources/Core/RepositoryLanguages.swift" \

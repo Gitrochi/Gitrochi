@@ -1,5 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { File, Search, X } from "@/shared/icons";
+import { Search, X } from "@/shared/icons";
+import { FileTypeIcon } from "@/shared/ui";
 import type { RepositoryTreeEntry } from "@/entities/git";
 import { t } from "@/shared/i18n";
 import { rankCodeFiles } from "../lib/code-navigation";
@@ -29,7 +30,7 @@ export function CodeQuickOpen({ entries, recent, open, close }: Props) {
       <div className="code-quick-heading"><strong>{t("Quick open")}</strong><button ref={closeButton} type="button" className="icon-btn" aria-label={t("Close quick open")} data-tip={t("Close quick open")} onClick={close}><X size={16}/></button></div>
       <label className="code-quick-search"><Search size={18}/><input ref={input} role="combobox" aria-expanded="true" aria-controls={`${id}-results`} aria-activedescendant={results[index] ? `${id}-${index}` : undefined} aria-label={t("Search files by name or path")} placeholder={t("Search files by name or path")} value={query} onChange={(event) => { setQuery(event.target.value); setActive(0); }}/></label>
       <div className="code-quick-section">{t(query.trim() ? "Files" : "Recent files")}</div>
-      <div ref={list} className="code-quick-results" role="listbox" id={`${id}-results`} aria-label={t("Files")}>{results.map((entry, i) => <button type="button" role="option" aria-selected={i === index} tabIndex={-1} id={`${id}-${i}`} key={entry.path} data-index={i} className={i === index ? "on" : ""} onMouseMove={() => setActive(i)} onClick={() => choose(entry)}><File size={16}/><span><strong>{entry.path.split("/").at(-1)}</strong><small>{entry.path}</small></span>{i === index && <kbd>↵</kbd>}</button>)}{!results.length && <div className="code-quick-empty">{t("No matching files")}</div>}</div>
+      <div ref={list} className="code-quick-results" role="listbox" id={`${id}-results`} aria-label={t("Files")}>{results.map((entry, i) => <button type="button" role="option" aria-selected={i === index} tabIndex={-1} id={`${id}-${i}`} key={entry.path} data-index={i} className={i === index ? "on" : ""} onMouseMove={() => setActive(i)} onClick={() => choose(entry)}><FileTypeIcon path={entry.path} size={16}/><span><strong>{entry.path.split("/").at(-1)}</strong><small>{entry.path}</small></span>{i === index && <kbd>↵</kbd>}</button>)}{!results.length && <div className="code-quick-empty">{t("No matching files")}</div>}</div>
       <footer><span>↑ ↓</span><span>↵</span><span>Esc</span></footer>
     </div>
   </div>;

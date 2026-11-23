@@ -252,7 +252,11 @@ struct RepositoryCodePanel: View {
                         let current = selected?.path == entry.path
                         RepositoryCodeRow(selected: current, action: { requestOpen(entry) }) {
                             HStack(spacing: 8) {
-                                SymbolIcon(entry.isSubmodule ? "shippingbox" : entry.isSymlink ? "link" : "doc").font(.system(size: 12)).foregroundStyle(StudioStyle.Rail.icon).frame(width: 14)
+                                if entry.isSubmodule || entry.isSymlink {
+                                    SymbolIcon(entry.isSubmodule ? "shippingbox" : "link").font(.system(size: 12)).foregroundStyle(StudioStyle.Rail.icon).frame(width: 14)
+                                } else {
+                                    FileTypeIcon(path: entry.path)
+                                }
                                 Text(languageFilter == nil ? String(entry.path.dropFirst(prefix.count)) : entry.path).font(.system(size: 13, weight: current ? .semibold : .regular))
                                     .lineLimit(1).truncationMode(.middle).frame(maxWidth: .infinity, alignment: .leading)
                                 // changed in the working tree and not committed yet

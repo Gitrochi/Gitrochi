@@ -360,7 +360,7 @@ struct FileRowFold: Hashable {
 }
 
 /// The one changed-file row (docs/design.md, Shared components): working changes, a commit's files, a pull request's
-/// files and Compare all draw this. 28 pt tall with a 6 pt radius; the status badge, the name at 13 pt, the folder and
+/// files and Compare all draw this. 28 pt tall with a 6 pt radius; the status badge, the file type icon, the name at 13 pt, the folder and
 /// the rename caption at 11 pt, then the counts or a neutral pill, the review marks and the row's own action.
 /// (Windows: FileRow in shared/ui/FileRow.tsx)
 struct FileRow: View {
@@ -463,6 +463,7 @@ struct FileRow: View {
     private func words(_ fold: FileRowFold) -> some View {
         HStack(spacing: 8) {
             StatusBadge(kind: change.kind)
+            FileTypeIcon(path: change.path)
             // the semibold width is kept either way, so selecting a row never moves what follows the name
             Text(verbatim: change.fileName).font(.system(size: 13, weight: .semibold)).lineLimit(1)
                 .fixedSize(horizontal: !fold.cut, vertical: false)
