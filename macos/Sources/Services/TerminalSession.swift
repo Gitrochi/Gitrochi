@@ -276,7 +276,7 @@ final class TerminalSession: Identifiable {
     func applyFont(size: Double) {
         let size = size.isFinite ? min(22, max(10, size)) : 13
         guard view.font.pointSize != size else { return }
-        view.font = NSFont.monospacedSystemFont(ofSize: size, weight: .regular)
+        view.setFont(NSFont.monospacedSystemFont(ofSize: size, weight: .regular))
     }
 
     /// 어두운/밝은 모드에 맞춘 글자·배경색(SwiftTerm 은 색을 넣을 때 한 번만 읽는다)
@@ -531,11 +531,35 @@ final class ShellView: LocalProcessTerminalView {
 
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
+        measureForScreen()
         if window != nil { onShown?() }
         guard window != nil, !gpuTried else { return }
         gpuTried = true
         guard UserDefaults.standard.object(forKey: Self.gpuRenderingKey) as? Bool ?? true else { return }
         try? setUseMetal(true)
+    }
+
+    /// The screen scale SwiftTerm measured the cells at: the window's, or the main screen's before there is one
+    private var cellScale: CGFloat = 0
+    private var screenScale: CGFloat { window?.backingScaleFactor ?? NSScreen.main?.backingScaleFactor ?? 1 }
+
+    /// Sets the font and notes the scale its cells were measured at
+    func setFont(_ font: NSFont) {
+        self.font = font
+        cellScale = screenScale
+    }
+
+    /// SwiftTerm snaps the cell width to one screen's pixel grid and keeps it, so cells measured on a Retina screen
+    /// stayed half a pixel wide on a 1x display: text drew on that grid while box drawing rounded every cell up, and
+    /// table lines drifted off the text. Measures again for the screen the view is on now.
+    private func measureForScreen() {
+        guard window != nil, cellScale != screenScale else { return }
+        setFont(font)
+    }
+
+    override func viewDidChangeBackingProperties() {
+        super.viewDidChangeBackingProperties()
+        measureForScreen()
     }
 
     override func dataReceived(slice: ArraySlice<UInt8>) {
