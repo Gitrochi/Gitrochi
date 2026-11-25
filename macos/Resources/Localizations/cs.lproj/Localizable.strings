@@ -2302,3 +2302,16 @@
 "Choose a time" = "Vybrat čas";
 "Previous month" = "Předchozí měsíc";
 "Next month" = "Další měsíc";
+"Connect to gitch" = "Připojit ke gitch";
+"Connect to gitch…" = "Připojit ke gitch…";
+"Connect this account to gitch?" = "Připojit tento účet ke gitch?";
+"Saves this account and the folder rule in gitch, creates an SSH key on this Mac if there is none, registers its public key with %@ using the saved sign-in, and checks the connection. The token and the private key are not stored in gitch." = "Uloží tento účet a pravidlo složky do gitch, vytvoří klíč SSH na tomto Macu, pokud žádný není, zaregistruje jeho veřejný klíč u %@ pomocí uloženého přihlášení a ověří připojení. Token a soukromý klíč se v gitch neukládají.";
+"Fill in from a saved account" = "Vyplnit z uloženého účtu";
+"Uses the account's saved sign-in for the name, email and server, and to register the SSH key." = "Použije uložené přihlášení účtu pro jméno, e-mail a server a k registraci klíče SSH.";
+"Defaults to the folder that holds an open repository from this server." = "Výchozí je složka, která obsahuje otevřený repozitář z tohoto serveru.";
+"Register key with %@…" = "Zaregistrovat klíč u %@…";
+"Gitrochi can't read this account's saved sign-in. Restore it in Settings › Accounts and try again." = "Gitrochi nemůže přečíst uložené přihlášení tohoto účtu. Obnovte ho v Nastavení › Účty a zkuste to znovu.";
+"Public key registered with %@." = "Veřejný klíč byl zaregistrován u %@.";
+"This public key is already registered with %@." = "Tento veřejný klíč už je u %@ zaregistrován.";
+"The saved GitHub token can't add SSH keys (it needs the write:public_key scope). Copy the public key below and add it in GitHub's SSH key settings." = "Uložený token GitHubu nemůže přidávat klíče SSH (potřebuje oprávnění write:public_key). Zkopírujte veřejný klíč níže a přidejte ho v nastavení klíčů SSH na GitHubu.";
+"The saved GitLab token can't add SSH keys (it needs the api scope). Copy the public key below and add it in GitLab's SSH key settings." = "Uložený token GitLabu nemůže přidávat klíče SSH (potřebuje oprávnění api). Zkopírujte veřejný klíč níže a přidejte ho v nastavení klíčů SSH na GitLabu.";

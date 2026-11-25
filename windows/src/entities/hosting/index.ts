@@ -1,7 +1,7 @@
 // entities/hosting 의 공개 API — 다른 조각은 이 파일로만 가져온다
 export { avatarURL, createPullRequest, date, defaultBranch, findTarget, HostingError, movedProject, parseRemote, projectID, repositories, send, sendRaw } from "./api/hosting";
 export { type PullRequestReview, type ReviewAccess, ReviewAPI, type ReviewComment, type ReviewDraftComment, type ReviewFile, type ReviewLineAnchor, type ReviewLineSide, type ReviewRefs, type ReviewVerdict, ReviewSubmissionError, reviewFileChange, reviewRepositoryKey, reviewDraftMatches } from "./api/review";
-export { accounts, AccountStore } from "./model/accounts";
+export { accounts, AccountStore, MissingKeyScope } from "./model/accounts";
 export { type AccountStatus, type AccountStatusIcon, type AccountReason, type CredentialState, accountStatusFor, accountStatusIcon, accountStatusTitle, accountStatusAction, accountStatusCaption, toolbarAccountBadge, accountReason, accountReasonText, accountInitial } from "./lib/account-presentation";
 export { AccountConnectionFailure, accountConnectionMessage } from "./model/connection-failure";
 export { type RequestScope, type RequestQuery, type RequestLifecycle, type MergeMethod, type InboxItem, type InboxDetail, type IssueLabel, requestPage, requestLifecycle, mergeRequest, rebaseRequest, setRequestState, updateRequest, setReviewers, inboxPage, inboxDetail, postInboxComment, setIssueState, markInboxRead, trailerIssue } from "./api/collaboration";

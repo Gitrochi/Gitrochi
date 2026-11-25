@@ -2325,3 +2325,16 @@
 "Choose a time" = "選擇時間";
 "Previous month" = "上個月";
 "Next month" = "下個月";
+"Connect to gitch" = "連接到 gitch";
+"Connect to gitch…" = "連接到 gitch…";
+"Connect this account to gitch?" = "要將此帳號連接到 gitch 嗎？";
+"Saves this account and the folder rule in gitch, creates an SSH key on this Mac if there is none, registers its public key with %@ using the saved sign-in, and checks the connection. The token and the private key are not stored in gitch." = "在 gitch 中儲存此帳號和資料夾規則；若此 Mac上沒有 SSH 金鑰則建立一組，使用已儲存的登入將公鑰註冊到 %@，並檢查連線。權杖和私鑰不會儲存在 gitch 中。";
+"Fill in from a saved account" = "從已儲存的帳號填入";
+"Uses the account's saved sign-in for the name, email and server, and to register the SSH key." = "使用該帳號已儲存的登入填入名稱、電子郵件和伺服器，並註冊 SSH 金鑰。";
+"Defaults to the folder that holds an open repository from this server." = "若開啟了此伺服器上的儲存庫，預設使用該儲存庫所在的資料夾。";
+"Register key with %@…" = "向 %@ 註冊金鑰…";
+"Gitrochi can't read this account's saved sign-in. Restore it in Settings › Accounts and try again." = "無法讀取此帳號已儲存的登入。請在「設定 › 帳號」中還原後再試一次。";
+"Public key registered with %@." = "已向 %@ 註冊公鑰。";
+"This public key is already registered with %@." = "此公鑰已註冊到 %@。";
+"The saved GitHub token can't add SSH keys (it needs the write:public_key scope). Copy the public key below and add it in GitHub's SSH key settings." = "已儲存的 GitHub 權杖無法新增 SSH 金鑰（需要 write:public_key 權限）。請複製下方的公鑰，並在 GitHub 的 SSH 金鑰設定中新增。";
+"The saved GitLab token can't add SSH keys (it needs the api scope). Copy the public key below and add it in GitLab's SSH key settings." = "已儲存的 GitLab 權杖無法新增 SSH 金鑰（需要 api 權限）。請複製下方的公鑰，並在 GitLab 的 SSH 金鑰設定中新增。";

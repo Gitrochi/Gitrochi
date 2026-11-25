@@ -4053,3 +4053,16 @@
 "Choose a time" = "시간 선택";
 "Previous month" = "이전 달";
 "Next month" = "다음 달";
+"Connect to gitch" = "gitch에 연결";
+"Connect to gitch…" = "gitch에 연결…";
+"Connect this account to gitch?" = "이 계정을 gitch에 연결할까요?";
+"Saves this account and the folder rule in gitch, creates an SSH key on this Mac if there is none, registers its public key with %@ using the saved sign-in, and checks the connection. The token and the private key are not stored in gitch." = "이 계정과 폴더 규칙을 gitch에 저장하고, 이 Mac에 SSH 키가 없으면 만든 뒤, 저장된 로그인으로 공개키를 %@에 등록하고 연결을 확인합니다. 토큰과 개인키는 gitch에 저장되지 않습니다.";
+"Fill in from a saved account" = "저장된 계정으로 채우기";
+"Uses the account's saved sign-in for the name, email and server, and to register the SSH key." = "계정의 저장된 로그인으로 이름·이메일·서버를 채우고 SSH 키도 등록합니다.";
+"Defaults to the folder that holds an open repository from this server." = "이 서버의 저장소가 열려 있으면 그 저장소가 있는 폴더가 기본값입니다.";
+"Register key with %@…" = "%@에 키 등록…";
+"Gitrochi can't read this account's saved sign-in. Restore it in Settings › Accounts and try again." = "이 계정의 저장된 로그인을 읽을 수 없습니다. 설정 › 계정에서 복원한 뒤 다시 시도하세요.";
+"Public key registered with %@." = "%@에 공개키를 등록했습니다.";
+"This public key is already registered with %@." = "이 공개키는 이미 %@에 등록되어 있습니다.";
+"The saved GitHub token can't add SSH keys (it needs the write:public_key scope). Copy the public key below and add it in GitHub's SSH key settings." = "저장된 GitHub 토큰으로는 SSH 키를 추가할 수 없습니다(write:public_key 권한 필요). 아래 공개키를 복사해 GitHub의 SSH 키 설정에 추가하세요.";
+"The saved GitLab token can't add SSH keys (it needs the api scope). Copy the public key below and add it in GitLab's SSH key settings." = "저장된 GitLab 토큰으로는 SSH 키를 추가할 수 없습니다(api 권한 필요). 아래 공개키를 복사해 GitLab의 SSH 키 설정에 추가하세요.";

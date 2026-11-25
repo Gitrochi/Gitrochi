@@ -7,6 +7,10 @@ import { tools } from "@/shared/platform";
 import * as Hosting from "../api/hosting";
 import type { AccountStatus } from "../lib/account-presentation";
 import { AccountConnectionFailure } from "./connection-failure";
+import { gitHubEmails, gitLabEmails, type GitHubEmail } from "@/entities/gitch";
+
+/** The saved token can't add SSH keys; the person copies the key instead, and the message says why */
+export class MissingKeyScope extends Error {}
 
 /** GitHub·사내 GitLab 계정(여러 개). 앱 전체에서 하나만 쓴다. (맥 버전 AccountStore) */
 class AccountStore extends Observable {
@@ -237,6 +241,47 @@ class AccountStore extends Observable {
       if (page === 20) throw new Error(t("Couldn't finish checking existing SSH keys. Register the key manually or try again."));
     }
     await request("https://api.github.com/user/keys", "POST", { title: `Gitrochi (${username})`, key });
+  }
+
+  /** The account's commit email choices, read with its saved token (macOS: GitchConnect.emails) */
+  async gitchEmails(a: HostAccount): Promise<string[]> {
+    const token = await this.token(a);
+    if (!token) throw new Error(t("Gitrochi can't read this account's saved sign-in. Restore it in Settings › Accounts and try again."));
+    const base = accountApiBase(a);
+    if (a.provider === "github") {
+      const user = await Hosting.send<{ id: number; login: string; email: string | null }>("github", base + "/user", token);
+      // listing the emails needs the user:email scope; without it only the public one is known
+      const listed = await Hosting.send<GitHubEmail[]>("github", base + "/user/emails", token).catch(() => null);
+      return gitHubEmails(listed, user.email, user.id, user.login, accountHost(a) === "github.com");
+    }
+    const user = await Hosting.send<{ commit_email?: string | null; email?: string | null; public_email?: string | null }>("gitlab", base + "/user", token);
+    return gitLabEmails(user.commit_email ?? null, user.email ?? null, user.public_email ?? null);
+  }
+
+  /**
+   * Adds the public key to the account with its saved token: true when added, false when it was there already. A token
+   * without the scope for it (GitHub write:public_key, GitLab api) throws MissingKeyScope. (macOS: GitchConnect.registerKey)
+   */
+  async registerSSHKey(a: HostAccount, publicKey: string, title: string): Promise<boolean> {
+    const token = await this.token(a);
+    if (!token) throw new Error(t("Gitrochi can't read this account's saved sign-in. Restore it in Settings › Accounts and try again."));
+    const material = (s: string) => s.trim().split(/\s+/).slice(0, 2).join(" ");
+    const key = material(publicKey);
+    if (!/^(ssh-|ecdsa-|sk-)[^ ]+ [A-Za-z0-9+/=]+$/.test(key)) throw new Error(t("A valid public SSH key is required."));
+    const missing = new MissingKeyScope(a.provider === "github"
+      ? t("The saved GitHub token can't add SSH keys (it needs the write:public_key scope). Copy the public key below and add it in GitHub's SSH key settings.")
+      : t("The saved GitLab token can't add SSH keys (it needs the api scope). Copy the public key below and add it in GitLab's SSH key settings."));
+    const request = async <T>(path: string, method = "GET", body?: unknown): Promise<T> => {
+      try { return await Hosting.send<T>(a.provider, accountApiBase(a) + path, token, method, body); }
+      catch (e) { throw e instanceof Hosting.HostingError && [401, 403, 404].includes(e.status) ? missing : e; }
+    };
+    for (let page = 1; page <= 10; page++) {
+      const keys = await request<{ key: string }[]>(`/user/keys?per_page=100&page=${page}`);
+      if (keys.some((k) => material(k.key) === key)) return false;
+      if (keys.length < 100) break;
+    }
+    await request("/user/keys", "POST", { title, key });
+    return true;
   }
 
   async disconnect(a: HostAccount) {

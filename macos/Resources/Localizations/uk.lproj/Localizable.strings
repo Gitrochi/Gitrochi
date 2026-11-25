@@ -2320,3 +2320,16 @@
 "Choose a time" = "Вибрати час";
 "Previous month" = "Попередній місяць";
 "Next month" = "Наступний місяць";
+"Connect to gitch" = "Під’єднати до gitch";
+"Connect to gitch…" = "Під’єднати до gitch…";
+"Connect this account to gitch?" = "Під’єднати цей обліковий запис до gitch?";
+"Saves this account and the folder rule in gitch, creates an SSH key on this Mac if there is none, registers its public key with %@ using the saved sign-in, and checks the connection. The token and the private key are not stored in gitch." = "Зберігає цей обліковий запис і правило папки в gitch, створює SSH-ключ на цьому Mac, якщо його немає, реєструє відкритий ключ у %@ через збережений вхід і перевіряє з’єднання. Токен і закритий ключ у gitch не зберігаються.";
+"Fill in from a saved account" = "Заповнити зі збереженого облікового запису";
+"Uses the account's saved sign-in for the name, email and server, and to register the SSH key." = "Використовує збережений вхід облікового запису для імені, пошти й сервера, а також для реєстрації SSH-ключа.";
+"Defaults to the folder that holds an open repository from this server." = "Типово — папка, у якій лежить відкритий репозиторій із цього сервера.";
+"Register key with %@…" = "Зареєструвати ключ у %@…";
+"Gitrochi can't read this account's saved sign-in. Restore it in Settings › Accounts and try again." = "Gitrochi не може прочитати збережений вхід цього облікового запису. Відновіть його в Налаштування › Облікові записи й спробуйте ще раз.";
+"Public key registered with %@." = "Відкритий ключ зареєстровано в %@.";
+"This public key is already registered with %@." = "Цей відкритий ключ уже зареєстровано в %@.";
+"The saved GitHub token can't add SSH keys (it needs the write:public_key scope). Copy the public key below and add it in GitHub's SSH key settings." = "Збережений токен GitHub не може додавати SSH-ключі (потрібна область write:public_key). Скопіюйте відкритий ключ нижче й додайте його в налаштуваннях SSH-ключів GitHub.";
+"The saved GitLab token can't add SSH keys (it needs the api scope). Copy the public key below and add it in GitLab's SSH key settings." = "Збережений токен GitLab не може додавати SSH-ключі (потрібна область api). Скопіюйте відкритий ключ нижче й додайте його в налаштуваннях SSH-ключів GitLab.";

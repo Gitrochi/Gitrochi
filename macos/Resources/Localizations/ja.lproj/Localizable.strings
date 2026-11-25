@@ -2983,3 +2983,16 @@
 "Choose a time" = "時刻を選択";
 "Previous month" = "前の月";
 "Next month" = "次の月";
+"Connect to gitch" = "gitchに接続";
+"Connect to gitch…" = "gitchに接続…";
+"Connect this account to gitch?" = "このアカウントをgitchに接続しますか？";
+"Saves this account and the folder rule in gitch, creates an SSH key on this Mac if there is none, registers its public key with %@ using the saved sign-in, and checks the connection. The token and the private key are not stored in gitch." = "このアカウントとフォルダルールをgitchに保存し、このMacにSSHキーがなければ作成して、保存済みのサインインで公開鍵を%@に登録し、接続を確認します。トークンと秘密鍵はgitchに保存されません。";
+"Fill in from a saved account" = "保存済みのアカウントから入力";
+"Uses the account's saved sign-in for the name, email and server, and to register the SSH key." = "アカウントの保存済みサインインで名前・メール・サーバーを入力し、SSHキーも登録します。";
+"Defaults to the folder that holds an open repository from this server." = "このサーバーのリポジトリが開いていれば、そのリポジトリがあるフォルダが既定値です。";
+"Register key with %@…" = "%@にキーを登録…";
+"Gitrochi can't read this account's saved sign-in. Restore it in Settings › Accounts and try again." = "このアカウントの保存済みサインインを読み取れません。設定 › アカウントで復元してから、もう一度お試しください。";
+"Public key registered with %@." = "%@に公開鍵を登録しました。";
+"This public key is already registered with %@." = "この公開鍵はすでに%@に登録されています。";
+"The saved GitHub token can't add SSH keys (it needs the write:public_key scope). Copy the public key below and add it in GitHub's SSH key settings." = "保存済みのGitHubトークンではSSHキーを追加できません（write:public_key スコープが必要）。下の公開鍵をコピーして、GitHubのSSHキー設定に追加してください。";
+"The saved GitLab token can't add SSH keys (it needs the api scope). Copy the public key below and add it in GitLab's SSH key settings." = "保存済みのGitLabトークンではSSHキーを追加できません（api スコープが必要）。下の公開鍵をコピーして、GitLabのSSHキー設定に追加してください。";

@@ -2279,3 +2279,16 @@
 "Choose a time" = "Pilih waktu";
 "Previous month" = "Bulan sebelumnya";
 "Next month" = "Bulan berikutnya";
+"Connect to gitch" = "Hubungkan ke gitch";
+"Connect to gitch…" = "Hubungkan ke gitch…";
+"Connect this account to gitch?" = "Hubungkan akun ini ke gitch?";
+"Saves this account and the folder rule in gitch, creates an SSH key on this Mac if there is none, registers its public key with %@ using the saved sign-in, and checks the connection. The token and the private key are not stored in gitch." = "Menyimpan akun ini dan aturan folder di gitch, membuat kunci SSH di Mac ini jika belum ada, mendaftarkan kunci publiknya ke %@ dengan info masuk yang tersimpan, lalu memeriksa koneksi. Token dan kunci privat tidak disimpan di gitch.";
+"Fill in from a saved account" = "Isi dari akun tersimpan";
+"Uses the account's saved sign-in for the name, email and server, and to register the SSH key." = "Menggunakan info masuk tersimpan akun untuk nama, email, dan server, serta untuk mendaftarkan kunci SSH.";
+"Defaults to the folder that holds an open repository from this server." = "Bawaannya folder yang berisi repositori terbuka dari server ini.";
+"Register key with %@…" = "Daftarkan kunci ke %@…";
+"Gitrochi can't read this account's saved sign-in. Restore it in Settings › Accounts and try again." = "Gitrochi tidak dapat membaca info masuk tersimpan akun ini. Pulihkan di Pengaturan › Akun, lalu coba lagi.";
+"Public key registered with %@." = "Kunci publik didaftarkan ke %@.";
+"This public key is already registered with %@." = "Kunci publik ini sudah terdaftar di %@.";
+"The saved GitHub token can't add SSH keys (it needs the write:public_key scope). Copy the public key below and add it in GitHub's SSH key settings." = "Token GitHub tersimpan tidak dapat menambahkan kunci SSH (perlu cakupan write:public_key). Salin kunci publik di bawah dan tambahkan di pengaturan kunci SSH GitHub.";
+"The saved GitLab token can't add SSH keys (it needs the api scope). Copy the public key below and add it in GitLab's SSH key settings." = "Token GitLab tersimpan tidak dapat menambahkan kunci SSH (perlu cakupan api). Salin kunci publik di bawah dan tambahkan di pengaturan kunci SSH GitLab.";
