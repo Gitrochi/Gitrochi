@@ -2306,3 +2306,16 @@
 "Choose a time" = "Időpont kiválasztása";
 "Previous month" = "Előző hónap";
 "Next month" = "Következő hónap";
+"Connect to gitch" = "Csatlakoztatás a gitch-hez";
+"Connect to gitch…" = "Csatlakoztatás a gitch-hez…";
+"Connect this account to gitch?" = "Csatlakoztatod ezt a fiókot a gitch-hez?";
+"Saves this account and the folder rule in gitch, creates an SSH key on this Mac if there is none, registers its public key with %@ using the saved sign-in, and checks the connection. The token and the private key are not stored in gitch." = "Elmenti ezt a fiókot és a mappaszabályt a gitch-ben, SSH-kulcsot hoz létre ezen a Macen, ha nincs, a mentett bejelentkezéssel regisztrálja a nyilvános kulcsot itt: %@, majd ellenőrzi a kapcsolatot. A token és a privát kulcs nem kerül a gitch-be.";
+"Fill in from a saved account" = "Kitöltés mentett fiókból";
+"Uses the account's saved sign-in for the name, email and server, and to register the SSH key." = "A fiók mentett bejelentkezésével tölti ki a nevet, az e-mailt és a szervert, és regisztrálja az SSH-kulcsot.";
+"Defaults to the folder that holds an open repository from this server." = "Alapértelmezés szerint az a mappa, amely a szerver egy megnyitott tárolóját tartalmazza.";
+"Register key with %@…" = "Kulcs regisztrálása itt: %@…";
+"Gitrochi can't read this account's saved sign-in. Restore it in Settings › Accounts and try again." = "A Gitrochi nem tudja olvasni a fiók mentett bejelentkezését. Állítsd vissza a Beállítások › Fiókok menüben, és próbáld újra.";
+"Public key registered with %@." = "A nyilvános kulcs regisztrálva itt: %@.";
+"This public key is already registered with %@." = "Ez a nyilvános kulcs már regisztrálva van itt: %@.";
+"The saved GitHub token can't add SSH keys (it needs the write:public_key scope). Copy the public key below and add it in GitHub's SSH key settings." = "A mentett GitHub-token nem tud SSH-kulcsot hozzáadni (write:public_key jogosultság kell). Másold ki az alábbi nyilvános kulcsot, és add hozzá a GitHub SSH-kulcs beállításaiban.";
+"The saved GitLab token can't add SSH keys (it needs the api scope). Copy the public key below and add it in GitLab's SSH key settings." = "A mentett GitLab-token nem tud SSH-kulcsot hozzáadni (api jogosultság kell). Másold ki az alábbi nyilvános kulcsot, és add hozzá a GitLab SSH-kulcs beállításaiban.";

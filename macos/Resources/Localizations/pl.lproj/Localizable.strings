@@ -2304,3 +2304,16 @@
 "Choose a time" = "Wybierz godzinę";
 "Previous month" = "Poprzedni miesiąc";
 "Next month" = "Następny miesiąc";
+"Connect to gitch" = "Połącz z gitch";
+"Connect to gitch…" = "Połącz z gitch…";
+"Connect this account to gitch?" = "Połączyć to konto z gitch?";
+"Saves this account and the folder rule in gitch, creates an SSH key on this Mac if there is none, registers its public key with %@ using the saved sign-in, and checks the connection. The token and the private key are not stored in gitch." = "Zapisuje to konto i regułę folderu w gitch, tworzy klucz SSH na tym Macu, jeśli go nie ma, rejestruje klucz publiczny w %@ za pomocą zapisanego logowania i sprawdza połączenie. Token i klucz prywatny nie są przechowywane w gitch.";
+"Fill in from a saved account" = "Wypełnij z zapisanego konta";
+"Uses the account's saved sign-in for the name, email and server, and to register the SSH key." = "Używa zapisanego logowania konta do nazwy, e-maila i serwera oraz do rejestracji klucza SSH.";
+"Defaults to the folder that holds an open repository from this server." = "Domyślnie folder zawierający otwarte repozytorium z tego serwera.";
+"Register key with %@…" = "Zarejestruj klucz w %@…";
+"Gitrochi can't read this account's saved sign-in. Restore it in Settings › Accounts and try again." = "Gitrochi nie może odczytać zapisanego logowania tego konta. Przywróć je w Ustawieniach › Konta i spróbuj ponownie.";
+"Public key registered with %@." = "Zarejestrowano klucz publiczny w %@.";
+"This public key is already registered with %@." = "Ten klucz publiczny jest już zarejestrowany w %@.";
+"The saved GitHub token can't add SSH keys (it needs the write:public_key scope). Copy the public key below and add it in GitHub's SSH key settings." = "Zapisany token GitHub nie może dodawać kluczy SSH (wymaga zakresu write:public_key). Skopiuj poniższy klucz publiczny i dodaj go w ustawieniach kluczy SSH w GitHub.";
+"The saved GitLab token can't add SSH keys (it needs the api scope). Copy the public key below and add it in GitLab's SSH key settings." = "Zapisany token GitLab nie może dodawać kluczy SSH (wymaga zakresu api). Skopiuj poniższy klucz publiczny i dodaj go w ustawieniach kluczy SSH w GitLab.";

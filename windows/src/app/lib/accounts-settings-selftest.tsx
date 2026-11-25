@@ -16,7 +16,7 @@ const menuItem = (label: string) => [...document.querySelectorAll<HTMLElement>("
 export const accountsSettingsSelfTest = () => leavingNothingBehind(accountsSettingsStep);
 
 async function accountsSettingsStep(): Promise<[boolean, string]> {
-  const original = { accounts: accounts.accounts, status: accounts.status, disconnect: accounts.disconnect, identities: gitch.accounts };
+  const original = { accounts: accounts.accounts, status: accounts.status, disconnect: accounts.disconnect, identities: gitch.accounts, emails: accounts.gitchEmails };
   const host = document.createElement("div"); host.style.width = "600px"; document.body.append(host);
   const root = createRoot(host);
   const alice: HostAccount = { id: "settings-alice", provider: "github", server: "https://github.com", username: "alice", name: "Alice", avatarURL: null };
@@ -26,6 +26,7 @@ async function accountsSettingsStep(): Promise<[boolean, string]> {
   try {
     accounts.accounts = [alice, carol]; accounts.status = () => "signedIn";
     accounts.disconnect = async (account) => { removed.push(account.id); };
+    accounts.gitchEmails = async () => ["carol@example.invalid", "carol.work@example.invalid"];
     gitch.accounts = async () => [{ id: "alice", hosts: "github.com, ssh.github.com(port 443)", email: "alice@example.invalid", rules: "", sshKey: true }];
     root.render(createElement(AccountsSettings));
     if (!await until(() => host.querySelectorAll("[data-identity]").length === 1)) return [false, "The Git identities did not load"];
@@ -55,6 +56,17 @@ async function accountsSettingsStep(): Promise<[boolean, string]> {
     if (removed.length || $(".remove-account-sheet .shared-sheet-title")?.textContent !== t("Remove @{0}?", "alice")) return [false, "Removing must wait for the confirmation, which names the account"];
     $<HTMLButtonElement>(".remove-account-sheet .shared-sheet-cancel")!.click();
     if (!await until(() => !$(".remove-account-sheet")) || removed.length) return [false, "Cancel must leave the account"];
+    // Connect to gitch… fills the details from the saved account and asks only for the email among several
+    host.querySelector<HTMLButtonElement>(`[data-account="${carol.id}"] .accounts-settings-more`)!.click();
+    if (!await until(() => !!menuItem("Connect to gitch…"))) return [false, "Connect to gitch… is missing from the account's ⋯ menu"];
+    menuItem("Connect to gitch…")!.click();
+    const connectButton = () => [...host.querySelectorAll<HTMLButtonElement>("button")].find((b) => b.textContent === t("Connect to gitch"));
+    if (!await until(() => !!connectButton())) return [false, "Connect to gitch… did not open the filled-in setup"];
+    const panel = host.querySelector<HTMLElement>(`[aria-label="${t("Git account setup")}"]`)!;
+    if (panel.querySelector<HTMLInputElement>("input")?.value !== "carol" || panel.querySelector<HTMLSelectElement>("select")?.options.length !== 2 || !panel.textContent?.includes("gitlab.example.com")) return [false, "The setup must take the name, server and email choices from the saved account"];
+    if (connectButton()!.disabled) return [false, "Connect to gitch must be ready with the filled-in details"];
+    [...panel.querySelectorAll<HTMLButtonElement>("button")].find((b) => b.textContent === t("Close"))!.click();
+    if (!await until(() => !host.querySelector(`[aria-label="${t("Git account setup")}"]`))) return [false, "The setup did not close"];
     host.querySelector<HTMLButtonElement>(`[data-account="${carol.id}"] .accounts-settings-more`)!.click();
     if (!await until(() => !!menuItem("Remove account…"))) return [false, "The GitLab account's ⋯ menu did not open"];
     if (menuItems().includes(t("Renew browser connection…"))) return [false, "Browser renewal is for github.com accounts only"];
@@ -62,10 +74,10 @@ async function accountsSettingsStep(): Promise<[boolean, string]> {
     if (!await until(() => !!$(".remove-account-sheet .shared-sheet-primary"))) return [false, "Remove account… did not ask for the GitLab account"];
     $<HTMLButtonElement>(".remove-account-sheet .shared-sheet-primary")!.click();
     if (!await until(() => removed.join() === carol.id && !$(".remove-account-sheet"))) return [false, `Confirming must remove that account only: ${removed.join()}`];
-    return [true, "Hosting accounts and Git identities are listed once with their state; Add account… opens the shared sheet; Remove account… is the last ⋯ item and asks first"];
+    return [true, "Hosting accounts and Git identities are listed once with their state; Add account… opens the shared sheet; Connect to gitch… fills the setup from the saved account; Remove account… is the last ⋯ item and asks first"];
   } finally {
     root.unmount(); await sleep(25); host.remove();
     document.querySelector(".add-account-sheet")?.closest(".modal-backdrop")?.remove(); document.querySelector(".remove-account-sheet")?.closest(".modal-backdrop")?.remove();
-    accounts.accounts = original.accounts; accounts.status = original.status; accounts.disconnect = original.disconnect; gitch.accounts = original.identities;
+    accounts.accounts = original.accounts; accounts.status = original.status; accounts.disconnect = original.disconnect; gitch.accounts = original.identities; accounts.gitchEmails = original.emails;
   }
 }

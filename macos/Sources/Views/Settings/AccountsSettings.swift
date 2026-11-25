@@ -58,6 +58,8 @@ struct AccountsSettings: View {
                 GitHubBrowserLoginSheet(expectedLogin: expected, capability: capability) { _, _ in }
             case .identity(let id):
                 GitchAccountSetupSheet(accountID: id) { Task { identities = await Gitch.accounts() } }
+            case .gitch(let account):
+                GitchAccountSetupSheet(accountID: nil, hosting: account) { Task { identities = await Gitch.accounts() } }
             }
         }
         // removing deletes the token, so it asks first
@@ -115,11 +117,14 @@ enum AccountsSettingsSheet: Identifiable {
     case login(String?, Gitch.GitHubLoginCapability)
     /// A Git identity's SSH setup, or a new identity
     case identity(String?)
+    /// A saved hosting account connected to gitch from its token
+    case gitch(HostAccount)
     var id: String {
         switch self {
         case .add(let provider, let server): "add:\(provider.rawValue):\(server ?? "")"
         case .login(let expected, let capability): "login:\(expected ?? "new"):\(capability.rawValue)"
         case .identity(let id): "identity:\(id ?? "new")"
+        case .gitch(let account): "gitch:\(account.id)"
         }
     }
 }
@@ -183,6 +188,7 @@ struct HostingAccountRow: View {
                     Button("Renew browser connection…") { present(.login(account.username, .standard)) }
                     Button("Connect project access…") { present(.login(account.username, .projects)) }
                 }
+                Button("Connect to gitch…") { present(.gitch(account)) }
                 Button("Copy username") {
                     NSPasteboard.general.clearContents(); NSPasteboard.general.setString(account.username, forType: .string)
                 }

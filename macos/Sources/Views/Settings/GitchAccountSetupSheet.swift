@@ -1,9 +1,13 @@
 import SwiftUI
 import AppKit
 
-/// Native account setup; every write has a separate user action and the CLI owns all configuration.
+/// Native account setup; every write has a separate user action and the CLI owns all configuration. Started from a
+/// saved hosting account (or filled in from one), it fills the details from that account's token and one action saves
+/// the account, creates the key, registers it with the token and checks the connection (GitchConnect).
 struct GitchAccountSetupSheet: View {
     let accountID: String?
+    /// The saved hosting account to connect
+    var hosting: HostAccount? = nil
     let onChanged: () -> Void
     @Environment(\.dismiss) private var dismiss
     @ViewState private var id = ""
@@ -25,12 +29,18 @@ struct GitchAccountSetupSheet: View {
     @ViewState private var showBrowserLogin = false
     @ViewState private var confirmRegistration = false
     @ViewState private var registrationResult: String?
+    /// The saved hosting account the details came from; its token registers the key
+    @ViewState private var source: HostAccount?
+    @ViewState private var emailChoices: [String] = []
+    /// Why the key has to be copied by hand (the token lacks the scope)
+    @ViewState private var keyNote: String?
+    @ViewState private var confirmConnect = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text(accountID == nil ? String(localized: "Add Git account") : String(localized: "Connect with SSH")).font(.title2.weight(.semibold)).padding(20)
+            Text(source != nil && setup == nil ? String(localized: "Connect to gitch") : accountID == nil ? String(localized: "Add Git account") : String(localized: "Connect with SSH")).font(.title2.weight(.semibold)).padding(20)
             Form {
-                if let setup { keySteps(setup) } else if accountID == nil { accountForm }
+                if let setup { keySteps(setup) } else if let source, accountID == nil { connectForm(source) } else if accountID == nil { accountForm }
                 else if !busy { Button("Reload account") { Task { await refreshKey() } } }
                 if let error { Section { Text(error).foregroundStyle(.red).font(.callout).textSelection(.enabled) } }
             }
@@ -39,7 +49,9 @@ struct GitchAccountSetupSheet: View {
                 if busy { ProgressView().controlSize(.small); Text("Working…").foregroundStyle(.secondary) }
                 Spacer()
                 Button(setup == nil ? String(localized: "Cancel") : String(localized: "Done")) { dismiss() }.keyboardShortcut(.cancelAction).disabled(busy)
-                if setup == nil && accountID == nil {
+                if setup == nil && accountID == nil && source != nil {
+                    Button("Connect to gitch") { confirmConnect = true }.buttonStyle(.borderedProminent).disabled(!valid || busy)
+                } else if setup == nil && accountID == nil {
                     Button("Save account") { confirmAdd = true }.buttonStyle(.borderedProminent).disabled(!valid || busy)
                 }
             }.padding(20)
@@ -48,6 +60,7 @@ struct GitchAccountSetupSheet: View {
         .interactiveDismissDisabled(busy)
         .task(id: accountID) {
             accounts = await Gitch.accounts()
+            if let hosting { await fill(from: hosting) }
             if let accountID { await perform { setup = try await Gitch.setupAccount(accountID, action: .inspect) } }
         }
         .sheet(isPresented: $showBrowserLogin) { GitHubBrowserLoginSheet(expectedLogin: setup?.id ?? accountID, onConnected: connectedGitHub) }
@@ -56,6 +69,12 @@ struct GitchAccountSetupSheet: View {
             Button("Save account") { Task { await save() } }
         } message: {
             Text("Saves this account and the optional folder rule in gitch. SSH keys and SSH connection settings are prepared separately in the next step.")
+        }
+        .alert("Connect this account to gitch?", isPresented: $confirmConnect) {
+            Button("Cancel", role: .cancel) {}
+            Button("Connect to gitch") { Task { await connect() } }
+        } message: {
+            Text("Saves this account and the folder rule in gitch, creates an SSH key on this Mac if there is none, registers its public key with \(source?.host ?? host) using the saved sign-in, and checks the connection. The token and the private key are not stored in gitch.")
         }
         .alert("Create an SSH key?", isPresented: $confirmKey) {
             Button("Cancel", role: .cancel) {}
@@ -79,6 +98,18 @@ struct GitchAccountSetupSheet: View {
 
     private var accountForm: some View {
         Group {
+            if !AccountStore.shared.accounts.isEmpty {
+                Section {
+                    Menu("Fill in from a saved account") {
+                        ForEach(AccountStore.shared.accounts) { account in
+                            Button { Task { await fill(from: account) } } label: { Text(verbatim: "@" + account.username + " · " + account.host) }
+                        }
+                    }
+                    .disabled(busy)
+                    Text("Uses the account's saved sign-in for the name, email and server, and to register the SSH key.")
+                        .font(.callout).foregroundStyle(.secondary)
+                }
+            }
             Section {
                 Button("Sign in to GitHub in browser…") { showBrowserLogin = true }
                 Text("Browser sign-in fills in your GitHub account and connects pull request features. Review your commit email and choose Save account to continue.")
@@ -124,6 +155,38 @@ struct GitchAccountSetupSheet: View {
         }
     }
 
+    /// The details filled in from the saved account; the email is asked only when there is more than one
+    private func connectForm(_ account: HostAccount) -> some View {
+        Group {
+            Section {
+                Label("@" + account.username, symbol: "person.crop.circle").font(.headline)
+                TextField("Account name", text: $id)
+                if emailChoices.count > 1 {
+                    Picker("Commit email", selection: $email) {
+                        ForEach(emailChoices, id: \.self) { Text(verbatim: $0).tag($0) }
+                    }
+                } else {
+                    TextField("Commit email", text: $email, prompt: Text("you@example.com"))
+                }
+                LabeledContent("Git server") { Text(verbatim: host) }
+                LabeledContent("SSH port") {
+                    TextField("SSH port", text: $port).labelsHidden().accessibilityLabel("SSH port").help(portHelp)
+                }
+            } header: { Text("1. Account") }
+            Section {
+                Toggle("Choose this account automatically in a folder", isOn: $useFolder)
+                if useFolder {
+                    HStack {
+                        Text(folder.isEmpty ? String(localized: "No folder selected") : folder).lineLimit(1).truncationMode(.head).foregroundStyle(.secondary)
+                        Spacer()
+                        Button("Choose folder…") { chooseFolder() }
+                    }
+                }
+                Text("Defaults to the folder that holds an open repository from this server.").font(.caption).foregroundStyle(.secondary)
+            } header: { Text("Folder") }
+        }
+    }
+
     private func keySteps(_ state: Gitch.AccountSetup) -> some View {
         Group {
             Section {
@@ -154,7 +217,12 @@ struct GitchAccountSetupSheet: View {
                         Button(copied ? String(localized: "Copied") : String(localized: "Copy public key")) { copyKey(state.publicKey) }
                         Button("Open SSH key settings") { openRegistration(state.registrationURL) }
                     }
-                    if state.host.lowercased() == "github.com" {
+                    if let keyNote {
+                        Label(keyNote, symbol: "exclamationmark.triangle.fill").font(.callout).foregroundStyle(.orange)
+                    }
+                    if let source, source.host == state.host.lowercased() {
+                        Button("Register key with \(source.host)…") { Task { await registerHosted(source) } }.disabled(busy)
+                    } else if state.host.lowercased() == "github.com" {
                         if AccountStore.shared.accounts(for: .github).contains(where: { $0.username.caseInsensitiveCompare(state.id) == .orderedSame }) {
                             Button("Register key with GitHub…") { confirmRegistration = true }.disabled(busy)
                         } else {
@@ -242,6 +310,64 @@ struct GitchAccountSetupSheet: View {
                 }
             }
         }
+    }
+
+    /// Fills the form from a saved hosting account's token: name, server, email choices and the folder rule's default
+    private func fill(from account: HostAccount) async {
+        await perform {
+            guard let token = AccountStore.shared.token(for: account) else {
+                throw Gitch.Failure(message: String(localized: "Gitrochi can't read this account's saved sign-in. Restore it in Settings › Accounts and try again."))
+            }
+            let found = try await GitchConnect.emails(for: account, token: token)
+            source = account
+            id = GitchConnect.accountName(login: account.username, host: account.host, taken: accounts)
+            host = account.host; port = "22"
+            emailChoices = found; email = found.first ?? ""
+            let open = Workspace.shared.openRepositories.compactMap { store in store.url.map { (path: $0.path, host: store.target?.host) } }
+            let parent = GitchConnect.defaultFolder(repositories: open, host: account.host, home: NSHomeDirectory())
+            useFolder = parent != nil; folder = parent ?? ""
+        }
+    }
+
+    /// Saves (or reuses) the gitch account, creates its key when missing, registers it with the saved token and checks
+    /// the connection; a token without the scope leaves the copy-the-key step with the reason
+    private func connect() async {
+        guard let source else { return }
+        await perform {
+            var state: Gitch.AccountSetup
+            if let existing = GitchConnect.existing(name: id.trimmed, host: host.trimmed, in: accounts) {
+                state = try await Gitch.setupAccount(existing.id, action: .inspect)
+            } else {
+                state = try await Gitch.addAccount(id: id.trimmed, email: email.trimmed, host: host.trimmed, port: Int(port) ?? 22, folder: useFolder ? folder : nil, via: nil)
+            }
+            setup = state; onChanged()
+            if !state.keyExists || state.aliasConfigured == false {
+                state = try await Gitch.setupAccount(state.id, action: .generate)
+                setup = state; onChanged()
+            }
+            try await register(state, with: source)
+        }
+    }
+
+    private func registerHosted(_ account: HostAccount) async {
+        guard let setup else { return }
+        await perform { try await register(setup, with: account) }
+    }
+
+    private func register(_ state: Gitch.AccountSetup, with account: HostAccount) async throws {
+        guard let token = AccountStore.shared.token(for: account) else {
+            throw Gitch.Failure(message: String(localized: "Gitrochi can't read this account's saved sign-in. Restore it in Settings › Accounts and try again."))
+        }
+        do {
+            let created = try await GitchConnect.registerKey(account, token: token, publicKey: state.publicKey, title: "Gitrochi (\(state.id))")
+            keyNote = nil
+            registrationResult = created ? String(localized: "Public key registered with \(account.host).") : String(localized: "This public key is already registered with \(account.host).")
+        } catch let missing as GitchConnect.MissingScope {
+            keyNote = missing.message
+            return
+        }
+        setup = try await Gitch.setupAccount(state.id, action: .check)
+        onChanged()
     }
 
     private func registerKey() async {

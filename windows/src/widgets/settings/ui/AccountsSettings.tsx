@@ -28,7 +28,7 @@ export function AccountsSettings() {
   useObserve(accounts);
   const [sheet, setSheet] = useState<AccountsSheet | null>(null);
   const [identities, setIdentities] = useState<GitchAccount[]>([]);
-  const [wizard, setWizard] = useState<{ account: GitchAccount | null } | null>(null);
+  const [wizard, setWizard] = useState<{ account: GitchAccount | null; hosting?: HostAccount } | null>(null);
   const [removing, setRemoving] = useState(false);
   const loadIdentities = () => gitch.accounts().then(setIdentities, () => setIdentities([]));
   useEffect(() => { void loadIdentities(); }, []);
@@ -42,6 +42,7 @@ export function AccountsSettings() {
       { label: t("Connect project access…"), onClick: () => setSheet({ kind: "login", expectedLogin: account.username, capability: "projects" }) },
     );
     // removing is destructive, so it comes last after a divider and asks first
+    items.push({ label: t("Connect to gitch…"), onClick: () => setWizard({ account: null, hosting: account }) });
     items.push({ label: t("Copy username"), onClick: () => void navigator.clipboard.writeText(account.username).catch(() => {}) }, "divider", { label: t("Remove account…"), danger: true, onClick: () => setSheet({ kind: "remove", account }) });
     showMenuBelow(button, items);
   };
@@ -102,7 +103,7 @@ export function AccountsSettings() {
         </div>
       </section>
       <p className="accounts-settings-note"><People size={13} strokeWidth={1.4} />{t("An account used under several host labels (HTTPS, SSH on port 443) is listed once.")}</p>
-      {wizard && <GitchAccountSetup key={wizard.account?.id ?? "new"} account={wizard.account} accounts={identities} onSaved={() => void loadIdentities()} onClose={() => setWizard(null)} />}
+      {wizard && <GitchAccountSetup key={wizard.account?.id ?? wizard.hosting?.id ?? "new"} account={wizard.account} hosting={wizard.hosting ?? null} accounts={identities} onSaved={() => void loadIdentities()} onClose={() => setWizard(null)} />}
 
       {sheet?.kind === "add" && createPortal(<AddAccountSheet provider={sheet.provider} server={sheet.server} onClose={() => setSheet(null)} />, document.body)}
       {sheet?.kind === "login" && createPortal(<GitHubSignInSheet expectedLogin={sheet.expectedLogin} capability={sheet.capability} onClose={() => setSheet(null)} />, document.body)}

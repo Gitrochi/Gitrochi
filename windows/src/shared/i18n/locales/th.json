@@ -2327,5 +2327,17 @@
   "Choose a date": "เลือกวันที่",
   "Choose a time": "เลือกเวลา",
   "Previous month": "เดือนก่อนหน้า",
-  "Next month": "เดือนถัดไป"
+  "Next month": "เดือนถัดไป",
+  "Connect to gitch": "เชื่อมต่อกับ gitch",
+  "Connect to gitch…": "เชื่อมต่อกับ gitch…",
+  "Saves this account and the folder rule in gitch, creates an SSH key on this computer if there is none, registers its public key with {0} using the saved sign-in, and checks the connection. The token and the private key are not stored in gitch.": "บันทึกบัญชีนี้และกฎโฟลเดอร์ใน gitch สร้างคีย์ SSH บนคอมพิวเตอร์เครื่องนี้หากยังไม่มี ลงทะเบียนพับลิกคีย์กับ {0} ด้วยการลงชื่อเข้าใช้ที่บันทึกไว้ แล้วตรวจสอบการเชื่อมต่อ โทเค็นและไพรเวตคีย์จะไม่ถูกเก็บใน gitch",
+  "Fill in from a saved account": "กรอกจากบัญชีที่บันทึกไว้",
+  "Uses the account's saved sign-in for the name, email and server, and to register the SSH key.": "ใช้การลงชื่อเข้าใช้ที่บันทึกไว้ของบัญชีสำหรับชื่อ อีเมล และเซิร์ฟเวอร์ และเพื่อลงทะเบียนคีย์ SSH",
+  "Defaults to the folder that holds an open repository from this server.": "ค่าเริ่มต้นคือโฟลเดอร์ที่มีรีโพสิทอรีที่เปิดอยู่จากเซิร์ฟเวอร์นี้",
+  "Register key with {0}…": "ลงทะเบียนคีย์กับ {0}…",
+  "Gitrochi can't read this account's saved sign-in. Restore it in Settings › Accounts and try again.": "Gitrochi อ่านการลงชื่อเข้าใช้ที่บันทึกไว้ของบัญชีนี้ไม่ได้ กู้คืนได้ที่ การตั้งค่า › บัญชี แล้วลองอีกครั้ง",
+  "Public key registered with {0}.": "ลงทะเบียนพับลิกคีย์กับ {0} แล้ว",
+  "This public key is already registered with {0}.": "พับลิกคีย์นี้ลงทะเบียนกับ {0} อยู่แล้ว",
+  "The saved GitHub token can't add SSH keys (it needs the write:public_key scope). Copy the public key below and add it in GitHub's SSH key settings.": "โทเค็น GitHub ที่บันทึกไว้เพิ่มคีย์ SSH ไม่ได้ (ต้องมีสิทธิ์ write:public_key) คัดลอกพับลิกคีย์ด้านล่างแล้วเพิ่มในการตั้งค่าคีย์ SSH ของ GitHub",
+  "The saved GitLab token can't add SSH keys (it needs the api scope). Copy the public key below and add it in GitLab's SSH key settings.": "โทเค็น GitLab ที่บันทึกไว้เพิ่มคีย์ SSH ไม่ได้ (ต้องมีสิทธิ์ api) คัดลอกพับลิกคีย์ด้านล่างแล้วเพิ่มในการตั้งค่าคีย์ SSH ของ GitLab"
 }

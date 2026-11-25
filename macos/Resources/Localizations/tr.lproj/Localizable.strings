@@ -2308,3 +2308,16 @@
 "Choose a time" = "Saat seç";
 "Previous month" = "Önceki ay";
 "Next month" = "Sonraki ay";
+"Connect to gitch" = "gitch’e bağla";
+"Connect to gitch…" = "gitch’e bağla…";
+"Connect this account to gitch?" = "Bu hesap gitch’e bağlansın mı?";
+"Saves this account and the folder rule in gitch, creates an SSH key on this Mac if there is none, registers its public key with %@ using the saved sign-in, and checks the connection. The token and the private key are not stored in gitch." = "Bu hesabı ve klasör kuralını gitch’e kaydeder, bu Mac’te SSH anahtarı yoksa oluşturur, kayıtlı oturumla ortak anahtarı %@ üzerine kaydeder ve bağlantıyı denetler. Belirteç ve özel anahtar gitch’te saklanmaz.";
+"Fill in from a saved account" = "Kayıtlı bir hesaptan doldur";
+"Uses the account's saved sign-in for the name, email and server, and to register the SSH key." = "Ad, e-posta ve sunucu için ve SSH anahtarını kaydetmek için hesabın kayıtlı oturumunu kullanır.";
+"Defaults to the folder that holds an open repository from this server." = "Varsayılan olarak bu sunucudan açık bir deposu bulunan klasör.";
+"Register key with %@…" = "Anahtarı %@ üzerine kaydet…";
+"Gitrochi can't read this account's saved sign-in. Restore it in Settings › Accounts and try again." = "Gitrochi bu hesabın kayıtlı oturumunu okuyamıyor. Ayarlar › Hesaplar’dan geri yükleyip yeniden deneyin.";
+"Public key registered with %@." = "Ortak anahtar %@ üzerine kaydedildi.";
+"This public key is already registered with %@." = "Bu ortak anahtar zaten %@ üzerinde kayıtlı.";
+"The saved GitHub token can't add SSH keys (it needs the write:public_key scope). Copy the public key below and add it in GitHub's SSH key settings." = "Kayıtlı GitHub belirteci SSH anahtarı ekleyemiyor (write:public_key izni gerekir). Aşağıdaki ortak anahtarı kopyalayıp GitHub’ın SSH anahtarı ayarlarına ekleyin.";
+"The saved GitLab token can't add SSH keys (it needs the api scope). Copy the public key below and add it in GitLab's SSH key settings." = "Kayıtlı GitLab belirteci SSH anahtarı ekleyemiyor (api izni gerekir). Aşağıdaki ortak anahtarı kopyalayıp GitLab’ın SSH anahtarı ayarlarına ekleyin.";

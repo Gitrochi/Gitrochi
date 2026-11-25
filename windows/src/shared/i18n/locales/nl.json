@@ -2288,5 +2288,17 @@
   "Choose a date": "Datum kiezen",
   "Choose a time": "Tijd kiezen",
   "Previous month": "Vorige maand",
-  "Next month": "Volgende maand"
+  "Next month": "Volgende maand",
+  "Connect to gitch": "Verbinden met gitch",
+  "Connect to gitch…": "Verbinden met gitch…",
+  "Saves this account and the folder rule in gitch, creates an SSH key on this computer if there is none, registers its public key with {0} using the saved sign-in, and checks the connection. The token and the private key are not stored in gitch.": "Bewaart dit account en de mapregel in gitch, maakt een SSH-sleutel op deze computer als er geen is, registreert de publieke sleutel bij {0} met de bewaarde aanmelding en controleert de verbinding. Het token en de privésleutel worden niet in gitch bewaard.",
+  "Fill in from a saved account": "Invullen vanuit een bewaard account",
+  "Uses the account's saved sign-in for the name, email and server, and to register the SSH key.": "Gebruikt de bewaarde aanmelding van het account voor naam, e-mail en server, en om de SSH-sleutel te registreren.",
+  "Defaults to the folder that holds an open repository from this server.": "Standaard de map met een geopende repository van deze server.",
+  "Register key with {0}…": "Sleutel registreren bij {0}…",
+  "Gitrochi can't read this account's saved sign-in. Restore it in Settings › Accounts and try again.": "Gitrochi kan de bewaarde aanmelding van dit account niet lezen. Herstel die in Instellingen › Accounts en probeer het opnieuw.",
+  "Public key registered with {0}.": "Publieke sleutel geregistreerd bij {0}.",
+  "This public key is already registered with {0}.": "Deze publieke sleutel is al geregistreerd bij {0}.",
+  "The saved GitHub token can't add SSH keys (it needs the write:public_key scope). Copy the public key below and add it in GitHub's SSH key settings.": "Het bewaarde GitHub-token kan geen SSH-sleutels toevoegen (het heeft de scope write:public_key nodig). Kopieer de publieke sleutel hieronder en voeg die toe in de SSH-sleutelinstellingen van GitHub.",
+  "The saved GitLab token can't add SSH keys (it needs the api scope). Copy the public key below and add it in GitLab's SSH key settings.": "Het bewaarde GitLab-token kan geen SSH-sleutels toevoegen (het heeft de scope api nodig). Kopieer de publieke sleutel hieronder en voeg die toe in de SSH-sleutelinstellingen van GitLab."
 }

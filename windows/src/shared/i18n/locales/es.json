@@ -2368,5 +2368,17 @@
   "Choose a date": "Elegir fecha",
   "Choose a time": "Elegir hora",
   "Previous month": "Mes anterior",
-  "Next month": "Mes siguiente"
+  "Next month": "Mes siguiente",
+  "Connect to gitch": "Conectar con gitch",
+  "Connect to gitch…": "Conectar con gitch…",
+  "Saves this account and the folder rule in gitch, creates an SSH key on this computer if there is none, registers its public key with {0} using the saved sign-in, and checks the connection. The token and the private key are not stored in gitch.": "Guarda esta cuenta y la regla de carpeta en gitch, crea una clave SSH en este equipo si no hay ninguna, registra su clave pública en {0} con el inicio de sesión guardado y comprueba la conexión. El token y la clave privada no se guardan en gitch.",
+  "Fill in from a saved account": "Rellenar desde una cuenta guardada",
+  "Uses the account's saved sign-in for the name, email and server, and to register the SSH key.": "Usa el inicio de sesión guardado de la cuenta para el nombre, el correo y el servidor, y para registrar la clave SSH.",
+  "Defaults to the folder that holds an open repository from this server.": "De forma predeterminada, la carpeta que contiene un repositorio abierto de este servidor.",
+  "Register key with {0}…": "Registrar la clave en {0}…",
+  "Gitrochi can't read this account's saved sign-in. Restore it in Settings › Accounts and try again.": "Gitrochi no puede leer el inicio de sesión guardado de esta cuenta. Restáuralo en Ajustes › Cuentas e inténtalo de nuevo.",
+  "Public key registered with {0}.": "Clave pública registrada en {0}.",
+  "This public key is already registered with {0}.": "Esta clave pública ya está registrada en {0}.",
+  "The saved GitHub token can't add SSH keys (it needs the write:public_key scope). Copy the public key below and add it in GitHub's SSH key settings.": "El token de GitHub guardado no puede añadir claves SSH (necesita el permiso write:public_key). Copia la clave pública de abajo y añádela en los ajustes de claves SSH de GitHub.",
+  "The saved GitLab token can't add SSH keys (it needs the api scope). Copy the public key below and add it in GitLab's SSH key settings.": "El token de GitLab guardado no puede añadir claves SSH (necesita el permiso api). Copia la clave pública de abajo y añádela en los ajustes de claves SSH de GitLab."
 }
