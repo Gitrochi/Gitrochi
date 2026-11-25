@@ -100,8 +100,26 @@ export async function send<T>(p: Provider, url: string, token: string, method = 
 /** 응답 본문(204 처럼 본문이 없어도 성공이면 빈 문자열) */
 export async function sendRaw(p: Provider, url: string, token: string, method = "GET", body?: unknown): Promise<string> {
   const r = await ipc.http(method, url, headers(p, token, body !== undefined), body === undefined ? undefined : JSON.stringify(body));
+  // GitLab redirects reads of a renamed or transferred project but refuses writes by its old path; retry by its id
+  const moved = p === "gitlab" && r.status === 405 && method !== "GET" ? movedProject(url) : null;
+  if (moved) {
+    const id = (JSON.parse(await sendRaw(p, moved.lookup, token)) as { id?: unknown }).id;
+    if (typeof id === "number") return sendRaw(p, moved.url(id), token, method, body);
+  }
   if (r.status < 200 || r.status >= 300) throw new HostingError(r.status, r.body);
   return r.body;
+}
+
+/** The project lookup for a GitLab API address that names its project by path, and the same address by numeric id. (macOS: movedProject) */
+export function movedProject(url: string): { lookup: string; url: (id: number) => string } | null {
+  const marker = url.indexOf("/projects/");
+  if (marker < 0) return null;
+  const start = marker + "/projects/".length;
+  const rest = url.slice(start).search(/[/?]/);
+  const end = rest < 0 ? url.length : start + rest;
+  if (!url.slice(start, end).toLowerCase().includes("%2f")) return null;
+  const head = url.slice(0, start), tail = url.slice(end);
+  return { lookup: url.slice(0, end), url: (id) => head + id + tail };
 }
 
 export const projectID = (path: string) => encodeURIComponent(path);

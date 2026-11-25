@@ -115,8 +115,30 @@ enum Hosting {
     static func data(_ req: URLRequest) async throws -> Data {
         let (data, resp) = try await URLSession.shared.data(for: req)
         let code = (resp as? HTTPURLResponse)?.statusCode ?? 0
+        // GitLab redirects reads of a renamed or transferred project but refuses writes by its old path; retry by its id
+        if code == 405, req.httpMethod != "GET", let url = req.url?.absoluteString, let moved = movedProject(url),
+           let address = URL(string: moved.lookup) {
+            var lookup = URLRequest(url: address, timeoutInterval: 30)
+            for header in ["User-Agent", "PRIVATE-TOKEN"] { lookup.setValue(req.value(forHTTPHeaderField: header), forHTTPHeaderField: header) }
+            let project = try JSONSerialization.jsonObject(with: try await Self.data(lookup)) as? [String: Any]
+            if let id = (project?["id"] as? NSNumber)?.intValue, let retried = URL(string: moved.url(id)) {
+                var retry = req
+                retry.url = retried
+                return try await Self.data(retry)
+            }
+        }
         guard (200..<300).contains(code) else { throw HostingError(status: code, body: data) }
         return data
+    }
+
+    /// The project lookup for a GitLab API address that names its project by path, and the same address by numeric id.
+    /// (Windows: movedProject)
+    static func movedProject(_ url: String) -> (lookup: String, url: (Int) -> String)? {
+        guard let start = url.range(of: "/projects/")?.upperBound else { return nil }
+        let end = url[start...].firstIndex { $0 == "/" || $0 == "?" } ?? url.endIndex
+        guard url[start..<end].lowercased().contains("%2f") else { return nil }
+        let head = String(url[..<start]), tail = String(url[end...])
+        return (head + url[start..<end], { head + String($0) + tail })
     }
 
     static func projectID(_ path: String) -> String {
