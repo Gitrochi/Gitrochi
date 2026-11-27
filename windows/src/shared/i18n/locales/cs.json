@@ -2326,5 +2326,6 @@
   "Public key registered with {0}.": "Veřejný klíč byl zaregistrován u {0}.",
   "This public key is already registered with {0}.": "Tento veřejný klíč už je u {0} zaregistrován.",
   "The saved GitHub token can't add SSH keys (it needs the write:public_key scope). Copy the public key below and add it in GitHub's SSH key settings.": "Uložený token GitHubu nemůže přidávat klíče SSH (potřebuje oprávnění write:public_key). Zkopírujte veřejný klíč níže a přidejte ho v nastavení klíčů SSH na GitHubu.",
-  "The saved GitLab token can't add SSH keys (it needs the api scope). Copy the public key below and add it in GitLab's SSH key settings.": "Uložený token GitLabu nemůže přidávat klíče SSH (potřebuje oprávnění api). Zkopírujte veřejný klíč níže a přidejte ho v nastavení klíčů SSH na GitLabu."
+  "The saved GitLab token can't add SSH keys (it needs the api scope). Copy the public key below and add it in GitLab's SSH key settings.": "Uložený token GitLabu nemůže přidávat klíče SSH (potřebuje oprávnění api). Zkopírujte veřejný klíč níže a přidejte ho v nastavení klíčů SSH na GitLabu.",
+  "Checking the Git account and repository…": "Kontrola účtu Git a repozitáře…"
 }

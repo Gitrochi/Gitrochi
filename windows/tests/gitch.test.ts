@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { countGraphRules, fromPosix, graphDiffRelations, linkTarget, parseAccounts, parseBackups, parseGraphCheck, parseGraphSummary, parseGraphWatchURL, parsePreflight, parseStatus, plain, supportsGraph, versionAtLeast, versionOf } from "@/entities/gitch";
+import { commitStop, countGraphRules, fromPosix, graphDiffRelations, linkTarget, parseAccounts, parseBackups, parseGraphCheck, parseGraphSummary, parseGraphWatchURL, parsePreflight, parseStatus, plain, supportsGraph, versionAtLeast, versionOf, type GitchLevel, type GitchPreflight, type GitchStatus } from "@/entities/gitch";
 
 describe("구조 그래프(gitch graph)", () => {
   it("감시 서버 주소는 반환한 로컬 HTTP 주소만 연다", () => {
@@ -125,5 +125,26 @@ describe("gitch 출력 읽기", () => {
     expect(fromPosix("/c/Users/me/x")).toBe("C:/Users/me/x");
     expect(fromPosix("C:/Users/me/x")).toBe("C:/Users/me/x");
     expect(plain("\u001b[32m✔\u001b[0m 설치 완료 \n")).toBe("✔ 설치 완료");
+  });
+});
+
+describe("Commit and gitch preflight", () => {
+  const status = (over: Partial<GitchStatus> = {}): GitchStatus => ({ inRepo: true, lockedAccount: null, account: "alice", accountSource: "lock", pushAccount: "alice", ignored: false, ...over });
+  const preflight = (...checks: [GitchLevel, string][]): GitchPreflight => ({
+    result: checks.some(([level]) => level === "STOP") ? "STOP" : "OK",
+    checks: checks.map(([level, code]) => ({ level, code, message: code })),
+  });
+
+  it("stops only for the commit author in a repository gitch manages", () => {
+    expect(commitStop(status(), preflight(["STOP", "identity"]))?.message).toBe("identity");
+    expect(commitStop(status(), preflight(["OK", "identity"], ["STOP", "lock_unknown"]))?.code).toBe("lock_unknown");
+  });
+
+  it("lets plain git commit where gitch has no say", () => {
+    // no account picked, push-only and repository-state stops
+    for (const code of ["no_account", "no_binding", "push_url", "in_progress", "conflicts", "bad_config"]) expect(commitStop(status(), preflight(["STOP", code]))).toBeNull();
+    expect(commitStop(status({ ignored: true }), preflight(["STOP", "identity"]))).toBeNull();
+    expect(commitStop(null, preflight(["STOP", "identity"]))).toBeNull();
+    expect(commitStop(status(), null)).toBeNull();
   });
 });

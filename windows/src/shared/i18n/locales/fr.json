@@ -2381,5 +2381,6 @@
   "Public key registered with {0}.": "Clé publique enregistrée auprès de {0}.",
   "This public key is already registered with {0}.": "Cette clé publique est déjà enregistrée auprès de {0}.",
   "The saved GitHub token can't add SSH keys (it needs the write:public_key scope). Copy the public key below and add it in GitHub's SSH key settings.": "Le jeton GitHub enregistré ne peut pas ajouter de clés SSH (il lui faut la portée write:public_key). Copiez la clé publique ci-dessous et ajoutez-la dans les réglages de clés SSH de GitHub.",
-  "The saved GitLab token can't add SSH keys (it needs the api scope). Copy the public key below and add it in GitLab's SSH key settings.": "Le jeton GitLab enregistré ne peut pas ajouter de clés SSH (il lui faut la portée api). Copiez la clé publique ci-dessous et ajoutez-la dans les réglages de clés SSH de GitLab."
+  "The saved GitLab token can't add SSH keys (it needs the api scope). Copy the public key below and add it in GitLab's SSH key settings.": "Le jeton GitLab enregistré ne peut pas ajouter de clés SSH (il lui faut la portée api). Copiez la clé publique ci-dessous et ajoutez-la dans les réglages de clés SSH de GitLab.",
+  "Checking the Git account and repository…": "Vérification du compte Git et du dépôt…"
 }

@@ -1,4 +1,4 @@
-import { countGraphRules, gitch, type GitchAccount, type GitchBackup, type GitchPreflight, type GitchStatus, type GraphCheck, type GraphPage, type GraphRelation, type GraphReview, graphRelations, graphRulesFile } from "@/entities/gitch";
+import { commitStop, countGraphRules, gitch, type GitchAccount, type GitchBackup, type GitchPreflight, type GitchStatus, type GraphCheck, type GraphPage, type GraphRelation, type GraphReview, graphRelations, graphRulesFile } from "@/entities/gitch";
 import { ipc } from "@/shared/api";
 import { joinPath } from "@/shared/config";
 import { t } from "@/shared/i18n";
@@ -31,6 +31,18 @@ export abstract class RepoGitch extends RepoTerminal {
   gitchProtected = new Set<string>();
   gitchChecking = false;
   private gitchGen = 0;
+
+  // Commit waits for gitch only where gitch manages the repository (macOS: canCommit · commitGuidance)
+  override get canCommit() {
+    return super.canCommit && !this.gitchChecking && !commitStop(this.gitchStatus, this.gitchPreflight);
+  }
+
+  override get commitBlockedReason(): string | null {
+    if (!super.canCommit) return super.commitBlockedReason;
+    if (this.gitchChecking) return t("Checking the Git account and repository…");
+    // gitch's own words for what stops the commit; its commands are in the terminal
+    return commitStop(this.gitchStatus, this.gitchPreflight)?.message ?? null;
+  }
 
   /** 사용자가 누를 때만 분석한다. 분석하는 동안에도 스테이지나 커밋 작업은 막지 않는다. */
   commitImpact: CommitImpactState | null = null;

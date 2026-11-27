@@ -2272,7 +2272,6 @@
 "Commit 1 file" = "Закомітити 1 файл";
 "Commit %lld files" = "Закомітити файли (%lld)";
 "Couldn't write the commit message" = "Не вдалося написати повідомлення коміту";
-"gitch stopped this commit. Run gitch doctor in the terminal." = "gitch зупинив цей коміт. Запустіть gitch doctor у терміналі.";
 "Amend previous commit" = "Доповнити попередній коміт";
 "Split into commits…" = "Розбити на коміти…";
 "AI message" = "Повідомлення від ШІ";

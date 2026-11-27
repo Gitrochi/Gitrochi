@@ -2256,7 +2256,6 @@
 "Commit 1 file" = "Zatwierdź 1 plik";
 "Commit %lld files" = "Zatwierdź pliki (%lld)";
 "Couldn't write the commit message" = "Nie udało się napisać komunikatu commita";
-"gitch stopped this commit. Run gitch doctor in the terminal." = "gitch zatrzymał ten commit. Uruchom gitch doctor w terminalu.";
 "Amend previous commit" = "Popraw poprzedni commit";
 "Split into commits…" = "Podziel na commity…";
 "AI message" = "Wiadomość AI";

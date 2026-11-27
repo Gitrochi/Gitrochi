@@ -2242,7 +2242,6 @@
 "Commit 1 file" = "Fazer commit de 1 arquivo";
 "Commit %lld files" = "Fazer commit de %lld arquivos";
 "Couldn't write the commit message" = "Não foi possível escrever a mensagem do commit";
-"gitch stopped this commit. Run gitch doctor in the terminal." = "O gitch bloqueou este commit. Execute gitch doctor no terminal.";
 "Amend previous commit" = "Corrigir o commit anterior (amend)";
 "Split into commits…" = "Dividir em commits…";
 "AI message" = "Mensagem por IA";

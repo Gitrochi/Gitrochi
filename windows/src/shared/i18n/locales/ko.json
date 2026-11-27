@@ -4041,5 +4041,6 @@
   "Public key registered with {0}.": "{0}에 공개키를 등록했습니다.",
   "This public key is already registered with {0}.": "이 공개키는 이미 {0}에 등록되어 있습니다.",
   "The saved GitHub token can't add SSH keys (it needs the write:public_key scope). Copy the public key below and add it in GitHub's SSH key settings.": "저장된 GitHub 토큰으로는 SSH 키를 추가할 수 없습니다(write:public_key 권한 필요). 아래 공개키를 복사해 GitHub의 SSH 키 설정에 추가하세요.",
-  "The saved GitLab token can't add SSH keys (it needs the api scope). Copy the public key below and add it in GitLab's SSH key settings.": "저장된 GitLab 토큰으로는 SSH 키를 추가할 수 없습니다(api 권한 필요). 아래 공개키를 복사해 GitLab의 SSH 키 설정에 추가하세요."
+  "The saved GitLab token can't add SSH keys (it needs the api scope). Copy the public key below and add it in GitLab's SSH key settings.": "저장된 GitLab 토큰으로는 SSH 키를 추가할 수 없습니다(api 권한 필요). 아래 공개키를 복사해 GitLab의 SSH 키 설정에 추가하세요.",
+  "Checking the Git account and repository…": "Git 계정과 저장소를 점검하는 중…"
 }

@@ -2478,5 +2478,6 @@
   "Public key registered with {0}.": "已向 {0} 注册公钥。",
   "This public key is already registered with {0}.": "此公钥已注册到 {0}。",
   "The saved GitHub token can't add SSH keys (it needs the write:public_key scope). Copy the public key below and add it in GitHub's SSH key settings.": "已保存的 GitHub 令牌无法添加 SSH 密钥（需要 write:public_key 权限）。请复制下面的公钥，并在 GitHub 的 SSH 密钥设置中添加。",
-  "The saved GitLab token can't add SSH keys (it needs the api scope). Copy the public key below and add it in GitLab's SSH key settings.": "已保存的 GitLab 令牌无法添加 SSH 密钥（需要 api 权限）。请复制下面的公钥，并在 GitLab 的 SSH 密钥设置中添加。"
+  "The saved GitLab token can't add SSH keys (it needs the api scope). Copy the public key below and add it in GitLab's SSH key settings.": "已保存的 GitLab 令牌无法添加 SSH 密钥（需要 api 权限）。请复制下面的公钥，并在 GitLab 的 SSH 密钥设置中添加。",
+  "Checking the Git account and repository…": "正在检查 Git 账户和仓库…"
 }

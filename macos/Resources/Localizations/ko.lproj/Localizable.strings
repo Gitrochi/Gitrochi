@@ -4014,7 +4014,6 @@
 "Commit 1 file" = "1개 파일 커밋";
 "Commit %lld files" = "%lld개 파일 커밋";
 "Couldn't write the commit message" = "커밋 메시지를 쓰지 못했습니다";
-"gitch stopped this commit. Run gitch doctor in the terminal." = "gitch가 이 커밋을 막았습니다. 터미널에서 gitch doctor를 실행하세요.";
 "Amend previous commit" = "이전 커밋 수정";
 "Split into commits…" = "나눠서 커밋…";
 "Latest on %@" = "%@의 최신 커밋";

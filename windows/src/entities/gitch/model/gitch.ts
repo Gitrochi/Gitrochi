@@ -89,6 +89,16 @@ export function parsePreflight(json: string): GitchPreflight | null {
   }
 }
 
+/**
+ * The preflight stop that keeps the app from committing, if any. (macOS: Gitch.commitStop)
+ * Only who the commit is by counts, and only where gitch manages the repository: a repository with no gitch
+ * account, or one set to be ignored, commits with plain git. Push and repository-state stops belong to their own flows.
+ */
+export function commitStop(status: GitchStatus | null, preflight: GitchPreflight | null) {
+  if (!status || status.ignored) return null;
+  return preflight?.checks.find((c) => c.level === "STOP" && (c.code === "identity" || c.code === "lock_unknown")) ?? null;
+}
+
 export function parseAccounts(json: string): GitchAccount[] {
   try {
     const o = JSON.parse(json) as { accounts?: Partial<GitchAccount>[] };

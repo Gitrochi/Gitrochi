@@ -2234,7 +2234,6 @@
 "Commit 1 file" = "Commit 1 tệp";
 "Commit %lld files" = "Commit %lld tệp";
 "Couldn't write the commit message" = "Không thể viết thông điệp commit";
-"gitch stopped this commit. Run gitch doctor in the terminal." = "gitch đã chặn commit này. Hãy chạy gitch doctor trong terminal.";
 "Amend previous commit" = "Amend commit trước";
 "Split into commits…" = "Chia thành nhiều commit…";
 "AI message" = "Thông điệp AI";

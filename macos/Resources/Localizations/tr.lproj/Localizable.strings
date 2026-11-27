@@ -2260,7 +2260,6 @@
 "Commit 1 file" = "1 dosyayı commit et";
 "Commit %lld files" = "%lld dosyayı commit et";
 "Couldn't write the commit message" = "Commit mesajı yazılamadı";
-"gitch stopped this commit. Run gitch doctor in the terminal." = "gitch bu commit'i durdurdu. Terminalde gitch doctor komutunu çalıştırın.";
 "Amend previous commit" = "Önceki commit'i düzelt";
 "Split into commits…" = "Commit'lere böl…";
 "AI message" = "AI mesajı";

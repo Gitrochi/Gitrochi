@@ -2258,7 +2258,6 @@
 "Commit 1 file" = "1 fájl commitolása";
 "Commit %lld files" = "%lld fájl commitolása";
 "Couldn't write the commit message" = "Nem sikerült megírni a commit üzenetét";
-"gitch stopped this commit. Run gitch doctor in the terminal." = "A gitch leállította ezt a commitot. Futtassa a gitch doctor parancsot a terminálban.";
 "Amend previous commit" = "Előző commit módosítása";
 "Split into commits…" = "Commitokra bontás…";
 "AI message" = "AI-üzenet";

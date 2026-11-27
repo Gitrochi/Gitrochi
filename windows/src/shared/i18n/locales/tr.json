@@ -2331,5 +2331,6 @@
   "Public key registered with {0}.": "Ortak anahtar {0} üzerine kaydedildi.",
   "This public key is already registered with {0}.": "Bu ortak anahtar zaten {0} üzerinde kayıtlı.",
   "The saved GitHub token can't add SSH keys (it needs the write:public_key scope). Copy the public key below and add it in GitHub's SSH key settings.": "Kayıtlı GitHub belirteci SSH anahtarı ekleyemiyor (write:public_key izni gerekir). Aşağıdaki ortak anahtarı kopyalayıp GitHub’ın SSH anahtarı ayarlarına ekleyin.",
-  "The saved GitLab token can't add SSH keys (it needs the api scope). Copy the public key below and add it in GitLab's SSH key settings.": "Kayıtlı GitLab belirteci SSH anahtarı ekleyemiyor (api izni gerekir). Aşağıdaki ortak anahtarı kopyalayıp GitLab’ın SSH anahtarı ayarlarına ekleyin."
+  "The saved GitLab token can't add SSH keys (it needs the api scope). Copy the public key below and add it in GitLab's SSH key settings.": "Kayıtlı GitLab belirteci SSH anahtarı ekleyemiyor (api izni gerekir). Aşağıdaki ortak anahtarı kopyalayıp GitLab’ın SSH anahtarı ayarlarına ekleyin.",
+  "Checking the Git account and repository…": "Git hesabı ve depo denetleniyor…"
 }

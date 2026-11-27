@@ -271,7 +271,7 @@ extension RepoStore {
         busy == nil && !summary.trimmed.isEmpty
             && (!status.staged.isEmpty || amend || repoState == .merging)
             && status.conflicted.isEmpty
-            && !gitchChecking && gitchPreflight?.result != "STOP"
+            && !gitchChecking && Gitch.commitStop(status: gitchStatus, preflight: gitchPreflight) == nil
     }
 
     /// 비활성 버튼 옆에서 현재 필요한 다음 행동을 안내한다. Git 실행 조건은 canCommit 에 유지한다.
@@ -279,9 +279,9 @@ extension RepoStore {
         if let busy { return busy }
         if !status.conflicted.isEmpty { return String(localized: "Resolve conflicts before committing.") }
         if gitchChecking { return String(localized: "Checking the Git account and repository…") }
-        if gitchPreflight?.result == "STOP" {
+        if let stop = Gitch.commitStop(status: gitchStatus, preflight: gitchPreflight) {
             // gitch's own words for what stops the commit; its commands are in the terminal
-            return gitchPreflight?.checks.first { $0.level == "STOP" }?.message ?? String(localized: "gitch stopped this commit. Run gitch doctor in the terminal.")
+            return stop.message
         }
         if status.staged.isEmpty && !amend && repoState != .merging {
             return String(localized: "Stage the files you want to include.")

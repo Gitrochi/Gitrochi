@@ -2230,7 +2230,6 @@
 "Commit 1 file" = "Commit 1 file";
 "Commit %lld files" = "Commit %lld file";
 "Couldn't write the commit message" = "Tidak dapat menulis pesan commit";
-"gitch stopped this commit. Run gitch doctor in the terminal." = "gitch menghentikan commit ini. Jalankan gitch doctor di terminal.";
 "Amend previous commit" = "Amend commit sebelumnya";
 "Split into commits…" = "Pecah menjadi beberapa commit…";
 "AI message" = "Pesan AI";
