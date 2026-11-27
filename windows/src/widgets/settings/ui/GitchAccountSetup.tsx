@@ -48,7 +48,9 @@ export function GitchAccountSetup({ account, accounts, hosting = null, onSaved, 
     const server = accountHost(from);
     setSource(from); setId(gitchAccountName(from.username, server, accounts)); setHost(server); setPort("22");
     setEmailChoices(found); setEmail(found[0] ?? "");
-    const parent = defaultGitchFolder(workspace.tabs.filter((tab) => tab.path).map((tab) => ({ path: tab.path!, host: tab.target?.host ?? null })), server, env.home);
+    // a repository on another name of this server (remembered in hostAliases) counts as this server
+    const hostOf = (target: typeof workspace.tabs[number]["target"]) => !target ? null : hostingAccounts.candidates(target).some((a) => a.id === from.id) ? server : target.host;
+    const parent = defaultGitchFolder(workspace.tabs.filter((tab) => tab.path).map((tab) => ({ path: tab.path!, host: hostOf(tab.target) })), server, env.home);
     setUseFolder(!!parent); setFolder(parent ?? "");
   });
   useEffect(() => { if (hosting) void fill(hosting); }, [hosting]);

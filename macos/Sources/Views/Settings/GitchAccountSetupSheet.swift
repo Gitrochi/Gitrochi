@@ -323,7 +323,10 @@ struct GitchAccountSetupSheet: View {
             id = GitchConnect.accountName(login: account.username, host: account.host, taken: accounts)
             host = account.host; port = "22"
             emailChoices = found; email = found.first ?? ""
-            let open = Workspace.shared.openRepositories.compactMap { store in store.url.map { (path: $0.path, host: store.target?.host) } }
+            // a repository on another name of this server (remembered in hostAliases) counts as this server
+            let open = Workspace.shared.openRepositories.compactMap { store in
+                store.url.map { (path: $0.path, host: store.target.map { AccountStore.shared.candidates(for: $0).contains(account) ? account.host : $0.host }) }
+            }
             let parent = GitchConnect.defaultFolder(repositories: open, host: account.host, home: NSHomeDirectory())
             useFolder = parent != nil; folder = parent ?? ""
         }

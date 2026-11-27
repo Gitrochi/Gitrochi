@@ -598,9 +598,13 @@ git config 형식이다. `gitch config set|add|unset <키> <값>` 으로 바꾸�
 	allowRemote = github.com/acme/*
 [org "github.com/acme"]
 	account = alice
+[server "gitlab.example.com"]
+	alias = code.example.org   # 같은 서버의 다른 이름
 ```
 
 고급: `host = github.com via 다른계정` — 이 계정의 신원(이메일)으로 커밋하지만 GitHub 접속은 다른 계정의 SSH 키/로그인을 빌려 쓴다.
+
+같은 서버를 두 이름으로 쓸 때(`gitlab.a.com`, `gitlab.b.com` 이 한 서버): `gitch config add server.gitlab.a.com.alias gitlab.b.com` 으로 한 번 적어 두면 `gitlab.b.com` 원격도 `gitlab.a.com` 서버로 읽어 같은 SSH 별칭·계정을 쓴다. 계정에 없는 서버라고 멈출 때 두 이름이 같은 주소를 가리키면 gitch 가 이 명령을 알려 준다. 같은 주소라도 다른 서비스일 수 있어서 직접 적지는 않는다.
 
 ## GitHub CLI / PR
 
