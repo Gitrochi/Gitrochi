@@ -2196,8 +2196,10 @@ preflight_cmd() {   # 작업/커밋/push 전 한 번에 점검 → PREFLIGHT=OK|
   resolve_repo .
   push_url_alias .
   br=$(cur_branch)
-  [ -n "$R_IGNORED" ] && pf_add WARN ignored "gitch 관리 제외 저장소입니다 (검사 안 함)."
-  if [ -z "$R_ACC" ]; then
+  if [ -n "$R_IGNORED" ]; then
+    # An ignored repository is plain git: no account, author or push address to check, as in the hooks
+    pf_add WARN ignored "gitch 관리 제외 저장소입니다 (검사 안 함)."
+  elif [ -z "$R_ACC" ]; then
     pf_add STOP no_account "이 저장소의 계정이 정해지지 않았습니다 → 사용자에게 계정을 확인한 뒤 gitch use <계정>"
   else
     want=$(acc_email "$R_ACC")
@@ -2221,7 +2223,7 @@ preflight_cmd() {   # 작업/커밋/push 전 한 번에 점검 → PREFLIGHT=OK|
       pf_add WARN rule_mismatch "잠금($R_LOCK)과 규칙($R_DERIVED — $R_DERIVED_NOTE)이 다릅니다. 사용자에게 확인하세요."
     fi
   fi
-  [ -n "$R_LOCK_UNKNOWN" ] && pf_add STOP lock_unknown "잠금 계정 '$R_LOCK' 이 설정에 없습니다 → 사용자에게 확인"
+  [ -n "$R_LOCK_UNKNOWN" ] && [ -z "$R_IGNORED" ] && pf_add STOP lock_unknown "잠금 계정 '$R_LOCK' 이 설정에 없습니다 → 사용자에게 확인"
   repo_state
   if [ -n "$RS_OP" ]; then
     if [ "$RS_CONFLICTS" -gt 0 ]; then pf_add STOP in_progress "$(op_word "$RS_OP") 진행 중, 충돌 파일 ${RS_CONFLICTS}개 → 고친 뒤 git add → gitch continue (취소: gitch abort)"

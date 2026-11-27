@@ -543,7 +543,7 @@ gitch flow run --help            # that subcommand's usage; nothing is planned, 
 | push | 폴더 허용 목록(`allowRemote`) 밖으로 push | `GITCH_SKIP=remote` |
 | 커밋 메시지 | 계정 정책 `aiTrailer = strip` 이면 `Co-Authored-By: Claude` 같은 줄 제거 | — |
 
-- `gitch.ignore` 로 저장소를 검사에서 뺄 수 있다: `gitch ignore` / `gitch ignore --off`.
+- `gitch.ignore` 로 저장소를 검사에서 뺄 수 있다: `gitch ignore` / `gitch ignore --off`. 훅과 `gitch preflight` 의 계정 검사가 모두 빠지고, 앱도 그 저장소의 커밋을 막지 않는다.
 - `user.useConfigOnly=true` 를 켜서, 규칙 밖 저장소에서 `me@컴퓨터이름` 같은 엉뚱한 작성자로 커밋되지 않게 한다.
 - 설정 파일이 깨지면 커밋을 막지 않고 경고만 한다 (`gitch doctor` 로 확인).
 - gitch 를 찾지 못하면(앱을 지웠거나 옮김) 커밋 · push 는 막지 않고 `[gitch] ~/bin/gitch 를 찾을 수 없어 검사를 건너뜁니다` 한 줄로 알린다. 훅 연결 스크립트는 gitch 가 바뀌면 다음 훅 실행 때 스스로 새로 쓴다.

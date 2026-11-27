@@ -31,6 +31,16 @@ test_preflight_detects_problems() {
   run gitch status --strict; assert_ok
 }
 
+test_preflight_skips_account_checks_when_ignored() {
+  misc_repo
+  git config user.email bob@example.com
+  git config gitch.account nobody
+  git config gitch.ignore true
+  run gitch preflight --json --no-fetch; assert_ok
+  assert_eq "$(printf '%s' "$OUT" | jq -r .result)" "WARN"
+  assert_eq "$(printf '%s' "$OUT" | jq -r '[.checks[].code] | join(",")')" "ignored"
+}
+
 test_status_warns_rule_mismatch() {
   mk_config; install_quiet
   mk_remote_seeded github-alice teamb/x
