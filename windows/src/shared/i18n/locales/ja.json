@@ -3035,5 +3035,6 @@
   "Public key registered with {0}.": "{0}に公開鍵を登録しました。",
   "This public key is already registered with {0}.": "この公開鍵はすでに{0}に登録されています。",
   "The saved GitHub token can't add SSH keys (it needs the write:public_key scope). Copy the public key below and add it in GitHub's SSH key settings.": "保存済みのGitHubトークンではSSHキーを追加できません（write:public_key スコープが必要）。下の公開鍵をコピーして、GitHubのSSHキー設定に追加してください。",
-  "The saved GitLab token can't add SSH keys (it needs the api scope). Copy the public key below and add it in GitLab's SSH key settings.": "保存済みのGitLabトークンではSSHキーを追加できません（api スコープが必要）。下の公開鍵をコピーして、GitLabのSSHキー設定に追加してください。"
+  "The saved GitLab token can't add SSH keys (it needs the api scope). Copy the public key below and add it in GitLab's SSH key settings.": "保存済みのGitLabトークンではSSHキーを追加できません（api スコープが必要）。下の公開鍵をコピーして、GitLabのSSHキー設定に追加してください。",
+  "Checking the Git account and repository…": "Git アカウントとリポジトリを確認しています…"
 }

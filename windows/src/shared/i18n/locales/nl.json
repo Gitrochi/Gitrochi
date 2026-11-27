@@ -2300,5 +2300,6 @@
   "Public key registered with {0}.": "Publieke sleutel geregistreerd bij {0}.",
   "This public key is already registered with {0}.": "Deze publieke sleutel is al geregistreerd bij {0}.",
   "The saved GitHub token can't add SSH keys (it needs the write:public_key scope). Copy the public key below and add it in GitHub's SSH key settings.": "Het bewaarde GitHub-token kan geen SSH-sleutels toevoegen (het heeft de scope write:public_key nodig). Kopieer de publieke sleutel hieronder en voeg die toe in de SSH-sleutelinstellingen van GitHub.",
-  "The saved GitLab token can't add SSH keys (it needs the api scope). Copy the public key below and add it in GitLab's SSH key settings.": "Het bewaarde GitLab-token kan geen SSH-sleutels toevoegen (het heeft de scope api nodig). Kopieer de publieke sleutel hieronder en voeg die toe in de SSH-sleutelinstellingen van GitLab."
+  "The saved GitLab token can't add SSH keys (it needs the api scope). Copy the public key below and add it in GitLab's SSH key settings.": "Het bewaarde GitLab-token kan geen SSH-sleutels toevoegen (het heeft de scope api nodig). Kopieer de publieke sleutel hieronder en voeg die toe in de SSH-sleutelinstellingen van GitLab.",
+  "Checking the Git account and repository…": "Git-account en repository controleren…"
 }

@@ -2299,5 +2299,6 @@
   "Public key registered with {0}.": "Kunci publik didaftarkan ke {0}.",
   "This public key is already registered with {0}.": "Kunci publik ini sudah terdaftar di {0}.",
   "The saved GitHub token can't add SSH keys (it needs the write:public_key scope). Copy the public key below and add it in GitHub's SSH key settings.": "Token GitHub tersimpan tidak dapat menambahkan kunci SSH (perlu cakupan write:public_key). Salin kunci publik di bawah dan tambahkan di pengaturan kunci SSH GitHub.",
-  "The saved GitLab token can't add SSH keys (it needs the api scope). Copy the public key below and add it in GitLab's SSH key settings.": "Token GitLab tersimpan tidak dapat menambahkan kunci SSH (perlu cakupan api). Salin kunci publik di bawah dan tambahkan di pengaturan kunci SSH GitLab."
+  "The saved GitLab token can't add SSH keys (it needs the api scope). Copy the public key below and add it in GitLab's SSH key settings.": "Token GitLab tersimpan tidak dapat menambahkan kunci SSH (perlu cakupan api). Salin kunci publik di bawah dan tambahkan di pengaturan kunci SSH GitLab.",
+  "Checking the Git account and repository…": "Memeriksa akun Git dan repositori…"
 }

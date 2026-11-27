@@ -2328,5 +2328,6 @@
   "Public key registered with {0}.": "A nyilvános kulcs regisztrálva itt: {0}.",
   "This public key is already registered with {0}.": "Ez a nyilvános kulcs már regisztrálva van itt: {0}.",
   "The saved GitHub token can't add SSH keys (it needs the write:public_key scope). Copy the public key below and add it in GitHub's SSH key settings.": "A mentett GitHub-token nem tud SSH-kulcsot hozzáadni (write:public_key jogosultság kell). Másold ki az alábbi nyilvános kulcsot, és add hozzá a GitHub SSH-kulcs beállításaiban.",
-  "The saved GitLab token can't add SSH keys (it needs the api scope). Copy the public key below and add it in GitLab's SSH key settings.": "A mentett GitLab-token nem tud SSH-kulcsot hozzáadni (api jogosultság kell). Másold ki az alábbi nyilvános kulcsot, és add hozzá a GitLab SSH-kulcs beállításaiban."
+  "The saved GitLab token can't add SSH keys (it needs the api scope). Copy the public key below and add it in GitLab's SSH key settings.": "A mentett GitLab-token nem tud SSH-kulcsot hozzáadni (api jogosultság kell). Másold ki az alábbi nyilvános kulcsot, és add hozzá a GitLab SSH-kulcs beállításaiban.",
+  "Checking the Git account and repository…": "A Git-fiók és a tároló ellenőrzése…"
 }

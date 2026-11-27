@@ -2301,5 +2301,6 @@
   "Public key registered with {0}.": "Đã đăng ký khóa công khai với {0}.",
   "This public key is already registered with {0}.": "Khóa công khai này đã được đăng ký với {0}.",
   "The saved GitHub token can't add SSH keys (it needs the write:public_key scope). Copy the public key below and add it in GitHub's SSH key settings.": "Token GitHub đã lưu không thể thêm khóa SSH (cần quyền write:public_key). Hãy sao chép khóa công khai bên dưới và thêm vào phần cài đặt khóa SSH của GitHub.",
-  "The saved GitLab token can't add SSH keys (it needs the api scope). Copy the public key below and add it in GitLab's SSH key settings.": "Token GitLab đã lưu không thể thêm khóa SSH (cần quyền api). Hãy sao chép khóa công khai bên dưới và thêm vào phần cài đặt khóa SSH của GitLab."
+  "The saved GitLab token can't add SSH keys (it needs the api scope). Copy the public key below and add it in GitLab's SSH key settings.": "Token GitLab đã lưu không thể thêm khóa SSH (cần quyền api). Hãy sao chép khóa công khai bên dưới và thêm vào phần cài đặt khóa SSH của GitLab.",
+  "Checking the Git account and repository…": "Đang kiểm tra tài khoản Git và kho lưu trữ…"
 }

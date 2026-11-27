@@ -2310,7 +2310,6 @@
 "Commit 1 file" = "Valider 1 fichier";
 "Commit %lld files" = "Valider %lld fichiers";
 "Couldn't write the commit message" = "Impossible de rédiger le message de commit";
-"gitch stopped this commit. Run gitch doctor in the terminal." = "gitch a bloqué ce commit. Exécutez gitch doctor dans le terminal.";
 "Amend previous commit" = "Modifier le commit précédent";
 "Split into commits…" = "Découper en commits…";
 "AI message" = "Message par IA";

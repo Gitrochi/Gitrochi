@@ -50,6 +50,14 @@ enum Gitch {
         let checks: [Check]
     }
 
+    /// The preflight stop that keeps the app from committing, if any. (Windows: commitStop)
+    /// Only who the commit is by counts, and only where gitch manages the repository: a repository with no gitch
+    /// account, or one set to be ignored, commits with plain git. Push and repository-state stops belong to their own flows.
+    static func commitStop(status: Status?, preflight: Preflight?) -> Preflight.Check? {
+        guard let status, status.ignored != true else { return nil }
+        return preflight?.checks.first { $0.level == "STOP" && ["identity", "lock_unknown"].contains($0.code) }
+    }
+
     /// gitch list --json 의 계정(rules 는 gitch 가 낸 문구 그대로)
     struct Account: Decodable, Identifiable, Equatable {
         let id: String

@@ -2935,7 +2935,6 @@
 "Commit 1 file" = "1 個のファイルをコミット";
 "Commit %lld files" = "%lld 個のファイルをコミット";
 "Couldn't write the commit message" = "コミットメッセージを作成できませんでした";
-"gitch stopped this commit. Run gitch doctor in the terminal." = "gitch がこのコミットを止めました。ターミナルで gitch doctor を実行してください。";
 "Amend previous commit" = "直前のコミットを修正";
 "Split into commits…" = "分割してコミット…";
 "AI message" = "AI で作成";

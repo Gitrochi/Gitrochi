@@ -2267,7 +2267,6 @@
 "Commit 1 file" = "คอมมิต 1 ไฟล์";
 "Commit %lld files" = "คอมมิต %lld ไฟล์";
 "Couldn't write the commit message" = "เขียนข้อความคอมมิตไม่ได้";
-"gitch stopped this commit. Run gitch doctor in the terminal." = "gitch หยุดคอมมิตนี้ไว้ ให้รัน gitch doctor ในเทอร์มินัล";
 "Amend previous commit" = "แก้ไขคอมมิตก่อนหน้า (amend)";
 "Split into commits…" = "แบ่งเป็นหลายคอมมิต…";
 "AI message" = "ข้อความจาก AI";

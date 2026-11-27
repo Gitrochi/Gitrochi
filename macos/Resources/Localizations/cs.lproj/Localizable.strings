@@ -2254,7 +2254,6 @@
 "Commit 1 file" = "Commitnout 1 soubor";
 "Commit %lld files" = "Commitnout soubory (%lld)";
 "Couldn't write the commit message" = "Zprávu commitu se nepodařilo napsat";
-"gitch stopped this commit. Run gitch doctor in the terminal." = "gitch tento commit zastavil. Spusťte v terminálu gitch doctor.";
 "Amend previous commit" = "Opravit předchozí commit (amend)";
 "Split into commits…" = "Rozdělit do commitů…";
 "AI message" = "Zpráva od AI";

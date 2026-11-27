@@ -2264,7 +2264,6 @@
 "Commit 1 file" = "1 Datei committen";
 "Commit %lld files" = "%lld Dateien committen";
 "Couldn't write the commit message" = "Die Commit-Nachricht konnte nicht geschrieben werden";
-"gitch stopped this commit. Run gitch doctor in the terminal." = "gitch hat diesen Commit gestoppt. Führen Sie gitch doctor im Terminal aus.";
 "Amend previous commit" = "Vorherigen Commit ändern";
 "Split into commits…" = "In Commits aufteilen…";
 "AI message" = "KI-Nachricht";

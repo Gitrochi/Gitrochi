@@ -2343,5 +2343,6 @@
   "Public key registered with {0}.": "Відкритий ключ зареєстровано в {0}.",
   "This public key is already registered with {0}.": "Цей відкритий ключ уже зареєстровано в {0}.",
   "The saved GitHub token can't add SSH keys (it needs the write:public_key scope). Copy the public key below and add it in GitHub's SSH key settings.": "Збережений токен GitHub не може додавати SSH-ключі (потрібна область write:public_key). Скопіюйте відкритий ключ нижче й додайте його в налаштуваннях SSH-ключів GitHub.",
-  "The saved GitLab token can't add SSH keys (it needs the api scope). Copy the public key below and add it in GitLab's SSH key settings.": "Збережений токен GitLab не може додавати SSH-ключі (потрібна область api). Скопіюйте відкритий ключ нижче й додайте його в налаштуваннях SSH-ключів GitLab."
+  "The saved GitLab token can't add SSH keys (it needs the api scope). Copy the public key below and add it in GitLab's SSH key settings.": "Збережений токен GitLab не може додавати SSH-ключі (потрібна область api). Скопіюйте відкритий ключ нижче й додайте його в налаштуваннях SSH-ключів GitLab.",
+  "Checking the Git account and repository…": "Перевірка облікового запису Git і репозиторію…"
 }

@@ -2415,7 +2415,6 @@
 "Commit 1 file" = "提交 1 个文件";
 "Commit %lld files" = "提交 %lld 个文件";
 "Couldn't write the commit message" = "无法撰写提交信息";
-"gitch stopped this commit. Run gitch doctor in the terminal." = "gitch 阻止了此提交。请在终端中运行 gitch doctor。";
 "Amend previous commit" = "修补上一个提交";
 "Split into commits…" = "拆分提交…";
 "AI message" = "AI 撰写";

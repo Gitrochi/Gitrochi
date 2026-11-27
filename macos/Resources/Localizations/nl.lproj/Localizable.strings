@@ -2227,7 +2227,6 @@
 "Commit 1 file" = "1 bestand committen";
 "Commit %lld files" = "%lld bestanden committen";
 "Couldn't write the commit message" = "Kan het commitbericht niet schrijven";
-"gitch stopped this commit. Run gitch doctor in the terminal." = "gitch heeft deze commit tegengehouden. Voer gitch doctor uit in de terminal.";
 "Amend previous commit" = "Vorige commit aanpassen";
 "Split into commits…" = "Opsplitsen in commits…";
 "AI message" = "AI-bericht";

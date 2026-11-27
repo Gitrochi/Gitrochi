@@ -2339,5 +2339,6 @@
   "Public key registered with {0}.": "ลงทะเบียนพับลิกคีย์กับ {0} แล้ว",
   "This public key is already registered with {0}.": "พับลิกคีย์นี้ลงทะเบียนกับ {0} อยู่แล้ว",
   "The saved GitHub token can't add SSH keys (it needs the write:public_key scope). Copy the public key below and add it in GitHub's SSH key settings.": "โทเค็น GitHub ที่บันทึกไว้เพิ่มคีย์ SSH ไม่ได้ (ต้องมีสิทธิ์ write:public_key) คัดลอกพับลิกคีย์ด้านล่างแล้วเพิ่มในการตั้งค่าคีย์ SSH ของ GitHub",
-  "The saved GitLab token can't add SSH keys (it needs the api scope). Copy the public key below and add it in GitLab's SSH key settings.": "โทเค็น GitLab ที่บันทึกไว้เพิ่มคีย์ SSH ไม่ได้ (ต้องมีสิทธิ์ api) คัดลอกพับลิกคีย์ด้านล่างแล้วเพิ่มในการตั้งค่าคีย์ SSH ของ GitLab"
+  "The saved GitLab token can't add SSH keys (it needs the api scope). Copy the public key below and add it in GitLab's SSH key settings.": "โทเค็น GitLab ที่บันทึกไว้เพิ่มคีย์ SSH ไม่ได้ (ต้องมีสิทธิ์ api) คัดลอกพับลิกคีย์ด้านล่างแล้วเพิ่มในการตั้งค่าคีย์ SSH ของ GitLab",
+  "Checking the Git account and repository…": "กำลังตรวจสอบบัญชี Git และที่เก็บ…"
 }
