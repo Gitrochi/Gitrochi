@@ -125,3 +125,24 @@ test_resolve_rules_order() {
   cd "$HOME/Develop/corp/norem" && run gitch status --json
   assert_eq "$(printf '%s' "$OUT" | jq -r .derivedAccount)" "carol"
 }
+
+test_config_server_alias_reads_another_name_as_the_server() {
+  mk_config
+  printf '10.0.0.7 gitlab.example.com\n10.0.0.7 code.example.org\n10.0.0.9 other.example.net\n' > "$HOME/hosts"
+  export GITCH_HOSTS="$HOME/hosts"
+  mk_repo "$HOME/Develop/corp/app" https://code.example.org/grp/app.git
+  cd "$HOME/Develop/corp/app" || return 1
+  run gitch use carol; assert_fail
+  assert_out "carol 계정에는 code.example.org 서버가 없습니다"
+  assert_out "gitch config add server.gitlab.example.com.alias code.example.org"
+  git remote set-url origin https://other.example.net/grp/app.git
+  run gitch use carol; assert_fail
+  assert_no_out "server.gitlab.example.com.alias" "a different address gets no suggestion"
+  git remote set-url origin https://code.example.org/grp/app.git
+  run gitch config add server.gitlab.example.com.alias code.example.org --yes; assert_ok
+  run gitch use carol; assert_ok
+  assert_eq "$(git remote get-url origin)" "git@gitlab-carol:grp/app.git"
+  run gitch config add server.nowhere.example.alias code2.example.org --yes; assert_fail; assert_out "되돌렸습니다"
+  run gitch config check; assert_ok
+  unset GITCH_HOSTS
+}
