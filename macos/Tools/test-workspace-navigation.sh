@@ -90,8 +90,27 @@ import SwiftUI
         store.gitchChecking = true
         precondition(!store.canCommit)
         store.gitchChecking = false
-        store.gitchPreflight = Gitch.Preflight(result: "STOP", checks: [])
-        precondition(!store.canCommit, "A known gitch STOP must remain blocked")
+        func gitchStatus(ignored: Bool) -> Gitch.Status {
+            try! JSONDecoder().decode(Gitch.Status.self, from: Data(#"{"inRepo":true,"account":"alice","accountSource":"lock","ignored":\#(ignored)}"#.utf8))
+        }
+        func stop(_ code: String) -> Gitch.Preflight {
+            Gitch.Preflight(result: "STOP", checks: [.init(level: "STOP", code: code, message: "gitch: \(code)")])
+        }
+        store.gitchStatus = gitchStatus(ignored: false)
+        store.gitchPreflight = stop("identity")
+        precondition(!store.canCommit && store.commitGuidance == "gitch: identity", "A wrong author in a gitch repository must remain blocked")
+        store.gitchPreflight = stop("lock_unknown")
+        precondition(!store.canCommit, "An unknown locked account must remain blocked")
+        for code in ["no_account", "push_url", "no_binding", "in_progress"] {
+            store.gitchPreflight = stop(code)
+            precondition(store.canCommit, "Plain git commits through \(code)")
+        }
+        store.gitchStatus = gitchStatus(ignored: true)
+        store.gitchPreflight = stop("identity")
+        precondition(store.canCommit, "An ignored repository commits with plain git")
+        store.gitchStatus = nil
+        precondition(store.canCommit, "A repository gitch doesn't manage commits with plain git")
+        store.gitchStatus = gitchStatus(ignored: false)
         store.gitchPreflight = Gitch.Preflight(result: "WARN", checks: [])
         precondition(store.canCommit, "Warnings remain reviewable without blocking")
         for width: CGFloat in [410, 520, 780, 1200] {
