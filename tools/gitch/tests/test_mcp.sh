@@ -211,3 +211,42 @@ test_mcp_guard_asks_like_the_matching_gitch_commands() {
   mcpt_expect_guard none mcp__gitch__push '{}' "$app"
   mcpt_expect_guard none mcp__gitch__pr_create '{"title":"t"}' "$app"
 }
+
+test_mcp_instructions_describe_the_project_folder() {
+  local cfg="$HOME/.config/gitch/config" text
+  mcpt_alice_repo
+  mcpt_session "$MCPT_INIT"
+  text=$(mcpt_response 0 | jq -r '.result.instructions')
+  case "$text" in *'repository app on main, locked to the account alice.'*) ;; *) fail "no folder line:\n$text" ;; esac
+  case "$text" in *'Every push and new pull request asks the user first.'*) ;; *) fail "no ask policy:\n$text" ;; esac
+  case "$text" in *'force push'*) ;; *) fail "does not say what is left to the user:\n$text" ;; esac
+  case "$text" in *'bob'*|*'@example.com'*) fail "other accounts or emails leak into the instructions:\n$text" ;; esac
+  git config -f "$cfg" gitch.aiPush branch
+  git switch -q -c feature/y; git config --unset gitch.account
+  mcpt_session "$MCPT_INIT"
+  text=$(mcpt_response 0 | jq -r '.result.instructions')
+  case "$text" in *'Pushes to work branches go ahead'*) ;; *) fail "no branch policy:\n$text" ;; esac
+  case "$text" in *'on feature/y, not locked to an account yet'*) ;; *) fail "no unlocked line:\n$text" ;; esac
+  cd "$T" || fail cd
+  mkdir -p plain && cd plain || fail cd
+  mcpt_session "$MCPT_INIT"
+  case "$(mcpt_response 0 | jq -r '.result.instructions')" in *'project folder is the repository'*) fail 'a folder line outside a repository' ;; esac
+}
+
+test_mcp_prompts_become_commands() {
+  mcpt_alice_repo
+  mcpt_session "$MCPT_INIT" '{"jsonrpc":"2.0","id":1,"method":"prompts/list"}' \
+    '{"jsonrpc":"2.0","id":2,"method":"prompts/get","params":{"name":"commit","arguments":{"focus":"only the docs"}}}' \
+    '{"jsonrpc":"2.0","id":3,"method":"prompts/get","params":{"name":"pr"}}' \
+    '{"jsonrpc":"2.0","id":4,"method":"prompts/get","params":{"name":"nope"}}'
+  assert_ok
+  assert_eq "$(mcpt_response 0 | jq -r '.result.capabilities.prompts.listChanged')" false
+  assert_eq "$(mcpt_response 1 | jq -r '[.result.prompts[].name] | join(" ")')" 'commit pr'
+  assert_eq "$(mcpt_response 2 | jq -r '.result.messages[0].role')" user
+  case "$(mcpt_response 2 | jq -r '.result.messages[0].content.text')" in
+    *'Call preflight'*'Focus: only the docs') ;; *) fail "commit prompt:\n$(mcpt_response 2)" ;; esac
+  case "$(mcpt_response 3 | jq -r '.result.messages[0].content.text')" in
+    *'Call pr_create'*) ;; *) fail "pr prompt:\n$(mcpt_response 3)" ;; esac
+  case "$(mcpt_response 3 | jq -r '.result.messages[0].content.text')" in *'Notes:'*) fail 'empty notes are left out' ;; esac
+  assert_eq "$(mcpt_response 4 | jq -r '.error.code')" -32602
+}

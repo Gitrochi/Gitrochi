@@ -6401,11 +6401,65 @@ mcp_initialize() {   # $1 initialize params → MCP_RESULT; the client's name se
   client=$(lower "$(printf '%s' "$1" | jq -r '.clientInfo.name // "" | tostring')")
   case "$client" in *claude*) MCP_ACTOR=claude ;; *codex*) MCP_ACTOR=codex ;; *cursor*) MCP_ACTOR=cursor ;; *gemini*) MCP_ACTOR=gemini ;; *) MCP_ACTOR=ai ;; esac
   MCP_RESULT=$(jq -cn --arg v "$version" --arg gv "$GITCH_VERSION" --arg i "$(mcp_instructions)" \
-    '{protocolVersion: $v, capabilities: {tools: {listChanged: false}}, serverInfo: {name: "gitch", title: "gitch", version: $gv}, instructions: $i}')
+    '{protocolVersion: $v, capabilities: {tools: {listChanged: false}, prompts: {listChanged: false}}, serverInfo: {name: "gitch", title: "gitch", version: $gv}, instructions: $i}')
 }
 
-mcp_instructions() {
-  printf '%s' "gitch manages several Git accounts on this computer: each repository is locked to one account, and commits and pushes are checked for the author, secrets, big files and force pushes. Use these tools for that Git work instead of composing gitch or git commands. They act on the folder the server started in unless you pass repository. When a result shows a [gitch] refusal, report it to the user and do not work around it."
+mcp_instructions() {   # what the agent needs to know, for the folder the server started in (read when the client connects)
+  local top branch lock policy
+  case "$(g_push_mode)" in
+    allow) policy="Pushes and pull requests go ahead without asking; the checks still run." ;;
+    branch) policy="Pushes to work branches go ahead; pushes to the default or a protected branch and new pull requests ask the user first." ;;
+    *) policy="Every push and new pull request asks the user first." ;;
+  esac
+  printf '%s\n' "gitch manages several Git accounts on this computer: each repository is locked to one account, and commits and pushes are checked for the author, secrets, big files and force pushes." \
+    "Use these tools for Git work in place of git or gitch commands: status and preflight before acting, commit with one topic's files at a time, push, pr_create, pull and continue for updates and conflicts, test for the affected tests." \
+    "Tools act on the project folder unless you pass repository; pass it for other repositories and worktrees." \
+    "$policy" \
+    "When a result shows a [gitch] refusal or preflight answers STOP, report it to the user and do not work around it." \
+    "Left to the user: force push, amend, undo, unlocking or changing a repository's account, restoring a rescue point, and trusting flow files."
+  top=$(git -C "$MCP_ROOT" rev-parse --show-toplevel 2>/dev/null) || return 0
+  branch=$(git -C "$MCP_ROOT" symbolic-ref --short HEAD 2>/dev/null) || branch="a detached HEAD"
+  lock=$(git -C "$MCP_ROOT" config --get gitch.account 2>/dev/null)
+  if [ -n "$lock" ]; then lock="locked to the account $lock"; else lock="not locked to an account yet (preflight says what to do)"; fi
+  printf 'The project folder is the repository %s on %s, %s.\n' "${top##*/}" "$branch" "$lock"
+}
+
+# Prompts: the client shows them as slash commands (Claude Code: /gitch:commit, /gitch:pr).
+read -r -d '' MCP_PROMPTS <<'EOF'
+[
+  {"name": "commit", "title": "Commit with gitch",
+   "description": "Commit the current changes as small single-topic commits under the repository's account.",
+   "arguments": [{"name": "focus", "description": "What to commit or how to word it (optional)", "required": false}]},
+  {"name": "pr", "title": "Open a pull request with gitch",
+   "description": "Commit what is left, push the branch and open a pull request with the repository account's login.",
+   "arguments": [{"name": "notes", "description": "Anything the description should mention (optional)", "required": false}]}
+]
+EOF
+MCP_PROMPT_COMMIT='Commit the current work in this repository with the gitch tools.
+1. Call preflight. On STOP, stop and report the failed checks.
+2. Call status and group the changed files by topic.
+3. Read a few recent commit subjects (git log --oneline -10) and follow their style.
+4. For each topic, call commit with only that topic'\''s files, a subject and a short body that says why.
+5. Do not push unless I ask.'
+MCP_PROMPT_PR='Open a pull request for the current work with the gitch tools.
+1. Call preflight. On STOP, stop and report the failed checks.
+2. On the default branch, call branch with a short topic name first.
+3. Commit what is left with commit (one topic per commit), then call push.
+4. Write the title and description. Follow .github/PULL_REQUEST_TEMPLATE.md when the repository has one, and name the checks you ran.
+5. Call pr_create and give me the link.'
+
+mcp_prompt() {   # $1 prompts/get params → MCP_RESULT, or MCP_CALL_ERROR for an unknown prompt
+  local name extra text label
+  MCP_RESULT=""; MCP_CALL_ERROR=""
+  name=$(printf '%s' "$1" | jq -r '.name // "" | tostring')
+  case "$name" in
+    commit) text=$MCP_PROMPT_COMMIT; label=Focus; extra=$(printf '%s' "$1" | jq -r '.arguments.focus // "" | tostring') ;;
+    pr) text=$MCP_PROMPT_PR; label=Notes; extra=$(printf '%s' "$1" | jq -r '.arguments.notes // "" | tostring') ;;
+    *) MCP_CALL_ERROR="Unknown prompt: $name"; return ;;
+  esac
+  [ -z "$extra" ] || text="$text"$'\n\n'"$label: $extra"
+  MCP_RESULT=$(printf '%s' "$MCP_PROMPTS_JSON" | jq -c --arg n "$name" --arg t "$text" \
+    '{description: (.[] | select(.name == $n) | .description), messages: [{role: "user", content: {type: "text", text: $t}}]}')
 }
 
 mcp_handle() {   # $1 one JSON-RPC message; notifications and anything without an id get no answer
@@ -6425,6 +6479,10 @@ mcp_handle() {   # $1 one JSON-RPC message; notifications and anything without a
     tools/call)
       mcp_call "$params"
       if [ -n "$MCP_CALL_ERROR" ]; then mcp_fail "$id" -32602 "$MCP_CALL_ERROR"; else mcp_reply "$id" "$MCP_RESULT"; fi ;;
+    prompts/list) mcp_reply "$id" "{\"prompts\":$MCP_PROMPTS_JSON}" ;;
+    prompts/get)
+      mcp_prompt "$params"
+      if [ -n "$MCP_CALL_ERROR" ]; then mcp_fail "$id" -32602 "$MCP_CALL_ERROR"; else mcp_reply "$id" "$MCP_RESULT"; fi ;;
     *) mcp_fail "$id" -32601 "Method not found: $method" ;;
   esac
 }
@@ -6436,6 +6494,7 @@ mcp_cmd() {   # gitch mcp — reads requests until the client closes stdin
   MCP_ROOT=$(cd "$(posix_path "${CLAUDE_PROJECT_DIR:-$PWD}")" 2>/dev/null && pwd -P) || MCP_ROOT=$(pwd -P)
   MCP_SELF=$(self_path); MCP_ACTOR=ai
   MCP_TOOLS_JSON=$(printf '%s' "$MCP_TOOLS" | jq -c .) || { err "gitch mcp: the tool list is not valid JSON"; return 1; }
+  MCP_PROMPTS_JSON=$(printf '%s' "$MCP_PROMPTS" | jq -c .) || { err "gitch mcp: the prompt list is not valid JSON"; return 1; }
   exec 3>&1 1>&2
   while IFS= read -r line || [ -n "$line" ]; do
     line=${line%$'\r'}
