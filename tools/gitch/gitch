@@ -5455,24 +5455,62 @@ JQ_CLAUDE_REMOVE='
   | (if .permissions.allow then .permissions.allow |= map(select(. as $x | ($allow | any(.[]; . == $x)) | not)) else . end)
   | (if .permissions.allow == [] then del(.permissions.allow) else . end)
   | (if .permissions == {} then del(.permissions) else . end)'
+# gitch ai --mcp: the MCP tools Claude Code may call without asking, like the gitch commands above.
+# The guard hook (matcher below) still asks for pushes and pull requests by the aiPush policy.
+CLAUDE_MCP_ALLOW='["mcp__gitch__status","mcp__gitch__preflight","mcp__gitch__pr_status","mcp__gitch__ci","mcp__gitch__rescue_list","mcp__gitch__commit","mcp__gitch__push","mcp__gitch__pull","mcp__gitch__branch","mcp__gitch__continue","mcp__gitch__pr_create","mcp__gitch__test"]'
+JQ_CLAUDE_MCP='
+  .hooks.PreToolUse += [{"matcher": "mcp__gitch__.*", "hooks": [{"type": "command", "command": $cmd, "timeout": 15}]}]
+  | .permissions.allow = reduce $mcp[] as $x (.permissions.allow; if any(.[]; . == $x) then . else . + [$x] end)'
+
+ai_mcp_on() { [ "$(git config -f "$CFG" --bool --get gitch.aimcp 2>/dev/null)" = true ]; }   # gitch ai --mcp was run (gitch.aiMcp)
 
 write_claude_settings() {
   [ -d "$CLAUDE_DIR" ] || return 0
   command -v jq >/dev/null 2>&1 || { warn "jq 가 없어 Claude Code 검사 훅을 설치하지 못했습니다 ($(install_hint jq jqlang.jq))"; return 1; }
-  local f="$CLAUDE_DIR/settings.json" tmp cmd
+  local f="$CLAUDE_DIR/settings.json" tmp cmd old
   cmd="\"$(gitch_cmd_path)\" guard --claude"
   if [ -f "$f" ]; then
     jq empty "$f" >/dev/null 2>&1 || { warn "$(tilde "$f") 이 올바른 JSON 이 아니라 건드리지 않았습니다"; return 1; }
     backup_file "$f"
   fi
   tmp=$(mktemp "${TMPDIR:-/tmp}/gitch-claude.XXXXXX") || return 1
-  if { if [ -f "$f" ]; then cat "$f"; else echo '{}'; fi; } | jq --arg cmd "$cmd" --argjson allow "$CLAUDE_ALLOW" --argjson old "$CLAUDE_ALLOW_OLD" "$JQ_CLAUDE_INSTALL" > "$tmp"; then
+  # The MCP entries go with the old ones, so the file is as before unless gitch ai --mcp is on; then they come back.
+  old=$(jq -cn --argjson a "$CLAUDE_ALLOW_OLD" --argjson b "$CLAUDE_MCP_ALLOW" '$a + $b')
+  if { if [ -f "$f" ]; then cat "$f"; else echo '{}'; fi; } | jq --arg cmd "$cmd" --argjson allow "$CLAUDE_ALLOW" --argjson old "$old" "$JQ_CLAUDE_INSTALL" > "$tmp" \
+     && { ! ai_mcp_on || { jq --arg cmd "$cmd" --argjson mcp "$CLAUDE_MCP_ALLOW" "$JQ_CLAUDE_MCP" "$tmp" > "$tmp.mcp" && cat "$tmp.mcp" > "$tmp"; }; }; then
     cat "$tmp" > "$f"
     say "  ${GREEN}✔${RESET} Claude Code 명령 검사 훅 + 읽기 명령 허용: $(tilde "$f")"
+    ai_mcp_on && say "  ${GREEN}✔${RESET} Claude Code MCP tools allowed, with the same guard: $(tilde "$f")"
   else
     warn "Claude Code 설정을 바꾸지 못했습니다: $(tilde "$f")"
   fi
-  rm -f "$tmp"
+  rm -f "$tmp" "$tmp.mcp"
+}
+
+mcp_server_json() {   # how Claude Code starts this gitch's MCP server (Windows starts Git Bash with the script)
+  if [ -n "$IS_WINDOWS" ]; then jq -cn --arg c "$(flow_bash)" --arg g "$(cygpath -w "$(gitch_cmd_path)")" '{type: "stdio", command: $c, args: [$g, "mcp"]}'
+  else jq -cn --arg c "$(gitch_cmd_path)" '{type: "stdio", command: $c, args: ["mcp"]}'; fi
+}
+
+mcp_claude() {   # the claude command: GITCH_CLAUDE (the app's tool setting, like GITCH_GH), then PATH
+  if [ -n "${GITCH_CLAUDE:-}" ]; then [ -x "$GITCH_CLAUDE" ] && printf '%s' "$GITCH_CLAUDE"; return; fi
+  command -v claude 2>/dev/null
+}
+
+mcp_register() {   # $1 add | remove — the user-scope server "gitch" in Claude Code, through its own claude command
+  local claude json
+  if ! claude=$(mcp_claude); then
+    [ "$1" = add ] && warn "The claude command was not found; register the server in Claude Code yourself: claude mcp add-json --scope user gitch '$(mcp_server_json)'"
+    return 0
+  fi
+  "$claude" mcp remove --scope user gitch >/dev/null 2>&1
+  [ "$1" = add ] || return 0
+  json=$(mcp_server_json)
+  if "$claude" mcp add-json --scope user gitch "$json" >/dev/null 2>&1; then
+    say "  ${GREEN}✔${RESET} Claude Code MCP server gitch (user scope): $(tilde "$(gitch_cmd_path)") mcp"
+  else
+    warn "Claude Code did not take the MCP server; run it yourself: claude mcp add-json --scope user gitch '$json'"
+  fi
 }
 
 ai_remove() {
@@ -5486,9 +5524,10 @@ ai_remove() {
   if [ -f "$f" ] && command -v jq >/dev/null 2>&1 && jq empty "$f" >/dev/null 2>&1; then
     backup_file "$f"
     tmp=$(mktemp "${TMPDIR:-/tmp}/gitch-claude.XXXXXX") || return 1
-    jq --argjson allow "$(jq -cn --argjson a "$CLAUDE_ALLOW" --argjson b "$CLAUDE_ALLOW_OLD" '$a + $b')" "$JQ_CLAUDE_REMOVE" "$f" > "$tmp" && cat "$tmp" > "$f"
+    jq --argjson allow "$(jq -cn --argjson a "$CLAUDE_ALLOW" --argjson b "$CLAUDE_ALLOW_OLD" --argjson c "$CLAUDE_MCP_ALLOW" '$a + $b + $c')" "$JQ_CLAUDE_REMOVE" "$f" > "$tmp" && cat "$tmp" > "$f"
     rm -f "$tmp"
   fi
+  if ai_mcp_on; then mcp_register remove; git config -f "$CFG" --unset gitch.aimcp; fi
 }
 
 ai_cmd() {
@@ -5497,7 +5536,12 @@ ai_cmd() {
     --skill) gen_skill ;;
     --remove) ai_remove; ok "AI 도구 연동(규칙/스킬/Claude 훅)을 지웠습니다." ;;
     "") need_config; write_ai_rules; write_skills; write_claude_settings ;;
-    *) die "사용법: gitch ai [--print | --skill | --remove]" ;;
+    --mcp) need_config; git config -f "$CFG" gitch.aiMcp true || die "Could not write $(tilde "$CFG")"
+      write_ai_rules; write_skills; write_claude_settings; mcp_register add ;;
+    --no-mcp)
+      if ai_mcp_on; then git config -f "$CFG" --unset gitch.aimcp; mcp_register remove; write_claude_settings >/dev/null; fi
+      ok "gitch's MCP server is off for Claude Code (rules, skill and guard stay)." ;;
+    *) die "사용법: gitch ai [--print | --skill | --remove | --mcp | --no-mcp]" ;;
   esac
 }
 
@@ -21337,7 +21381,7 @@ completion_candidates() {   # _complete -- 이후: 실행 파일 이름을 뺀 �
         ignore) printf '%s\n' --off --yes ;;
         protect) printf '%s\n' --rm --list ;;
         migrate) printf '%s\n' --force ;;
-        ai) printf '%s\n' --print --skill --remove ;;
+        ai) printf '%s\n' --print --skill --remove --mcp --no-mcp ;;
         pr|mr) printf '%s\n' --title --body --body-file --base --draft --web --json; [ "${words[1]:-}" != list ] || printf '%s\n' --state --limit ;;
         issue) printf '%s\n' --help --json --state --limit --label --assignee ;;
         workspace|ws) printf '%s\n' --help --json --dry-run ;;
@@ -22832,15 +22876,18 @@ gitch login github --cancel SESSION --json'
       H_EX='gitch sign
 gitch sign on' ;;
     ai) H_GROUP='account'; H_TIER='main'
-      H_USAGE='gitch ai [--print | --skill | --remove]'
+      H_USAGE='gitch ai [--print | --skill | --remove | --mcp | --no-mcp]'
       H_DESC='AI 도구(Claude Code · Codex 등)에 gitch 규칙 · 스킬 · 명령 검사 훅을 깔거나 지운다.'
       H_SUM='AI 도구(Claude, Codex) 규칙·스킬·검사 훅'
       H_FLAGS='  --print    규칙 블록만 출력 (아무것도 바꾸지 않음)
   --skill    스킬 문서만 출력 (아무것도 바꾸지 않음)
-  --remove   AI 도구 연동을 지움'
-      H_WRITES='옵션이 없거나 --remove 면 ~/.claude · ~/.codex 등의 규칙 · 스킬 · 훅'
+  --remove   AI 도구 연동을 지움
+  --mcp      Also register gitch mcp with Claude Code as tools, with the same guard (gitch.aiMcp)
+  --no-mcp   Unregister the MCP server again (rules, skill and guard stay)'
+      H_WRITES='옵션이 없거나 --remove 면 ~/.claude · ~/.codex 등의 규칙 · 스킬 · 훅 (--mcp · --no-mcp: also the Claude Code MCP server list through claude mcp)'
       H_EX='gitch ai --print
-gitch ai' ;;
+gitch ai
+gitch ai --mcp' ;;
     ssh) H_GROUP='account'
       H_USAGE='gitch ssh prune [--yes]'
       H_DESC='지금 계정 설정에서 쓰지 않는 SSH Host 를 ~/.ssh/config 에서 정리한다 (키 파일은 그대로, 백업 남김).'

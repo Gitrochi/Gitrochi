@@ -250,3 +250,62 @@ test_mcp_prompts_become_commands() {
   case "$(mcpt_response 3 | jq -r '.result.messages[0].content.text')" in *'Notes:'*) fail 'empty notes are left out' ;; esac
   assert_eq "$(mcpt_response 4 | jq -r '.error.code')" -32602
 }
+
+mcpt_fake_claude() {   # a claude command that records its arguments in $T/claude.log (never the real one: it would register for real)
+  printf '#!/bin/sh\necho "$*" >> "%s/claude.log"\n' "$T" > "$T/fakebin/claude"
+  chmod +x "$T/fakebin/claude"
+}
+
+test_mcp_ai_registration_is_opt_in_and_reversible() {
+  local s="$HOME/.claude/settings.json" cfg="$HOME/.config/gitch/config" before
+  mk_config; mcpt_fake_claude
+  printf '%s\n' '{"model": "x", "permissions": {"allow": ["Bash(npm test)"]}}' > "$s"
+  run gitch ai; assert_ok
+  before=$(cat "$s")
+  case "$before" in *mcp*) fail "plain gitch ai wrote MCP entries:\n$before" ;; esac
+  [ ! -e "$T/claude.log" ] || fail "plain gitch ai called claude: $(cat "$T/claude.log")"
+  # --mcp: the hook matcher, the tool permissions and the server, once however often it runs
+  run gitch ai --mcp; assert_ok
+  run gitch ai --mcp; assert_ok; assert_out 'Claude Code MCP server gitch (user scope)'
+  assert_eq "$(git config -f "$cfg" --get gitch.aimcp)" true
+  assert_eq "$(jq '[.hooks.PreToolUse[] | select(.matcher == "mcp__gitch__.*" and (.hooks[0].command | test("guard --claude$")))] | length' "$s")" 1
+  assert_eq "$(jq '[.hooks.PreToolUse[] | select(.hooks[0].command | test("guard --claude"))] | length' "$s")" 3
+  assert_eq "$(jq '[.permissions.allow[] | select(startswith("mcp__gitch__"))] | length' "$s")" 12
+  assert_eq "$(jq '.permissions.allow | length' "$s")" "$(jq '.permissions.allow | unique | length' "$s")" 'duplicate permissions'
+  assert_eq "$(jq -r .model "$s")" x
+  assert_eq "$(grep -c '^mcp remove --scope user gitch$' "$T/claude.log")" 2
+  assert_eq "$(grep -c '^mcp add-json --scope user gitch ' "$T/claude.log")" 2
+  if mac_only; then
+    assert_eq "$(grep '^mcp add-json' "$T/claude.log" | tail -1 | sed 's/^mcp add-json --scope user gitch //' | jq -c .)" \
+      "$(jq -cn --arg c "$HOME/bin/gitch" '{type: "stdio", command: $c, args: ["mcp"]}')" 'the server runs this gitch'
+  fi
+  # A later plain gitch ai (or a settings change) keeps the MCP setup while it is on.
+  run gitch ai; assert_ok
+  assert_eq "$(jq '[.permissions.allow[] | select(startswith("mcp__gitch__"))] | length' "$s")" 12
+  # --no-mcp puts settings.json back byte for byte and unregisters the server.
+  : > "$T/claude.log"
+  run gitch ai --no-mcp; assert_ok
+  assert_eq "$(cat "$s")" "$before" 'settings.json after --no-mcp'
+  assert_eq "$(git config -f "$cfg" --get gitch.aimcp)" ''
+  assert_eq "$(cat "$T/claude.log")" 'mcp remove --scope user gitch'
+  : > "$T/claude.log"
+  run gitch ai --no-mcp; assert_ok
+  [ ! -s "$T/claude.log" ] || fail 'nothing to unregister when it is off'
+  # --remove takes the MCP setup with the rest.
+  run gitch ai --mcp; assert_ok
+  : > "$T/claude.log"
+  run gitch ai --remove; assert_ok
+  case "$(cat "$s")" in *mcp*) fail "MCP entries left after --remove:\n$(cat "$s")" ;; esac
+  assert_eq "$(cat "$T/claude.log")" 'mcp remove --scope user gitch'
+  assert_eq "$(git config -f "$cfg" --get gitch.aimcp)" ''
+  : > "$T/claude.log"
+  run gitch ai --remove; assert_ok
+  [ ! -s "$T/claude.log" ] || fail '--remove calls claude only when the server was registered'
+}
+
+test_mcp_ai_without_claude_explains_the_command() {
+  mk_config
+  GITCH_CLAUDE="$T/no-claude" run gitch ai --mcp; assert_ok
+  assert_out 'claude mcp add-json --scope user gitch'
+  assert_eq "$(jq '[.permissions.allow[] | select(startswith("mcp__gitch__"))] | length' "$HOME/.claude/settings.json")" 12
+}
