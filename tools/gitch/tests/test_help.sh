@@ -112,7 +112,7 @@ test_help_overview_is_grouped_and_points_to_topics() {
   [ "$lines" -le 75 ] || fail "the overview grew to $lines lines"
   # Every command is in the overview, with its usage or at least by name; setup is no longer listed twice.
   for name in $(help_table_names); do
-    [ "$name" != guard ] || continue
+    case "$name" in guard|mcp) continue ;; esac   # the internal commands tools call
     printf '%s\n' "$overview" | grep -qE -- "(^  gitch | · |: )$name( |\$)" || fail "not in the overview: $name"
   done
   assert_eq "$(printf '%s\n' "$overview" | grep -c '^  gitch setup')" 1
@@ -380,7 +380,7 @@ test_help_completion_options_of_confirming_commands() {
 
 test_help_completion_names_and_topics_come_from_the_table() {
   local expected
-  expected=$({ help_table_names | grep -vx guard; echo g; } | LC_ALL=C sort -u)
+  expected=$({ help_table_names | grep -vxE 'guard|mcp'; echo g; } | LC_ALL=C sort -u)
   run gitch _complete -- ''; assert_ok; assert_eq "$OUT" "$expected" 'command names'
   run gitch _complete --empty-current --; assert_ok; assert_eq "$OUT" "$expected" 'command names for an empty word'
   run gitch _complete -- help ''; assert_ok; assert_eq "$OUT" "$expected" 'help topics'
