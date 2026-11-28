@@ -604,7 +604,7 @@ Without `--mcp`, `gitch ai` writes `settings.json` byte for byte as before and n
 - Each call runs this gitch as a child with stdin closed and `GITCH_ACTOR` set from the client's name (`claude`, `codex`, ...). The account lock, the hooks (author, secrets, big files, force push), the non-interactive rules and `gitch report` behave as they do for an agent's shell. A `[gitch]` refusal comes back as `isError: true` with gitch's own message.
 - The guard decides `mcp__gitch__push` like `gitch p` and `mcp__gitch__pr_create` like `gitch pr`, under the same push policy. It reads the folder from the tool's `repository`, or from the project folder. The plugin form of the name (`mcp__plugin_gitch_gitch__…`) counts too.
 - The server's instructions name only the project folder's repository, branch and locked account, plus the push policy. They replace the static rules text for agents that connect, and other accounts and emails stay out.
-- The prompts `commit` and `pr` appear as `/gitch:commit` and `/gitch:pr` in Claude Code.
+- The prompts `commit` and `pr` appear in Claude Code as `/mcp__gitch__commit` and `/mcp__gitch__pr`.
 - Force push, amend, undo, unlocking, changing accounts, restoring rescue points and trusting flow files are not tools. They stay with the user in a terminal.
 - Protocol versions: 2025-11-25, 2025-06-18, 2025-03-26 and 2024-11-05. One request runs at a time, and a long `test` holds the next one. Text results are cut at 40,000 characters.
 

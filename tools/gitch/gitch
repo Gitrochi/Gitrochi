@@ -6468,7 +6468,7 @@ mcp_instructions() {   # what the agent needs to know, for the folder the server
   printf 'The project folder is the repository %s on %s, %s.\n' "${top##*/}" "$branch" "$lock"
 }
 
-# Prompts: the client shows them as slash commands (Claude Code: /gitch:commit, /gitch:pr).
+# Prompts: the client shows them as slash commands (Claude Code: /mcp__gitch__commit, /mcp__gitch__pr).
 read -r -d '' MCP_PROMPTS <<'EOF'
 [
   {"name": "commit", "title": "Commit with gitch",
