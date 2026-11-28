@@ -35,7 +35,7 @@ test_mcp_initialize_and_tool_list() {
   assert_eq "$(mcpt_response 0 | jq -r '.result.serverInfo.name')" gitch
   assert_eq "$(mcpt_response 0 | jq -r '.result.capabilities.tools.listChanged')" false
   case "$(mcpt_response 0 | jq -r '.result.instructions')" in *'[gitch] refusal'*) ;; *) fail 'instructions do not explain refusals' ;; esac
-  assert_eq "$(mcpt_response 1 | jq -r '[.result.tools[].name] | sort | join(" ")')" 'ci pr_status preflight rescue_list status'
+  assert_eq "$(mcpt_response 1 | jq -r '[.result.tools[].name] | sort | join(" ")')" 'branch ci commit continue pr_create pr_status preflight pull push rescue_list status test'
   # Every tool declares an object schema with the repository argument, a description and its hints.
   assert_eq "$(mcpt_response 1 | jq '[.result.tools[] | select(.inputSchema.type != "object" or .inputSchema.properties.repository.type != "string" or (.description | length) < 20 or .annotations.readOnlyHint == null)] | length')" 0
   assert_eq "$(mcpt_response 2 | jq -c '.result')" '{}'
@@ -100,4 +100,67 @@ test_mcp_repository_argument() {
   cd "$T" || fail cd
   OUT=$(printf '%s\n' "$MCPT_INIT" "$(mcpt_call 1 status '{"fetch":false}')" | CLAUDE_PROJECT_DIR="$HOME/Develop/alice/app" gitch mcp 2>/dev/null)
   assert_eq "$(mcpt_response 1 | jq -r '.result.structuredContent.changes.account')" alice
+}
+
+test_mcp_commit_stages_the_given_files_under_the_lock() {
+  mcpt_alice_repo
+  echo a > a.txt; echo b > b.txt; mkdir -p 'dir with space'; echo c > 'dir with space/*.txt'; echo d > 'dir with space/other.txt'
+  mcpt_session "$MCPT_INIT" \
+    "$(mcpt_call 1 commit '{"title":"feat: add a","body":"- why a","files":["a.txt"]}')" \
+    "$(mcpt_call 2 commit '{"title":"nothing staged"}')" \
+    "$(mcpt_call 3 commit '{"title":"feat: literal path","files":["dir with space/*.txt"]}')" \
+    "$(mcpt_call 4 commit '{"title":"x","files":["a.txt"],"all":true}')" \
+    "$(mcpt_call 5 commit '{"title":"x","files":"a.txt"}')" \
+    "$(mcpt_call 6 commit '{"body":"no title"}')" \
+    "$(mcpt_call 7 commit '{"title":"chore: the rest","all":true}')"
+  assert_ok
+  assert_eq "$(mcpt_error_flag 1)" false "$(mcpt_text 1)"
+  assert_eq "$(mcpt_error_flag 2)" true 'gitch stops when nothing is staged'
+  case "$(mcpt_text 2)" in *'git add'*) ;; *) fail "no staging hint: $(mcpt_text 2)" ;; esac
+  assert_eq "$(mcpt_error_flag 3)" false "$(mcpt_text 3)"
+  for i in 4 5 6; do assert_eq "$(mcpt_error_flag $i)" true "call $i should fail"; done
+  assert_eq "$(mcpt_error_flag 7)" false "$(mcpt_text 7)"
+  assert_eq "$(git log --format=%s | tr '\n' '|')" 'chore: the rest|feat: literal path|feat: add a|init|'
+  assert_eq "$(git show --name-only --format= HEAD~2)" a.txt
+  assert_eq "$(git show --name-only --format= HEAD~1)" 'dir with space/*.txt' 'the path is taken literally'
+  assert_eq "$(git show --name-only --format= HEAD | tr '\n' '|')" 'b.txt|dir with space/other.txt|'
+  assert_eq "$(git log -1 --format=%b HEAD~2 | head -1)" '- why a'
+  assert_eq "$(git log --format=%ae -3 | sort -u)" alice@example.com 'commits use the locked account'
+}
+
+test_mcp_commit_refusal_comes_back_as_an_error() {
+  mcpt_alice_repo
+  printf 'token = "ghp_%s"\n' "abcdefghijklmnopqrstuvwxyz0123456789" > conf.py
+  mcpt_session "$MCPT_INIT" "$(mcpt_call 1 commit '{"title":"feat: conf","files":["conf.py"]}')"
+  assert_eq "$(mcpt_error_flag 1)" true
+  case "$(mcpt_text 1)" in *'[gitch]'*) ;; *) fail "the hook's refusal is missing:\n$(mcpt_text 1)" ;; esac
+  assert_eq "$(git rev-list --count HEAD)" 1 'nothing was committed'
+}
+
+test_mcp_branch_push_pull_and_pull_request() {
+  mcpt_alice_repo
+  echo tok-alice > "$FAKE_GH/tokens/alice"
+  echo f > f.txt
+  mcpt_session "$MCPT_INIT" "$(mcpt_call 1 branch '{"name":"feature/mcp"}')" \
+    "$(mcpt_call 2 commit '{"title":"feat: f","files":["f.txt"]}')" "$(mcpt_call 3 push)" "$(mcpt_call 4 pull)" \
+    "$(mcpt_call 5 pr_create '{"title":"t","body":"b","draft":true}')" "$(mcpt_call 6 branch '{"name":"-x"}')" \
+    "$(mcpt_call 7 branch '{"name":"bad..name"}')" "$(mcpt_call 8 pr_create '{"title":"t","base":"--web"}')" \
+    "$(mcpt_call 9 push '{"dry_run":true}')"
+  assert_ok
+  for i in 1 2 3 4 5 9; do assert_eq "$(mcpt_error_flag $i)" false "call $i: $(mcpt_text $i)"; done
+  assert_eq "$(git symbolic-ref --short HEAD)" feature/mcp
+  git --git-dir "$FAKE_REMOTES/github-alice/alice/app.git" rev-parse -q --verify refs/heads/feature/mcp >/dev/null || fail 'the branch is not on origin'
+  grep -q -- 'GH_TOKEN=tok-alice pr create -R alice/app --head feature/mcp --base main --title t --body b' "$FAKE_GH/log" || fail "gh call:\n$(cat "$FAKE_GH/log")"
+  grep -q -- '--draft' "$FAKE_GH/log" || fail 'draft was not passed'
+  case "$(mcpt_text 5)" in *'https://github.com/alice/app/pull/7'*) ;; *) fail "no URL: $(mcpt_text 5)" ;; esac
+  for i in 6 7 8; do assert_eq "$(mcpt_error_flag $i)" true "call $i should fail"; done
+}
+
+test_mcp_test_tool_is_not_a_pass_without_tests() {
+  mcpt_alice_repo
+  mcpt_session "$MCPT_INIT" "$(mcpt_call 1 test)" "$(mcpt_call 2 test '{"suite":"--yes"}')"
+  assert_eq "$(mcpt_error_flag 1)" true 'no flow file is not a pass'
+  [ -n "$(mcpt_text 1)" ] || fail 'no explanation'
+  assert_eq "$(mcpt_error_flag 2)" true
+  case "$(mcpt_text 2)" in *'must not start with -'*) ;; *) fail "$(mcpt_text 2)" ;; esac
 }

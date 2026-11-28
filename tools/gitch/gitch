@@ -6181,7 +6181,47 @@ read -r -d '' MCP_TOOLS <<EOF
   {"name": "rescue_list", "title": "Rescue points",
    "description": "List the rescue points gitch saved before pull, up, sync, fix, undo and amend. Restoring one is for the user to run (gitch rescue N --restore). Read-only.",
    "inputSchema": {"type": "object", "properties": {$MCP_REPO_PROP}, "additionalProperties": false},
-   "annotations": {"readOnlyHint": true, "destructiveHint": false, "idempotentHint": true, "openWorldHint": false}}
+   "annotations": {"readOnlyHint": true, "destructiveHint": false, "idempotentHint": true, "openWorldHint": false}},
+  {"name": "commit", "title": "Commit",
+   "description": "Commit under the repository's locked account. files are staged first (added to anything already staged); all stages every change like git add -A; with neither, only what is already staged is committed. gitch's checks (author, secrets, big files) run as usual: a [gitch] refusal is an error to report to the user, not to work around. Never amends.",
+   "inputSchema": {"type": "object", "properties": {$MCP_REPO_PROP,
+     "title": {"type": "string", "minLength": 1, "description": "The commit subject, in the repository's commit style."},
+     "body": {"type": "string", "description": "The commit body (paragraphs or bullets)."},
+     "files": {"type": "array", "items": {"type": "string", "minLength": 1}, "description": "Paths to stage, relative to the repository folder, taken literally (no globs)."},
+     "all": {"type": "boolean", "description": "Stage every change, new files included."}}, "required": ["title"], "additionalProperties": false},
+   "annotations": {"readOnlyHint": false, "destructiveHint": false, "idempotentHint": false, "openWorldHint": false}},
+  {"name": "push", "title": "Push",
+   "description": "Push the current branch to origin; the first push sets the upstream. Never force-pushes: when origin has new commits, pull first. Depending on the user's push policy, a push (or one to a default or protected branch) asks the user first.",
+   "inputSchema": {"type": "object", "properties": {$MCP_REPO_PROP,
+     "dry_run": {"type": "boolean", "description": "Show what would be pushed without pushing."}}, "additionalProperties": false},
+   "annotations": {"readOnlyHint": false, "destructiveHint": false, "idempotentHint": true, "openWorldHint": true}},
+  {"name": "pull", "title": "Pull",
+   "description": "Bring the current branch up to date with its upstream; gitch saves a rescue point first. Conflicts are reported: resolve them, stage the files and call continue.",
+   "inputSchema": {"type": "object", "properties": {$MCP_REPO_PROP}, "additionalProperties": false},
+   "annotations": {"readOnlyHint": false, "destructiveHint": false, "idempotentHint": true, "openWorldHint": true}},
+  {"name": "branch", "title": "Switch or create a branch",
+   "description": "Switch to a branch: an existing local one, origin's branch of that name (tracked), or a new one from the current commit.",
+   "inputSchema": {"type": "object", "properties": {$MCP_REPO_PROP,
+     "name": {"type": "string", "minLength": 1, "description": "Branch name, for example feature/short-topic."}}, "required": ["name"], "additionalProperties": false},
+   "annotations": {"readOnlyHint": false, "destructiveHint": false, "idempotentHint": true, "openWorldHint": false}},
+  {"name": "continue", "title": "Continue a rebase or merge",
+   "description": "Continue a rebase or merge after its conflicts are resolved and the files are staged.",
+   "inputSchema": {"type": "object", "properties": {$MCP_REPO_PROP}, "additionalProperties": false},
+   "annotations": {"readOnlyHint": false, "destructiveHint": false, "idempotentHint": false, "openWorldHint": false}},
+  {"name": "pr_create", "title": "Open a pull request",
+   "description": "Open a pull request (GitHub) or merge request (GitLab) for the current branch with the repository account's own login, pushing the branch first when needed. Not from the default branch. Asks the user first unless the user's push policy allows it.",
+   "inputSchema": {"type": "object", "properties": {$MCP_REPO_PROP,
+     "title": {"type": "string", "minLength": 1, "description": "The pull request title."},
+     "body": {"type": "string", "description": "The description; follow the repository's pull request template when it has one."},
+     "base": {"type": "string", "description": "Target branch. Defaults to the default branch."},
+     "draft": {"type": "boolean", "description": "Open it as a draft."}}, "required": ["title"], "additionalProperties": false},
+   "annotations": {"readOnlyHint": false, "destructiveHint": false, "idempotentHint": false, "openWorldHint": true}},
+  {"name": "test", "title": "Run tests",
+   "description": "Run the repository's gitch flow tests (.gitch/flow.yml) and return a short summary. Without suite, only the tests affected by the current changes run. Zero tests run or an undecided result is not a pass.",
+   "inputSchema": {"type": "object", "properties": {$MCP_REPO_PROP,
+     "suite": {"type": "string", "description": "A suite or tag from .gitch/flow.yml."},
+     "affected": {"type": "boolean", "description": "Run only the tests the changes affect. Defaults to true without suite and false with one."}}, "additionalProperties": false},
+   "annotations": {"readOnlyHint": false, "destructiveHint": false, "idempotentHint": true, "openWorldHint": false}}
 ]
 EOF
 
@@ -6266,6 +6306,65 @@ mcp_tool_preflight() {
 mcp_tool_pr_status() { mcp_run "$MCP_DIR" pr status --json; mcp_finish; }
 mcp_tool_ci() { mcp_run "$MCP_DIR" ci; mcp_finish; }
 mcp_tool_rescue_list() { mcp_run "$MCP_DIR" rescue; mcp_finish; }
+
+mcp_word() {   # $1 value $2 what it is → false with an error result when the value is empty or could be read as an option
+  case "$1" in ""|-*) mcp_result true "$2 must be given and must not start with -"; return 1 ;; esac
+}
+mcp_tool_commit() {
+  local title body all f files=()
+  title=$(mcp_arg "$1" title); body=$(mcp_arg "$1" body); all=$(mcp_arg "$1" all)
+  [ -n "$title" ] || { mcp_result true "title is required"; return; }
+  printf '%s' "$1" | jq -e '(.files // []) | type == "array" and all(.[]; type == "string" and length > 0)' >/dev/null \
+    || { mcp_result true "files must be a list of paths"; return; }
+  while IFS= read -r -d '' f; do files+=("$f"); done < <(printf '%s' "$1" | jq -j '(.files // [])[] | ., "\u0000"')
+  if [ "$all" = true ] && [ ${#files[@]} -gt 0 ]; then mcp_result true "Pass files or all, not both"; return; fi
+  if [ ${#files[@]} -gt 0 ]; then
+    MCP_OUT=""
+    if ! MCP_ERR=$(git -C "$MCP_DIR" --literal-pathspecs add -- "${files[@]}" 2>&1); then MCP_RC=1; mcp_finish; return; fi
+  fi
+  set -- c
+  [ "$all" = true ] && set -- "$@" -a
+  set -- "$@" -m "$title"
+  [ -n "$body" ] && set -- "$@" -m "$body"
+  mcp_run "$MCP_DIR" "$@"
+  mcp_finish
+}
+mcp_tool_push() {   # never --force: the user runs that in a terminal
+  if [ "$(mcp_arg "$1" dry_run)" = true ]; then mcp_run "$MCP_DIR" p --dry-run; else mcp_run "$MCP_DIR" p; fi
+  mcp_finish
+}
+mcp_tool_pull() { mcp_run "$MCP_DIR" pl; mcp_finish; }
+mcp_tool_continue() { mcp_run "$MCP_DIR" continue; mcp_finish; }
+mcp_tool_branch() {
+  local name
+  name=$(mcp_arg "$1" name)
+  mcp_word "$name" name || return
+  git -C "$MCP_DIR" check-ref-format --branch "$name" >/dev/null 2>&1 || { mcp_result true "Not a valid branch name: $name"; return; }
+  mcp_run "$MCP_DIR" b "$name"
+  mcp_finish
+}
+mcp_tool_pr_create() {
+  local title body base draft
+  title=$(mcp_arg "$1" title); body=$(mcp_arg "$1" body); base=$(mcp_arg "$1" base); draft=$(mcp_arg "$1" draft)
+  [ -n "$title" ] || { mcp_result true "title is required"; return; }
+  [ -z "$base" ] || mcp_word "$base" base || return
+  set -- pr --title "$title"
+  [ -n "$body" ] && set -- "$@" --body "$body"
+  [ -n "$base" ] && set -- "$@" --base "$base"
+  [ "$draft" = true ] && set -- "$@" --draft
+  mcp_run "$MCP_DIR" "$@"
+  mcp_finish
+}
+mcp_tool_test() {   # never --yes: steps that wait for a person stay with the person
+  local suite affected
+  suite=$(mcp_arg "$1" suite); affected=$(mcp_arg "$1" affected)
+  [ -z "$suite" ] || mcp_word "$suite" suite || return
+  set -- test
+  if [ -n "$suite" ]; then set -- "$@" "$suite"; [ "$affected" = true ] && set -- "$@" --affected
+  else [ "$affected" = false ] || set -- "$@" --affected; fi
+  mcp_run "$MCP_DIR" "$@" --summary
+  mcp_finish
+}
 
 mcp_call() {   # $1 tools/call params → MCP_RESULT, or MCP_CALL_ERROR for an unknown tool or arguments that are not an object
   local name args
