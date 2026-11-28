@@ -1,0 +1,311 @@
+# shellcheck shell=bash disable=SC2034   # OUT and RC are read by lib.sh's asserts
+# gitch mcp: the Model Context Protocol server AI clients start (JSON-RPC over stdin/stdout, one message per line)
+
+MCPT_INIT='{"jsonrpc":"2.0","id":0,"method":"initialize","params":{"protocolVersion":"2025-06-18","clientInfo":{"name":"claude-code","version":"test"},"capabilities":{}}}'
+
+mcpt_session() {   # each argument is one message line → OUT the server's stdout, RC its exit code, $T/mcp-stderr its stderr
+  OUT=$(printf '%s\n' "$@" | gitch mcp 2> "$T/mcp-stderr"); RC=$?
+}
+mcpt_response() {   # $1 id → that response from OUT (exactly one, or the test fails)
+  local r
+  r=$(printf '%s\n' "$OUT" | jq -c --argjson id "$1" 'select(.id == $id)') || fail "server output is not JSON lines\n$OUT"
+  [ "$(printf '%s\n' "$r" | grep -c .)" = 1 ] || fail "expected one response with id $1\n--- output:\n$OUT"
+  printf '%s' "$r"
+}
+mcpt_call() {   # $1 id $2 tool [$3 arguments JSON] → one tools/call line
+  local a=${3:-'{}'}
+  jq -cn --argjson id "$1" --arg n "$2" --argjson a "$a" '{jsonrpc: "2.0", id: $id, method: "tools/call", params: {name: $n, arguments: $a}}'
+}
+mcpt_text() { mcpt_response "$1" | jq -r '.result.content[0].text'; }   # $1 id → the tool's text
+mcpt_error_flag() { mcpt_response "$1" | jq -r '.result.isError'; }   # $1 id → true | false
+mcpt_alice_repo() {   # a locked alice clone with one commit → cd (the server starts here)
+  mk_config; install_quiet
+  mk_remote_seeded github-alice alice/app alice@example.com
+  gitch clone alice alice/app "$HOME/Develop/alice/app" >/dev/null 2>&1 || fail "clone failed"
+  cd "$HOME/Develop/alice/app" || fail cd
+}
+
+test_mcp_initialize_and_tool_list() {
+  mcpt_alice_repo
+  mcpt_session "$MCPT_INIT" '{"jsonrpc":"2.0","method":"notifications/initialized"}' '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' \
+    '{"jsonrpc":"2.0","id":2,"method":"ping"}'
+  assert_ok
+  assert_eq "$(printf '%s\n' "$OUT" | grep -c .)" 3 'one answer per request and none for the notification'
+  assert_eq "$(mcpt_response 0 | jq -r '.result.protocolVersion')" 2025-06-18 'the version the client asked for'
+  assert_eq "$(mcpt_response 0 | jq -r '.result.serverInfo.name')" gitch
+  assert_eq "$(mcpt_response 0 | jq -r '.result.capabilities.tools.listChanged')" false
+  case "$(mcpt_response 0 | jq -r '.result.instructions')" in *'[gitch] refusal'*) ;; *) fail 'instructions do not explain refusals' ;; esac
+  assert_eq "$(mcpt_response 1 | jq -r '[.result.tools[].name] | sort | join(" ")')" 'branch ci commit continue pr_create pr_status preflight pull push rescue_list status test'
+  # Every tool declares an object schema with the repository argument, a description and its hints.
+  assert_eq "$(mcpt_response 1 | jq '[.result.tools[] | select(.inputSchema.type != "object" or .inputSchema.properties.repository.type != "string" or (.description | length) < 20 or .annotations.readOnlyHint == null)] | length')" 0
+  assert_eq "$(mcpt_response 2 | jq -c '.result')" '{}'
+  # An unknown version gets the newest one the server speaks.
+  mcpt_session '{"jsonrpc":"2.0","id":0,"method":"initialize","params":{"protocolVersion":"1999-01-01","clientInfo":{"name":"x"}}}'
+  assert_eq "$(mcpt_response 0 | jq -r '.result.protocolVersion')" 2025-11-25
+}
+
+test_mcp_protocol_errors() {
+  mcpt_alice_repo
+  mcpt_session "$MCPT_INIT" 'not json' '[1,2]' '{"jsonrpc":"2.0","id":"a","method":"nope"}' \
+    "$(mcpt_call 3 missing)" '{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"status","arguments":[1]}}' \
+    '{"jsonrpc":"2.0","method":"nope/notification"}' '   ' '{"jsonrpc":"2.0","id":5,"method":"ping"}'
+  assert_ok
+  assert_eq "$(printf '%s\n' "$OUT" | jq -c 'select(.id == null) | .error.code' | tr '\n' ' ')" '-32700 -32600 ' 'parse error, then invalid request'
+  assert_eq "$(mcpt_response '"a"' | jq -r '.error.code')" -32601
+  assert_eq "$(mcpt_response 3 | jq -r '.error.code')" -32602
+  assert_eq "$(mcpt_response 4 | jq -r '.error.code')" -32602
+  assert_eq "$(mcpt_response 5 | jq -c '.result')" '{}' 'the server keeps answering after errors'
+  assert_eq "$(printf '%s\n' "$OUT" | grep -c .)" 7 'nothing for a notification or a blank line'
+  run gitch mcp extra; assert_fail 'gitch mcp takes no arguments'
+}
+
+test_mcp_read_tools_return_gitch_json() {
+  mcpt_alice_repo
+  echo b > b.txt
+  mcpt_session "$MCPT_INIT" "$(mcpt_call 1 status '{"fetch":false}')" "$(mcpt_call 2 preflight '{"fetch":false}')" \
+    "$(mcpt_call 3 rescue_list)" '{"jsonrpc":"2.0","id":4,"method":"ping"}'
+  assert_ok
+  assert_eq "$(mcpt_error_flag 1)" false
+  assert_eq "$(mcpt_response 1 | jq -r '.result.structuredContent.changes.account')" alice
+  assert_eq "$(mcpt_response 1 | jq -r '.result.structuredContent.changes.untracked[0]')" b.txt
+  assert_eq "$(mcpt_response 1 | jq -r '.result.structuredContent.account.lockedAccount')" alice
+  assert_eq "$(mcpt_text 1 | jq -r '.changes.branch')" main 'the text carries the same JSON'
+  assert_eq "$(mcpt_response 2 | jq -r '.result.structuredContent.result')" OK
+  assert_eq "$(mcpt_error_flag 2)" false
+  assert_eq "$(mcpt_error_flag 3)" false
+  assert_eq "$(mcpt_response 4 | jq -c '.result')" '{}'
+  [ ! -s "$T/mcp-stderr" ] || fail "the server wrote to stderr:\n$(cat "$T/mcp-stderr")"
+}
+
+test_mcp_preflight_stop_is_a_result_not_a_failure() {
+  mcpt_alice_repo
+  git config gitch.account bob   # locked to another account than the folder's: gitch answers STOP
+  mcpt_session "$MCPT_INIT" "$(mcpt_call 1 preflight '{"fetch":false}')"
+  assert_eq "$(mcpt_response 1 | jq -r '.result.structuredContent.result')" STOP
+  assert_eq "$(mcpt_error_flag 1)" false
+}
+
+test_mcp_repository_argument() {
+  mcpt_alice_repo
+  mkdir -p "$T/plain" sub
+  mcpt_session "$MCPT_INIT" "$(mcpt_call 1 status "$(jq -cn --arg r "$T/missing" '{repository: $r, fetch: false}')")" \
+    "$(mcpt_call 2 status "$(jq -cn --arg r "$T/plain" '{repository: $r, fetch: false}')")" \
+    "$(mcpt_call 3 status '{"repository":"sub","fetch":false}')" \
+    "$(mcpt_call 4 status "$(jq -cn --arg r "$HOME/Develop/alice/app" '{repository: $r, fetch: false}')")"
+  assert_eq "$(mcpt_error_flag 1)" true; case "$(mcpt_text 1)" in 'No such folder'*) ;; *) fail "$(mcpt_text 1)" ;; esac
+  assert_eq "$(mcpt_error_flag 2)" true; case "$(mcpt_text 2)" in 'Not inside a Git work tree'*) ;; *) fail "$(mcpt_text 2)" ;; esac
+  assert_eq "$(mcpt_error_flag 3)" false 'a folder relative to the start folder'
+  assert_eq "$(mcpt_response 4 | jq -r '.result.structuredContent.changes.repo')" app
+  # The start folder is the project folder Claude Code names, not where the process happens to run.
+  cd "$T" || fail cd
+  OUT=$(printf '%s\n' "$MCPT_INIT" "$(mcpt_call 1 status '{"fetch":false}')" | CLAUDE_PROJECT_DIR="$HOME/Develop/alice/app" gitch mcp 2>/dev/null)
+  assert_eq "$(mcpt_response 1 | jq -r '.result.structuredContent.changes.account')" alice
+}
+
+test_mcp_commit_stages_the_given_files_under_the_lock() {
+  mcpt_alice_repo
+  echo a > a.txt; echo b > b.txt; mkdir -p 'dir with space'; echo c > 'dir with space/*.txt'; echo d > 'dir with space/other.txt'
+  mcpt_session "$MCPT_INIT" \
+    "$(mcpt_call 1 commit '{"title":"feat: add a","body":"- why a","files":["a.txt"]}')" \
+    "$(mcpt_call 2 commit '{"title":"nothing staged"}')" \
+    "$(mcpt_call 3 commit '{"title":"feat: literal path","files":["dir with space/*.txt"]}')" \
+    "$(mcpt_call 4 commit '{"title":"x","files":["a.txt"],"all":true}')" \
+    "$(mcpt_call 5 commit '{"title":"x","files":"a.txt"}')" \
+    "$(mcpt_call 6 commit '{"body":"no title"}')" \
+    "$(mcpt_call 7 commit '{"title":"chore: the rest","all":true}')"
+  assert_ok
+  assert_eq "$(mcpt_error_flag 1)" false "$(mcpt_text 1)"
+  assert_eq "$(mcpt_error_flag 2)" true 'gitch stops when nothing is staged'
+  case "$(mcpt_text 2)" in *'git add'*) ;; *) fail "no staging hint: $(mcpt_text 2)" ;; esac
+  assert_eq "$(mcpt_error_flag 3)" false "$(mcpt_text 3)"
+  for i in 4 5 6; do assert_eq "$(mcpt_error_flag $i)" true "call $i should fail"; done
+  assert_eq "$(mcpt_error_flag 7)" false "$(mcpt_text 7)"
+  assert_eq "$(git log --format=%s | tr '\n' '|')" 'chore: the rest|feat: literal path|feat: add a|init|'
+  assert_eq "$(git show --name-only --format= HEAD~2)" a.txt
+  assert_eq "$(git show --name-only --format= HEAD~1)" 'dir with space/*.txt' 'the path is taken literally'
+  assert_eq "$(git show --name-only --format= HEAD | tr '\n' '|')" 'b.txt|dir with space/other.txt|'
+  assert_eq "$(git log -1 --format=%b HEAD~2 | head -1)" '- why a'
+  assert_eq "$(git log --format=%ae -3 | sort -u)" alice@example.com 'commits use the locked account'
+}
+
+test_mcp_commit_refusal_comes_back_as_an_error() {
+  mcpt_alice_repo
+  printf 'token = "ghp_%s"\n' "abcdefghijklmnopqrstuvwxyz0123456789" > conf.py
+  mcpt_session "$MCPT_INIT" "$(mcpt_call 1 commit '{"title":"feat: conf","files":["conf.py"]}')"
+  assert_eq "$(mcpt_error_flag 1)" true
+  case "$(mcpt_text 1)" in *'[gitch]'*) ;; *) fail "the hook's refusal is missing:\n$(mcpt_text 1)" ;; esac
+  assert_eq "$(git rev-list --count HEAD)" 1 'nothing was committed'
+}
+
+test_mcp_branch_push_pull_and_pull_request() {
+  mcpt_alice_repo
+  echo tok-alice > "$FAKE_GH/tokens/alice"
+  echo f > f.txt
+  mcpt_session "$MCPT_INIT" "$(mcpt_call 1 branch '{"name":"feature/mcp"}')" \
+    "$(mcpt_call 2 commit '{"title":"feat: f","files":["f.txt"]}')" "$(mcpt_call 3 push)" "$(mcpt_call 4 pull)" \
+    "$(mcpt_call 5 pr_create '{"title":"t","body":"b","draft":true}')" "$(mcpt_call 6 branch '{"name":"-x"}')" \
+    "$(mcpt_call 7 branch '{"name":"bad..name"}')" "$(mcpt_call 8 pr_create '{"title":"t","base":"--web"}')" \
+    "$(mcpt_call 9 push '{"dry_run":true}')"
+  assert_ok
+  for i in 1 2 3 4 5 9; do assert_eq "$(mcpt_error_flag $i)" false "call $i: $(mcpt_text $i)"; done
+  assert_eq "$(git symbolic-ref --short HEAD)" feature/mcp
+  git --git-dir "$FAKE_REMOTES/github-alice/alice/app.git" rev-parse -q --verify refs/heads/feature/mcp >/dev/null || fail 'the branch is not on origin'
+  grep -q -- 'GH_TOKEN=tok-alice pr create -R alice/app --head feature/mcp --base main --title t --body b' "$FAKE_GH/log" || fail "gh call:\n$(cat "$FAKE_GH/log")"
+  grep -q -- '--draft' "$FAKE_GH/log" || fail 'draft was not passed'
+  case "$(mcpt_text 5)" in *'https://github.com/alice/app/pull/7'*) ;; *) fail "no URL: $(mcpt_text 5)" ;; esac
+  for i in 6 7 8; do assert_eq "$(mcpt_error_flag $i)" true "call $i should fail"; done
+}
+
+test_mcp_test_tool_is_not_a_pass_without_tests() {
+  mcpt_alice_repo
+  mcpt_session "$MCPT_INIT" "$(mcpt_call 1 test)" "$(mcpt_call 2 test '{"suite":"--yes"}')"
+  assert_eq "$(mcpt_error_flag 1)" true 'no flow file is not a pass'
+  [ -n "$(mcpt_text 1)" ] || fail 'no explanation'
+  assert_eq "$(mcpt_error_flag 2)" true
+  case "$(mcpt_text 2)" in *'must not start with -'*) ;; *) fail "$(mcpt_text 2)" ;; esac
+}
+
+mcpt_guard() {   # $1 tool name $2 tool_input JSON [$3 hook cwd] → deny | ask | none (the Claude Code hook's decision)
+  local out
+  out=$(jq -cn --arg n "$1" --argjson i "$2" --arg d "${3:-$PWD}" '{tool_name: $n, tool_input: $i, cwd: $d}' | gitch guard --claude 2>&1)
+  if [ -z "$out" ]; then echo none; return; fi
+  printf '%s' "$out" | jq -e . >/dev/null 2>&1 || { echo "BADJSON:$out"; return; }
+  printf '%s' "$out" | jq -r '.hookSpecificOutput.permissionDecision'
+}
+mcpt_expect_guard() {   # $1 expected $2 tool $3 tool_input [$4 cwd]
+  local got
+  got=$(mcpt_guard "$2" "$3" "${4:-}")
+  [ "$got" = "$1" ] || fail "expected $1, got $got  <- $2 $3"
+}
+
+test_mcp_guard_asks_like_the_matching_gitch_commands() {
+  local app="$HOME/Develop/alice/app" cfg="$HOME/.config/gitch/config"
+  mcpt_alice_repo
+  # aiPush=ask (the default): every push and pull request asks, other tools go ahead.
+  mcpt_expect_guard ask mcp__gitch__push '{}'
+  mcpt_expect_guard ask mcp__gitch__push '{"dry_run":true}'
+  mcpt_expect_guard ask mcp__gitch__pr_create '{"title":"t"}'
+  for t in status preflight commit pull branch continue test pr_status ci rescue_list; do mcpt_expect_guard none "mcp__gitch__$t" '{}'; done
+  case "$(jq -cn '{tool_name: "mcp__gitch__push", tool_input: {}, cwd: "."}' | gitch guard --claude)" in
+    *'[gitch] gitch p'*) ;; *) fail 'the reason does not name the gitch command' ;; esac
+  # aiPush=branch: work branches go ahead, the default branch and pull requests ask.
+  git config -f "$cfg" gitch.aiPush branch
+  mcpt_expect_guard ask mcp__gitch__push '{}'
+  git switch -q -c feature/x
+  mcpt_expect_guard none mcp__gitch__push '{}'
+  mcpt_expect_guard ask mcp__gitch__pr_create '{"title":"t"}'
+  # The repository argument decides, not the hook's folder; relative folders start at the project folder.
+  git clone -q "$app" "$T/other"
+  mcpt_expect_guard ask mcp__gitch__push "$(jq -cn --arg r "$T/other" '{repository: $r}')"
+  mcpt_expect_guard none mcp__gitch__push "$(jq -cn --arg r "$app" '{repository: $r}')" "$T/other"
+  mkdir -p "$T/nogit"
+  mcpt_expect_guard ask mcp__gitch__push '{}' "$T/nogit"
+  [ "$(CLAUDE_PROJECT_DIR="$app" mcpt_guard mcp__gitch__push '{}' "$T/nogit")" = none ] || fail 'the project folder is where the server pushes from'
+  [ "$(CLAUDE_PROJECT_DIR="$T" mcpt_guard mcp__gitch__push '{"repository":"other"}' "$app")" = ask ] || fail 'a relative repository starts at the project folder'
+  # The plugin form of the server name is the same server; other servers are not gitch's business.
+  git -C "$app" switch -q main
+  mcpt_expect_guard ask mcp__plugin_gitch_gitch__push '{}' "$app"
+  mcpt_expect_guard none mcp__other__push '{}' "$app"
+  # aiPush=allow: nothing asks, and the hooks still check every commit and push.
+  git config -f "$cfg" gitch.aiPush allow
+  mcpt_expect_guard none mcp__gitch__push '{}' "$app"
+  mcpt_expect_guard none mcp__gitch__pr_create '{"title":"t"}' "$app"
+}
+
+test_mcp_instructions_describe_the_project_folder() {
+  local cfg="$HOME/.config/gitch/config" text
+  mcpt_alice_repo
+  mcpt_session "$MCPT_INIT"
+  text=$(mcpt_response 0 | jq -r '.result.instructions')
+  case "$text" in *'repository app on main, locked to the account alice.'*) ;; *) fail "no folder line:\n$text" ;; esac
+  case "$text" in *'Every push and new pull request asks the user first.'*) ;; *) fail "no ask policy:\n$text" ;; esac
+  case "$text" in *'force push'*) ;; *) fail "does not say what is left to the user:\n$text" ;; esac
+  case "$text" in *'bob'*|*'@example.com'*) fail "other accounts or emails leak into the instructions:\n$text" ;; esac
+  git config -f "$cfg" gitch.aiPush branch
+  git switch -q -c feature/y; git config --unset gitch.account
+  mcpt_session "$MCPT_INIT"
+  text=$(mcpt_response 0 | jq -r '.result.instructions')
+  case "$text" in *'Pushes to work branches go ahead'*) ;; *) fail "no branch policy:\n$text" ;; esac
+  case "$text" in *'on feature/y, not locked to an account yet'*) ;; *) fail "no unlocked line:\n$text" ;; esac
+  cd "$T" || fail cd
+  mkdir -p plain && cd plain || fail cd
+  mcpt_session "$MCPT_INIT"
+  case "$(mcpt_response 0 | jq -r '.result.instructions')" in *'project folder is the repository'*) fail 'a folder line outside a repository' ;; esac
+}
+
+test_mcp_prompts_become_commands() {
+  mcpt_alice_repo
+  mcpt_session "$MCPT_INIT" '{"jsonrpc":"2.0","id":1,"method":"prompts/list"}' \
+    '{"jsonrpc":"2.0","id":2,"method":"prompts/get","params":{"name":"commit","arguments":{"focus":"only the docs"}}}' \
+    '{"jsonrpc":"2.0","id":3,"method":"prompts/get","params":{"name":"pr"}}' \
+    '{"jsonrpc":"2.0","id":4,"method":"prompts/get","params":{"name":"nope"}}'
+  assert_ok
+  assert_eq "$(mcpt_response 0 | jq -r '.result.capabilities.prompts.listChanged')" false
+  assert_eq "$(mcpt_response 1 | jq -r '[.result.prompts[].name] | join(" ")')" 'commit pr'
+  assert_eq "$(mcpt_response 2 | jq -r '.result.messages[0].role')" user
+  case "$(mcpt_response 2 | jq -r '.result.messages[0].content.text')" in
+    *'Call preflight'*'Focus: only the docs') ;; *) fail "commit prompt:\n$(mcpt_response 2)" ;; esac
+  case "$(mcpt_response 3 | jq -r '.result.messages[0].content.text')" in
+    *'Call pr_create'*) ;; *) fail "pr prompt:\n$(mcpt_response 3)" ;; esac
+  case "$(mcpt_response 3 | jq -r '.result.messages[0].content.text')" in *'Notes:'*) fail 'empty notes are left out' ;; esac
+  assert_eq "$(mcpt_response 4 | jq -r '.error.code')" -32602
+}
+
+mcpt_fake_claude() {   # a claude command that records its arguments in $T/claude.log (never the real one: it would register for real)
+  printf '#!/bin/sh\necho "$*" >> "%s/claude.log"\n' "$T" > "$T/fakebin/claude"
+  chmod +x "$T/fakebin/claude"
+}
+
+test_mcp_ai_registration_is_opt_in_and_reversible() {
+  local s="$HOME/.claude/settings.json" cfg="$HOME/.config/gitch/config" before
+  mk_config; mcpt_fake_claude
+  printf '%s\n' '{"model": "x", "permissions": {"allow": ["Bash(npm test)"]}}' > "$s"
+  run gitch ai; assert_ok
+  before=$(cat "$s")
+  case "$before" in *mcp*) fail "plain gitch ai wrote MCP entries:\n$before" ;; esac
+  [ ! -e "$T/claude.log" ] || fail "plain gitch ai called claude: $(cat "$T/claude.log")"
+  # --mcp: the hook matcher, the tool permissions and the server, once however often it runs
+  run gitch ai --mcp; assert_ok
+  run gitch ai --mcp; assert_ok; assert_out 'Claude Code MCP server gitch (user scope)'
+  assert_eq "$(git config -f "$cfg" --get gitch.aimcp)" true
+  assert_eq "$(jq '[.hooks.PreToolUse[] | select(.matcher == "mcp__gitch__.*" and (.hooks[0].command | test("guard --claude$")))] | length' "$s")" 1
+  assert_eq "$(jq '[.hooks.PreToolUse[] | select(.hooks[0].command | test("guard --claude"))] | length' "$s")" 3
+  assert_eq "$(jq '[.permissions.allow[] | select(startswith("mcp__gitch__"))] | length' "$s")" 12
+  assert_eq "$(jq '.permissions.allow | length' "$s")" "$(jq '.permissions.allow | unique | length' "$s")" 'duplicate permissions'
+  assert_eq "$(jq -r .model "$s")" x
+  assert_eq "$(grep -c '^mcp remove --scope user gitch$' "$T/claude.log")" 2
+  assert_eq "$(grep -c '^mcp add-json --scope user gitch ' "$T/claude.log")" 2
+  if mac_only; then
+    assert_eq "$(grep '^mcp add-json' "$T/claude.log" | tail -1 | sed 's/^mcp add-json --scope user gitch //' | jq -c .)" \
+      "$(jq -cn --arg c "$HOME/bin/gitch" '{type: "stdio", command: $c, args: ["mcp"]}')" 'the server runs this gitch'
+  fi
+  # A later plain gitch ai (or a settings change) keeps the MCP setup while it is on.
+  run gitch ai; assert_ok
+  assert_eq "$(jq '[.permissions.allow[] | select(startswith("mcp__gitch__"))] | length' "$s")" 12
+  # --no-mcp puts settings.json back byte for byte and unregisters the server.
+  : > "$T/claude.log"
+  run gitch ai --no-mcp; assert_ok
+  assert_eq "$(cat "$s")" "$before" 'settings.json after --no-mcp'
+  assert_eq "$(git config -f "$cfg" --get gitch.aimcp)" ''
+  assert_eq "$(cat "$T/claude.log")" 'mcp remove --scope user gitch'
+  : > "$T/claude.log"
+  run gitch ai --no-mcp; assert_ok
+  [ ! -s "$T/claude.log" ] || fail 'nothing to unregister when it is off'
+  # --remove takes the MCP setup with the rest.
+  run gitch ai --mcp; assert_ok
+  : > "$T/claude.log"
+  run gitch ai --remove; assert_ok
+  case "$(cat "$s")" in *mcp*) fail "MCP entries left after --remove:\n$(cat "$s")" ;; esac
+  assert_eq "$(cat "$T/claude.log")" 'mcp remove --scope user gitch'
+  assert_eq "$(git config -f "$cfg" --get gitch.aimcp)" ''
+  : > "$T/claude.log"
+  run gitch ai --remove; assert_ok
+  [ ! -s "$T/claude.log" ] || fail '--remove calls claude only when the server was registered'
+}
+
+test_mcp_ai_without_claude_explains_the_command() {
+  mk_config
+  GITCH_CLAUDE="$T/no-claude" run gitch ai --mcp; assert_ok
+  assert_out 'claude mcp add-json --scope user gitch'
+  assert_eq "$(jq '[.permissions.allow[] | select(startswith("mcp__gitch__"))] | length' "$HOME/.claude/settings.json")" 12
+}

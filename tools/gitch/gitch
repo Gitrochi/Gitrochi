@@ -5455,24 +5455,62 @@ JQ_CLAUDE_REMOVE='
   | (if .permissions.allow then .permissions.allow |= map(select(. as $x | ($allow | any(.[]; . == $x)) | not)) else . end)
   | (if .permissions.allow == [] then del(.permissions.allow) else . end)
   | (if .permissions == {} then del(.permissions) else . end)'
+# gitch ai --mcp: the MCP tools Claude Code may call without asking, like the gitch commands above.
+# The guard hook (matcher below) still asks for pushes and pull requests by the aiPush policy.
+CLAUDE_MCP_ALLOW='["mcp__gitch__status","mcp__gitch__preflight","mcp__gitch__pr_status","mcp__gitch__ci","mcp__gitch__rescue_list","mcp__gitch__commit","mcp__gitch__push","mcp__gitch__pull","mcp__gitch__branch","mcp__gitch__continue","mcp__gitch__pr_create","mcp__gitch__test"]'
+JQ_CLAUDE_MCP='
+  .hooks.PreToolUse += [{"matcher": "mcp__gitch__.*", "hooks": [{"type": "command", "command": $cmd, "timeout": 15}]}]
+  | .permissions.allow = reduce $mcp[] as $x (.permissions.allow; if any(.[]; . == $x) then . else . + [$x] end)'
+
+ai_mcp_on() { [ "$(git config -f "$CFG" --bool --get gitch.aimcp 2>/dev/null)" = true ]; }   # gitch ai --mcp was run (gitch.aiMcp)
 
 write_claude_settings() {
   [ -d "$CLAUDE_DIR" ] || return 0
   command -v jq >/dev/null 2>&1 || { warn "jq 가 없어 Claude Code 검사 훅을 설치하지 못했습니다 ($(install_hint jq jqlang.jq))"; return 1; }
-  local f="$CLAUDE_DIR/settings.json" tmp cmd
+  local f="$CLAUDE_DIR/settings.json" tmp cmd old
   cmd="\"$(gitch_cmd_path)\" guard --claude"
   if [ -f "$f" ]; then
     jq empty "$f" >/dev/null 2>&1 || { warn "$(tilde "$f") 이 올바른 JSON 이 아니라 건드리지 않았습니다"; return 1; }
     backup_file "$f"
   fi
   tmp=$(mktemp "${TMPDIR:-/tmp}/gitch-claude.XXXXXX") || return 1
-  if { if [ -f "$f" ]; then cat "$f"; else echo '{}'; fi; } | jq --arg cmd "$cmd" --argjson allow "$CLAUDE_ALLOW" --argjson old "$CLAUDE_ALLOW_OLD" "$JQ_CLAUDE_INSTALL" > "$tmp"; then
+  # The MCP entries go with the old ones, so the file is as before unless gitch ai --mcp is on; then they come back.
+  old=$(jq -cn --argjson a "$CLAUDE_ALLOW_OLD" --argjson b "$CLAUDE_MCP_ALLOW" '$a + $b')
+  if { if [ -f "$f" ]; then cat "$f"; else echo '{}'; fi; } | jq --arg cmd "$cmd" --argjson allow "$CLAUDE_ALLOW" --argjson old "$old" "$JQ_CLAUDE_INSTALL" > "$tmp" \
+     && { ! ai_mcp_on || { jq --arg cmd "$cmd" --argjson mcp "$CLAUDE_MCP_ALLOW" "$JQ_CLAUDE_MCP" "$tmp" > "$tmp.mcp" && cat "$tmp.mcp" > "$tmp"; }; }; then
     cat "$tmp" > "$f"
     say "  ${GREEN}✔${RESET} Claude Code 명령 검사 훅 + 읽기 명령 허용: $(tilde "$f")"
+    ai_mcp_on && say "  ${GREEN}✔${RESET} Claude Code MCP tools allowed, with the same guard: $(tilde "$f")"
   else
     warn "Claude Code 설정을 바꾸지 못했습니다: $(tilde "$f")"
   fi
-  rm -f "$tmp"
+  rm -f "$tmp" "$tmp.mcp"
+}
+
+mcp_server_json() {   # how Claude Code starts this gitch's MCP server (Windows starts Git Bash with the script)
+  if [ -n "$IS_WINDOWS" ]; then jq -cn --arg c "$(flow_bash)" --arg g "$(cygpath -w "$(gitch_cmd_path)")" '{type: "stdio", command: $c, args: [$g, "mcp"]}'
+  else jq -cn --arg c "$(gitch_cmd_path)" '{type: "stdio", command: $c, args: ["mcp"]}'; fi
+}
+
+mcp_claude() {   # the claude command: GITCH_CLAUDE (the app's tool setting, like GITCH_GH), then PATH
+  if [ -n "${GITCH_CLAUDE:-}" ]; then [ -x "$GITCH_CLAUDE" ] && printf '%s' "$GITCH_CLAUDE"; return; fi
+  command -v claude 2>/dev/null
+}
+
+mcp_register() {   # $1 add | remove — the user-scope server "gitch" in Claude Code, through its own claude command
+  local claude json
+  if ! claude=$(mcp_claude); then
+    [ "$1" = add ] && warn "The claude command was not found; register the server in Claude Code yourself: claude mcp add-json --scope user gitch '$(mcp_server_json)'"
+    return 0
+  fi
+  "$claude" mcp remove --scope user gitch >/dev/null 2>&1
+  [ "$1" = add ] || return 0
+  json=$(mcp_server_json)
+  if "$claude" mcp add-json --scope user gitch "$json" >/dev/null 2>&1; then
+    say "  ${GREEN}✔${RESET} Claude Code MCP server gitch (user scope): $(tilde "$(gitch_cmd_path)") mcp"
+  else
+    warn "Claude Code did not take the MCP server; run it yourself: claude mcp add-json --scope user gitch '$json'"
+  fi
 }
 
 ai_remove() {
@@ -5486,9 +5524,10 @@ ai_remove() {
   if [ -f "$f" ] && command -v jq >/dev/null 2>&1 && jq empty "$f" >/dev/null 2>&1; then
     backup_file "$f"
     tmp=$(mktemp "${TMPDIR:-/tmp}/gitch-claude.XXXXXX") || return 1
-    jq --argjson allow "$(jq -cn --argjson a "$CLAUDE_ALLOW" --argjson b "$CLAUDE_ALLOW_OLD" '$a + $b')" "$JQ_CLAUDE_REMOVE" "$f" > "$tmp" && cat "$tmp" > "$f"
+    jq --argjson allow "$(jq -cn --argjson a "$CLAUDE_ALLOW" --argjson b "$CLAUDE_ALLOW_OLD" --argjson c "$CLAUDE_MCP_ALLOW" '$a + $b + $c')" "$JQ_CLAUDE_REMOVE" "$f" > "$tmp" && cat "$tmp" > "$f"
     rm -f "$tmp"
   fi
+  if ai_mcp_on; then mcp_register remove; git config -f "$CFG" --unset gitch.aimcp; fi
 }
 
 ai_cmd() {
@@ -5497,7 +5536,12 @@ ai_cmd() {
     --skill) gen_skill ;;
     --remove) ai_remove; ok "AI 도구 연동(규칙/스킬/Claude 훅)을 지웠습니다." ;;
     "") need_config; write_ai_rules; write_skills; write_claude_settings ;;
-    *) die "사용법: gitch ai [--print | --skill | --remove]" ;;
+    --mcp) need_config; git config -f "$CFG" gitch.aiMcp true || die "Could not write $(tilde "$CFG")"
+      write_ai_rules; write_skills; write_claude_settings; mcp_register add ;;
+    --no-mcp)
+      if ai_mcp_on; then git config -f "$CFG" --unset gitch.aimcp; mcp_register remove; write_claude_settings >/dev/null; fi
+      ok "gitch's MCP server is off for Claude Code (rules, skill and guard stay)." ;;
+    *) die "사용법: gitch ai [--print | --skill | --remove | --mcp | --no-mcp]" ;;
   esac
 }
 
@@ -6128,6 +6172,21 @@ guard_file_edit() {   # Edit/Write 도구의 파일 경로
   return 0
 }
 
+guard_mcp() {   # $1 tool name (mcp__<server>__<tool>) $2 its repository argument — decided like the gitch command the tool runs
+  local server=${1#mcp__} name=${1##*__}
+  server=${server%__*}
+  case "$server" in gitch|plugin_gitch_*) ;; *) return 0 ;; esac
+  # The server acts on the project folder unless told otherwise, and resolves relative folders from there.
+  [ -n "${CLAUDE_PROJECT_DIR:-}" ] && G_CWD=$(posix_path "$CLAUDE_PROJECT_DIR")
+  [ -n "$2" ] && G_CWD=$(g_path "$2")
+  case "$name" in
+    push) GW=(gitch p) ;;
+    pr_create) GW=(gitch pr) ;;
+    *) return 0 ;;
+  esac
+  guard_simple
+}
+
 guard_cmd() {   # gitch guard --claude  (Claude Code PreToolUse 훅)
   [ "${1:-}" = --claude ] || die "사용법: gitch guard --claude  (Claude Code 훅 전용, 표준입력 JSON)"
   local input tool="" cwd="" arg=""
@@ -6135,15 +6194,356 @@ guard_cmd() {   # gitch guard --claude  (Claude Code PreToolUse 훅)
   command -v jq >/dev/null 2>&1 || return 0
   case "$input" in *git*|*GIT*|*.ssh*|*ssh-*|*hooks*) ;; *) return 0 ;; esac
   { IFS= read -r -d '' tool; IFS= read -r -d '' cwd; IFS= read -r -d '' arg; } < <(printf '%s' "$input" | \
-    jq -j '(.tool_name // ""), "\u0000", (.cwd // ""), "\u0000", (.tool_input.command // .tool_input.file_path // .tool_input.notebook_path // ""), "\u0000"' 2>/dev/null)
+    jq -j '(.tool_name // ""), "\u0000", (.cwd // ""), "\u0000", (.tool_input.command // .tool_input.file_path // .tool_input.notebook_path // .tool_input.repository // ""), "\u0000"' 2>/dev/null)
   G_DEC=""; G_REASON=""; G_CWD=$(posix_path "${cwd:-$PWD}")
   case "$tool" in
     Bash) guard_bash "$arg" ;;
     Edit|Write|MultiEdit|NotebookEdit) guard_file_edit "$arg" ;;
+    mcp__*) guard_mcp "$tool" "$arg" ;;
     *) return 0 ;;
   esac
   [ -z "$G_DEC" ] && return 0
   jq -cn --arg d "$G_DEC" --arg r "[gitch] $G_REASON" '{hookSpecificOutput: {hookEventName: "PreToolUse", permissionDecision: $d, permissionDecisionReason: $r}}'
+  return 0
+}
+
+
+# ================= mcp: gitch tools over the Model Context Protocol =================
+# An AI client starts `gitch mcp` and talks JSON-RPC over stdin/stdout, one message per line.
+# Each tool runs this gitch as a child with stdin closed, so the checks behave as they do for an agent's shell:
+# account lock, author, secrets and big files in the hooks, and confirmations that stop instead of asking.
+
+MCP_PROTOCOLS='2025-11-25 2025-06-18 2025-03-26 2024-11-05'   # the first one is offered when the client asks for another
+MCP_TEXT_LIMIT=40000
+
+# The repository argument every tool takes.
+MCP_REPO_PROP='"repository": {"type": "string", "description": "Folder of the repository, absolute or relative to the folder the server started in (the project folder). Defaults to that folder; pass it for other repositories and worktrees."}'
+read -r -d '' MCP_TOOLS <<EOF
+[
+  {"name": "status", "title": "Repository status",
+   "description": "Read the repository's state: branch, locked account, ahead/behind, staged, unstaged and untracked files, conflicts and a rebase or merge in progress (changes), plus the commit author and push account (account). Read-only.",
+   "inputSchema": {"type": "object", "properties": {$MCP_REPO_PROP,
+     "fetch": {"type": "boolean", "description": "true fetches origin first, false never fetches. Left out, gitch fetches only when the last fetch is old."}}, "additionalProperties": false},
+   "annotations": {"readOnlyHint": true, "destructiveHint": false, "idempotentHint": true, "openWorldHint": true}},
+  {"name": "preflight", "title": "Check before commit or push",
+   "description": "Check the account lock, commit author, push address and work in progress before committing or pushing. result is OK, WARN or STOP. On STOP do not commit or push: report the failed checks to the user. Read-only.",
+   "inputSchema": {"type": "object", "properties": {$MCP_REPO_PROP,
+     "fetch": {"type": "boolean", "description": "false checks with what is known locally instead of fetching origin first."}}, "additionalProperties": false},
+   "annotations": {"readOnlyHint": true, "destructiveHint": false, "idempotentHint": true, "openWorldHint": true}},
+  {"name": "pr_status", "title": "Pull request status",
+   "description": "Read the current branch's pull request (GitHub) or merge request links (GitLab): state, reviews and checks. Read-only.",
+   "inputSchema": {"type": "object", "properties": {$MCP_REPO_PROP}, "additionalProperties": false},
+   "annotations": {"readOnlyHint": true, "destructiveHint": false, "idempotentHint": true, "openWorldHint": true}},
+  {"name": "ci", "title": "CI results",
+   "description": "Read the CI checks of the current branch's pull request. Read-only.",
+   "inputSchema": {"type": "object", "properties": {$MCP_REPO_PROP}, "additionalProperties": false},
+   "annotations": {"readOnlyHint": true, "destructiveHint": false, "idempotentHint": true, "openWorldHint": true}},
+  {"name": "rescue_list", "title": "Rescue points",
+   "description": "List the rescue points gitch saved before pull, up, sync, fix, undo and amend. Restoring one is for the user to run (gitch rescue N --restore). Read-only.",
+   "inputSchema": {"type": "object", "properties": {$MCP_REPO_PROP}, "additionalProperties": false},
+   "annotations": {"readOnlyHint": true, "destructiveHint": false, "idempotentHint": true, "openWorldHint": false}},
+  {"name": "commit", "title": "Commit",
+   "description": "Commit under the repository's locked account. files are staged first (added to anything already staged); all stages every change like git add -A; with neither, only what is already staged is committed. gitch's checks (author, secrets, big files) run as usual: a [gitch] refusal is an error to report to the user, not to work around. Never amends.",
+   "inputSchema": {"type": "object", "properties": {$MCP_REPO_PROP,
+     "title": {"type": "string", "minLength": 1, "description": "The commit subject, in the repository's commit style."},
+     "body": {"type": "string", "description": "The commit body (paragraphs or bullets)."},
+     "files": {"type": "array", "items": {"type": "string", "minLength": 1}, "description": "Paths to stage, relative to the repository folder, taken literally (no globs)."},
+     "all": {"type": "boolean", "description": "Stage every change, new files included."}}, "required": ["title"], "additionalProperties": false},
+   "annotations": {"readOnlyHint": false, "destructiveHint": false, "idempotentHint": false, "openWorldHint": false}},
+  {"name": "push", "title": "Push",
+   "description": "Push the current branch to origin; the first push sets the upstream. Never force-pushes: when origin has new commits, pull first. Depending on the user's push policy, a push (or one to a default or protected branch) asks the user first.",
+   "inputSchema": {"type": "object", "properties": {$MCP_REPO_PROP,
+     "dry_run": {"type": "boolean", "description": "Show what would be pushed without pushing."}}, "additionalProperties": false},
+   "annotations": {"readOnlyHint": false, "destructiveHint": false, "idempotentHint": true, "openWorldHint": true}},
+  {"name": "pull", "title": "Pull",
+   "description": "Bring the current branch up to date with its upstream; gitch saves a rescue point first. Conflicts are reported: resolve them, stage the files and call continue.",
+   "inputSchema": {"type": "object", "properties": {$MCP_REPO_PROP}, "additionalProperties": false},
+   "annotations": {"readOnlyHint": false, "destructiveHint": false, "idempotentHint": true, "openWorldHint": true}},
+  {"name": "branch", "title": "Switch or create a branch",
+   "description": "Switch to a branch: an existing local one, origin's branch of that name (tracked), or a new one from the current commit.",
+   "inputSchema": {"type": "object", "properties": {$MCP_REPO_PROP,
+     "name": {"type": "string", "minLength": 1, "description": "Branch name, for example feature/short-topic."}}, "required": ["name"], "additionalProperties": false},
+   "annotations": {"readOnlyHint": false, "destructiveHint": false, "idempotentHint": true, "openWorldHint": false}},
+  {"name": "continue", "title": "Continue a rebase or merge",
+   "description": "Continue a rebase or merge after its conflicts are resolved and the files are staged.",
+   "inputSchema": {"type": "object", "properties": {$MCP_REPO_PROP}, "additionalProperties": false},
+   "annotations": {"readOnlyHint": false, "destructiveHint": false, "idempotentHint": false, "openWorldHint": false}},
+  {"name": "pr_create", "title": "Open a pull request",
+   "description": "Open a pull request (GitHub) or merge request (GitLab) for the current branch with the repository account's own login, pushing the branch first when needed. Not from the default branch. Asks the user first unless the user's push policy allows it.",
+   "inputSchema": {"type": "object", "properties": {$MCP_REPO_PROP,
+     "title": {"type": "string", "minLength": 1, "description": "The pull request title."},
+     "body": {"type": "string", "description": "The description; follow the repository's pull request template when it has one."},
+     "base": {"type": "string", "description": "Target branch. Defaults to the default branch."},
+     "draft": {"type": "boolean", "description": "Open it as a draft."}}, "required": ["title"], "additionalProperties": false},
+   "annotations": {"readOnlyHint": false, "destructiveHint": false, "idempotentHint": false, "openWorldHint": true}},
+  {"name": "test", "title": "Run tests",
+   "description": "Run the repository's gitch flow tests (.gitch/flow.yml) and return a short summary. Without suite, only the tests affected by the current changes run. Zero tests run or an undecided result is not a pass.",
+   "inputSchema": {"type": "object", "properties": {$MCP_REPO_PROP,
+     "suite": {"type": "string", "description": "A suite or tag from .gitch/flow.yml."},
+     "affected": {"type": "boolean", "description": "Run only the tests the changes affect. Defaults to true without suite and false with one."}}, "additionalProperties": false},
+   "annotations": {"readOnlyHint": false, "destructiveHint": false, "idempotentHint": true, "openWorldHint": false}}
+]
+EOF
+
+mcp_send() { printf '%s\n' "$1" >&3; }   # fd 3 is the protocol stream; stdout goes to stderr while the server runs
+mcp_reply() { mcp_send "{\"jsonrpc\":\"2.0\",\"id\":$1,\"result\":$2}"; }   # $1 id (JSON) $2 result (JSON)
+mcp_fail() { mcp_send "{\"jsonrpc\":\"2.0\",\"id\":$1,\"error\":{\"code\":$2,\"message\":$(json_str "$3")}}"; }   # $1 id $2 code $3 message
+mcp_is_object() { printf '%s' "$1" | jq -e 'type == "object"' >/dev/null 2>&1; }
+mcp_arg() {   # $1 arguments (JSON object) $2 name → strings as they are, other values as JSON, nothing when missing or null
+  printf '%s' "$1" | jq -r --arg k "$2" 'if .[$k] == null then empty elif (.[$k] | type) == "string" then .[$k] else (.[$k] | tojson) end' 2>/dev/null
+}
+mcp_plain() { sed $'s/\033\\[[0-9;?]*[A-Za-z]//g'; }   # a child should print no colors without a terminal; this is the safety net
+
+mcp_result() {   # $1 true when the tool failed, $2 text, [$3 a JSON object for structuredContent] → MCP_RESULT
+  if [ -n "${3:-}" ]; then
+    MCP_RESULT=$(jq -cn --argjson e "$1" --arg t "$2" --argjson s "$3" '{content: [{type: "text", text: $t}], structuredContent: $s, isError: $e}')
+  else
+    MCP_RESULT=$(jq -cn --argjson e "$1" --arg t "$2" '{content: [{type: "text", text: $t}], isError: $e}')
+  fi
+}
+
+mcp_repo() {   # $1 the repository argument → MCP_DIR, or false with MCP_WHY
+  local p="${1:-}"
+  MCP_DIR=""; MCP_WHY=""
+  if [ -z "$p" ]; then p=$MCP_ROOT
+  else
+    p=$(posix_path "$(expand_path "$p")")
+    case "$p" in /*) ;; *) p="$MCP_ROOT/$p" ;; esac
+  fi
+  [ -d "$p" ] || { MCP_WHY="No such folder: $p"; return 1; }
+  git -C "$p" rev-parse --is-inside-work-tree >/dev/null 2>&1 || { MCP_WHY="Not inside a Git work tree: $p"; return 1; }
+  MCP_DIR=$(cd "$p" && pwd -P)
+}
+
+mcp_run() {   # $1 folder, then gitch arguments → MCP_RC, MCP_OUT (stdout), MCP_ERR (stderr)
+  local dir="$1" o e
+  shift
+  o=$(mktemp "${TMPDIR:-/tmp}/gitch-mcp.XXXXXX") || return 1
+  e=$(mktemp "${TMPDIR:-/tmp}/gitch-mcp.XXXXXX") || { rm -f "$o"; return 1; }
+  (cd "$dir" && GITCH_ACTOR="$MCP_ACTOR" GITCH_COLOR=never GITCH_STYLE=plain NO_COLOR=1 "${BASH:-bash}" "$MCP_SELF" "$@") < /dev/null > "$o" 2> "$e"
+  MCP_RC=$?
+  MCP_OUT=$(mcp_plain < "$o"); MCP_ERR=$(mcp_plain < "$e")
+  rm -f "$o" "$e"
+}
+
+mcp_text() {   # the last run's stdout and stderr as one text, cut at MCP_TEXT_LIMIT characters
+  local t="$MCP_OUT"
+  [ -n "$MCP_ERR" ] && t="${t:+$t$'\n'}$MCP_ERR"
+  [ -n "$t" ] || t="(no output, exit code $MCP_RC)"
+  [ ${#t} -le $MCP_TEXT_LIMIT ] || t="${t:0:$MCP_TEXT_LIMIT}"$'\n'"... (cut at $MCP_TEXT_LIMIT characters)"
+  printf '%s' "$t"
+}
+
+mcp_finish() {   # the last run as the tool result: a JSON object on stdout becomes structured content
+  local failed=false   # $1 ok-json: a JSON result is not a failure whatever the exit code (preflight answers STOP with 1)
+  [ "$MCP_RC" -eq 0 ] || failed=true
+  if mcp_is_object "$MCP_OUT"; then
+    [ "${1:-}" = ok-json ] && failed=false
+    mcp_result "$failed" "$(mcp_text)" "$MCP_OUT"
+  else
+    mcp_result "$failed" "$(mcp_text)"
+  fi
+}
+
+mcp_tool_status() {
+  local fetch changes
+  fetch=$(mcp_arg "$1" fetch)
+  case "$fetch" in true) set -- --fetch ;; false) set -- --no-fetch ;; *) set -- ;; esac
+  mcp_run "$MCP_DIR" ck --json "$@"
+  mcp_is_object "$MCP_OUT" || { mcp_finish; return; }
+  changes=$MCP_OUT
+  mcp_run "$MCP_DIR" status --json
+  mcp_is_object "$MCP_OUT" || MCP_OUT=null
+  MCP_OUT=$(jq -cn --argjson c "$changes" --argjson a "$MCP_OUT" '{changes: $c, account: $a}')
+  MCP_ERR=""; MCP_RC=0
+  mcp_finish
+}
+mcp_tool_preflight() {
+  if [ "$(mcp_arg "$1" fetch)" = false ]; then mcp_run "$MCP_DIR" preflight --json --no-fetch
+  else mcp_run "$MCP_DIR" preflight --json; fi
+  mcp_finish ok-json
+}
+mcp_tool_pr_status() { mcp_run "$MCP_DIR" pr status --json; mcp_finish; }
+mcp_tool_ci() { mcp_run "$MCP_DIR" ci; mcp_finish; }
+mcp_tool_rescue_list() { mcp_run "$MCP_DIR" rescue; mcp_finish; }
+
+mcp_word() {   # $1 value $2 what it is → false with an error result when the value is empty or could be read as an option
+  case "$1" in ""|-*) mcp_result true "$2 must be given and must not start with -"; return 1 ;; esac
+}
+mcp_tool_commit() {
+  local title body all f files=()
+  title=$(mcp_arg "$1" title); body=$(mcp_arg "$1" body); all=$(mcp_arg "$1" all)
+  [ -n "$title" ] || { mcp_result true "title is required"; return; }
+  printf '%s' "$1" | jq -e '(.files // []) | type == "array" and all(.[]; type == "string" and length > 0)' >/dev/null \
+    || { mcp_result true "files must be a list of paths"; return; }
+  while IFS= read -r -d '' f; do files+=("$f"); done < <(printf '%s' "$1" | jq -j '(.files // [])[] | ., "\u0000"')
+  if [ "$all" = true ] && [ ${#files[@]} -gt 0 ]; then mcp_result true "Pass files or all, not both"; return; fi
+  if [ ${#files[@]} -gt 0 ]; then
+    MCP_OUT=""
+    if ! MCP_ERR=$(git -C "$MCP_DIR" --literal-pathspecs add -- "${files[@]}" 2>&1); then MCP_RC=1; mcp_finish; return; fi
+  fi
+  set -- c
+  [ "$all" = true ] && set -- "$@" -a
+  set -- "$@" -m "$title"
+  [ -n "$body" ] && set -- "$@" -m "$body"
+  mcp_run "$MCP_DIR" "$@"
+  mcp_finish
+}
+mcp_tool_push() {   # never --force: the user runs that in a terminal
+  if [ "$(mcp_arg "$1" dry_run)" = true ]; then mcp_run "$MCP_DIR" p --dry-run; else mcp_run "$MCP_DIR" p; fi
+  mcp_finish
+}
+mcp_tool_pull() { mcp_run "$MCP_DIR" pl; mcp_finish; }
+mcp_tool_continue() { mcp_run "$MCP_DIR" continue; mcp_finish; }
+mcp_tool_branch() {
+  local name
+  name=$(mcp_arg "$1" name)
+  mcp_word "$name" name || return
+  git -C "$MCP_DIR" check-ref-format --branch "$name" >/dev/null 2>&1 || { mcp_result true "Not a valid branch name: $name"; return; }
+  mcp_run "$MCP_DIR" b "$name"
+  mcp_finish
+}
+mcp_tool_pr_create() {
+  local title body base draft
+  title=$(mcp_arg "$1" title); body=$(mcp_arg "$1" body); base=$(mcp_arg "$1" base); draft=$(mcp_arg "$1" draft)
+  [ -n "$title" ] || { mcp_result true "title is required"; return; }
+  [ -z "$base" ] || mcp_word "$base" base || return
+  set -- pr --title "$title"
+  [ -n "$body" ] && set -- "$@" --body "$body"
+  [ -n "$base" ] && set -- "$@" --base "$base"
+  [ "$draft" = true ] && set -- "$@" --draft
+  mcp_run "$MCP_DIR" "$@"
+  mcp_finish
+}
+mcp_tool_test() {   # never --yes: steps that wait for a person stay with the person
+  local suite affected
+  suite=$(mcp_arg "$1" suite); affected=$(mcp_arg "$1" affected)
+  [ -z "$suite" ] || mcp_word "$suite" suite || return
+  set -- test
+  if [ -n "$suite" ]; then set -- "$@" "$suite"; [ "$affected" = true ] && set -- "$@" --affected
+  else [ "$affected" = false ] || set -- "$@" --affected; fi
+  mcp_run "$MCP_DIR" "$@" --summary
+  mcp_finish
+}
+
+mcp_call() {   # $1 tools/call params → MCP_RESULT, or MCP_CALL_ERROR for an unknown tool or arguments that are not an object
+  local name args
+  MCP_RESULT=""; MCP_CALL_ERROR=""
+  name=$(printf '%s' "$1" | jq -r '.name // "" | tostring')
+  args=$(printf '%s' "$1" | jq -c '.arguments // {}')
+  printf '%s' "$MCP_TOOLS_JSON" | jq -e --arg n "$name" 'any(.[]; .name == $n)' >/dev/null || { MCP_CALL_ERROR="Unknown tool: $name"; return; }
+  mcp_is_object "$args" || { MCP_CALL_ERROR="Tool arguments must be an object"; return; }
+  if ! mcp_repo "$(mcp_arg "$args" repository)"; then mcp_result true "$MCP_WHY"; return; fi
+  "mcp_tool_$name" "$args"
+}
+
+mcp_initialize() {   # $1 initialize params → MCP_RESULT; the client's name sets the actor gitch records and checks for
+  local asked version v client
+  asked=$(printf '%s' "$1" | jq -r '.protocolVersion // "" | tostring')
+  version=${MCP_PROTOCOLS%% *}
+  for v in $MCP_PROTOCOLS; do [ "$v" = "$asked" ] && version=$v; done
+  client=$(lower "$(printf '%s' "$1" | jq -r '.clientInfo.name // "" | tostring')")
+  case "$client" in *claude*) MCP_ACTOR=claude ;; *codex*) MCP_ACTOR=codex ;; *cursor*) MCP_ACTOR=cursor ;; *gemini*) MCP_ACTOR=gemini ;; *) MCP_ACTOR=ai ;; esac
+  MCP_RESULT=$(jq -cn --arg v "$version" --arg gv "$GITCH_VERSION" --arg i "$(mcp_instructions)" \
+    '{protocolVersion: $v, capabilities: {tools: {listChanged: false}, prompts: {listChanged: false}}, serverInfo: {name: "gitch", title: "gitch", version: $gv}, instructions: $i}')
+}
+
+mcp_instructions() {   # what the agent needs to know, for the folder the server started in (read when the client connects)
+  local top branch lock policy
+  case "$(g_push_mode)" in
+    allow) policy="Pushes and pull requests go ahead without asking; the checks still run." ;;
+    branch) policy="Pushes to work branches go ahead; pushes to the default or a protected branch and new pull requests ask the user first." ;;
+    *) policy="Every push and new pull request asks the user first." ;;
+  esac
+  printf '%s\n' "gitch manages several Git accounts on this computer: each repository is locked to one account, and commits and pushes are checked for the author, secrets, big files and force pushes." \
+    "Use these tools for Git work in place of git or gitch commands: status and preflight before acting, commit with one topic's files at a time, push, pr_create, pull and continue for updates and conflicts, test for the affected tests." \
+    "Tools act on the project folder unless you pass repository; pass it for other repositories and worktrees." \
+    "$policy" \
+    "When a result shows a [gitch] refusal or preflight answers STOP, report it to the user and do not work around it." \
+    "Left to the user: force push, amend, undo, unlocking or changing a repository's account, restoring a rescue point, and trusting flow files."
+  top=$(git -C "$MCP_ROOT" rev-parse --show-toplevel 2>/dev/null) || return 0
+  branch=$(git -C "$MCP_ROOT" symbolic-ref --short HEAD 2>/dev/null) || branch="a detached HEAD"
+  lock=$(git -C "$MCP_ROOT" config --get gitch.account 2>/dev/null)
+  if [ -n "$lock" ]; then lock="locked to the account $lock"; else lock="not locked to an account yet (preflight says what to do)"; fi
+  printf 'The project folder is the repository %s on %s, %s.\n' "${top##*/}" "$branch" "$lock"
+}
+
+# Prompts: the client shows them as slash commands (Claude Code: /mcp__gitch__commit, /mcp__gitch__pr).
+read -r -d '' MCP_PROMPTS <<'EOF'
+[
+  {"name": "commit", "title": "Commit with gitch",
+   "description": "Commit the current changes as small single-topic commits under the repository's account.",
+   "arguments": [{"name": "focus", "description": "What to commit or how to word it (optional)", "required": false}]},
+  {"name": "pr", "title": "Open a pull request with gitch",
+   "description": "Commit what is left, push the branch and open a pull request with the repository account's login.",
+   "arguments": [{"name": "notes", "description": "Anything the description should mention (optional)", "required": false}]}
+]
+EOF
+MCP_PROMPT_COMMIT='Commit the current work in this repository with the gitch tools.
+1. Call preflight. On STOP, stop and report the failed checks.
+2. Call status and group the changed files by topic.
+3. Read a few recent commit subjects (git log --oneline -10) and follow their style.
+4. For each topic, call commit with only that topic'\''s files, a subject and a short body that says why.
+5. Do not push unless I ask.'
+MCP_PROMPT_PR='Open a pull request for the current work with the gitch tools.
+1. Call preflight. On STOP, stop and report the failed checks.
+2. On the default branch, call branch with a short topic name first.
+3. Commit what is left with commit (one topic per commit), then call push.
+4. Write the title and description. Follow .github/PULL_REQUEST_TEMPLATE.md when the repository has one, and name the checks you ran.
+5. Call pr_create and give me the link.'
+
+mcp_prompt() {   # $1 prompts/get params → MCP_RESULT, or MCP_CALL_ERROR for an unknown prompt
+  local name extra text label
+  MCP_RESULT=""; MCP_CALL_ERROR=""
+  name=$(printf '%s' "$1" | jq -r '.name // "" | tostring')
+  case "$name" in
+    commit) text=$MCP_PROMPT_COMMIT; label=Focus; extra=$(printf '%s' "$1" | jq -r '.arguments.focus // "" | tostring') ;;
+    pr) text=$MCP_PROMPT_PR; label=Notes; extra=$(printf '%s' "$1" | jq -r '.arguments.notes // "" | tostring') ;;
+    *) MCP_CALL_ERROR="Unknown prompt: $name"; return ;;
+  esac
+  [ -z "$extra" ] || text="$text"$'\n\n'"$label: $extra"
+  MCP_RESULT=$(printf '%s' "$MCP_PROMPTS_JSON" | jq -c --arg n "$name" --arg t "$text" \
+    '{description: (.[] | select(.name == $n) | .description), messages: [{role: "user", content: {type: "text", text: $t}}]}')
+}
+
+mcp_handle() {   # $1 one JSON-RPC message; notifications and anything without an id get no answer
+  local id method params hasid
+  if ! { IFS= read -r -d '' id && IFS= read -r -d '' method && IFS= read -r -d '' params && IFS= read -r -d '' hasid; } < <(printf '%s' "$1" | jq -j '
+      if type != "object" then error("not an object") else . end
+      | (.id | tojson), "\u0000", (.method // "" | tostring), "\u0000", (.params // {} | tojson), "\u0000", (has("id") | tostring), "\u0000"' 2>/dev/null); then
+    if printf '%s' "$1" | jq -e . >/dev/null 2>&1; then mcp_fail null -32600 "Invalid request: expected one JSON-RPC object"
+    else mcp_fail null -32700 "Parse error"; fi
+    return 0
+  fi
+  [ "$hasid" = true ] || return 0
+  case "$method" in
+    initialize) mcp_initialize "$params"; mcp_reply "$id" "$MCP_RESULT" ;;
+    ping) mcp_reply "$id" '{}' ;;
+    tools/list) mcp_reply "$id" "{\"tools\":$MCP_TOOLS_JSON}" ;;
+    tools/call)
+      mcp_call "$params"
+      if [ -n "$MCP_CALL_ERROR" ]; then mcp_fail "$id" -32602 "$MCP_CALL_ERROR"; else mcp_reply "$id" "$MCP_RESULT"; fi ;;
+    prompts/list) mcp_reply "$id" "{\"prompts\":$MCP_PROMPTS_JSON}" ;;
+    prompts/get)
+      mcp_prompt "$params"
+      if [ -n "$MCP_CALL_ERROR" ]; then mcp_fail "$id" -32602 "$MCP_CALL_ERROR"; else mcp_reply "$id" "$MCP_RESULT"; fi ;;
+    *) mcp_fail "$id" -32601 "Method not found: $method" ;;
+  esac
+}
+
+mcp_cmd() {   # gitch mcp — reads requests until the client closes stdin
+  [ $# -eq 0 ] || die "Usage: gitch mcp  (an MCP server on stdin/stdout that AI clients start; register it with gitch ai --mcp)"
+  command -v jq >/dev/null 2>&1 || { err "gitch mcp needs jq ($(install_hint jq jqlang.jq))"; return 1; }
+  local line
+  MCP_ROOT=$(cd "$(posix_path "${CLAUDE_PROJECT_DIR:-$PWD}")" 2>/dev/null && pwd -P) || MCP_ROOT=$(pwd -P)
+  MCP_SELF=$(self_path); MCP_ACTOR=ai
+  MCP_TOOLS_JSON=$(printf '%s' "$MCP_TOOLS" | jq -c .) || { err "gitch mcp: the tool list is not valid JSON"; return 1; }
+  MCP_PROMPTS_JSON=$(printf '%s' "$MCP_PROMPTS" | jq -c .) || { err "gitch mcp: the prompt list is not valid JSON"; return 1; }
+  exec 3>&1 1>&2
+  while IFS= read -r line || [ -n "$line" ]; do
+    line=${line%$'\r'}
+    case "$line" in *[![:space:]]*) mcp_handle "$line" ;; esac
+  done
   return 0
 }
 
@@ -20981,7 +21381,7 @@ completion_candidates() {   # _complete -- 이후: 실행 파일 이름을 뺀 �
         ignore) printf '%s\n' --off --yes ;;
         protect) printf '%s\n' --rm --list ;;
         migrate) printf '%s\n' --force ;;
-        ai) printf '%s\n' --print --skill --remove ;;
+        ai) printf '%s\n' --print --skill --remove --mcp --no-mcp ;;
         pr|mr) printf '%s\n' --title --body --body-file --base --draft --web --json; [ "${words[1]:-}" != list ] || printf '%s\n' --state --limit ;;
         issue) printf '%s\n' --help --json --state --limit --label --assignee ;;
         workspace|ws) printf '%s\n' --help --json --dry-run ;;
@@ -21976,7 +22376,7 @@ clone fork sync
 status use unlock ignore protect fix scan audit prune
 overlap move module report graph schema completion
 list add remove org config setup login auto sign ai ssh install uninstall migrate export import doctor version self-update logo help
-guard'
+guard mcp'
 
 help_group_title() {   # $1 group → HELP_TITLE
   case "$1" in
@@ -22476,15 +22876,18 @@ gitch login github --cancel SESSION --json'
       H_EX='gitch sign
 gitch sign on' ;;
     ai) H_GROUP='account'; H_TIER='main'
-      H_USAGE='gitch ai [--print | --skill | --remove]'
+      H_USAGE='gitch ai [--print | --skill | --remove | --mcp | --no-mcp]'
       H_DESC='AI 도구(Claude Code · Codex 등)에 gitch 규칙 · 스킬 · 명령 검사 훅을 깔거나 지운다.'
       H_SUM='AI 도구(Claude, Codex) 규칙·스킬·검사 훅'
       H_FLAGS='  --print    규칙 블록만 출력 (아무것도 바꾸지 않음)
   --skill    스킬 문서만 출력 (아무것도 바꾸지 않음)
-  --remove   AI 도구 연동을 지움'
-      H_WRITES='옵션이 없거나 --remove 면 ~/.claude · ~/.codex 등의 규칙 · 스킬 · 훅'
+  --remove   AI 도구 연동을 지움
+  --mcp      Also register gitch mcp with Claude Code as tools, with the same guard (gitch.aiMcp)
+  --no-mcp   Unregister the MCP server again (rules, skill and guard stay)'
+      H_WRITES='옵션이 없거나 --remove 면 ~/.claude · ~/.codex 등의 규칙 · 스킬 · 훅 (--mcp · --no-mcp: also the Claude Code MCP server list through claude mcp)'
       H_EX='gitch ai --print
-gitch ai' ;;
+gitch ai
+gitch ai --mcp' ;;
     ssh) H_GROUP='account'
       H_USAGE='gitch ssh prune [--yes]'
       H_DESC='지금 계정 설정에서 쓰지 않는 SSH Host 를 ~/.ssh/config 에서 정리한다 (키 파일은 그대로, 백업 남김).'
@@ -22555,6 +22958,12 @@ gitch help --all' ;;
       H_USAGE='gitch guard --claude'
       H_DESC='Claude Code 의 PreToolUse 훅 전용: 표준입력의 JSON 을 보고 위험한 git 명령을 막거나 확인을 요청한다 (gitch ai 가 등록한다).'
       H_EX='gitch guard --claude < hook-input.json' ;;
+    mcp) H_GROUP='internal'; H_LANG='en'
+      H_USAGE='gitch mcp'
+      H_DESC='A Model Context Protocol server on stdin/stdout (one JSON-RPC message per line) that AI clients start to use gitch as tools. Each tool runs the matching gitch command with all of its checks.'
+      H_WRITES='only what the called tools do (commits, pushes, branches, pull requests); the server itself writes nothing'
+      H_NET='only through the called tools (fetch, push, pull requests, CI)'
+      H_EX='gitch mcp < requests.jsonl' ;;
     *) return 1 ;;
   esac
 }
@@ -22822,7 +23231,7 @@ ui_start "$@"
 # Asking for help never runs the command: gitch <command> ... --help prints that command's help, for every command and alias.
 # (Internal protocol commands, _complete and the hooks, take their arguments as data.)
 case "${1:-}" in
-  _complete) ;;
+  _complete|mcp) ;;
   *) migrate_home_from_gitsw; migrate_here_from_gitsw ;;
 esac
 case "${1:-}" in
@@ -22907,6 +23316,7 @@ case "${1:-}" in
   doctor) shift; doctor_cmd "$@"; exit $? ;;
   self-update) shift; arity 'gitch self-update' 0 "$@"; self_update_cmd; exit $? ;;
   guard) shift; guard_cmd "$@"; exit 0 ;;
+  mcp) shift; mcp_cmd "$@"; exit $? ;;
   _hook) shift; hook_main "$@"; exit $? ;;
   "") menu_cmd; exit $? ;;
   *) help_unknown '알 수 없는 명령' "$1" ;;
