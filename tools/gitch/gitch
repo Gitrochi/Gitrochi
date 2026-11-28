@@ -6128,6 +6128,21 @@ guard_file_edit() {   # Edit/Write 도구의 파일 경로
   return 0
 }
 
+guard_mcp() {   # $1 tool name (mcp__<server>__<tool>) $2 its repository argument — decided like the gitch command the tool runs
+  local server=${1#mcp__} name=${1##*__}
+  server=${server%__*}
+  case "$server" in gitch|plugin_gitch_*) ;; *) return 0 ;; esac
+  # The server acts on the project folder unless told otherwise, and resolves relative folders from there.
+  [ -n "${CLAUDE_PROJECT_DIR:-}" ] && G_CWD=$(posix_path "$CLAUDE_PROJECT_DIR")
+  [ -n "$2" ] && G_CWD=$(g_path "$2")
+  case "$name" in
+    push) GW=(gitch p) ;;
+    pr_create) GW=(gitch pr) ;;
+    *) return 0 ;;
+  esac
+  guard_simple
+}
+
 guard_cmd() {   # gitch guard --claude  (Claude Code PreToolUse 훅)
   [ "${1:-}" = --claude ] || die "사용법: gitch guard --claude  (Claude Code 훅 전용, 표준입력 JSON)"
   local input tool="" cwd="" arg=""
@@ -6135,11 +6150,12 @@ guard_cmd() {   # gitch guard --claude  (Claude Code PreToolUse 훅)
   command -v jq >/dev/null 2>&1 || return 0
   case "$input" in *git*|*GIT*|*.ssh*|*ssh-*|*hooks*) ;; *) return 0 ;; esac
   { IFS= read -r -d '' tool; IFS= read -r -d '' cwd; IFS= read -r -d '' arg; } < <(printf '%s' "$input" | \
-    jq -j '(.tool_name // ""), "\u0000", (.cwd // ""), "\u0000", (.tool_input.command // .tool_input.file_path // .tool_input.notebook_path // ""), "\u0000"' 2>/dev/null)
+    jq -j '(.tool_name // ""), "\u0000", (.cwd // ""), "\u0000", (.tool_input.command // .tool_input.file_path // .tool_input.notebook_path // .tool_input.repository // ""), "\u0000"' 2>/dev/null)
   G_DEC=""; G_REASON=""; G_CWD=$(posix_path "${cwd:-$PWD}")
   case "$tool" in
     Bash) guard_bash "$arg" ;;
     Edit|Write|MultiEdit|NotebookEdit) guard_file_edit "$arg" ;;
+    mcp__*) guard_mcp "$tool" "$arg" ;;
     *) return 0 ;;
   esac
   [ -z "$G_DEC" ] && return 0

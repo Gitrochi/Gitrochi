@@ -164,3 +164,50 @@ test_mcp_test_tool_is_not_a_pass_without_tests() {
   assert_eq "$(mcpt_error_flag 2)" true
   case "$(mcpt_text 2)" in *'must not start with -'*) ;; *) fail "$(mcpt_text 2)" ;; esac
 }
+
+mcpt_guard() {   # $1 tool name $2 tool_input JSON [$3 hook cwd] → deny | ask | none (the Claude Code hook's decision)
+  local out
+  out=$(jq -cn --arg n "$1" --argjson i "$2" --arg d "${3:-$PWD}" '{tool_name: $n, tool_input: $i, cwd: $d}' | gitch guard --claude 2>&1)
+  if [ -z "$out" ]; then echo none; return; fi
+  printf '%s' "$out" | jq -e . >/dev/null 2>&1 || { echo "BADJSON:$out"; return; }
+  printf '%s' "$out" | jq -r '.hookSpecificOutput.permissionDecision'
+}
+mcpt_expect_guard() {   # $1 expected $2 tool $3 tool_input [$4 cwd]
+  local got
+  got=$(mcpt_guard "$2" "$3" "${4:-}")
+  [ "$got" = "$1" ] || fail "expected $1, got $got  <- $2 $3"
+}
+
+test_mcp_guard_asks_like_the_matching_gitch_commands() {
+  local app="$HOME/Develop/alice/app" cfg="$HOME/.config/gitch/config"
+  mcpt_alice_repo
+  # aiPush=ask (the default): every push and pull request asks, other tools go ahead.
+  mcpt_expect_guard ask mcp__gitch__push '{}'
+  mcpt_expect_guard ask mcp__gitch__push '{"dry_run":true}'
+  mcpt_expect_guard ask mcp__gitch__pr_create '{"title":"t"}'
+  for t in status preflight commit pull branch continue test pr_status ci rescue_list; do mcpt_expect_guard none "mcp__gitch__$t" '{}'; done
+  case "$(jq -cn '{tool_name: "mcp__gitch__push", tool_input: {}, cwd: "."}' | gitch guard --claude)" in
+    *'[gitch] gitch p'*) ;; *) fail 'the reason does not name the gitch command' ;; esac
+  # aiPush=branch: work branches go ahead, the default branch and pull requests ask.
+  git config -f "$cfg" gitch.aiPush branch
+  mcpt_expect_guard ask mcp__gitch__push '{}'
+  git switch -q -c feature/x
+  mcpt_expect_guard none mcp__gitch__push '{}'
+  mcpt_expect_guard ask mcp__gitch__pr_create '{"title":"t"}'
+  # The repository argument decides, not the hook's folder; relative folders start at the project folder.
+  git clone -q "$app" "$T/other"
+  mcpt_expect_guard ask mcp__gitch__push "$(jq -cn --arg r "$T/other" '{repository: $r}')"
+  mcpt_expect_guard none mcp__gitch__push "$(jq -cn --arg r "$app" '{repository: $r}')" "$T/other"
+  mkdir -p "$T/nogit"
+  mcpt_expect_guard ask mcp__gitch__push '{}' "$T/nogit"
+  [ "$(CLAUDE_PROJECT_DIR="$app" mcpt_guard mcp__gitch__push '{}' "$T/nogit")" = none ] || fail 'the project folder is where the server pushes from'
+  [ "$(CLAUDE_PROJECT_DIR="$T" mcpt_guard mcp__gitch__push '{"repository":"other"}' "$app")" = ask ] || fail 'a relative repository starts at the project folder'
+  # The plugin form of the server name is the same server; other servers are not gitch's business.
+  git -C "$app" switch -q main
+  mcpt_expect_guard ask mcp__plugin_gitch_gitch__push '{}' "$app"
+  mcpt_expect_guard none mcp__other__push '{}' "$app"
+  # aiPush=allow: nothing asks, and the hooks still check every commit and push.
+  git config -f "$cfg" gitch.aiPush allow
+  mcpt_expect_guard none mcp__gitch__push '{}' "$app"
+  mcpt_expect_guard none mcp__gitch__pr_create '{"title":"t"}' "$app"
+}
