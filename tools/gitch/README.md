@@ -572,6 +572,42 @@ gitch flow run --help            # that subcommand's usage; nothing is planned, 
 
 지우기: `gitch ai --remove`.
 
+### MCP tools (`gitch mcp`)
+
+`gitch mcp` is a [Model Context Protocol](https://modelcontextprotocol.io/specification/2025-11-25) server on stdin/stdout. With it an agent calls gitch as typed tools with JSON results, instead of building `gitch c -m "..."` strings from the rules text. It is off until you turn it on:
+
+```bash
+gitch ai --mcp       # register it with Claude Code (user scope) and add its guard and permissions
+gitch ai --no-mcp    # unregister it; the rules, the skill and the Bash guard stay
+```
+
+`gitch ai --mcp` stores `gitch.aiMcp = true`, so later `gitch ai` runs and settings changes keep it. It also does three things:
+
+- runs `claude mcp add-json --scope user gitch '{"type":"stdio","command":"~/bin/gitch","args":["mcp"]}'`. On Windows the command is Git Bash with the script. `GITCH_CLAUDE` picks the `claude` command; without one, gitch prints the command to run yourself.
+- adds a `PreToolUse` hook with the matcher `mcp__gitch__.*` that runs `gitch guard --claude`.
+- allows the 12 tools as `mcp__gitch__<tool>`.
+
+Without `--mcp`, `gitch ai` writes `settings.json` byte for byte as before and never calls `claude`. `--no-mcp` puts the file back exactly.
+
+| Tool | Runs | Notes |
+| --- | --- | --- |
+| `status` | `gitch ck --json` + `gitch status --json` | `fetch`: true, false or left out (fetch when old) |
+| `preflight` | `gitch preflight --json` | STOP is a result, not a tool error |
+| `pr_status`, `ci`, `rescue_list` | `gitch pr status --json`, `gitch ci`, `gitch rescue` | read-only |
+| `commit` | `git add -- <files>` (literal paths), then `gitch c [-a] -m title [-m body]` | `files` or `all`, never both; never amends |
+| `push`, `pull`, `continue` | `gitch p [--dry-run]`, `gitch pl`, `gitch continue` | no force push |
+| `branch` | `gitch b <name>` | the name is checked with `git check-ref-format --branch` |
+| `pr_create` | `gitch pr --title ... [--body] [--base] [--draft]` | the account's own `gh` login |
+| `test` | `gitch test [suite] [--affected] --summary` | never `--yes` |
+
+- Every tool takes an optional `repository`. It is absolute, or relative to the project folder (`CLAUDE_PROJECT_DIR`, or the folder the server starts in). Without it, the tool acts on the project folder.
+- Each call runs this gitch as a child with stdin closed and `GITCH_ACTOR` set from the client's name (`claude`, `codex`, ...). The account lock, the hooks (author, secrets, big files, force push), the non-interactive rules and `gitch report` behave as they do for an agent's shell. A `[gitch]` refusal comes back as `isError: true` with gitch's own message.
+- The guard decides `mcp__gitch__push` like `gitch p` and `mcp__gitch__pr_create` like `gitch pr`, under the same push policy. It reads the folder from the tool's `repository`, or from the project folder. The plugin form of the name (`mcp__plugin_gitch_gitch__…`) counts too.
+- The server's instructions name only the project folder's repository, branch and locked account, plus the push policy. They replace the static rules text for agents that connect, and other accounts and emails stay out.
+- The prompts `commit` and `pr` appear as `/gitch:commit` and `/gitch:pr` in Claude Code.
+- Force push, amend, undo, unlocking, changing accounts, restoring rescue points and trusting flow files are not tools. They stay with the user in a terminal.
+- Protocol versions: 2025-11-25, 2025-06-18, 2025-03-26 and 2024-11-05. One request runs at a time, and a long `test` holds the next one. Text results are cut at 40,000 characters.
+
 ## 설정 파일 (`~/.config/gitch/config`)
 
 git config 형식이다. `gitch config set|add|unset <키> <값>` 으로 바꾸면 바꾼 뒤 검사하고, 틀리면 되돌린다.
